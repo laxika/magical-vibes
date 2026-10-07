@@ -64,11 +64,77 @@ class TemptWithImmortalityTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCreature);
     }
 
+    @Test
+    @DisplayName("An empty controller graveyard does not prevent an opponent from accepting")
+    void emptyControllerGraveyardStillAllowsOpponentReturn() {
+        Card opponentCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(opponentCreature));
+
+        castTemptWithImmortality();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleGraveyardCardChosen(player2, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactly(opponentCreature.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent without creatures cannot grant an additional return")
+    void opponentWithoutCreaturesDoesNotGrantReward() {
+        Card ownFirst = new GrizzlyBears();
+        Card ownReward = new GrizzlyBears();
+        Card noncreature = new TemptWithImmortality();
+        harness.setGraveyard(player1, List.of(ownFirst, ownReward));
+        harness.setGraveyard(player2, List.of(noncreature));
+
+        castTemptWithImmortality();
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactly(ownFirst.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownReward);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(noncreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+    }
+
+    @Test
+    @DisplayName("Creature choices skip noncreature cards in both graveyards")
+    void returnsOnlyCreaturesFromMixedGraveyards() {
+        Card ownNoncreature = new TemptWithImmortality();
+        Card opponentNoncreature = new TemptWithImmortality();
+        Card ownCreature = new GrizzlyBears();
+        Card opponentCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(ownNoncreature, ownCreature));
+        harness.setGraveyard(player2, List.of(opponentNoncreature, opponentCreature));
+
+        castTemptWithImmortality();
+        harness.handleGraveyardCardChosen(player1, 1);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleGraveyardCardChosen(player2, 1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactly(ownCreature.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactly(opponentCreature.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownNoncreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentNoncreature);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+    }
     private void castTemptWithImmortality() {
         harness.setHand(player1, List.of(new TemptWithImmortality()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }
