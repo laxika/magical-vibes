@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DragonSniper;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,14 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StarryEyedSkyrider.class, GrizzlyBears.class})
+@CardUsed({StarryEyedSkyrider.class, DragonSniper.class})
 class StarryEyedSkyriderTest extends BaseCardTest {
 
     @Test
     @DisplayName("Attacking grants flying to another creature you control until end of turn")
     void grantsFlyingToAnotherCreatureYouControl() {
         addCreatureReady(player1, new StarryEyedSkyrider());
-        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player1, new DragonSniper());
 
         declareAttackers(List.of(0, 1));
         harness.handlePermanentChosen(player1, otherCreature.getId());
@@ -53,7 +54,7 @@ class StarryEyedSkyriderTest extends BaseCardTest {
     @DisplayName("Cannot target itself")
     void cannotTargetItself() {
         Permanent skyrider = addCreatureReady(player1, new StarryEyedSkyrider());
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new DragonSniper());
 
         declareAttackers(List.of(0, 1));
 
@@ -61,8 +62,88 @@ class StarryEyedSkyriderTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The attack trigger can target a nonattacking creature and expires at end of turn")
+    void nonattackingCreatureGainsFlyingUntilEndOfTurn() {
+        addCreatureReady(player1, new StarryEyedSkyrider());
+        Permanent target = addCreatureReady(player1, new DragonSniper());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot target an opponent's creature")
+    void cannotTargetOpponentsCreature() {
+        addCreatureReady(player1, new StarryEyedSkyrider());
+        addCreatureReady(player1, new DragonSniper());
+        Permanent opponentCreature = addCreatureReady(player2, new DragonSniper());
+
+        declareAttackers(List.of(0));
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A target that changes controllers before resolution does not gain flying")
+    void targetMustStillBeControlledByYouAtResolution() {
+        addCreatureReady(player1, new StarryEyedSkyrider());
+        Permanent target = addCreatureReady(player1, new DragonSniper());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The attack trigger resolves even if Skyrider leaves the battlefield")
+    void attackTriggerSurvivesSourceLeaving() {
+        Permanent skyrider = addCreatureReady(player1, new StarryEyedSkyrider());
+        Permanent target = addCreatureReady(player1, new DragonSniper());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(skyrider);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Only attacking tokens gain the static flying bonus, which ends when Skyrider leaves")
+    void staticBonusRequiresAttackingTokenAndSourceOnBattlefield() {
+        Permanent skyrider = addCreatureReady(player1, new StarryEyedSkyrider());
+        Permanent token = addTokenCreature(player1);
+        Permanent nontoken = addCreatureReady(player1, new DragonSniper());
+
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isFalse();
+        token.setAttacking(true);
+        token.setAttackTarget(player2.getId());
+        nontoken.setAttacking(true);
+        nontoken.setAttackTarget(player2.getId());
+
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nontoken, Keyword.FLYING)).isFalse();
+
+        gd.playerBattlefields.get(player1.getId()).remove(skyrider);
+
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isFalse();
+    }
+
     private Permanent addTokenCreature(Player player) {
-        Card tokenCard = new GrizzlyBears();
+        Card tokenCard = new DragonSniper();
         tokenCard.setToken(true);
         return addCreatureReady(player, tokenCard);
     }
