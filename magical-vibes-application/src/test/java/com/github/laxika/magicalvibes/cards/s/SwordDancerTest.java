@@ -131,6 +131,57 @@ class SwordDancerTest extends BaseCardTest {
         assertThat(attacker.getEffectivePower()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent swordDancer = harness.addToBattlefieldAndReturn(player1, new SwordDancer());
+        swordDancer.setSummoningSick(true);
+        swordDancer.setTapped(true);
+        Permanent attacker = addAttackingCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.getEffectivePower()).isEqualTo(1);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(swordDancer.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after Sword Dancer leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent swordDancer = addCreatureReady(player1, new SwordDancer());
+        Permanent attacker = addAttackingCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, swordDancer));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(swordDancer);
+        assertThat(attacker.getEffectivePower()).isEqualTo(1);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Resolved debuff persists when the creature stops attacking")
+    void resolvedDebuffPersistsOutsideCombat() {
+        addCreatureReady(player1, new SwordDancer());
+        Permanent attacker = addAttackingCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+        attacker.setAttacking(false);
+
+        assertThat(attacker.getEffectivePower()).isEqualTo(1);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+    }
+
     private Permanent addAttackingCreature(Player player) {
         Permanent perm = addCreatureReady(player, new GrizzlyBears());
         perm.setAttacking(true);
