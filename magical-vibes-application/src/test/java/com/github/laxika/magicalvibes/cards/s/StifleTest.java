@@ -33,8 +33,7 @@ class StifleTest extends BaseCardTest {
         harness.activateAbility(player2, 0, 0, warchief.getId());
         harness.passPriority(player2);
 
-        harness.castInstant(player1, 0, warchief.getCard().getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, warchief.getCard().getId());
 
         assertThat(warchief.getRegenerationShield()).isZero();
         assertThat(harness.getGameData().stack).isEmpty();
@@ -55,12 +54,42 @@ class StifleTest extends BaseCardTest {
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
 
         harness.passPriority(player2);
-        harness.castInstant(player1, 0, gd.stack.getLast().getCard().getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, gd.stack.getLast().getCard().getId());
 
         assertThat(decree.getCounterCount(CounterType.DEPLETION)).isZero();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    void countersOnlyTheSelectedAbilityFromTheSameSource() {
+        Permanent warchief = addCreatureReady(player2, new KrosanWarchief());
+        harness.setHand(player1, List.of(new Stifle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, 0, warchief.getId());
+        var remainingAbilityId = gd.stack.getFirst().getTargetableId();
+        harness.activateAbility(player2, 0, 0, warchief.getId());
+        var targetedAbilityId = gd.stack.getLast().getTargetableId();
+        harness.passPriority(player2);
+
+        harness.castAndResolveInstant(player1, 0, targetedAbilityId);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetableId()).isEqualTo(remainingAbilityId);
+        assertThat(warchief.getRegenerationShield()).isZero();
+        harness.assertOnBattlefield(player2, "Krosan Warchief");
+        harness.assertNotInGraveyard(player2, "Krosan Warchief");
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(warchief.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
