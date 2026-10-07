@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,23 +16,15 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SphinxsHerald.class, SuntailHawk.class, FugitiveWizard.class, ScatheZombies.class,
+        SphinxSovereign.class})
 class SphinxsHeraldTest extends BaseCardTest {
 
     private Permanent setUpHerald() {
-        harness.addToBattlefield(player1, new SphinxsHerald());
-        Permanent herald = findPermanent(player1, "Sphinx's Herald");
+        Permanent herald = harness.addToBattlefieldAndReturn(player1, new SphinxsHerald());
         herald.setSummoningSick(false);
         harness.addMana(player1, ManaColor.BLUE, 3);
         return herald;
-    }
-
-    private Card sphinxSovereign() {
-        Card card = new Card() {};
-        card.setName("Sphinx Sovereign");
-        card.setType(CardType.CREATURE);
-        card.setPower(6);
-        card.setToughness(6);
-        return card;
     }
 
     @Test
@@ -95,8 +85,7 @@ class SphinxsHeraldTest extends BaseCardTest {
         UUID wizardId = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard()).getId();
         harness.addToBattlefieldAndReturn(player1, new ScatheZombies());
 
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(sphinxSovereign(), new ScatheZombies()));
+        harness.setLibrary(player1, List.of(new SphinxSovereign(), new ScatheZombies()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, hawkId);
@@ -108,8 +97,82 @@ class SphinxsHeraldTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).allMatch(c -> c.getName().equals("Sphinx Sovereign"));
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Sphinx Sovereign");
     }
+
+    @Test
+    @DisplayName("The tapped Herald can itself pay the blue sacrifice")
+    void canSacrificeHeraldForBlue() {
+        Permanent herald = setUpHerald();
+        UUID whiteId = harness.addToBattlefieldAndReturn(player1, new SphinxSovereign()).getId();
+        harness.addToBattlefield(player1, new SphinxSovereign());
+        harness.setLibrary(player1, List.of(new SphinxSovereign()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, whiteId);
+        harness.handlePermanentChosen(player1, herald.getId());
+
+        harness.assertInGraveyard(player1, "Sphinx's Herald");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.assertOnBattlefield(player1, "Sphinx Sovereign");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A multicolored creature cannot pay more than one sacrifice")
+    void needsThreeDistinctCreatures() {
+        setUpHerald();
+        harness.addToBattlefield(player1, new SphinxSovereign());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough permanents to sacrifice");
+        harness.assertOnBattlefield(player1, "Sphinx Sovereign");
+        harness.assertOnBattlefield(player1, "Sphinx's Herald");
+    }
+
+    @Test
+    @DisplayName("The search can decline to find an available Sphinx Sovereign")
+    void canFailToFind() {
+        Permanent herald = setUpHerald();
+        UUID whiteId = harness.addToBattlefieldAndReturn(player1, new SphinxSovereign()).getId();
+        harness.addToBattlefield(player1, new SphinxSovereign());
+        SphinxSovereign sovereign = new SphinxSovereign();
+        harness.setLibrary(player1, List.of(sovereign));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, whiteId);
+        harness.handlePermanentChosen(player1, herald.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotOnBattlefield(player1, "Sphinx Sovereign");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(sovereign);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An empty library does not undo the sacrifices")
+    void emptyLibraryStillPaysCosts() {
+        Permanent herald = setUpHerald();
+        UUID whiteId = harness.addToBattlefieldAndReturn(player1, new SphinxSovereign()).getId();
+        harness.addToBattlefield(player1, new SphinxSovereign());
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, whiteId);
+        harness.handlePermanentChosen(player1, herald.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        harness.assertNotOnBattlefield(player1, "Sphinx Sovereign");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
 }
