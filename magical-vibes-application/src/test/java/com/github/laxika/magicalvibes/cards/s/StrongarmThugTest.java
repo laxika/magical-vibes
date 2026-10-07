@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BogSmugglers;
 import com.github.laxika.magicalvibes.cards.r.RishadanPort;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -20,11 +19,7 @@ class StrongarmThugTest extends BaseCardTest {
     private void castStrongarmThug() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new StrongarmThug()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new StrongarmThug(), "{2}{B}");
         harness.passBothPriorities();
     }
 
@@ -42,6 +37,9 @@ class StrongarmThugTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(mercenary.getId()));
         harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Bog Smugglers");
         harness.assertNotInGraveyard(player1, "Bog Smugglers");
@@ -93,9 +91,45 @@ class StrongarmThugTest extends BaseCardTest {
 
         castStrongarmThug();
 
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(mercenary.getId()));
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Bog Smugglers");
+        harness.assertNotInHand(player1, "Bog Smugglers");
+    }
+
+    @Test
+    @DisplayName("The ability does not return a target that left the graveyard before resolution")
+    void targetLeavingGraveyardIsNotReturned() {
+        BogSmugglers mercenary = new BogSmugglers();
+        harness.setGraveyard(player1, List.of(mercenary));
+
+        castStrongarmThug();
+        harness.handleMultipleCardsChosen(player1, List.of(mercenary.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertNotInHand(player1, "Bog Smugglers");
+        harness.assertOnBattlefield(player1, "Strongarm Thug");
+    }
+
+    @Test
+    @DisplayName("A legal Mercenary target must be chosen before the optional return resolves")
+    void targetIsMandatoryEvenWhenReturnIsOptional() {
+        BogSmugglers mercenary = new BogSmugglers();
+        harness.setGraveyard(player1, List.of(mercenary));
+
+        castStrongarmThug();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.minCount()).isEqualTo(1);
+        assertThat(choice.maxCount()).isEqualTo(1);
         harness.assertInGraveyard(player1, "Bog Smugglers");
         harness.assertNotInHand(player1, "Bog Smugglers");
     }
