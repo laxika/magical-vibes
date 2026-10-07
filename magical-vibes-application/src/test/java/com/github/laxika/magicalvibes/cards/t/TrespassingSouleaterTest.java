@@ -7,14 +7,16 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TrespassingSouleater.class})
 class TrespassingSouleaterTest extends BaseCardTest {
 
-    // ===== Activated ability: make self unblockable paying blue mana =====
 
     @Test
     @DisplayName("Activating ability puts it on the stack")
@@ -62,7 +64,6 @@ class TrespassingSouleaterTest extends BaseCardTest {
         assertThat(souleater.isCantBeBlocked()).isFalse();
     }
 
-    // ===== Phyrexian mana: pay with life =====
 
     @Test
     @DisplayName("Can pay Phyrexian mana with 2 life when no blue mana available")
@@ -92,7 +93,6 @@ class TrespassingSouleaterTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
 
-    // ===== Activation constraints =====
 
     @Test
     @DisplayName("Activating ability does NOT tap Trespassing Souleater")
@@ -121,8 +121,7 @@ class TrespassingSouleaterTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability with summoning sickness (no tap cost)")
     void canActivateWithSummoningSickness() {
-        Permanent souleater = new Permanent(new TrespassingSouleater());
-        gd.playerBattlefields.get(player1.getId()).add(souleater);
+        harness.addToBattlefield(player1, new TrespassingSouleater());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -131,29 +130,74 @@ class TrespassingSouleaterTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Trespassing Souleater");
     }
 
-    // ===== Fizzle =====
 
     @Test
-    @DisplayName("Ability fizzles if Trespassing Souleater is removed before resolution")
-    void abilityFizzlesIfSourceRemoved() {
-        addSouleaterReady(player1);
+    @DisplayName("Ability resolves without affecting a replacement Souleater if its source leaves")
+    void abilityDoesNotAffectReplacementSource() {
+        Permanent original = addSouleaterReady(player1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
 
         gd.playerBattlefields.get(player1.getId()).clear();
+        Permanent replacement = addSouleaterReady(player1);
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
+        assertThat(original.isCantBeBlocked()).isFalse();
+        assertThat(replacement.isCantBeBlocked()).isFalse();
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Cannot pay two life with only one life and no blue mana")
+    void cannotActivateWithoutEnoughLifeOrMana() {
+        addSouleaterReady(player1);
+        harness.setLife(player1, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 1);
+    }
+
+    @Test
+    @DisplayName("Each activation pays its cost even if already unblockable")
+    void repeatedActivationPaysLifeAgain() {
+        Permanent souleater = addSouleaterReady(player1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        assertThat(souleater.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Resolving the ability prevents an opposing creature from blocking")
+    void preventsBlockingOnlyTheSource() {
+        Permanent souleater = addSouleaterReady(player1);
+        Permanent other = addSouleaterReady(player1);
+        Permanent blocker = addSouleaterReady(player2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(harness.getBlockLegalityService().canBlockAttacker(
+                gd, blocker, souleater, gd.playerBattlefields.get(player2.getId()))).isFalse();
+        assertThat(harness.getBlockLegalityService().canBlockAttacker(
+                gd, blocker, other, gd.playerBattlefields.get(player2.getId()))).isTrue();
+    }
+
 
     private Permanent addSouleaterReady(Player player) {
-        Permanent perm = new Permanent(new TrespassingSouleater());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new TrespassingSouleater());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
