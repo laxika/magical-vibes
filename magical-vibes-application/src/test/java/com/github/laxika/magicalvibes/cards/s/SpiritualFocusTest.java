@@ -122,8 +122,7 @@ class SpiritualFocusTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castSorcery(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
         harness.passBothPriorities();
@@ -139,6 +138,25 @@ class SpiritualFocusTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, false);
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent's discard spell does not trigger when no card is discarded")
+    void emptyHandDoesNotTrigger() {
+        harness.addToBattlefield(player1, new SpiritualFocus());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new SpectersWail()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
