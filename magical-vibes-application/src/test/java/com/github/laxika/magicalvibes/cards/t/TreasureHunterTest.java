@@ -94,4 +94,39 @@ class TreasureHunterTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getId().equals(enteringTreasureHunter.getId()));
     }
+
+    @Test
+    @DisplayName("Only the targeted artifact is returned when multiple artifacts are eligible")
+    void returnsOnlyTargetedArtifact() {
+        Spellbook targetedArtifact = new Spellbook();
+        Spellbook otherArtifact = new Spellbook();
+        harness.setGraveyard(player1, List.of(targetedArtifact, otherArtifact));
+
+        harness.enterBattlefieldAndReturn(player1, new TreasureHunter());
+        harness.handleMultipleCardsChosen(player1, List.of(targetedArtifact.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(targetedArtifact).doesNotContain(otherArtifact);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherArtifact);
+    }
+
+    @Test
+    @DisplayName("A target that leaves the graveyard prevents resolution and cannot be replaced")
+    void removedTargetDoesNotReturnAnotherArtifact() {
+        Spellbook targetedArtifact = new Spellbook();
+        Spellbook otherArtifact = new Spellbook();
+        harness.setGraveyard(player1, List.of(targetedArtifact, otherArtifact));
+
+        harness.enterBattlefieldAndReturn(player1, new TreasureHunter());
+        harness.handleMultipleCardsChosen(player1, List.of(targetedArtifact.getId()));
+        harness.setGraveyard(player1, List.of(otherArtifact));
+        harness.setHand(player1, List.of(targetedArtifact));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(targetedArtifact);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherArtifact);
+    }
 }
