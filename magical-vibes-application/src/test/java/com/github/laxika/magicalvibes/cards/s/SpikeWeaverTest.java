@@ -22,13 +22,8 @@ class SpikeWeaverTest extends BaseCardTest {
     @Test
     @DisplayName("Enters the battlefield with three +1/+1 counters")
     void entersWithThreePlusOneCounters() {
-        harness.setHand(player1, List.of(new SpikeWeaver()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-
-        harness.castCreature(player1, 0);
+        prepareMainPhase(player1);
+        harness.castFromHand(player1, new SpikeWeaver(), "{2}{G}{G}");
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Spike Weaver")
@@ -112,6 +107,94 @@ class SpikeWeaverTest extends BaseCardTest {
                 player1, battlefieldIndex(player1, weaver), 0, null, cityOfTraitors.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can target itself, paying the counter before resolution")
+    void canTargetItself() {
+        Permanent weaver = addReadyWeaver(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        prepareMainPhase(player1);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, weaver), 0, null, weaver.getId());
+
+        assertThat(weaver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.passBothPriorities();
+        assertThat(weaver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Fog resolves even after paying the last counter kills its source")
+    void lastCounterFogSurvivesSourceDeath() {
+        Permanent weaver = addReadyWeaver(player1);
+        weaver.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent attacker = addReadyWeaver(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        prepareMainPhase(player1);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, weaver), 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Spike Weaver");
+        harness.assertInGraveyard(player1, "Spike Weaver");
+        harness.passBothPriorities();
+        declareAttackers(player2, List.of(battlefieldIndex(player2, attacker)));
+        resolveCombat(player2);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Counter transfer resolves even after the source loses its last counter")
+    void lastCounterTransferSurvivesSourceDeath() {
+        Permanent weaver = addReadyWeaver(player1);
+        weaver.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent target = addReadyWeaver(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        prepareMainPhase(player1);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, weaver), 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Spike Weaver");
+        harness.assertInGraveyard(player1, "Spike Weaver");
+        harness.passBothPriorities();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Targeting itself cannot save it when the last counter is spent")
+    void lastCounterCannotBeReturnedToDyingSource() {
+        Permanent weaver = addReadyWeaver(player1);
+        weaver.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        prepareMainPhase(player1);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, weaver), 0, null, weaver.getId());
+
+        harness.assertNotOnBattlefield(player1, "Spike Weaver");
+        harness.assertInGraveyard(player1, "Spike Weaver");
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Spike Weaver");
+        harness.assertInGraveyard(player1, "Spike Weaver");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both abilities work while tapped and summoning sick")
+    void abilitiesWorkWhileTappedAndSummoningSick() {
+        Permanent weaver = addReadyWeaver(player1);
+        weaver.setSummoningSick(true);
+        weaver.setTapped(true);
+        Permanent target = addReadyWeaver(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        prepareMainPhase(player1);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, weaver), 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, battlefieldIndex(player1, weaver), 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(weaver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(gd.preventAllCombatDamage).isTrue();
     }
 
     private Permanent addReadyWeaver(Player player) {
