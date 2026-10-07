@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TerminalMoraine.class, Forest.class, Plains.class, GrizzlyBears.class})
 class TerminalMoraineTest extends BaseCardTest {
@@ -71,5 +72,79 @@ class TerminalMoraineTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonBasicCard);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard() instanceof Forest || permanent.getCard() instanceof Plains);
+    }
+
+    @Test
+    @DisplayName("May decline to find a basic land even when one is available")
+    void mayDeclineAvailableBasicLand() {
+        Forest forest = new Forest();
+        harness.addToBattlefield(player1, new TerminalMoraine());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLibrary(player1, List.of(forest));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.assertInGraveyard(player1, "Terminal Moraine");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Search excludes nonbasic lands and removes the chosen basic land from the library")
+    void excludesNonbasicLands() {
+        TerminalMoraine nonbasicLand = new TerminalMoraine();
+        Forest forest = new Forest();
+        harness.addToBattlefield(player1, new TerminalMoraine());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLibrary(player1, List.of(nonbasicLand, forest));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).containsExactly(forest);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonbasicLand);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Search cannot be activated with only one mana")
+    void requiresTwoMana() {
+        harness.addToBattlefield(player1, new TerminalMoraine());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Terminal Moraine");
+        harness.assertNotInGraveyard(player1, "Terminal Moraine");
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Terminal Moraine cannot activate its search ability")
+    void tappedLandCannotSearch() {
+        harness.addToBattlefield(player1, new TerminalMoraine());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Terminal Moraine");
+        harness.assertNotInGraveyard(player1, "Terminal Moraine");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
     }
 }
