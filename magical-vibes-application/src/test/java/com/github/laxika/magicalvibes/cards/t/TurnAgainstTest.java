@@ -64,11 +64,76 @@ class TurnAgainstTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castTurnAgainst(Permanent target) {
+    @Test
+    @DisplayName("Can untap and grant haste to a creature already controlled by the caster")
+    void targetsOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.tap();
+
+        castTurnAgainst(target);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("Repeated casts on a stolen creature still return it to its original controller")
+    void repeatedControlEffectsExpireTogether() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castTurnAgainst(target);
+        target.tap();
+
+        castTurnAgainst(target);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("Does not affect another creature when its target leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        other.tap();
         harness.setHand(player1, List.of(new TurnAgainst()));
         addMana();
         harness.castInstant(player1, 0, target.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, target));
         harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Turn Against");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(other);
+        assertThat(other.isTapped()).isTrue();
+        assertThat(other.hasKeyword(Keyword.HASTE)).isFalse();
+    }
+
+    private void castTurnAgainst(Permanent target) {
+        harness.setHand(player1, List.of(new TurnAgainst()));
+        addMana();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void addMana() {
