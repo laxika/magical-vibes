@@ -80,4 +80,26 @@ class SunQuanLordOfWuTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, creatures, Keyword.HORSEMANSHIP)).isFalse();
     }
+
+    @Test
+    @DisplayName("Creatures entering after Sun Quan gain horsemanship immediately")
+    void laterCreaturesGainHorsemanship() {
+        addCreatureReady(player1, new SunQuanLordOfWu());
+
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new ShuFootSoldiers());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HORSEMANSHIP)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature with horsemanship can block an attacker without horsemanship")
+    void horsemanshipCreatureCanBlockOrdinaryAttacker() {
+        addCreatureReady(player1, new ShuFootSoldiers());
+        Permanent blocker = addCreatureReady(player2, new SunQuanLordOfWu());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 }
