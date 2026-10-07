@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -109,7 +108,7 @@ class UginEyeOfTheStormsTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).containsExactly(ornithopter);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.getCardsExiledByPermanent(ugin.getId())).containsExactly(ornithopter);
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getClass)
@@ -123,11 +122,130 @@ class UginEyeOfTheStormsTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getCard().getId().equals(ornithopter.getId()));
     }
 
+    @Test
+    void castTriggerCanResolveWithoutColoredPermanents() {
+        UginEyeOfTheStorms card = new UginEyeOfTheStorms();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.castPlaneswalker(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(card.getId()));
+    }
+
+    @Test
+    void ultimateCastsSevenManaCardForFreeAfterSourceDies() {
+        UginEyeOfTheStorms selected = new UginEyeOfTheStorms();
+        harness.setLibrary(player1, List.of(selected));
+        Permanent source = addReadyUgin(11);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(source);
+
+        harness.castFromExile(player1, selected.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(selected.getId()));
+    }
+
+    @Test
+    void ultimateAllowsCastingEverySelectedCard() {
+        Ornithopter first = new Ornithopter();
+        Ornithopter second = new Ornithopter();
+        harness.setLibrary(player1, List.of(first, second));
+        addReadyUgin(11);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        harness.castFromExile(player1, first.getId());
+        harness.passBothPriorities();
+        harness.castFromExile(player1, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .contains(first.getId(), second.getId());
+    }
+
+    @Test
+    void laterUltimateDoesNotAllowCastingCardsFromEarlierSearch() {
+        Ornithopter previouslyExiled = new Ornithopter();
+        harness.setLibrary(player1, List.of(previouslyExiled, new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        addReadyUgin(23);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        assertThatThrownBy(() -> harness.castFromExile(player1, previouslyExiled.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, previouslyExiled.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void ultimateCanFindNoCards() {
+        Ornithopter card = new Ornithopter();
+        harness.setLibrary(player1, List.of(card));
+        addReadyUgin(11);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(card);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void coloredSpellDoesNotTriggerExile() {
+        addReadyUgin(7);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof GrizzlyBears);
+    }
+
+    @Test
+    void zeroAbilityUsesTheStack() {
+        addReadyUgin(7);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.passBothPriorities();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+    }
+
     private Permanent addReadyUgin(int loyalty) {
-        Permanent ugin = new Permanent(new UginEyeOfTheStorms());
+        Permanent ugin = harness.addToBattlefieldAndReturn(player1, new UginEyeOfTheStorms());
         ugin.setCounterCount(CounterType.LOYALTY, loyalty);
         ugin.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(ugin);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return ugin;
