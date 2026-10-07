@@ -32,8 +32,7 @@ class StrengthOfWillTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
@@ -51,11 +50,8 @@ class StrengthOfWillTest extends BaseCardTest {
         bears.setBlocking(true);
         bears.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveCombat(player2);
+        resolveAllTriggers();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -91,6 +87,72 @@ class StrengthOfWillTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Each copy grants a separate damage-triggered ability")
+    void multipleCopiesEachAddCounters() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        castOn(player1, bears);
+        castOn(player1, bears);
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, bears.getId());
+        resolveAllTriggers();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Separate damage events add counters that remain after the ability expires")
+    void repeatedDamageGrowsCreatureAndCountersRemainAfterTurn() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        castOn(player1, bears);
+
+        for (int i = 0; i < 2; i++) {
+            harness.setHand(player2, List.of(new Shock()));
+            harness.addMana(player2, ManaColor.RED, 1);
+            harness.castInstant(player2, 0, bears.getId());
+            resolveAllTriggers();
+            assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2 * (i + 1));
+        }
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, bears.getId());
+        resolveAllTriggers();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Removing the target in response prevents both granted abilities")
+    void removedTargetDoesNotReceiveAbilities() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StrengthOfWill()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, bears.getId());
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, bears.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castOn(Player caster, Permanent target) {
