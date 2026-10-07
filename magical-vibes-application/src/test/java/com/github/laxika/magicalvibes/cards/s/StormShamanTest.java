@@ -10,8 +10,29 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(StormShaman.class)
+@CardUsed({StormShaman.class})
 class StormShamanTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Ability uses the stack and boosts only its source")
+    void boostsOnlyTheActivatedShamanAfterResolution() {
+        Permanent first = addCreatureReady(player1, new StormShaman());
+        Permanent second = addCreatureReady(player1, new StormShaman());
+        Permanent opposing = addCreatureReady(player2, new StormShaman());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(second.getPowerModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(second.getPowerModifier()).isEqualTo(1);
+        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(first.getPowerModifier()).isZero();
+        assertThat(opposing.getPowerModifier()).isZero();
+    }
 
     @Test
     @DisplayName("Activating ability gives +1/+0")
