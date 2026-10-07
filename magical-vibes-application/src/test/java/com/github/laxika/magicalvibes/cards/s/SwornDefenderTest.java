@@ -162,6 +162,59 @@ class SwornDefenderTest extends BaseCardTest {
         assertThat(defender.getEffectiveToughness()).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("Counters on Sworn Defender apply after the ability sets its base stats")
+    void retainsItsOwnCounters() {
+        Permanent defender = addCreatureReady(player1, new SwornDefender());
+        Permanent blocker = addCreatureReady(player2, new ElvishRanger());
+        defender.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        setupDefenderAttackingBlockedBy(defender, blocker);
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, defender)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, defender)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("A later activation replaces the earlier stat setting")
+    void canActivateAgainDuringTheSameCombat() {
+        Permanent defender = addCreatureReady(player1, new SwornDefender());
+        Permanent blocker = addCreatureReady(player2, new ElvishRanger());
+        setupDefenderAttackingBlockedBy(defender, blocker);
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, defender)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, defender)).isEqualTo(5);
+
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, defender)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, defender)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("A target with negative power can set Sworn Defender's toughness to zero")
+    void negativeTargetPowerIsNotClampedBeforeAddingOne() {
+        Permanent defender = addCreatureReady(player1, new SwornDefender());
+        Permanent blocker = addCreatureReady(player2, new ElvishRanger());
+        blocker.setPowerModifier(-5);
+        setupDefenderAttackingBlockedBy(defender, blocker);
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Sworn Defender");
+        harness.assertInGraveyard(player1, "Sworn Defender");
+    }
+
     private Permanent addRanger(Player player, int power, int toughness) {
         ElvishRanger ranger = new ElvishRanger();
         ranger.setPower(power);
@@ -170,15 +223,13 @@ class SwornDefenderTest extends BaseCardTest {
     }
 
     private void setupDefenderAttackingBlockedBy(Permanent defender, Permanent blocker) {
-        declareAttackers(player1, List.of(indexOf(player1, defender)));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(indexOf(player1, defender)));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 indexOf(player2, blocker), indexOf(player1, defender))));
     }
 
     private void setupDefenderBlockingAttacker(Permanent defender, Permanent attacker) {
-        declareAttackers(player2, List.of(indexOf(player2, attacker)));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(indexOf(player2, attacker)));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
                 indexOf(player1, defender), indexOf(player2, attacker))));
     }
