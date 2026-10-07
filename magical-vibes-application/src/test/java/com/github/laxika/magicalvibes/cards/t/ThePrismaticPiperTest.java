@@ -34,4 +34,26 @@ class ThePrismaticPiperTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(piper.getId()));
         assertThat(gd.commanderTaxByCardId.get(piper.getId())).isEqualTo(2);
     }
+
+    @Test
+    void resolvesFromCommandZoneAndRemainsTheCommander() {
+        ThePrismaticPiper piper = new ThePrismaticPiper();
+        piper.setOwnerId(player1.getId());
+        piper.freeze();
+        gd.format = DeckFormat.COMMANDER;
+        gd.makeCommander(player1.getId(), piper);
+        gd.playerCommandZones.put(player1.getId(), new ArrayList<>(List.of(piper)));
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        gs.castCommander(gd, player1, piper.getId(),
+                () -> gs.playCard(gd, player1, 0, null, null, null));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "The Prismatic Piper");
+        assertThat(gd.playerCommandZones.get(player1.getId())).isEmpty();
+        assertThat(gd.isCommander(piper.getId())).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
