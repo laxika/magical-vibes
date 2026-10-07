@@ -22,8 +22,7 @@ class SunstarExpansionistTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
         castExpansionist();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Lander")).hasSize(1);
     }
@@ -60,10 +59,100 @@ class SunstarExpansionistTest extends BaseCardTest {
         assertThat(expansionist.getEffectiveToughness()).isEqualTo(3);
     }
 
+    @Test
+    void etbConditionIsCheckedAgainOnResolution() {
+        harness.addToBattlefield(player2, new Forest());
+        castExpansionist();
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addToBattlefield(player1, new Forest());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Lander")).isEmpty();
+    }
+
+    @Test
+    void falseEtbConditionDoesNotTriggerEvenIfOpponentLaterGainsLand() {
+        castExpansionist();
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Lander")).isEmpty();
+    }
+
+    @Test
+    void opponentsLandDoesNotTriggerLandfall() {
+        Permanent expansionist = harness.addToBattlefieldAndReturn(player1, new SunstarExpansionist());
+
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(expansionist.getEffectivePower()).isEqualTo(2);
+    }
+
+    @Test
+    void multipleLandEntriesGiveCumulativeBoosts() {
+        Permanent expansionist = harness.addToBattlefieldAndReturn(player1, new SunstarExpansionist());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        resolveAllTriggers();
+
+        assertThat(expansionist.getEffectivePower()).isEqualTo(4);
+        assertThat(expansionist.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    void newlyCreatedLanderCanSearchAndTriggerLandfall() {
+        harness.addToBattlefield(player2, new Forest());
+        castExpansionist();
+        resolveAllTriggers();
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(new SunstarExpansionist(), forest));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId())
+                .indexOf(findPermanent(player1, "Lander")), null, null);
+
+        assertThat(findPermanents(player1, "Lander")).isEmpty();
+        assertThat(findPermanents(player1, "Forest")).isEmpty();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Forest").getCard()).isSameAs(forest);
+        assertThat(findPermanent(player1, "Forest").isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1)
+                .allMatch(card -> card instanceof SunstarExpansionist);
+        assertThat(findPermanent(player1, "Sunstar Expansionist").getEffectivePower()).isEqualTo(3);
+    }
+
+    @Test
+    void landerSearchMayFailToFindBasicLand() {
+        harness.addToBattlefield(player2, new Forest());
+        castExpansionist();
+        resolveAllTriggers();
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId())
+                .indexOf(findPermanent(player1, "Lander")), null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(findPermanents(player1, "Lander")).isEmpty();
+        assertThat(findPermanents(player1, "Forest")).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castExpansionist() {
-        harness.setHand(player1, List.of(new SunstarExpansionist()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SunstarExpansionist(), "{1}{W}");
     }
 }
