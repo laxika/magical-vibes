@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GingerbreadCabin;
+import com.github.laxika.magicalvibes.cards.s.SporecapSpider;
 import com.github.laxika.magicalvibes.cards.o.OakenBoon;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,12 +15,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TuinvaleTreefolk.class, OakenBoon.class, GrizzlyBears.class, Forest.class})
+@CardUsed({TuinvaleTreefolk.class, OakenBoon.class, SporecapSpider.class, GingerbreadCabin.class})
 class TuinvaleTreefolkTest extends BaseCardTest {
 
     @Test
     void adventurePutsTwoCountersOnTargetCreatureAndExilesTheCard() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SporecapSpider());
         TuinvaleTreefolk card = new TuinvaleTreefolk();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -36,7 +36,7 @@ class TuinvaleTreefolkTest extends BaseCardTest {
 
     @Test
     void adventureCannotTargetNoncreaturePermanent() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GingerbreadCabin());
         harness.setHand(player1, List.of(new TuinvaleTreefolk()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -47,7 +47,7 @@ class TuinvaleTreefolkTest extends BaseCardTest {
 
     @Test
     void creatureFaceCanBeCastFromExileAfterAdventure() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SporecapSpider());
         TuinvaleTreefolk card = new TuinvaleTreefolk();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -63,5 +63,49 @@ class TuinvaleTreefolkTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Tuinvale Treefolk");
         assertThat(gd.findExiledCard(card.getId())).isNull();
+    }
+
+    @Test
+    void creatureFaceCanBeCastDirectlyFromHand() {
+        TuinvaleTreefolk card = new TuinvaleTreefolk();
+        harness.castFromHand(player1, card, "{5}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Tuinvale Treefolk");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    void adventureAddsCountersToOwnCreatureOnRepeatedResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SporecapSpider());
+        harness.setHand(player1, List.of(new TuinvaleTreefolk(), new TuinvaleTreefolk()));
+
+        for (int i = 0; i < 2; i++) {
+            harness.addMana(player1, ManaColor.GREEN, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 3);
+            harness.castAdventure(player1, 0, target.getId());
+            harness.passBothPriorities();
+        }
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    void adventureWithMissingTargetGoesToGraveyardWithoutExilePermission() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SporecapSpider());
+        TuinvaleTreefolk card = new TuinvaleTreefolk();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAdventure(player1, 0, target.getId());
+
+        harness.getPermanentRemovalService().removePermanentToHand(gd, target);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Tuinvale Treefolk");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
