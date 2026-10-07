@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,13 +14,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({StockmanMadFlyEntist.class, GrizzlyBears.class, Island.class})
+@CardUsed({StockmanMadFlyEntist.class, Mountain.class, Island.class})
 class StockmanMadFlyEntistTest extends BaseCardTest {
 
     @Test
     @DisplayName("Entering the battlefield draws a card, then discards a card")
     void entersDrawsThenDiscards() {
-        Card discarded = new GrizzlyBears();
+        Card discarded = new Mountain();
         Card drawn = new Island();
         harness.setHand(player1, List.of(new StockmanMadFlyEntist(), discarded));
         harness.setLibrary(player1, List.of(drawn));
@@ -29,8 +28,7 @@ class StockmanMadFlyEntistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(discarded, drawn);
@@ -38,7 +36,7 @@ class StockmanMadFlyEntistTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Mountain");
     }
 
     @Test
@@ -47,7 +45,7 @@ class StockmanMadFlyEntistTest extends BaseCardTest {
         Card stockman = new StockmanMadFlyEntist();
         Island island = new Island();
         harness.setHand(player1, List.of(stockman));
-        harness.setLibrary(player1, List.of(island, new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(island, new Mountain()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateHandAbility(player1, 0, null);
@@ -59,8 +57,69 @@ class StockmanMadFlyEntistTest extends BaseCardTest {
                 .hasSize(1)
                 .allMatch(card -> card instanceof Island);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(island);
+    }
+
+    @Test
+    @DisplayName("The entering trigger can discard the card it just drew")
+    void canDiscardNewlyDrawnCard() {
+        Card retained = new Mountain();
+        Card drawn = new Island();
+        harness.setHand(player1, List.of(new StockmanMadFlyEntist(), retained));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retained);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Islandcycling can fail to find even when an Island is available")
+    void islandcyclingCanFailToFind() {
+        Card stockman = new StockmanMadFlyEntist();
+        Card island = new Island();
+        harness.setHand(player1, List.of(stockman));
+        harness.setLibrary(player1, List.of(island));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(stockman);
+
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Islandcycling with no Islands does not draw a replacement card")
+    void islandcyclingWithoutIsland() {
+        Card stockman = new StockmanMadFlyEntist();
+        Card mountain = new Mountain();
+        harness.setHand(player1, List.of(stockman));
+        harness.setLibrary(player1, List.of(mountain));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(stockman);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(mountain);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
