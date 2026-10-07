@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ClockworkDroid;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -15,7 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheCurseOfFenric.class, GrizzlyBears.class})
+@CardUsed({TheCurseOfFenric.class, GrizzlyBears.class, ClockworkDroid.class, Card.class})
 class TheCurseOfFenricTest extends BaseCardTest {
 
     @Test
@@ -74,6 +76,111 @@ class TheCurseOfFenricTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(fenric);
         assertThat(mutant.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void chapterIIIRetainsBothTargetsWhenTheyHaveTheSameController() {
+        Permanent saga = addSaga(0);
+        Permanent victim = harness.addToBattlefieldAndReturn(player1, new ClockworkDroid());
+        Permanent futureFenric = harness.addToBattlefieldAndReturn(player1, new ClockworkDroid());
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        Permanent mutant = mutants(player1).getFirst();
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, futureFenric.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectiveName(gd, futureFenric)).isEqualTo("Fenric");
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, mutant.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(futureFenric.getId());
+        harness.handlePermanentChosen(player1, futureFenric.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .doesNotContain(mutant, futureFenric, saga);
+    }
+
+    @Test
+    void chapterICreatesReplacementMutantForDestroyedToken() {
+        Permanent saga = addSaga(0);
+        Permanent victim = harness.addToBattlefieldAndReturn(player1, new ClockworkDroid());
+        triggerChapter();
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
+        Permanent originalMutant = mutants(player1).getFirst();
+
+        saga.setCounterCount(CounterType.LORE, 0);
+        triggerChapter();
+        harness.handlePermanentChosen(player1, originalMutant.getId());
+        harness.passBothPriorities();
+
+        assertThat(mutants(player1)).hasSize(1).doesNotContain(originalMutant);
+        assertThat(gqs.getEffectivePower(gd, mutants(player1).getFirst())).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mutants(player1).getFirst())).isEqualTo(3);
+    }
+
+    @Test
+    void chapterIIReplacesArtifactTypeAndPersistsAfterSagaLeaves() {
+        Permanent saga = addSaga(1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ClockworkDroid());
+        triggerChapter();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isArtifact(gd, creature)).isFalse();
+        assertThat(gqs.hasEffectiveSupertype(gd, creature, CardSupertype.LEGENDARY)).isTrue();
+        triggerChapter();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+        assertThat(gqs.getEffectiveName(gd, creature)).isEqualTo("Fenric");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+        assertThat(gqs.hasLostAllAbilities(gd, creature)).isTrue();
+    }
+
+    @Test
+    void chapterIIIDoesNotFightWhenFenricHasAnotherNameAtResolution() {
+        addSaga(0);
+        Permanent victim = harness.addToBattlefieldAndReturn(player1, new ClockworkDroid());
+        Permanent fenric = harness.addToBattlefieldAndReturn(player2, new ClockworkDroid());
+        triggerChapter();
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        Permanent mutant = mutants(player1).getFirst();
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, fenric.getId());
+        harness.passBothPriorities();
+        triggerChapter();
+        harness.handlePermanentChosen(player1, mutant.getId());
+        harness.handlePermanentChosen(player1, fenric.getId());
+        fenric.setPersistentName("Clockwork Droid");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(mutant);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(fenric);
+        assertThat(mutant.getMarkedDamage()).isZero();
+        assertThat(fenric.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void chapterICanChooseNoCreatures() {
+        addSaga(0);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ClockworkDroid());
+        triggerChapter();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(mutants(player1)).isEmpty();
+        assertThat(mutants(player2)).isEmpty();
     }
 
     private Permanent addSaga(int loreCounters) {
