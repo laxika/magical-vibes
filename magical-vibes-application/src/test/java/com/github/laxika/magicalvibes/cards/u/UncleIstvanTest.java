@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.b.BallLightning;
 import com.github.laxika.magicalvibes.cards.b.BrothersOfFire;
 import com.github.laxika.magicalvibes.cards.i.Inferno;
+import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UncleIstvan.class, BallLightning.class, BrothersOfFire.class, Inferno.class})
+@CardUsed({UncleIstvan.class, BallLightning.class, BrothersOfFire.class, Inferno.class,
+        RodOfRuin.class, TurnToFrog.class})
 class UncleIstvanTest extends BaseCardTest {
 
     @Test
@@ -59,8 +61,7 @@ class UncleIstvanTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Inferno()));
         harness.addMana(player1, ManaColor.RED, 7);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         // Inferno is an instant (a noncreature source), so its damage is not prevented.
         harness.assertNotOnBattlefield(player2, "Uncle Istvan");
@@ -86,7 +87,6 @@ class UncleIstvanTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(TurnToFrog.class)
     @DisplayName("Does not prevent creature damage after losing its ability")
     void doesNotPreventDamageAfterLosingAbility() {
         addCreatureReady(player2, new UncleIstvan());
@@ -97,11 +97,39 @@ class UncleIstvanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, istvanId);
         harness.setHand(player1, List.of(new TurnToFrog()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0, istvanId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, istvanId);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(brothers);
         harness.assertInGraveyard(player2, "Uncle Istvan");
+    }
+
+    @Test
+    @DisplayName("Damage from an artifact ability is not prevented")
+    void artifactSourceDamageIsNotPrevented() {
+        Permanent istvan = addCreatureReady(player2, new UncleIstvan());
+        harness.addToBattlefield(player1, new RodOfRuin());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, istvan.getId());
+        harness.passBothPriorities();
+
+        assertThat(istvan.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Uncle Istvan");
+    }
+
+    @Test
+    @DisplayName("Damage from a creature with the same controller is prevented")
+    void friendlyCreatureSourceDamageIsPrevented() {
+        addCreatureReady(player1, new BrothersOfFire());
+        Permanent istvan = addCreatureReady(player1, new UncleIstvan());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, null, istvan.getId());
+        harness.passBothPriorities();
+
+        assertThat(istvan.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Uncle Istvan");
+        harness.assertLife(player1, 19);
     }
 }
