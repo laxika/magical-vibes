@@ -45,6 +45,63 @@ class TrackhandTrainerTest extends BaseCardTest {
                 .hasMessageContaining("only once");
     }
 
+    @Test
+    void conjuredTrainingGroundsReducesTheDrawAbilityCost() {
+        harness.addToBattlefield(player1, new TrackhandTrainer());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        harness.assertOnBattlefield(player1, "Training Grounds");
+        harness.assertNotOnBattlefield(player2, "Training Grounds");
+    }
+
+    @Test
+    void bothAbilitiesCanBeActivatedWhileTappedAndSummoningSick() {
+        Permanent trainer = harness.addToBattlefieldAndReturn(player1, new TrackhandTrainer());
+        trainer.setSummoningSick(true);
+        trainer.setTapped(true);
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        harness.assertOnBattlefield(player1, "Training Grounds");
+        assertThat(trainer.isTapped()).isTrue();
+    }
+
+    @Test
+    void exhaustLimitAppliesImmediatelyAndSeparatelyToEachTrainer() {
+        harness.addToBattlefield(player1, new TrackhandTrainer());
+        harness.addToBattlefield(player1, new TrackhandTrainer());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Training Grounds")).isEqualTo(2);
+    }
+
     private Permanent addReadyTrainer() {
         Permanent trainer = harness.addToBattlefieldAndReturn(player1, new TrackhandTrainer());
         trainer.setSummoningSick(false);
