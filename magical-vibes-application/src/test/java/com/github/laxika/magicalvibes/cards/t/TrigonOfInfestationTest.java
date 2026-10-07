@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.s.Shatter;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,70 +17,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({TrigonOfInfestation.class, Shatter.class})
 class TrigonOfInfestationTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    
-
-    @Test
-    @DisplayName("Has two activated abilities")
-    void hasTwoActivatedAbilities() {
-        TrigonOfInfestation card = new TrigonOfInfestation();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-    }
-
-    @Test
-    @DisplayName("First ability: {G}{G}, tap to put a charge counter")
-    void hasChargeCounterAbility() {
-        TrigonOfInfestation card = new TrigonOfInfestation();
-
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost().toString()).isEqualTo("{G}{G}");
-        assertThat(ability.getEffects())
-                .hasSize(1)
-                .anyMatch(e -> e instanceof PutCountersOnSelfEffect);
-    }
-
-    @Test
-    @DisplayName("Second ability: {2}, tap, remove charge counter to create 1/1 infect token")
-    void hasTokenCreationAbility() {
-        TrigonOfInfestation card = new TrigonOfInfestation();
-
-        var ability = card.getActivatedAbilities().get(1);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost().toString()).isEqualTo("{2}");
-        assertThat(ability.getEffects())
-                .hasSize(2)
-                .anyMatch(e -> e instanceof RemoveCounterFromSourceCost rc && rc.count() == 1 && rc.counterType() == CounterType.CHARGE)
-                .anyMatch(e -> e instanceof CreateTokenEffect);
-    }
-
-    // ===== Entering the battlefield with charge counters =====
 
     @Test
     @DisplayName("Enters the battlefield with 3 charge counters")
     void entersWithThreeChargeCounters() {
-        harness.setHand(player1, List.of(new TrigonOfInfestation()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new TrigonOfInfestation(), "{4}");
         harness.passBothPriorities();
 
         Permanent trigon = findPermanent(player1, "Trigon of Infestation");
         assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
-    // ===== Ability 1: Put a charge counter =====
 
     @Test
     @DisplayName("Activating first ability adds a charge counter")
     void activateFirstAbilityAddsCounter() {
-        harness.addToBattlefield(player1, new TrigonOfInfestation());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Infestation");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfInfestation());
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -94,9 +48,7 @@ class TrigonOfInfestationTest extends BaseCardTest {
     @Test
     @DisplayName("First ability requires green mana")
     void firstAbilityRequiresGreenMana() {
-        harness.addToBattlefield(player1, new TrigonOfInfestation());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Infestation");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfInfestation());
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         // Only colorless mana, should fail
@@ -106,14 +58,11 @@ class TrigonOfInfestationTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Ability 2: Create token =====
 
     @Test
     @DisplayName("Activating second ability creates a 1/1 green Phyrexian Insect token with infect")
     void activateSecondAbilityCreatesToken() {
-        harness.addToBattlefield(player1, new TrigonOfInfestation());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Infestation");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfInfestation());
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -130,15 +79,14 @@ class TrigonOfInfestationTest extends BaseCardTest {
                         && p.getCard().getPower() == 1
                         && p.getCard().getToughness() == 1
                         && p.getCard().getColor() == CardColor.GREEN
+                        && p.getCard().getSubtypes().containsAll(List.of(CardSubtype.PHYREXIAN, CardSubtype.INSECT))
                         && p.getCard().getKeywords().contains(Keyword.INFECT));
     }
 
     @Test
     @DisplayName("Cannot activate second ability with 0 charge counters")
     void cannotActivateTokenAbilityWithNoCounters() {
-        harness.addToBattlefield(player1, new TrigonOfInfestation());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Infestation");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfInfestation());
         trigon.setCounterCount(CounterType.CHARGE, 0);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -150,9 +98,7 @@ class TrigonOfInfestationTest extends BaseCardTest {
     @Test
     @DisplayName("Can create multiple tokens by activating multiple times (untapping between uses)")
     void canCreateMultipleTokens() {
-        harness.addToBattlefield(player1, new TrigonOfInfestation());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Infestation");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfInfestation());
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         // First activation
@@ -176,9 +122,7 @@ class TrigonOfInfestationTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate second ability while tapped")
     void cannotActivateWhileTapped() {
-        harness.addToBattlefield(player1, new TrigonOfInfestation());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Infestation");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfInfestation());
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         // First activation taps it
@@ -192,5 +136,70 @@ class TrigonOfInfestationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         assertThatThrownBy(() -> harness.activateAbility(player1, trigonIndex, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Recharging taps immediately and adds the counter only on resolution")
+    void rechargeUsesStackAndTapCost() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfInfestation());
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(trigon.isTapped()).isTrue();
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.passBothPriorities();
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Token cost is paid before resolution and the last counter can be spent")
+    void lastCounterIsPaidImmediately() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfInfestation());
+        trigon.setCounterCount(CounterType.CHARGE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(trigon.isTapped()).isTrue();
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(countPermanents(player1, "Phyrexian Insect")).isZero();
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Phyrexian Insect")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Token ability requires two mana even when a charge counter is available")
+    void tokenAbilityRequiresTwoMana() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfInfestation());
+        trigon.setCounterCount(CounterType.CHARGE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(trigon.isTapped()).isFalse();
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Phyrexian Insect")).isZero();
+    }
+
+    @Test
+    @DisplayName("Token ability resolves after the Trigon is destroyed")
+    void tokenAbilitySurvivesSourceDestruction() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfInfestation());
+        trigon.setCounterCount(CounterType.CHARGE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, trigon.getId());
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Trigon of Infestation")).isZero();
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Phyrexian Insect")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Phyrexian Insect")).isZero();
     }
 }
