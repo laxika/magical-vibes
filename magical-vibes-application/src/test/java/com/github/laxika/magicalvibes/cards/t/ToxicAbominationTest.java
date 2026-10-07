@@ -16,8 +16,7 @@ class ToxicAbominationTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.castFromHand(player1, new ToxicAbomination(), "{1}{B}");
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB
+        resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Toxic Abomination");
@@ -30,9 +29,29 @@ class ToxicAbominationTest extends BaseCardTest {
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         harness.castFromHand(player1, new ToxicAbomination(), "{1}{B}");
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
+    }
+
+    @Test
+    @DisplayName("Life loss waits for the enter trigger to resolve")
+    void lifeLossWaitsForTriggerResolution() {
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castFromHand(player1, new ToxicAbomination(), "{1}{B}");
+        harness.assertLife(player1, lifeBefore);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Toxic Abomination");
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, lifeBefore);
+
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, lifeBefore - 2);
+        harness.assertLife(player2, opponentLifeBefore);
     }
 }
