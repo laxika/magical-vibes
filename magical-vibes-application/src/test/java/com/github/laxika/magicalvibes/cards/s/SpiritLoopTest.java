@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SpiritLoopTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Enchanted creature's combat damage causes its controller to gain that much life")
+    @DisplayName("Enchanted creature's combat damage causes Spirit Loop's controller to gain that much life")
     void gainsLifeFromCombatDamage() {
         harness.setLife(player1, 10);
         Permanent creature = addCreatureReady(player1, new BenalishCavalry());
@@ -33,7 +33,7 @@ class SpiritLoopTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Enchanted creature's noncombat damage causes its controller to gain that much life")
+    @DisplayName("Enchanted creature's noncombat damage causes Spirit Loop's controller to gain that much life")
     void gainsLifeFromNoncombatDamage() {
         harness.setLife(player1, 10);
         Permanent creature = addCreatureReady(player1, new FledglingMawcor());
@@ -47,7 +47,7 @@ class SpiritLoopTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Enchanted creature's noncombat damage to a creature causes its controller to gain that much life")
+    @DisplayName("Enchanted creature's noncombat damage to a creature causes Spirit Loop's controller to gain that much life")
     void gainsLifeWhenNoncombatDamageHitsCreature() {
         harness.setLife(player1, 10);
         Permanent creature = addCreatureReady(player1, new FledglingMawcor());
@@ -101,6 +101,53 @@ class SpiritLoopTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature you control");
+    }
+
+    @Test
+    @DisplayName("Spirit Loop returns to its owner even when another player controlled it")
+    void returnsToOwnerRatherThanController() {
+        Permanent creature = addCreatureReady(player2, new BenalishCavalry());
+        SpiritLoop card = new SpiritLoop();
+        card.setOwnerId(player1.getId());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, card);
+        aura.setAttachedTo(creature.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Spirit Loop");
+        harness.assertNotInHand(player2, "Spirit Loop");
+        harness.assertNotInGraveyard(player1, "Spirit Loop");
+    }
+
+    @Test
+    @DisplayName("Spirit Loop returns after the enchanted creature dies")
+    void returnsAfterEnchantedCreatureDies() {
+        Permanent creature = addCreatureReady(player1, new BenalishCavalry());
+        attachSpiritLoop(player1, creature);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature));
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Benalish Cavalry");
+        harness.assertInHand(player1, "Spirit Loop");
+        harness.assertNotOnBattlefield(player1, "Spirit Loop");
+    }
+
+    @Test
+    @DisplayName("Each Spirit Loop triggers separately for the same damage")
+    void multipleAurasEachGainLife() {
+        harness.setLife(player1, 10);
+        Permanent creature = addCreatureReady(player1, new FledglingMawcor());
+        attachSpiritLoop(player1, creature);
+        attachSpiritLoop(player1, creature);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 12);
+        harness.assertLife(player2, 19);
     }
 
     private Permanent attachSpiritLoop(Player controller, Permanent creature) {
