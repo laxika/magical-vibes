@@ -52,4 +52,84 @@ class UndergrowthReconTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
+
+    @Test
+    @DisplayName("Does not trigger during an opponent's upkeep")
+    void doesNotTriggerOnOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new UndergrowthRecon());
+        harness.setGraveyard(player1, List.of(new Forest()));
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Cannot return a land from an opponent's graveyard")
+    void doesNotTargetOpponentsLand() {
+        harness.addToBattlefield(player1, new UndergrowthRecon());
+        harness.setGraveyard(player2, List.of(new Forest()));
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.UPKEEP);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Returns only the selected land when multiple lands are available")
+    void returnsOnlySelectedLand() {
+        Forest selected = new Forest();
+        Forest other = new Forest();
+        harness.addToBattlefield(player1, new UndergrowthRecon());
+        harness.setGraveyard(player1, List.of(other, selected));
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other, selected);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+        Permanent returned = findPermanent(player1, "Forest");
+        assertThat(returned.getCard().getId()).isEqualTo(selected.getId());
+        assertThat(returned.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not choose a replacement when the targeted land leaves the graveyard")
+    void doesNotRetargetMissingLand() {
+        Forest selected = new Forest();
+        Forest other = new Forest();
+        harness.addToBattlefield(player1, new UndergrowthRecon());
+        harness.setGraveyard(player1, List.of(selected, other));
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+        harness.setGraveyard(player1, List.of(other));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
 }
