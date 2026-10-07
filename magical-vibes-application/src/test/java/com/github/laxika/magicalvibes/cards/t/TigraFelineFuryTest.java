@@ -13,8 +13,7 @@ class TigraFelineFuryTest extends BaseCardTest {
 
     @Test
     void getsCounterWhenControllerGainsLife() {
-        harness.addToBattlefield(player1, new TigraFelineFury());
-        Permanent tigra = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent tigra = harness.addToBattlefieldAndReturn(player1, new TigraFelineFury());
 
         harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
         harness.passBothPriorities();
@@ -24,10 +23,41 @@ class TigraFelineFuryTest extends BaseCardTest {
 
     @Test
     void doesNotTriggerWhenOpponentGainsLife() {
-        harness.addToBattlefield(player1, new TigraFelineFury());
-        Permanent tigra = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent tigra = harness.addToBattlefieldAndReturn(player1, new TigraFelineFury());
 
         harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 1));
+
+        assertThat(tigra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void gainsOnlyOneCounterForALargerLifeGain() {
+        Permanent tigra = harness.addToBattlefieldAndReturn(player1, new TigraFelineFury());
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 5));
+        harness.passBothPriorities();
+
+        assertThat(tigra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void gainsACounterForEachSeparateLifeGainInTheSameTurn() {
+        Permanent tigra = harness.addToBattlefieldAndReturn(player1, new TigraFelineFury());
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 2));
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
+        harness.passBothPriorities();
+
+        assertThat(tigra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void doesNotTriggerForZeroLifeGain() {
+        Permanent tigra = harness.addToBattlefieldAndReturn(player1, new TigraFelineFury());
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 0));
+        harness.passBothPriorities();
 
         assertThat(tigra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
