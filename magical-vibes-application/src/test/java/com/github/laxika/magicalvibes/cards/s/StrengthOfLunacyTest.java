@@ -68,12 +68,10 @@ class StrengthOfLunacyTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new TaintedField());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new TaintedField());
         harness.setHand(player1, List.of(new StrengthOfLunacy()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        Permanent land = findPermanent(player1, "Tainted Field");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -131,6 +129,75 @@ class StrengthOfLunacyTest extends BaseCardTest {
                 .hasMessageContaining("protection from white");
     }
 
+    @Test
+    @DisplayName("Strength of Lunacy can enchant an opponent's creature without affecting other creatures")
+    void enchantsOpponentCreatureOnly() {
+        Permanent target = addCreatureReady(player2, new TerohsFaithful());
+        Permanent other = addCreatureReady(player1, new TerohsFaithful());
+        harness.setHand(player1, List.of(new StrengthOfLunacy()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        assertThat(gqs.hasProtectionFrom(gd, target, CardColor.WHITE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(4);
+        assertThat(gqs.hasProtectionFrom(gd, other, CardColor.WHITE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Two Strength of Lunacy Auras stack their boosts")
+    void multipleAurasStack() {
+        Permanent target = addCreatureReady(player1, new TerohsFaithful());
+        harness.setHand(player1, List.of(new StrengthOfLunacy(), new StrengthOfLunacy()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
+        assertThat(gqs.hasProtectionFrom(gd, target, CardColor.WHITE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Madness without a legal creature target puts the Aura into the graveyard without spending mana")
+    void madnessWithoutTargets() {
+        StrengthOfLunacy lunacy = discardViaUnhinge();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(lunacy.getId()));
+        harness.assertInGraveyard(player1, "Strength of Lunacy");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Madness cannot be paid with only colorless mana")
+    void madnessRequiresBlackMana() {
+        addCreatureReady(player1, new TerohsFaithful());
+        StrengthOfLunacy lunacy = discardViaUnhinge();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(lunacy.getId()));
+        harness.assertInGraveyard(player1, "Strength of Lunacy");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
     private StrengthOfLunacy discardViaUnhinge() {
         StrengthOfLunacy lunacy = new StrengthOfLunacy();
         harness.setHand(player1, List.of(lunacy));
@@ -140,8 +207,7 @@ class StrengthOfLunacyTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
         harness.handleCardChosen(player1, 0);
         return lunacy;
     }
