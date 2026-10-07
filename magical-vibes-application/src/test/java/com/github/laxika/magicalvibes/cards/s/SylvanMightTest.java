@@ -45,8 +45,7 @@ class SylvanMightTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
@@ -116,5 +115,42 @@ class SylvanMightTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Sylvan Might");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .contains(spell);
+    }
+
+    @Test
+    @DisplayName("Flashback exiles Sylvan Might even when its target leaves before resolution")
+    void flashbackExilesWhenTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LeafDancer());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new LeafDancer());
+        SylvanMight spell = new SylvanMight();
+        harness.setGraveyard(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFlashback(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player1, "Sylvan Might");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flashback requires its higher cost rather than Sylvan Might's normal mana cost")
+    void flashbackCannotUseNormalManaCost() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new LeafDancer());
+        harness.setGraveyard(player1, List.of(new SylvanMight()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Sylvan Might");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 }
