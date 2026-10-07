@@ -131,6 +131,67 @@ class SupremeInquisitorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
+    @Test
+    @DisplayName("May exile zero cards from a nonempty library and still shuffle")
+    void mayChooseZeroCards() {
+        Permanent inquisitor = prepareWithFiveWizards();
+        harness.setLibrary(player2, List.of(new GlorySeeker(), new GlorySeeker()));
+
+        activate(inquisitor, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Summoning-sick Wizards, including Supreme Inquisitor, may pay the cost")
+    void mayTapSummoningSickWizards() {
+        harness.addToBattlefield(player1, new SupremeInquisitor());
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new RiptideBiologist());
+        }
+        harness.setLibrary(player2, List.of(new GlorySeeker()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(Permanent::isTapped);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A tapped Supreme Inquisitor may activate by tapping five other Wizards")
+    void tappedSourceMayActivate() {
+        Permanent inquisitor = prepareWithFiveWizards();
+        inquisitor.tap();
+        harness.setLibrary(player2, List.of(new GlorySeeker()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(Permanent::isTapped);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Opponent's Wizards cannot contribute to the activation cost")
+    void opponentsWizardsDoNotCount() {
+        Permanent inquisitor = addCreatureReady(player1, new SupremeInquisitor());
+        addReadyRiptideBiologists(3);
+        addCreatureReady(player2, new RiptideBiologist());
+
+        assertThatThrownBy(() -> activate(inquisitor, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(Permanent::isTapped);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent prepareWithFiveWizards() {
         Permanent inquisitor = addCreatureReady(player1, new SupremeInquisitor());
         addReadyRiptideBiologists(5);
