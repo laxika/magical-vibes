@@ -8,8 +8,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -21,11 +19,8 @@ class SpiketailDrakelingTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SpiketailDrakeling());
 
         PrismaticLens lens = new PrismaticLens();
-        harness.setHand(player2, List.of(lens));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-
         harness.forceActivePlayer(player2);
-        harness.castArtifact(player2, 0);
+        harness.castFromHand(player2, lens, "{2}");
         harness.passPriority(player2);
 
         harness.activateAbility(player1, 0, null, lens.getId());
@@ -60,11 +55,9 @@ class SpiketailDrakelingTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SpiketailDrakeling());
 
         PrismaticLens lens = new PrismaticLens();
-        harness.setHand(player2, List.of(lens));
-        harness.addMana(player2, ManaColor.GREEN, 4);
-
+        harness.addMana(player2, ManaColor.GREEN, 2);
         harness.forceActivePlayer(player2);
-        harness.castArtifact(player2, 0);
+        harness.castFromHand(player2, lens, "{2}");
         harness.passPriority(player2);
 
         harness.activateAbility(player1, 0, null, lens.getId());
@@ -87,11 +80,9 @@ class SpiketailDrakelingTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SpiketailDrakeling());
 
         PrismaticLens lens = new PrismaticLens();
-        harness.setHand(player2, List.of(lens));
-        harness.addMana(player2, ManaColor.GREEN, 4);
-
+        harness.addMana(player2, ManaColor.GREEN, 2);
         harness.forceActivePlayer(player2);
-        harness.castArtifact(player2, 0);
+        harness.castFromHand(player2, lens, "{2}");
         harness.passPriority(player2);
 
         harness.activateAbility(player1, 0, null, lens.getId());
@@ -107,5 +98,57 @@ class SpiketailDrakelingTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Spiketail Drakeling");
         harness.assertInGraveyard(player2, "Prismatic Lens");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canSacrificeWhileTappedAndSummoningSick() {
+        var drakeling = harness.addToBattlefieldAndReturn(player1, new SpiketailDrakeling());
+        drakeling.tap();
+        drakeling.setSummoningSick(true);
+        PrismaticLens lens = new PrismaticLens();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, lens, "{2}");
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, lens.getId());
+        harness.assertNotOnBattlefield(player1, "Spiketail Drakeling");
+        harness.assertInGraveyard(player1, "Spiketail Drakeling");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Prismatic Lens");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canCounterOwnSpell() {
+        harness.addToBattlefield(player1, new SpiketailDrakeling());
+        PrismaticLens lens = new PrismaticLens();
+        harness.castFromHand(player1, lens, "{2}");
+
+        harness.activateAbility(player1, 0, null, lens.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Spiketail Drakeling");
+        harness.assertInGraveyard(player1, "Prismatic Lens");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void controllerWithUntappedManaSourcesIsOfferedPaymentDuringResolution() {
+        harness.addToBattlefield(player1, new SpiketailDrakeling());
+        harness.addToBattlefield(player2, new PrismaticLens());
+        harness.addToBattlefield(player2, new PrismaticLens());
+        PrismaticLens spell = new PrismaticLens();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, spell, "{2}");
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, spell.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player2, "Prismatic Lens");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
     }
 }
