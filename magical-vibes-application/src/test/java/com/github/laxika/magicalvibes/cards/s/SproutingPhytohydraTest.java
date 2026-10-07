@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -52,7 +53,7 @@ class SproutingPhytohydraTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player2, true);
 
-        UUID tokenId = gd.playerBattlefields.get(player2.getId()).stream()
+        UUID tokenId = findPermanents(player2, "Sprouting Phytohydra").stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .map(permanent -> permanent.getId())
                 .findFirst()
@@ -81,6 +82,44 @@ class SproutingPhytohydraTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(tokenCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Separate damage events each create one copy, even when the second is lethal")
+    void separateDamageEventsEachCreateOneCopy() {
+        UUID phytohydraId = addPhytohydraAndSealOfFire();
+        findPermanent(player2, "Sprouting Phytohydra")
+                .setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        harness.activateAbility(player1, 0, null, phytohydraId);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(tokenCount()).isEqualTo(1);
+        assertThat(countPermanents(player2, "Sprouting Phytohydra")).isEqualTo(2);
+
+        harness.activateAbility(player1, 0, null, phytohydraId);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(tokenCount()).isEqualTo(2);
+        assertThat(countPermanents(player2, "Sprouting Phytohydra")).isEqualTo(2);
+        assertThat(findPermanents(player2, "Sprouting Phytohydra"))
+                .allSatisfy(permanent -> assertThat(permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero());
+    }
+
+    @Test
+    @DisplayName("Fully prevented damage does not trigger a copy")
+    void fullyPreventedDamageDoesNotTrigger() {
+        UUID phytohydraId = addPhytohydraAndSealOfFire();
+        findPermanent(player2, "Sprouting Phytohydra").setDamagePreventionShield(2);
+
+        harness.activateAbility(player1, 0, null, phytohydraId);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(tokenCount()).isZero();
+        assertThat(countPermanents(player2, "Sprouting Phytohydra")).isEqualTo(1);
     }
 
     private UUID addPhytohydraAndSealOfFire() {
