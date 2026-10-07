@@ -106,6 +106,50 @@ class TetsuoUmezawaTest extends BaseCardTest {
                 .hasMessageContaining("can't be enchanted by other Auras");
     }
 
+    @Test
+    @DisplayName("An Aura attached without an Aura spell remains attached")
+    void auraAttachedWithoutSpellRemainsAttached() {
+        Permanent tetsuo = addCreatureReady(player1, new TetsuoUmezawa());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SpiritLink());
+        aura.setAttachedTo(tetsuo.getId());
+
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Spirit Link");
+        harness.assertNotInGraveyard(player1, "Spirit Link");
+        assertThat(aura.getAttachedTo()).isEqualTo(tetsuo.getId());
+    }
+
+    @Test
+    @DisplayName("Can destroy a tapped creature its controller owns and pays the tap cost")
+    void destroysOwnTappedCreatureAndTapsTetsuo() {
+        readyTetsuo();
+        Permanent target = addCreatureReady(player1, new DurkwoodBoars());
+        target.tap();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(findPermanent(player1, "Tetsuo Umezawa").isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Durkwood Boars");
+    }
+
+    @Test
+    @DisplayName("A blocking creature remains a legal target when untapped in response")
+    void untappedBlockingCreatureRemainsLegalTarget() {
+        readyTetsuo();
+        Permanent target = addCreatureReady(player2, new DurkwoodBoars());
+        target.setBlocking(true);
+        target.tap();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        target.untap();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Durkwood Boars");
+    }
+
     private void readyTetsuo() {
         addCreatureReady(player1, new TetsuoUmezawa());
         harness.addMana(player1, ManaColor.BLUE, 1);
