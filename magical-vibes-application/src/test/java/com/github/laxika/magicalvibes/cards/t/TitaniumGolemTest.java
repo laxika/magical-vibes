@@ -16,6 +16,52 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TitaniumGolemTest extends BaseCardTest {
 
     @Test
+    @DisplayName("One white and one colorless mana pay the activation cost")
+    void acceptsMixedManaPayment() {
+        Permanent golem = addCreatureReady(player1, new TitaniumGolem());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FIRST_STRIKE)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(golem.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Golem can activate its ability")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent golem = addCreatureReady(player1, new TitaniumGolem());
+        golem.setSummoningSick(true);
+        golem.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(golem.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability grants first strike only to its source")
+    void grantsFirstStrikeOnlyToSource() {
+        Permanent source = addCreatureReady(player1, new TitaniumGolem());
+        Permanent other = addCreatureReady(player1, new TitaniumGolem());
+        Permanent opponent = addCreatureReady(player2, new TitaniumGolem());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, source, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
     @DisplayName("Resolving the ability grants first strike until end of turn")
     void resolvingAbilityGrantsFirstStrike() {
         Permanent golem = addCreatureReady(player1, new TitaniumGolem());
