@@ -8,11 +8,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ThrabenDoomsayer.class, GrizzlyBears.class})
 class ThrabenDoomsayerTest extends BaseCardTest {
 
     // ===== Tap ability: token creation =====
@@ -110,6 +113,68 @@ class ThrabenDoomsayerTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("New Human tokens receive fateful hour and lose it above five life")
+    void createdTokenReceivesDynamicBoost() {
+        harness.setLife(player1, 1);
+        addReadyDoomsayer(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken()).findFirst().orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
+
+        harness.setLife(player1, 6);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two Doomsayers boost each other and both boost the created token")
+    void multipleDoomsayersStackTheirBoosts() {
+        harness.setLife(player1, 5);
+        Permanent first = addReadyDoomsayer(player1);
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ThrabenDoomsayer());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken()).findFirst().orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Doomsayer cannot pay the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        Permanent doomsayer = harness.addToBattlefieldAndReturn(player1, new ThrabenDoomsayer());
+        doomsayer.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(doomsayer.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Doomsayer cannot activate again")
+    void cannotActivateWhileTapped() {
+        Permanent doomsayer = addReadyDoomsayer(player1);
+        doomsayer.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent addReadyDoomsayer(Player player) {
         return addCreatureReady(player, new ThrabenDoomsayer());
     }
