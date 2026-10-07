@@ -79,4 +79,22 @@ class TresserhornSkyknightTest extends BaseCardTest {
 
         assertThat(skyknight.getMarkedDamage()).isZero();
     }
+
+    @Test
+    @DisplayName("Does not prevent combat or noncombat damage from a Wolverine without first strike")
+    void doesNotPreventDamageFromWolverineWithoutFirstStrike() {
+        Permanent skyknight = addCreatureReady(player2, new TresserhornSkyknight());
+        Permanent wolverine = addCreatureReady(player1, new KarplusanWolverine());
+        wolverine.setAttacking(true);
+
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.handlePermanentChosen(player1, skyknight.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveCombat(player1);
+
+        harness.assertOnBattlefield(player2, "Tresserhorn Skyknight");
+        assertThat(skyknight.getMarkedDamage()).isEqualTo(2);
+    }
 }
