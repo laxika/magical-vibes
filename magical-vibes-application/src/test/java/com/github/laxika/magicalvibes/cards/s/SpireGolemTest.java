@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -70,6 +72,53 @@ class SpireGolemTest extends BaseCardTest {
         }
         harness.setHand(player1, List.of(new SpireGolem()));
         harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+
+    @Test
+    @DisplayName("Without Islands Spire Golem requires all six generic mana")
+    void withoutIslandsRequiresFullCost() {
+        harness.setHand(player1, List.of(new SpireGolem()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {6, 8})
+    @DisplayName("Six or more Islands allow Spire Golem to be cast without mana")
+    void enoughIslandsAllowCastingWithoutMana(int islandCount) {
+        for (int i = 0; i < islandCount; i++) {
+            harness.addToBattlefield(player1, new Island());
+        }
+        harness.setHand(player1, List.of(new SpireGolem()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Spire Golem");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Five Islands still require one mana")
+    void fiveIslandsDoNotAllowCastingWithoutMana() {
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new Island());
+        }
+        harness.setHand(player1, List.of(new SpireGolem()));
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
