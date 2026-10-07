@@ -5,14 +5,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+@CardUsed({UmbraMystic.class, DoomBlade.class, GrizzlyBears.class, Pacifism.class})
 class UmbraMysticTest extends BaseCardTest {
 
     @Test
@@ -58,12 +61,61 @@ class UmbraMysticTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
+    @Test
+    @DisplayName("An Aura attached to Umbra Mystic protects Umbra Mystic itself")
+    void protectsUmbraMysticItself() {
+        Permanent mystic = harness.addToBattlefieldAndReturn(player1, new UmbraMystic());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Pacifism());
+        aura.setAttachedTo(mystic.getId());
+        mystic.setMarkedDamage(1);
+        mystic.setCantRegenerateThisTurn(true);
+
+        destroyWithDoomBlade(player2, mystic);
+
+        harness.assertOnBattlefield(player1, "Umbra Mystic");
+        harness.assertInGraveyard(player2, "Pacifism");
+        assertThat(mystic.getMarkedDamage()).isZero();
+        assertThat(mystic.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Auras lose granted umbra armor when Umbra Mystic leaves the battlefield")
+    void protectionEndsWhenMysticLeaves() {
+        Permanent mystic = harness.addToBattlefieldAndReturn(player1, new UmbraMystic());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Pacifism());
+        aura.setAttachedTo(creature.getId());
+
+        destroyWithDoomBlade(player2, mystic);
+        destroyWithDoomBlade(player2, creature);
+
+        harness.assertInGraveyard(player1, "Umbra Mystic");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Pacifism");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Granted umbra armor does not save a creature with zero toughness")
+    void doesNotPreventZeroToughnessDeath() {
+        harness.addToBattlefield(player1, new UmbraMystic());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Pacifism());
+        aura.setAttachedTo(creature.getId());
+        creature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Pacifism");
+    }
+
     private void destroyWithDoomBlade(com.github.laxika.magicalvibes.model.Player caster,
                                       Permanent target) {
         harness.setHand(caster, List.of(new DoomBlade()));
         harness.addMana(caster, ManaColor.BLACK, 2);
         harness.forceActivePlayer(caster);
-        harness.castInstant(caster, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, target.getId());
     }
 }
