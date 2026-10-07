@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +21,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TidehollowSculler.class, Forest.class, GrizzlyBears.class, LightningBolt.class,
+        Peek.class, Unsummon.class})
 class TidehollowScullerTest extends BaseCardTest {
 
     /**
@@ -43,8 +46,6 @@ class TidehollowScullerTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
     }
-
-    // ===== ETB exile =====
 
     @Test
     @DisplayName("ETB reveals opponent's hand in exile mode")
@@ -116,8 +117,6 @@ class TidehollowScullerTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("empty"));
     }
 
-    // ===== Return on source leave =====
-
     @Test
     @DisplayName("Exiled card returns to hand when Sculler dies")
     void exiledCardReturnsToHandWhenScullerDies() {
@@ -137,10 +136,12 @@ class TidehollowScullerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         UUID scullerId = harness.getPermanentId(player1, "Tidehollow Sculler");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, scullerId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, scullerId);
 
         harness.assertNotOnBattlefield(player1, "Tidehollow Sculler");
+        harness.assertNotInHand(player2, "Peek");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).anyMatch(c -> c.getName().equals("Peek"));
+        harness.passBothPriorities();
         harness.assertInHand(player2, "Peek");
         assertThat(gd.getPlayerExiledCards(player2.getId())).noneMatch(c -> c.getName().equals("Peek"));
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
@@ -160,10 +161,40 @@ class TidehollowScullerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
         UUID scullerId = harness.getPermanentId(player1, "Tidehollow Sculler");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, scullerId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, scullerId);
 
+        harness.assertNotInHand(player2, "Peek");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).anyMatch(c -> c.getName().equals("Peek"));
+        harness.passBothPriorities();
         harness.assertInHand(player2, "Peek");
         assertThat(gd.getPlayerExiledCards(player2.getId())).noneMatch(c -> c.getName().equals("Peek"));
+    }
+
+    @Test
+    @DisplayName("Leaving before the enter trigger resolves exiles the chosen card indefinitely")
+    void leavingBeforeEnterTriggerStillExilesCard() {
+        Card chosen = new Peek();
+        harness.setHand(player2, List.of(chosen, new Unsummon()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new TidehollowSculler()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        UUID scullerId = harness.getPermanentId(player1, "Tidehollow Sculler");
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 1, scullerId);
+        harness.assertInHand(player1, "Tidehollow Sculler");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(chosen);
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(chosen);
     }
 }
