@@ -24,8 +24,7 @@ class SparkspitterTest extends BaseCardTest {
     @Test
     @DisplayName("Discarding a card creates a 3/1 trampling hasty Spark Elemental")
     void discardingCardCreatesSparkElemental() {
-        Permanent sparkspitter = harness.addToBattlefieldAndReturn(player1, new Sparkspitter());
-        sparkspitter.setSummoningSick(false);
+        Permanent sparkspitter = addCreatureReady(player1, new Sparkspitter());
         harness.setHand(player1, List.of(new FomoriNomad()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -47,8 +46,7 @@ class SparkspitterTest extends BaseCardTest {
     @Test
     @DisplayName("The Spark Elemental is sacrificed at the beginning of the next end step")
     void sparkElementalIsSacrificedAtNextEndStep() {
-        Permanent sparkspitter = harness.addToBattlefieldAndReturn(player1, new Sparkspitter());
-        sparkspitter.setSummoningSick(false);
+        addCreatureReady(player1, new Sparkspitter());
         harness.setHand(player1, List.of(new FomoriNomad()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -58,8 +56,7 @@ class SparkspitterTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Spark Elemental");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Spark Elemental");
@@ -68,8 +65,7 @@ class SparkspitterTest extends BaseCardTest {
     @Test
     @DisplayName("The ability cannot be activated without a card to discard")
     void cannotActivateWithoutCardToDiscard() {
-        Permanent sparkspitter = harness.addToBattlefieldAndReturn(player1, new Sparkspitter());
-        sparkspitter.setSummoningSick(false);
+        Permanent sparkspitter = addCreatureReady(player1, new Sparkspitter());
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -84,8 +80,7 @@ class SparkspitterTest extends BaseCardTest {
     @Test
     @DisplayName("The ability cannot be activated without red mana")
     void cannotActivateWithoutRedMana() {
-        Permanent sparkspitter = harness.addToBattlefieldAndReturn(player1, new Sparkspitter());
-        sparkspitter.setSummoningSick(false);
+        Permanent sparkspitter = addCreatureReady(player1, new Sparkspitter());
         harness.setHand(player1, List.of(new FomoriNomad()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -94,5 +89,62 @@ class SparkspitterTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        Permanent sparkspitter = harness.addToBattlefieldAndReturn(player1, new Sparkspitter());
+        harness.setHand(player1, List.of(new FomoriNomad()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(sparkspitter.isTapped()).isFalse();
+        harness.assertInHand(player1, "Fomori Nomad");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Spark Elemental");
+    }
+
+    @Test
+    @DisplayName("A tapped Sparkspitter cannot activate again")
+    void cannotActivateWhileTapped() {
+        Permanent sparkspitter = addCreatureReady(player1, new Sparkspitter());
+        sparkspitter.setTapped(true);
+        harness.setHand(player1, List.of(new FomoriNomad()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Fomori Nomad");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Spark Elemental");
+    }
+
+    @Test
+    @DisplayName("A token created during an end step waits until the following end step")
+    void tokenCreatedDuringEndStepSurvivesUntilOpponentsEndStep() {
+        addCreatureReady(player1, new Sparkspitter());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new FomoriNomad()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.assertInGraveyard(player1, "Fomori Nomad");
+        harness.assertNotOnBattlefield(player1, "Spark Elemental");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Spark Elemental");
+        assertThat(gd.stack).isEmpty();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Spark Elemental");
+        harness.assertOnBattlefield(player1, "Sparkspitter");
     }
 }
