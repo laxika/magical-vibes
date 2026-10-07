@@ -52,6 +52,38 @@ class StonewoodInvokerTest extends BaseCardTest {
     }
 
     @Test
+    void abilityCanBeActivatedWhileSummoningSick() {
+        Permanent invoker = harness.addToBattlefieldAndReturn(player1, new StonewoodInvoker());
+        invoker.setSummoningSick(true);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(invoker.getPowerModifier()).isEqualTo(5);
+        assertThat(invoker.getToughnessModifier()).isEqualTo(5);
+        assertThat(invoker.isTapped()).isFalse();
+    }
+
+    @Test
+    void abilityBoostsOnlyItsSource() {
+        Permanent first = addCreatureReady(player1, new StonewoodInvoker());
+        Permanent second = addCreatureReady(player1, new StonewoodInvoker());
+        Permanent opposing = addCreatureReady(player2, new StonewoodInvoker());
+        addActivationMana();
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getPowerModifier()).isEqualTo(0);
+        assertThat(first.getToughnessModifier()).isEqualTo(0);
+        assertThat(second.getPowerModifier()).isEqualTo(5);
+        assertThat(second.getToughnessModifier()).isEqualTo(5);
+        assertThat(opposing.getPowerModifier()).isEqualTo(0);
+        assertThat(opposing.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
     void cannotActivateWithoutEnoughMana() {
         addCreatureReady(player1, new StonewoodInvoker());
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -81,7 +113,6 @@ class StonewoodInvokerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(invoker.getPowerModifier()).isEqualTo(0);
