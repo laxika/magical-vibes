@@ -25,8 +25,7 @@ class ThunderbladeChargeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
     }
@@ -112,6 +111,57 @@ class ThunderbladeChargeTest extends BaseCardTest {
         resolveCombatDamageToTrigger();
 
         assertThat(gd.pendingMayAbilities).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Deals lethal damage to a creature")
+    void dealsDamageToCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrinningIgnus());
+        harness.setHand(player1, List.of(new ThunderbladeCharge()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Grinning Ignus");
+        harness.assertInGraveyard(player2, "Grinning Ignus");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Opponent's combat damage does not trigger the graveyard ability")
+    void doesNotTriggerForOpponentCreature() {
+        Card charge = putChargeInGraveyard();
+        Permanent attacker = addCreatureReady(player2, new GrinningIgnus());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(charge);
+    }
+
+    @Test
+    @DisplayName("Leaving and reentering the graveyard invalidates the original trigger")
+    void doesNotResolveAfterLeavingAndReenteringGraveyard() {
+        Card charge = putChargeInGraveyard();
+        addReadyAttacker();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+
+        gd.playerGraveyards.get(player1.getId()).remove(charge);
+        harness.setHand(player1, List.of(charge));
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(charge));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(charge);
     }
 
     private Card putChargeInGraveyard() {
