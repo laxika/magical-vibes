@@ -1,24 +1,28 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.d.DiregrafGhoul;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.d.DarkthicketWolf;
+import com.github.laxika.magicalvibes.cards.b.BrimstoneVolley;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.cards.d.DemonmailHauberk;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({UnbreathingHorde.class, DiregrafGhoul.class, DarkthicketWolf.class,
+        BrimstoneVolley.class, UnburialRites.class, DemonmailHauberk.class})
 class UnbreathingHordeTest extends BaseCardTest {
 
-    // ===== ETB counter placement =====
 
     @Test
     @DisplayName("Enters with 0 counters when no other Zombies and empty graveyard, dies to SBA")
@@ -27,7 +31,7 @@ class UnbreathingHordeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.WHITE, 2); // 2 generic
 
-        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         // 0/0 creature dies to SBA
@@ -45,10 +49,10 @@ class UnbreathingHordeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent horde = findHorde(player1);
+        Permanent horde = findPermanent(player1, "Unbreathing Horde");
         assertThat(horde).isNotNull();
         assertThat(horde.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
@@ -57,18 +61,16 @@ class UnbreathingHordeTest extends BaseCardTest {
     @DisplayName("Enters with counters equal to Zombie cards in graveyard")
     void entersWithCountersFromGraveyardZombies() {
         // Put 3 Zombie cards in the graveyard
-        gd.playerGraveyards.get(player1.getId()).add(new DiregrafGhoul());
-        gd.playerGraveyards.get(player1.getId()).add(new DiregrafGhoul());
-        gd.playerGraveyards.get(player1.getId()).add(new DiregrafGhoul());
+        harness.setGraveyard(player1, List.of(new DiregrafGhoul(), new DiregrafGhoul(), new DiregrafGhoul()));
 
         harness.setHand(player1, List.of(new UnbreathingHorde()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent horde = findHorde(player1);
+        Permanent horde = findPermanent(player1, "Unbreathing Horde");
         assertThat(horde).isNotNull();
         assertThat(horde.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
@@ -79,16 +81,16 @@ class UnbreathingHordeTest extends BaseCardTest {
         // 2 Zombies on battlefield + 1 in graveyard = 3 counters
         harness.addToBattlefield(player1, new DiregrafGhoul());
         harness.addToBattlefield(player1, new DiregrafGhoul());
-        gd.playerGraveyards.get(player1.getId()).add(new DiregrafGhoul());
+        harness.setGraveyard(player1, List.of(new DiregrafGhoul()));
 
         harness.setHand(player1, List.of(new UnbreathingHorde()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent horde = findHorde(player1);
+        Permanent horde = findPermanent(player1, "Unbreathing Horde");
         assertThat(horde).isNotNull();
         assertThat(horde.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
@@ -98,13 +100,13 @@ class UnbreathingHordeTest extends BaseCardTest {
     void doesNotCountOpponentZombies() {
         // Opponent has Zombies on battlefield and in graveyard
         harness.addToBattlefield(player2, new DiregrafGhoul());
-        gd.playerGraveyards.get(player2.getId()).add(new DiregrafGhoul());
+        harness.setGraveyard(player2, List.of(new DiregrafGhoul()));
 
         harness.setHand(player1, List.of(new UnbreathingHorde()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         // 0 counters from player1's perspective, dies to SBA
@@ -114,39 +116,37 @@ class UnbreathingHordeTest extends BaseCardTest {
     @Test
     @DisplayName("Does not count non-Zombie creatures")
     void doesNotCountNonZombies() {
-        // GrizzlyBears is a Bear, not a Zombie
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        // DarkthicketWolf is a Wolf, not a Zombie
+        harness.addToBattlefield(player1, new DarkthicketWolf());
 
         harness.setHand(player1, List.of(new UnbreathingHorde()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         // 0 counters, dies to SBA
         harness.assertNotOnBattlefield(player1, "Unbreathing Horde");
     }
 
-    // ===== Damage prevention =====
 
     @Test
     @DisplayName("Damage is prevented and removes exactly one +1/+1 counter")
     void damagePreventedRemovesOneCounter() {
         harness.addToBattlefield(player2, new UnbreathingHorde());
-        Permanent horde = findHorde(player2);
+        Permanent horde = findPermanent(player2, "Unbreathing Horde");
         horde.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3); // 3/3
 
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new BrimstoneVolley()));
+        harness.addMana(player1, ManaColor.RED, 3);
 
         UUID hordeId = horde.getId();
-        harness.castInstant(player1, 0, hordeId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, hordeId);
 
-        // Shock deals 2 damage, but only 1 counter is removed (removeOneOnly=true)
+        // BrimstoneVolley deals 3 damage, but only 1 counter is removed (removeOneOnly=true)
         harness.assertOnBattlefield(player2, "Unbreathing Horde");
-        Permanent survivingHorde = findHorde(player2);
+        Permanent survivingHorde = findPermanent(player2, "Unbreathing Horde");
         assertThat(survivingHorde.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
@@ -154,37 +154,34 @@ class UnbreathingHordeTest extends BaseCardTest {
     @DisplayName("Multiple damage events each remove one counter")
     void multipleDamageEventsRemoveOneCounterEach() {
         harness.addToBattlefield(player2, new UnbreathingHorde());
-        Permanent horde = findHorde(player2);
+        Permanent horde = findPermanent(player2, "Unbreathing Horde");
         horde.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3); // 3/3
 
-        // First Shock
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, horde.getId());
-        harness.passBothPriorities();
+        // First BrimstoneVolley
+        harness.setHand(player1, List.of(new BrimstoneVolley()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player1, 0, horde.getId());
 
-        assertThat(findHorde(player2).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(findPermanent(player2, "Unbreathing Horde").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
 
-        // Second Shock
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, horde.getId());
-        harness.passBothPriorities();
+        // Second BrimstoneVolley
+        harness.setHand(player1, List.of(new BrimstoneVolley()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player1, 0, horde.getId());
 
-        assertThat(findHorde(player2).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanent(player2, "Unbreathing Horde").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Removing last counter makes it 0/0, dies to SBA")
     void diesWhenLastCounterRemoved() {
         harness.addToBattlefield(player2, new UnbreathingHorde());
-        Permanent horde = findHorde(player2);
+        Permanent horde = findPermanent(player2, "Unbreathing Horde");
         horde.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1); // 1/1
 
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, horde.getId());
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new BrimstoneVolley()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player1, 0, horde.getId());
 
         // 0/0, dies to SBA
         harness.assertNotOnBattlefield(player2, "Unbreathing Horde");
@@ -193,36 +190,85 @@ class UnbreathingHordeTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage is prevented and removes one counter")
     void combatDamageRemovesOneCounter() {
-        UnbreathingHorde hordeCard = new UnbreathingHorde();
-        Permanent blocker = new Permanent(hordeCard);
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new UnbreathingHorde());
         blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3); // 3/3
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent attacker = new Permanent(bears);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new DarkthicketWolf());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
-        // Bears deal 2 combat damage, but only 1 counter is removed
-        Permanent survivingHorde = findHorde(player2);
+        // Wolves deal 2 combat damage, but only 1 counter is removed
+        Permanent survivingHorde = findPermanent(player2, "Unbreathing Horde");
         assertThat(survivingHorde).isNotNull();
         assertThat(survivingHorde.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
-    // ===== Helpers =====
 
-    private Permanent findHorde(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Unbreathing Horde"))
-                .findFirst().orElse(null);
+    @Test
+    @DisplayName("Counts itself when entering from its controller's graveyard")
+    void countsItselfWhenReanimated() {
+        UnbreathingHorde card = new UnbreathingHorde();
+        harness.setGraveyard(player1, List.of(card));
+        harness.setHand(player1, List.of(new UnburialRites()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, card.getId());
+
+        harness.assertOnBattlefield(player1, "Unbreathing Horde");
+        assertThat(findPermanent(player1, "Unbreathing Horde").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Reanimation counts itself together with other battlefield and graveyard Zombies")
+    void reanimationCountsAllThreeContributions() {
+        UnbreathingHorde card = new UnbreathingHorde();
+        harness.addToBattlefield(player1, new DiregrafGhoul());
+        harness.setGraveyard(player1, List.of(card, new DiregrafGhoul(), new DarkthicketWolf()));
+        harness.setHand(player1, List.of(new UnburialRites()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, card.getId());
+
+        harness.assertOnBattlefield(player1, "Unbreathing Horde");
+        assertThat(findPermanent(player1, "Unbreathing Horde").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Prevents damage even with no counters when equipment keeps it alive")
+    void preventsDamageWithoutCounters() {
+        Permanent horde = harness.addToBattlefieldAndReturn(player2, new UnbreathingHorde());
+        Permanent hauberk = harness.addToBattlefieldAndReturn(player2, new DemonmailHauberk());
+        hauberk.setAttachedTo(horde.getId());
+        harness.setHand(player1, List.of(new BrimstoneVolley(), new BrimstoneVolley()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castAndResolveInstant(player1, 0, horde.getId());
+        harness.castAndResolveInstant(player1, 0, horde.getId());
+
+        harness.assertOnBattlefield(player2, "Unbreathing Horde");
+        assertThat(horde.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(horde.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Simultaneous combat damage from two blockers removes only one counter")
+    void simultaneousCombatDamageRemovesOneCounter() {
+        Permanent horde = addCreatureReady(player1, new UnbreathingHorde());
+        horde.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        Permanent first = addCreatureReady(player2, new DarkthicketWolf());
+        Permanent second = addCreatureReady(player2, new DarkthicketWolf());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(first.getId(), 3, second.getId(), 2));
+
+        harness.assertOnBattlefield(player1, "Unbreathing Horde");
+        assertThat(horde.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(horde.getMarkedDamage()).isZero();
+    }
+
 }
