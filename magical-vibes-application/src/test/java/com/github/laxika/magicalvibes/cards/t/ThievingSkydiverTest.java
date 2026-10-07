@@ -77,9 +77,69 @@ class ThievingSkydiverTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 2, artifact.getId(), null, List.of(), List.of(),
-                false, null, null, null, null, null, true))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("mana value X or less");
+        harness.ensurePriority(player1);
+        gs.playCard(gd, player1, 0, 2, null, null, List.of(), List.of(),
+                false, null, null, null, null, null, true);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotKickWithZeroXEvenWhenAZeroManaArtifactIsAvailable() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        harness.setHand(player1, List.of(new ThievingSkydiver()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castKickedCreature(player1, 0, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void unkickedEntryDoesNotCreateAnArtifactTheftTrigger() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        harness.setHand(player1, List.of(new ThievingSkydiver()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+    }
+
+    @Test
+    void canCastKickedWithoutAnyEligibleArtifactOnTheBattlefield() {
+        harness.setHand(player1, List.of(new ThievingSkydiver()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.ensurePriority(player1);
+
+        gs.playCard(gd, player1, 0, 1, null, null, List.of(), List.of(), false,
+                null, null, null, null, null, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Thieving Skydiver");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canAttachAnEquipmentAlreadyControlledByTheCaster() {
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        harness.setHand(player1, List.of(new ThievingSkydiver()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.ensurePriority(player1);
+
+        gs.playCard(gd, player1, 0, 1, equipment.getId(), null, List.of(), List.of(), false,
+                null, null, null, null, null, true);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(harness.getPermanentId(player1, "Thieving Skydiver"));
     }
 }
