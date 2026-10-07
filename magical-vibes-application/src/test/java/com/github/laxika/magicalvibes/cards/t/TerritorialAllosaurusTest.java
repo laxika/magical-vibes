@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalothGorger;
+import com.github.laxika.magicalvibes.cards.b.BlinkOfAnEye;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -16,12 +18,12 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TerritorialAllosaurus.class, BalothGorger.class, BlinkOfAnEye.class})
 class TerritorialAllosaurusTest extends BaseCardTest {
-
-    // ===== Cast without kicker =====
 
     @Nested
     @DisplayName("Cast without kicker")
+    @CardUsed({TerritorialAllosaurus.class, BalothGorger.class})
     class WithoutKicker {
 
         @Test
@@ -36,6 +38,17 @@ class TerritorialAllosaurusTest extends BaseCardTest {
 
             harness.assertOnBattlefield(player1, "Territorial Allosaurus");
             assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Entering without being cast does not trigger a fight")
+        void enteringWithoutCastingDoesNotFight() {
+            Permanent target = addCreature(player2);
+            harness.enterBattlefieldAndReturn(player1, new TerritorialAllosaurus());
+
+            harness.assertOnBattlefield(player1, "Territorial Allosaurus");
+            assertThat(gd.stack).isEmpty();
+            assertThat(target.getMarkedDamage()).isZero();
         }
 
         @Test
@@ -54,10 +67,9 @@ class TerritorialAllosaurusTest extends BaseCardTest {
         }
     }
 
-    // ===== Cast with kicker =====
-
     @Nested
     @DisplayName("Cast with kicker")
+    @CardUsed({TerritorialAllosaurus.class, BalothGorger.class, BlinkOfAnEye.class})
     class WithKicker {
 
         @Test
@@ -74,21 +86,20 @@ class TerritorialAllosaurusTest extends BaseCardTest {
         @Test
         @DisplayName("Fights and kills a smaller creature")
         void fightsAndKillsSmallerCreature() {
-            // Grizzly Bears is 2/2, Territorial Allosaurus is 5/5
+            // Baloth Gorger is 4/4, Territorial Allosaurus is 5/5
             Permanent target = addCreature(player2);
             castKicked(target.getId());
             harness.passBothPriorities(); // resolve ETB trigger
 
-            // Grizzly Bears should be dead (took 5 damage with 2 toughness)
-            harness.assertInGraveyard(player2, "Grizzly Bears");
-            // Allosaurus should survive (took 2 damage with 5 toughness)
+            // Baloth Gorger should be dead (took 5 damage with 4 toughness)
+            harness.assertInGraveyard(player2, "Baloth Gorger");
+            // Allosaurus should survive (took 4 damage with 5 toughness)
             harness.assertOnBattlefield(player1, "Territorial Allosaurus");
         }
 
         @Test
         @DisplayName("Both creatures die when fighting equal-power creature")
         void bothDieWhenFightingEqualPower() {
-            // Hill Giant is 3/3, but let's use a 5/5
             // Add another Territorial Allosaurus as the target
             Permanent target = addSpecificCreature(player2, new TerritorialAllosaurus());
             castKicked(target.getId());
@@ -106,24 +117,69 @@ class TerritorialAllosaurusTest extends BaseCardTest {
             castKicked(ownCreature.getId());
             harness.passBothPriorities(); // resolve ETB trigger
 
-            // Own Grizzly Bears should be dead (took 5 damage with 2 toughness)
-            harness.assertInGraveyard(player1, "Grizzly Bears");
-            // Allosaurus should survive (took 2 damage with 5 toughness)
+            // Own Baloth Gorger should be dead (took 5 damage with 4 toughness)
+            harness.assertInGraveyard(player1, "Baloth Gorger");
+            // Allosaurus should survive (took 4 damage with 5 toughness)
             harness.assertOnBattlefield(player1, "Territorial Allosaurus");
+        }
+
+        @Test
+        @DisplayName("Can be kicked with no other creature and cannot fight itself")
+        void kickedWithoutAnotherCreature() {
+            castKicked(null);
+
+            harness.assertOnBattlefield(player1, "Territorial Allosaurus");
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getMarkedDamage()).isZero();
+        }
+
+        @Test
+        @DisplayName("No fight damage if the source leaves before resolution")
+        void noFightWhenSourceLeaves() {
+            Permanent target = addCreature(player2);
+            castKicked(target.getId());
+            Permanent source = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+            harness.setHand(player2, List.of(new BlinkOfAnEye()));
+            harness.addMana(player2, ManaColor.BLUE, 1);
+            harness.addMana(player2, ManaColor.COLORLESS, 1);
+            harness.castInstant(player2, 0, source.getId());
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            harness.assertInHand(player1, "Territorial Allosaurus");
+            harness.assertOnBattlefield(player2, "Baloth Gorger");
+            assertThat(target.getMarkedDamage()).isZero();
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("No fight damage if the target leaves before resolution")
+        void noFightWhenTargetLeaves() {
+            Permanent target = addCreature(player2);
+            castKicked(target.getId());
+            Permanent source = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+            harness.setHand(player2, List.of(new BlinkOfAnEye()));
+            harness.addMana(player2, ManaColor.BLUE, 1);
+            harness.addMana(player2, ManaColor.COLORLESS, 1);
+            harness.castInstant(player2, 0, target.getId());
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            harness.assertInHand(player2, "Baloth Gorger");
+            harness.assertOnBattlefield(player1, "Territorial Allosaurus");
+            assertThat(source.getMarkedDamage()).isZero();
+            assertThat(gd.stack).isEmpty();
         }
     }
 
-    // ===== Helpers =====
-
     private Permanent addCreature(Player player) {
-        return addSpecificCreature(player, new GrizzlyBears());
+        return addSpecificCreature(player, new BalothGorger());
     }
 
     private Permanent addSpecificCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, card);
     }
 
     private void castKicked(UUID targetId) {
