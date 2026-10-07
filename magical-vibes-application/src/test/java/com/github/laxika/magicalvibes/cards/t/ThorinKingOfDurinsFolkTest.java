@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.Conspiracy;
+import com.github.laxika.magicalvibes.cards.d.DwarvenWarriors;
+import com.github.laxika.magicalvibes.cards.w.WayfarersBauble;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -14,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(ThorinKingOfDurinsFolk.class)
+@CardUsed({ThorinKingOfDurinsFolk.class, Conspiracy.class, DwarvenWarriors.class,
+        WayfarersBauble.class})
 class ThorinKingOfDurinsFolkTest extends BaseCardTest {
 
     @Test
@@ -61,6 +65,77 @@ class ThorinKingOfDurinsFolkTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, creature("Bear", CardSubtype.BEAR));
 
         assertThat(countArtifactTokens(player1)).isZero();
+    }
+
+    @Test
+    @DisplayName("Thorin creates a Treasure on its own entry even when its creature types are replaced")
+    void selfEntryDoesNotRequireDwarfSubtype() {
+        harness.castFromHand(player1, new Conspiracy(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+
+        harness.castFromHand(player1, new ThorinKingOfDurinsFolk(), "{3}{R}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(countArtifactTokens(player1)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's Dwarf entering does not create a Treasure")
+    void ignoresOpponentDwarfEntries() {
+        harness.addToBattlefield(player1, new ThorinKingOfDurinsFolk());
+
+        harness.enterBattlefieldAndReturn(player2, new DwarvenWarriors());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(countArtifactTokens(player1)).isZero();
+        assertThat(countArtifactTokens(player2)).isZero();
+    }
+
+    @Test
+    @DisplayName("Dwarf tokens also trigger Treasure creation and receive the boost")
+    void dwarfTokenEntryCreatesTreasureAndReceivesBoost() {
+        Permanent thorin = harness.addToBattlefieldAndReturn(player1, new ThorinKingOfDurinsFolk());
+        Card dwarfToken = new DwarvenWarriors().createRuntimeCopy();
+        dwarfToken.setToken(true);
+
+        Permanent dwarf = harness.enterBattlefieldAndReturn(player1, dwarfToken);
+        harness.passBothPriorities();
+
+        assertThat(countArtifactTokens(player1)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, dwarf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, dwarf)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, thorin)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The boost counts all your artifact tokens, excluding nontokens and opponents' tokens")
+    void countsOnlyControlledArtifactTokensAndUpdatesWithNewTreasures() {
+        Permanent thorin = harness.addToBattlefieldAndReturn(player1, new ThorinKingOfDurinsFolk());
+        Permanent dwarf = harness.addToBattlefieldAndReturn(player1, new DwarvenWarriors());
+        harness.addToBattlefield(player1, new WayfarersBauble());
+
+        Card artifactToken = new WayfarersBauble().createRuntimeCopy();
+        artifactToken.setToken(true);
+        harness.addToBattlefield(player1, artifactToken);
+        Card opponentArtifactToken = new WayfarersBauble().createRuntimeCopy();
+        opponentArtifactToken.setToken(true);
+        harness.addToBattlefield(player2, opponentArtifactToken);
+        Card creatureToken = new DwarvenWarriors().createRuntimeCopy();
+        creatureToken.setToken(true);
+        harness.addToBattlefield(player1, creatureToken);
+
+        assertThat(gqs.getEffectivePower(gd, dwarf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, dwarf)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, thorin)).isEqualTo(4);
+
+        harness.enterBattlefieldAndReturn(player1, new DwarvenWarriors());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, dwarf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, dwarf)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, thorin)).isEqualTo(4);
     }
 
     private Permanent addCreature(Player player, String name, CardSubtype subtype) {
