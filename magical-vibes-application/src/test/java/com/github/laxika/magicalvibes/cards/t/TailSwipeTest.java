@@ -28,9 +28,8 @@ class TailSwipeTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player1, 0, List.of(
+        harness.castAndResolveInstant(player1, 0, List.of(
                 myBear.getId(), harness.getPermanentId(player2, "Grizzly Bears")));
-        harness.passBothPriorities();
 
         assertThat(myBear.getPowerModifier()).isEqualTo(1);
         assertThat(myBear.getToughnessModifier()).isEqualTo(1);
@@ -49,10 +48,9 @@ class TailSwipeTest extends BaseCardTest {
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player1, 0, List.of(
+        harness.castAndResolveInstant(player1, 0, List.of(
                 harness.getPermanentId(player1, "Grizzly Bears"),
                 harness.getPermanentId(player2, "Grizzly Bears")));
-        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -88,5 +86,95 @@ class TailSwipeTest extends BaseCardTest {
                 battlefield.get(0).getId(), battlefield.get(1).getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature you don't control");
+    }
+
+    @Test
+    @DisplayName("Does not boost during the opponent's main phase")
+    void doesNotBoostDuringOpponentsMainPhase() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TailSwipe()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player1, 0, List.of(
+                harness.getPermanentId(player1, "Grizzly Bears"),
+                harness.getPermanentId(player2, "Grizzly Bears")));
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Boosts during your postcombat main phase")
+    void boostsDuringPostcombatMainPhase() {
+        Permanent myBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TailSwipe()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player1, 0, List.of(
+                myBear.getId(), harness.getPermanentId(player2, "Grizzly Bears")));
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(myBear.getPowerModifier()).isEqualTo(1);
+        assertThat(myBear.getToughnessModifier()).isEqualTo(1);
+        assertThat(myBear.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(myBear.getPowerModifier()).isZero();
+        assertThat(myBear.getToughnessModifier()).isZero();
+        assertThat(myBear.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Still boosts your creature but does not fight when the other target leaves")
+    void boostsWithoutFightWhenOpponentTargetLeaves() {
+        Permanent myBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent otherBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TailSwipe()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castInstant(player1, 0, List.of(myBear.getId(), otherBear.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(otherBear);
+        harness.passBothPriorities();
+
+        assertThat(myBear.getPowerModifier()).isEqualTo(1);
+        assertThat(myBear.getToughnessModifier()).isEqualTo(1);
+        assertThat(myBear.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Tail Swipe");
+    }
+
+    @Test
+    @DisplayName("Does not boost or fight the opponent's creature when your target leaves")
+    void doesNotAffectOpponentWhenOwnTargetLeaves() {
+        Permanent myBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent otherBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TailSwipe()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castInstant(player1, 0, List.of(myBear.getId(), otherBear.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(myBear);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(otherBear.getPowerModifier()).isZero();
+        assertThat(otherBear.getToughnessModifier()).isZero();
+        assertThat(otherBear.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Tail Swipe");
     }
 }
