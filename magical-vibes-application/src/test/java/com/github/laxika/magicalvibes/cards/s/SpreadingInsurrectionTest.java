@@ -76,12 +76,106 @@ class SpreadingInsurrectionTest extends BaseCardTest {
         assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
     }
 
+    @Test
+    @DisplayName("Storm copies may each steal a different creature without being cast")
+    void stormCopiesMayChooseDifferentCreatures() {
+        Permanent originalTarget = addCreatureReady(player2, new GrizzlyBears());
+        Permanent firstCopyTarget = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondCopyTarget = addCreatureReady(player2, new GrizzlyBears());
+        originalTarget.tap();
+        firstCopyTarget.tap();
+        secondCopyTarget.tap();
+        gd.recordSpellCast(player1.getId(), new GrizzlyBears());
+        gd.recordSpellCast(player2.getId(), new GrizzlyBears());
+        harness.setHand(player1, List.of(new SpreadingInsurrection()));
+        addMana();
+        harness.castSorcery(player1, 0, originalTarget.getId());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, firstCopyTarget.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, secondCopyTarget.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getTotalSpellsCastThisTurnCount()).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(originalTarget, firstCopyTarget, secondCopyTarget);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .doesNotContain(originalTarget, firstCopyTarget, secondCopyTarget);
+        for (Permanent target : List.of(originalTarget, firstCopyTarget, secondCopyTarget)) {
+            assertThat(target.isTapped()).isFalse();
+            assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+            assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isTrue();
+        }
+    }
+
+    @Test
+    @DisplayName("The original cannot untap a creature already stolen by its storm copy")
+    void originalTargetBecomesIllegalAfterCopyStealsIt() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        gd.recordSpellCast(player1.getId(), new GrizzlyBears());
+        harness.setHand(player1, List.of(new SpreadingInsurrection()));
+        addMana();
+        harness.castSorcery(player1, 0, target.getId());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.stack).hasSize(1);
+        target.tap();
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Storm ignores spells cast after Spreading Insurrection")
+    void stormCountIsFixedAtCastTime() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        gd.recordSpellCast(player1.getId(), new GrizzlyBears());
+        harness.setHand(player1, List.of(new SpreadingInsurrection()));
+        addMana();
+        harness.castSorcery(player1, 0, target.getId());
+        gd.recordSpellCast(player2.getId(), new GrizzlyBears());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("A departed target receives none of the spell's effects")
+    void departedTargetIsNotStolenUntappedOrGrantedHaste() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.tap();
+        harness.setHand(player1, List.of(new SpreadingInsurrection()));
+        addMana();
+        harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
+    }
+
     private void castSpreadingInsurrection(Permanent target) {
         harness.setHand(player1, List.of(new SpreadingInsurrection()));
         addMana();
         harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void addMana() {
