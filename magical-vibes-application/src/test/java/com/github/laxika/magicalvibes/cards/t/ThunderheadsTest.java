@@ -68,7 +68,49 @@ class ThunderheadsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Exile waits for the delayed end-step ability to resolve")
+    void tokenRemainsUntilDelayedAbilityResolves() {
+        castThunderheads(List.of());
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(getTokens()).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(getTokens()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Tokens created during an end step survive until the following turn's end step")
+    void endStepCastWaitsForFollowingEndStep() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.withAutoStop(TurnStep.END_STEP,
+                () -> castThunderheads(List.of("{2}{U}")));
+
+        assertThat(getTokens()).hasSize(2);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(getTokens()).hasSize(2);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(getTokens()).hasSize(2);
+
+        resolveAllTriggers();
+
+        assertThat(getTokens()).isEmpty();
     }
 
     private void castThunderheads(List<String> replicatePayments) {
