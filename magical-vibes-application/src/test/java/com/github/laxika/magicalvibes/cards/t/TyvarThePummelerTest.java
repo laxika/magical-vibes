@@ -42,7 +42,7 @@ class TyvarThePummelerTest extends BaseCardTest {
     @DisplayName("The indestructible ability can be activated while Tyvar is tapped")
     void canActivateIndestructibleAbilityWhileTapped() {
         Permanent tyvar = addCreatureReady(player1, new TyvarThePummeler());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
         tyvar.tap();
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(tyvar), null, null);
@@ -93,5 +93,81 @@ class TyvarThePummelerTest extends BaseCardTest {
 
         assertThat(tyvar.getEffectivePower()).isEqualTo(3);
         assertThat(tyvar.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    void creatureIsTappedAsCostButTyvarWaitsForResolution() {
+        Permanent tyvar = addCreatureReady(player1, new TyvarThePummeler());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(tyvar), null, null);
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(tyvar.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, tyvar, Keyword.INDESTRUCTIBLE)).isFalse();
+        harness.passBothPriorities();
+        assertThat(tyvar.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, tyvar, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    void summoningSickCreaturesCanPayTheCostAndActivateTyvar() {
+        Permanent tyvar = harness.addToBattlefieldAndReturn(player1, new TyvarThePummeler());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(tyvar), null, null);
+        harness.passBothPriorities();
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(tyvar.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, tyvar, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    void indestructibleExpiresAtEndOfTurn() {
+        Permanent tyvar = addCreatureReady(player1, new TyvarThePummeler());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(tyvar), null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, tyvar, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, tyvar, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    void pumpIncludesCreaturesPresentAtResolutionButNotLaterEntrants() {
+        Permanent tyvar = addCreatureReady(player1, new TyvarThePummeler());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(tyvar), 1, null, null);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+        Permanent laterBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(tyvar.getEffectivePower()).isEqualTo(6);
+        assertThat(bears.getEffectivePower()).isEqualTo(5);
+        assertThat(laterBears.getEffectivePower()).isEqualTo(2);
+    }
+
+    @Test
+    void repeatedPumpsUsePowerIncludingPreviousPump() {
+        Permanent tyvar = addCreatureReady(player1, new TyvarThePummeler());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(tyvar), 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(tyvar), 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(tyvar.getEffectivePower()).isEqualTo(12);
+        assertThat(tyvar.getEffectiveToughness()).isEqualTo(12);
+        assertThat(bears.getEffectivePower()).isEqualTo(11);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(11);
     }
 }
