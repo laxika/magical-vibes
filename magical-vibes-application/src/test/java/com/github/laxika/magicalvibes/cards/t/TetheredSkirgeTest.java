@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @CardUsed({TetheredSkirge.class, BurstOfEnergy.class, ThornwindFaeries.class})
 class TetheredSkirgeTest extends BaseCardTest {
 
@@ -20,8 +22,7 @@ class TetheredSkirgeTest extends BaseCardTest {
         harness.setHand(player2, List.of(new BurstOfEnergy()));
         harness.addMana(player2, ManaColor.WHITE, 1);
 
-        harness.castInstant(player2, 0, skirge.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, skirge.getId());
 
         harness.assertLife(player1, 19);
     }
@@ -33,8 +34,7 @@ class TetheredSkirgeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BurstOfEnergy()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, skirge.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, skirge.getId());
 
         harness.assertLife(player1, 19);
     }
@@ -48,5 +48,58 @@ class TetheredSkirgeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 19);
+    }
+
+    @Test
+    void lifeLossUsesTheStackAndResolvesBeforeTheTargetingSpell() {
+        Permanent skirge = harness.addToBattlefieldAndReturn(player1, new TetheredSkirge());
+        skirge.setTapped(true);
+        harness.setHand(player1, List.of(new BurstOfEnergy()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, skirge.getId());
+
+        harness.assertLife(player1, 20);
+        assertThat(skirge.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        assertThat(skirge.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        assertThat(skirge.isTapped()).isFalse();
+    }
+
+    @Test
+    void eachSpellTargetingTheSameSkirgeTriggersLifeLoss() {
+        Permanent skirge = harness.addToBattlefieldAndReturn(player1, new TetheredSkirge());
+        harness.setHand(player1, List.of(new BurstOfEnergy(), new BurstOfEnergy()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, skirge.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 19);
+
+        harness.castAndResolveInstant(player1, 0, skirge.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void targetingAnotherCreatureDoesNotTriggerSkirge() {
+        harness.addToBattlefield(player1, new TetheredSkirge());
+        Permanent faeries = harness.addToBattlefieldAndReturn(player1, new ThornwindFaeries());
+        harness.setHand(player1, List.of(new BurstOfEnergy()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, faeries.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }
