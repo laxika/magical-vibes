@@ -45,6 +45,39 @@ class USAgentJohnWalkerTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
     }
 
+    @Test
+    void createsUnattachedShieldWhenAgentLeavesBeforeTriggerResolves() {
+        harness.setHand(player1, List.of(new USAgentJohnWalker()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent agent = findPermanent(player1, "U.S.Agent, John Walker");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, agent));
+        harness.passBothPriorities();
+
+        Permanent shield = findPermanent(player1, "Sturdy Shield");
+        assertThat(shield.getAttachedTo()).isNull();
+        harness.assertNotOnBattlefield(player1, "U.S.Agent, John Walker");
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(shield);
+    }
+
+    @Test
+    void shieldRemainsWhenEquippedAgentDies() {
+        castAgent();
+        Permanent agent = findPermanent(player1, "U.S.Agent, John Walker");
+        Permanent shield = findPermanent(player1, "Sturdy Shield");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, agent));
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(shield);
+        assertThat(shield.getAttachedTo()).isNull();
+    }
+
     private void castAgent() {
         harness.setHand(player1, List.of(new USAgentJohnWalker()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
