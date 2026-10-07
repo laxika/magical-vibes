@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,18 +22,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({TheAntiquitiesWar.class, BottleGnomes.class, ChromaticStar.class,
+        GrizzlyBears.class, Ornithopter.class, Shock.class})
 class TheAntiquitiesWarTest extends BaseCardTest {
-
-    // ===== ETB: first lore counter and chapter I triggers =====
 
     @Test
     @DisplayName("Casting The Antiquities War adds a lore counter and triggers chapter I")
     void castingAddsLoreCounterAndTriggersChapterI() {
-        harness.setHand(player1, List.of(new TheAntiquitiesWar()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new TheAntiquitiesWar(), "{3}{U}");
         harness.passBothPriorities(); // resolve enchantment
 
         GameData gd = harness.getGameData();
@@ -60,11 +56,7 @@ class TheAntiquitiesWarTest extends BaseCardTest {
                 new GrizzlyBears(),
                 new GrizzlyBears()
         ));
-        harness.setHand(player1, List.of(new TheAntiquitiesWar()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new TheAntiquitiesWar(), "{3}{U}");
         harness.passBothPriorities(); // resolve enchantment → chapter I triggers
         harness.passBothPriorities(); // resolve chapter I
 
@@ -76,8 +68,8 @@ class TheAntiquitiesWarTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Chapter I with no artifacts in top five goes directly to reorder")
-    void chapterINoArtifactsGoesToReorder() {
+    @DisplayName("Chapter I with no artifacts bottoms all five without an ordering choice")
+    void chapterINoArtifactsBottomsWithoutOrderingChoice() {
         setupTopCards(List.of(
                 new GrizzlyBears(),
                 new GrizzlyBears(),
@@ -85,29 +77,19 @@ class TheAntiquitiesWarTest extends BaseCardTest {
                 new GrizzlyBears(),
                 new GrizzlyBears()
         ));
-        harness.setHand(player1, List.of(new TheAntiquitiesWar()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new TheAntiquitiesWar(), "{3}{U}");
         harness.passBothPriorities(); // resolve enchantment → chapter I triggers
         harness.passBothPriorities(); // resolve chapter I
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(5);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
     }
-
-    // ===== Chapter III: animate artifacts =====
 
     @Test
     @DisplayName("Chapter III makes noncreature artifacts into 5/5 creatures")
     void chapterIIIAnimatesNoncreatureArtifacts() {
-        harness.addToBattlefield(player1, new TheAntiquitiesWar());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("The Antiquities War"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheAntiquitiesWar());
         saga.setCounterCount(CounterType.LORE, 2);
 
         // Add a noncreature artifact
@@ -139,11 +121,7 @@ class TheAntiquitiesWarTest extends BaseCardTest {
     @Test
     @DisplayName("Chapter III sets artifact creatures to 5/5 base P/T")
     void chapterIIISetsArtifactCreatureBasePT() {
-        harness.addToBattlefield(player1, new TheAntiquitiesWar());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("The Antiquities War"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheAntiquitiesWar());
         saga.setCounterCount(CounterType.LORE, 2);
 
         // Add an artifact creature (Ornithopter is 0/2)
@@ -177,11 +155,7 @@ class TheAntiquitiesWarTest extends BaseCardTest {
     @Test
     @DisplayName("Chapter III does not affect non-artifact permanents")
     void chapterIIIDoesNotAffectNonArtifacts() {
-        harness.addToBattlefield(player1, new TheAntiquitiesWar());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("The Antiquities War"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheAntiquitiesWar());
         saga.setCounterCount(CounterType.LORE, 2);
 
         // Add a non-artifact creature
@@ -208,11 +182,7 @@ class TheAntiquitiesWarTest extends BaseCardTest {
     @Test
     @DisplayName("Chapter III does not affect opponent's artifacts")
     void chapterIIIDoesNotAffectOpponentArtifacts() {
-        harness.addToBattlefield(player1, new TheAntiquitiesWar());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("The Antiquities War"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheAntiquitiesWar());
         saga.setCounterCount(CounterType.LORE, 2);
 
         // Add an artifact to opponent's battlefield
@@ -236,11 +206,7 @@ class TheAntiquitiesWarTest extends BaseCardTest {
     @Test
     @DisplayName("Chapter III preserves +1/+1 counters on top of 5/5 base")
     void chapterIIIPreservesPlusOnePlusOneCounters() {
-        harness.addToBattlefield(player1, new TheAntiquitiesWar());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("The Antiquities War"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheAntiquitiesWar());
         saga.setCounterCount(CounterType.LORE, 2);
 
         // Add an artifact creature with +1/+1 counters
@@ -268,16 +234,10 @@ class TheAntiquitiesWarTest extends BaseCardTest {
         assertThat(gnomes.getEffectiveToughness()).isEqualTo(7);
     }
 
-    // ===== Saga lifecycle =====
-
     @Test
     @DisplayName("Saga is sacrificed after chapter III resolves")
     void sagaSacrificedAfterChapterIII() {
-        harness.addToBattlefield(player1, new TheAntiquitiesWar());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("The Antiquities War"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheAntiquitiesWar());
         saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
@@ -286,24 +246,80 @@ class TheAntiquitiesWarTest extends BaseCardTest {
         harness.passBothPriorities(); // precombat main → chapter III triggers
         harness.passBothPriorities(); // resolve chapter III
 
-        GameData gd = harness.getGameData();
-
-        // Saga should be sacrificed
-        boolean sagaStillOnBf = gd.playerBattlefields.get(player1.getId()).stream()
-                .anyMatch(p -> p.getCard().getName().equals("The Antiquities War"));
-        assertThat(sagaStillOnBf).isFalse();
-
-        // Saga should be in graveyard
-        boolean sagaInGraveyard = gd.playerGraveyards.get(player1.getId()).stream()
-                .anyMatch(c -> c.getName().equals("The Antiquities War"));
-        assertThat(sagaInGraveyard).isTrue();
+        harness.assertNotOnBattlefield(player1, "The Antiquities War");
+        harness.assertInGraveyard(player1, "The Antiquities War");
     }
 
-    // ===== Helper =====
+    @Test
+    void chapterIIAllowsDecliningAndBottomsOnlyTheLookedAtCards() {
+        harness.setHand(player1, List.of());
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheAntiquitiesWar());
+        saga.setCounterCount(CounterType.LORE, 1);
+        Card artifact = new ChromaticStar();
+        List<Card> topFive = List.of(artifact, new GrizzlyBears(), new Shock(),
+                new Ornithopter(), new BottleGnomes());
+        Card untouched = new Shock();
+        harness.setLibrary(player1, List.of(topFive.get(0), topFive.get(1), topFive.get(2),
+                topFive.get(3), topFive.get(4), untouched));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.LibrarySearch) {
+            harness.handleCardChosen(player1, -1);
+        } else {
+            harness.handleMultipleCardsChosen(player1, List.of());
+        }
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(untouched);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 6))
+                .containsExactlyInAnyOrderElementsOf(topFive);
+    }
+
+    @Test
+    void chapterISelectsOnlyOneArtifactAndBottomsTheRestWithoutOrderingChoice() {
+        Card selected = new ChromaticStar();
+        List<Card> remaining = List.of(new Ornithopter(), new BottleGnomes(),
+                new GrizzlyBears(), new Shock());
+        Card untouched = new Shock();
+        harness.setLibrary(player1, List.of(selected, remaining.get(0), remaining.get(1),
+                remaining.get(2), remaining.get(3), untouched));
+        harness.castFromHand(player1, new TheAntiquitiesWar(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.LibrarySearch) {
+            harness.handleCardChosen(player1, 0);
+        } else {
+            harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+        }
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(selected);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(untouched);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 5))
+                .containsExactlyInAnyOrderElementsOf(remaining);
+    }
+
+    @Test
+    void chapterIIIDoesNotAnimateArtifactsEnteringAfterResolution() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheAntiquitiesWar());
+        saga.setCounterCount(CounterType.LORE, 2);
+        Permanent existing = harness.addToBattlefieldAndReturn(player1, new ChromaticStar());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "The Antiquities War");
+        harness.passBothPriorities();
+        assertThat(existing.getEffectivePower()).isEqualTo(5);
+        Permanent later = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        assertThat(later.getEffectivePower()).isZero();
+        assertThat(later.getEffectiveToughness()).isEqualTo(2);
+    }
 
     private void setupTopCards(List<Card> cards) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+        harness.setLibrary(player1, cards);
     }
 }
