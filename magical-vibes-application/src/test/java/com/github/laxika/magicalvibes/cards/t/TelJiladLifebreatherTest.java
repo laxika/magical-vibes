@@ -16,6 +16,81 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TelJiladLifebreatherTest extends BaseCardTest {
 
     @Test
+    void canTargetItselfAndPaysCostsBeforeResolution() {
+        Permanent lifebreather = addCreatureReady(player1, new TelJiladLifebreather());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, lifebreather.getId());
+
+        assertThat(lifebreather.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(lifebreather.getRegenerationShield()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(lifebreather.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent lifebreather = harness.addToBattlefieldAndReturn(player1, new TelJiladLifebreather());
+        lifebreather.setSummoningSick(true);
+        harness.addToBattlefield(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, lifebreather.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(lifebreather.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    void creatingShieldDoesNotImmediatelyTapOrRemoveDamage() {
+        addCreatureReady(player1, new TelJiladLifebreather());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        target.setMarkedDamage(1);
+        harness.addToBattlefield(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void shieldSavesCreatureFromLethalCombatDamageAndRemovesItFromCombat() {
+        addCreatureReady(player1, new TelJiladLifebreather());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        Permanent attacker = addCreatureReady(player2, new TelJiladLifebreather());
+        attacker.setAttacking(true);
+        target.setBlocking(true);
+        target.addBlockingTarget(0);
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.isBlocking()).isFalse();
+        assertThat(target.getBlockingTargets()).isEmpty();
+        harness.assertInGraveyard(player2, "Tel-Jilad Lifebreather");
+    }
+
+    @Test
     void sacrificesAForestAndRegeneratesTargetCreature() {
         Permanent lifebreather = addCreatureReady(player1, new TelJiladLifebreather());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
