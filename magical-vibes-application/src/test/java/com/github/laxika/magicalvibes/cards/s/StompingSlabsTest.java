@@ -34,8 +34,7 @@ class StompingSlabsTest extends BaseCardTest {
     private void castAt(UUID targetId) {
         harness.setHand(player1, List.of(new StompingSlabs()));
         harness.addMana(player1, ManaColor.RED, 3); // {2}{R}
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
     }
 
     @Test
@@ -44,6 +43,10 @@ class StompingSlabsTest extends BaseCardTest {
         harness.setLibrary(player1, libraryWithCopy());
 
         castAt(player2.getId());
+
+        List<Card> reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(IntStream.range(0, reorder.size()).boxed().toList()));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
     }
@@ -157,5 +160,44 @@ class StompingSlabsTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId()))
                 .containsExactlyElementsOf(order.stream().map(revealedCards::get).toList());
+    }
+
+    @Test
+    @DisplayName("A copy below the top seven is not revealed and the unrevealed cards stay on top")
+    void copyBelowTopSevenDealsNoDamage() {
+        List<Card> library = filler(7);
+        Card hiddenCopy = new StompingSlabs();
+        library.add(hiddenCopy);
+        harness.setLibrary(player1, library);
+
+        castAt(player2.getId());
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder.cards()).containsExactlyElementsOf(library.subList(0, 7));
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(6, 5, 4, 3, 2, 1, 0)));
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(
+                hiddenCopy, library.get(6), library.get(5), library.get(4), library.get(3),
+                library.get(2), library.get(1), library.get(0));
+    }
+
+    @Test
+    @DisplayName("Revealing multiple copies still deals only seven damage")
+    void multipleCopiesDealSevenDamage() {
+        List<Card> library = filler(5);
+        library.add(new StompingSlabs());
+        library.add(new StompingSlabs());
+        harness.setLibrary(player1, library);
+
+        castAt(player2.getId());
+
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3, 4, 5, 6)));
+
+        harness.assertLife(player2, 13);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library);
     }
 }
