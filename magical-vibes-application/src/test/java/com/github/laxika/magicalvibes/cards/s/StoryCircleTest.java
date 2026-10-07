@@ -418,4 +418,55 @@ class StoryCircleTest extends BaseCardTest {
                 .anyMatch(shield -> shield.playerId().equals(player1.getId())
                         && shield.sourceId().equals(redSource.getId()));
     }
+
+    @Test
+    @DisplayName("A source referenced by a waiting prevention shield remains a legal source choice")
+    void canChooseSourceReferencedByWaitingShieldAfterSpellResolves() {
+        Permanent storyCircle = addReadyStoryCircle(player1, CardColor.RED);
+        Permanent creature = addCreatureReady(player1, new HillGiant());
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castInstant(player2, 0, creature.getId());
+
+        activateStoryCircle(player1, storyCircle);
+        harness.handlePermanentChosen(player1, shock.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(shield -> shield.sourceId().equals(shock.getId()));
+
+        activateStoryCircle(player1, storyCircle);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(shock.getId());
+        harness.handlePermanentChosen(player1, shock.getId());
+        assertThat(gd.playerSourceNextDamageShields).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("One activation prevents only the next damage event from the chosen source")
+    void laterCombatDamageFromSameSourceIsNotPrevented() {
+        Permanent storyCircle = addReadyStoryCircle(player2, CardColor.RED);
+        Permanent attacker = addCreatureReady(player1, new HillGiant());
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        activateAndChooseSource(player2, storyCircle, attacker);
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player2, 17);
+    }
 }
