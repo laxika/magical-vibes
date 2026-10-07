@@ -5,6 +5,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.r.Regeneration;
+import com.github.laxika.magicalvibes.cards.t.TidalVisionary;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.cards.y.YavimayaBarbarian;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,8 +20,67 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SpreadingPlague.class, GrizzlyBears.class, HillGiant.class, Ornithopter.class,
-        Forest.class, Regeneration.class})
+        Forest.class, Regeneration.class, TidalVisionary.class, Unsummon.class, YavimayaBarbarian.class})
 class SpreadingPlagueTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A multicolored creature destroys creatures sharing either color")
+    void multicoloredCreatureDestroysEitherColor() {
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new HillGiant());
+        addCreatureReady(player2, new Ornithopter());
+        harness.addToBattlefield(player1, new SpreadingPlague());
+
+        harness.castFromHand(player1, new YavimayaBarbarian(), "{R}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.assertOnBattlefield(player2, "Ornithopter");
+        harness.assertOnBattlefield(player1, "Yavimaya Barbarian");
+    }
+
+    @Test
+    @DisplayName("The entering creature's current color is used when the trigger resolves")
+    void usesCurrentColorAtResolution() {
+        addCreatureReady(player1, new TidalVisionary());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new HillGiant());
+        harness.addToBattlefield(player1, new SpreadingPlague());
+        Permanent entering = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 0, null, entering.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(entering);
+    }
+
+    @Test
+    @DisplayName("A departed entering creature's last battlefield color is used")
+    void usesLastBattlefieldColorAfterBounce() {
+        addCreatureReady(player1, new TidalVisionary());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new HillGiant());
+        harness.addToBattlefield(player1, new SpreadingPlague());
+        Permanent entering = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 0, null, entering.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, entering.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
 
     @Test
     @DisplayName("A creature entering destroys other creatures sharing a color")
@@ -73,6 +135,7 @@ class SpreadingPlagueTest extends BaseCardTest {
     void colorlessCreatureDoesNotDestroyAnyCreature() {
         Permanent ownGreenCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent opponentGreenCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent existingColorlessCreature = addCreatureReady(player2, new Ornithopter());
         harness.addToBattlefield(player1, new SpreadingPlague());
 
         Ornithopter entering = new Ornithopter();
@@ -84,7 +147,8 @@ class SpreadingPlagueTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .contains(ownGreenCreature)
                 .anyMatch(permanent -> permanent.getCard() == entering);
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentGreenCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .contains(opponentGreenCreature, existingColorlessCreature);
     }
 
     @Test
