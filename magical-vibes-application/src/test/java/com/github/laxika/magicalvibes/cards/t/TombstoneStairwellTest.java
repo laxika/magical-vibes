@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
+import com.github.laxika.magicalvibes.cards.w.WithstandDeath;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -19,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TombstoneStairwell.class, IronTuskElephant.class, Disenchant.class})
+@CardUsed({TombstoneStairwell.class, IronTuskElephant.class, Disenchant.class, WithstandDeath.class})
 class TombstoneStairwellTest extends BaseCardTest {
 
     /** Advances to player2's upkeep so only the each-upkeep trigger fires (no cumulative upkeep prompt). */
@@ -108,8 +109,7 @@ class TombstoneStairwellTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, findPermanents(player1, "Tombstone Stairwell").getFirst().getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Tombstone Stairwell"));
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Tombstone Stairwell");
@@ -171,5 +171,50 @@ class TombstoneStairwellTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Tombstone Stairwell");
         assertThat(countPermanents(player1, "Tombspawn")).isZero();
         assertThat(countPermanents(player2, "Tombspawn")).isZero();
+    }
+
+    @Test
+    @DisplayName("A Tombspawn that survives end-step destruction is still destroyed when Stairwell leaves")
+    void survivingTokenRemainsLinkedToStairwell() {
+        Permanent stairwell = harness.addToBattlefieldAndReturn(player1, new TombstoneStairwell());
+        harness.setGraveyard(player1, List.of(new IronTuskElephant()));
+        advanceToOpponentUpkeep();
+        Permanent tombspawn = findPermanent(player1, "Tombspawn");
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new WithstandDeath()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player2, 0, tombspawn.getId());
+        advanceToEndStep();
+        assertThat(findPermanents(player1, "Tombspawn")).containsExactly(tombspawn);
+
+        harness.passUntil(TurnStep.CLEANUP);
+        assertThat(gqs.hasKeyword(gd, tombspawn, Keyword.INDESTRUCTIBLE)).isFalse();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, stairwell.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Tombstone Stairwell");
+        assertThat(countPermanents(player1, "Tombspawn")).isZero();
+    }
+
+    @Test
+    @DisplayName("The upkeep ability counts creature cards when it resolves")
+    void countsGraveyardsAtResolution() {
+        harness.addToBattlefield(player1, new TombstoneStairwell());
+        harness.setGraveyard(player1, List.of(new IronTuskElephant()));
+        advanceToUpkeep(player2);
+
+        harness.setGraveyard(player1, List.of(new Disenchant()));
+        harness.setGraveyard(player2, List.of(new IronTuskElephant(), new IronTuskElephant()));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Tombspawn")).isZero();
+        assertThat(countPermanents(player2, "Tombspawn")).isEqualTo(2);
     }
 }
