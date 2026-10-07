@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.e.ElspethSunsNemesis;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NyxbornColossus;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({StormsWrath.class, GrizzlyBears.class, GiantSpider.class, ChandraNalaar.class})
+@CardUsed({StormsWrath.class, GrizzlyBears.class, GiantSpider.class, ChandraNalaar.class,
+        NyxbornColossus.class, ElspethSunsNemesis.class})
 class StormsWrathTest extends BaseCardTest {
 
     @Test
@@ -32,22 +35,73 @@ class StormsWrathTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(spider.getMarkedDamage()).isEqualTo(4);
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed({StormsWrath.class, NyxbornColossus.class, ElspethSunsNemesis.class})
+    @DisplayName("Damages surviving enchantment creatures and planeswalkers on both sides exactly once")
+    void damagesSurvivorsOnBothSides() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new NyxbornColossus());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new NyxbornColossus());
+        Permanent ownPlaneswalker = harness.enterBattlefieldAndReturn(player1, new ElspethSunsNemesis());
+        Permanent opposingPlaneswalker = harness.enterBattlefieldAndReturn(player2, new ElspethSunsNemesis());
+
+        castStormsWrath();
+
+        harness.assertOnBattlefield(player1, "Nyxborn Colossus");
+        harness.assertOnBattlefield(player2, "Nyxborn Colossus");
+        assertThat(ownCreature.getMarkedDamage()).isEqualTo(4);
+        assertThat(opposingCreature.getMarkedDamage()).isEqualTo(4);
+        harness.assertOnBattlefield(player1, "Elspeth, Sun's Nemesis");
+        harness.assertOnBattlefield(player2, "Elspeth, Sun's Nemesis");
+        assertThat(ownPlaneswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThat(opposingPlaneswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({StormsWrath.class, ElspethSunsNemesis.class})
+    @DisplayName("Planeswalkers with four or fewer loyalty go to the graveyard")
+    void killsPlaneswalkersWithLowLoyalty() {
+        Permanent ownPlaneswalker = harness.enterBattlefieldAndReturn(player1, new ElspethSunsNemesis());
+        Permanent opposingPlaneswalker = harness.enterBattlefieldAndReturn(player2, new ElspethSunsNemesis());
+        ownPlaneswalker.setCounterCount(CounterType.LOYALTY, 4);
+        opposingPlaneswalker.setCounterCount(CounterType.LOYALTY, 2);
+
+        castStormsWrath();
+
+        harness.assertNotOnBattlefield(player1, "Elspeth, Sun's Nemesis");
+        harness.assertNotOnBattlefield(player2, "Elspeth, Sun's Nemesis");
+        harness.assertInGraveyard(player1, "Elspeth, Sun's Nemesis");
+        harness.assertInGraveyard(player2, "Elspeth, Sun's Nemesis");
+    }
+
+    @Test
+    @CardUsed({StormsWrath.class})
+    @DisplayName("Resolves without targets on an empty battlefield")
+    void resolvesOnEmptyBattlefield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        castStormsWrath();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Storm's Wrath");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     private void castStormsWrath() {
         harness.setHand(player1, List.of(new StormsWrath()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     private Permanent addPlaneswalker(Player player, int loyalty) {
-        Permanent permanent = new Permanent(new ChandraNalaar());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new ChandraNalaar());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
