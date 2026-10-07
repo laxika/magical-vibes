@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
+import com.github.laxika.magicalvibes.cards.c.CommonCrook;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.p.PeterParkersCamera;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,44 +14,40 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SpiderWomanStunningSavior.class, DarksteelRelic.class, Forest.class, GrizzlyBears.class})
+@CardUsed({SpiderWomanStunningSavior.class, PeterParkersCamera.class, Forest.class, CommonCrook.class, SoulSummons.class})
 class SpiderWomanStunningSaviorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Opponent's creatures and artifacts enter tapped")
     void opponentsCreaturesAndArtifactsEnterTapped() {
         harness.addToBattlefield(player1, new SpiderWomanStunningSavior());
-        harness.setHand(player2, List.of(new GrizzlyBears(), new DarksteelRelic()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new CommonCrook(), "{1}{B}");
         harness.passBothPriorities();
 
-        harness.castArtifact(player2, 0);
+        harness.castFromHand(player2, new PeterParkersCamera(), "{1}");
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player2, "Grizzly Bears").isTapped()).isTrue();
-        assertThat(findPermanent(player2, "Darksteel Relic").isTapped()).isTrue();
+        assertThat(findPermanent(player2, "Common Crook").isTapped()).isTrue();
+        assertThat(findPermanent(player2, "Peter Parker's Camera").isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Controller's creatures and artifacts enter untapped")
     void controllersCreaturesAndArtifactsEnterUntapped() {
         harness.addToBattlefield(player1, new SpiderWomanStunningSavior());
-        harness.setHand(player1, List.of(new GrizzlyBears(), new DarksteelRelic()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CommonCrook(), "{1}{B}");
         harness.passBothPriorities();
 
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new PeterParkersCamera(), "{1}");
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Grizzly Bears").isTapped()).isFalse();
-        assertThat(findPermanent(player1, "Darksteel Relic").isTapped()).isFalse();
+        assertThat(findPermanent(player1, "Common Crook").isTapped()).isFalse();
+        assertThat(findPermanent(player1, "Peter Parker's Camera").isTapped()).isFalse();
     }
 
     @Test
@@ -64,9 +59,69 @@ class SpiderWomanStunningSaviorTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        gs.playCard(gd, player2, 0, 0, null, null);
+        harness.playLand(player2, 0);
 
         Permanent forest = findPermanent(player2, "Forest");
         assertThat(forest.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Opponent's permanents enter tapped even when they are not cast")
+    void noncastPermanentsEnterTapped() {
+        harness.addToBattlefield(player1, new SpiderWomanStunningSavior());
+
+        Permanent creature = harness.enterBattlefieldAndReturn(player2, new CommonCrook());
+        Permanent artifact = harness.enterBattlefieldAndReturn(player2, new PeterParkersCamera());
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(artifact.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Spider-Woman does not tap permanents already on the battlefield")
+    void existingPermanentsRemainUntapped() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CommonCrook());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new PeterParkersCamera());
+
+        Permanent spiderWoman = harness.enterBattlefieldAndReturn(player1, new SpiderWomanStunningSavior());
+
+        assertThat(spiderWoman.isTapped()).isFalse();
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(artifact.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering tapped does not prevent untapping on the next untap step")
+    void affectedPermanentsUntapNormally() {
+        harness.addToBattlefield(player1, new SpiderWomanStunningSavior());
+        Permanent creature = harness.enterBattlefieldAndReturn(player2, new CommonCrook());
+        Permanent artifact = harness.enterBattlefieldAndReturn(player2, new PeterParkersCamera());
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(artifact.isTapped()).isTrue();
+
+        harness.performUntapStep(player2);
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(artifact.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's manifested land enters tapped as a face-down creature")
+    void manifestedLandEntersTapped() {
+        harness.addToBattlefield(player1, new SpiderWomanStunningSavior());
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player2, new SoulSummons(), "{1}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        Permanent manifested = gd.playerBattlefields.get(player2.getId()).getFirst();
+        assertThat(manifested.isFaceDown()).isTrue();
+        assertThat(manifested.isTapped()).isTrue();
     }
 }
