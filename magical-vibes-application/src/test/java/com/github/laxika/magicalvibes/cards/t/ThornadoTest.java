@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.model.Permanent;
 
 
 
@@ -25,8 +24,7 @@ class ThornadoTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Thornado()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Air Elemental");
         harness.assertInGraveyard(player2, "Air Elemental");
@@ -57,6 +55,54 @@ class ThornadoTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Thornado");
         harness.assertInHand(player1, "Grizzly Bears");
     }
+
+    @Test
+    @DisplayName("Can destroy your own creature with flying")
+    void destroysOwnFlyingCreature() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new AirElemental()).getId();
+        harness.setHand(player1, List.of(new Thornado()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Air Elemental");
+        harness.assertInGraveyard(player1, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Cycling discards immediately but draws only on resolution")
+    void cyclingPaysDiscardBeforeDrawing() {
+        harness.setHand(player1, List.of(new Thornado()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertNotInHand(player1, "Thornado");
+        harness.assertInGraveyard(player1, "Thornado");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cycling requires green mana and does not discard when payment fails")
+    void cyclingRequiresGreenMana() {
+        harness.setHand(player1, List.of(new Thornado()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Thornado");
+        harness.assertNotInGraveyard(player1, "Thornado");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+    }
 }
 
 @CardUsed({Thornado.class, AirElemental.class, GrizzlyBears.class})
@@ -65,15 +111,13 @@ class Mh1ThornadoTest extends BaseCardTest {
     @Test
     @DisplayName("Destroys target creature with flying")
     void destroysTargetCreatureWithFlying() {
-        harness.addToBattlefield(player2, new AirElemental());
-        Permanent target = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new AirElemental()).getId();
 
         harness.setHand(player1, List.of(new Thornado()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertInGraveyard(player2, "Air Elemental");
     }
@@ -81,14 +125,13 @@ class Mh1ThornadoTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature without flying")
     void cannotTargetCreatureWithoutFlying() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent target = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
 
         harness.setHand(player1, List.of(new Thornado()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature with flying");
     }
