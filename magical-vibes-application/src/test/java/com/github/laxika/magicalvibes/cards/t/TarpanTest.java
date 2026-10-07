@@ -1,17 +1,63 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.j.Jokulhaups;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Tarpan.class, Jokulhaups.class, BalduvianBears.class})
+@CardUsed({Tarpan.class, Jokulhaups.class, BalduvianBears.class, Unsummon.class})
 class TarpanTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Each Tarpan dying simultaneously gains life for its own controller")
+    void simultaneousDeathsGainLifeForEachController() {
+        harness.addToBattlefield(player1, new Tarpan());
+        harness.addToBattlefield(player1, new Tarpan());
+        harness.addToBattlefield(player2, new Tarpan());
+        int player1LifeBefore = gd.getLife(player1.getId());
+        int player2LifeBefore = gd.getLife(player2.getId());
+
+        harness.castFromHand(player1, new Jokulhaups(), "{4}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Tarpan");
+        harness.assertNotOnBattlefield(player2, "Tarpan");
+        harness.assertInGraveyard(player1, "Tarpan");
+        harness.assertInGraveyard(player2, "Tarpan");
+        harness.assertLife(player1, player1LifeBefore);
+        harness.assertLife(player2, player2LifeBefore);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, player1LifeBefore + 2);
+        harness.assertLife(player2, player2LifeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Returning Tarpan to hand does not trigger life gain")
+    void returningToHandDoesNotGainLife() {
+        harness.addToBattlefield(player1, new Tarpan());
+        int lifeBefore = gd.getLife(player1.getId());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Tarpan"));
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Tarpan");
+        harness.assertNotInGraveyard(player1, "Tarpan");
+        harness.assertNotOnBattlefield(player1, "Tarpan");
+        harness.assertLife(player1, lifeBefore);
+    }
 
     @Test
     @DisplayName("Tarpan dies from Jokulhaups, controller gains 1 life")
