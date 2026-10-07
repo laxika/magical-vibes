@@ -53,7 +53,60 @@ class SunfallTest extends BaseCardTest {
     private void cast() {
         harness.setHand(player1, List.of(new Sunfall()));
         harness.addMana(player1, ManaColor.WHITE, 5);
-        harness.castSorcery(player1, 0, 0);
+        harness.castAndResolveSorcery(player1, 0, 0);
+    }
+
+    @Test
+    void createsOneNoncreatureIncubatorWhenNoCreaturesAreExiled() {
+        cast();
+
+        assertThat(countPermanents(player1, "Incubator")).isEqualTo(1);
+        Permanent incubator = findPermanent(player1, "Incubator");
+        assertThat(incubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.isCreature(gd, incubator)).isFalse();
+    }
+
+    @Test
+    void zeroCounterIncubatorDiesWhenTransformed() {
+        cast();
+        Permanent incubator = findPermanent(player1, "Incubator");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(incubator), null, null);
         harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(incubator);
+    }
+
+    @Test
+    void leavesExistingUntransformedIncubatorAndCreatesAnotherWithZeroCounters() {
+        cast();
+        Permanent original = findPermanent(player1, "Incubator");
+
+        cast();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(original);
+        assertThat(countPermanents(player1, "Incubator")).isEqualTo(2);
+        assertThat(findPermanents(player1, "Incubator"))
+                .allMatch(token -> token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) == 0);
+    }
+
+    @Test
+    void countsTransformedCreatureTokenEvenThoughItCeasesToExistAfterExile() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        cast();
+        Permanent original = findPermanent(player1, "Incubator");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(original), null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, original)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(1);
+
+        cast();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(original);
+        assertThat(countPermanents(player1, "Incubator")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Incubator").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(1);
     }
 }
