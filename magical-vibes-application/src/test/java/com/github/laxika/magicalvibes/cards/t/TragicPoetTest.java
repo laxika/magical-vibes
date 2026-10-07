@@ -175,6 +175,24 @@ class TragicPoetTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can activate during an opponent's turn and returns the card to its controller")
+    void canActivateDuringOpponentsTurn() {
+        Card enchantment = new AuraFlux();
+        addCreatureReady(player1, new TragicPoet());
+        harness.setGraveyard(player1, List.of(enchantment));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(enchantment.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Aura Flux");
+        harness.assertNotInHand(player2, "Aura Flux");
+        harness.assertNotInGraveyard(player1, "Aura Flux");
+        harness.assertInGraveyard(player1, "Tragic Poet");
+    }
+
+    @Test
     @DisplayName("Stack is empty after full resolution")
     void stackIsEmptyAfterResolution() {
         Card enchantment = new AuraFlux();
