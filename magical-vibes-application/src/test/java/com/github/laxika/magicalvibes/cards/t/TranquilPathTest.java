@@ -32,4 +32,28 @@ class TranquilPathTest extends BaseCardTest {
         harness.assertInHand(player1, "Angelfire Crusader");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
+
+    @Test
+    void drawsExactlyOneCardForCasterWhenThereAreNoEnchantments() {
+        harness.addToBattlefield(player1, new AngelfireCrusader());
+        harness.addToBattlefield(player2, new AngelfireCrusader());
+        harness.setLibrary(player1, List.of(new AngelfireCrusader(), new UnnaturalSelection()));
+        harness.setLibrary(player2, List.of(new UnnaturalSelection()));
+
+        harness.castFromHand(player1, new TranquilPath(), "{4}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Angelfire Crusader");
+        harness.assertOnBattlefield(player2, "Angelfire Crusader");
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(card -> card.getName())
+                .containsExactly("Angelfire Crusader");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(card -> card.getName())
+                .containsExactly("Unnatural Selection");
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .extracting(card -> card.getName())
+                .containsExactly("Unnatural Selection");
+        harness.assertInGraveyard(player1, "Tranquil Path");
+    }
 }
