@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.Banefire;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SpellSnip.class, LlanowarElves.class, GrizzlyBears.class, Banefire.class})
 class SpellSnipTest extends BaseCardTest {
 
     @Test
@@ -26,8 +29,7 @@ class SpellSnipTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, elves.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, elves.getId());
 
         harness.assertInGraveyard(player1, "Llanowar Elves");
         harness.assertNotOnBattlefield(player1, "Llanowar Elves");
@@ -46,8 +48,7 @@ class SpellSnipTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, elves.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, elves.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
@@ -69,8 +70,7 @@ class SpellSnipTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, elves.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, elves.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
@@ -88,10 +88,35 @@ class SpellSnipTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateHandAbility(player1, 0, null);
+        harness.assertInGraveyard(player1, "Spell Snip");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Spell Snip");
         harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Controller may still pay for a spell that cannot be countered")
+    void offersPaymentForUncounterableSpell() {
+        Banefire banefire = new Banefire();
+        harness.setHand(player1, List.of(banefire));
+        harness.addMana(player1, ManaColor.RED, 7);
+        harness.setHand(player2, List.of(new SpellSnip()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.setLife(player2, 20);
+
+        harness.castSorcery(player1, 0, 5, player2.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, banefire.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        harness.assertInGraveyard(player1, "Banefire");
     }
 }
