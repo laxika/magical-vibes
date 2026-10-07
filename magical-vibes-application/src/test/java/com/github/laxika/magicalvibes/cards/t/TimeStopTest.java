@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BoonSatyr;
 import com.github.laxika.magicalvibes.cards.e.EsikaGodOfTheTree;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfTolvada;
+import com.github.laxika.magicalvibes.cards.r.RoyalAssassin;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -24,7 +25,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TimeStop.class, ScatheZombies.class, InvasionOfTolvada.class, AirElemental.class,
-        TheBrokenSky.class, EsikaGodOfTheTree.class, ThePrismaticBridge.class, BoonSatyr.class})
+        TheBrokenSky.class, EsikaGodOfTheTree.class, ThePrismaticBridge.class, BoonSatyr.class,
+        RoyalAssassin.class})
 class TimeStopTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -163,8 +165,7 @@ class TimeStopTest extends BaseCardTest {
 
         // Cast bears, then angel
         harness.castCreature(player2, 0);
-        harness.passPriority(player2);
-        harness.passPriority(player1);
+        harness.passBothPriorities();
         // Bears resolves, now cast angel
         harness.castCreature(player2, 0);
         harness.passPriority(player2);
@@ -389,16 +390,20 @@ class TimeStopTest extends BaseCardTest {
     // ===== End-of-combat sacrifices =====
 
     @Test
-    @DisplayName("Resolving clears end-of-combat sacrifice list")
-    void clearsEndOfCombatSacrifices() {
+    @DisplayName("Skipping end of combat preserves its untriggered delayed sacrifice")
+    void preservesUntriggeredEndOfCombatSacrifice() {
+        Permanent creature = addCreatureReady(player1, new ScatheZombies());
         harness.setHand(player1, List.of(new TimeStop()));
         harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
-        gd.queueDelayedAction(new SacrificeAtEndOfCombat(UUID.randomUUID()));
+        SacrificeAtEndOfCombat sacrifice = new SacrificeAtEndOfCombat(creature.getId());
+        gd.queueDelayedAction(sacrifice);
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class)).isEmpty();
+        harness.assertOnBattlefield(player1, "Scathe Zombies");
+        assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class)).contains(sacrifice);
     }
 
     @Test
@@ -475,6 +480,55 @@ class TimeStopTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Scathe Zombies");
         harness.assertInGraveyard(player1, "Scathe Zombies");
+    }
+
+    @Test
+    @DisplayName("Time Stop removes activated abilities without removing their sources or targets")
+    void removesActivatedAbilitiesFromStack() {
+        addCreatureReady(player1, new RoyalAssassin());
+        Permanent target = addCreatureReady(player2, new ScatheZombies());
+        target.setTapped(true);
+        harness.setHand(player2, List.of(new TimeStop()));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Royal Assassin");
+        harness.assertOnBattlefield(player2, "Scathe Zombies");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Damage and temporary modifiers remain until cleanup discards finish")
+    void cleanupDiscardsBeforeRemovingDamageAndModifiers() {
+        Permanent creature = addCreatureReady(player1, new ScatheZombies());
+        creature.setMarkedDamage(1);
+        creature.setPowerModifier(3);
+        creature.setToughnessModifier(3);
+        harness.setHand(player1, List.of(
+                new ScatheZombies(), new ScatheZombies(), new ScatheZombies(), new ScatheZombies(),
+                new ScatheZombies(), new ScatheZombies(), new ScatheZombies(), new ScatheZombies()));
+        harness.setHand(player2, List.of(new TimeStop()));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(creature.getToughnessModifier()).isEqualTo(3);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(creature.getToughnessModifier()).isZero();
     }
 }
 
