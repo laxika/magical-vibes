@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.CallForBlood;
 import com.github.laxika.magicalvibes.cards.g.GnarledMass;
+import com.github.laxika.magicalvibes.cards.g.GroundSeal;
 import com.github.laxika.magicalvibes.cards.t.TendoIceBridge;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StreamOfConsciousness.class, GnarledMass.class, CallForBlood.class, TendoIceBridge.class})
+@CardUsed({StreamOfConsciousness.class, GnarledMass.class, CallForBlood.class, TendoIceBridge.class,
+        GroundSeal.class})
 class StreamOfConsciousnessTest extends BaseCardTest {
 
     private void castStream(UUID targetPlayerId) {
@@ -152,6 +154,85 @@ class StreamOfConsciousnessTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
+        harness.assertInGraveyard(player1, "Stream of Consciousness");
+    }
+
+    @Test
+    @DisplayName("Shuffles exactly four chosen cards while leaving an unchosen fifth card")
+    void shufflesFourOfFiveCards() {
+        List<Card> cards = List.of(new GnarledMass(), new CallForBlood(), new GnarledMass(),
+                new CallForBlood(), new TendoIceBridge());
+        harness.setGraveyard(player2, cards);
+        int librarySize = gd.playerDecks.get(player2.getId()).size();
+
+        castStream(player2.getId());
+        harness.handleMultipleCardsChosen(player1, cards.subList(0, 4).stream().map(Card::getId).toList());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySize + 4);
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getId)
+                .containsAll(cards.subList(0, 4).stream().map(Card::getId).toList());
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(cards.get(4));
+    }
+
+    @Test
+    @DisplayName("Rejects cards from a graveyard other than the targeted player's")
+    void cannotChooseCardsFromAnotherPlayersGraveyard() {
+        Card ownCard = new GnarledMass();
+        Card opponentCard = new CallForBlood();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentCard));
+
+        castStream(player2.getId());
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(opponentCard.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownCard);
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getId)
+                .contains(opponentCard.getId()).doesNotContain(ownCard.getId());
+    }
+
+    @Test
+    @DisplayName("Still shuffles a surviving target when another selected card leaves the graveyard")
+    void resolvesWithOneGraveyardTargetMissing() {
+        Card removed = new GnarledMass();
+        Card remaining = new CallForBlood();
+        harness.setGraveyard(player2, List.of(removed, remaining));
+        int librarySize = gd.playerDecks.get(player2.getId()).size();
+
+        castStream(player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(removed.getId(), remaining.getId()));
+        harness.setGraveyard(player2, List.of(remaining));
+        harness.setExile(player2, List.of(removed));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySize + 1);
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getId)
+                .contains(remaining.getId()).doesNotContain(removed.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.findExiledCard(removed.getId())).isNotNull();
+        harness.assertInGraveyard(player1, "Stream of Consciousness");
+    }
+
+    @Test
+    @DisplayName("Does not move graveyard targets that become untargetable before resolution")
+    void groundSealMakesChosenGraveyardCardsIllegal() {
+        Card chosen = new GnarledMass();
+        harness.setGraveyard(player2, List.of(chosen));
+        int librarySize = gd.playerDecks.get(player2.getId()).size();
+
+        castStream(player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        harness.addToBattlefield(player2, new GroundSeal());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySize);
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getId)
+                .doesNotContain(chosen.getId());
         harness.assertInGraveyard(player1, "Stream of Consciousness");
     }
 }
