@@ -18,6 +18,45 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SunderTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Resolves without any lands on the battlefield")
+    void resolvesWithoutLands() {
+        harness.setHand(player2, List.of());
+        harness.castFromHand(player1, new Sunder(), "{3}{U}{U}");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Sunder");
+    }
+
+    @Test
+    @DisplayName("Returns tapped and untapped lands present at resolution, including lands added after casting")
+    void returnsLandsPresentAtResolution() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setTapped(true);
+        harness.setHand(player2, List.of());
+        harness.castFromHand(player1, new Sunder(), "{3}{U}{U}");
+        harness.addToBattlefield(player1, new Island());
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        island.setTapped(true);
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(c -> c.getName())
+                .containsExactlyInAnyOrder("Forest", "Island");
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(c -> c.getName())
+                .containsExactlyInAnyOrder("Island", "Forest");
+        harness.assertInGraveyard(player1, "Sunder");
+    }
+
+    @Test
     @DisplayName("Returns all lands on the battlefield to their owners' hands")
     void returnsAllLandsToTheirOwnersHands() {
         harness.addToBattlefield(player1, new Forest());
