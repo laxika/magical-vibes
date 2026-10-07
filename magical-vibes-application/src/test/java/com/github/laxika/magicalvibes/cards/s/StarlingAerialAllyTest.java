@@ -73,6 +73,37 @@ class StarlingAerialAllyTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("ETB still grants flying after Starling leaves the battlefield")
+    void etbResolvesAfterSourceLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castStarling(target.getId());
+        harness.passBothPriorities();
+
+        Permanent starling = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof StarlingAerialAlly)
+                .findFirst().orElseThrow();
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, starling);
+        harness.passBothPriorities();
+
+        assertThat(target.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB does not grant flying to a target that left and returned")
+    void etbDoesNotAffectReturnedTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castStarling(target.getId());
+        harness.passBothPriorities();
+
+        harness.getPermanentRemovalService().removePermanentToHand(gd, target);
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(returned.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(gd.stack).isEmpty();
+    }
     private void castStarling(java.util.UUID targetId) {
         harness.setHand(player1, List.of(new StarlingAerialAlly()));
         harness.addMana(player1, ManaColor.WHITE, 1);
