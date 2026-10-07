@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CarapaceForger;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({TrigonOfCorruption.class, CarapaceForger.class})
 class TrigonOfCorruptionTest extends BaseCardTest {
-
-    // ===== ETB: enters with 3 charge counters =====
 
     @Test
     @DisplayName("Enters the battlefield with 3 charge counters")
@@ -32,8 +32,6 @@ class TrigonOfCorruptionTest extends BaseCardTest {
         Permanent trigon = findPermanent(player1, "Trigon of Corruption");
         assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
-
-    // ===== First ability: {B}{B}, {T} to add charge counter =====
 
     @Test
     @DisplayName("First ability adds a charge counter when paying {B}{B}")
@@ -60,44 +58,42 @@ class TrigonOfCorruptionTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Second ability: {2}, {T}, remove charge counter to put -1/-1 counter =====
-
     @Test
     @DisplayName("Second ability puts a -1/-1 counter on target creature")
     void secondAbilityPutsMinusCounter() {
         harness.addToBattlefield(player1, new TrigonOfCorruption());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new CarapaceForger());
 
         Permanent trigon = findPermanent(player1, "Trigon of Corruption");
         trigon.setCounterCount(CounterType.CHARGE, 1);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID creatureId = harness.getPermanentId(player2, "Carapace Forger");
         int trigonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(trigon);
-        harness.activateAbility(player1, trigonIndex, 1, null, bearsId);
+        harness.activateAbility(player1, trigonIndex, 1, null, creatureId);
         harness.passBothPriorities();
 
         // Charge counter removed
         assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
 
         // -1/-1 counter placed
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        Permanent creature = findPermanent(player2, "Carapace Forger");
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Second ability cannot be activated with 0 charge counters")
     void cannotActivateSecondAbilityWithNoCounters() {
         harness.addToBattlefield(player1, new TrigonOfCorruption());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new CarapaceForger());
 
         Permanent trigon = findPermanent(player1, "Trigon of Corruption");
         trigon.setCounterCount(CounterType.CHARGE, 0);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID creatureId = harness.getPermanentId(player2, "Carapace Forger");
         int trigonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(trigon);
-        assertThatThrownBy(() -> harness.activateAbility(player1, trigonIndex, 1, null, bearsId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, trigonIndex, 1, null, creatureId))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -106,38 +102,37 @@ class TrigonOfCorruptionTest extends BaseCardTest {
     void secondAbilityKillsOneOneCreature() {
         harness.addToBattlefield(player1, new TrigonOfCorruption());
 
-        // Create a 1/1 by giving Grizzly Bears (2/2) a -1/-1 counter
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
-        UUID bearsId = bears.getId();
+        // Create a 1/1 by giving Carapace Forger (2/2) a -1/-1 counter
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CarapaceForger());
+        creature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        UUID creatureId = creature.getId();
 
         Permanent trigon = findPermanent(player1, "Trigon of Corruption");
         trigon.setCounterCount(CounterType.CHARGE, 1);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         int trigonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(trigon);
-        harness.activateAbility(player1, trigonIndex, 1, null, bearsId);
+        harness.activateAbility(player1, trigonIndex, 1, null, creatureId);
         harness.passBothPriorities();
 
-        // Bears (1/1) got another -1/-1 counter making it 0/0, dies to SBA
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        // The 1/1 gets another -1/-1 counter, becomes 0/0, and dies.
+        harness.assertNotOnBattlefield(player2, "Carapace Forger");
+        harness.assertInGraveyard(player2, "Carapace Forger");
     }
 
     @Test
     @DisplayName("Second ability fizzles when target creature is removed before resolution")
     void secondAbilityFizzlesWhenTargetRemoved() {
         harness.addToBattlefield(player1, new TrigonOfCorruption());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new CarapaceForger());
 
         Permanent trigon = findPermanent(player1, "Trigon of Corruption");
         trigon.setCounterCount(CounterType.CHARGE, 1);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID creatureId = harness.getPermanentId(player2, "Carapace Forger");
         int trigonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(trigon);
-        harness.activateAbility(player1, trigonIndex, 1, null, bearsId);
+        harness.activateAbility(player1, trigonIndex, 1, null, creatureId);
 
         // Remove target before resolution
         gd.playerBattlefields.get(player2.getId()).clear();
@@ -151,13 +146,11 @@ class TrigonOfCorruptionTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
-    // ===== Tap constraint =====
-
     @Test
-    @DisplayName("Cannot use both abilities in the same turn since both require tapping")
-    void cannotUseBothAbilitiesSameTurn() {
+    @DisplayName("Cannot activate the second ability while tapped after using the first")
+    void cannotUseSecondAbilityWhileTapped() {
         harness.addToBattlefield(player1, new TrigonOfCorruption());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new CarapaceForger());
 
         Permanent trigon = findPermanent(player1, "Trigon of Corruption");
         trigon.setCounterCount(CounterType.CHARGE, 3);
@@ -167,12 +160,91 @@ class TrigonOfCorruptionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        // Now trigon is tapped — cannot activate second ability
+        // Trigon is tapped, so the second ability cannot be activated.
         assertThat(trigon.isTapped()).isTrue();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID creatureId = harness.getPermanentId(player2, "Carapace Forger");
         int trigonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(trigon);
-        assertThatThrownBy(() -> harness.activateAbility(player1, trigonIndex, 1, null, bearsId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, trigonIndex, 1, null, creatureId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Charge counter and tap costs are paid before the target receives its counter")
+    void paysCostsBeforeResolution() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfCorruption());
+        trigon.setCounterCount(CounterType.CHARGE, 3);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CarapaceForger());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
+
+        assertThat(trigon.isTapped()).isTrue();
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The second ability can target a creature controlled by its controller")
+    void canTargetOwnCreature() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfCorruption());
+        trigon.setCounterCount(CounterType.CHARGE, 1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CarapaceForger());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The second ability cannot target a noncreature artifact")
+    void cannotTargetNoncreature() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfCorruption());
+        trigon.setCounterCount(CounterType.CHARGE, 1);
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new TrigonOfCorruption());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, other.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(trigon.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The second ability resolves after its source leaves the battlefield")
+    void resolvesWithoutSource() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfCorruption());
+        trigon.setCounterCount(CounterType.CHARGE, 1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CarapaceForger());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(trigon);
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The first ability replenishes an empty trigon on resolution")
+    void replenishesEmptyTrigon() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfCorruption());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(trigon.isTapped()).isTrue();
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 }
