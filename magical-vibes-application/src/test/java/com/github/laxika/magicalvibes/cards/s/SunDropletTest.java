@@ -111,6 +111,50 @@ class SunDropletTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
     }
 
+    @Test
+    @DisplayName("Damage adds counters only when the triggered ability resolves")
+    void damageCountersWaitForTriggerResolution() {
+        Permanent droplet = addSunDroplet();
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new ShrapnelBlast()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstantWithSacrifice(player2, 0, player1.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 15);
+        assertThat(droplet.getCounterCount(CounterType.CHARGE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(droplet.getCounterCount(CounterType.CHARGE)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("An upkeep ability cannot gain life after Sun Droplet is sacrificed")
+    void sacrificedDropletCannotPayForUpkeepLifeGain() {
+        Permanent droplet = addSunDroplet();
+        droplet.setCounterCount(CounterType.CHARGE, 2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new ShrapnelBlast()));
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstantWithSacrifice(player1, 0, player2.getId(), droplet.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 15);
+        harness.assertNotOnBattlefield(player1, "Sun Droplet");
+        harness.assertInGraveyard(player1, "Sun Droplet");
+    }
+
     private Permanent addSunDroplet() {
         return harness.addToBattlefieldAndReturn(player1, new SunDroplet());
     }
