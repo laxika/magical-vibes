@@ -30,8 +30,7 @@ class StoneboundMentorTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
@@ -54,8 +53,7 @@ class StoneboundMentorTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Stonebound Mentor");
@@ -73,10 +71,79 @@ class StoneboundMentorTest extends BaseCardTest {
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castSorcery(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, bears.getId());
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Triggers when a noncreature card leaves its controller's graveyard")
+    void triggersForNoncreatureCard() {
+        harness.addToBattlefield(player1, new StoneboundMentor());
+        harness.setGraveyard(player1, List.of(new Reminisce()));
+        harness.setHand(player1, List.of(new Reminisce()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry).isNotNull();
+        assertThat(scry.cards()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Does not trigger when an empty graveyard is shuffled into the library")
+    void doesNotTriggerForEmptyGraveyard() {
+        harness.addToBattlefield(player1, new StoneboundMentor());
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new Reminisce()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Each Mentor triggers independently for a single graveyard departure")
+    void eachMentorTriggers() {
+        harness.addToBattlefield(player1, new StoneboundMentor());
+        harness.addToBattlefield(player1, new StoneboundMentor());
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        harness.setHand(player1, List.of(new Disentomb()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The scried card can be put on the bottom of the library")
+    void canPutScriedCardOnBottom() {
+        harness.addToBattlefield(player1, new StoneboundMentor());
+        Card bears = new GrizzlyBears();
+        Card top = new GrizzlyBears();
+        Card next = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        harness.setHand(player1, List.of(new Disentomb()));
+        harness.setLibrary(player1, List.of(top, next));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(next, top);
+        assertThat(gd.stack).isEmpty();
     }
 }
