@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.d.DoomBlade;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Murder;
+import com.github.laxika.magicalvibes.cards.c.CivicGardener;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -19,13 +19,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StickyFingers.class, GrizzlyBears.class, DoomBlade.class, Mountain.class})
+@CardUsed({StickyFingers.class, CivicGardener.class, Murder.class, Mountain.class})
 class StickyFingersTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enchanted creature has menace")
     void enchantedCreatureHasMenace() {
-        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent enchanted = addCreatureReady(player1, new CivicGardener());
         addAura(player1, enchanted);
 
         assertThat(gqs.hasKeyword(gd, enchanted, Keyword.MENACE)).isTrue();
@@ -34,11 +34,12 @@ class StickyFingersTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature creates a Treasure when it deals combat damage to a player")
     void createsTreasureOnCombatDamageToPlayer() {
-        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent enchanted = addCreatureReady(player1, new CivicGardener());
         addAura(player1, enchanted);
         enchanted.setAttacking(true);
 
         resolveCombat();
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.TREASURE)))
@@ -48,9 +49,9 @@ class StickyFingersTest extends BaseCardTest {
     @Test
     @DisplayName("Aura controller draws when the enchanted creature dies")
     void auraControllerDrawsWhenEnchantedCreatureDies() {
-        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent enchanted = addCreatureReady(player1, new CivicGardener());
         addAura(player2, enchanted);
-        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new CivicGardener()));
 
         destroyCreature(player2, enchanted);
 
@@ -60,7 +61,7 @@ class StickyFingersTest extends BaseCardTest {
     @Test
     @DisplayName("Sticky Fingers can enchant only a creature")
     void cannotEnchantALand() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new CivicGardener());
         harness.addToBattlefield(player1, new Mountain());
         harness.setHand(player1, List.of(new StickyFingers()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -70,6 +71,52 @@ class StickyFingersTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("The enchanted creature's controller creates the Treasure, even with an opposing Aura")
+    void creatureControllerCreatesTreasureWithOpposingAura() {
+        Permanent enchanted = addCreatureReady(player1, new CivicGardener());
+        addAura(player2, enchanted);
+        enchanted.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.TREASURE)))
+                .hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.TREASURE)))
+                .isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Sticky Fingers draws a card when their enchanted creature dies")
+    void multipleAurasEachDrawOnDeath() {
+        Permanent enchanted = addCreatureReady(player1, new CivicGardener());
+        addAura(player2, enchanted);
+        addAura(player2, enchanted);
+        harness.setLibrary(player2, List.of(new CivicGardener(), new CivicGardener()));
+
+        destroyCreature(player2, enchanted);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("An unrelated creature dying does not trigger Sticky Fingers")
+    void unrelatedCreatureDeathDoesNotDraw() {
+        Permanent enchanted = addCreatureReady(player1, new CivicGardener());
+        Permanent other = addCreatureReady(player1, new CivicGardener());
+        addAura(player2, enchanted);
+        harness.setLibrary(player2, List.of(new CivicGardener()));
+
+        destroyCreature(player2, other);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gqs.hasKeyword(gd, enchanted, Keyword.MENACE)).isTrue();
     }
 
     private void addAura(Player controller, Permanent enchanted) {
@@ -82,10 +129,9 @@ class StickyFingersTest extends BaseCardTest {
         harness.forceActivePlayer(caster);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(caster, List.of(new DoomBlade()));
-        harness.addMana(caster, ManaColor.BLACK, 2);
-        harness.castInstant(caster, 0, target.getId());
-        harness.passBothPriorities();
+        harness.setHand(caster, List.of(new Murder()));
+        harness.addMana(caster, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(caster, 0, target.getId());
         harness.passBothPriorities();
     }
 }
