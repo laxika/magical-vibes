@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Ponder;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.f.FranticFirebolt;
+import com.github.laxika.magicalvibes.cards.m.Mintstrosity;
+import com.github.laxika.magicalvibes.cards.w.WitchsMark;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,8 +14,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UnrulyCatapult.class, GrizzlyBears.class, Ponder.class, Shock.class})
+@CardUsed({UnrulyCatapult.class, Mintstrosity.class, WitchsMark.class, FranticFirebolt.class})
 class UnrulyCatapultTest extends BaseCardTest {
 
     @Test
@@ -38,9 +39,9 @@ class UnrulyCatapultTest extends BaseCardTest {
         Permanent catapult = addCatapultReady(player1);
         catapult.tap();
 
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
+        harness.setHand(player1, List.of(new FranticFirebolt()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castInstant(player1, 0, catapult.getId());
         harness.passBothPriorities();
 
         assertThat(catapult.isTapped()).isFalse();
@@ -52,8 +53,8 @@ class UnrulyCatapultTest extends BaseCardTest {
         Permanent catapult = addCatapultReady(player1);
         catapult.tap();
 
-        harness.setHand(player1, List.of(new Ponder()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player1, List.of(new WitchsMark()));
+        harness.addMana(player1, ManaColor.RED, 2);
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
@@ -66,8 +67,8 @@ class UnrulyCatapultTest extends BaseCardTest {
         Permanent catapult = addCatapultReady(player1);
         catapult.tap();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new Mintstrosity()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
@@ -81,18 +82,93 @@ class UnrulyCatapultTest extends BaseCardTest {
         catapult.tap();
 
         harness.forceActivePlayer(player2);
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new FranticFirebolt()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player2, 0, catapult.getId());
 
         assertThat(catapult.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("The untap trigger resolves before the spell and allows another activation")
+    void untapTriggerAllowsAnotherActivationBeforeSpellResolves() {
+        Permanent catapult = addCatapultReady(player1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+
+        harness.setHand(player1, List.of(new FranticFirebolt()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castInstant(player1, 0, catapult.getId());
+
+        assertThat(catapult.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(catapult.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+        assertThat(catapult.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents activating the tap ability")
+    void summoningSicknessPreventsActivation() {
+        Permanent catapult = addCatapultReady(player1);
+        catapult.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(catapult.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A tapped Catapult cannot activate without untapping")
+    void tappedCatapultCannotActivateAgain() {
+        Permanent catapult = addCatapultReady(player1);
+        catapult.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Each Catapult untaps independently and the opponent's Catapult stays tapped")
+    void spellUntapsOnlyControlledCatapults() {
+        Permanent first = addCatapultReady(player1);
+        Permanent second = addCatapultReady(player1);
+        Permanent opposing = addCatapultReady(player2);
+        first.tap();
+        second.tap();
+        opposing.tap();
+
+        harness.setHand(player1, List.of(new FranticFirebolt()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castInstant(player1, 0, opposing.getId());
+        assertThat(gd.stack).hasSize(3);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+        assertThat(opposing.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+    }
+
     private Permanent addCatapultReady(Player player) {
-        Permanent perm = new Permanent(new UnrulyCatapult());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new UnrulyCatapult());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
