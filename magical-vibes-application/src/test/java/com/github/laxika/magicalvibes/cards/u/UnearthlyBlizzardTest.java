@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.s.SenseisDiviningTop;
 import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -134,6 +135,45 @@ class UnearthlyBlizzardTest extends BaseCardTest {
         castUnearthlyBlizzard(List.of(creature.getId()));
 
         harness.assertInGraveyard(player1, "Unearthly Blizzard");
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same creature twice")
+    void cannotChooseSameCreatureTwice() {
+        Permanent creature = addCreatureReady(player2, new WanderingOnes());
+        prepareUnearthlyBlizzard();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("No creatures are affected when every target leaves before resolution")
+    void allTargetsLeaveBeforeResolution() {
+        Permanent target = addCreatureReady(player2, new WanderingOnes());
+        Permanent untargeted = addCreatureReady(player2, new WanderingOnes());
+        prepareUnearthlyBlizzard();
+        harness.castSorcery(player1, 0, List.of(target.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(untargeted.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Unearthly Blizzard");
+    }
+
+    @Test
+    @DisplayName("The blocking restriction expires at the end of the turn")
+    void blockingRestrictionExpires() {
+        Permanent creature = addCreatureReady(player2, new WanderingOnes());
+        castUnearthlyBlizzard(List.of(creature.getId()));
+        assertThat(creature.isCantBlockThisTurn()).isTrue();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(creature.isCantBlockThisTurn()).isFalse();
     }
 
     private void castUnearthlyBlizzard(List<UUID> targetIds) {
