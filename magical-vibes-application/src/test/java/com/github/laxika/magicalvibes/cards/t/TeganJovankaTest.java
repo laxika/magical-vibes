@@ -57,12 +57,72 @@ class TeganJovankaTest extends BaseCardTest {
         assertThat(historicAttacker.getPowerModifier()).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, historicAttacker, Keyword.INDESTRUCTIBLE)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(historicAttacker.getPowerModifier()).isZero();
         assertThat(historicAttacker.getToughnessModifier()).isZero();
         assertThat(gqs.hasKeyword(gd, historicAttacker, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Tegan can target herself when attacking, but not an idle historic creature")
+    void canTargetHerselfWhenAttacking() {
+        Permanent tegan = addCreatureReady(player1, new TeganJovanka());
+        addCreatureReady(player1, new Ornithopter());
+
+        declareAttackers(player1, List.of(0));
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(tegan.getId());
+
+        harness.handlePermanentChosen(player1, tegan.getId());
+        harness.passBothPriorities();
+
+        assertThat(tegan.getPowerModifier()).isEqualTo(1);
+        assertThat(tegan.getToughnessModifier()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, tegan, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An attack with no historic attacker grants no benefits and requires no target choice")
+    void noHistoricAttacker() {
+        Permanent tegan = addCreatureReady(player1, new TeganJovanka());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(1));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(tegan.getPowerModifier()).isZero();
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, tegan, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Tegan does not trigger when her opponent attacks")
+    void opponentAttackDoesNotTrigger() {
+        addCreatureReady(player1, new TeganJovanka());
+        Permanent attacker = addCreatureReady(player2, new Ornithopter());
+
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Tegan does not trigger when no attackers are declared")
+    void noAttackersDoesNotTrigger() {
+        Permanent tegan = addCreatureReady(player1, new TeganJovanka());
+
+        declareAttackers(player1, List.of());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(tegan.getPowerModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, tegan, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 }
