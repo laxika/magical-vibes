@@ -56,8 +56,7 @@ class TrashTheTownTest extends BaseCardTest {
         harness.castModalInstantWithModes(player1, 0, 1, 3, new int[]{2}, List.of(target.getId()));
         harness.passBothPriorities();
 
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         target.setAttacking(true);
@@ -92,6 +91,76 @@ class TrashTheTownTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castModalInstantWithModes(
                 player1, 0, 1, 3, new int[]{0}, List.of(land.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Different modes affect only their respective targets")
+    void modesUseSeparateTargets() {
+        Permanent counters = addCreatureReady(player1, new GrizzlyBears());
+        Permanent trample = addCreatureReady(player1, new GrizzlyBears());
+        Permanent draw = addCreatureReady(player1, new GrizzlyBears());
+
+        cast(new int[]{0, 1, 2}, List.of(counters.getId(), trample.getId(), draw.getId()), 5);
+
+        assertThat(counters.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(trample.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(draw.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, counters, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, trample, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, draw, Keyword.TRAMPLE)).isFalse();
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        counters.setAttacking(true);
+        resolveCombat();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    @DisplayName("The creature's controller draws even when an opponent cast the spell")
+    void opponentCreatureControllerDraws() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        cast(new int[]{2}, List.of(target.getId()), 2);
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        int casterHand = gd.playerHands.get(player1.getId()).size();
+        int creatureControllerHand = gd.playerHands.get(player2.getId()).size();
+
+        target.setAttacking(true);
+        resolveCombat(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(creatureControllerHand + 2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(casterHand);
+    }
+
+    @Test
+    @DisplayName("The granted draw ability expires at end of turn")
+    void drawAbilityExpiresAtEndOfTurn() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        cast(new int[]{2}, List.of(target.getId()), 2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        target.setAttacking(true);
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    @DisplayName("The printed mana cost alone cannot pay for a selected spree mode")
+    void requiresAdditionalModeCost() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TrashTheTown()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(
+                player1, 0, 1, 3, new int[]{2}, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
