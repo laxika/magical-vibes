@@ -1,48 +1,35 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.cards.a.AvacynianPriest;
+import com.github.laxika.magicalvibes.cards.d.DoomedTraveler;
+import com.github.laxika.magicalvibes.cards.g.Geistflame;
+import com.github.laxika.magicalvibes.cards.o.OliviaVoldaren;
+import com.github.laxika.magicalvibes.cards.p.PreyUpon;
+import com.github.laxika.magicalvibes.cards.r.RecklessWaif;
+import com.github.laxika.magicalvibes.cards.r.RottingFensnake;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SpareFromEvil.class, DoomedTraveler.class, WalkingCorpse.class, RottingFensnake.class,
+        RecklessWaif.class, OliviaVoldaren.class, AvacynianPriest.class,
+        Geistflame.class, PreyUpon.class, TurnToFrog.class})
 class SpareFromEvilTest extends BaseCardTest {
-
-    private static Card createHumanCreature(String name, int power, int toughness) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(CardColor.WHITE);
-        card.setPower(power);
-        card.setToughness(toughness);
-        card.setSubtypes(List.of(CardSubtype.HUMAN));
-        return card;
-    }
-
-    private static Card createNonHumanCreature(String name, int power, int toughness) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(CardColor.GREEN);
-        card.setPower(power);
-        card.setToughness(toughness);
-        card.setSubtypes(List.of(CardSubtype.BEAST));
-        return card;
-    }
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Spare from Evil puts it on the stack")
@@ -57,135 +44,268 @@ class SpareFromEvilTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
     }
 
-    // ===== Resolution grants protection =====
+    @Test
+    @DisplayName("Resolving grants protection to controlled Human and non-Human creatures")
+    void resolvingGrantsProtection() {
+        Permanent human = harness.addToBattlefieldAndReturn(player1, new DoomedTraveler());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
+
+        castSpareFromEvil();
+
+        assertThat(human.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).contains(CardSubtype.HUMAN);
+        assertThat(zombie.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).contains(CardSubtype.HUMAN);
+        harness.assertInGraveyard(player1, "Spare from Evil");
+    }
 
     @Test
-    @DisplayName("Resolving grants protection from non-Human creatures to all controlled creatures")
-    void resolvingGrantsProtection() {
-        harness.addToBattlefield(player1, createHumanCreature("Elite Vanguard", 2, 1));
-        harness.addToBattlefield(player1, createNonHumanCreature("Bear", 2, 2));
+    @DisplayName("Non-Human creature cannot block a protected attacker")
+    void nonHumanCannotBlock() {
+        Permanent attacker = addCreatureReady(player1, new DoomedTraveler());
+        Permanent blocker = addCreatureReady(player2, new WalkingCorpse());
+        castSpareFromEvil();
 
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker, gd.playerBattlefields.get(player2.getId())))
+                .isFalse();
+    }
+
+    @Test
+    @DisplayName("Human creature can still block a protected attacker")
+    void humanCanStillBlock() {
+        Permanent attacker = addCreatureReady(player1, new DoomedTraveler());
+        Permanent blocker = addCreatureReady(player2, new DoomedTraveler());
+        castSpareFromEvil();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker, gd.playerBattlefields.get(player2.getId())))
+                .isTrue();
+    }
+
+    @Test
+    @DisplayName("Casting after blocks prevents combat damage from a non-Human blocker")
+    void combatDamageFromNonHumanPrevented() {
+        Permanent attacker = addCreatureReady(player1, new DoomedTraveler());
+        addCreatureReady(player2, new RottingFensnake());
+        declareAttackersAndPrepareBlockers(List.of(0));
         harness.setHand(player1, List.of(new SpareFromEvil()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.castAndResolveInstant(player1, 0));
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.runStateBasedActions();
 
-        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-        for (Permanent p : battlefield) {
-            if (gqs.isCreature(gd, p)) {
-                assertThat(p.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).contains(CardSubtype.HUMAN);
-            }
-        }
-    }
-
-    // ===== Protection prevents blocking by non-Human creatures =====
-
-    @Test
-    @DisplayName("Non-Human creature cannot block creature with protection from non-Human creatures")
-    void nonHumanCannotBlock() {
-        Permanent attacker = new Permanent(createHumanCreature("Elite Vanguard", 2, 1));
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        attacker.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn().add(CardSubtype.HUMAN);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
-
-        Permanent blocker = new Permanent(createNonHumanCreature("Beast", 3, 3));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        // Blocker should not be able to block the protected attacker
-        assertThat(bls.canBlockAttacker(gd, blocker, attacker, gd.playerBattlefields.get(player2.getId()))).isFalse();
+        harness.assertOnBattlefield(player1, "Doomed Traveler");
+        assertThat(attacker.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Rotting Fensnake");
+        harness.assertLife(player2, 20);
     }
 
     @Test
-    @DisplayName("Human creature CAN block creature with protection from non-Human creatures")
-    void humanCanStillBlock() {
-        Permanent attacker = new Permanent(createHumanCreature("Elite Vanguard", 2, 1));
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        attacker.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn().add(CardSubtype.HUMAN);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
-
-        Permanent blocker = new Permanent(createHumanCreature("Human Blocker", 2, 2));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        // Human blocker should be able to block the protected attacker
-        assertThat(bls.canBlockAttacker(gd, blocker, attacker, gd.playerBattlefields.get(player2.getId()))).isTrue();
-    }
-
-    // ===== Protection prevents combat damage from non-Human creatures =====
-
-    @Test
-    @DisplayName("Combat damage from non-Human blocker is prevented by protection")
-    void combatDamageFromNonHumanPrevented() {
-        Permanent attacker = new Permanent(createHumanCreature("Elite Vanguard", 2, 1));
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        attacker.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn().add(CardSubtype.HUMAN);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
-
-        Permanent blocker = new Permanent(createNonHumanCreature("Big Beast", 5, 5));
-        blocker.setSummoningSick(false);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        // Elite Vanguard (2/1) should survive because 5 damage from non-Human is prevented
-        harness.assertOnBattlefield(player1, "Elite Vanguard");
-    }
-
-    // ===== Protection clears at end of turn =====
-
-    @Test
-    @DisplayName("Protection is cleared at end of turn via resetModifiers")
+    @DisplayName("Protection persists through the end step and expires at cleanup")
     void protectionClearedAtEndOfTurn() {
-        Permanent creature = new Permanent(createHumanCreature("Soldier", 2, 2));
-        creature.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn().add(CardSubtype.HUMAN);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
+        castSpareFromEvil();
 
-        assertThat(creature.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).isNotEmpty();
-
-        creature.resetModifiers();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(creature.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).contains(CardSubtype.HUMAN);
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(creature.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).isEmpty();
     }
 
-    // ===== Does not affect opponent's creatures =====
-
     @Test
     @DisplayName("Does not grant protection to opponent's creatures")
     void doesNotAffectOpponentCreatures() {
-        harness.addToBattlefield(player1, createHumanCreature("Own Soldier", 2, 2));
-        harness.addToBattlefield(player2, createHumanCreature("Opponent Soldier", 2, 2));
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new DoomedTraveler());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new DoomedTraveler());
 
-        harness.setHand(player1, List.of(new SpareFromEvil()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
-
-        Permanent ownCreature = findPermanent(player1, "Own Soldier");
-        Permanent opponentCreature = findPermanent(player2, "Opponent Soldier");
+        castSpareFromEvil();
 
         assertThat(ownCreature.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).contains(CardSubtype.HUMAN);
         assertThat(opponentCreature.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).isEmpty();
+    }
+
+    @Test
+    void creaturesEnteringAfterResolutionDoNotGainProtection() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
+        castSpareFromEvil();
+
+        Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new DoomedTraveler());
+
+        assertThat(original.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).contains(CardSubtype.HUMAN);
+        assertThat(newcomer.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).isEmpty();
+    }
+
+    @Test
+    void creaturesEnteringBeforeResolutionGainProtection() {
+        harness.setHand(player1, List.of(new SpareFromEvil()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0);
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new WalkingCorpse());
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).contains(CardSubtype.HUMAN);
+    }
+
+    @Test
+    void humanWithOtherCreatureTypesCanStillBlock() {
+        Permanent attacker = addCreatureReady(player1, new DoomedTraveler());
+        Permanent blocker = addCreatureReady(player2, new RecklessWaif());
+        castSpareFromEvil();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker, gd.playerBattlefields.get(player2.getId())))
+                .isTrue();
+    }
+
+    @Test
+    void nonHumanCreatureAbilityCannotTargetProtectedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
+        harness.addToBattlefield(player2, new OliviaVoldaren());
+        castSpareFromEvil();
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void protectionMakesPendingNonHumanCreatureAbilityTargetIllegal() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
+        Permanent olivia = harness.addToBattlefieldAndReturn(player2, new OliviaVoldaren());
+        harness.setHand(player1, List.of(new SpareFromEvil()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, null, target.getId());
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getGrantedSubtypes()).doesNotContain(CardSubtype.VAMPIRE);
+        assertThat(olivia.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void humanCreatureAbilityCanStillTargetProtectedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
+        addCreatureReady(player2, new AvacynianPriest());
+        castSpareFromEvil();
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void instantCanStillTargetAndDamageProtectedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
+        castSpareFromEvil();
+        harness.setHand(player2, List.of(new Geistflame()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Walking Corpse");
+    }
+
+    @Test
+    void fightDamageFromNonHumanCreatureIsPrevented() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
+        Permanent snake = harness.addToBattlefieldAndReturn(player2, new RottingFensnake());
+        castSpareFromEvil();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new PreyUpon()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player2, 0, List.of(snake.getId(), target.getId()));
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Walking Corpse");
+        harness.assertInGraveyard(player2, "Rotting Fensnake");
+    }
+
+    @Test
+    void resolvesWithNoCreatures() {
+        castSpareFromEvil();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Spare from Evil");
+    }
+
+    @Test
+    void laterAbilityRemovalRemovesGrantedProtection() {
+        Permanent attacker = addCreatureReady(player1, new DoomedTraveler());
+        Permanent blocker = addCreatureReady(player2, new WalkingCorpse());
+        castSpareFromEvil();
+        harness.setHand(player2, List.of(new TurnToFrog()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker, gd.playerBattlefields.get(player2.getId())))
+                .isTrue();
+    }
+
+    @Test
+    void protectionGrantedAfterAbilityRemovalStillApplies() {
+        Permanent attacker = addCreatureReady(player1, new DoomedTraveler());
+        Permanent blocker = addCreatureReady(player2, new WalkingCorpse());
+        harness.setHand(player2, List.of(new TurnToFrog()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
+
+        castSpareFromEvil();
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker, gd.playerBattlefields.get(player2.getId())))
+                .isFalse();
+    }
+
+    @Test
+    void combatDamageFromHumanIsNotPrevented() {
+        Permanent attacker = addCreatureReady(player1, new WalkingCorpse());
+        addCreatureReady(player2, new DoomedTraveler());
+        castSpareFromEvil();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.runStateBasedActions();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Walking Corpse");
+        harness.assertInGraveyard(player2, "Doomed Traveler");
+    }
+
+    private void castSpareFromEvil() {
+        harness.setHand(player1, List.of(new SpareFromEvil()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0);
     }
 }
