@@ -31,8 +31,7 @@ class TakeOutTheTrashTest extends BaseCardTest {
         harness.setHand(player1, new ArrayList<>(List.of(new TakeOutTheTrash(), keeper)));
         addMana();
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
@@ -49,8 +48,7 @@ class TakeOutTheTrashTest extends BaseCardTest {
         harness.setHand(player1, new ArrayList<>(List.of(new TakeOutTheTrash(), discard)));
         addMana();
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -69,8 +67,7 @@ class TakeOutTheTrashTest extends BaseCardTest {
         harness.setHand(player1, new ArrayList<>(List.of(new TakeOutTheTrash(), keeper)));
         addMana();
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(keeper);
@@ -85,8 +82,7 @@ class TakeOutTheTrashTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TakeOutTheTrash()));
         addMana();
 
-        harness.castInstant(player1, 0, planeswalker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, planeswalker.getId());
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
     }
@@ -101,6 +97,77 @@ class TakeOutTheTrashTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void opponentsRaccoonDoesNotEnableLoot() {
+        Permanent raccoon = harness.addToBattlefieldAndReturn(player2, new RaccoonRallier());
+        Card keeper = new Forest();
+        harness.setHand(player1, List.of(new TakeOutTheTrash(), keeper));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, raccoon.getId());
+
+        harness.assertInGraveyard(player2, "Raccoon Rallier");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(keeper);
+    }
+
+    @Test
+    void acceptingLootWithAnEmptyHandDoesNotDraw() {
+        harness.addToBattlefield(player1, new RaccoonRallier());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RaccoonRallier());
+        Card draw = new Forest();
+        harness.setLibrary(player1, List.of(draw));
+        harness.setHand(player1, List.of(new TakeOutTheTrash()));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void canLootWhenTheOnlyRaccoonReceivesLethalDamageFromThisSpell() {
+        Permanent raccoon = harness.addToBattlefieldAndReturn(player1, new RaccoonRallier());
+        Card discard = new Forest();
+        Card draw = new Forest();
+        harness.setLibrary(player1, List.of(draw));
+        harness.setHand(player1, List.of(new TakeOutTheTrash(), discard));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, raccoon.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.assertOnBattlefield(player1, "Raccoon Rallier");
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discard);
+        harness.assertInGraveyard(player1, "Raccoon Rallier");
+    }
+
+    @Test
+    void illegalTargetPreventsLootEvenWithARaccoon() {
+        harness.addToBattlefield(player1, new RaccoonRallier());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RaccoonRallier());
+        Card keeper = new Forest();
+        Card draw = new Forest();
+        harness.setLibrary(player1, List.of(draw));
+        harness.setHand(player1, List.of(new TakeOutTheTrash(), keeper));
+        addMana();
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(keeper);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
+        harness.assertInGraveyard(player1, "Take Out the Trash");
+    }
     private void addMana() {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
