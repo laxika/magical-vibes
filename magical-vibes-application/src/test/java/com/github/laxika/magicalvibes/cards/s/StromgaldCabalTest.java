@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
-import com.github.laxika.magicalvibes.cards.b.BantSureblade;
+import com.github.laxika.magicalvibes.cards.m.MeriekeRiBerit;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranWarrior;
-import com.github.laxika.magicalvibes.cards.s.SwordsToPlowshares;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,10 +14,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StromgaldCabal.class, BantSureblade.class, KjeldoranWarrior.class, BalduvianBears.class})
+@CardUsed({StromgaldCabal.class, MeriekeRiBerit.class, KjeldoranWarrior.class, BalduvianBears.class,
+        SwordsToPlowshares.class})
 class StromgaldCabalTest extends BaseCardTest {
-
-    // ===== Counters a white spell, paying 1 life =====
 
     @Test
     @DisplayName("Counters target white spell and pays 1 life")
@@ -36,13 +33,11 @@ class StromgaldCabalTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, victim.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Kjeldoran Warrior is countered — goes to graveyard, 1 life paid
         harness.assertInGraveyard(player2, "Kjeldoran Warrior");
         harness.assertNotOnBattlefield(player2, "Kjeldoran Warrior");
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
     }
 
     @Test
@@ -65,7 +60,6 @@ class StromgaldCabalTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(SwordsToPlowshares.class)
     @DisplayName("Counters a white noncreature spell and taps")
     void countersWhiteNonCreatureSpell() {
         StromgaldCabal cabal = new StromgaldCabal();
@@ -85,7 +79,7 @@ class StromgaldCabalTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Swords to Plowshares");
         assertThat(cabalPermanent.isTapped()).isTrue();
-        assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
     }
 
     @Test
@@ -104,7 +98,7 @@ class StromgaldCabalTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough life");
         assertThat(cabalPermanent.isTapped()).isFalse();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isZero();
+        harness.assertLife(player1, 0);
     }
 
     @Test
@@ -114,24 +108,17 @@ class StromgaldCabalTest extends BaseCardTest {
         addCreatureReady(player1, cabal);
         harness.setLife(player1, 20);
 
-        BantSureblade victim = new BantSureblade();
-        harness.setHand(player2, List.of(victim));
-        harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
-
+        MeriekeRiBerit victim = new MeriekeRiBerit();
         harness.forceActivePlayer(player2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, victim, "{W}{U}{B}");
         harness.passPriority(player2);
 
         harness.activateAbility(player1, 0, null, victim.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Bant Sureblade");
-        assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        harness.assertInGraveyard(player2, "Merieke Ri Berit");
+        harness.assertLife(player1, 19);
     }
-
-    // ===== Cannot target a non-white spell =====
 
     @Test
     @DisplayName("Cannot target a green spell")
@@ -147,5 +134,69 @@ class StromgaldCabalTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Pays tap and life costs before the ability resolves")
+    void paysCostsOnActivation() {
+        var cabalPermanent = addCreatureReady(player1, new StromgaldCabal());
+        harness.setLife(player1, 20);
+
+        KjeldoranWarrior victim = new KjeldoranWarrior();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, victim, "{W}");
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, victim.getId());
+
+        assertThat(cabalPermanent.isTapped()).isTrue();
+        harness.assertLife(player1, 19);
+        assertThat(gd.stack).hasSize(2);
+        harness.assertNotInGraveyard(player2, "Kjeldoran Warrior");
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Kjeldoran Warrior");
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped and does not pay life")
+    void cannotActivateWhileTapped() {
+        var cabalPermanent = addCreatureReady(player1, new StromgaldCabal());
+        cabalPermanent.tap();
+        harness.setLife(player1, 20);
+
+        KjeldoranWarrior victim = new KjeldoranWarrior();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, victim, "{W}");
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, victim.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate with summoning sickness and does not pay costs")
+    void cannotActivateWithSummoningSickness() {
+        var cabalPermanent = addCreatureReady(player1, new StromgaldCabal());
+        cabalPermanent.setSummoningSick(true);
+        harness.setLife(player1, 20);
+
+        KjeldoranWarrior victim = new KjeldoranWarrior();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, victim, "{W}");
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, victim.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(cabalPermanent.isTapped()).isFalse();
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
     }
 }
