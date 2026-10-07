@@ -25,8 +25,7 @@ class SpaceshiftTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         giveSpaceshift();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         Permanent returned = findPermanent(player2, "Grizzly Bears");
         assertThat(returned.getId()).isNotEqualTo(target.getId());
@@ -41,8 +40,7 @@ class SpaceshiftTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new UrzasBauble());
         giveSpaceshift();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         Permanent returned = findPermanent(player1, "Urza's Bauble");
         assertThat(returned.getId()).isNotEqualTo(target.getId());
@@ -58,6 +56,55 @@ class SpaceshiftTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an artifact or creature");
+    }
+
+    @Test
+    @DisplayName("Returns a stolen creature to its owner rather than its controller")
+    void returnsStolenCreatureToOwner() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.stolenCreatures.put(target.getId(), player2.getId());
+        giveSpaceshift();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        Permanent returned = findPermanent(player2, "Grizzly Bears");
+        assertThat(returned.getId()).isNotEqualTo(target.getId());
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Returns a fresh untapped creature with only the new counter")
+    void resetsOldPermanentState() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        target.tap();
+        target.setSummoningSick(false);
+        giveSpaceshift();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.getId()).isNotEqualTo(target.getId());
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(returned.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not return a target that leaves the battlefield before resolution")
+    void doesNotReturnMissingTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        giveSpaceshift();
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setGraveyard(player2, List.of(target.getCard()));
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 
     private void giveSpaceshift() {
