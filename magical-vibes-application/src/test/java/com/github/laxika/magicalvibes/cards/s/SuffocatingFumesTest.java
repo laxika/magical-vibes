@@ -21,8 +21,7 @@ class SuffocatingFumesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SuffocatingFumes()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 
     @Test
@@ -78,5 +77,41 @@ class SuffocatingFumesTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Suffocating Fumes");
         harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution are not shrunk")
+    void doesNotShrinkCreaturesEnteringLater() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castFumes();
+        Permanent later = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
+
+        assertThat(existing.getEffectivePower()).isEqualTo(1);
+        assertThat(existing.getEffectiveToughness()).isEqualTo(1);
+        assertThat(later.getEffectivePower()).isEqualTo(1);
+        assertThat(later.getEffectiveToughness()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Fugitive Wizard");
+    }
+
+    @Test
+    @DisplayName("Cycling discards as a cost and does not shrink creatures")
+    void cyclingDiscardsBeforeDrawingWithoutShrinking() {
+        Permanent theirs = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SuffocatingFumes()));
+        harness.setLibrary(player1, List.of(new FugitiveWizard()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Suffocating Fumes");
+        harness.assertNotInHand(player1, "Suffocating Fumes");
+        harness.assertNotInHand(player1, "Fugitive Wizard");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Fugitive Wizard");
+        assertThat(theirs.getEffectivePower()).isEqualTo(2);
+        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
     }
 }
