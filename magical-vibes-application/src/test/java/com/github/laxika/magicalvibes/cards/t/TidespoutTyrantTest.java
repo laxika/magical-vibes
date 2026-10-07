@@ -85,4 +85,62 @@ class TidespoutTyrantTest extends BaseCardTest {
         harness.assertNotInHand(player2, "Simic Signet");
         harness.assertNotOnBattlefield(player2, "Simic Signet");
     }
+
+    @Test
+    @DisplayName("The Tyrant can return itself before the triggering spell resolves")
+    void canReturnItselfBeforeSpellResolves() {
+        Permanent tyrant = harness.addToBattlefieldAndReturn(player1, new TidespoutTyrant());
+
+        harness.castFromHand(player1, new SimicSignet(), "{2}");
+        harness.handlePermanentChosen(player1, tyrant.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Tidespout Tyrant");
+        harness.assertNotOnBattlefield(player1, "Tidespout Tyrant");
+        harness.assertNotOnBattlefield(player1, "Simic Signet");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Simic Signet");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting a creature spell triggers the Tyrant already on the battlefield")
+    void creatureSpellTriggersExistingTyrant() {
+        harness.addToBattlefield(player1, new TidespoutTyrant());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new NovijenHeartOfProgress());
+
+        harness.castFromHand(player1, new TidespoutTyrant(), "{5}{U}{U}{U}");
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Novijen, Heart of Progress");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The Tyrant does not trigger from its own casting or entering the battlefield")
+    void ownCastingDoesNotTrigger() {
+        harness.addToBattlefield(player2, new NovijenHeartOfProgress());
+
+        harness.castFromHand(player1, new TidespoutTyrant(), "{5}{U}{U}{U}");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Tidespout Tyrant");
+        harness.assertOnBattlefield(player2, "Novijen, Heart of Progress");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
 }
