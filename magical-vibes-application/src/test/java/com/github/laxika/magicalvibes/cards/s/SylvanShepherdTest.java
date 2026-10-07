@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.effect.normalfx.D20RollService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RollD20EffectHandler;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,6 +9,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -34,16 +35,18 @@ class SylvanShepherdTest extends BaseCardTest {
         ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", originalD20RollService);
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(ints = {1, 9})
     @DisplayName("A result from 1 through 9 gains 1 life")
-    void lowResultGainsOneLife() {
-        assertAttackGain(9, 1);
+    void lowResultGainsOneLife(int roll) {
+        assertAttackGain(roll, 1);
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(ints = {10, 19})
     @DisplayName("A result from 10 through 19 gains 2 life")
-    void middleResultGainsTwoLife() {
-        assertAttackGain(19, 2);
+    void middleResultGainsTwoLife(int roll) {
+        assertAttackGain(roll, 2);
     }
 
     @Test
@@ -52,16 +55,50 @@ class SylvanShepherdTest extends BaseCardTest {
         assertAttackGain(20, 5);
     }
 
+    @Test
+    @DisplayName("Only the attacking Shepherd triggers")
+    void nonattackingShepherdDoesNotTrigger() {
+        addCreatureReady(player1, new SylvanShepherd());
+        assertAttackGain(20, 5);
+    }
+
+    @Test
+    @DisplayName("Each attacking Shepherd grants life independently")
+    void multipleAttackingShepherdsEachTrigger() {
+        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(10));
+        harness.setLife(player1, 10);
+        addCreatureReady(player1, new SylvanShepherd());
+        addCreatureReady(player1, new SylvanShepherd());
+
+        declareAttackers(List.of(0, 1));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 14);
+    }
+
+    @Test
+    @DisplayName("An opponent's Shepherd grants life to that opponent")
+    void opponentControlledShepherdGainsLifeForItsController() {
+        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(20));
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+        addCreatureReady(player2, new SylvanShepherd());
+        addCreatureReady(player1, new SylvanShepherd());
+
+        declareAttackers(player2, List.of(0));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
+        harness.assertLife(player1, 10);
+    }
+
     private void assertAttackGain(int roll, int lifeGain) {
         ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(roll));
         harness.setLife(player1, 10);
         addCreatureReady(player1, new SylvanShepherd());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(10 + lifeGain);
