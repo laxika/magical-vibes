@@ -62,8 +62,8 @@ class TrygonPredatorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The trigger does not occur when the damaged player controls no artifact or enchantment")
-    void noMatchingPermanentMeansNoTrigger() {
+    @DisplayName("No ability remains on the stack when the damaged player has no legal target")
+    void noMatchingPermanentMeansNoAbilityOnStack() {
         Permanent predator = addCreatureReady(player1, new TrygonPredator());
         predator.setAttacking(true);
         addCreatureReady(player2, new MistralCharger());
@@ -72,6 +72,64 @@ class TrygonPredatorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player2, "Mistral Charger");
+    }
+
+    @Test
+    @DisplayName("Accepting the trigger destroys the chosen artifact")
+    void acceptingTriggerDestroysArtifact() {
+        Permanent predator = addCreatureReady(player1, new TrygonPredator());
+        predator.setAttacking(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AzoriusSignet());
+
+        resolveCombat();
+        harness.assertLife(player2, 18);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player2, "Azorius Signet");
+        harness.assertInGraveyard(player2, "Azorius Signet");
+    }
+
+    @Test
+    @DisplayName("A sacrificed target does not allow choosing another permanent")
+    void sacrificedTargetMakesAbilityFailToResolve() {
+        Permanent predator = addCreatureReady(player1, new TrygonPredator());
+        predator.setAttacking(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SealOfDoom());
+        harness.addToBattlefield(player2, new AzoriusSignet());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.activateAbility(player2, 0, null, predator.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Seal of Doom");
+        harness.assertInGraveyard(player1, "Trygon Predator");
+        harness.assertOnBattlefield(player2, "Azorius Signet");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability resolves even if Trygon Predator leaves the battlefield")
+    void destroyingSourceDoesNotStopTrigger() {
+        Permanent predator = addCreatureReady(player1, new TrygonPredator());
+        predator.setAttacking(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AzoriusSignet());
+        harness.addToBattlefield(player2, new SealOfDoom());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.activateAbility(player2, 1, null, predator.getId());
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Trygon Predator");
+        harness.assertInGraveyard(player2, "Azorius Signet");
+        harness.assertNotOnBattlefield(player2, "Azorius Signet");
     }
 }
