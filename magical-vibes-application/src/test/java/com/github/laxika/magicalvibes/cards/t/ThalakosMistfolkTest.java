@@ -56,6 +56,54 @@ class ThalakosMistfolkTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A controlled Mistfolk goes to its owner's library, not its controller's")
+    void abilityUsesOwnersLibrary() {
+        ThalakosMistfolk card = new ThalakosMistfolk();
+        card.setOwnerId(player2.getId());
+        Permanent mistfolk = harness.addToBattlefieldAndReturn(player1, card);
+        HornedTurtle existingTopCard = new HornedTurtle();
+        harness.setLibrary(player2, List.of(existingTopCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(mistfolk);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(card, existingTopCard);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(card);
+    }
+
+    @Test
+    @DisplayName("Repeated activations do nothing once Mistfolk has left the battlefield")
+    void repeatedActivationsDoNotDuplicateCard() {
+        Permanent mistfolk = harness.addToBattlefieldAndReturn(player1, new ThalakosMistfolk());
+        HornedTurtle existingTopCard = new HornedTurtle();
+        harness.setLibrary(player1, List.of(existingTopCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(mistfolk.getCard(), existingTopCard);
+        harness.assertNotOnBattlefield(player1, "Thalakos Mistfolk");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Thalakos Mistfolk can block an attacker with shadow")
+    void shadowAllowsBlockingShadowAttacker() {
+        addCreatureReady(player1, new SoltariFootSoldier()).setAttacking(true);
+        Permanent mistfolk = addCreatureReady(player2, new ThalakosMistfolk());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(mistfolk.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Shadow prevents a creature without shadow from blocking Thalakos Mistfolk")
     void shadowPreventsNonShadowBlocker() {
         Permanent mistfolk = addCreatureReady(player1, new ThalakosMistfolk());
