@@ -77,4 +77,40 @@ class TalismanOfConvictionTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+    @Test
+    @DisplayName("The second player's talisman gives them mana and damages only them")
+    void secondPlayersColoredManaDamagesOnlyItsController() {
+        harness.addToBattlefield(player2, new TalismanOfConviction());
+        int controllerLife = gd.playerLifeTotals.get(player2.getId());
+        int opponentLife = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.handleListChoice(player2, "RED");
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        harness.assertLife(player2, controllerLife - 1);
+        harness.assertLife(player1, opponentLife);
+        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The colored mana ability rejects blue and still accepts a valid choice")
+    void cannotChooseBlueMana() {
+        harness.addToBattlefield(player1, new TalismanOfConviction());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "BLUE"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        harness.assertLife(player1, lifeBefore - 1);
+        assertThat(gd.stack).isEmpty();
+    }
 }
