@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.Carom;
 import com.github.laxika.magicalvibes.cards.e.Electrolyze;
 import com.github.laxika.magicalvibes.cards.g.GruulNodorog;
 import com.github.laxika.magicalvibes.cards.g.GruulScrapper;
@@ -15,7 +16,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SoulsOfTheFaultless.class, GruulScrapper.class, GruulNodorog.class, Electrolyze.class})
+@CardUsed({SoulsOfTheFaultless.class, GruulScrapper.class, GruulNodorog.class, Electrolyze.class, Carom.class})
 class SoulsOfTheFaultlessTest extends BaseCardTest {
 
     @Test
@@ -73,5 +74,31 @@ class SoulsOfTheFaultlessTest extends BaseCardTest {
         assertThat(souls.getMarkedDamage()).isEqualTo(2);
         harness.assertInHand(player1, "Souls of the Faultless");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Redirected blocker combat damage makes the attacking player lose life")
+    void redirectedBlockerDamageMakesAttackingPlayerLoseLife() {
+        Permanent attacker = addCreatureReady(player1, new GruulNodorog());
+        Permanent blocker = addCreatureReady(player2, new GruulScrapper());
+        Permanent souls = addCreatureReady(player2, new SoulsOfTheFaultless());
+        harness.setHand(player2, List.of(new Carom()));
+        harness.setLibrary(player2, List.of(new SoulsOfTheFaultless()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, List.of(attacker.getId(), souls.getId()));
+
+        attacker.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat(player1);
+        resolveAllTriggers();
+
+        assertThat(souls.getMarkedDamage()).isEqualTo(1);
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 21);
+        harness.assertInGraveyard(player2, "Gruul Scrapper");
     }
 }
