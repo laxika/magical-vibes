@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StormcloudSpirit.class, GrizzlyBears.class})
+@CardUsed({StormcloudSpirit.class, GrizzlyBears.class, GiantSpider.class})
 class StormcloudSpiritTest extends BaseCardTest {
 
     @Test
@@ -22,8 +23,7 @@ class StormcloudSpiritTest extends BaseCardTest {
         Permanent spirit = addCreatureReady(player1, new StormcloudSpirit());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -37,8 +37,31 @@ class StormcloudSpiritTest extends BaseCardTest {
         addCreatureReady(player1, new StormcloudSpirit());
         Permanent blocker = addCreatureReady(player2, new StormcloudSpirit());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Stormcloud Spirit can be blocked by a creature with reach")
+    void canBeBlockedByCreatureWithReach() {
+        addCreatureReady(player1, new StormcloudSpirit());
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Stormcloud Spirit can block a creature without flying")
+    void canBlockCreatureWithoutFlying() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new StormcloudSpirit());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
