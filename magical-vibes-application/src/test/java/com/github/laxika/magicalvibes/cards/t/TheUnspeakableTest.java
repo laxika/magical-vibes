@@ -125,6 +125,71 @@ class TheUnspeakableTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Consuming Vortex");
     }
 
+    @Test
+    @DisplayName("An opponent's Arcane card is not a legal graveyard target")
+    void opponentsArcaneCardIsNotOffered() {
+        addAttackingUnspeakable(player1);
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new ConsumingVortex()));
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Consuming Vortex");
+        harness.assertNotInHand(player1, "Consuming Vortex");
+    }
+
+    @Test
+    @DisplayName("The other player's Unspeakable returns a card from that player's graveyard")
+    void otherControllerReturnsTheirOwnArcaneCard() {
+        addAttackingUnspeakable(player2);
+        ConsumingVortex ownArcane = new ConsumingVortex();
+        ConsumingVortex opponentsArcane = new ConsumingVortex();
+        harness.setGraveyard(player2, List.of(ownArcane));
+        harness.setGraveyard(player1, List.of(opponentsArcane));
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(ownArcane.getId());
+        harness.handleMultipleCardsChosen(player2, List.of(ownArcane.getId()));
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertInHand(player2, "Consuming Vortex");
+        harness.assertNotInGraveyard(player2, "Consuming Vortex");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(opponentsArcane);
+    }
+
+    @Test
+    @DisplayName("Combat damage assigned entirely to a blocker does not trigger the return")
+    void damageOnlyToBlockerDoesNotTrigger() {
+        addAttackingUnspeakable(player1);
+        Permanent blocker = addCreatureReady(player2, new TheUnspeakable());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.setGraveyard(player1, List.of(new ConsumingVortex()));
+
+        resolveCombat();
+        var assignment = gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class);
+        if (assignment != null) {
+            harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 6));
+        }
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Consuming Vortex");
+        harness.assertNotInHand(player1, "Consuming Vortex");
+    }
+
     private Permanent addAttackingUnspeakable(Player player) {
         Permanent unspeakable = addCreatureReady(player, new TheUnspeakable());
         unspeakable.setAttacking(true);
