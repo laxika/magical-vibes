@@ -56,8 +56,7 @@ class SpatialBindingTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new RealityRipple()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertOnBattlefield(player2, "Merfolk Raiders");
     }
@@ -113,6 +112,51 @@ class SpatialBindingTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(curse);
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Teferi's Curse"));
+    }
+
+    @Test
+    @DisplayName("Protection survives your next untap but expires before actions in your upkeep")
+    void protectsThroughOwnUntapThenExpiresAtUpkeep() {
+        harness.addToBattlefield(player1, new SpatialBinding());
+        harness.addToBattlefield(player1, new MerfolkRaiders());
+        UUID targetId = harness.getPermanentId(player1, "Merfolk Raiders");
+
+        activateBinding(targetId);
+        advanceTurn(player2);
+        advanceTurn(player1);
+
+        harness.assertOnBattlefield(player1, "Merfolk Raiders");
+        harness.setHand(player1, List.of(new RealityRipple()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Merfolk Raiders");
+        assertThat(gd.phasedOutPermanents.getOrDefault(player1.getId(), List.of()))
+                .anyMatch(p -> p.getId().equals(targetId));
+    }
+
+    @Test
+    @DisplayName("An ability whose target phases out in response does not protect it when it returns")
+    void phasedOutTargetIsIllegalOnResolution() {
+        harness.addToBattlefield(player1, new SpatialBinding());
+        harness.addToBattlefield(player2, new MerfolkRaiders());
+        UUID targetId = harness.getPermanentId(player2, "Merfolk Raiders");
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.setHand(player1, List.of(new RealityRipple()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore - 1);
+        advanceTurn(player2);
+        harness.assertOnBattlefield(player2, "Merfolk Raiders");
+
+        harness.setHand(player2, List.of(new RealityRipple()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, targetId);
+        harness.assertNotOnBattlefield(player2, "Merfolk Raiders");
     }
 
     private void activateBinding(UUID targetId) {
