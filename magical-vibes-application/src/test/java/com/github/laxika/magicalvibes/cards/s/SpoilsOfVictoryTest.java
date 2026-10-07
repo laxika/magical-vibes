@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.t.TropicalIsland;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -20,7 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SpoilsOfVictory.class, Forest.class, Island.class, Swamp.class, Mountain.class, Plains.class})
+@CardUsed({SpoilsOfVictory.class, Forest.class, Island.class, Swamp.class, Mountain.class, Plains.class, TropicalIsland.class})
 class SpoilsOfVictoryTest extends BaseCardTest {
 
     @Test
@@ -110,6 +111,54 @@ class SpoilsOfVictoryTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("it is empty"));
+    }
+
+    @Test
+    @DisplayName("A nonbasic land with a named land type can be found and enters untapped")
+    void findsNonbasicLandWithBasicLandType() {
+        TropicalIsland land = new TropicalIsland();
+        SpoilsOfVictory nonland = new SpoilsOfVictory();
+        harness.setLibrary(player1, List.of(nonland, land));
+        setupAndCast();
+
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(land);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard() == land && !p.isTapped());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonland);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Finding a land searches only the controller's library and shuffles the remainder")
+    void searchesOnlyControllersLibraryAndShuffles() {
+        Forest ownLand = new Forest();
+        Island opponentsLand = new Island();
+        SpoilsOfVictory remainingCard = new SpoilsOfVictory();
+        harness.setLibrary(player1, List.of(ownLand, remainingCard));
+        harness.setLibrary(player2, List.of(opponentsLand));
+        setupAndCast();
+
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(ownLand);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsLand);
+        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getCard() == ownLand);
+        assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getCard() == ownLand);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("Library is shuffled"));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c instanceof SpoilsOfVictory);
     }
 
     private void setupAndCast() {
