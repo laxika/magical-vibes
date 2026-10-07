@@ -59,9 +59,59 @@ class TCRIBuildingTest extends BaseCardTest {
     }
 
     private Permanent addReadyBuilding(Player player) {
-        Permanent building = new Permanent(new TCRIBuilding());
-        building.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(building);
-        return building;
+        return addCreatureReady(player, new TCRIBuilding());
+    }
+
+    @Test
+    @DisplayName("Life gain waits for the enter trigger to resolve")
+    void lifeGainUsesTheStack() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new TCRIBuilding()));
+
+        harness.playLand(player1, 0);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Enter trigger gains life even after the land leaves the battlefield")
+    void lifeGainSurvivesSourceLeaving() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new TCRIBuilding()));
+        harness.playLand(player1, 0);
+
+        Permanent building = gd.playerBattlefields.get(player1.getId()).removeFirst();
+        gd.playerGraveyards.get(player1.getId()).add(building.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A newly entered noncreature land can produce mana once untapped")
+    void newlyEnteredLandCanProduceManaOnceUntapped() {
+        harness.setHand(player1, List.of(new TCRIBuilding()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        Permanent building = gd.playerBattlefields.get(player1.getId()).getFirst();
+        building.setTapped(false);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(building.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }
