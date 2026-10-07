@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AuraFinesse;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,23 +13,20 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-@CardUsed({SporogenicInfection.class, GrizzlyBears.class, HillGiant.class, Shock.class})
+@CardUsed({SporogenicInfection.class, GrizzlyBears.class, HillGiant.class, Shock.class, AuraFinesse.class})
 class SporogenicInfectionTest extends BaseCardTest {
 
     @Test
     @DisplayName("Its enter-the-battlefield ability sacrifices another creature, not the enchanted creature")
     void sacrificesAnotherCreature() {
         Permanent enchanted = addCreatureReady(player2, new HillGiant());
-        Permanent other = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         castSporogenicInfection(enchanted, player2.getId());
 
-        assertThat(onBattlefield(player2, "Hill Giant")).isTrue();
-        assertThat(onBattlefield(player2, "Grizzly Bears")).isFalse();
-        assertThat(onBattlefield(player1, "Sporogenic Infection")).isTrue();
-        assertThat(other).isNotNull();
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Sporogenic Infection");
     }
 
     @Test
@@ -38,8 +36,8 @@ class SporogenicInfectionTest extends BaseCardTest {
 
         castSporogenicInfection(enchanted, player2.getId());
 
-        assertThat(onBattlefield(player2, "Hill Giant")).isTrue();
-        assertThat(onBattlefield(player1, "Sporogenic Infection")).isTrue();
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertOnBattlefield(player1, "Sporogenic Infection");
     }
 
     @Test
@@ -51,12 +49,58 @@ class SporogenicInfectionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         UUID enchantedId = harness.getPermanentId(player2, "Hill Giant");
-        harness.castInstant(player1, 0, enchantedId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, enchantedId);
         resolveAllTriggers();
 
-        assertThat(onBattlefield(player2, "Hill Giant")).isFalse();
-        assertThat(onBattlefield(player1, "Sporogenic Infection")).isFalse();
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.assertNotOnBattlefield(player1, "Sporogenic Infection");
+    }
+
+    @Test
+    void targetedPlayerChoosesWhichOtherCreatureToSacrifice() {
+        Permanent enchanted = addCreatureReady(player2, new HillGiant());
+        Permanent chosen = addCreatureReady(player2, new GrizzlyBears());
+        Permanent spared = addCreatureReady(player2, new GrizzlyBears());
+
+        castSporogenicInfection(enchanted, player2.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
+        resolveAllTriggers();
+
+        org.assertj.core.api.Assertions.assertThat(gd.playerBattlefields.get(player2.getId()))
+                .contains(enchanted, spared).doesNotContain(chosen);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void canMakeAuraControllerSacrificeTheirCreature() {
+        Permanent enchanted = addCreatureReady(player2, new HillGiant());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        castSporogenicInfection(enchanted, player1.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertOnBattlefield(player1, "Sporogenic Infection");
+    }
+
+    @Test
+    void movingAuraAfterDamageStillDestroysDamagedCreature() {
+        Permanent enchanted = addCreatureReady(player2, new HillGiant());
+        Permanent destination = addCreatureReady(player2, new GrizzlyBears());
+        castSporogenicInfection(enchanted, player1.getId());
+        UUID auraId = harness.getPermanentId(player1, "Sporogenic Infection");
+
+        harness.setHand(player1, List.of(new Shock(), new AuraFinesse()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, enchanted.getId());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, List.of(auraId, destination.getId()));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Hill Giant");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Sporogenic Infection");
     }
 
     private void castSporogenicInfection(Permanent enchanted, UUID playerTargetId) {
@@ -68,8 +112,4 @@ class SporogenicInfectionTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private boolean onBattlefield(com.github.laxika.magicalvibes.model.Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .anyMatch(p -> p.getCard().getName().equals(name));
-    }
 }
