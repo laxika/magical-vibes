@@ -94,6 +94,62 @@ class TundraKavuTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a land");
     }
 
+    @Test
+    @DisplayName("A removed target causes the ability to resolve without a type choice")
+    void removedTargetDoesNotOfferChoice() {
+        Permanent land = addKavuAndLand();
+        harness.activateAbility(player1, 0, null, land.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(land);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability resolves even if Tundra Kavu leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        Permanent land = addKavuAndLand();
+        harness.activateAbility(player1, 0, null, land.getId());
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "PLAINS");
+
+        assertThat(gqs.effectiveLandTypes(gd, land)).containsExactly(CardSubtype.PLAINS);
+    }
+
+    @Test
+    @DisplayName("The controller can target their own land and tap it for white without pain")
+    void ownLandProducesWhiteManaWithoutPain() {
+        addCreatureReady(player1, new TundraKavu());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new YavimayaCoast());
+        harness.forceActivePlayer(player1);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        activateAbility(land);
+        harness.handleListChoice(player1, "PLAINS");
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        harness.assertLife(player1, lifeBefore);
+        assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Tundra Kavu cannot pay the tap cost")
+    void summoningSicknessPreventsActivation() {
+        harness.addToBattlefield(player1, new TundraKavu());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new YavimayaCoast());
+        harness.forceActivePlayer(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent addKavuAndLand() {
         addCreatureReady(player1, new TundraKavu());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new YavimayaCoast());
