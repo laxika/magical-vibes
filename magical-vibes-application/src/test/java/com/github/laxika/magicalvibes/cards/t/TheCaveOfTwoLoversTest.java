@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.s.SecretTunnel;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -19,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TheCaveOfTwoLovers.class, Mountain.class})
+@CardUsed({TheCaveOfTwoLovers.class, Mountain.class, SecretTunnel.class})
 class TheCaveOfTwoLoversTest extends BaseCardTest {
 
     @Test
@@ -36,8 +35,8 @@ class TheCaveOfTwoLoversTest extends BaseCardTest {
     void chapterIISearchesForMountainOrCave() {
         addSaga(1);
         Mountain mountain = new Mountain();
-        Card cave = caveCard();
-        harness.setLibrary(player1, List.of(new Card(), mountain, cave));
+        Card cave = new SecretTunnel();
+        harness.setLibrary(player1, List.of(new TheCaveOfTwoLovers(), mountain, cave));
 
         advanceToNextChapter();
         harness.passBothPriorities();
@@ -45,8 +44,7 @@ class TheCaveOfTwoLoversTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).containsExactly(mountain, cave);
-        gs.handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(search.params().cards().indexOf(cave)));
+        harness.handleCardChosen(player1, search.params().cards().indexOf(cave));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(cave);
     }
@@ -84,6 +82,122 @@ class TheCaveOfTwoLoversTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
+    @Test
+    void chapterIICanFindMountain() {
+        addSaga(1);
+        Mountain mountain = new Mountain();
+        harness.setLibrary(player1, List.of(mountain));
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(mountain);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(mountain);
+    }
+
+    @Test
+    void chapterIICanFailToFindEvenWithMatchingCard() {
+        addSaga(1);
+        Mountain mountain = new Mountain();
+        harness.setLibrary(player1, List.of(mountain));
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(mountain);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(mountain);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void dyingEarthbendedLandReturnsAfterSagaIsSacrificed() {
+        Permanent land = earthbendMountain();
+        harness.assertNotOnBattlefield(player1, "The Cave of Two Lovers");
+        harness.assertInGraveyard(player1, "The Cave of Two Lovers");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .destroyPermanentToGraveyard(gd, land));
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.passBothPriorities();
+
+        assertReturnedMountain(land);
+        harness.assertNotInGraveyard(player1, "Mountain");
+    }
+
+    @Test
+    void exiledEarthbendedLandReturnsTapped() {
+        Permanent land = earthbendMountain();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToExile(gd, land));
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.passBothPriorities();
+
+        assertReturnedMountain(land);
+        assertThat(gd.findExiledCard(land.getCard().getId())).isNull();
+    }
+
+    @Test
+    void bouncedEarthbendedLandStaysInHand() {
+        Permanent land = earthbendMountain();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, land));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Mountain");
+        harness.assertNotOnBattlefield(player1, "Mountain");
+    }
+
+    @Test
+    void enteringSagaTriggersFirstChapter() {
+        harness.setHand(player1, List.of(new TheCaveOfTwoLovers()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Ally")).hasSize(2);
+        harness.assertOnBattlefield(player1, "The Cave of Two Lovers");
+    }
+
+    @Test
+    void chapterIIIRejectsNonlandPermanent() {
+        Permanent saga = addSaga(2);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Mountain());
+
+        advanceToNextChapter();
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, saga.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid permanent");
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(3);
+    }
+    private Permanent earthbendMountain() {
+        addSaga(2);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        advanceToNextChapter();
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.passBothPriorities();
+        return land;
+    }
+
+    private void assertReturnedMountain(Permanent original) {
+        Permanent returned = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Mountain"));
+        assertThat(returned.getId()).isNotEqualTo(original.getId());
+        assertThat(returned.getCard().getId()).isEqualTo(original.getCard().getId());
+        assertThat(returned.isTapped()).isTrue();
+        assertThat(gqs.isLand(gd, returned)).isTrue();
+        assertThat(gqs.isCreature(gd, returned)).isFalse();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isFalse();
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
     private Permanent addSaga(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheCaveOfTwoLovers());
         saga.setCounterCount(CounterType.LORE, loreCounters);
@@ -97,11 +211,4 @@ class TheCaveOfTwoLoversTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private Card caveCard() {
-        Card cave = new Card();
-        cave.setName("Cave");
-        cave.setType(CardType.LAND);
-        cave.setSubtypes(List.of(CardSubtype.CAVE));
-        return cave;
-    }
 }
