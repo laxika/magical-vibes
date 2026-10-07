@@ -35,13 +35,12 @@ class SpiderByteWebWardenTest extends BaseCardTest {
     @Test
     @DisplayName("Can enter without choosing a target")
     void canChooseNoTarget() {
-        harness.setHand(player1, List.of(new SpiderByteWebWarden()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castCreature(player1, 0, 0);
+        harness.castFromHand(player1, new SpiderByteWebWarden(), "{2}{U}");
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
 
         harness.assertOnBattlefield(player1, "Spider-Byte, Web Warden");
     }
@@ -58,6 +57,65 @@ class SpiderByteWebWardenTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("nonland permanent");
+    }
+
+    @Test
+    @DisplayName("Can decline to bounce even when a legal target exists")
+    void canChooseNoTargetWithLegalTarget() {
+        harness.addToBattlefield(player2, new SpiderByteWebWarden());
+
+        harness.castFromHand(player1, new SpiderByteWebWarden(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+
+        harness.assertOnBattlefield(player1, "Spider-Byte, Web Warden");
+        harness.assertOnBattlefield(player2, "Spider-Byte, Web Warden");
+        harness.assertNotInHand(player2, "Spider-Byte, Web Warden");
+    }
+
+    @Test
+    @DisplayName("Can return a permanent you control")
+    void canBounceOwnPermanent() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        castSpiderByte(harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Spider-Byte, Web Warden");
+    }
+
+    @Test
+    @DisplayName("Returns a stolen permanent to its owner's hand")
+    void returnsToOwnerRatherThanController() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        gd.stolenCreatures.put(targetId, player1.getId());
+
+        castSpiderByte(targetId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Can target Spider-Byte itself after it enters")
+    void canBounceItself() {
+        harness.castFromHand(player1, new SpiderByteWebWarden(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Spider-Byte, Web Warden"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Spider-Byte, Web Warden");
+        harness.assertInHand(player1, "Spider-Byte, Web Warden");
     }
 
     private void castSpiderByte(UUID targetId) {
