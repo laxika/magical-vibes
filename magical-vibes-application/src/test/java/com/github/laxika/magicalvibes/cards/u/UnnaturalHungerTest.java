@@ -57,6 +57,7 @@ class UnnaturalHungerTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(volunteers);
         harness.assertInGraveyard(player2, "Fresh Volunteers");
@@ -73,6 +74,7 @@ class UnnaturalHungerTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         PendingInteraction.PermanentChoice choice =
@@ -94,6 +96,7 @@ class UnnaturalHungerTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
         harness.handlePermanentChosen(player2, volunteers.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(volunteers);
@@ -168,6 +171,51 @@ class UnnaturalHungerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can decline to sacrifice another creature and take damage instead")
+    void canDeclineSacrifice() {
+        attachToOpponentCreature(new HiredGiant());
+        Permanent volunteers = addCreatureReady(player2, new FreshVolunteers());
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(volunteers);
+        harness.assertNotInGraveyard(player2, "Fresh Volunteers");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 4);
+    }
+
+    @Test
+    @DisplayName("Uses power immediately before the enchanted creature leaves, not power at trigger time")
+    void usesLastKnownPowerAfterPowerChanges() {
+        Permanent enchanted = attachToOpponentCreature(new HiredGiant());
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        enchanted.setPowerModifier(2);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, enchanted);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 6);
+    }
+
+    @Test
+    @DisplayName("Negative enchanted creature power deals no damage")
+    void negativePowerDealsNoDamage() {
+        Permanent enchanted = attachToOpponentCreature(new HiredGiant());
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        enchanted.setPowerModifier(-5);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
     }
 
     private Permanent attachToOpponentCreature(Card creatureCard) {
