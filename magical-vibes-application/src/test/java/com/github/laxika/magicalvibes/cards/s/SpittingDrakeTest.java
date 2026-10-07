@@ -118,4 +118,55 @@ class SpittingDrakeTest extends BaseCardTest {
         assertThat(firstDrake.getPowerModifier()).isEqualTo(1);
         assertThat(secondDrake.getPowerModifier()).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Activation limit applies before the first activation resolves")
+    void cannotActivateAgainWhileAbilityIsOnStack() {
+        Permanent drake = addCreatureReady(player1, new SpittingDrake());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(drake.getPowerModifier()).isEqualTo(0);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+
+        harness.passBothPriorities();
+
+        assertThat(drake.getPowerModifier()).isEqualTo(1);
+        assertThat(drake.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Failed activation without mana does not consume the activation limit")
+    void failedPaymentDoesNotConsumeActivationLimit() {
+        Permanent drake = addCreatureReady(player1, new SpittingDrake());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(drake.getPowerModifier()).isEqualTo(1);
+        assertThat(drake.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Tapped Spitting Drake can activate its non-tap ability")
+    void canActivateWhileTapped() {
+        Permanent drake = addCreatureReady(player1, new SpittingDrake());
+        drake.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(drake.getPowerModifier()).isEqualTo(1);
+        assertThat(drake.getToughnessModifier()).isEqualTo(0);
+        assertThat(drake.isTapped()).isTrue();
+    }
 }
