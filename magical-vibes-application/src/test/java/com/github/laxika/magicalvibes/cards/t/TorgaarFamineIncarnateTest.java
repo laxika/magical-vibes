@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.m.MuldrothaTheGravetide;
+import com.github.laxika.magicalvibes.model.DeckFormat;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TorgaarFamineIncarnate.class, TolarianScholar.class, Forest.class})
+@CardUsed({TorgaarFamineIncarnate.class, TolarianScholar.class, Forest.class, MuldrothaTheGravetide.class})
 class TorgaarFamineIncarnateTest extends BaseCardTest {
 
     @Test
@@ -127,9 +129,7 @@ class TorgaarFamineIncarnateTest extends BaseCardTest {
     @DisplayName("Cannot sacrifice non-creatures for cost reduction")
     void cannotSacrificeNonCreatures() {
         // Add a non-creature permanent (land)
-        Forest forest = new Forest();
-        Permanent land = new Permanent(forest);
-        gd.playerBattlefields.get(player1.getId()).add(land);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         harness.setHand(player1, List.of(new TorgaarFamineIncarnate()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -154,5 +154,78 @@ class TorgaarFamineIncarnateTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
 
         harness.assertInGraveyard(player1, "Tolarian Scholar");
+    }
+
+    @Test
+    @DisplayName("ETB sets Commander life to half the starting total, rather than 10")
+    void etbUsesCommanderStartingLifeTotal() {
+        gd.format = DeckFormat.COMMANDER;
+        harness.setLife(player1, 40);
+        harness.setLife(player2, 35);
+        harness.setHand(player1, List.of(new TorgaarFamineIncarnate()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castCreatureWithSacrificeForReduction(player1, 0, player2.getId(), List.of());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(40);
+    }
+
+    @Test
+    @DisplayName("More creatures can be sacrificed than needed to remove the generic cost")
+    void canSacrificeMoreThanThreeCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new TolarianScholar());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new TolarianScholar());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new TolarianScholar());
+        Permanent fourth = harness.addToBattlefieldAndReturn(player1, new TolarianScholar());
+        harness.setHand(player1, List.of(new TorgaarFamineIncarnate()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castCreatureWithSacrificeForReduction(player1, 0, player2.getId(),
+                List.of(first.getId(), second.getId(), third.getId(), fourth.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Tolarian Scholar");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Torgaar, Famine Incarnate");
+        assertThat(gd.getLife(player2.getId())).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's creature for cost reduction")
+    void cannotSacrificeOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new TolarianScholar());
+        harness.setHand(player1, List.of(new TorgaarFamineIncarnate()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> harness.castCreatureWithSacrificeForReduction(
+                player1, 0, player2.getId(), List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Tolarian Scholar");
+    }
+
+    @Test
+    @DisplayName("Sacrifice discount also applies when casting from the graveyard with Muldrotha")
+    void sacrificeDiscountAppliesToGraveyardCast() {
+        harness.addToBattlefield(player1, new MuldrothaTheGravetide());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new TolarianScholar());
+        harness.setGraveyard(player1, List.of(new TorgaarFamineIncarnate()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castFromGraveyardWithSacrifices(player1, 0, player2.getId(), List.of(creature.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Torgaar, Famine Incarnate");
+        harness.assertNotOnBattlefield(player1, "Tolarian Scholar");
+        harness.assertInGraveyard(player1, "Tolarian Scholar");
+        assertThat(gd.getLife(player2.getId())).isEqualTo(10);
     }
 }
