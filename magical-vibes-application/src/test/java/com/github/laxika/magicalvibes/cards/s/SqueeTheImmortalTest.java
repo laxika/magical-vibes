@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.ExileCast;
-import com.github.laxika.magicalvibes.model.GraveyardCast;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,36 +13,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SqueeTheImmortal.class})
 class SqueeTheImmortalTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has GraveyardCast casting option")
-    void hasGraveyardCastOption() {
-        SqueeTheImmortal card = new SqueeTheImmortal();
-
-        assertThat(card.getCastingOption(GraveyardCast.class)).isPresent();
-    }
-
-    @Test
-    @DisplayName("Has ExileCast casting option")
-    void hasExileCastOption() {
-        SqueeTheImmortal card = new SqueeTheImmortal();
-
-        assertThat(card.getCastingOption(ExileCast.class)).isPresent();
-    }
-
-    // ===== Casting from hand =====
 
     @Test
     @DisplayName("Can cast from hand normally")
     void castFromHand() {
-        harness.setHand(player1, List.of(new SqueeTheImmortal()));
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SqueeTheImmortal(), "{1}{R}{R}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
@@ -51,19 +27,89 @@ class SqueeTheImmortalTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Resolves onto battlefield from hand")
-    void resolvesFromHand() {
-        harness.setHand(player1, List.of(new SqueeTheImmortal()));
+    void graveyardCastRequiresFullManaCost() {
+        SqueeTheImmortal squee = new SqueeTheImmortal();
+        harness.setGraveyard(player1, List.of(squee));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Squee, the Immortal");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromGraveyard(player1, 0);
+        harness.assertNotInGraveyard(player1, "Squee, the Immortal");
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(squee);
+    }
+
+    @Test
+    void exileCastRequiresRedManaAndKeepsCardInExileOnFailure() {
+        SqueeTheImmortal squee = new SqueeTheImmortal();
+        harness.setExile(player1, List.of(squee));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, squee.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(squee);
+
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castFromExile(player1, squee.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(squee);
+    }
+
+    @Test
+    void cannotCastOpponentsSqueeFromExileWithoutSeparatePermission() {
+        SqueeTheImmortal squee = new SqueeTheImmortal();
+        harness.setExile(player2, List.of(squee));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castCreature(player1, 0);
+        assertThatThrownBy(() -> harness.castFromExile(player1, squee.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(squee);
+    }
+
+    @Test
+    void graveyardCastRequiresEmptyStack() {
+        harness.castFromHand(player1, new SqueeTheImmortal(), "{1}{R}{R}");
+        SqueeTheImmortal squee = new SqueeTheImmortal();
+        harness.setGraveyard(player1, List.of(squee));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertInGraveyard(player1, "Squee, the Immortal");
+    }
+
+    @Test
+    void exileCastRequiresEmptyStack() {
+        harness.castFromHand(player1, new SqueeTheImmortal(), "{1}{R}{R}");
+        SqueeTheImmortal squee = new SqueeTheImmortal();
+        harness.setExile(player1, List.of(squee));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, squee.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(squee);
+    }
+
+    @Test
+    @DisplayName("Resolves onto battlefield from hand")
+    void resolvesFromHand() {
+        harness.castFromHand(player1, new SqueeTheImmortal(), "{1}{R}{R}");
+
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Squee, the Immortal");
     }
-
-    // ===== Casting from graveyard =====
 
     @Test
     @DisplayName("Can cast from graveyard")
@@ -108,8 +154,6 @@ class SqueeTheImmortalTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Casting from exile =====
 
     @Test
     @DisplayName("Can cast from exile")
