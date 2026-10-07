@@ -22,7 +22,7 @@ class SouldrinkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        harness.assertLife(player1, 17);
         assertThat(souldrinker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(souldrinker.getEffectivePower()).isEqualTo(3);
         assertThat(souldrinker.getEffectiveToughness()).isEqualTo(3);
@@ -39,7 +39,7 @@ class SouldrinkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(14);
+        harness.assertLife(player1, 14);
         assertThat(souldrinker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
@@ -65,5 +65,40 @@ class SouldrinkerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough life");
+    }
+
+    @Test
+    @DisplayName("Life is paid immediately but the counter waits for resolution")
+    void lifeIsPaidBeforeResolution() {
+        Permanent souldrinker = harness.addToBattlefieldAndReturn(player1, new Souldrinker());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 17);
+        assertThat(souldrinker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        assertThat(souldrinker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A tapped Souldrinker can activate and only that copy receives the counter")
+    void tappedSourceReceivesCounterWithoutAffectingOtherCopies() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new Souldrinker());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new Souldrinker());
+        source.setTapped(true);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        assertThat(source.isTapped()).isTrue();
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
