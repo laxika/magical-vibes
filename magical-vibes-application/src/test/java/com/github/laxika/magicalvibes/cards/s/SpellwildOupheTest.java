@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.FatalAttraction;
 import com.github.laxika.magicalvibes.cards.n.NessianCourser;
+import com.github.laxika.magicalvibes.cards.l.Lignify;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpellwildOuphe.class, FatalAttraction.class, NessianCourser.class})
+@CardUsed({SpellwildOuphe.class, FatalAttraction.class, NessianCourser.class, Lignify.class})
 class SpellwildOupheTest extends BaseCardTest {
 
     @Test
@@ -55,6 +56,50 @@ class SpellwildOupheTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, courser.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The reduction does not pay colored mana costs")
+    void stillRequiresColoredMana() {
+        Permanent ouphe = harness.addToBattlefieldAndReturn(player1, new SpellwildOuphe());
+        harness.setHand(player1, List.of(new FatalAttraction()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, ouphe.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An untargeted Ouphe does not provide another reduction")
+    void untargetedOupheDoesNotReduceCost() {
+        Permanent ouphe = harness.addToBattlefieldAndReturn(player1, new SpellwildOuphe());
+        harness.addToBattlefield(player1, new SpellwildOuphe());
+        harness.setHand(player1, List.of(new FatalAttraction()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, ouphe.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Losing all abilities removes the targeting discount")
+    void losingAbilitiesRemovesDiscount() {
+        Permanent ouphe = harness.addToBattlefieldAndReturn(player1, new SpellwildOuphe());
+        harness.setHand(player1, List.of(new Lignify()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0, ouphe.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasLostAllAbilities(gd, ouphe)).isTrue();
+        harness.setHand(player1, List.of(new FatalAttraction()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, ouphe.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
