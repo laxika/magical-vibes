@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.f.FathomSeer;
+import com.github.laxika.magicalvibes.cards.g.Greenseeker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,12 +14,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpellBurst.class, GrizzlyBears.class, LlanowarElves.class, Cancel.class})
+@CardUsed({SpellBurst.class, AshcoatBear.class, Greenseeker.class, Cancel.class, FathomSeer.class})
 class SpellBurstTest extends BaseCardTest {
 
     @Test
     void countersTargetSpellWithManaValueEqualToX() {
-        GrizzlyBears bears = new GrizzlyBears();
+        AshcoatBear bears = new AshcoatBear();
         SpellBurst burst = new SpellBurst();
         harness.setHand(player1, List.of(bears));
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -36,7 +37,7 @@ class SpellBurstTest extends BaseCardTest {
 
     @Test
     void cannotTargetSpellWithDifferentManaValue() {
-        LlanowarElves elves = new LlanowarElves();
+        Greenseeker elves = new Greenseeker();
         harness.setHand(player1, List.of(elves));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.setHand(player2, List.of(new SpellBurst()));
@@ -51,7 +52,7 @@ class SpellBurstTest extends BaseCardTest {
 
     @Test
     void payingBuybackReturnsSpellToHandAsItResolves() {
-        GrizzlyBears bears = new GrizzlyBears();
+        AshcoatBear bears = new AshcoatBear();
         SpellBurst burst = new SpellBurst();
         harness.setHand(player1, List.of(bears));
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -70,7 +71,7 @@ class SpellBurstTest extends BaseCardTest {
 
     @Test
     void fizzledBuybackSpellGoesToGraveyard() {
-        GrizzlyBears bears = new GrizzlyBears();
+        AshcoatBear bears = new AshcoatBear();
         SpellBurst burst = new SpellBurst();
         harness.setHand(player1, List.of(bears));
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -106,5 +107,65 @@ class SpellBurstTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void countersFaceDownSpellWithXZero() {
+        FathomSeer seer = new FathomSeer();
+        SpellBurst burst = new SpellBurst();
+        harness.setHand(player1, List.of(seer));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.setHand(player2, List.of(burst));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 0, seer.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(seer);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(burst);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotTargetFaceDownSpellUsingItsPrintedManaValue() {
+        FathomSeer seer = new FathomSeer();
+        harness.setHand(player1, List.of(seer));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.setHand(player2, List.of(new SpellBurst()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, 2, seer.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void targetManaValueIncludesXButNotBuybackAndCounteredBuybackIsNotReturned() {
+        AshcoatBear bears = new AshcoatBear();
+        SpellBurst boughtBackBurst = new SpellBurst();
+        SpellBurst counter = new SpellBurst();
+        harness.setHand(player1, List.of(bears, counter));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.setHand(player2, List.of(boughtBackBurst));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        castWithBuybackForX(player2, bears.getId());
+        harness.castInstant(player1, 0, 3, boughtBackBurst.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(boughtBackBurst);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(counter);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId()).containsExactly(bears.getId());
     }
 }
