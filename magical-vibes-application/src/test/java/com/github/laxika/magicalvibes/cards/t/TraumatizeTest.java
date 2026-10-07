@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -8,13 +9,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(Traumatize.class)
+@CardUsed({Traumatize.class, Plains.class})
 class TraumatizeTest extends BaseCardTest {
-
-    // ===== Milling =====
 
     @Test
     @DisplayName("Mills half of target player's library rounded down (even count)")
@@ -22,8 +22,7 @@ class TraumatizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Traumatize()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        List<Card> deck = gd.playerDecks.get(player2.getId());
-        harness.setLibrary(player2, deck.subList(deck.size() - 20, deck.size()));
+        harness.setLibrary(player2, plains(20));
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(10);
@@ -36,8 +35,7 @@ class TraumatizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Traumatize()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        List<Card> deck = gd.playerDecks.get(player2.getId());
-        harness.setLibrary(player2, deck.subList(deck.size() - 11, deck.size()));
+        harness.setLibrary(player2, plains(11));
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
@@ -52,8 +50,7 @@ class TraumatizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Traumatize()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        harness.setLibrary(player1, deck.subList(deck.size() - 10, deck.size()));
+        harness.setLibrary(player1, plains(10));
 
         harness.castAndResolveSorcery(player1, 0, player1.getId());
 
@@ -69,8 +66,7 @@ class TraumatizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Traumatize()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        List<Card> deck = gd.playerDecks.get(player2.getId());
-        harness.setLibrary(player2, deck.subList(deck.size() - 1, deck.size()));
+        harness.setLibrary(player2, plains(1));
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
@@ -99,6 +95,7 @@ class TraumatizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Traumatize()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
+        harness.setLibrary(player2, plains(4));
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertInGraveyard(player1, "Traumatize");
@@ -106,13 +103,12 @@ class TraumatizeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Milled cards move from top of library to graveyard in order")
+    @DisplayName("Milled cards move from top of library to graveyard")
     void milledCardsAreFromTopOfLibrary() {
         harness.setHand(player1, List.of(new Traumatize()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        List<Card> deck = gd.playerDecks.get(player2.getId());
-        deck = deck.subList(deck.size() - 4, deck.size());
+        List<Card> deck = plains(4);
         harness.setLibrary(player2, deck);
 
         // Record the top 2 cards (half of 4)
@@ -126,6 +122,31 @@ class TraumatizeTest extends BaseCardTest {
         // Top 2 should be milled, bottom 2 remain
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(thirdCard, fourthCard);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(firstCard, secondCard);
+    }
+
+    @Test
+    @DisplayName("Uses the library size at resolution rather than at casting")
+    void usesLibrarySizeAtResolution() {
+        harness.setHand(player1, List.of(new Traumatize()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.setLibrary(player2, plains(20));
+
+        harness.castSorcery(player1, 0, player2.getId());
+        assertThat(gd.stack).hasSize(1);
+
+        List<Card> remainingLibrary = plains(7);
+        harness.setLibrary(player2, remainingLibrary);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactlyInAnyOrderElementsOf(remainingLibrary.subList(0, 3));
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .containsExactlyElementsOf(remainingLibrary.subList(3, 7));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private static List<Card> plains(int count) {
+        return IntStream.range(0, count).mapToObj(i -> (Card) new Plains()).toList();
     }
 }
 
