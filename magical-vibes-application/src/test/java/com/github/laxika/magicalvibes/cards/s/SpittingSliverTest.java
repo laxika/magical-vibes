@@ -55,4 +55,29 @@ class SpittingSliverTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, otherSliver, Keyword.FIRST_STRIKE)).isFalse();
     }
+
+    @Test
+    @DisplayName("First strike remains until the last Spitting Sliver leaves")
+    void retainsFirstStrikeWhileAnotherSourceRemains() {
+        Permanent ownSource = addCreatureReady(player1, new SpittingSliver());
+        Permanent opponentSource = addCreatureReady(player2, new SpittingSliver());
+        Permanent ownSliver = addCreatureReady(player1, new PoulticeSliver());
+        Permanent opponentSliver = addCreatureReady(player2, new PoulticeSliver());
+
+        assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentSliver, Keyword.FIRST_STRIKE)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, ownSource));
+
+        assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentSliver, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentSource, Keyword.FIRST_STRIKE)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, opponentSource));
+
+        assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentSliver, Keyword.FIRST_STRIKE)).isFalse();
+    }
 }
