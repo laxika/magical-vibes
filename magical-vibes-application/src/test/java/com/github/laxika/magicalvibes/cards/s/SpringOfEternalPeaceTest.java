@@ -5,8 +5,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 @CardUsed(SpringOfEternalPeace.class)
 class SpringOfEternalPeaceTest extends BaseCardTest {
 
@@ -19,7 +17,25 @@ class SpringOfEternalPeaceTest extends BaseCardTest {
         harness.castFromHand(player1, new SpringOfEternalPeace(), "{3}{G}{G}");
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(28);
-        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player1, 28);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Life is gained only on resolution, even above the starting life total")
+    void gainsLifeOnlyOnResolutionAboveStartingLifeTotal() {
+        harness.setLife(player1, 35);
+        harness.setLife(player2, 12);
+
+        harness.castFromHand(player1, new SpringOfEternalPeace(), "{3}{G}{G}");
+
+        harness.assertLife(player1, 35);
+        harness.assertLife(player2, 12);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 43);
+        harness.assertLife(player2, 12);
+        harness.assertInGraveyard(player1, "Spring of Eternal Peace");
     }
 }
