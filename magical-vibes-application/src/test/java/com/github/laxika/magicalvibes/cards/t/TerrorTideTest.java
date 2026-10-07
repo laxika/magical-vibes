@@ -76,11 +76,66 @@ class TerrorTideTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, enemyGiant)).isEqualTo(3);
     }
 
+    @Test
+    void ignoresOpponentsGraveyard() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+        castTerrorTide();
+
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(2);
+    }
+
+    @Test
+    void determinesCountAtResolutionRatherThanCasting() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new TerrorTide()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castSorcery(player1, 0);
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(1);
+    }
+
+    @Test
+    void deathsDoNotIncreaseResolvedDebuff() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+        castTerrorTide();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(1);
+        harness.setGraveyard(player1, List.of());
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(1);
+    }
+
+    @Test
+    void creaturesEnteringAfterResolutionAreUnaffected() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        castTerrorTide();
+        Permanent lateCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, lateCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lateCreature)).isEqualTo(2);
+    }
+
     private void castTerrorTide() {
         harness.setHand(player1, List.of(new TerrorTide()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, (java.util.UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, (java.util.UUID) null);
     }
 }
