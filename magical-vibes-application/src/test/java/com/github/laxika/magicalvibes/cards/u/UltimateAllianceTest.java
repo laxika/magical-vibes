@@ -27,8 +27,7 @@ class UltimateAllianceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new UltimateAlliance()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, hillGiant.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, hillGiant.getId());
 
         assertThat(hillGiant.getMarkedDamage()).isEqualTo(2);
     }
@@ -57,5 +56,63 @@ class UltimateAllianceTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, fountain.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Deals no damage when you control no creatures")
+    void dealsZeroDamageWithoutControlledCreatures() {
+        Permanent hillGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new UltimateAlliance()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, hillGiant.getId());
+
+        assertThat(hillGiant.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player1, "Ultimate Alliance");
+    }
+
+    @Test
+    @DisplayName("Counts only controlled creatures, excluding artifacts and opposing creatures")
+    void excludesNoncreaturesAndOpposingCreatures() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent hillGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new UltimateAlliance()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, hillGiant.getId());
+
+        assertThat(hillGiant.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can target your own creature and includes that creature in the count")
+    void canDamageOwnCreature() {
+        Permanent hillGiant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new UltimateAlliance()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, hillGiant.getId());
+
+        assertThat(hillGiant.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Lethal damage destroys the target creature")
+    void lethalDamageDestroysTarget() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new UltimateAlliance()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }
