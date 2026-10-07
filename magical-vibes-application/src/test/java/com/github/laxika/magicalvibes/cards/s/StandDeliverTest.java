@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AncientSpring;
 import com.github.laxika.magicalvibes.cards.k.KavuAggressor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -79,5 +80,59 @@ class StandDeliverTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Stand's unused prevention expires at the end of the turn")
+    void standPreventionExpires() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new KavuAggressor());
+        harness.setHand(player1, List.of(new StandDeliver()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, 0, kavu.getId());
+        harness.passBothPriorities();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new ScorchingLava()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, kavu.getId());
+
+        harness.assertNotOnBattlefield(player1, "Kavu Aggressor");
+        harness.assertInGraveyard(player1, "Kavu Aggressor");
+    }
+
+    @Test
+    @DisplayName("Deliver can return its controller's creature")
+    void deliverReturnsOwnCreature() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new KavuAggressor());
+        harness.setHand(player1, List.of(new StandDeliver()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, 1, kavu.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Kavu Aggressor");
+        harness.assertInHand(player1, "Kavu Aggressor");
+        harness.assertInGraveyard(player1, "Stand // Deliver");
+    }
+
+    @Test
+    @DisplayName("Deliver does not return a creature that dies before resolution")
+    void deliverWithRemovedTargetDoesNotReturnCardFromGraveyard() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player2, new KavuAggressor());
+        harness.setHand(player1, List.of(new StandDeliver()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, 1, kavu.getId());
+
+        harness.setHand(player2, List.of(new ScorchingLava()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, kavu.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Kavu Aggressor");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Stand // Deliver");
     }
 }
