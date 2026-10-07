@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
 import com.github.laxika.magicalvibes.cards.g.GraniteGrip;
-import com.github.laxika.magicalvibes.cards.t.TreacherousLink;
 import com.github.laxika.magicalvibes.cards.w.WarlordsAxe;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,7 +23,7 @@ class TreefolkMysticTest extends BaseCardTest {
     @Test
     @DisplayName("When Treefolk Mystic blocks, it destroys all Auras attached to the attacker")
     void blocksDestroysAllAurasAttachedToAttacker() {
-        Permanent mystic = addReadyMystic(player2);
+        addReadyMystic(player2);
         Permanent attacker = addCreatureReady(player1, new GiantCockroach());
         attacker.setAttacking(true);
         addAttachedAura(player1, new GraniteGrip(), attacker);
@@ -35,14 +34,11 @@ class TreefolkMysticTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Granite Grip")
-                        || p.getCard().getName().equals("Treacherous Link"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .extracting(card -> card.getName())
-                .contains("Granite Grip", "Treacherous Link");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Warlord's Axe"));
+        harness.assertNotOnBattlefield(player1, "Granite Grip");
+        harness.assertNotOnBattlefield(player1, "Treacherous Link");
+        harness.assertInGraveyard(player1, "Granite Grip");
+        harness.assertInGraveyard(player1, "Treacherous Link");
+        harness.assertOnBattlefield(player1, "Warlord's Axe");
     }
 
     @Test
@@ -66,12 +62,8 @@ class TreefolkMysticTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(opponentControlledAura.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(unrelatedAura.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .extracting(card -> card.getName())
-                .contains("Granite Grip");
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .extracting(card -> card.getName())
-                .contains("Treacherous Link");
+        harness.assertInGraveyard(player1, "Granite Grip");
+        harness.assertInGraveyard(player2, "Treacherous Link");
     }
 
     @Test
@@ -87,12 +79,10 @@ class TreefolkMysticTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Granite Grip")
-                        || p.getCard().getName().equals("Treacherous Link"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .extracting(card -> card.getName())
-                .contains("Granite Grip", "Treacherous Link");
+        harness.assertNotOnBattlefield(player2, "Granite Grip");
+        harness.assertNotOnBattlefield(player2, "Treacherous Link");
+        harness.assertInGraveyard(player2, "Granite Grip");
+        harness.assertInGraveyard(player2, "Treacherous Link");
     }
 
     @Test
@@ -111,12 +101,48 @@ class TreefolkMysticTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Granite Grip")
-                        || p.getCard().getName().equals("Treacherous Link"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .extracting(card -> card.getName())
-                .contains("Granite Grip", "Treacherous Link");
+        harness.assertNotOnBattlefield(player2, "Granite Grip");
+        harness.assertNotOnBattlefield(player2, "Treacherous Link");
+        harness.assertInGraveyard(player2, "Granite Grip");
+        harness.assertInGraveyard(player2, "Treacherous Link");
+    }
+
+    @Test
+    @DisplayName("Blocking destroys opposing Auras but leaves Auras on Treefolk Mystic intact")
+    void blockingLeavesMysticsOwnAurasIntact() {
+        Permanent mystic = addReadyMystic(player2);
+        Permanent attacker = addCreatureReady(player1, new GiantCockroach());
+        attacker.setAttacking(true);
+        addAttachedAura(player1, new GraniteGrip(), attacker);
+        addAttachedAura(player2, new TreacherousLink(), mystic);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Granite Grip");
+        harness.assertNotOnBattlefield(player1, "Granite Grip");
+        harness.assertOnBattlefield(player2, "Treacherous Link");
+        harness.assertNotInGraveyard(player2, "Treacherous Link");
+    }
+
+    @Test
+    @DisplayName("The trigger destroys Auras attached at resolution, even if there were none when it triggered")
+    void checksAttachedAurasAtResolution() {
+        Permanent mystic = addReadyMystic(player1);
+        mystic.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GiantCockroach());
+        Permanent otherCreature = addCreatureReady(player2, new GiantCockroach());
+        Permanent aura = addAttachedAura(player2, new GraniteGrip(), otherCreature);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(gd.stack).hasSize(1);
+        aura.setAttachedTo(blocker.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Granite Grip");
+        harness.assertInGraveyard(player2, "Granite Grip");
     }
 
     private Permanent addReadyMystic(Player player) {
