@@ -96,16 +96,37 @@ class SwordOfTheMeekTest extends BaseCardTest {
         SwordOfTheMeek sword = new SwordOfTheMeek();
         harness.setGraveyard(player1, List.of(sword));
         Permanent creature = harness.enterBattlefieldAndReturn(player1, new SamiteCenserBearer());
-        harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature));
-        harness.handleMayAbilityChosen(player1, true);
-        resolveAllTriggers();
+
+        resolveMayAbility(true);
 
         Permanent returnedSword = findPermanent(player1, "Sword of the Meek");
         assertThat(returnedSword.getAttachedTo()).isNull();
         harness.assertNotInGraveyard(player1, "Sword of the Meek");
+    }
+
+    @Test
+    void stillReturnsAndAttachesIfCreatureIsNoLongerOneOneAtResolution() {
+        harness.setGraveyard(player1, List.of(new SwordOfTheMeek()));
+        Permanent dread = harness.addToBattlefieldAndReturn(player1, new DreadOfNight());
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new KnightOfSursi());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, dread));
+
+        resolveMayAbility(true);
+
+        assertThat(findPermanent(player1, "Sword of the Meek").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    void swordOnBattlefieldDoesNotAttachWhenOneOneEnters() {
+        Permanent sword = harness.addToBattlefieldAndReturn(player1, new SwordOfTheMeek());
+        harness.enterBattlefieldAndReturn(player1, new SamiteCenserBearer());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(sword.getAttachedTo()).isNull();
     }
 
     private void resolveMayAbility(boolean accepted) {
