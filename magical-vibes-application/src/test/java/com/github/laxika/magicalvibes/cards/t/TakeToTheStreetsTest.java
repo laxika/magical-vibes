@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GallantCitizen;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CivicGardener;
+import com.github.laxika.magicalvibes.cards.h.HypnoticGrifter;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,15 +16,15 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TakeToTheStreets.class, GallantCitizen.class, GrizzlyBears.class})
+@CardUsed({TakeToTheStreets.class, CivicGardener.class, HypnoticGrifter.class})
 class TakeToTheStreetsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Boosts all your creatures, with an additional boost and vigilance for Citizens")
     void boostsCreaturesAndCitizens() {
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent ownCitizen = addCreatureReady(player1, new GallantCitizen());
-        Permanent opponentCitizen = addCreatureReady(player2, new GallantCitizen());
+        Permanent ownCreature = addCreatureReady(player1, new HypnoticGrifter());
+        Permanent ownCitizen = addCreatureReady(player1, new CivicGardener());
+        Permanent opponentCitizen = addCreatureReady(player2, new CivicGardener());
         int ownCreaturePower = gqs.getEffectivePower(gd, ownCreature);
         int ownCreatureToughness = gqs.getEffectiveToughness(gd, ownCreature);
         int ownCitizenPower = gqs.getEffectivePower(gd, ownCitizen);
@@ -46,8 +46,8 @@ class TakeToTheStreetsTest extends BaseCardTest {
     @Test
     @DisplayName("The temporary boosts and vigilance wear off at end of turn")
     void effectsWearOffAtEndOfTurn() {
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent ownCitizen = addCreatureReady(player1, new GallantCitizen());
+        Permanent ownCreature = addCreatureReady(player1, new HypnoticGrifter());
+        Permanent ownCitizen = addCreatureReady(player1, new CivicGardener());
         int ownCreaturePower = gqs.getEffectivePower(gd, ownCreature);
         int ownCitizenPower = gqs.getEffectivePower(gd, ownCitizen);
 
@@ -61,11 +61,46 @@ class TakeToTheStreetsTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, ownCitizen, Keyword.VIGILANCE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Creatures entering after resolution receive neither boost nor vigilance")
+    void laterCreaturesAreNotAffected() {
+        castTakeToTheStreets();
+
+        Permanent creature = addCreatureReady(player1, new HypnoticGrifter());
+        Permanent citizen = addCreatureReady(player1, new CivicGardener());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, citizen)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, citizen)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, citizen, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Repeated casts give cumulative boosts to existing creatures")
+    void repeatedCastsStack() {
+        Permanent creature = addCreatureReady(player1, new HypnoticGrifter());
+        Permanent citizen = addCreatureReady(player1, new CivicGardener());
+        int creaturePower = gqs.getEffectivePower(gd, creature);
+        int creatureToughness = gqs.getEffectiveToughness(gd, creature);
+        int citizenPower = gqs.getEffectivePower(gd, citizen);
+        int citizenToughness = gqs.getEffectiveToughness(gd, citizen);
+
+        castTakeToTheStreets();
+        castTakeToTheStreets();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(creaturePower + 4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(creatureToughness + 4);
+        assertThat(gqs.getEffectivePower(gd, citizen)).isEqualTo(citizenPower + 6);
+        assertThat(gqs.getEffectiveToughness(gd, citizen)).isEqualTo(citizenToughness + 6);
+        assertThat(gqs.hasKeyword(gd, citizen, Keyword.VIGILANCE)).isTrue();
+    }
+
     private void castTakeToTheStreets() {
         harness.setHand(player1, List.of(new TakeToTheStreets()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castSorcery(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
     }
 }
