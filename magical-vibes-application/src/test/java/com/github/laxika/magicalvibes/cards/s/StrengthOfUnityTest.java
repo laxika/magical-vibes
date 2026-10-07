@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BenalishLancer;
+import com.github.laxika.magicalvibes.cards.e.ElfhamePalace;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({
         StrengthOfUnity.class, BenalishLancer.class, Forest.class, Island.class,
-        Mountain.class, Plains.class, Swamp.class
+        Mountain.class, Plains.class, Swamp.class, ElfhamePalace.class
 })
 class StrengthOfUnityTest extends BaseCardTest {
 
@@ -126,6 +127,39 @@ class StrengthOfUnityTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Mana colors produced by an untyped land do not contribute to domain")
+    void ignoresLandsWithoutBasicLandTypes() {
+        Permanent lancer = enchantedLancer();
+        harness.addToBattlefield(player1, new ElfhamePalace());
+
+        assertThat(gqs.getEffectivePower(gd, lancer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lancer)).isEqualTo(2);
+
+        harness.addToBattlefield(player1, new Forest());
+
+        assertThat(gqs.getEffectivePower(gd, lancer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, lancer)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Can enchant an opponent's creature using the Aura controller's domain")
+    void castsOnOpponentsCreature() {
+        Permanent lancer = harness.addToBattlefieldAndReturn(player2, new BenalishLancer());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player2, new Swamp());
+        harness.setHand(player1, List.of(new StrengthOfUnity()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castEnchantment(player1, 0, lancer.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Strength of Unity").getAttachedTo()).isEqualTo(lancer.getId());
+        assertThat(gqs.getEffectivePower(gd, lancer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, lancer)).isEqualTo(3);
     }
 
     private Permanent enchantedLancer() {
