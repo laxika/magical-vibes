@@ -109,6 +109,70 @@ class SubmergeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target a creature controlled by the caster")
+    void canTargetOwnCreature() {
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new Forest());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Submerge()));
+
+        harness.castWithAlternateCost(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(target.getCard());
+        harness.assertInGraveyard(player1, "Submerge");
+    }
+
+    @Test
+    @DisplayName("A Forest controlled only by the caster does not enable the free cast")
+    void ownForestDoesNotEnableFreeCast() {
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Submerge()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Losing the required lands after casting does not prevent resolution")
+    void landConditionIsOnlyCheckedWhenCasting() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Submerge()));
+
+        harness.castWithAlternateCost(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(island);
+        gd.playerBattlefields.get(player2.getId()).remove(forest);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst()).isSameAs(target.getCard());
+        harness.assertInGraveyard(player1, "Submerge");
+    }
+
+    @Test
+    @DisplayName("Does not move a creature that leaves the battlefield before resolution")
+    void doesNotMoveTargetThatLeftBattlefield() {
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new Forest());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Submerge()));
+
+        harness.castWithAlternateCost(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setGraveyard(player2, List.of(target.getCard()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(target.getCard());
+        harness.assertInGraveyard(player1, "Submerge");
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreaturePermanent() {
         harness.addToBattlefield(player1, new Island());
