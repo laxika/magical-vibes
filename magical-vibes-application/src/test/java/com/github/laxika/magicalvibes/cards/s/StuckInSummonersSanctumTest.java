@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.Gigantoad;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StuckInSummonersSanctum.class, Forest.class, MindStone.class, BottleGnomes.class})
+@CardUsed({StuckInSummonersSanctum.class, Forest.class, MindStone.class, BottleGnomes.class,
+        Gigantoad.class, SeatOfTheSynod.class})
 class StuckInSummonersSanctumTest extends BaseCardTest {
 
     @Test
@@ -43,10 +45,7 @@ class StuckInSummonersSanctumTest extends BaseCardTest {
         artifact.tap();
         attachAura(artifact, player2);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.performUntapStep(player1);
 
         assertThat(artifact.isTapped()).isTrue();
     }
@@ -108,6 +107,66 @@ class StuckInSummonersSanctumTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Can flash onto a nonartifact creature during the opponent's upkeep")
+    void flashesOntoCreatureAndTapsWithSeparateTrigger() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Gigantoad());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.setHand(player1, List.of(new StuckInSummonersSanctum()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.ensurePriority(player1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> creature.getId().equals(p.getAttachedTo()));
+
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Removing the Aura restores mana ability activation")
+    void removingAuraRestoresManaAbility() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new MindStone());
+        Permanent aura = attachAura(artifact, player2);
+        gd.playerBattlefields.get(player2.getId()).remove(aura);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(artifact.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An enchanted artifact land is not available as a mana source")
+    void enchantedArtifactLandCannotBeUsedAsManaSource() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new SeatOfTheSynod());
+        attachAura(land, player2);
+
+        assertThat(harness.getGameQueryService().canActivateManaAbility(gd, land)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can enchant an artifact land and tap it")
+    void enchantsArtifactLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new SeatOfTheSynod());
+        harness.setHand(player1, List.of(new StuckInSummonersSanctum()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castEnchantment(player1, 0, land.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> land.getId().equals(p.getAttachedTo()));
     }
 
     private Permanent attachAura(Permanent target, Player controller) {
