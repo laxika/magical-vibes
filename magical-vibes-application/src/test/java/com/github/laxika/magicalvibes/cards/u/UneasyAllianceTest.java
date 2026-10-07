@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UneasyAlliance.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({UneasyAlliance.class, GrizzlyBears.class, FountainOfYouth.class, Unsummon.class})
 class UneasyAllianceTest extends BaseCardTest {
 
     @Test
@@ -27,27 +27,21 @@ class UneasyAllianceTest extends BaseCardTest {
         Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
         attachAura(player2, enchanted);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
 
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         attachAura(player1, blocker);
-        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new com.github.laxika.magicalvibes.networking.message.BlockerAssignment(
-                        gd.playerBattlefields.get(player2.getId()).indexOf(blocker), 0))))
+                        gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                        gd.playerBattlefields.get(player1.getId()).indexOf(attacker)))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid blocker index");
     }
@@ -102,6 +96,95 @@ class UneasyAllianceTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void castingAuraAttachesItToOwnCreature() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new UneasyAlliance()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Uneasy Alliance");
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null);
+        harness.assertInGraveyard(player1, "Uneasy Alliance");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(countPermanents(player1, "Ninja")).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature.getCard());
+        assertThat(countPermanents(player1, "Ninja")).isEqualTo(1);
+    }
+
+    @Test
+    void createsNinjaEvenWhenEnchantedCreatureLeavesBeforeResolution() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = attachAura(player1, creature);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null);
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        assertThat(gd.playerHands.get(player2.getId())).contains(creature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(creature.getCard());
+        assertThat(countPermanents(player1, "Ninja")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Ninja")).isZero();
+    }
+
+    @Test
+    void cannotActivateDuringOpponentsMainPhase() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = attachAura(player1, creature);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
+    }
+
+    @Test
+    void cannotActivateWithSpellOnStack() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = attachAura(player1, creature);
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castInstant(player1, 0, creature.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
+    }
+
+    @Test
+    void cannotActivateWithoutFiveMana() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = attachAura(player1, creature);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent attachAura(Player controller, Permanent creature) {
