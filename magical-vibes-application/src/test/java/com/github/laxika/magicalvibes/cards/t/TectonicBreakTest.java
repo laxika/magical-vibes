@@ -35,8 +35,7 @@ class TectonicBreakTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TectonicBreak()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
         GameData gd = harness.getGameData();
         PendingInteraction.MultiPermanentChoice firstChoice =
@@ -78,8 +77,7 @@ class TectonicBreakTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TectonicBreak()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -126,5 +124,30 @@ class TectonicBreakTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Mountain");
         harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("A player with no lands does not prevent the other player from choosing lands")
+    void playerWithNoLandsDoesNotPreventOtherPlayersSacrifice() {
+        harness.addToBattlefield(player1, new FreshVolunteers());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new TectonicBreak()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.maxCount()).isEqualTo(1);
+        UUID chosenLand = findPermanents(player2, "Forest").getFirst().getId();
+        harness.handleMultiplePermanentsChosen(player2, List.of(chosenLand));
+
+        assertThat(countPermanents(player2, "Forest")).isEqualTo(1);
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertOnBattlefield(player1, "Fresh Volunteers");
+        harness.assertInGraveyard(player1, "Tectonic Break");
     }
 }
