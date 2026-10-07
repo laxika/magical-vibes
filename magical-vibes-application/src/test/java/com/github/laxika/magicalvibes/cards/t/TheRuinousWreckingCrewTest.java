@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -90,6 +89,73 @@ class TheRuinousWreckingCrewTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void discardModeStillDrawsWithAnEmptyHand() {
+        Card drawn = new Plains();
+        harness.setLibrary(player1, List.of(drawn));
+        castForX(1);
+
+        harness.handleListChoice(player1, DISCARD_AND_DRAW);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    void zeroXEntersWithoutCountersOrModeEffects() {
+        Permanent crew = castForX(0);
+
+        assertThat(crew.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void canChooseNoModesWithPositiveX() {
+        Permanent crew = castForX(2);
+        harness.handleListChoice(player1, "Done");
+
+        assertThat(crew.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void canChooseFewerThanXModes() {
+        castForX(3);
+        harness.handleListChoice(player1, LOSE_LIFE);
+        harness.handleListChoice(player1, "Done");
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void lifeLossModeRejectsItsController() {
+        castForX(1);
+        harness.handleListChoice(player1, LOSE_LIFE);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void destroyModeResolvesBeforeSacrificeEvenWhenSelectedSecond() {
+        Card tokenCard = new GrizzlyBears();
+        tokenCard.setToken(true);
+        Permanent token = harness.addToBattlefieldAndReturn(player1, tokenCard);
+        Permanent crew = castForX(2);
+
+        harness.handleListChoice(player1, SACRIFICE_CREATURE);
+        harness.handleListChoice(player1, DESTROY_TOKEN);
+        harness.handlePermanentChosen(player1, token.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token, crew);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(crew.getCard());
+    }
+
     private Permanent castForX(int xValue) {
         harness.setHand(player1, List.of(new TheRuinousWreckingCrew()));
         addManaForX(xValue);
@@ -105,10 +171,7 @@ class TheRuinousWreckingCrewTest extends BaseCardTest {
     }
 
     private Permanent addToken(com.github.laxika.magicalvibes.model.Player owner) {
-        Card token = new Card();
-        token.setName("Token");
-        token.setType(CardType.ARTIFACT);
-        token.setManaCost("");
+        Card token = new Plains();
         token.setToken(true);
         return harness.addToBattlefieldAndReturn(owner, token);
     }
