@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.f.ForbiddenAlchemy;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,12 +21,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({UndeadAlchemist.class, GrizzlyBears.class, Shock.class})
 class UndeadAlchemistTest extends BaseCardTest {
 
-    // ===== Replacement effect: Zombie combat damage → mill =====
 
     @Nested
     @DisplayName("Replacement effect — Zombie combat damage → mill")
+    @CardUsed({UndeadAlchemist.class, GrizzlyBears.class})
     class ReplacementEffect {
 
         @Test
@@ -33,10 +37,8 @@ class UndeadAlchemistTest extends BaseCardTest {
             harness.setLife(player2, 20);
 
             // Put an attacking Zombie creature (Undead Alchemist itself is 4/2 Zombie)
-            Permanent attacker = new Permanent(new UndeadAlchemist());
-            attacker.setSummoningSick(false);
+            Permanent attacker = addCreatureReady(player1, new UndeadAlchemist());
             attacker.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(attacker);
 
             int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
 
@@ -58,10 +60,8 @@ class UndeadAlchemistTest extends BaseCardTest {
             harness.setLife(player2, 20);
 
             // GrizzlyBears is a 2/2 Bear, not a Zombie
-            Permanent attacker = new Permanent(new GrizzlyBears());
-            attacker.setSummoningSick(false);
+            Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
             attacker.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(attacker);
 
             int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
 
@@ -80,10 +80,8 @@ class UndeadAlchemistTest extends BaseCardTest {
         @DisplayName("Undead Alchemist replaces its own combat damage (it is a Zombie)")
         void replacesOwnCombatDamage() {
             // Single Undead Alchemist on the battlefield, also attacking
-            Permanent alchemist = new Permanent(new UndeadAlchemist());
-            alchemist.setSummoningSick(false);
+            Permanent alchemist = addCreatureReady(player1, new UndeadAlchemist());
             alchemist.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(alchemist);
 
             harness.setLife(player2, 20);
             int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
@@ -100,27 +98,22 @@ class UndeadAlchemistTest extends BaseCardTest {
         }
     }
 
-    // ===== Triggered ability: creature card milled → exile + token =====
 
     @Nested
     @DisplayName("Triggered ability — creature card milled → exile + Zombie token")
+    @CardUsed({UndeadAlchemist.class, GrizzlyBears.class, Shock.class})
     class TriggeredAbility {
 
         @Test
         @DisplayName("Milling a creature card exiles it and creates a Zombie token")
         void millingCreatureCardCreatesZombieToken() {
-            Permanent alchemist = new Permanent(new UndeadAlchemist());
-            alchemist.setSummoningSick(false);
+            Permanent alchemist = addCreatureReady(player1, new UndeadAlchemist());
             alchemist.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(alchemist);
 
             harness.setLife(player2, 20);
 
             // Set up opponent's deck: 4 creature cards at the top
-            gd.playerDecks.get(player2.getId()).clear();
-            for (int i = 0; i < 4; i++) {
-                gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
-            }
+            harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
             int p1BattlefieldSizeBefore = gd.playerBattlefields.get(player1.getId()).size();
 
@@ -148,18 +141,13 @@ class UndeadAlchemistTest extends BaseCardTest {
         @Test
         @DisplayName("Milling non-creature cards does not create tokens")
         void millingNonCreatureCardsNoTokens() {
-            Permanent alchemist = new Permanent(new UndeadAlchemist());
-            alchemist.setSummoningSick(false);
+            Permanent alchemist = addCreatureReady(player1, new UndeadAlchemist());
             alchemist.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(alchemist);
 
             harness.setLife(player2, 20);
 
             // Set up opponent's deck: 4 non-creature cards (instants)
-            gd.playerDecks.get(player2.getId()).clear();
-            for (int i = 0; i < 4; i++) {
-                gd.playerDecks.get(player2.getId()).add(new Shock());
-            }
+            harness.setLibrary(player2, List.of(new Shock(), new Shock(), new Shock(), new Shock()));
 
             int p1BattlefieldSizeBefore = gd.playerBattlefields.get(player1.getId()).size();
 
@@ -178,19 +166,13 @@ class UndeadAlchemistTest extends BaseCardTest {
         @Test
         @DisplayName("Mixed deck: only creature cards trigger tokens, non-creatures go to graveyard")
         void mixedDeckOnlyCreaturesCreateTokens() {
-            Permanent alchemist = new Permanent(new UndeadAlchemist());
-            alchemist.setSummoningSick(false);
+            Permanent alchemist = addCreatureReady(player1, new UndeadAlchemist());
             alchemist.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(alchemist);
 
             harness.setLife(player2, 20);
 
             // Deck: creature, instant, creature, instant (milled top to bottom)
-            gd.playerDecks.get(player2.getId()).clear();
-            gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
-            gd.playerDecks.get(player2.getId()).add(new Shock());
-            gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
-            gd.playerDecks.get(player2.getId()).add(new Shock());
+            harness.setLibrary(player2, List.of(new GrizzlyBears(), new Shock(), new GrizzlyBears(), new Shock()));
 
             int p1BattlefieldSizeBefore = gd.playerBattlefields.get(player1.getId()).size();
 
@@ -208,10 +190,10 @@ class UndeadAlchemistTest extends BaseCardTest {
         }
     }
 
-    // ===== Multiple Undead Alchemists =====
 
     @Nested
     @DisplayName("Multiple Undead Alchemists interaction")
+    @CardUsed({UndeadAlchemist.class, GrizzlyBears.class})
     class MultipleAlchemists {
 
         @Test
@@ -219,18 +201,13 @@ class UndeadAlchemistTest extends BaseCardTest {
         void twoAlchemistsEachCreateTokens() {
             // Two Undead Alchemists on the battlefield
             harness.addToBattlefield(player1, new UndeadAlchemist());
-            Permanent attacker = new Permanent(new UndeadAlchemist());
-            attacker.setSummoningSick(false);
+            Permanent attacker = addCreatureReady(player1, new UndeadAlchemist());
             attacker.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(attacker);
 
             harness.setLife(player2, 20);
 
             // Deck with 4 creature cards
-            gd.playerDecks.get(player2.getId()).clear();
-            for (int i = 0; i < 4; i++) {
-                gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
-            }
+            harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
             int p1BattlefieldSizeBefore = gd.playerBattlefields.get(player1.getId()).size();
 
@@ -245,7 +222,6 @@ class UndeadAlchemistTest extends BaseCardTest {
         }
     }
 
-    // ===== Replacement does not apply without Undead Alchemist =====
 
     @Test
     @DisplayName("Without Undead Alchemist, Zombie deals combat damage normally")
@@ -264,10 +240,8 @@ class UndeadAlchemistTest extends BaseCardTest {
         zombieCard.setToughness(2);
         zombieCard.setManaCost("{2}{B}");
 
-        Permanent attacker = new Permanent(zombieCard);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, zombieCard);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
 
@@ -281,15 +255,12 @@ class UndeadAlchemistTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
     }
 
-    // ===== Logging =====
 
     @Test
     @DisplayName("Replacement is logged")
     void replacementIsLogged() {
-        Permanent alchemist = new Permanent(new UndeadAlchemist());
-        alchemist.setSummoningSick(false);
-        alchemist.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(alchemist);
+        Permanent alchemist = addCreatureReady(player1, new UndeadAlchemist());
+            alchemist.setAttacking(true);
 
         harness.setLife(player2, 20);
 
@@ -301,4 +272,43 @@ class UndeadAlchemistTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("combat damage is replaced with milling"));
     }
+
+    @Test
+    void creatureMillWaitsForTriggeredAbilityResolution() {
+        Permanent attacker = addCreatureReady(player1, new UndeadAlchemist());
+        attacker.setAttacking(true);
+        Card creature = new UndeadAlchemist();
+        harness.setLibrary(player2, List.of(creature));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(attacker);
+    }
+
+    @Test
+    @CardUsed({UndeadAlchemist.class, ForbiddenAlchemy.class})
+    void creaturesPutIntoGraveyardByForbiddenAlchemyAlsoCreateTokens() {
+        harness.addToBattlefield(player1, new UndeadAlchemist());
+        Card chosen = new ForbiddenAlchemy();
+        harness.setLibrary(player2, List.of(chosen, new UndeadAlchemist(),
+                new UndeadAlchemist(), new UndeadAlchemist()));
+        harness.setHand(player2, List.of(new ForbiddenAlchemy()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player2, 0);
+        harness.handleMultipleCardsChosen(player2, List.of(chosen.getId()));
+        for (int i = 0; i < 3 && !gd.stack.isEmpty(); i++) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(3);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken())).hasSize(3);
+    }
+
 }
