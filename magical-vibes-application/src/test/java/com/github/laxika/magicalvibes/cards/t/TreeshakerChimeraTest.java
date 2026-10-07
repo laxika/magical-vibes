@@ -50,11 +50,10 @@ class TreeshakerChimeraTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        gd.playerDecks.get(player1.getId()).clear();
         GrizzlyBears first = new GrizzlyBears();
         GrizzlyBears second = new GrizzlyBears();
         GrizzlyBears third = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(first, second, third));
+        harness.setLibrary(player1, List.of(first, second, third));
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
@@ -65,5 +64,46 @@ class TreeshakerChimeraTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second, third);
+    }
+
+    @Test
+    @DisplayName("Tapped defenders are exempt, but summoning-sick defenders must block")
+    void onlyAbleDefendersMustBlock() {
+        Permanent chimera = addCreatureReady(player1, new TreeshakerChimera());
+        chimera.setAttacking(true);
+        Permanent tapped = addCreatureReady(player2, new GrizzlyBears());
+        tapped.setTapped(true);
+        Permanent newlyEntered = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        newlyEntered.setSummoningSick(true);
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+
+        assertThat(tapped.isBlocking()).isFalse();
+        assertThat(newlyEntered.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opposing Chimera's death draws cards for its controller")
+    void opposingControllerDrawsOnDeath() {
+        harness.addToBattlefield(player2, new TreeshakerChimera());
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        GrizzlyBears third = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(first, second, third));
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(first, second, third);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }
