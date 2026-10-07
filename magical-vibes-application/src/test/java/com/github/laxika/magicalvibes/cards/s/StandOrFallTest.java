@@ -116,6 +116,36 @@ class StandOrFallTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("a creature entering after an empty split cannot block")
+    void creatureEnteringAfterEmptySplitCannotBlock() {
+        harness.addToBattlefield(player1, new StandOrFall());
+
+        advanceToControllerCombat();
+
+        Permanent laterCreature = addCreatureReady(player2, new RagingKavu());
+
+        assertThat(harness.getBlockLegalityService().canBlock(gd, laterCreature)).isFalse();
+        assertThat(harness.getCombatBlockService().getBlockableCreatureIndices(gd, player2.getId()))
+                .isEmpty();
+    }
+
+    @Test
+    @DisplayName("the pile restriction expires at the end of the turn")
+    void pileRestrictionExpiresAtEndOfTurn() {
+        harness.addToBattlefield(player1, new StandOrFall());
+        Permanent kavu = addCreatureReady(player2, new RagingKavu());
+
+        advanceToControllerCombat();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(harness.getBlockLegalityService().canBlock(gd, kavu)).isFalse();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(harness.getBlockLegalityService().canBlock(gd, kavu)).isTrue();
+    }
+    @Test
     @DisplayName("does not trigger on an opponent's turn")
     void doesNotTriggerOnOpponentsTurn() {
         harness.addToBattlefield(player1, new StandOrFall());
