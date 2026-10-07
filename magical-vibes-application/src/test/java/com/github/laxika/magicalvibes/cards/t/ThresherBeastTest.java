@@ -107,6 +107,50 @@ class ThresherBeastTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Rhystic Cave");
     }
 
+    @Test
+    @DisplayName("A defender with one land sacrifices it without a choice prompt")
+    void soleLandIsSacrificed() {
+        Permanent attacker = addCreatureReady(player1, new ThresherBeast());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        Permanent blocker = addCreatureReady(player2, new PygmyRazorback());
+        harness.addToBattlefield(player2, new WintermoonMesa());
+        harness.addToBattlefield(player1, new RhysticCave());
+
+        declareBlocks(attacker, List.of(blocker));
+
+        harness.assertNotOnBattlefield(player2, "Wintermoon Mesa");
+        harness.assertInGraveyard(player2, "Wintermoon Mesa");
+        harness.assertOnBattlefield(player1, "Rhystic Cave");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The land sacrifice still resolves after Thresher Beast leaves the battlefield")
+    void triggerResolvesWithoutSource() {
+        Permanent attacker = addCreatureReady(player1, new ThresherBeast());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        Permanent blocker = addCreatureReady(player2, new PygmyRazorback());
+        harness.addToBattlefield(player2, new WintermoonMesa());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        gd.playerGraveyards.get(player1.getId()).add(attacker.getCard());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Wintermoon Mesa");
+        harness.assertNotOnBattlefield(player2, "Wintermoon Mesa");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void declareBlocks(Permanent attacker, List<Permanent> blockers) {
         prepareDeclareBlockers();
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
