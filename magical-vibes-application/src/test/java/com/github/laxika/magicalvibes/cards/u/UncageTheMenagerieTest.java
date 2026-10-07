@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,6 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({UncageTheMenagerie.class, AirElemental.class, AmbushViper.class, GrizzlyBears.class,
+        LlanowarElves.class, RuneclawBear.class, Shock.class})
 class UncageTheMenagerieTest extends BaseCardTest {
 
     @Test
@@ -44,14 +46,12 @@ class UncageTheMenagerieTest extends BaseCardTest {
     void putsIntoHandAndRequiresDifferentNames() {
         castUncage(2);
         GameData gd = harness.getGameData();
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears(), new AmbushViper(), new RuneclawBear()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new AmbushViper(), new RuneclawBear()));
 
         harness.passBothPriorities();
 
         int bearsIndex = indexOf(offeredNames(gd), "Grizzly Bears");
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(bearsIndex));
+        harness.handleCardChosen(player1, bearsIndex);
 
         harness.assertInHand(player1, "Grizzly Bears");
         assertThat(offeredNames(gd)).containsExactlyInAnyOrder("Ambush Viper", "Runeclaw Bear");
@@ -59,7 +59,7 @@ class UncageTheMenagerieTest extends BaseCardTest {
         assertThat(activeSearch().params().remainingCount()).isEqualTo(1);
 
         int viperIndex = indexOf(offeredNames(gd), "Ambush Viper");
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(viperIndex));
+        harness.handleCardChosen(player1, viperIndex);
 
         harness.assertInHand(player1, "Ambush Viper");
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -90,10 +90,60 @@ class UncageTheMenagerieTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("May stop after finding fewer than X creatures")
+    void mayStopAfterOneCreature() {
+        castUncage(2);
+        setupLibrary();
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        harness.handleCardChosen(player1, indexOf(offeredNames(gd), "Grizzly Bears"));
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
+        harness.assertInGraveyard(player1, "Uncage the Menagerie");
+    }
+
+    @Test
+    @DisplayName("Finishes when only duplicate names remain")
+    void finishesWhenOnlyDuplicateNamesRemain() {
+        castUncage(2);
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new LlanowarElves()));
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        harness.handleCardChosen(player1, indexOf(offeredNames(gd), "Grizzly Bears"));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Grizzly Bears", "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Uncage the Menagerie");
+    }
+
+    @Test
+    @DisplayName("No matching creatures finishes without taking a card")
+    void noMatchingCreatures() {
+        castUncage(2);
+        harness.setLibrary(player1, List.of(new LlanowarElves(), new AirElemental(), new Shock()));
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        harness.assertInGraveyard(player1, "Uncage the Menagerie");
     }
 
     private void castUncage(int xValue) {
@@ -103,9 +153,7 @@ class UncageTheMenagerieTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(
+        harness.setLibrary(player1, List.of(
                 new GrizzlyBears(),
                 new AmbushViper(),
                 new RuneclawBear(),
