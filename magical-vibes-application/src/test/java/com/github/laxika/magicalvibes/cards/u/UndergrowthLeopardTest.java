@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -111,31 +113,61 @@ class UndergrowthLeopardTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
+    @Test
+    void vigilanceKeepsAttackingLeopardUntapped() {
+        Permanent leopard = addReadyLeopard(player1);
+
+        declareAttackers(List.of(0));
+
+        assertThat(leopard.isTapped()).isFalse();
+    }
+
+    @Test
+    void tappedLeopardCanDestroyItsControllersArtifact() {
+        Permanent leopard = addReadyLeopard(player1);
+        leopard.tap();
+        Permanent target = addReadyArtifact(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Undergrowth Leopard");
+        harness.assertInGraveyard(player1, "Undergrowth Leopard");
+        harness.assertOnBattlefield(player1, "Leonin Scimitar");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Leonin Scimitar");
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+    }
+
+    @Test
+    void missingTargetDoesNotSacrificeLeopard() {
+        addReadyLeopard(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Undergrowth Leopard");
+        harness.assertNotInGraveyard(player1, "Undergrowth Leopard");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyLeopard(Player player) {
-        Permanent perm = new Permanent(new UndergrowthLeopard());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new UndergrowthLeopard());
     }
 
     private Permanent addReadyArtifact(Player player) {
-        Permanent perm = new Permanent(new LeoninScimitar());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new LeoninScimitar());
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        Permanent perm = new Permanent(new GloriousAnthem());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new GloriousAnthem());
     }
 
     private Permanent addReadyLand(Player player) {
-        Permanent perm = new Permanent(new Island());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new Island());
     }
 }
