@@ -13,12 +13,52 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SwayOfIllusion.class, RagingKavu.class, Forest.class})
 class SwayOfIllusionTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Can target more than ninety-nine creatures")
+    void targetsAnyNumberOfCreatures() {
+        List<Permanent> creatures = IntStream.range(0, 100)
+                .mapToObj(i -> harness.addToBattlefieldAndReturn(player2, new RagingKavu()))
+                .toList();
+        harness.setHand(player1, List.of(new SwayOfIllusion()));
+        harness.setLibrary(player1, List.of(new RagingKavu()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, creatures.stream().map(Permanent::getId).toList());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+
+        creatures.forEach(creature ->
+                assertThat(gqs.getEffectiveColors(gd, creature)).containsExactly(CardColor.BLACK));
+        harness.assertInHand(player1, "Raging Kavu");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not draw when all chosen targets leave before resolution")
+    void doesNotDrawWhenAllTargetsAreIllegal() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new RagingKavu());
+        harness.setHand(player1, List.of(new SwayOfIllusion()));
+        harness.setLibrary(player1, List.of(new RagingKavu()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, List.of(creature.getId()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Sway of Illusion");
+    }
 
     @Test
     @DisplayName("Makes all targeted creatures the chosen color and draws a card")
