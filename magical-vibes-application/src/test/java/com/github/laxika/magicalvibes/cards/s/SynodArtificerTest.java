@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -123,6 +125,118 @@ class SynodArtificerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
                 player1, 0, 1, 2, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void untapAbilityAllowsZeroTargets() {
+        Permanent artificer = addCreatureReady(player1, new SynodArtificer());
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 1, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(artificer.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    void cannotChooseTheSameArtifactTwice(int abilityIndex) {
+        Permanent artificer = addCreatureReady(player1, new SynodArtificer());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DarksteelIngot());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, abilityIndex, 2, List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(artificer.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    void cannotActivateWhileSummoningSick(int abilityIndex) {
+        Permanent artificer = harness.addToBattlefieldAndReturn(player1, new SynodArtificer());
+        artificer.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, abilityIndex, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(artificer.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    void cannotActivateWhileTapped(int abilityIndex) {
+        Permanent artificer = addCreatureReady(player1, new SynodArtificer());
+        artificer.tap();
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, abilityIndex, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    void canTargetArtifactsControlledByDifferentPlayers(int abilityIndex) {
+        addCreatureReady(player1, new SynodArtificer());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new DarksteelIngot());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new DarksteelIngot());
+        if (abilityIndex == 1) {
+            own.tap();
+            opposing.tap();
+        }
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, abilityIndex, 2,
+                List.of(own.getId(), opposing.getId()));
+        harness.passBothPriorities();
+
+        assertThat(own.isTapped()).isEqualTo(abilityIndex == 0);
+        assertThat(opposing.isTapped()).isEqualTo(abilityIndex == 0);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    void cannotActivateWithoutPayingX(int abilityIndex) {
+        Permanent artificer = addCreatureReady(player1, new SynodArtificer());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DarksteelIngot());
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, abilityIndex, 1, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(artificer.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    void rejectsMoreThanXTargets(int abilityIndex) {
+        addCreatureReady(player1, new SynodArtificer());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new DarksteelIngot());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new DarksteelIngot());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, abilityIndex, 1, List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void untapAbilityRejectsNonartifactTarget() {
+        addCreatureReady(player1, new SynodArtificer());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CrazedGoblin());
+        target.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 1, 1, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
