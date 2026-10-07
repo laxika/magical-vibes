@@ -102,8 +102,37 @@ class TruceTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player2, true);
 
-        harness.assertLife(player1, 24);
+        harness.assertLife(player1, 20);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).playerId())
                 .isEqualTo(player2.getId());
+
+        harness.handleXValueChosen(player2, 0);
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 22);
+    }
+
+    @Test
+    @DisplayName("Life gain waits until every player has finished drawing")
+    void lifeGainWaitsUntilAllDrawsFinish() {
+        harness.addToBattlefield(player1, new ZursWeirding());
+        castTruce();
+
+        harness.handleXValueChosen(player1, 0);
+        harness.assertLife(player1, 20);
+
+        harness.handleXValueChosen(player2, 1);
+        PendingInteraction.MayAbilityChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.assertLife(player1, 20);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 22);
     }
 }
