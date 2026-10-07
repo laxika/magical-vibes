@@ -85,4 +85,57 @@ class StormQueenOfWakandaTest extends BaseCardTest {
 
         assertThat(attacker.getMarkedDamage()).isZero();
     }
+
+    @Test
+    @DisplayName("Only another attacking creature is a legal target")
+    void excludesStormAndNonAttackingCreatures() {
+        addCreatureReady(player1, new StormQueenOfWakanda());
+        Permanent attackingBears = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0, 1));
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).containsExactly(attackingBears.getId());
+
+        harness.handlePermanentChosen(player1, attackingBears.getId());
+        resolveAllTriggers();
+        assertThat(gqs.hasKeyword(gd, attackingBears, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The attack boost evaluates power on resolution and then stays fixed")
+    void boostUsesPowerAtResolution() {
+        Permanent storm = addCreatureReady(player1, new StormQueenOfWakanda());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0, 1));
+        storm.setPowerModifier(3);
+        harness.handlePermanentChosen(player1, bears.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(9);
+        storm.setPowerModifier(0);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each flying attacker receives Storm's damage")
+    void damagesEachFlyingAttacker() {
+        addCreatureReady(player1, new StormQueenOfWakanda());
+        Permanent first = addCreatureReady(player2, new AirElemental());
+        Permanent second = addCreatureReady(player2, new AirElemental());
+        first.setToughnessModifier(2);
+        second.setToughnessModifier(2);
+
+        declareAttackers(player2, List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(first.getMarkedDamage()).isEqualTo(4);
+        assertThat(second.getMarkedDamage()).isEqualTo(4);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(first, second);
+    }
 }
