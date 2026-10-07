@@ -25,7 +25,6 @@ class TabletOfEpityrTest extends BaseCardTest {
 
         destroyArtifact(player1, 3);
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -44,7 +43,6 @@ class TabletOfEpityrTest extends BaseCardTest {
 
         destroyArtifact(player1, 2);
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -60,15 +58,59 @@ class TabletOfEpityrTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         destroyArtifact(player2, 2);
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Tablet triggers when it itself is destroyed")
+    void ownDestructionTriggersLifeGain() {
+        harness.addToBattlefield(player1, new TabletOfEpityr());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Tablet of Epityr"));
+
+        harness.assertInGraveyard(player1, "Tablet of Epityr");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 21);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Tablet offers a separate payment for the same destroyed artifact")
+    void multipleTabletsOfferIndependentPayments() {
+        harness.addToBattlefield(player1, new TabletOfEpityr());
+        harness.addToBattlefield(player1, new TabletOfEpityr());
+        harness.addToBattlefield(player1, new MindStone());
+        harness.setLife(player1, 20);
+
+        destroyArtifact(player1, 3);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 21);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
     private void destroyArtifact(com.github.laxika.magicalvibes.model.Player artifactController, int mana) {
         harness.setHand(player1, List.of(new Naturalize()));
         harness.addMana(player1, ManaColor.GREEN, mana);
-        harness.castInstant(player1, 0, harness.getPermanentId(artifactController, "Mind Stone"));
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(artifactController, "Mind Stone"));
     }
 }
