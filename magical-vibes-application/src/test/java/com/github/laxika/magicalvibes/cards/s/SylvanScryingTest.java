@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.f.Frogmite;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.t.TreeOfTales;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SylvanScrying.class, Forest.class, Plains.class, Frogmite.class})
+@CardUsed({SylvanScrying.class, Forest.class, Plains.class, Frogmite.class, TreeOfTales.class})
 class SylvanScryingTest extends BaseCardTest {
 
     @Test
@@ -29,7 +30,7 @@ class SylvanScryingTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Sylvan Scrying");
+        assertThat(entry.getCard()).isInstanceOf(SylvanScrying.class);
     }
 
     @Test
@@ -132,6 +133,69 @@ class SylvanScryingTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
 
+        harness.assertInGraveyard(player1, "Sylvan Scrying");
+    }
+
+    @Test
+    @DisplayName("A nonbasic artifact land is revealed and put into the controller's hand")
+    void findsNonbasicArtifactLand() {
+        setupAndCast();
+        TreeOfTales land = new TreeOfTales();
+        Frogmite nonland = new Frogmite();
+        Forest opposingLand = new Forest();
+        harness.setLibrary(player1, List.of(nonland, land));
+        harness.setLibrary(player2, List.of(opposingLand));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(land);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Tree of Tales");
+        harness.assertNotOnBattlefield(player1, "Tree of Tales");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonland);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingLand);
+        harness.assertNotInHand(player2, "Tree of Tales");
+        assertThat(gameLogContains("reveals Tree of Tales and puts it into their hand")).isTrue();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Sylvan Scrying");
+    }
+
+    @Test
+    @DisplayName("Failing to find still shuffles and leaves every card in the library")
+    void failingToFindStillShuffles() {
+        setupAndCast();
+        Forest land = new Forest();
+        Frogmite nonland = new Frogmite();
+        harness.setLibrary(player1, List.of(land, nonland));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(land, nonland);
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Sylvan Scrying");
+    }
+
+    @Test
+    @DisplayName("Finding no matching land still shuffles the library")
+    void noMatchingLandStillShuffles() {
+        setupAndCast();
+        Frogmite nonland = new Frogmite();
+        harness.setLibrary(player1, List.of(nonland));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonland);
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Sylvan Scrying");
     }
 
