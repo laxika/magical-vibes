@@ -107,4 +107,68 @@ class TorrentOfStoneTest extends BaseCardTest {
                 .hasMessageContaining("cannot be spliced onto Eradicate");
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(mountain1, mountain2);
     }
+
+    @Test
+    @DisplayName("Tapped Mountains can pay the splice cost before resolution")
+    void canSacrificeTappedMountains() {
+        Permanent mountain1 = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent mountain2 = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        mountain1.tap();
+        mountain2.tap();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PatronOfTheAkki());
+        TorrentOfStone torrent = new TorrentOfStone();
+        harness.setHand(player1, List.of(new RibbonsOfTheReikai(), torrent));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castWithSplice(player1, 0, target.getId(), List.of(1),
+                List.of(mountain1.getId(), mountain2.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Mountain");
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(torrent);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        harness.assertInGraveyard(player1, "Ribbons of the Reikai");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(torrent);
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice the same Mountain twice to splice")
+    void cannotSacrificeSameMountainTwice() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PatronOfTheAkki());
+        harness.setHand(player1, List.of(new RibbonsOfTheReikai(), new TorrentOfStone()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castWithSplice(player1, 0, target.getId(), List.of(1),
+                List.of(mountain.getId(), mountain.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(mountain);
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's Mountain to splice")
+    void cannotSacrificeOpponentsMountain() {
+        Permanent ownMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent opponentsMountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PatronOfTheAkki());
+        harness.setHand(player1, List.of(new RibbonsOfTheReikai(), new TorrentOfStone()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castWithSplice(player1, 0, target.getId(), List.of(1),
+                List.of(ownMountain.getId(), opponentsMountain.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(ownMountain);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(opponentsMountain, target);
+        assertThat(target.getMarkedDamage()).isZero();
+    }
 }
