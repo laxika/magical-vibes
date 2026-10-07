@@ -1,14 +1,18 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
+import com.github.laxika.magicalvibes.cards.m.MelekIzzetParagon;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,6 +26,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Turn // Burn is one card whose two halves (and their fusion) are the three modes of a single
  * modal instant, each paying its own total cost.
  */
+@CardUsed({TurnBurn.class, GrizzlyBears.class, SerraAngel.class, InvasionOfZendikar.class,
+        MelekIzzetParagon.class})
 class TurnBurnTest extends BaseCardTest {
 
     private static final int TURN = 0;
@@ -158,5 +164,70 @@ class TurnBurnTest extends BaseCardTest {
         assertThat(gqs.hasColor(gd, angel, CardColor.RED)).isFalse();
         assertThat(angel.getTransientCreatureTypeOverride()).isNull();
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void burnCanDamageBattle() {
+        Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfZendikar());
+        battle.setCounterCount(CounterType.DEFENSE, 3);
+        harness.setHand(player1, List.of(new TurnBurn()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, BURN, battle.getId());
+        harness.passBothPriorities();
+
+        assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(1);
+    }
+
+    @Test
+    void fuseCannotBeCastFromLibraryWithMelek() {
+        harness.addToBattlefield(player1, new MelekIzzetParagon());
+        harness.setLibrary(player1, List.of(new TurnBurn()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.ensurePriority(player1);
+
+        assertThatThrownBy(() -> gs.playCardFromLibraryTop(gd, player1, FUSE, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only be cast from hand");
+    }
+
+    @Test
+    void fuseStillBurnsWhenTurnTargetLeavesBattlefield() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TurnBurn()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castModalInstant(player1, 0, FUSE, List.of(bears.getId(), player2.getId()));
+
+        harness.setHand(player2, List.of(new TurnBurn()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castInstant(player2, 0, BURN, bears.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void fuseDoesNotRemoveCountersAndSurvivingCreatureKeepsDamage() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, List.of(new TurnBurn()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castModalInstant(player1, 0, FUSE, List.of(bears.getId(), bears.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(bears.getMarkedDamage()).isEqualTo(2);
     }
 }
