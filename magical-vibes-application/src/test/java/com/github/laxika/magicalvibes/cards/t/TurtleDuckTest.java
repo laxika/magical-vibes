@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(TurtleDuck.class)
+@CardUsed({TurtleDuck.class})
 class TurtleDuckTest extends BaseCardTest {
 
     @Test
@@ -38,6 +39,57 @@ class TurtleDuckTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, turtleDuck)).isZero();
         assertThat(gqs.getEffectiveToughness(gd, turtleDuck)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, turtleDuck, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Repeated activation sets power to 4 rather than adding power")
+    void repeatedActivationDoesNotIncreasePower() {
+        Permanent turtleDuck = addReadyTurtleDuck();
+        activateAbility();
+        activateAbility();
+
+        assertThat(gqs.getEffectivePower(gd, turtleDuck)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, turtleDuck)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, turtleDuck, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability preserves counters and leaves base toughness unchanged")
+    void countersApplyOnTopOfBasePower() {
+        Permanent turtleDuck = addReadyTurtleDuck();
+        turtleDuck.getCounters().put(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        activateAbility();
+
+        assertThat(gqs.getEffectivePower(gd, turtleDuck)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, turtleDuck)).isEqualTo(6);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, turtleDuck)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, turtleDuck)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, turtleDuck, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Tapped summoning-sick Turtle-Duck can activate during the opponent's turn")
+    void canActivateWhileTappedAndSummoningSickOnOpponentsTurn() {
+        Permanent turtleDuck = harness.addToBattlefieldAndReturn(player1, new TurtleDuck());
+        turtleDuck.setSummoningSick(true);
+        turtleDuck.setTapped(true);
+        Permanent otherTurtleDuck = addCreatureReady(player2, new TurtleDuck());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, turtleDuck)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, turtleDuck, Keyword.TRAMPLE)).isTrue();
+        assertThat(turtleDuck.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, otherTurtleDuck)).isZero();
+        assertThat(gqs.hasKeyword(gd, otherTurtleDuck, Keyword.TRAMPLE)).isFalse();
     }
 
     private Permanent addReadyTurtleDuck() {
