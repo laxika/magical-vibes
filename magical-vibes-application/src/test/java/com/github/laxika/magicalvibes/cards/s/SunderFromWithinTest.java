@@ -25,8 +25,7 @@ class SunderFromWithinTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SunderFromWithin()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Pithing Needle");
         harness.assertInGraveyard(player2, "Pithing Needle");
@@ -39,8 +38,7 @@ class SunderFromWithinTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SunderFromWithin()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Oboro, Palace in the Clouds");
         harness.assertInGraveyard(player2, "Oboro, Palace in the Clouds");
@@ -53,11 +51,47 @@ class SunderFromWithinTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SunderFromWithin()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player1, "Pithing Needle");
         harness.assertInGraveyard(player1, "Pithing Needle");
+    }
+
+    @Test
+    @DisplayName("Sunder from Within can destroy its controller's land without affecting other permanents")
+    void destroysOwnLandOnly() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new OboroPalaceInTheClouds());
+        harness.addToBattlefield(player2, new PithingNeedle());
+        harness.addToBattlefield(player2, new GnatMiser());
+        harness.setHand(player1, List.of(new SunderFromWithin()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Oboro, Palace in the Clouds");
+        harness.assertInGraveyard(player1, "Oboro, Palace in the Clouds");
+        harness.assertOnBattlefield(player2, "Pithing Needle");
+        harness.assertOnBattlefield(player2, "Gnat Miser");
+        harness.assertInGraveyard(player1, "Sunder from Within");
+    }
+
+    @Test
+    @DisplayName("Sunder from Within does not destroy Oboro after it returns to hand in response")
+    void targetReturnedToHandBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new OboroPalaceInTheClouds());
+        harness.setHand(player1, List.of(new SunderFromWithin()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Oboro, Palace in the Clouds");
+        harness.assertNotOnBattlefield(player2, "Oboro, Palace in the Clouds");
+        harness.assertNotInGraveyard(player2, "Oboro, Palace in the Clouds");
+        harness.assertInGraveyard(player1, "Sunder from Within");
     }
 
     @Test
