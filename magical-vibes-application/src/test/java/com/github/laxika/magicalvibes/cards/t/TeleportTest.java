@@ -30,8 +30,7 @@ class TeleportTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         UUID targetId = harness.getPermanentId(player1, "Durkwood Boars");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         assertThat(findPermanent(player1, "Durkwood Boars").isCantBeBlocked()).isTrue();
     }
@@ -61,8 +60,7 @@ class TeleportTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         UUID targetId = harness.getPermanentId(player2, "Durkwood Boars");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         assertThat(findPermanent(player2, "Durkwood Boars").isCantBeBlocked()).isTrue();
     }
@@ -91,8 +89,7 @@ class TeleportTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
-        harness.castInstant(player1, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
         declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
@@ -112,12 +109,57 @@ class TeleportTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         UUID targetId = harness.getPermanentId(player1, "Durkwood Boars");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Durkwood Boars").isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Teleport can be cast during an opponent's declare attackers step")
+    void canCastDuringOpponentsDeclareAttackers() {
+        harness.forceActivePlayer(player2);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DurkwoodBoars());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new DurkwoodBoars());
+        harness.setHand(player1, List.of(new Teleport()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(other.isCantBeBlocked()).isFalse();
+        harness.assertInGraveyard(player1, "Teleport");
+    }
+
+    @Test
+    @DisplayName("Teleport cannot be cast during the declare blockers step")
+    void cannotCastDuringDeclareBlockers() {
+        harness.forceActivePlayer(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DurkwoodBoars());
+        harness.setHand(player1, List.of(new Teleport()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Teleport's effect remains active during the end step")
+    void unblockableLastsThroughEndStep() {
+        harness.forceActivePlayer(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DurkwoodBoars());
+        harness.setHand(player1, List.of(new Teleport()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(target.isCantBeBlocked()).isTrue();
     }
 }
