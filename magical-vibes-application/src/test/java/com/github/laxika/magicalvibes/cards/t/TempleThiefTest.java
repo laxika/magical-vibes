@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.a.AlseidOfLifesBounty;
 import com.github.laxika.magicalvibes.cards.a.AqueousForm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SentinelsEyes;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TempleThief.class, GrizzlyBears.class, AqueousForm.class, AlseidOfLifesBounty.class})
+@CardUsed({TempleThief.class, GrizzlyBears.class, AqueousForm.class, AlseidOfLifesBounty.class,
+        SentinelsEyes.class})
 class TempleThiefTest extends BaseCardTest {
 
     @Test
@@ -30,7 +31,7 @@ class TempleThiefTest extends BaseCardTest {
         aura.setAttachedTo(blocker.getId());
         gd.playerBattlefields.get(player2.getId()).add(aura);
 
-        beginDeclareBlockers();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> declareBlock(blocker, thief))
                 .isInstanceOf(IllegalStateException.class)
@@ -43,7 +44,7 @@ class TempleThiefTest extends BaseCardTest {
         Permanent thief = addReady(player1, new TempleThief(), true);
         Permanent blocker = addReady(player2, new AlseidOfLifesBounty(), false);
 
-        beginDeclareBlockers();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> declareBlock(blocker, thief))
                 .isInstanceOf(IllegalStateException.class)
@@ -56,7 +57,38 @@ class TempleThiefTest extends BaseCardTest {
         Permanent thief = addReady(player1, new TempleThief(), true);
         Permanent blocker = addReady(player2, new GrizzlyBears(), false);
 
-        beginDeclareBlockers();
+        prepareDeclareBlockers();
+        declareBlock(blocker, thief);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An Aura controlled by the attacker still prevents the enchanted creature from blocking")
+    void cannotBeBlockedByCreatureEnchantedByOpponentsAura() {
+        Permanent thief = addReady(player1, new TempleThief(), true);
+        Permanent blocker = addCreatureReady(player2, new TempleThief());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SentinelsEyes());
+        aura.setAttachedTo(blocker.getId());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> declareBlock(blocker, thief))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cannot block");
+    }
+
+    @Test
+    @DisplayName("A creature can block Temple Thief after its only Aura leaves the battlefield")
+    void canBeBlockedAfterAuraLeavesBattlefield() {
+        Permanent thief = addReady(player1, new TempleThief(), true);
+        Permanent blocker = addCreatureReady(player2, new TempleThief());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new SentinelsEyes());
+        aura.setAttachedTo(blocker.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(aura);
+        gd.playerGraveyards.get(player2.getId()).add(aura.getCard());
+
+        prepareDeclareBlockers();
         declareBlock(blocker, thief);
 
         assertThat(blocker.isBlocking()).isTrue();
@@ -69,17 +101,8 @@ class TempleThiefTest extends BaseCardTest {
     }
 
     private Permanent addReady(Player player, Card card, boolean attacking) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
+        Permanent permanent = addCreatureReady(player, card);
         permanent.setAttacking(attacking);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
-    }
-
-    private void beginDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 }
