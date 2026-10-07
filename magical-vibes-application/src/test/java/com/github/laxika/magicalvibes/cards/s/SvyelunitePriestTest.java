@@ -132,6 +132,69 @@ class SvyelunitePriestTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The priest can grant shroud to itself")
+    void canTargetItself() {
+        Permanent priest = addCreatureReady(player1, new SvyelunitePriest());
+        prepareUpkeep();
+
+        harness.activateAbility(player1, 0, null, priest.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, priest, Keyword.SHROUD)).isTrue();
+        assertThat(priest.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick priest cannot pay the tap cost during upkeep")
+    void cannotActivateWithSummoningSickness() {
+        Permanent priest = harness.addToBattlefieldAndReturn(player1, new SvyelunitePriest());
+        prepareUpkeep();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, priest.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(priest.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Granted shroud prevents targeting by the creature's controller")
+    void shroudPreventsControllersAbilityTargeting() {
+        Permanent target = addCreatureReady(player1, new SvyelunitePriest());
+        Permanent secondPriest = addCreatureReady(player1, new SvyelunitePriest());
+        prepareUpkeep();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        addAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+        assertThat(secondPriest.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Granted shroud prevents targeting by an opponent during the same turn")
+    void shroudPreventsOpponentsAbilityTargeting() {
+        Permanent priest = addCreatureReady(player1, new SvyelunitePriest());
+        Permanent target = addCreatureReady(player2, new SvyelunitePriest());
+        prepareUpkeep();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        priest.untap();
+        addAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+        assertThat(priest.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void prepareUpkeep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UPKEEP);
