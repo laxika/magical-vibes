@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SovereignsBite.class, GreenwoodSentinel.class})
 class SovereignsBiteTest extends BaseCardTest {
 
     @Test
@@ -25,8 +28,8 @@ class SovereignsBiteTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 19);
     }
 
     @Test
@@ -39,19 +42,32 @@ class SovereignsBiteTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(10);
+        harness.assertLife(player1, 10);
     }
 
     @Test
     @DisplayName("Sovereign's Bite cannot target a creature")
     void cannotTargetCreature() {
-        Permanent bear = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bear);
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player2, new GreenwoodSentinel());
 
         harness.setHand(player1, List.of(new SovereignsBite()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, bear.getId()))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, sentinel.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Self-targeting at 3 life completes both life changes before checking for a loss")
+    void survivesSelfTargetingAtThreeLife() {
+        harness.setLife(player1, 3);
+        harness.setHand(player1, List.of(new SovereignsBite()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 3);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 }
