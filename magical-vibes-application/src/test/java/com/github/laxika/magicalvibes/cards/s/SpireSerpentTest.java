@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +15,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SpireSerpent.class, Spellbook.class, LeoninScimitar.class, BottleGnomes.class, GrizzlyBears.class})
 class SpireSerpentTest extends BaseCardTest {
-
-    // ===== Without metalcraft =====
 
     @Test
     @DisplayName("Base 3/5 with defender and no artifacts")
@@ -51,17 +49,10 @@ class SpireSerpentTest extends BaseCardTest {
         serpent.setSummoningSick(false);
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
-
-    // ===== With metalcraft =====
 
     @Test
     @DisplayName("Gets +2/+2 (becomes 5/7) with exactly three artifacts")
@@ -88,17 +79,10 @@ class SpireSerpentTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         int serpentIndex = gd.playerBattlefields.get(player1.getId()).indexOf(serpent);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
-
-        gs.declareAttackers(gd, player1, List.of(serpentIndex));
+        declareAttackers(player1, List.of(serpentIndex));
 
         assertThat(serpent.isAttacking()).isTrue();
     }
-
-    // ===== Metalcraft lost =====
 
     @Test
     @DisplayName("Loses boost when artifact count drops below three")
@@ -133,12 +117,7 @@ class SpireSerpentTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard().getName().equals("Bottle Gnomes"));
 
         int serpentIndex = gd.playerBattlefields.get(player1.getId()).indexOf(serpent);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(serpentIndex)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(serpentIndex)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -154,5 +133,74 @@ class SpireSerpentTest extends BaseCardTest {
         Permanent serpent = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(gqs.getEffectivePower(gd, serpent)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, serpent)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Gaining the third artifact immediately enables the boost and attacking")
+    void gainsMetalcraftWhenThirdArtifactEnters() {
+        Permanent serpent = harness.addToBattlefieldAndReturn(player1, new SpireSerpent());
+        serpent.setSummoningSick(false);
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new LeoninScimitar());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, serpent)).isEqualTo(3);
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+
+        harness.addToBattlefield(player1, new BottleGnomes());
+        assertThat(gqs.getEffectivePower(gd, serpent)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, serpent)).isEqualTo(7);
+        declareAttackers(player1, List.of(0));
+        assertThat(serpent.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("More than three artifacts gives only one boost and preserves defender")
+    void fourArtifactsDoNotStackBoostOrRemoveDefender() {
+        Permanent serpent = harness.addToBattlefieldAndReturn(player1, new SpireSerpent());
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new LeoninScimitar());
+        harness.addToBattlefield(player1, new BottleGnomes());
+
+        assertThat(gqs.getEffectivePower(gd, serpent)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, serpent)).isEqualTo(7);
+        assertThat(gqs.hasKeyword(gd, serpent, Keyword.DEFENDER)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Metalcraft does not allow attacking while summoning sick")
+    void metalcraftDoesNotBypassSummoningSickness() {
+        Permanent serpent = harness.addToBattlefieldAndReturn(player1, new SpireSerpent());
+        serpent.setSummoningSick(true);
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new LeoninScimitar());
+        harness.addToBattlefield(player1, new BottleGnomes());
+
+        assertThat(gqs.getEffectivePower(gd, serpent)).isEqualTo(5);
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Losing metalcraft after declaration reduces stats but does not remove the attacker")
+    void losingMetalcraftDuringCombatDoesNotUndoAttack() {
+        Permanent serpent = harness.addToBattlefieldAndReturn(player1, new SpireSerpent());
+        serpent.setSummoningSick(false);
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new LeoninScimitar());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new BottleGnomes());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        assertThat(serpent.isAttacking()).isTrue();
+        gd.playerBattlefields.get(player1.getId()).remove(artifact);
+
+        assertThat(gqs.getEffectivePower(gd, serpent)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, serpent)).isEqualTo(5);
+        assertThat(serpent.isAttacking()).isTrue();
     }
 }
