@@ -91,13 +91,69 @@ class StampedeDriverTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
 
-    private void activateDriver(Permanent driver) {
+    @Test
+    @DisplayName("Creatures entering before resolution receive the boost and trample")
+    void affectsCreaturesEnteringBeforeResolution() {
+        Permanent driver = addCreatureReady(player1, new StampedeDriver());
+        harness.setHand(player1, List.of(new Mossdog()));
+
+        activateDriverWithoutResolving(driver);
+
+        assertThat(driver.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Mossdog");
+        assertThat(driver.getEffectivePower()).isEqualTo(1);
+        assertThat(driver.hasKeyword(Keyword.TRAMPLE)).isFalse();
+
+        Permanent creature = addCreatureReady(player1, new Mossdog());
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent driver = addCreatureReady(player1, new StampedeDriver());
+        driver.setTapped(true);
+        harness.setHand(player1, List.of(new Mossdog()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Mossdog");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent driver = harness.addToBattlefieldAndReturn(player1, new StampedeDriver());
+        driver.setSummoningSick(true);
+        harness.setHand(player1, List.of(new Mossdog()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(driver.isTapped()).isFalse();
+        harness.assertInHand(player1, "Mossdog");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    private void activateDriverWithoutResolving(Permanent driver) {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(driver), null, null);
         harness.handleCardChosen(player1, 0);
+    }
+
+    private void activateDriver(Permanent driver) {
+        activateDriverWithoutResolving(driver);
         harness.passBothPriorities();
     }
 }
