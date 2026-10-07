@@ -83,6 +83,50 @@ class TempleGardenTest extends BaseCardTest {
         assertThat(garden.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Temple Garden can produce mana immediately after its life payment")
+    void producesManaOnTheTurnItEnters() {
+        playTempleGarden(20);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(findGarden(player1).isTapped()).isTrue();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Temple Garden's controller pays life when it enters without being played")
+    void enteringWithoutBeingPlayedOffersPaymentToController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 15);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        Permanent garden = harness.enterBattlefieldAndReturn(player2, new TempleGarden());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(garden.isTapped()).isFalse();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(13);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Temple Garden enters tapped when payment is declined outside a land play")
+    void enteringWithoutBeingPlayedStillRequiresPayment() {
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        Permanent garden = harness.enterBattlefieldAndReturn(player1, new TempleGarden());
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(garden.isTapped()).isTrue();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
     private void playTempleGarden(int life) {
         harness.setLife(player1, life);
         harness.setHand(player1, List.of(new TempleGarden()));
@@ -92,9 +136,7 @@ class TempleGardenTest extends BaseCardTest {
     }
 
     private Permanent addGardenReady(Player player) {
-        Permanent garden = harness.addToBattlefieldAndReturn(player, new TempleGarden());
-        garden.setSummoningSick(false);
-        return garden;
+        return addCreatureReady(player, new TempleGarden());
     }
 
     private Permanent findGarden(Player player) {
