@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.ChitteringRats;
+import com.github.laxika.magicalvibes.cards.e.EchoingTruth;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SwordOfFireAndIce.class, ChitteringRats.class})
+@CardUsed({SwordOfFireAndIce.class, ChitteringRats.class, EchoingTruth.class})
 class SwordOfFireAndIceTest extends BaseCardTest {
 
     @Test
@@ -107,6 +108,70 @@ class SwordOfFireAndIceTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Combat damage creates one ability containing both damage and draw")
+    void combatDamageCreatesOneTriggeredAbility() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new ChitteringRats()));
+        Permanent creature = addCreatureReady(player1, new ChitteringRats());
+        Permanent sword = addSwordReady(player1);
+        sword.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An illegal damage target prevents the card draw too")
+    void illegalTargetPreventsDraw() {
+        harness.setHand(player1, List.of(new EchoingTruth()));
+        harness.setLibrary(player1, List.of(new ChitteringRats()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        Permanent creature = addCreatureReady(player1, new ChitteringRats());
+        Permanent sword = addSwordReady(player1);
+        sword.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChitteringRats());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Chittering Rats");
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Equipment controller chooses the target and draws, even on another player's creature")
+    void equipmentControllerControlsTrigger() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new ChitteringRats()));
+        harness.setLibrary(player2, List.of(new ChitteringRats()));
+        Permanent creature = addCreatureReady(player1, new ChitteringRats());
+        Permanent sword = addSwordReady(player2);
+        sword.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+
+        resolveCombat();
+        harness.handlePermanentChosen(player2, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 
     private Permanent addSwordReady(Player player) {
