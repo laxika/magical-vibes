@@ -91,6 +91,39 @@ class TelethopterTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A summoning-sick Telethopter can tap itself, but gains flying only on resolution")
+    void summoningSickTelethopterCanPayItsOwnCost() {
+        Permanent thopter = harness.addToBattlefieldAndReturn(player1, new Telethopter());
+        thopter.setSummoningSick(true);
+
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(thopter);
+        harness.activateAbility(player1, index, null, null);
+
+        assertThat(thopter.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, thopter, Keyword.FLYING)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, thopter, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick supporting creature can pay the cost without gaining flying")
+    void summoningSickSupportingCreatureCanPayCost() {
+        Permanent thopter = addCreatureReady(player1, new Telethopter());
+        thopter.tap();
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new ThalakosSentry());
+        fodder.setSummoningSick(true);
+
+        activate(thopter);
+
+        assertThat(fodder.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, thopter, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, fodder, Keyword.FLYING)).isFalse();
+    }
+
     private void activate(Permanent thopter) {
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(thopter);
         harness.activateAbility(player1, index, null, null);
