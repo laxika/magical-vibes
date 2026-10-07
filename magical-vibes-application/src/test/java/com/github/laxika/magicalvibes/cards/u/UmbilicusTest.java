@@ -102,4 +102,43 @@ class UmbilicusTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Umbilicus");
     }
+
+    @Test
+    @DisplayName("Umbilicus itself can be returned during its controller's upkeep")
+    void mayReturnUmbilicusItself() {
+        Permanent umbilicus = harness.addToBattlefieldAndReturn(player1, new Umbilicus());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handlePermanentChosen(player1, umbilicus.getId());
+
+        harness.assertInHand(player1, "Umbilicus");
+        harness.assertNotOnBattlefield(player1, "Umbilicus");
+        harness.assertLife(player1, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A borrowed permanent returns to its owner's hand")
+    void borrowedPermanentReturnsToOwner() {
+        harness.addToBattlefield(player1, new Umbilicus());
+        GorillaWarrior card = new GorillaWarrior();
+        card.setOwnerId(player1.getId());
+        Permanent gorilla = harness.addToBattlefieldAndReturn(player2, card);
+        gd.stolenCreatures.put(gorilla.getId(), player1.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(gorilla.getId());
+        harness.handlePermanentChosen(player2, gorilla.getId());
+
+        harness.assertInHand(player1, "Gorilla Warrior");
+        harness.assertNotInHand(player2, "Gorilla Warrior");
+        harness.assertNotOnBattlefield(player2, "Gorilla Warrior");
+        harness.assertOnBattlefield(player1, "Umbilicus");
+        harness.assertLife(player2, 20);
+    }
 }
