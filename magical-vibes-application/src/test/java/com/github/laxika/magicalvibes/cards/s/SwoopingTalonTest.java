@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AvenEnvoy;
 import com.github.laxika.magicalvibes.cards.f.FreneticRaptor;
+import com.github.laxika.magicalvibes.cards.g.GoblinClearcutter;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SwoopingTalon.class, AvenEnvoy.class, FreneticRaptor.class})
+@CardUsed({SwoopingTalon.class, AvenEnvoy.class, FreneticRaptor.class, GoblinClearcutter.class})
 class SwoopingTalonTest extends BaseCardTest {
 
     @Test
@@ -125,6 +126,51 @@ class SwoopingTalonTest extends BaseCardTest {
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
                 .doesNotThrowAnyException();
         assertThat(blocker.getMustBlockIds()).containsExactly(talon.getId());
+    }
+
+
+    @Test
+    @DisplayName("Provoke untaps a ground creature even though it cannot block the flying Talon")
+    void provokeDoesNotOverrideFlyingRestriction() {
+        addCreatureReady(player1, new SwoopingTalon());
+        Permanent blocker = addCreatureReady(player2, new GoblinClearcutter());
+        blocker.tap();
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(blocker.isTapped()).isFalse();
+        prepareDeclareBlockers();
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Losing flying before blockers makes the provoked ground creature have to block")
+    void losingFlyingMakesProvokedGroundCreatureAbleToBlock() {
+        Permanent talon = addCreatureReady(player1, new SwoopingTalon());
+        Permanent blocker = addCreatureReady(player2, new GoblinClearcutter());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.handleMayAbilityChosen(player1, true);
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        });
+
+        assertThat(gqs.hasKeyword(gd, talon, Keyword.FLYING)).isFalse();
+        prepareDeclareBlockers();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
 }
