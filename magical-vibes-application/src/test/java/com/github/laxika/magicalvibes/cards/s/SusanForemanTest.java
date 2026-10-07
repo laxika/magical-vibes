@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SusanForeman.class, Panopticon.class})
 class SusanForemanTest extends BaseCardTest {
@@ -68,5 +69,60 @@ class SusanForemanTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(com.github.laxika.magicalvibes.model.ManaColor.GREEN))
                 .isEqualTo(1);
+    }
+
+    @Test
+    void lookingAtPlanarCardsDoesNotRevealThemInThePublicLog() {
+        harness.addToBattlefield(player1, new SusanForeman());
+        gd.planechase.deck.add(new Panopticon());
+        gd.planechase.deck.add(new Panopticon());
+        gd.gameLog.clear();
+
+        harness.inMutationScope(() -> planar.planeswalk(gd));
+
+        assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains("Panopticon"));
+    }
+
+    @Test
+    void canPutTheSecondCardOnBottomWithoutReorderingTheRestOfTheDeck() {
+        harness.addToBattlefield(player1, new SusanForeman());
+        Card departing = gd.planechase.faceUp.getFirst().getCard();
+        Card first = new Panopticon();
+        Card second = new Panopticon();
+        Card third = new Panopticon();
+        gd.planechase.deck.addAll(List.of(first, second, third));
+
+        harness.inMutationScope(() -> planar.planeswalk(gd));
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+
+        assertThat(gd.planechase.faceUp).singleElement().extracting(PlanarObject::getCard)
+                .isSameAs(first);
+        assertThat(gd.planechase.deck).containsExactly(third, second, departing);
+    }
+
+    @Test
+    void doesNotReplaceAnOpponentsPlaneswalk() {
+        harness.addToBattlefield(player2, new SusanForeman());
+        Card first = new Panopticon();
+        Card second = new Panopticon();
+        gd.planechase.deck.addAll(List.of(first, second));
+
+        harness.inMutationScope(() -> planar.planeswalk(gd));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PlanarCardChoice.class)).isNull();
+        assertThat(gd.planechase.faceUp).singleElement().extracting(PlanarObject::getCard)
+                .isSameAs(first);
+    }
+
+    @Test
+    void cannotTapForManaWhileSummoningSick() {
+        Permanent susan = harness.addToBattlefieldAndReturn(player1, new SusanForeman());
+        susan.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(susan.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(com.github.laxika.magicalvibes.model.ManaColor.GREEN))
+                .isZero();
     }
 }
