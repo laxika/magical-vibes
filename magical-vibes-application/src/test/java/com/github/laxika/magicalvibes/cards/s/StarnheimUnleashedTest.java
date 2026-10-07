@@ -6,13 +6,16 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StarnheimUnleashed.class})
 class StarnheimUnleashedTest extends BaseCardTest {
 
     @Test
@@ -56,11 +59,61 @@ class StarnheimUnleashedTest extends BaseCardTest {
 
         gd.turnNumber++;
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.ensurePriority(player1);
-        gs.playCardFromExile(gd, player1, card.getId(), 0, null);
+        harness.castFromExile(player1, card.getId());
         harness.passBothPriorities();
 
         assertAngelWarriors(0);
+    }
+
+    @Test
+    @DisplayName("A foretold card cannot be cast on the turn it was foretold")
+    void cannotCastOnForetellTurn() {
+        StarnheimUnleashed card = new StarnheimUnleashed();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.foretell(player1, 0);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, card.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertAngelWarriors(0);
+    }
+
+    @Test
+    @DisplayName("Both X symbols in the foretell cost must be paid")
+    void foretellCostRequiresTwiceXGenericMana() {
+        StarnheimUnleashed card = new StarnheimUnleashed();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.foretell(player1, 0);
+        gd.turnNumber++;
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.ensurePriority(player1);
+
+        assertThatThrownBy(() -> gs.playCardFromExile(gd, player1, card.getId(), 2, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertAngelWarriors(0);
+    }
+
+    @Test
+    @DisplayName("Casting with foretell for X equal to one creates exactly one token")
+    void foretoldCastingWithOneCreatesOneToken() {
+        StarnheimUnleashed card = new StarnheimUnleashed();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.foretell(player1, 0);
+        gd.turnNumber++;
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.ensurePriority(player1);
+        gs.playCardFromExile(gd, player1, card.getId(), 1, null);
+        harness.passBothPriorities();
+
+        assertAngelWarriors(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
     private void assertAngelWarriors(int expectedCount) {
