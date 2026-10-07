@@ -117,6 +117,64 @@ class SubterraneanHangarTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
+    @Test
+    @DisplayName("Putting a storage counter uses the stack and waits for resolution")
+    void storageAbilityUsesTheStack() {
+        Permanent hangar = addHangarWithCounters(0);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(hangar.isTapped()).isTrue();
+        assertThat(hangar.getCounterCount(CounterType.STORAGE)).isZero();
+        assertThat(blackMana()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(hangar.getCounterCount(CounterType.STORAGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An untapped land can store a counter on the turn it enters")
+    void newlyEnteredLandCanStoreACounter() {
+        Permanent hangar = harness.enterBattlefieldAndReturn(player1, new SubterraneanHangar());
+        hangar.untap();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(hangar.getCounterCount(CounterType.STORAGE)).isEqualTo(1);
+        assertThat(hangar.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The storage ability cannot be activated while the land is tapped")
+    void cannotActivateStorageAbilityWhileTapped() {
+        Permanent hangar = addHangarWithCounters(0);
+        hangar.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(hangar.getCounterCount(CounterType.STORAGE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing storage counters produces mana without using the stack")
+    void manaAbilityDoesNotUseTheStack() {
+        Permanent hangar = addHangarWithCounters(2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "2");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(blackMana()).isEqualTo(2);
+        assertThat(hangar.getCounterCount(CounterType.STORAGE)).isZero();
+    }
+
     private Permanent addHangarWithCounters(int counters) {
         Permanent hangar = harness.addToBattlefieldAndReturn(player1, new SubterraneanHangar());
         hangar.setSummoningSick(false);
