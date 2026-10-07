@@ -1,17 +1,71 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.i.Inflame;
+import com.github.laxika.magicalvibes.cards.u.UrzasRage;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SpiketailDrake.class, SpiketailHatchling.class, Inflame.class})
+@CardUsed({SpiketailDrake.class, SpiketailHatchling.class, Inflame.class, UrzasRage.class})
 class SpiketailDrakeTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A tapped Drake with summoning sickness is sacrificed immediately as a cost")
+    void tappedSummoningSickDrakeCanActivateAndPaysCostImmediately() {
+        Permanent drake = harness.addToBattlefieldAndReturn(player1, new SpiketailDrake());
+        drake.tap();
+        drake.setSummoningSick(true);
+        harness.forceActivePlayer(player2);
+        SpiketailHatchling hatchling = new SpiketailHatchling();
+        harness.castFromHand(player2, hatchling, "{1}{U}");
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, hatchling.getId());
+
+        harness.assertNotOnBattlefield(player1, "Spiketail Drake");
+        harness.assertInGraveyard(player1, "Spiketail Drake");
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Spiketail Hatchling");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({SpiketailDrake.class, UrzasRage.class})
+    @DisplayName("An uncounterable spell's controller may still pay the optional cost")
+    void uncounterableSpellControllerMayStillPay() {
+        harness.addToBattlefield(player1, new SpiketailDrake());
+        harness.forceActivePlayer(player2);
+        UrzasRage rage = new UrzasRage();
+        harness.setHand(player2, List.of(rage));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, rage.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertInGraveyard(player1, "Spiketail Drake");
+        harness.assertInGraveyard(player2, "Urza's Rage");
+    }
 
     @Test
     @DisplayName("Sacrifice counters a spell when its controller cannot pay {3}")
