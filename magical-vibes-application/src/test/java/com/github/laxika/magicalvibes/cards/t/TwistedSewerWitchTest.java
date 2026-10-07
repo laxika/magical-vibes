@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.r.RuinRat;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -50,10 +49,59 @@ class TwistedSewerWitchTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
     }
 
+    @Test
+    void secondWitchReplacesOldRolesWithoutStackingTheirBoosts() {
+        castAndResolve();
+        Permanent firstRat = findPermanent(player1, "Rat");
+        Permanent firstRole = findPermanent(player1, "Wicked");
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+        int controllerLifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        castAndResolve();
+        harness.passBothPriorities();
+
+        List<Permanent> roles = findPermanents(player1, "Wicked");
+        assertThat(roles).hasSize(2);
+        assertThat(roles).extracting(Permanent::getId).doesNotContain(firstRole.getId());
+        assertThat(roles.stream().filter(role -> firstRat.getId().equals(role.getAttachedTo())))
+                .hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, firstRat)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstRat)).isEqualTo(2);
+        harness.assertLife(player2, opponentLifeBefore - 1);
+        harness.assertLife(player1, controllerLifeBefore);
+    }
+
+    @Test
+    void ratDyingPutsItsRoleIntoGraveyardAndDrainsOpponent() {
+        castAndResolve();
+        Permanent rat = findPermanent(player1, "Rat");
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+        int controllerLifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, rat));
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Wicked")).isEmpty();
+        harness.assertLife(player2, opponentLifeBefore - 1);
+        harness.assertLife(player1, controllerLifeBefore);
+    }
+
+    @Test
+    void doesNotAttachRolesToNonRatCreatures() {
+        Permanent existingWitch = harness.addToBattlefieldAndReturn(player1, new TwistedSewerWitch());
+
+        castAndResolve();
+
+        assertThat(findPermanents(player1, "Wicked")).hasSize(1);
+        assertThat(findPermanent(player1, "Wicked").getAttachedTo())
+                .isEqualTo(findPermanent(player1, "Rat").getId())
+                .isNotEqualTo(existingWitch.getId());
+    }
+
     private void castAndResolve() {
-        harness.setHand(player1, List.of(new TwistedSewerWitch()));
-        harness.addMana(player1, ManaColor.BLACK, 5);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new TwistedSewerWitch(), "{3}{B}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
