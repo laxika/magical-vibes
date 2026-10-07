@@ -79,11 +79,89 @@ class SpellbookVendorTest extends BaseCardTest {
                 new InteractionAnswer.ScryOrder(List.of(0), List.of()));
     }
 
+    @Test
+    @CardUsed({SpellbookVendor.class})
+    @DisplayName("Paying creates a separate trigger that can be responded to before the Role enters")
+    void roleCreationUsesSeparateReflexiveTrigger() {
+        Permanent vendor = addCreatureReady(player1, new SpellbookVendor());
+        beginCombat();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> {
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handlePermanentChosen(player1, vendor.getId());
+
+            assertThat(findPermanents(player1, "Sorcerer")).isEmpty();
+            assertThat(gd.stack).hasSize(1);
+
+            harness.inMutationScope(() ->
+                    harness.getPermanentRemovalService().removePermanentToHand(gd, vendor));
+            harness.passBothPriorities();
+            assertThat(findPermanents(player1, "Sorcerer")).isEmpty();
+        });
+    }
+
+    @Test
+    @CardUsed({SpellbookVendor.class})
+    @DisplayName("Spellbook Vendor can enchant itself")
+    void canCreateRoleAttachedToItself() {
+        Permanent vendor = addCreatureReady(player1, new SpellbookVendor());
+        beginCombat();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, vendor.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Sorcerer").getAttachedTo()).isEqualTo(vendor.getId());
+        assertThat(gqs.getEffectivePower(gd, vendor)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, vendor)).isEqualTo(3);
+    }
+
+    @Test
+    @CardUsed({SpellbookVendor.class})
+    @DisplayName("A new Sorcerer Role replaces the controller's older Role on the same creature")
+    void newRoleReplacesOlderRole() {
+        Permanent vendor = addCreatureReady(player1, new SpellbookVendor());
+        beginCombat();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, vendor.getId());
+        resolveAllTriggers();
+        Permanent oldRole = findPermanent(player1, "Sorcerer");
+
+        beginCombat();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, vendor.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Sorcerer")).hasSize(1);
+        assertThat(findPermanent(player1, "Sorcerer").getId()).isNotEqualTo(oldRole.getId());
+        assertThat(gqs.getEffectivePower(gd, vendor)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, vendor)).isEqualTo(3);
+    }
+
+    @Test
+    @CardUsed({SpellbookVendor.class})
+    @DisplayName("Spellbook Vendor does not trigger during an opponent's combat")
+    void doesNotTriggerDuringOpponentCombat() {
+        addCreatureReady(player1, new SpellbookVendor());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Sorcerer")).isEmpty();
+    }
+
     private void beginCombat() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
         harness.passBothPriorities();
     }
 }
