@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -82,6 +83,118 @@ class TheCloningOfShredderTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Hill Giant")).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Chapter III creates a Mutant copy before the Saga is sacrificed")
+    void chapterIIICopiesAndSacrificesSaga() {
+        Permanent saga = addSaga(2);
+        Card creature = new GrizzlyBears();
+        gd.addToExile(player1.getId(), creature, saga.getId());
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        Permanent token = findPermanent(player1, "Grizzly Bears");
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.getCard().getSubtypes()).contains(CardSubtype.BEAR, CardSubtype.MUTANT);
+        harness.assertNotOnBattlefield(player1, "The Cloning of Shredder");
+        harness.assertInGraveyard(player1, "The Cloning of Shredder");
+        assertThat(gd.findExiledCard(creature.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Chapter II cannot copy a card exiled with another Saga")
+    void chapterIIOnlyCopiesCardsExiledWithThisSaga() {
+        addSaga(1);
+        Permanent otherSaga = harness.addToBattlefieldAndReturn(player2, new TheCloningOfShredder());
+        Card creature = new GrizzlyBears();
+        gd.addToExile(player1.getId(), creature, otherSaga.getId());
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
+        assertThat(gd.findExiledCard(creature.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Chapter II does nothing if the linked creature has left exile")
+    void chapterIIDoesNotCopyCardThatLeftExile() {
+        Permanent saga = addSaga(1);
+        Card creature = new GrizzlyBears();
+        gd.addToExile(player1.getId(), creature, saga.getId());
+        gd.removeFromExile(creature.getId());
+        harness.setGraveyard(player1, List.of(creature));
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Chapter I targets only creature cards in the controller's graveyard")
+    void chapterITargetsOnlyOwnGraveyardCreatures() {
+        Card creature = new GrizzlyBears();
+        Card noncreature = new TheCloningOfShredder();
+        Card opposingCreature = new HillGiant();
+        harness.setGraveyard(player1, List.of(creature, noncreature));
+        harness.setGraveyard(player2, List.of(opposingCreature));
+        addSaga(0);
+
+        advanceToNextChapter();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(creature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "The Cloning of Shredder");
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Casting the Saga triggers chapter I immediately on entry")
+    void enteringSagaTriggersChapterI() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new TheCloningOfShredder()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(creature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(findPermanent(player1, "Grizzly Bears").getCard().getSubtypes())
+                .contains(CardSubtype.BEAR, CardSubtype.MUTANT);
+        assertThat(findPermanent(player1, "The Cloning of Shredder").getCounterCount(CounterType.LORE))
+                .isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Chapter I creates no copy if its target leaves the graveyard before resolution")
+    void chapterIFizzlesWhenTargetLeavesGraveyard() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        Permanent saga = addSaga(0);
+        advanceToNextChapter();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.setGraveyard(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(saga.getId())).isEmpty();
+    }
+
     private Permanent addSaga(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheCloningOfShredder());
         saga.setCounterCount(CounterType.LORE, loreCounters);
@@ -92,7 +205,6 @@ class TheCloningOfShredderTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
     }
 }
