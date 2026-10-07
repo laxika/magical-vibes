@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TormentOfVenom.class, AirElemental.class, GrizzlyBears.class, Forest.class})
 class TormentOfVenomTest extends BaseCardTest {
 
     private static final String LOSE_LIFE = "Lose 3 life";
@@ -124,22 +126,86 @@ class TormentOfVenomTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("An absent target prevents the entire spell from resolving")
+    void absentTargetPreventsLifeLoss() {
+        Permanent target = addSurvivor(player2);
+        harness.setHand(player2, List.of());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new TormentOfVenom()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerHands.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Torment of Venom");
+    }
+
+    @Test
+    @DisplayName("Targeting your own creature makes you lose life")
+    void ownCreatureControllerLosesLife() {
+        Permanent target = addSurvivor(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        castTormentOfVenom(target.getId());
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A lethal target remains until the discard choice completes")
+    void lethalTargetRemainsDuringDiscardChoice() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Forest()));
+        harness.setLife(player2, 20);
+
+        castTormentOfVenom(target.getId());
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
+        harness.handleListChoice(player2, ChoiceContext.TormentPenaltyChoice.DISCARD);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Lands cannot be sacrificed to avoid the life loss")
+    void landDoesNotProvideSacrificeOption() {
+        Permanent target = addSurvivor(player2);
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player2, List.of());
+        harness.setLife(player2, 20);
+
+        castTormentOfVenom(target.getId());
+
+        harness.assertLife(player2, 17);
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
 
     /** Air Elemental (4/4) survives three -1/-1 counters as a 1/1, so the punisher can be exercised. */
     private Permanent addSurvivor(Player owner) {
-        harness.addToBattlefield(owner, new AirElemental());
-        UUID id = harness.getPermanentId(owner, "Air Elemental");
-        return gd.playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getId().equals(id))
-                .findFirst()
-                .orElseThrow();
+        return harness.addToBattlefieldAndReturn(owner, new AirElemental());
     }
 
     private void castTormentOfVenom(UUID targetId) {
         harness.setHand(player1, List.of(new TormentOfVenom()));
         harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 }
