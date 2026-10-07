@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.PhyrexianBroodlings;
+import com.github.laxika.magicalvibes.cards.a.AtraxasFall;
+import com.github.laxika.magicalvibes.cards.i.IchorDrinker;
+import com.github.laxika.magicalvibes.cards.w.WaryThespian;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -14,16 +16,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TangledSkyline.class, PhyrexianBroodlings.class, GrizzlyBears.class})
+@CardUsed({TangledSkyline.class, IchorDrinker.class, WaryThespian.class, AtraxasFall.class})
 class TangledSkylineTest extends BaseCardTest {
 
     @Test
     void entersWithFiveLifeAndAnIncubatorWithFiveCounters() {
-        harness.setHand(player1, List.of(new TangledSkyline()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new TangledSkyline(), "{4}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -35,12 +33,52 @@ class TangledSkylineTest extends BaseCardTest {
     @Test
     void givesReachToPhyrexiansOnlyUnderItsControllersControl() {
         harness.addToBattlefield(player1, new TangledSkyline());
-        Permanent ownPhyrexian = harness.addToBattlefieldAndReturn(player1, new PhyrexianBroodlings());
-        Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opposingPhyrexian = harness.addToBattlefieldAndReturn(player2, new PhyrexianBroodlings());
+        Permanent ownPhyrexian = harness.addToBattlefieldAndReturn(player1, new IchorDrinker());
+        Permanent ownNonPhyrexian = harness.addToBattlefieldAndReturn(player1, new WaryThespian());
+        Permanent opposingPhyrexian = harness.addToBattlefieldAndReturn(player2, new IchorDrinker());
 
         assertThat(gqs.hasKeyword(gd, ownPhyrexian, Keyword.REACH)).isTrue();
-        assertThat(gqs.hasKeyword(gd, ownBear, Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownNonPhyrexian, Keyword.REACH)).isFalse();
         assertThat(gqs.hasKeyword(gd, opposingPhyrexian, Keyword.REACH)).isFalse();
+    }
+
+    @Test
+    void incubatorTransformsOnOpponentsTurnAndGainsReachWithItsFiveCounters() {
+        harness.castFromHand(player1, new TangledSkyline(), "{4}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent incubator = findPermanent(player1, "Incubator");
+
+        assertThat(gqs.isCreature(gd, incubator)).isFalse();
+        assertThat(gqs.hasKeyword(gd, incubator, Keyword.REACH)).isFalse();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(incubator), null, null);
+        harness.passBothPriorities();
+
+        assertThat(incubator.isTransformed()).isTrue();
+        assertThat(gqs.isCreature(gd, incubator)).isTrue();
+        assertThat(incubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, incubator)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, incubator)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, incubator, Keyword.REACH)).isTrue();
+        harness.assertLife(player1, 25);
+    }
+
+    @Test
+    void reachEndsWhenSkylineLeavesTheBattlefield() {
+        Permanent skyline = harness.addToBattlefieldAndReturn(player1, new TangledSkyline());
+        Permanent phyrexian = harness.addToBattlefieldAndReturn(player1, new IchorDrinker());
+        assertThat(gqs.hasKeyword(gd, phyrexian, Keyword.REACH)).isTrue();
+
+        harness.setHand(player1, List.of(new AtraxasFall()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveSorcery(player1, 0, skyline.getId());
+
+        harness.assertNotOnBattlefield(player1, "Tangled Skyline");
+        assertThat(gqs.hasKeyword(gd, phyrexian, Keyword.REACH)).isFalse();
     }
 }
