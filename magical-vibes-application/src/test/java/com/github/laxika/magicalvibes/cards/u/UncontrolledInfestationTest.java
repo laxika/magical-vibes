@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.cards.a.AuraGraft;
 import com.github.laxika.magicalvibes.cards.g.Glimmerpost;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UncontrolledInfestation.class, Glimmerpost.class, Swamp.class, Memnite.class})
+@CardUsed({UncontrolledInfestation.class, Glimmerpost.class, Swamp.class, Memnite.class, AuraGraft.class})
 class UncontrolledInfestationTest extends BaseCardTest {
 
     @Test
@@ -75,6 +76,80 @@ class UncontrolledInfestationTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Glimmerpost");
+    }
+
+    @Test
+    @DisplayName("Resolving the Aura attaches it without immediately destroying an untapped land")
+    void resolvingAttachesAura() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Glimmerpost());
+        castAt(land);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Uncontrolled Infestation").getAttachedTo())
+                .isEqualTo(land.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Enchanting an already tapped land waits for its next tap")
+    void alreadyTappedLandWaitsForNextTap() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Glimmerpost());
+        harness.tapPermanent(player2, 0);
+        castAt(land);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
+        assertThat(gd.stack).isEmpty();
+
+        land.setTapped(false);
+        harness.tapPermanent(player2, 0);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Glimmerpost");
+        harness.assertInGraveyard(player1, "Uncontrolled Infestation");
+    }
+
+    @Test
+    @DisplayName("An enchanted land produces mana before its destruction trigger resolves")
+    void landProducesManaBeforeDestruction() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Glimmerpost());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new UncontrolledInfestation());
+        aura.setAttachedTo(land.getId());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(land);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Glimmerpost");
+        harness.assertInGraveyard(player1, "Uncontrolled Infestation");
+    }
+
+    @Test
+    @DisplayName("Moving the Aura in response does not change which land the trigger destroys")
+    void movingAuraDoesNotChangeTriggeredLand() {
+        Permanent originalLand = harness.addToBattlefieldAndReturn(player2, new Glimmerpost());
+        Permanent destination = harness.addToBattlefieldAndReturn(player2, new Glimmerpost());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new UncontrolledInfestation());
+        aura.setAttachedTo(originalLand.getId());
+        harness.setHand(player1, List.of(new AuraGraft()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.tapPermanent(player2, 0);
+        assertThat(gd.stack).hasSize(1);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        harness.handlePermanentChosen(player1, destination.getId());
+        assertThat(aura.getAttachedTo()).isEqualTo(destination.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(originalLand).contains(destination);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
+        harness.assertInGraveyard(player2, "Glimmerpost");
     }
 
     private void castAt(Permanent target) {
