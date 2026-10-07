@@ -72,4 +72,75 @@ class TrollsOfTelJiladTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a green creature");
     }
+
+    @Test
+    @DisplayName("Can target itself while tapped and summoning sick")
+    void canTargetItselfWhileTappedAndSummoningSick() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new TrollsOfTelJilad());
+        source.setSummoningSick(true);
+        source.tap();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.getRegenerationShield()).isEqualTo(1);
+        assertThat(source.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Regeneration replaces lethal damage only once and taps the target")
+    void regenerationReplacesLethalDamageOnce() {
+        harness.addToBattlefield(player1, new TrollsOfTelJilad());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FangrenHunter());
+        target.setMarkedDamage(1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+
+        target.setMarkedDamage(4);
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player2, "Fangren Hunter");
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getRegenerationShield()).isZero();
+
+        target.setMarkedDamage(4);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player2, "Fangren Hunter");
+        harness.assertInGraveyard(player2, "Fangren Hunter");
+    }
+
+    @Test
+    @DisplayName("Repeated activations create separate regeneration shields")
+    void repeatedActivationsCreateSeparateShields() {
+        harness.addToBattlefield(player1, new TrollsOfTelJilad());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new FangrenHunter());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getRegenerationShield()).isEqualTo(2);
+        target.setMarkedDamage(4);
+        harness.runStateBasedActions();
+        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        target.setMarkedDamage(4);
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Fangren Hunter");
+        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(target.getMarkedDamage()).isZero();
+    }
 }
