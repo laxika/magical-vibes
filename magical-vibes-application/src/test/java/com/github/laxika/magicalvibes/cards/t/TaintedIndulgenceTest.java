@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.e.EchoInspector;
+import com.github.laxika.magicalvibes.cards.s.Strangle;
+import com.github.laxika.magicalvibes.cards.s.SewerCrocodile;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Murder;
@@ -21,7 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({
         TaintedIndulgence.class, Forest.class, Shock.class, GrizzlyBears.class,
-        Cancel.class, WrathOfGod.class, Divination.class, Murder.class
+        Cancel.class, WrathOfGod.class, Divination.class, Murder.class,
+        Strangle.class, EchoInspector.class, SewerCrocodile.class
 })
 class TaintedIndulgenceTest extends BaseCardTest {
 
@@ -59,6 +63,53 @@ class TaintedIndulgenceTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(firstDraw, secondDraw);
     }
 
+    @Test
+    @DisplayName("Repeated mana values do not count toward the five-value threshold")
+    void duplicateManaValuesStillRequireDiscard() {
+        Card firstDraw = new Murder();
+        Card secondDraw = new EchoInspector();
+        castWithGraveyard(List.of(new Forest(), new Strangle(), new Murder(),
+                new Murder(), new EchoInspector()), firstDraw, secondDraw);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(secondDraw);
+    }
+
+    @Test
+    @DisplayName("The resolving spell does not supply the fifth graveyard mana value")
+    void spellDoesNotCountItselfBeforeDiscard() {
+        Card firstDraw = new Murder();
+        Card secondDraw = new EchoInspector();
+        castWithGraveyard(List.of(new Forest(), new Strangle(), new Murder(), new EchoInspector()),
+                firstDraw, secondDraw);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondDraw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstDraw);
+    }
+
+    @Test
+    @DisplayName("Five mana values in the opponent's graveyard do not prevent discard")
+    void opponentsGraveyardDoesNotMeetThreshold() {
+        harness.setGraveyard(player2, List.of(new Forest(), new Strangle(), new Murder(),
+                new EchoInspector(), new SewerCrocodile()));
+        Card firstDraw = new Murder();
+        Card secondDraw = new EchoInspector();
+        castWithGraveyard(List.of(), firstDraw, secondDraw);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondDraw);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(5);
+    }
+
     private void castWithGraveyard(List<Card> graveyard, Card... library) {
         harness.setGraveyard(player1, graveyard);
         harness.setLibrary(player1, List.of(library));
@@ -66,7 +117,6 @@ class TaintedIndulgenceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 }
