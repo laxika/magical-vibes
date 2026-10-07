@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TreetopRangers.class, ArgothianSwine.class, Zephid.class})
+@CardUsed({TreetopRangers.class, ArgothianSwine.class, Zephid.class, GiantSpider.class})
 class TreetopRangersTest extends BaseCardTest {
 
     @Test
@@ -46,7 +46,6 @@ class TreetopRangersTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(GiantSpider.class)
     @DisplayName("Treetop Rangers cannot be blocked by a creature with reach but not flying")
     void reachDoesNotSatisfyFlyingRestriction() {
         addAttackingTreetopRangers();
@@ -58,6 +57,35 @@ class TreetopRangersTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can only be blocked by creatures with flying");
+    }
+
+    @Test
+    @DisplayName("A flying blocker does not allow a nonflying creature to also block Treetop Rangers")
+    void eachBlockerMustHaveFlying() {
+        addAttackingTreetopRangers();
+        addCreatureReady(player2, new Zephid());
+        addCreatureReady(player2, new ArgothianSwine());
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can only be blocked by creatures with flying");
+    }
+
+    @Test
+    @DisplayName("Multiple creatures with flying can block Treetop Rangers")
+    void canBeBlockedByMultipleFlyingCreatures() {
+        addAttackingTreetopRangers();
+        Permanent firstBlocker = addCreatureReady(player2, new Zephid());
+        Permanent secondBlocker = addCreatureReady(player2, new Zephid());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
     }
 
     private void addAttackingTreetopRangers() {
