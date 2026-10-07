@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.d.DriftOfPhantasms;
 import com.github.laxika.magicalvibes.cards.b.BorosSwiftblade;
 import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TwistedJustice.class, Forest.class, BorosSwiftblade.class, Watchwolf.class})
+@CardUsed({TwistedJustice.class, Forest.class, BorosSwiftblade.class, Watchwolf.class, DriftOfPhantasms.class})
 class TwistedJusticeTest extends BaseCardTest {
 
     @Test
@@ -94,6 +95,42 @@ class TwistedJusticeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Draw count includes counters on the creature before it is sacrificed")
+    void drawsUsingPowerBeforeSacrifice() {
+        Permanent swiftblade = harness.addToBattlefieldAndReturn(player2, new BorosSwiftblade());
+        swiftblade.setPlusOnePlusOneCounters(2);
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new TwistedJustice()));
+        addManaForTwistedJustice();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        harness.assertInGraveyard(player2, "Boros Swiftblade");
+        harness.assertNotOnBattlefield(player2, "Boros Swiftblade");
+    }
+
+    @Test
+    @DisplayName("The target may choose a zero-power creature and the caster draws nothing")
+    void choosingZeroPowerCreatureCausesNoDraw() {
+        Permanent drift = harness.addToBattlefieldAndReturn(player2, new DriftOfPhantasms());
+        harness.addToBattlefield(player2, new Watchwolf());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new TwistedJustice()));
+        addManaForTwistedJustice();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player2, drift.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Drift of Phantasms");
+        harness.assertOnBattlefield(player2, "Watchwolf");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void addManaForTwistedJustice() {
