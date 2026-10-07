@@ -6,7 +6,10 @@ import com.github.laxika.magicalvibes.cards.k.KamahlPitFighter;
 import com.github.laxika.magicalvibes.cards.k.KokushoTheEveningStar;
 import com.github.laxika.magicalvibes.cards.s.SqueeTheImmortal;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.d.DonatelloGadgetMaster;
+import com.github.laxika.magicalvibes.cards.l.LeonardoBigBrother;
+import com.github.laxika.magicalvibes.cards.m.MichelangeloGameMaster;
+import com.github.laxika.magicalvibes.cards.r.RaphaelMostAttitude;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -20,7 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TurtlesForever.class, ArvadTheCursed.class, GrizzlyBears.class,
-        KamahlPitFighter.class, KokushoTheEveningStar.class, SqueeTheImmortal.class})
+        KamahlPitFighter.class, KokushoTheEveningStar.class, SqueeTheImmortal.class,
+        LeonardoBigBrother.class, DonatelloGadgetMaster.class, MichelangeloGameMaster.class, RaphaelMostAttitude.class})
 class TurtlesForeverTest extends BaseCardTest {
 
     @Test
@@ -99,11 +103,50 @@ class TurtlesForeverTest extends BaseCardTest {
                 .isNotNull();
     }
 
+    @Test
+    @CardUsed({TurtlesForever.class, LeonardoBigBrother.class, DonatelloGadgetMaster.class,
+            MichelangeloGameMaster.class, RaphaelMostAttitude.class})
+    @DisplayName("May find no cards in a library search even when four eligible names exist")
+    void mayFailToFindWithFourEligibleNames() {
+        List<Card> cards = List.of(new LeonardoBigBrother(), new DonatelloGadgetMaster(),
+                new MichelangeloGameMaster(), new RaphaelMostAttitude());
+        harness.setLibrary(player1, cards);
+        castSpell();
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(cards);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContainAnyElementsOf(cards);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Turtles Forever");
+    }
+
+    @Test
+    @CardUsed({TurtlesForever.class, LeonardoBigBrother.class, DonatelloGadgetMaster.class,
+            MichelangeloGameMaster.class, RaphaelMostAttitude.class})
+    @DisplayName("Unchosen cards from outside the game are shuffled into the library")
+    void searchesOnlySideboardAndShufflesUnchosenCardsIntoLibrary() {
+        Card leonardo = new LeonardoBigBrother();
+        Card donatello = new DonatelloGadgetMaster();
+        Card michelangelo = new MichelangeloGameMaster();
+        Card raphael = new RaphaelMostAttitude();
+        harness.setLibrary(player1, List.of());
+        setSideboard(leonardo, donatello, michelangelo, raphael);
+        castSpell();
+
+        harness.handleMultipleCardsChosen(player1,
+                List.of(leonardo.getId(), donatello.getId(), michelangelo.getId(), raphael.getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(leonardo.getId(), donatello.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(leonardo, donatello);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(michelangelo, raphael);
+        assertThat(gd.playerSideboards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Turtles Forever");
+    }
+
     private void castSpell() {
-        harness.setHand(player1, List.of(new TurtlesForever()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new TurtlesForever(), "{3}{W}");
         harness.passBothPriorities();
     }
 
