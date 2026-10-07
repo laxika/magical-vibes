@@ -2,14 +2,13 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThrowFromTheSaddle.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({ThrowFromTheSaddle.class, GrizzlyBears.class, HillGiant.class, TrainedArynx.class})
 class ThrowFromTheSaddleTest extends BaseCardTest {
 
     @Test
@@ -44,8 +43,7 @@ class ThrowFromTheSaddleTest extends BaseCardTest {
     @Test
     @DisplayName("A Mount gets a +1/+1 counter instead and deals its power")
     void putsCounterOnMountAndDealsPower() {
-        Permanent mount = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        TestCards.mutableCard(mount).setSubtypes(List.of(CardSubtype.MOUNT));
+        Permanent mount = harness.addToBattlefieldAndReturn(player1, new TrainedArynx());
         harness.addToBattlefield(player2, new HillGiant());
         castThrow(mount);
 
@@ -53,6 +51,71 @@ class ThrowFromTheSaddleTest extends BaseCardTest {
         assertThat(mount.getToughnessModifier()).isZero();
         assertThat(mount.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         harness.assertInGraveyard(player2, "Hill Giant");
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(mount.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void mountDealsPowerAfterCounterWithoutTakingReturnDamage() {
+        Permanent mount = harness.addToBattlefieldAndReturn(player1, new TrainedArynx());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        victim.setToughnessModifier(2);
+
+        castThrow(mount);
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(4);
+        assertThat(mount.getMarkedDamage()).isZero();
+        assertThat(mount.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Trained Arynx");
+        harness.assertOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
+    void stillBoostsCreatureWhenDamageTargetBecomesIllegal() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        queueThrow(source);
+        victim.getGrantedKeywords().add(Keyword.HEXPROOF);
+
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(source.getToughnessModifier()).isEqualTo(1);
+        assertThat(victim.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
+    void stillPutsCounterOnMountWhenDamageTargetBecomesIllegal() {
+        Permanent mount = harness.addToBattlefieldAndReturn(player1, new TrainedArynx());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        queueThrow(mount);
+        victim.getGrantedKeywords().add(Keyword.HEXPROOF);
+
+        harness.passBothPriorities();
+
+        assertThat(mount.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(mount.getPowerModifier()).isZero();
+        assertThat(victim.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void dealsNoDamageWhenSourceBecomesIllegal() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        queueThrow(source);
+        source.getGrantedKeywords().add(Keyword.SHROUD);
+
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isZero();
+        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(victim.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Hill Giant");
     }
 
     @Test
@@ -71,8 +134,14 @@ class ThrowFromTheSaddleTest extends BaseCardTest {
     private void castThrow(Permanent target) {
         harness.setHand(player1, List.of(new ThrowFromTheSaddle()));
         harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveSorcery(player1, 0, List.of(target.getId(),
+                harness.getPermanentId(player2, "Hill Giant")));
+    }
+
+    private void queueThrow(Permanent target) {
+        harness.setHand(player1, List.of(new ThrowFromTheSaddle()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castSorcery(player1, 0, List.of(target.getId(),
                 harness.getPermanentId(player2, "Hill Giant")));
-        harness.passBothPriorities();
     }
 }
