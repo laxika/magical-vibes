@@ -13,22 +13,30 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TalionsThroneguard.class, DarksteelRelic.class, GrizzlyBears.class, Island.class, Shock.class})
 class TalionsThroneguardTest extends BaseCardTest {
 
     @Test
-    void withoutBargainDoesNotReturnPermanent() {
+    void withoutBargainReturnsPermanentWithoutIncreasingItsCost() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new TalionsThroneguard()));
         addTalionMana(4);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -65,8 +73,6 @@ class TalionsThroneguardTest extends BaseCardTest {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
         harness.setHand(player1, List.of(new TalionsThroneguard()));
         addTalionMana(4);
-        harness.forceActivePlayer(player1);
-        harness.clearPriorityPassed();
         castBargained(shockId, sacrifice.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -90,8 +96,51 @@ class TalionsThroneguardTest extends BaseCardTest {
                 .hasMessageContaining("nonland permanent");
     }
 
+    @Test
+    void cannotBargainBySacrificingANontokenLand() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TalionsThroneguard()));
+        addTalionMana(4);
+
+        assertThatThrownBy(() -> castBargained(target.getId(), sacrifice.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Island");
+    }
+
+    @Test
+    void canBargainBySacrificingANonartifactNonenchantmentCreatureToken() {
+        GrizzlyBears token = new GrizzlyBears();
+        token.setToken(true);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, token);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TalionsThroneguard()));
+        addTalionMana(4);
+
+        castBargained(target.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void bargainedCreatureCanBeCastWithoutChoosingABounceTarget() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
+        harness.setHand(player1, List.of(new TalionsThroneguard()));
+        addTalionMana(4);
+
+        harness.castKickedCreatureWithPermanent(player1, 0, sacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Talion's Throneguard");
+        harness.assertInGraveyard(player1, "Darksteel Relic");
+    }
+
     private void castBargained(UUID targetId, UUID sacrificeId) {
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null,
+        harness.ensurePriority(player1);
+        gs.playCard(gd, player1, 0, 0, targetId, null,
                 List.of(), List.of(), false, sacrificeId, null, null, null, null, true);
     }
 
