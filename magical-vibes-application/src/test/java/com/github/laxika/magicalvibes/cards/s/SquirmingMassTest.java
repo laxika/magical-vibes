@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.b.BlackKnight;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.b.BrassSecretary;
+import com.github.laxika.magicalvibes.cards.e.ElvishLookout;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianMonitor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -16,25 +16,20 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SquirmingMass.class, GrizzlyBears.class, BlackKnight.class, Ornithopter.class})
+@CardUsed({SquirmingMass.class, ElvishLookout.class, PhyrexianMonitor.class, BrassSecretary.class})
 class SquirmingMassTest extends BaseCardTest {
-
-    private void addAttacker() {
-        Permanent attacker = addCreatureReady(player1, new SquirmingMass());
-        attacker.setAttacking(true);
-    }
 
     private Permanent prepareBlocker(Card blockerCard) {
         Permanent blocker = addCreatureReady(player2, blockerCard);
-        addAttacker();
-        prepareDeclareBlockers();
+        addCreatureReady(player1, new SquirmingMass());
+        declareAttackersAndPrepareBlockers(List.of(0));
         return blocker;
     }
 
     @Test
     @DisplayName("Fear prevents a nonblack, nonartifact creature from blocking")
     void nonblackNonartifactCreatureCannotBlock() {
-        prepareBlocker(new GrizzlyBears());
+        prepareBlocker(new ElvishLookout());
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -44,7 +39,7 @@ class SquirmingMassTest extends BaseCardTest {
     @Test
     @DisplayName("Fear allows a black creature to block")
     void blackCreatureCanBlock() {
-        Permanent blocker = prepareBlocker(new BlackKnight());
+        Permanent blocker = prepareBlocker(new PhyrexianMonitor());
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -54,10 +49,22 @@ class SquirmingMassTest extends BaseCardTest {
     @Test
     @DisplayName("Fear allows an artifact creature to block")
     void artifactCreatureCanBlock() {
-        Permanent blocker = prepareBlocker(new Ornithopter());
+        Permanent blocker = prepareBlocker(new BrassSecretary());
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Fear does not allow a tapped artifact creature to block")
+    void tappedArtifactCreatureCannotBlock() {
+        Permanent blocker = prepareBlocker(new BrassSecretary());
+        blocker.setTapped(true);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(blocker.isBlocking()).isFalse();
     }
 }
