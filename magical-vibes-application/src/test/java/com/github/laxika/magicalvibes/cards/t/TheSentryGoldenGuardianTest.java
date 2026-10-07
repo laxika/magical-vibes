@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -41,12 +40,7 @@ class TheSentryGoldenGuardianTest extends BaseCardTest {
         Permanent theVoid = findPermanent(player2, "The Void");
         theVoid.setSummoningSick(false);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of()))
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
     }
@@ -60,6 +54,48 @@ class TheSentryGoldenGuardianTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
+    }
+
+    @Test
+    @DisplayName("The Void is created only when the enters trigger resolves")
+    void tokenCreationWaitsForTriggerResolution() {
+        harness.setHand(player1, List.of(new TheSentryGoldenGuardian()));
+        addSentryMana();
+        harness.castCreature(player1, 0, player2.getId());
+
+        assertThat(countPermanents(player2, "The Void")).isZero();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "The Sentry, Golden Guardian");
+        assertThat(countPermanents(player2, "The Void")).isZero();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player2, "The Void")).isEqualTo(1);
+        assertThat(countPermanents(player1, "The Void")).isZero();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Void is not required to attack")
+    void summoningSickVoidMayStayBack() {
+        castAndResolveSentry();
+        Permanent theVoid = findPermanent(player2, "The Void");
+
+        declareAttackers(player2, List.of());
+
+        assertThat(theVoid.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Void is not required to attack")
+    void tappedVoidMayStayBack() {
+        castAndResolveSentry();
+        Permanent theVoid = findPermanent(player2, "The Void");
+        theVoid.setSummoningSick(false);
+        theVoid.tap();
+
+        declareAttackers(player2, List.of());
+
+        assertThat(theVoid.isAttacking()).isFalse();
     }
 
     private void castAndResolveSentry() {
