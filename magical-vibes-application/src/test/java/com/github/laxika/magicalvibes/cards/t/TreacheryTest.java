@@ -41,8 +41,7 @@ class TreacheryTest extends BaseCardTest {
         List<Permanent> opposingLands = addTappedLands(player2, 3);
 
         castTreachery(creature);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -66,8 +65,7 @@ class TreacheryTest extends BaseCardTest {
         Permanent land = addTappedLands(player2, 1).getFirst();
 
         castTreachery(creature);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -90,8 +88,7 @@ class TreacheryTest extends BaseCardTest {
         opposingCreature.tap();
 
         castTreachery(creature);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -107,6 +104,75 @@ class TreacheryTest extends BaseCardTest {
         assertThatThrownBy(() -> castTreachery(land))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Treachery may untap fewer than five lands, including an opponent's land")
+    void mayUntapOnlyOneOfSeveralLands() {
+        Permanent creature = addCreatureReady(player2, new MetathranSoldier());
+        List<Permanent> ownLands = addTappedLands(player1, 3);
+        List<Permanent> opposingLands = addTappedLands(player2, 3);
+
+        castTreachery(creature);
+        resolveAllTriggers();
+        harness.handleMultiplePermanentsChosen(player1, List.of(opposingLands.getFirst().getId()));
+
+        assertThat(ownLands).allMatch(Permanent::isTapped);
+        assertThat(opposingLands.getFirst().isTapped()).isFalse();
+        assertThat(opposingLands.subList(1, 3)).allMatch(Permanent::isTapped);
+    }
+
+    @Test
+    @DisplayName("Treachery resolves normally when there are no lands to untap")
+    void resolvesWithoutLands() {
+        Permanent creature = addCreatureReady(player2, new MetathranSoldier());
+
+        castTreachery(creature);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Removing Treachery returns control but does not remove its untap trigger")
+    void untapTriggerSurvivesAuraRemoval() {
+        Permanent creature = addCreatureReady(player2, new MetathranSoldier());
+        Permanent land = addTappedLands(player1, 1).getFirst();
+
+        castTreachery(creature);
+        harness.passBothPriorities();
+        Permanent aura = findPermanent(player1, "Treachery");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, aura));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        resolveAllTriggers();
+        harness.handleMultiplePermanentsChosen(player1, List.of(land.getId()));
+
+        assertThat(land.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Treachery");
+    }
+
+    @Test
+    @DisplayName("Treachery does not enter or untap lands if its target leaves before resolution")
+    void missingTargetPreventsEnterTrigger() {
+        Permanent creature = addCreatureReady(player2, new MetathranSoldier());
+        Permanent land = addTappedLands(player1, 1).getFirst();
+
+        castTreachery(creature);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        resolveAllTriggers();
+
+        assertThat(land.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Treachery");
+        harness.assertInGraveyard(player1, "Treachery");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void castTreachery(Permanent target) {
