@@ -51,4 +51,60 @@ class TheScarletWitchTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
+
+    @Test
+    void reducesXSpellAtExactlyFourManaValue() {
+        harness.addToBattlefield(player1, new TheScarletWitch());
+        harness.setHand(player1, List.of(new MindSpring()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castSorcery(player1, 0, 2);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void doesNotReduceXSpellBelowFourManaValue() {
+        harness.addToBattlefield(player1, new TheScarletWitch());
+        harness.setHand(player1, List.of(new MindSpring()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void excessReductionCannotPayColoredMana() {
+        var scarletWitch = harness.addToBattlefieldAndReturn(player1, new TheScarletWitch());
+        scarletWitch.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        harness.setHand(player1, List.of(new AngelsMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotReduceOpponentsSpells() {
+        harness.addToBattlefield(player2, new TheScarletWitch());
+        harness.setHand(player1, List.of(new AngelsMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void negativePowerDoesNotIncreaseSpellCost() {
+        var scarletWitch = harness.addToBattlefieldAndReturn(player1, new TheScarletWitch());
+        scarletWitch.setPowerModifier(-3);
+        harness.setHand(player1, List.of(new AngelsMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castInstant(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }
