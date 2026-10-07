@@ -112,4 +112,78 @@ class SpitebellowsTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Burrenton Bombardier");
     }
+
+    @Test
+    @DisplayName("Evoke sacrifices even when there are no creatures to target afterward")
+    void evokeWithoutOtherCreatures() {
+        harness.setHand(player1, List.of(new Spitebellows()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreatureWithEvoke(player1, 0, null);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Spitebellows");
+        harness.assertInGraveyard(player1, "Spitebellows");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Returning Spitebellows to hand triggers its damage ability")
+    void returnedToHandDealsDamage() {
+        Permanent target = addCreatureReady(player2, new BurrentonBombardier());
+        Permanent spitebellows = harness.addToBattlefieldAndReturn(player1, new Spitebellows());
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToHand(gd, spitebellows));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Spitebellows");
+        harness.assertInGraveyard(player2, "Burrenton Bombardier");
+    }
+
+    @Test
+    @DisplayName("Exiling Spitebellows triggers its damage ability")
+    void exiledDealsDamage() {
+        Permanent target = addCreatureReady(player2, new BurrentonBombardier());
+        Permanent spitebellows = harness.addToBattlefieldAndReturn(player1, new Spitebellows());
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToExile(gd, spitebellows));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.findExiledCard(spitebellows.getCard().getId())).isNotNull();
+        harness.assertInGraveyard(player2, "Burrenton Bombardier");
+    }
+
+    @Test
+    @DisplayName("The new controller sacrifices an evoked Spitebellows and controls its damage trigger")
+    void controlChangeBeforeEvokeSacrificeStillSacrifices() {
+        Permanent target = addCreatureReady(player1, new BurrentonBombardier());
+        harness.setHand(player1, List.of(new Spitebellows()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreatureWithEvoke(player1, 0, null);
+        harness.passBothPriorities();
+        Permanent spitebellows = findPermanent(player1, "Spitebellows");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.inMutationScope(() -> {
+            gd.playerBattlefields.get(player1.getId()).remove(spitebellows);
+            gd.playerBattlefields.get(player2.getId()).add(spitebellows);
+        });
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Spitebellows");
+        harness.assertInGraveyard(player1, "Spitebellows");
+        harness.handlePermanentChosen(player2, target.getId());
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Burrenton Bombardier");
+    }
 }
