@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -124,6 +125,58 @@ class StunTest extends BaseCardTest {
 
         assertThat(gameLogContains("fizzles")).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Stun can target a tapped creature you control without untapping it or affecting other creatures")
+    void canTargetOwnTappedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new TrainedArmodon());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new TrainedArmodon());
+        target.tap();
+        JackalPup drawnCard = new JackalPup();
+        harness.setHand(player1, List.of(new Stun()));
+        harness.setLibrary(player1, List.of(drawnCard));
+        addStunMana();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+        assertThat(other.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("Stun draws for its caster rather than the targeted creature's controller")
+    void drawsForOpponentCaster() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new TrainedArmodon());
+        JackalPup drawnCard = new JackalPup();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Stun()));
+        harness.setLibrary(player2, List.of(drawnCard));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Stun's blocking restriction expires when the turn ends")
+    void blockingRestrictionExpiresAtEndOfTurn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TrainedArmodon());
+        harness.setHand(player1, List.of(new Stun()));
+        harness.setLibrary(player1, List.of(new JackalPup()));
+        addStunMana();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(target.isCantBlockThisTurn()).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(target.isCantBlockThisTurn()).isFalse();
     }
 
     private void addStunMana() {
