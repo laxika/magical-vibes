@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(Thallid.class)
+@CardUsed({Thallid.class})
 class ThallidTest extends BaseCardTest {
 
     @Test
@@ -111,6 +111,68 @@ class ThallidTest extends BaseCardTest {
 
     private Permanent addThallid() {
         return addCreatureReady(player1, new Thallid());
+    }
+
+    @Test
+    @DisplayName("Only the active player's Thallid gains an upkeep counter")
+    void upkeepOnlyAddsCountersToActivePlayersThallid() {
+        Permanent ours = addThallid();
+        Permanent theirs = addCreatureReady(player2, new Thallid());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(ours.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(theirs.getCounterCount(CounterType.FUNGUS)).isOne();
+    }
+
+    @Test
+    @DisplayName("Spore counters are paid before the token ability resolves")
+    void counterCostIsPaidImmediately() {
+        Permanent thallid = addThallid();
+        thallid.setCounterCount(CounterType.FUNGUS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Thallid can create a token")
+    void tappedSummoningSickThallidCanActivate() {
+        Permanent thallid = addThallid();
+        thallid.setSummoningSick(true);
+        thallid.tap();
+        thallid.setCounterCount(CounterType.FUNGUS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(thallid.isTapped()).isTrue();
+        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each activation spends three counters and creates one token")
+    void canActivateAgainWithEnoughRemainingCounters() {
+        Permanent thallid = addThallid();
+        thallid.setCounterCount(CounterType.FUNGUS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(findPermanents(player1, "Saproling")).hasSize(2);
     }
 
     private void advanceThroughPlayerOneUntap() {
