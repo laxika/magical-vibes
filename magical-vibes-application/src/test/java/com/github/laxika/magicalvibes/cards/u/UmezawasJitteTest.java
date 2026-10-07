@@ -182,6 +182,106 @@ class UmezawasJitteTest extends BaseCardTest {
         assertThat(jitte.getAttachedTo()).isEqualTo(creature.getId());
     }
 
+    @Test
+    @DisplayName("The pump uses the creature equipped when the ability resolves")
+    void pumpUsesCurrentAttachment() {
+        Permanent jitte = addJitteReady(player1);
+        Permanent original = addCreatureReady(player1, new GnarledMass());
+        Permanent replacement = addCreatureReady(player1, new GnarledMass());
+        jitte.setAttachedTo(original.getId());
+        jitte.setCounterCount(CounterType.CHARGE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        jitte.setAttachedTo(replacement.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, replacement)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, replacement)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("An equipped blocker also earns charge counters when it deals combat damage")
+    void blockingCreatureAddsChargeCounters() {
+        Permanent attacker = addCreatureReady(player1, new GnarledMass());
+        attacker.setAttacking(true);
+        Permanent jitte = addJitteReady(player2);
+        Permanent blocker = addCreatureReady(player2, new GnarledMass());
+        jitte.setAttachedTo(blocker.getId());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(jitte.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(jitte.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("The pump can be activated while Jitte is unattached and still spends its counter")
+    void unattachedPumpSpendsCounter() {
+        Permanent jitte = addJitteReady(player1);
+        Permanent creature = addCreatureReady(player1, new GnarledMass());
+        jitte.setCounterCount(CounterType.CHARGE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(jitte.getCounterCount(CounterType.CHARGE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Repeated shrink activations spend their counters immediately and can kill a creature")
+    void repeatedShrinkKillsCreature() {
+        Permanent jitte = addJitteReady(player1);
+        Permanent target = addCreatureReady(player2, new GnarledMass());
+        jitte.setCounterCount(CounterType.CHARGE, 3);
+
+        for (int remaining = 2; remaining >= 0; remaining--) {
+            harness.activateAbility(player1, 0, 1, null, target.getId());
+            assertThat(jitte.getCounterCount(CounterType.CHARGE)).isEqualTo(remaining);
+            harness.passBothPriorities();
+        }
+
+        harness.assertNotOnBattlefield(player2, "Gnarled Mass");
+        harness.assertInGraveyard(player2, "Gnarled Mass");
+    }
+
+    @Test
+    @DisplayName("The shrink mode wears off at end of turn")
+    void shrinkModeWearsOffAtEndOfTurn() {
+        Permanent jitte = addJitteReady(player1);
+        Permanent target = addCreatureReady(player2, new GnarledMass());
+        jitte.setCounterCount(CounterType.CHARGE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Equip cannot attach Jitte to an opponent's creature")
+    void equipRejectsOpponentsCreature() {
+        addJitteReady(player1);
+        Permanent creature = addCreatureReady(player2, new GnarledMass());
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 3, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addJitteReady(Player player) {
         Permanent jitte = harness.addToBattlefieldAndReturn(player, new UmezawasJitte());
         jitte.setSummoningSick(false);
