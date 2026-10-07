@@ -81,4 +81,70 @@ class UnearthTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Unearth");
         harness.assertInHand(player1, "Giant Cockroach");
     }
+
+    @Test
+    @DisplayName("Cycling discards as a cost and waits for resolution to draw")
+    void cyclingDiscardsBeforeDrawing() {
+        harness.setHand(player1, List.of(new Unearth()));
+        harness.setLibrary(player1, List.of(new GiantCockroach()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Unearth");
+        harness.assertNotInHand(player1, "Unearth");
+        harness.assertNotInHand(player1, "Giant Cockroach");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Giant Cockroach");
+    }
+
+    @Test
+    @DisplayName("Cycling requires two mana and leaves the card in hand when unpaid")
+    void cannotCycleWithInsufficientMana() {
+        harness.setHand(player1, List.of(new Unearth()));
+        harness.setLibrary(player1, List.of(new GiantCockroach()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Unearth");
+        harness.assertNotInGraveyard(player1, "Unearth");
+        harness.assertNotInHand(player1, "Giant Cockroach");
+    }
+
+    @Test
+    @DisplayName("Cannot cast Unearth without a target even with an eligible creature in the graveyard")
+    void requiresTargetAtCasting() {
+        harness.setGraveyard(player1, List.of(new BloatedToad()));
+        harness.setHand(player1, List.of(new Unearth()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Unearth");
+        harness.assertInGraveyard(player1, "Bloated Toad");
+    }
+
+    @Test
+    @DisplayName("Does not return a replacement creature when the target leaves the graveyard")
+    void doesNotChooseAnotherCreatureWhenTargetLeavesGraveyard() {
+        Card target = new BloatedToad();
+        Card other = new BloatedToad();
+        harness.setGraveyard(player1, List.of(target, other));
+        harness.setHand(player1, List.of(new Unearth()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.setGraveyard(player1, List.of(other));
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Bloated Toad");
+        harness.assertInGraveyard(player1, "Bloated Toad");
+        harness.assertInGraveyard(player1, "Unearth");
+    }
 }
