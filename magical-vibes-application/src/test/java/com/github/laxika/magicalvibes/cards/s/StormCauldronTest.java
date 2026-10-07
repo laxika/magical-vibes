@@ -178,4 +178,57 @@ class StormCauldronTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(forest);
         assertThat(gd.playerHands.get(player2.getId())).doesNotContain(forest);
     }
+
+    @Test
+    @DisplayName("Two return triggers do not return the same land twice")
+    void twoCauldronsReturnLandOnlyOnce() {
+        harness.addToBattlefield(player1, new StormCauldron());
+        harness.addToBattlefield(player2, new StormCauldron());
+        Forest forest = new Forest();
+        harness.addToBattlefield(player1, forest);
+        harness.setHand(player1, List.of());
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.pendingManaAbilityTriggers).hasSize(2);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A returned land can use the additional land play but does not reset the turn's count")
+    void returnedLandCanBeReplayedOnlyWithinAllowance() {
+        harness.addToBattlefield(player1, new StormCauldron());
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.tapPermanent(player1, 1);
+        resolveAllTriggers();
+        harness.playLand(player1, 0);
+        harness.tapPermanent(player1, 1);
+        resolveAllTriggers();
+
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The opponent can use the additional land play on their own turn")
+    void opponentCanUseAdditionalLandPlay() {
+        harness.addToBattlefield(player1, new StormCauldron());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Forest(), new Forest(), new Forest()));
+
+        harness.playLand(player2, 0);
+        harness.playLand(player2, 0);
+
+        assertThatThrownBy(() -> harness.playLand(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player2, "Forest")).isEqualTo(2);
+    }
 }
