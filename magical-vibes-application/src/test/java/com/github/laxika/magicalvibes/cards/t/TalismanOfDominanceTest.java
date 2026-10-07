@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(TalismanOfDominance.class)
+@CardUsed({TalismanOfDominance.class})
 class TalismanOfDominanceTest extends BaseCardTest {
 
     @Test
@@ -71,5 +71,40 @@ class TalismanOfDominanceTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("Can produce colored mana immediately after entering the battlefield")
+    void canActivateImmediatelyAfterCasting() {
+        harness.castFromHand(player1, new TalismanOfDominance(), "{2}");
+        harness.passBothPriorities();
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
+                .satisfies(permanent -> assertThat(permanent.isTapped()).isTrue());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Colored mana and damage apply to the activating controller")
+    void coloredManaAndDamageApplyToOtherController() {
+        Permanent talisman = harness.addToBattlefieldAndReturn(player2, new TalismanOfDominance());
+        int controllerLifeBefore = gd.playerLifeTotals.get(player2.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.handleListChoice(player2, "BLACK");
+
+        assertThat(talisman.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(controllerLifeBefore - 1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(opponentLifeBefore);
     }
 }
