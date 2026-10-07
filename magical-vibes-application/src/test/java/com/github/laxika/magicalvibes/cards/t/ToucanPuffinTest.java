@@ -21,16 +21,15 @@ class ToucanPuffinTest extends BaseCardTest {
     @Test
     @DisplayName("ETB gives a creature you control +2/+0 until end of turn")
     void etbBoostsCreatureYouControl() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new ToucanPuffin()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID targetId = bears.getId();
         harness.castCreature(player1, 0, targetId);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent bears = findPermanent(player1, targetId);
         assertThat(bears.getEffectivePower()).isEqualTo(4);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
     }
@@ -38,11 +37,11 @@ class ToucanPuffinTest extends BaseCardTest {
     @Test
     @DisplayName("Boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new ToucanPuffin()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID targetId = bears.getId();
         harness.castCreature(player1, 0, targetId);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -51,7 +50,6 @@ class ToucanPuffinTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent bears = findPermanent(player1, targetId);
         assertThat(bears.getEffectivePower()).isEqualTo(2);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
     }
@@ -70,10 +68,32 @@ class ToucanPuffinTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature you control");
     }
 
-    private Permanent findPermanent(com.github.laxika.magicalvibes.model.Player player, UUID permanentId) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getId().equals(permanentId))
-                .findFirst()
-                .orElseThrow();
+    @Test
+    @CardUsed({ToucanPuffin.class})
+    @DisplayName("Can target itself when entering an otherwise empty battlefield")
+    void canTargetItself() {
+        harness.setHand(player1, List.of(new ToucanPuffin()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent puffin = findPermanent(player1, "Toucan-Puffin");
+        harness.handlePermanentChosen(player1, puffin.getId());
+        harness.passBothPriorities();
+
+        assertThat(puffin.getEffectivePower()).isEqualTo(4);
+        assertThat(puffin.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({ToucanPuffin.class})
+    @DisplayName("Entry without being cast still triggers the boost")
+    void enteringWithoutBeingCastTriggersBoost() {
+        Permanent puffin = harness.enterBattlefieldAndReturn(player1, new ToucanPuffin());
+        harness.handlePermanentChosen(player1, puffin.getId());
+        harness.passBothPriorities();
+
+        assertThat(puffin.getEffectivePower()).isEqualTo(4);
+        assertThat(puffin.getEffectiveToughness()).isEqualTo(2);
     }
 }
