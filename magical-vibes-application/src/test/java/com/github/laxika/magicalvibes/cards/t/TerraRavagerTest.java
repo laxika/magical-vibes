@@ -47,6 +47,42 @@ class TerraRavagerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts defending lands when the trigger resolves and keeps that boost fixed")
+    void countsLandsAtResolution() {
+        Permanent ravager = addCreatureReady(player1, new TerraRavager());
+        harness.addToBattlefield(player2, new Mountain());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(ravager)));
+            assertThat(gqs.getEffectivePower(gd, ravager)).isEqualTo(0);
+
+            harness.addToBattlefield(player2, new Mountain());
+            resolveAllTriggers();
+
+            assertThat(gqs.getEffectivePower(gd, ravager)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, ravager)).isEqualTo(4);
+
+            harness.addToBattlefield(player2, new Mountain());
+            assertThat(gqs.getEffectivePower(gd, ravager)).isEqualTo(2);
+        });
+    }
+
+    @Test
+    @DisplayName("Counts player one's lands when player two attacks")
+    void countsDefendingLandsWhenPlayerTwoAttacks() {
+        Permanent ravager = addCreatureReady(player2, new TerraRavager());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Mountain());
+
+        declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(ravager)));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, ravager)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ravager)).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("The attack boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
         Permanent ravager = addCreatureReady(player1, new TerraRavager());
