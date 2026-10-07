@@ -1,15 +1,19 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({UnscytheKillerOfKings.class, GrizzlyBears.class})
 class UnscytheKillerOfKingsTest extends BaseCardTest {
 
     @Test
@@ -57,19 +61,16 @@ class UnscytheKillerOfKingsTest extends BaseCardTest {
         // the battlefield unattached — the killer carries no such ability, so nothing triggers.
         GrizzlyBears killerCard = new GrizzlyBears();
         killerCard.setToughness(5);
-        Permanent killer = new Permanent(killerCard);
+        Permanent killer = harness.addToBattlefieldAndReturn(player1, killerCard);
         killer.setSummoningSick(false);
         killer.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(killer);
 
-        Permanent unscythe = new Permanent(new UnscytheKillerOfKings());
-        gd.playerBattlefields.get(player1.getId()).add(unscythe); // not attached
+        harness.addToBattlefield(player1, new UnscytheKillerOfKings());
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -86,27 +87,78 @@ class UnscytheKillerOfKingsTest extends BaseCardTest {
         assertThat(zombieTokens(player1)).isEmpty();
     }
 
-    // ===== Helpers =====
+    @Test
+    void equipCostsTwoAndTransfersBonuses() {
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new UnscytheKillerOfKings());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        equipment.setAttachedTo(first.getId());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FIRST_STRIKE)).isTrue();
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    void equipmentControllerGetsChoiceAndTokenInsteadOfCreatureController() {
+        Permanent blocker = setUpEquippedKill(player1, player2);
+        Permanent equipment = findPermanent(player1, "Unscythe, Killer of Kings");
+        gd.playerBattlefields.get(player1.getId()).remove(equipment);
+        gd.playerBattlefields.get(player2.getId()).add(equipment);
+
+        runCombatUntilMayPrompt();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCards).anyMatch(e -> e.card().getId().equals(blocker.getCard().getId()));
+        assertThat(zombieTokens(player2)).hasSize(1);
+        assertThat(zombieTokens(player1)).isEmpty();
+    }
+
+    @Test
+    void noTokenIfDyingCardHasLeftGraveyard() {
+        Permanent blocker = setUpEquippedKill(player1, player2);
+        runCombatUntilMayPrompt();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        gd.playerGraveyards.get(player2.getId()).removeIf(card -> card.getId().equals(blocker.getCard().getId()));
+        harness.setExile(player2, java.util.List.of(blocker.getCard()));
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(zombieTokens(player1)).isEmpty();
+    }
 
     /**
      * Puts a Grizzly Bears equipped with Unscythe (a 5/5) on {@code attacker}'s battlefield attacking,
      * and a 2/2 Grizzly Bears on {@code defender}'s battlefield blocking it. Returns the blocker.
      */
     private Permanent setUpEquippedKill(Player attacker, Player defender) {
-        Permanent equipped = new Permanent(new GrizzlyBears());
+        Permanent equipped = harness.addToBattlefieldAndReturn(attacker, new GrizzlyBears());
         equipped.setSummoningSick(false);
         equipped.setAttacking(true);
-        gd.playerBattlefields.get(attacker.getId()).add(equipped);
 
-        Permanent unscythe = new Permanent(new UnscytheKillerOfKings());
+        Permanent unscythe = harness.addToBattlefieldAndReturn(attacker, new UnscytheKillerOfKings());
         unscythe.setAttachedTo(equipped.getId());
-        gd.playerBattlefields.get(attacker.getId()).add(unscythe);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(defender, new GrizzlyBears());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(defender.getId()).add(blocker);
 
         harness.forceActivePlayer(attacker);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
