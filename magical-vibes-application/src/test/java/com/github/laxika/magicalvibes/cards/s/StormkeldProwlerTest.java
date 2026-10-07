@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({StormkeldProwler.class, JacesIngenuity.class, GrizzlyBears.class})
+@CardUsed({StormkeldProwler.class, JacesIngenuity.class, GrizzlyBears.class, SongOfTotentanz.class})
 class StormkeldProwlerTest extends BaseCardTest {
 
     @Test
@@ -24,8 +24,7 @@ class StormkeldProwlerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new JacesIngenuity()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(prowler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
@@ -41,5 +40,61 @@ class StormkeldProwlerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(prowler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The chosen value of X counts toward the mana value five threshold")
+    void xSpellAtThresholdPutsTwoCountersOnProwler() {
+        Permanent prowler = addCreatureReady(player1, new StormkeldProwler());
+        harness.setHand(player1, List.of(new SongOfTotentanz()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 4);
+
+        assertThat(prowler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An X spell with total mana value four does not trigger Prowler")
+    void xSpellBelowThresholdDoesNotPutCountersOnProwler() {
+        Permanent prowler = addCreatureReady(player1, new StormkeldProwler());
+        harness.setHand(player1, List.of(new SongOfTotentanz()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 3);
+
+        assertThat(prowler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's qualifying spell does not trigger Prowler")
+    void opponentSpellDoesNotPutCountersOnProwler() {
+        Permanent prowler = addCreatureReady(player1, new StormkeldProwler());
+        harness.setHand(player2, List.of(new JacesIngenuity()));
+        harness.addMana(player2, ManaColor.BLUE, 5);
+
+        harness.castAndResolveInstant(player2, 0);
+
+        assertThat(prowler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Prowler gets its own two counters before the qualifying spell resolves")
+    void multipleProwlersTriggerIndependently() {
+        Permanent first = addCreatureReady(player1, new StormkeldProwler());
+        Permanent second = addCreatureReady(player1, new StormkeldProwler());
+        harness.setHand(player1, List.of(new JacesIngenuity()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 }
