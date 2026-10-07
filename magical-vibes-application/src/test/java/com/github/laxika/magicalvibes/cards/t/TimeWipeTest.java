@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.p.ParadiseDruid;
+import com.github.laxika.magicalvibes.cards.p.Prismite;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,7 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TimeWipe.class, GiantSpider.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({TimeWipe.class, GiantSpider.class, GrizzlyBears.class, HillGiant.class, ParadiseDruid.class, Prismite.class})
 class TimeWipeTest extends BaseCardTest {
 
     @Test
@@ -51,12 +52,54 @@ class TimeWipeTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Giant Spider");
     }
 
+    @Test
+    @DisplayName("Returns a creature to its owner rather than its controller")
+    void returnsBorrowedCreatureToOpponentsHand() {
+        ParadiseDruid druid = new ParadiseDruid();
+        druid.setOwnerId(player2.getId());
+        UUID druidId = addCreatureReady(player1, druid).getId();
+        addCreatureReady(player2, new Prismite());
+
+        castTimeWipe();
+        harness.handlePermanentChosen(player1, druidId);
+
+        harness.assertInHand(player2, "Paradise Druid");
+        harness.assertNotInHand(player1, "Paradise Druid");
+        harness.assertNotOnBattlefield(player1, "Paradise Druid");
+        harness.assertInGraveyard(player2, "Prismite");
+    }
+
+    @Test
+    @DisplayName("Destroys an opposing hexproof creature and an artifact creature")
+    void destroysHexproofAndArtifactCreaturesWithoutTargeting() {
+        addCreatureReady(player2, new ParadiseDruid());
+        addCreatureReady(player2, new Prismite());
+
+        castTimeWipe();
+
+        harness.assertInGraveyard(player2, "Paradise Druid");
+        harness.assertInGraveyard(player2, "Prismite");
+        harness.assertNotOnBattlefield(player2, "Paradise Druid");
+        harness.assertNotOnBattlefield(player2, "Prismite");
+    }
+
+    @Test
+    @DisplayName("Must return the only creature you control even when no others remain")
+    void returnsOnlyCreatureBeforeFinishingResolution() {
+        UUID prismiteId = addCreatureReady(player1, new Prismite()).getId();
+
+        castTimeWipe();
+        harness.handlePermanentChosen(player1, prismiteId);
+
+        harness.assertInHand(player1, "Prismite");
+        harness.assertNotInGraveyard(player1, "Prismite");
+        harness.assertNotOnBattlefield(player1, "Prismite");
+        harness.assertInGraveyard(player1, "Time Wipe");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void castTimeWipe() {
-        harness.setHand(player1, java.util.List.of(new TimeWipe()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new TimeWipe(), "{2}{W}{W}{U}");
         harness.passBothPriorities();
     }
 }
