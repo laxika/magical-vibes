@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.CinderCrawler;
 import com.github.laxika.magicalvibes.cards.n.NullBrooch;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,11 +15,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SpikeCannibal.class, CinderCrawler.class, NullBrooch.class})
+@CardUsed({SpikeCannibal.class, CinderCrawler.class, NullBrooch.class, Solemnity.class, Unsummon.class})
 class SpikeCannibalTest extends BaseCardTest {
 
     @Test
-    @DisplayName("ETB moves all +1/+1 counters from every creature, including itself")
+    @DisplayName("ETB moves all other creatures' +1/+1 counters and retains its own counter")
     void movesAllPlusOnePlusOneCountersFromEveryCreature() {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new CinderCrawler());
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new CinderCrawler());
@@ -76,6 +77,56 @@ class SpikeCannibalTest extends BaseCardTest {
 
         assertThat(spike.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Enters with its counter before the counter-moving trigger resolves")
+    void entersWithCounterBeforeTriggerResolves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CinderCrawler());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        castSpikeCannibalSpell();
+        harness.passBothPriorities();
+
+        Permanent spike = findPermanent(player1, "Spike Cannibal");
+        assertThat(spike.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        resolveAllTriggers();
+
+        assertThat(spike.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @CardUsed(Unsummon.class)
+    @Test
+    @DisplayName("Counters remain on creatures if Spike Cannibal leaves before its trigger resolves")
+    void doesNotRemoveCountersWhenSourceLeavesBattlefield() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CinderCrawler());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        castSpikeCannibalSpell();
+        harness.passBothPriorities();
+        Permanent spike = findPermanent(player1, "Spike Cannibal");
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, spike.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Spike Cannibal");
+        harness.assertInHand(player1, "Spike Cannibal");
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("With no other counters to move, Spike Cannibal retains its entry counter")
+    void retainsCounterOnOtherwiseEmptyBattlefield() {
+        castSpikeCannibal();
+
+        Permanent spike = findPermanent(player1, "Spike Cannibal");
+        assertThat(spike.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertNotInGraveyard(player1, "Spike Cannibal");
     }
 
     private void castSpikeCannibal() {
