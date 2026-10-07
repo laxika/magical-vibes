@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PlanarCleansing;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +22,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({UlvenwaldMysteries.class, GrizzlyBears.class, WrathOfGod.class, PlanarCleansing.class})
 class UlvenwaldMysteriesTest extends BaseCardTest {
 
     @Test
@@ -28,11 +31,8 @@ class UlvenwaldMysteriesTest extends BaseCardTest {
         harness.addToBattlefield(player1, new UlvenwaldMysteries());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        harness.setHand(player2, List.of(new WrathOfGod()));
-        harness.addMana(player2, ManaColor.WHITE, 4);
         harness.forceActivePlayer(player2);
-
-        harness.getGameService().playCard(harness.getGameData(), player2, 0, 0, null, null);
+        harness.castFromHand(player2, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -60,11 +60,8 @@ class UlvenwaldMysteriesTest extends BaseCardTest {
         tokenCard.setSubtypes(List.of(CardSubtype.BEAR));
         gd.playerBattlefields.get(player1.getId()).add(new Permanent(tokenCard));
 
-        harness.setHand(player2, List.of(new WrathOfGod()));
-        harness.addMana(player2, ManaColor.WHITE, 4);
         harness.forceActivePlayer(player2);
-
-        harness.getGameService().playCard(harness.getGameData(), player2, 0, 0, null, null);
+        harness.castFromHand(player2, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -77,15 +74,8 @@ class UlvenwaldMysteriesTest extends BaseCardTest {
         harness.addToBattlefield(player1, new UlvenwaldMysteries());
         addClueToken(player1);
 
-        List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
-        int clueIndex = -1;
-        for (int i = 0; i < bf.size(); i++) {
-            if (bf.get(i).getCard().getName().equals("Clue")) {
-                clueIndex = i;
-                break;
-            }
-        }
-        assertThat(clueIndex).isGreaterThanOrEqualTo(0);
+        int clueIndex = gd.playerBattlefields.get(player1.getId())
+                .indexOf(findPermanent(player1, "Clue"));
 
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -133,6 +123,83 @@ class UlvenwaldMysteriesTest extends BaseCardTest {
         }
 
         harness.assertNotOnBattlefield(player1, "Human Soldier");
+    }
+
+    @Test
+    @DisplayName("Each allied nontoken death investigates, but opposing deaths do not")
+    void simultaneousDeathsInvestigateOncePerAlliedCreature() {
+        harness.addToBattlefield(player1, new UlvenwaldMysteries());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Clue")).hasSize(2);
+        harness.assertNotOnBattlefield(player2, "Clue");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An investigated Clue creates a Soldier before its draw ability resolves")
+    void investigatedClueSacrificeCreatesSoldierAndDraws() {
+        harness.addToBattlefield(player1, new UlvenwaldMysteries());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int clueIndex = gd.playerBattlefields.get(player1.getId())
+                .indexOf(findPermanent(player1, "Clue"));
+        harness.activateAbility(player1, clueIndex, null, null);
+        harness.assertNotOnBattlefield(player1, "Clue");
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Human Soldier")).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent sacrificing a Clue does not create a Soldier")
+    void opponentClueSacrificeDoesNotTrigger() {
+        harness.addToBattlefield(player1, new UlvenwaldMysteries());
+        addClueToken(player2);
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Human Soldier");
+        harness.assertNotOnBattlefield(player2, "Human Soldier");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Investigates for each allied nontoken creature destroyed together with Mysteries")
+    void simultaneousDestructionOfMysteriesStillInvestigates() {
+        harness.addToBattlefield(player1, new UlvenwaldMysteries());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        harness.castFromHand(player1, new PlanarCleansing(), "{3}{W}{W}{W}");
+        harness.passBothPriorities();
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+
+        harness.assertNotOnBattlefield(player1, "Ulvenwald Mysteries");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Clue")).hasSize(2);
     }
 
     private void addClueToken(Player player) {
