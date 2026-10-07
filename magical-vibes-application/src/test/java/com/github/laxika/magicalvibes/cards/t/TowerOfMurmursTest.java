@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -24,9 +25,8 @@ class TowerOfMurmursTest extends BaseCardTest {
         Permanent tower = harness.addToBattlefieldAndReturn(player1, new TowerOfMurmurs());
         addEightMana(player1);
         List<Card> deck = harness.getGameData().playerDecks.get(player2.getId());
-        while (deck.size() > 10) {
-            deck.removeFirst();
-        }
+        harness.setLibrary(player2, deck.subList(Math.max(0, deck.size() - 10), deck.size()));
+        deck = gd.playerDecks.get(player2.getId());
         int deckSizeBefore = deck.size();
 
         harness.activateAbility(player1, 0, 0, null, player2.getId());
@@ -44,9 +44,8 @@ class TowerOfMurmursTest extends BaseCardTest {
         harness.addToBattlefieldAndReturn(player1, new TowerOfMurmurs());
         addEightMana(player1);
         List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        while (deck.size() > 10) {
-            deck.removeFirst();
-        }
+        harness.setLibrary(player1, deck.subList(Math.max(0, deck.size() - 10), deck.size()));
+        deck = gd.playerDecks.get(player1.getId());
         int deckSizeBefore = deck.size();
 
         harness.activateAbility(player1, 0, 0, null, player1.getId());
@@ -63,9 +62,8 @@ class TowerOfMurmursTest extends BaseCardTest {
         harness.addToBattlefieldAndReturn(player1, new TowerOfMurmurs());
         addEightMana(player1);
         List<Card> deck = gd.playerDecks.get(player2.getId());
-        while (deck.size() > 3) {
-            deck.removeFirst();
-        }
+        harness.setLibrary(player2, deck.subList(Math.max(0, deck.size() - 3), deck.size()));
+        deck = gd.playerDecks.get(player2.getId());
 
         harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -95,6 +93,43 @@ class TowerOfMurmursTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("Milling an empty library does not cause a player to lose")
+    void millingEmptyLibraryDoesNotCauseLoss() {
+        harness.addToBattlefield(player1, new TowerOfMurmurs());
+        harness.setLibrary(player2, List.of());
+        addEightMana(player1);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Ability mills the top eight cards even after the Tower leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent tower = harness.addToBattlefieldAndReturn(player1, new TowerOfMurmurs());
+        List<Card> originalLibrary = List.copyOf(gd.playerDecks.get(player2.getId()));
+        addEightMana(player1);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+
+        assertThat(tower.isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(originalLibrary);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, tower);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactlyInAnyOrderElementsOf(originalLibrary.subList(0, 8));
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .containsExactlyElementsOf(originalLibrary.subList(8, originalLibrary.size()));
+        harness.assertInGraveyard(player1, "Tower of Murmurs");
     }
 
     private void addEightMana(Player player) {
