@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +14,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({StormFleetAerialist.class})
 class StormFleetAerialistTest extends BaseCardTest {
-
-    // ===== Casting without raid =====
 
     @Test
     @DisplayName("Cast without raid — enters as 1/2 with no counters")
@@ -26,7 +26,7 @@ class StormFleetAerialistTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent aerialist = findAerialist(player1);
+        Permanent aerialist = findPermanent(player1, "Storm Fleet Aerialist");
         assertThat(aerialist).isNotNull();
         assertThat(aerialist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
@@ -43,8 +43,6 @@ class StormFleetAerialistTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Storm Fleet Aerialist");
     }
 
-    // ===== Casting with raid =====
-
     @Test
     @DisplayName("Cast with raid — enters as 2/3 with one +1/+1 counter")
     void castWithRaid() {
@@ -55,7 +53,7 @@ class StormFleetAerialistTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent aerialist = findAerialist(player1);
+        Permanent aerialist = findPermanent(player1, "Storm Fleet Aerialist");
         assertThat(aerialist).isNotNull();
         assertThat(aerialist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -73,8 +71,6 @@ class StormFleetAerialistTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Storm Fleet Aerialist") && log.contains("+1/+1 counter"));
     }
-
-    // ===== No ETB trigger on the stack =====
 
     @Test
     @DisplayName("Raid counter is a replacement effect — no ETB trigger on stack")
@@ -99,20 +95,56 @@ class StormFleetAerialistTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent aerialist = findAerialist(player1);
+        Permanent aerialist = findPermanent(player1, "Storm Fleet Aerialist");
         assertThat(aerialist).isNotNull();
         assertThat(aerialist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Raid also applies when entering without being cast")
+    void entersWithoutCastingWithRaid() {
+        markAttackedThisTurn();
+
+        Permanent aerialist = harness.enterBattlefieldAndReturn(player1, new StormFleetAerialist());
+
+        assertThat(aerialist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering without being cast does not grant a counter without raid")
+    void entersWithoutCastingWithoutRaid() {
+        Permanent aerialist = harness.enterBattlefieldAndReturn(player1, new StormFleetAerialist());
+
+        assertThat(aerialist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Declaring no attackers does not enable raid")
+    void declaringNoAttackersDoesNotEnableRaid() {
+        addCreatureReady(player1, new StormFleetAerialist());
+        declareAttackers(List.of());
+
+        Permanent aerialist = harness.enterBattlefieldAndReturn(player1, new StormFleetAerialist());
+
+        assertThat(aerialist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Raid remains enabled after the attacking creature leaves the battlefield")
+    void raidRemainsEnabledAfterAttackerLeaves() {
+        addCreatureReady(player1, new StormFleetAerialist());
+        declareAttackers(List.of(0));
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        Permanent aerialist = harness.enterBattlefieldAndReturn(player1, new StormFleetAerialist());
+
+        assertThat(aerialist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
 
     private void markAttackedThisTurn() {
         gd.playersDeclaredAttackersThisTurn.add(player1.getId());
     }
 
-    private Permanent findAerialist(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Storm Fleet Aerialist"))
-                .findFirst().orElse(null);
-    }
 }
