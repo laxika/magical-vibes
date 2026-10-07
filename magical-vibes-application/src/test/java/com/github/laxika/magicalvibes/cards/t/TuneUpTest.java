@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TuneUp.class, DuskLegionDreadnought.class, GrizzlyBears.class, Spellbook.class})
 class TuneUpTest extends BaseCardTest {
 
     @Test
@@ -26,8 +28,7 @@ class TuneUpTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TuneUp()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castSorcery(player1, 0, artifact.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, artifact.getId());
 
         Permanent returned = findPermanent(player1, "Spellbook");
         assertThat(gqs.isCreature(gd, returned)).isFalse();
@@ -43,8 +44,7 @@ class TuneUpTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TuneUp()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castSorcery(player1, 0, vehicle.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, vehicle.getId());
 
         Permanent returned = findPermanent(player1, "Dusk Legion Dreadnought");
         assertThat(gqs.isCreature(gd, returned)).isTrue();
@@ -68,5 +68,47 @@ class TuneUpTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotTargetArtifactInOpponentsGraveyard() {
+        Spellbook artifact = new Spellbook();
+        harness.setGraveyard(player2, List.of(artifact));
+        harness.setHand(player1, List.of(new TuneUp()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotReturnTargetThatLeavesGraveyardBeforeResolution() {
+        DuskLegionDreadnought vehicle = new DuskLegionDreadnought();
+        harness.setGraveyard(player1, List.of(vehicle));
+        harness.setHand(player1, List.of(new TuneUp()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castSorcery(player1, 0, vehicle.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(vehicle));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Dusk Legion Dreadnought");
+        harness.assertInHand(player1, "Dusk Legion Dreadnought");
+        harness.assertInGraveyard(player1, "Tune Up");
+    }
+
+    @Test
+    void returningNonVehicleDoesNotAnimateOtherVehicles() {
+        Spellbook artifact = new Spellbook();
+        harness.addToBattlefield(player1, new DuskLegionDreadnought());
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.setHand(player1, List.of(new TuneUp()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, artifact.getId());
+
+        harness.assertOnBattlefield(player1, "Spellbook");
+        assertThat(gqs.isCreature(gd, findPermanent(player1, "Dusk Legion Dreadnought"))).isFalse();
     }
 }
