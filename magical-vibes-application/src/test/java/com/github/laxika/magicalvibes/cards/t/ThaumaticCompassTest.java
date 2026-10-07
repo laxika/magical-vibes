@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.r.RavenousDaggertooth;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,22 +15,19 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ThaumaticCompass.class, Forest.class, RavenousDaggertooth.class})
 class ThaumaticCompassTest extends BaseCardTest {
-
-    // ===== Activated ability: search for basic land =====
 
     @Test
     @DisplayName("Search ability finds basic land and puts it in hand")
     void searchAbilityFindsBasicLand() {
-        Card basicLand = createBasicLand("Forest");
-        Card nonLand = createCreature("Bear", 2, 2);
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(nonLand, basicLand));
+        Card basicLand = new Forest();
+        Card nonLand = new RavenousDaggertooth();
+        harness.setLibrary(player1, List.of(nonLand, basicLand));
 
         Permanent compass = addArtifactReady(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -44,10 +41,12 @@ class ThaumaticCompassTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(1);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName()).isEqualTo("Forest");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).containsExactly(basicLand);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).contains(basicLand);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonLand);
+        assertThat(compass.isTapped()).isTrue();
     }
-
-    // ===== End step transform =====
 
     @Test
     @DisplayName("Transforms at end step with exactly 7 lands")
@@ -117,8 +116,6 @@ class ThaumaticCompassTest extends BaseCardTest {
         assertThat(compass.isTransformed()).isFalse();
     }
 
-    // ===== Back face: Spires of Orazca mana ability =====
-
     @Test
     @DisplayName("Spires of Orazca tap adds one colorless mana")
     void spiresBasicTapAddsColorless() {
@@ -130,20 +127,17 @@ class ThaumaticCompassTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isGreaterThanOrEqualTo(1);
     }
 
-    // ===== Back face: untap and remove from combat =====
-
     @Test
     @DisplayName("Spires untaps and removes opponent's attacking creature from combat")
     void spiresUntapsAndRemovesAttacker() {
         Permanent spires = addTransformedSpires(player1);
 
-        Card bear = createCreature("Bear", 2, 2);
-        Permanent attacker = new Permanent(bear);
+        Card bear = new RavenousDaggertooth();
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, bear);
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());
         attacker.tap();
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -162,13 +156,12 @@ class ThaumaticCompassTest extends BaseCardTest {
     void spiresCannotTargetOwnCreature() {
         Permanent spires = addTransformedSpires(player1);
 
-        Card bear = createCreature("Bear", 2, 2);
-        Permanent ownAttacker = new Permanent(bear);
+        Card bear = new RavenousDaggertooth();
+        Permanent ownAttacker = harness.addToBattlefieldAndReturn(player1, bear);
         ownAttacker.setSummoningSick(false);
         ownAttacker.setAttacking(true);
         ownAttacker.setAttackTarget(player2.getId());
         ownAttacker.tap();
-        gd.playerBattlefields.get(player1.getId()).add(ownAttacker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -183,10 +176,9 @@ class ThaumaticCompassTest extends BaseCardTest {
     void spiresCannotTargetNonAttacker() {
         Permanent spires = addTransformedSpires(player1);
 
-        Card bear = createCreature("Bear", 2, 2);
-        Permanent nonAttacker = new Permanent(bear);
+        Card bear = new RavenousDaggertooth();
+        Permanent nonAttacker = harness.addToBattlefieldAndReturn(player2, bear);
         nonAttacker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(nonAttacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -196,54 +188,101 @@ class ThaumaticCompassTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+    @Test
+    void doesNotTransformWhenLandCountFallsBeforeResolution() {
+        Permanent compass = addArtifactReady(player1);
+        for (int i = 0; i < 7; i++) {
+            addLandReady(player1);
+        }
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).removeLast();
+        harness.passBothPriorities();
+        assertThat(compass.isTransformed()).isFalse();
+    }
+
+    @Test
+    void opponentsLandsDoNotCountTowardTransformation() {
+        Permanent compass = addArtifactReady(player1);
+        for (int i = 0; i < 6; i++) {
+            addLandReady(player1);
+        }
+        addLandReady(player2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        assertThat(compass.isTransformed()).isFalse();
+    }
+
+    @Test
+    void spiresDoesNotUntapCreatureThatStoppedAttackingBeforeResolution() {
+        Permanent spires = addTransformedSpires(player1);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new RavenousDaggertooth());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player1.getId());
+        attacker.tap();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.activateAbility(player1, indexOf(player1, spires), 1, null, attacker.getId());
+        attacker.setAttacking(false);
+        attacker.setAttackTarget(null);
+        harness.passBothPriorities();
+        assertThat(attacker.isTapped()).isTrue();
+        assertThat(spires.isTapped()).isTrue();
+    }
+
+    @Test
+    void searchMayFailToFindEvenWithBasicLandAvailable() {
+        Forest land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+        harness.setHand(player1, List.of());
+        Permanent compass = addArtifactReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, indexOf(player1, compass), null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void transformationPreservesTappedStatus() {
+        Permanent compass = addArtifactReady(player1);
+        compass.tap();
+        for (int i = 0; i < 7; i++) {
+            addLandReady(player1);
+        }
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(compass.isTransformed()).isTrue();
+        assertThat(compass.isTapped()).isTrue();
+    }
 
     private Permanent addArtifactReady(Player player) {
-        ThaumaticCompass card = new ThaumaticCompass();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new ThaumaticCompass());
     }
 
     private Permanent addTransformedSpires(Player player) {
-        ThaumaticCompass card = new ThaumaticCompass();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        perm.setCard(card.getBackFaceCard());
+        Permanent perm = addArtifactReady(player);
+        perm.setCard(perm.getCard().getBackFaceCard());
         perm.setTransformed(true);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addLandReady(Player player) {
-        Card land = new Card();
-        land.setName("Forest");
-        land.setType(CardType.LAND);
-        land.setSupertypes(Set.of(CardSupertype.BASIC));
-        Permanent perm = new Permanent(land);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Card createCreature(String name, int power, int toughness) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{G}");
-        card.setColor(CardColor.GREEN);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
-
-    private Card createBasicLand(String name) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.LAND);
-        card.setSupertypes(Set.of(CardSupertype.BASIC));
-        return card;
+        return harness.addToBattlefieldAndReturn(player, new Forest());
     }
 
     private int indexOf(Player player, Permanent perm) {
