@@ -14,13 +14,11 @@ class TangleTest extends BaseCardTest {
 
     @Test
     void preventsCombatDamageAndKeepsAttackingCreaturesTapped() {
-        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new RazorfootGriffin());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new RazorfootGriffin());
         attacker.setAttacking(true);
         attacker.tap();
 
-        Permanent nonAttacker = harness.addToBattlefieldAndReturn(player2, new RazorfootGriffin());
-        nonAttacker.setSummoningSick(false);
+        Permanent nonAttacker = addCreatureReady(player2, new RazorfootGriffin());
         nonAttacker.tap();
 
         castAndResolve();
@@ -37,8 +35,7 @@ class TangleTest extends BaseCardTest {
 
     @Test
     void attackingCreaturesUntapOnTheFollowingTurn() {
-        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new RazorfootGriffin());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new RazorfootGriffin());
         attacker.setAttacking(true);
         attacker.tap();
 
@@ -65,6 +62,84 @@ class TangleTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+    }
+
+    @Test
+    void preventsCombatDamageToBothAttackerAndBlockerWithoutLockingTheBlocker() {
+        Permanent attacker = addCreatureReady(player2, new RazorfootGriffin());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player1.getId());
+        attacker.tap();
+        Permanent blocker = addCreatureReady(player1, new RazorfootGriffin());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        blocker.addBlockingTargetId(attacker.getId());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        castAndResolve();
+        resolveCombat(player2);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(blocker);
+        blocker.tap();
+        advanceToUpkeep(player1);
+        assertThat(blocker.isTapped()).isFalse();
+        advanceToUpkeep(player2);
+        assertThat(attacker.isTapped()).isTrue();
+    }
+
+    @Test
+    void untappedAttackerIsNotTappedButStillSkipsItsNextUntap() {
+        Permanent attacker = addCreatureReady(player2, new RazorfootGriffin());
+        attacker.setAttacking(true);
+
+        castAndResolve();
+
+        assertThat(attacker.isTapped()).isFalse();
+        attacker.tap();
+        advanceToUpkeep(player2);
+        assertThat(attacker.isTapped()).isTrue();
+        advanceToUpkeep(player1);
+        advanceToUpkeep(player2);
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
+    @Test
+    void repeatedCastsDoNotMakeAnAttackerSkipTwoUntapSteps() {
+        Permanent attacker = addCreatureReady(player2, new RazorfootGriffin());
+        attacker.setAttacking(true);
+        attacker.tap();
+
+        castAndResolve();
+        castAndResolve();
+        advanceToUpkeep(player2);
+        assertThat(attacker.isTapped()).isTrue();
+        advanceToUpkeep(player1);
+        advanceToUpkeep(player2);
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
+    @Test
+    void creatureThatStartsAttackingAfterResolutionHasDamagePreventedButUntapsNormally() {
+        Permanent attacker = addCreatureReady(player2, new RazorfootGriffin());
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        castAndResolve();
+
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player1.getId());
+        attacker.tap();
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        resolveCombat(player2);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        advanceToUpkeep(player2);
+        assertThat(attacker.isTapped()).isFalse();
     }
 
     private void castAndResolve() {
