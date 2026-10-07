@@ -155,6 +155,52 @@ class TimeAndTideTest extends BaseCardTest {
                 .doesNotContain(faceDownCreature);
     }
 
+    @Test
+    @DisplayName("Attachments return to their own controller when their host phases in")
+    void phasesAttachmentsAcrossControllers() {
+        Permanent keeper = addCreatureReady(player1, new Breezekeeper());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new DarkPrivilege());
+        aura.setAttachedTo(keeper.getId());
+
+        castTimeAndTide();
+
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(keeper);
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(aura);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(aura);
+
+        castTimeAndTide();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(keeper).doesNotContain(aura);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(aura).doesNotContain(keeper);
+        assertThat(gd.phasedOutPermanents.getOrDefault(player2.getId(), List.of())).doesNotContain(aura);
+        assertThat(aura.getAttachedTo()).isEqualTo(keeper.getId());
+    }
+
+    @Test
+    @DisplayName("Phasing in does not untap a creature")
+    void preservesTappedState() {
+        Permanent keeper = addCreatureReady(player1, new Breezekeeper());
+        keeper.tap();
+
+        castTimeAndTide();
+        castTimeAndTide();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(keeper);
+        assertThat(keeper.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Resolves with no creatures to phase in or out")
+    void resolvesOnEmptyBattlefield() {
+        castTimeAndTide();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof TimeAndTide);
+    }
+
     private void castTimeAndTide() {
         harness.castFromHand(player1, new TimeAndTide(), "{U}{U}");
         harness.passBothPriorities();
@@ -175,12 +221,6 @@ class TimeAndTideTest extends BaseCardTest {
 
     private void advanceToControllersUntap(Player controller) {
         harness.forceStep(TurnStep.CLEANUP);
-        if (gd.activePlayerId.equals(controller.getId())) {
-            harness.passBothPriorities();
-            harness.forceStep(TurnStep.CLEANUP);
-            harness.passBothPriorities();
-        } else {
-            harness.passBothPriorities();
-        }
+        harness.passUntil(controller, TurnStep.UPKEEP);
     }
 }
