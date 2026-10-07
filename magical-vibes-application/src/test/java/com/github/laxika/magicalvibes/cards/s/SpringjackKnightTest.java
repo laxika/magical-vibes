@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.k.KithkinGreatheart;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -81,6 +82,7 @@ class SpringjackKnightTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, ally.getId());
         harness.passBothPriorities();
+        keepBothRevealedCardsOnTop();
 
         assertThat(ally.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
     }
@@ -100,6 +102,7 @@ class SpringjackKnightTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, ally.getId());
         harness.passBothPriorities();
+        keepBothRevealedCardsOnTop();
 
         assertThat(ally.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
     }
@@ -118,6 +121,7 @@ class SpringjackKnightTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, ally.getId());
         harness.passBothPriorities();
+        keepBothRevealedCardsOnTop();
 
         assertThat(ally.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
     }
@@ -136,13 +140,94 @@ class SpringjackKnightTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, ally.getId());
         harness.passBothPriorities();
+        keepBothRevealedCardsOnTop();
         assertThat(ally.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(ally.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+
+    private void keepBothRevealedCardsOnTop() {
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        gs.handleInteractionAnswer(gd, player2,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+    }
+
+    @Test
+    @DisplayName("The attacking Knight can grant itself double strike")
+    void canTargetItself() {
+        harness.setLibrary(player1, List.of(new KithkinGreatheart()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        Permanent knight = addCreatureReady(player1, new SpringjackKnight());
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, knight.getId());
+        harness.passBothPriorities();
+        keepBothRevealedCardsOnTop();
+        assertThat(knight.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A won clash can grant double strike to an opposing creature")
+    void canGrantDoubleStrikeToOpponent() {
+        harness.setLibrary(player1, List.of(new KithkinGreatheart()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        addCreatureReady(player1, new SpringjackKnight());
+        Permanent target = addCreatureReady(player2, new KithkinGreatheart());
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        keepBothRevealedCardsOnTop();
+        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents the entire ability from resolving, including the clash")
+    void missingTargetPreventsClash() {
+        KithkinGreatheart ownTop = new KithkinGreatheart();
+        Forest opposingTop = new Forest();
+        harness.setLibrary(player1, List.of(ownTop));
+        harness.setLibrary(player2, List.of(opposingTop));
+        addCreatureReady(player1, new SpringjackKnight());
+        Permanent target = addCreatureReady(player1, new KithkinGreatheart());
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerGraveyards.get(player1.getId()).add(target.getCard());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownTop);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingTop);
+        assertThat(gd.lastClashWonByController).doesNotContainKey(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Revealed cards move only after both players decide their placement")
+    void clashCardsMoveSimultaneously() {
+        KithkinGreatheart winningCard = new KithkinGreatheart();
+        Forest ownNext = new Forest();
+        Forest losingCard = new Forest();
+        KithkinGreatheart opposingNext = new KithkinGreatheart();
+        harness.setLibrary(player1, List.of(winningCard, ownNext));
+        harness.setLibrary(player2, List.of(losingCard, opposingNext));
+        addCreatureReady(player1, new SpringjackKnight());
+        Permanent target = addCreatureReady(player1, new KithkinGreatheart());
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(winningCard, ownNext);
+        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        gs.handleInteractionAnswer(gd, player2,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownNext, winningCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingNext, losingCard);
+        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
 }
