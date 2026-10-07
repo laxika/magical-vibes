@@ -29,8 +29,7 @@ class TormodTheDesecratorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Recollect()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, shock.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, shock.getId());
         harness.passBothPriorities();
 
         Permanent zombie = findPermanent(player1, "Zombie");
@@ -48,8 +47,7 @@ class TormodTheDesecratorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Reminisce()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Zombie")).hasSize(1);
@@ -63,11 +61,75 @@ class TormodTheDesecratorTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Grizzly Bears"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Grizzly Bears"));
 
         assertThat(findPermanents(player1, "Zombie")).isEmpty();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerWhenCardsLeaveOpponentsGraveyard() {
+        addReadyTormod();
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Reminisce()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerWhenEmptyGraveyardIsShuffled() {
+        addReadyTormod();
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new Reminisce()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void createsZombieForEachSeparateGraveyardDeparture() {
+        addReadyTormod();
+        Shock first = new Shock();
+        Shock second = new Shock();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new Recollect(), new Recollect()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castAndResolveSorcery(player1, 0, first.getId());
+        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Zombie")).hasSize(2)
+                .allSatisfy(zombie -> assertThat(zombie.isTapped()).isTrue());
+    }
+
+    @Test
+    void queuedTriggerStillCreatesZombieAfterTormodDies() {
+        addReadyTormod();
+        Shock returnedCard = new Shock();
+        harness.setGraveyard(player1, List.of(returnedCard));
+        harness.setHand(player1, List.of(new Recollect()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveSorcery(player1, 0, returnedCard.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Tormod, the Desecrator"));
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Tormod, the Desecrator")).isEmpty();
+        assertThat(findPermanents(player1, "Zombie")).hasSize(1);
+        assertThat(findPermanent(player1, "Zombie").isTapped()).isTrue();
     }
 
     private void addReadyTormod() {
