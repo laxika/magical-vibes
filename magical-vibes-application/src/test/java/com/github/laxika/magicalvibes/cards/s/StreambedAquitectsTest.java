@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GoldmeadowDodger;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -130,5 +131,60 @@ class StreambedAquitectsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, dodger.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+    @Test
+    @DisplayName("Pump can target an opponent's Merfolk")
+    void pumpCanTargetOpponentsMerfolk() {
+        Permanent aquitects = addCreatureReady(player1, new StreambedAquitects());
+        Permanent merrow = addCreatureReady(player2, new DeeptreadMerrow());
+
+        harness.activateAbility(player1, 0, 0, null, merrow.getId());
+        assertThat(aquitects.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(merrow.getPowerModifier()).isEqualTo(1);
+        assertThat(merrow.getToughnessModifier()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, merrow, Keyword.ISLANDWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Aquitects can target itself with its pump ability")
+    void pumpCanTargetItself() {
+        Permanent aquitects = addCreatureReady(player1, new StreambedAquitects());
+
+        harness.activateAbility(player1, 0, 0, null, aquitects.getId());
+        harness.passBothPriorities();
+
+        assertThat(aquitects.getPowerModifier()).isEqualTo(1);
+        assertThat(aquitects.getToughnessModifier()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, aquitects, Keyword.ISLANDWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents both tap abilities")
+    void summoningSicknessPreventsBothAbilities() {
+        Permanent aquitects = harness.addToBattlefieldAndReturn(player1, new StreambedAquitects());
+        aquitects.setSummoningSick(true);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, aquitects.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(aquitects.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's Forest becomes an Island with only blue intrinsic mana")
+    void opponentsLandLosesOriginalIntrinsicMana() {
+        Permanent aquitects = addCreatureReady(player1, new StreambedAquitects());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        harness.activateAbility(player1, 0, 1, null, forest.getId());
+        assertThat(aquitects.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gqs.intrinsicBasicLandManaColors(gd, forest)).containsOnly(ManaColor.BLUE);
     }
 }
