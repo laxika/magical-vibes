@@ -48,11 +48,54 @@ class TributeToTheWildTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
+    @Test
+    void opponentCanChooseArtifactInsteadOfEnchantment() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+
+        cast();
+
+        harness.handleMultiplePermanentsChosen(player2, List.of(artifact.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(enchantment);
+        harness.assertInGraveyard(player2, "Ornithopter");
+        harness.assertNotInGraveyard(player2, "Glorious Anthem");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void sacrificesSoleArtifactWithoutPrompting() {
+        harness.addToBattlefield(player1, new Ornithopter());
+        harness.addToBattlefield(player2, new Ornithopter());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        cast();
+
+        harness.assertInGraveyard(player2, "Ornithopter");
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void sacrificesSoleEnchantmentWithoutPrompting() {
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.addToBattlefield(player2, new GloriousAnthem());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        cast();
+
+        harness.assertInGraveyard(player2, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Glorious Anthem");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
     private void cast() {
         harness.setHand(player1, List.of(new TributeToTheWild()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 }
