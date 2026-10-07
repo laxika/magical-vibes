@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -12,12 +14,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SynthEradicator.class, GrizzlyBears.class})
+@CardUsed({SynthEradicator.class, Mountain.class})
 class SynthEradicatorTest extends BaseCardTest {
 
     @Test
     void attackingMayGetTwoEnergyInsteadOfPlayPermission() {
-        Card topCard = libraryCard("Top card");
+        Card topCard = new Mountain();
         harness.setLibrary(player1, List.of(topCard));
         addReadySynth();
 
@@ -33,7 +35,7 @@ class SynthEradicatorTest extends BaseCardTest {
 
     @Test
     void decliningEnergyGrantsPlayPermissionForExiledCard() {
-        Card topCard = libraryCard("Top card");
+        Card topCard = new Mountain();
         harness.setLibrary(player1, List.of(topCard));
         addReadySynth();
 
@@ -61,6 +63,96 @@ class SynthEradicatorTest extends BaseCardTest {
     }
 
     @Test
+    void decliningEnergyAllowsPlayingExiledLandDuringMainPhase() {
+        Card land = new Mountain();
+        harness.setLibrary(player1, List.of(land));
+        addReadySynth();
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.castFromExile(player1, land.getId());
+
+        harness.assertOnBattlefield(player1, "Mountain");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void decliningEnergyAllowsCastingExiledSpellWithNormalManaCost() {
+        Card spell = new SynthEradicator();
+        harness.setLibrary(player1, List.of(spell));
+        addReadySynth();
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        assertThatThrownBy(() -> harness.castFromExile(player1, spell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castFromExile(player1, spell.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(p -> p.getCard().getId())
+                .contains(spell.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void attackingWithEmptyLibraryStillMayGetTwoEnergy() {
+        harness.setLibrary(player1, List.of());
+        addReadySynth();
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void hasteAllowsAttackingWhileSummoningSick() {
+        harness.setLibrary(player1, List.of(new Mountain()));
+        harness.addToBattlefield(player1, new SynthEradicator());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
+    }
+
+    @Test
+    void hasteAllowsTapAbilityAndEnergyIsPaidBeforeResolution() {
+        Permanent synth = harness.addToBattlefieldAndReturn(player1, new SynthEradicator());
+        gd.playerEnergyCounters.put(player1.getId(), 5);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(synth.isTapped()).isTrue();
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void activatedAbilityCanDealLethalDamageToACreature() {
+        addReadySynth();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SynthEradicator());
+        gd.playerEnergyCounters.put(player1.getId(), 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Synth Eradicator");
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
     void activatedAbilityRequiresThreeEnergy() {
         addReadySynth();
         gd.playerEnergyCounters.put(player1.getId(), 2);
@@ -71,15 +163,8 @@ class SynthEradicatorTest extends BaseCardTest {
     }
 
     private Permanent addReadySynth() {
-        Permanent synth = new Permanent(new SynthEradicator());
+        Permanent synth = harness.addToBattlefieldAndReturn(player1, new SynthEradicator());
         synth.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(synth);
         return synth;
-    }
-
-    private Card libraryCard(String name) {
-        Card card = new Card();
-        card.setName(name);
-        return card;
     }
 }
