@@ -67,4 +67,61 @@ class ThalakosSeerTest extends BaseCardTest {
 
         assertThat(shadowBlocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Returning to hand draws a card in addition to returning Seer")
+    void returningToHandDrawsACard() {
+        ThalakosSeer card = new ThalakosSeer();
+        card.setOwnerId(player1.getId());
+        Permanent seer = harness.addToBattlefieldAndReturn(player1, card);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, seer));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(card).hasSize(handBefore + 2);
+        harness.assertNotOnBattlefield(player1, "Thalakos Seer");
+    }
+
+    @Test
+    @DisplayName("The last controller draws even when Seer belongs to the opponent")
+    void lastControllerDrawsInsteadOfOwner() {
+        ThalakosSeer card = new ThalakosSeer();
+        card.setOwnerId(player1.getId());
+        Permanent seer = harness.addToBattlefieldAndReturn(player2, card);
+        int ownerHandBefore = gd.playerHands.get(player1.getId()).size();
+        int controllerHandBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, seer));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(controllerHandBefore + 1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(ownerHandBefore);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+    }
+
+    @Test
+    @DisplayName("Thalakos Seer cannot block a creature without shadow")
+    void cannotBlockNonShadowAttacker() {
+        Permanent attacker = addCreatureReady(player1, new KnightOfDawn());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new ThalakosSeer());
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Thalakos Seer can block a creature with shadow")
+    void canBlockShadowAttacker() {
+        Permanent attacker = addCreatureReady(player1, new SoltariFootSoldier());
+        attacker.setAttacking(true);
+        Permanent seer = addCreatureReady(player2, new ThalakosSeer());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(seer.isBlocking()).isTrue();
+    }
 }
