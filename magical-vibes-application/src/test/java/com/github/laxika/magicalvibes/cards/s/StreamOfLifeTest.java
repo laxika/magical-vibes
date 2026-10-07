@@ -75,4 +75,21 @@ class StreamOfLifeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Successive casts use their own chosen X values")
+    void successiveCastsUseTheirOwnXValues() {
+        harness.setHand(player1, List.of(new StreamOfLife(), new StreamOfLife()));
+        harness.addMana(player1, ManaColor.GREEN, 7);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 4, player2.getId());
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 24);
+
+        harness.castAndResolveSorcery(player1, 0, 1, player1.getId());
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 24);
+    }
 }
