@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.ShinraReinforcements;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,20 +17,19 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UltimeciaTimeSorceress.class, UltimeciaOmnipotent.class, GrizzlyBears.class})
+@CardUsed({UltimeciaTimeSorceress.class, UltimeciaOmnipotent.class, ShinraReinforcements.class})
 class UltimeciaTimeSorceressTest extends BaseCardTest {
 
     @Test
     void entersAndAttacksWithSurveilTwo() {
-        Card first = new GrizzlyBears();
-        Card second = new GrizzlyBears();
+        Card first = new ShinraReinforcements();
+        Card second = new ShinraReinforcements();
         harness.setLibrary(player1, List.of(first, second));
         harness.setHand(player1, List.of(new UltimeciaTimeSorceress()));
         addManaForUltimecia();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.Scry enterSurveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
         assertThat(enterSurveil).isNotNull();
@@ -38,8 +37,8 @@ class UltimeciaTimeSorceressTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1)));
 
-        Card attackFirst = new GrizzlyBears();
-        Card attackSecond = new GrizzlyBears();
+        Card attackFirst = new ShinraReinforcements();
+        Card attackSecond = new ShinraReinforcements();
         harness.setLibrary(player1, List.of(attackFirst, attackSecond));
         Permanent ultimecia = findPermanent(player1, "Ultimecia, Time Sorceress");
         ultimecia.setSummoningSick(false);
@@ -56,7 +55,7 @@ class UltimeciaTimeSorceressTest extends BaseCardTest {
         Permanent ultimecia = addUltimecia(player1);
         List<Card> graveyard = new ArrayList<>();
         for (int i = 0; i < 8; i++) {
-            graveyard.add(new GrizzlyBears());
+            graveyard.add(new ShinraReinforcements());
         }
         harness.setGraveyard(player1, graveyard);
 
@@ -81,7 +80,7 @@ class UltimeciaTimeSorceressTest extends BaseCardTest {
         Permanent ultimecia = addUltimecia(player1);
         List<Card> graveyard = new ArrayList<>();
         for (int i = 0; i < 7; i++) {
-            graveyard.add(new GrizzlyBears());
+            graveyard.add(new ShinraReinforcements());
         }
         harness.setGraveyard(player1, graveyard);
 
@@ -92,6 +91,121 @@ class UltimeciaTimeSorceressTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.extraTurns).isEmpty();
+    }
+
+    @Test
+    void canDeclineTransformPaymentWithoutExilingCards() {
+        Permanent ultimecia = addUltimecia(player1);
+        List<Card> graveyard = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            graveyard.add(new ShinraReinforcements());
+        }
+        harness.setGraveyard(player1, graveyard);
+        advanceToEndStep(player1);
+        addManaForUltimecia();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(ultimecia.isTransformed()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(graveyard);
+        assertThat(gd.extraTurns).isEmpty();
+    }
+
+    @Test
+    void doesNotTransformWhenManaPaymentCannotBeMade() {
+        Permanent ultimecia = addUltimecia(player1);
+        List<Card> graveyard = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            graveyard.add(new ShinraReinforcements());
+        }
+        harness.setGraveyard(player1, graveyard);
+        advanceToEndStep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.passBothPriorities();
+
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(ultimecia.isTransformed()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(graveyard);
+        assertThat(gd.extraTurns).isEmpty();
+    }
+
+    @Test
+    void surveilCanPutOneCardInGraveyardAndKeepTheOtherOnTop() {
+        Card first = new ShinraReinforcements();
+        Card second = new ShinraReinforcements();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new UltimeciaTimeSorceress()));
+        addManaForUltimecia();
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first).doesNotContain(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second);
+    }
+
+    @Test
+    void doesNotTriggerTransformOnOpponentsEndStep() {
+        Permanent ultimecia = addUltimecia(player1);
+        List<Card> graveyard = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            graveyard.add(new ShinraReinforcements());
+        }
+        harness.setGraveyard(player1, graveyard);
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(ultimecia.isTransformed()).isFalse();
+    }
+
+    @Test
+    void choosesExactlyEightCardsWhenGraveyardHasMoreThanEight() {
+        Permanent ultimecia = addUltimecia(player1);
+        List<Card> graveyard = new ArrayList<>();
+        for (int i = 0; i < 9; i++) {
+            graveyard.add(new ShinraReinforcements());
+        }
+        Card retained = graveyard.getFirst();
+        harness.setGraveyard(player1, graveyard);
+        advanceToEndStep(player1);
+        addManaForUltimecia();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(ultimecia.isTransformed()).isFalse();
+        for (int i = 0; i < 8; i++) {
+            harness.handleGraveyardCardChosen(player1, 1);
+        }
+
+        assertThat(ultimecia.isTransformed()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(retained);
+    }
+
+    @Test
+    void endStepAbilityTriggersBeforeThereAreEnoughGraveyardCards() {
+        Permanent ultimecia = addUltimecia(player1);
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        List<Card> graveyard = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            graveyard.add(new ShinraReinforcements());
+        }
+        harness.setGraveyard(player1, graveyard);
+        addManaForUltimecia();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(ultimecia.isTransformed()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
     private Permanent addUltimecia(Player player) {
