@@ -92,4 +92,45 @@ class ThornwindFaeriesTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
+
+    @Test
+    @DisplayName("Can deal damage to its controller")
+    void canTargetController() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new ThornwindFaeries());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Can target itself and die from its own damage")
+    void canTargetItself() {
+        Permanent faeries = addCreatureReady(player1, new ThornwindFaeries());
+
+        harness.activateAbility(player1, 0, null, faeries.getId());
+        assertThat(faeries.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Thornwind Faeries");
+        harness.assertInGraveyard(player1, "Thornwind Faeries");
+    }
+
+    @Test
+    @DisplayName("Activated ability resolves after its source leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        harness.setLife(player2, 20);
+        Permanent faeries = addCreatureReady(player1, new ThornwindFaeries());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(faeries);
+        gd.playerGraveyards.get(player1.getId()).add(faeries.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Thornwind Faeries");
+        assertThat(gd.stack).isEmpty();
+    }
 }
