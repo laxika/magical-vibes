@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.h.HonorGuard;
+import com.github.laxika.magicalvibes.cards.h.HappyHoganDauntlessDriver;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,23 +12,56 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed({TheWhizzerClassicSpeedster.class, HonorGuard.class})
+import static org.assertj.core.api.Assertions.assertThat;
+
+@CardUsed({TheWhizzerClassicSpeedster.class, HonorGuard.class, HappyHoganDauntlessDriver.class})
 class TheWhizzerClassicSpeedsterTest extends BaseCardTest {
 
     @Test
     @DisplayName("First strike kills a 1/1 before it deals regular damage")
     void firstStrikeKillsBeforeRegularDamage() {
-        Permanent attacker = addCreatureReady(player1, new TheWhizzerClassicSpeedster());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new TheWhizzerClassicSpeedster());
+        addCreatureReady(player2, new HonorGuard());
 
-        Permanent blocker = addCreatureReady(player2, new HonorGuard());
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         resolveCombat();
 
         harness.assertOnBattlefield(player1, "The Whizzer, Classic Speedster");
         harness.assertInGraveyard(player2, "Honor Guard");
+    }
+
+    @Test
+    @DisplayName("First strike prevents a killed blocker from dealing damage back")
+    void firstStrikePreventsBlockerDamage() {
+        Permanent attacker = addCreatureReady(player1, new TheWhizzerClassicSpeedster());
+        addCreatureReady(player2, new HappyHoganDauntlessDriver());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player1, "The Whizzer, Classic Speedster");
+        harness.assertInGraveyard(player2, "Happy Hogan, Dauntless Driver");
+        assertThat(attacker.getMarkedDamage()).isZero();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("First strike also prevents damage from an attacker killed while blocking")
+    void firstStrikeWorksWhileBlocking() {
+        addCreatureReady(player1, new HappyHoganDauntlessDriver());
+        Permanent blocker = addCreatureReady(player2, new TheWhizzerClassicSpeedster());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Happy Hogan, Dauntless Driver");
+        harness.assertOnBattlefield(player2, "The Whizzer, Classic Speedster");
+        assertThat(blocker.getMarkedDamage()).isZero();
+        harness.assertLife(player2, 20);
     }
 
     @Test
