@@ -62,8 +62,7 @@ class SwatTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Bloated Toad");
         harness.assertNotInGraveyard(player2, "Bloated Toad");
@@ -96,6 +95,38 @@ class SwatTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(swat);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can destroy a creature controlled by its caster")
+    void destroysOwnCreature() {
+        Permanent creature = addCreatureReady(player1, new BloatedToad());
+
+        castSwat(creature);
+
+        harness.assertNotOnBattlefield(player1, "Bloated Toad");
+        harness.assertInGraveyard(player1, "Bloated Toad");
+        harness.assertInGraveyard(player1, "Swat");
+    }
+
+    @Test
+    @DisplayName("Cycling accepts colored mana and discards immediately before drawing")
+    void cyclingPaysDiscardBeforeResolution() {
+        harness.setHand(player1, List.of(new Swat()));
+        harness.setLibrary(player1, List.of(new BloatedToad()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertNotInHand(player1, "Swat");
+        harness.assertInGraveyard(player1, "Swat");
+        harness.assertNotInHand(player1, "Bloated Toad");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Bloated Toad");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castSwat(Permanent target) {
