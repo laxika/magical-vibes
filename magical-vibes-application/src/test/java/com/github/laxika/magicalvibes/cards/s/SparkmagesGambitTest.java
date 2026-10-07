@@ -26,8 +26,7 @@ class SparkmagesGambitTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, List.of(firstTarget.getId(), secondTarget.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(firstTarget.getId(), secondTarget.getId()));
 
         assertThat(firstTarget.getMarkedDamage()).isEqualTo(1);
         assertThat(secondTarget.getMarkedDamage()).isEqualTo(1);
@@ -44,13 +43,64 @@ class SparkmagesGambitTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, List.of(target.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(target.getId()));
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
         assertThat(target.isCantBlockThisTurn()).isTrue();
         assertThat(untargeted.getMarkedDamage()).isZero();
         assertThat(untargeted.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    void canResolveWithNoTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SparkmagesGambit()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, List.of());
+
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotTargetThreeCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SparkmagesGambit()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canTargetCreaturesControlledByDifferentPlayers() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SparkmagesGambit()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(own.getId(), opposing.getId()));
+
+        assertThat(own.getMarkedDamage()).isEqualTo(1);
+        assertThat(opposing.getMarkedDamage()).isEqualTo(1);
+        assertThat(own.isCantBlockThisTurn()).isTrue();
+        assertThat(opposing.isCantBlockThisTurn()).isTrue();
+    }
+
+    @Test
+    void cannotTargetTheSameCreatureTwice() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SparkmagesGambit()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
