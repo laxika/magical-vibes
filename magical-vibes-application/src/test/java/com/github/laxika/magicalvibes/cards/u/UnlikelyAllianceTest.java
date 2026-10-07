@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -42,7 +44,6 @@ class UnlikelyAllianceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(escort.getToughnessModifier()).isEqualTo(0);
@@ -124,5 +125,58 @@ class UnlikelyAllianceTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, blocker.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not be attacking or blocking");
+    }
+
+    @Test
+    @DisplayName("A tapped creature is still a legal target when not attacking or blocking")
+    void boostsTappedCreature() {
+        harness.addToBattlefield(player1, new UnlikelyAlliance());
+        Permanent escort = addCreatureReady(player1, new KjeldoranEscort());
+        escort.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, escort.getId());
+        harness.passBothPriorities();
+
+        assertThat(escort.isTapped()).isTrue();
+        assertThat(escort.getEffectivePower()).isEqualTo(2);
+        assertThat(escort.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Multiple activations stack without tapping the enchantment")
+    void repeatedActivationsStack() {
+        Permanent alliance = harness.addToBattlefieldAndReturn(player1, new UnlikelyAlliance());
+        Permanent escort = addCreatureReady(player1, new KjeldoranEscort());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, escort.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, escort.getId());
+        harness.passBothPriorities();
+
+        assertThat(alliance.isTapped()).isFalse();
+        assertThat(escort.getEffectivePower()).isEqualTo(2);
+        assertThat(escort.getEffectiveToughness()).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("A resolved boost remains when the creature attacks later in the turn")
+    void resolvedBoostRemainsWhenCreatureAttacks() {
+        harness.addToBattlefield(player1, new UnlikelyAlliance());
+        Permanent escort = addCreatureReady(player1, new KjeldoranEscort());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, escort.getId());
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        gs.declareAttackers(gd, player1, List.of(1));
+
+        assertThat(escort.isAttacking()).isTrue();
+        assertThat(escort.getEffectivePower()).isEqualTo(2);
+        assertThat(escort.getEffectiveToughness()).isEqualTo(5);
     }
 }
