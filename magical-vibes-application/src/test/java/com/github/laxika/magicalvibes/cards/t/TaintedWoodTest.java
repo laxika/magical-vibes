@@ -3,10 +3,13 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -75,4 +78,53 @@ class TaintedWoodTest extends BaseCardTest {
         assertThat(wood.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("A tapped Swamp still enables colored mana")
+    void tappedSwampEnablesColoredMana() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        swamp.setTapped(true);
+        Permanent wood = harness.addToBattlefieldAndReturn(player1, new TaintedWood());
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(wood.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Losing the last Swamp disables colored mana but leaves colorless available")
+    void losingLastSwampDisablesOnlyColoredMana() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent wood = harness.addToBattlefieldAndReturn(player1, new TaintedWood());
+        gd.playerBattlefields.get(player1.getId()).remove(swamp);
+        gd.playerGraveyards.get(player1.getId()).add(swamp.getCard());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("a Swamp");
+        assertThat(wood.isTapped()).isFalse();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(wood.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tainted Wood can tap for mana the turn it is played")
+    void canTapForManaImmediatelyAfterBeingPlayed() {
+        harness.setHand(player1, List.of(new TaintedWood()));
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
