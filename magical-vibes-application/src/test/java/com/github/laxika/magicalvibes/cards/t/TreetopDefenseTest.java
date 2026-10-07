@@ -81,6 +81,40 @@ class TreetopDefenseTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
+    @Test
+    @DisplayName("Can cast after the last declared attacker leaves during the same step")
+    void canCastAfterLastAttackerLeaves() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent defender = creature(player2);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+        assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
+        assertThat(attacker.getAttackTarget()).isEqualTo(player2.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        gd.playerGraveyards.get(player1.getId()).add(attacker.getCard());
+        harness.castFromHand(player2, new TreetopDefense(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, defender, Keyword.REACH)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creatures entering before resolution also gain reach")
+    void includesCreaturesEnteringBeforeResolution() {
+        harness.forceActivePlayer(player1);
+        addAttackerTargeting(player1, player2);
+        Permanent firstCreature = creature(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.castFromHand(player2, new TreetopDefense(), "{1}{G}");
+
+        Permanent secondCreature = creature(player2);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, firstCreature, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, secondCreature, Keyword.REACH)).isTrue();
+    }
+
     private Permanent addAttackerTargeting(Player attackerController, Player defender) {
         Permanent perm = addCreatureReady(attackerController, new GrizzlyBears());
         perm.setAttacking(true);
