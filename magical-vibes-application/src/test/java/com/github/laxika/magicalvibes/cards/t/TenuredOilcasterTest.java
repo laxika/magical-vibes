@@ -70,13 +70,44 @@ class TenuredOilcasterTest extends BaseCardTest {
         int player1DeckBefore = gd.playerDecks.get(player1.getId()).size();
         int player2DeckBefore = gd.playerDecks.get(player2.getId()).size();
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(player1DeckBefore - 1);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(player2DeckBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Loses the power bonus when the opponent's graveyard drops below eight cards")
+    void losesBoostBelowThreshold() {
+        Permanent oilcaster = harness.addToBattlefieldAndReturn(player1, new TenuredOilcaster());
+        int basePower = gqs.getEffectivePower(gd, oilcaster);
+        fillGraveyard(player2, 9);
+        assertThat(gqs.getEffectivePower(gd, oilcaster)).isEqualTo(basePower + 3);
+
+        fillGraveyard(player2, 7);
+
+        assertThat(gqs.getEffectivePower(gd, oilcaster)).isEqualTo(basePower);
+    }
+
+    @Test
+    @DisplayName("An empty controller library does not prevent the opponent from milling")
+    void emptyLibraryDoesNotStopOtherPlayerMilling() {
+        addCreatureReady(player1, new TenuredOilcaster());
+        Card topCard = new TenuredOilcaster();
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of(topCard));
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(topCard);
     }
 
     private void fillGraveyard(Player player, int count) {
