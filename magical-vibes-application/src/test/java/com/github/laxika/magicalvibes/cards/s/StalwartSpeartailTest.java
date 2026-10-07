@@ -3,7 +3,11 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.f.FutureSight;
 import com.github.laxika.magicalvibes.cards.g.GishathSunsAvatar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.q.QuintoriusKand;
+import com.github.laxika.magicalvibes.cards.x.Xenograft;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({StalwartSpeartail.class, FutureSight.class, GishathSunsAvatar.class, GrizzlyBears.class})
+@CardUsed({StalwartSpeartail.class, FutureSight.class, GishathSunsAvatar.class, GrizzlyBears.class,
+        QuintoriusKand.class, Xenograft.class})
 class StalwartSpeartailTest extends BaseCardTest {
 
     @Test
@@ -68,6 +73,60 @@ class StalwartSpeartailTest extends BaseCardTest {
         assertThat(otherCreature.getMarkedDamage()).isEqualTo(1);
     }
 
+    @Test
+    void attackDamagesBothPlayersPlaneswalkersWithoutDamagingPlayers() {
+        addCreatureReady(player1, new StalwartSpeartail());
+        harness.addToBattlefield(player1, new QuintoriusKand());
+        harness.addToBattlefield(player2, new QuintoriusKand());
+        Permanent ownPlaneswalker = findPermanent(player1, "Quintorius Kand");
+        Permanent opposingPlaneswalker = findPermanent(player2, "Quintorius Kand");
+        ownPlaneswalker.setCounterCount(CounterType.LOYALTY, 4);
+        opposingPlaneswalker.setCounterCount(CounterType.LOYALTY, 4);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(ownPlaneswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        assertThat(opposingPlaneswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void separateDamageEventsAccumulatePerpetualBoosts() {
+        Permanent source = addCreatureReady(player1, new StalwartSpeartail());
+        Permanent other = addCreatureReady(player1, new StalwartSpeartail());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        source.setTapped(false);
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(6);
+    }
+
+    @Test
+    void enrageIncludesCreaturesThatGainDinosaurTypeOnlyOnBattlefield() {
+        addCreatureReady(player1, new StalwartSpeartail());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Xenograft());
+        findPermanent(player1, "Xenograft").setChosenSubtype(CardSubtype.DINOSAUR);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
+    }
+
     private void castAndResolveHandDinosaur() {
         prepareMainPhase();
         addSpeartailMana();
@@ -83,9 +142,8 @@ class StalwartSpeartailTest extends BaseCardTest {
 
     private void castAndResolveHandBear() {
         prepareMainPhase();
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        Card bear = gd.playerHands.get(player1.getId()).getFirst();
+        harness.castFromHand(player1, bear, "{1}{G}");
         harness.passBothPriorities();
     }
 
