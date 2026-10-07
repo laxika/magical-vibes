@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
@@ -142,6 +144,39 @@ class TrevasRuinsTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(ruins.isTapped()).isTrue();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"GREEN", "WHITE"})
+    void producesOtherOfferedManaColors(ManaColor color) {
+        Permanent ruins = harness.addToBattlefieldAndReturn(player1, new TrevasRuins());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+        assertThat(ruins.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canProduceManaBeforeEntryTriggerSacrificesIt() {
+        TrevasRuins ruins = new TrevasRuins();
+        harness.setHand(player1, List.of(ruins));
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Treva's Ruins");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Treva's Ruins");
+        harness.assertInGraveyard(player1, "Treva's Ruins");
     }
 
     private TrevasRuins playAndResolveEtb(TrevasRuins ruins) {
