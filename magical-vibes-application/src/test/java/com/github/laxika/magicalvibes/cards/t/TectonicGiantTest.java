@@ -78,9 +78,7 @@ class TectonicGiantTest extends BaseCardTest {
     @DisplayName("An opponent's activated ability targeting it does not trigger the ability")
     void opponentAbilityTargetingItDoesNotTriggerAbility() {
         Permanent giant = addReadyGiant();
-        Permanent firecannon = new Permanent(new ElaborateFirecannon());
-        firecannon.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(firecannon);
+        harness.addToBattlefield(player2, new ElaborateFirecannon());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -89,6 +87,119 @@ class TectonicGiantTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, giant.getId());
 
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The attack mode is announced before players can respond")
+    void attackModeIsChosenBeforeResolution() {
+        addReadyGiant();
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            assertThat(gd.interaction.isAwaitingInput()).isTrue();
+            harness.handleListChoice(player1, "This creature deals 3 damage to each opponent.");
+            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+            harness.passBothPriorities();
+            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
+        });
+    }
+
+    @Test
+    @DisplayName("The opponent-spell mode is announced before the trigger resolves")
+    void opponentSpellModeIsChosenBeforeResolution() {
+        Permanent giant = addReadyGiant();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.castInstant(player2, 0, giant.getId());
+            assertThat(gd.interaction.isAwaitingInput()).isTrue();
+            harness.handleListChoice(player1, "This creature deals 3 damage to each opponent.");
+            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+            harness.passBothPriorities();
+            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
+        });
+    }
+
+    @Test
+    @DisplayName("Its controller's spell does not trigger the ability")
+    void ownSpellDoesNotTrigger() {
+        Permanent giant = addReadyGiant();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, giant.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("With only one card in the library, that card can be chosen and played as a land")
+    void singleLibraryCardCanBePlayed() {
+        addReadyGiant();
+        Forest land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1,
+                "Exile the top two cards of your library. Choose one of them. Until the end of your next turn, you may play that card.");
+        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(land);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromExile(player1, land.getId());
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(land);
+    }
+
+    @Test
+    @DisplayName("An empty library creates no card-choice prompt")
+    void emptyLibraryDoesNotRequireCardChoice() {
+        addReadyGiant();
+        harness.setLibrary(player1, List.of());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.passBothPriorities();
+            harness.handleListChoice(player1,
+                    "Exile the top two cards of your library. Choose one of them. Until the end of your next turn, you may play that card.");
+
+            assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        });
+    }
+
+    @Test
+    @DisplayName("The chosen card remains playable through the next turn and then expires")
+    void playPermissionLastsUntilEndOfNextTurn() {
+        addReadyGiant();
+        Forest chosen = new Forest();
+        Forest other = new Forest();
+        harness.setLibrary(player1, List.of(chosen, other, new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1,
+                "Exile the top two cards of your library. Choose one of them. Until the end of your next turn, you may play that card.");
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(chosen.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(chosen, other);
     }
 
     private Permanent addReadyGiant() {
