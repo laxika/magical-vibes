@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AzimaetDrake;
+import com.github.laxika.magicalvibes.cards.b.BenevolentUnicorn;
 import com.github.laxika.magicalvibes.cards.c.CrimsonRoc;
 import com.github.laxika.magicalvibes.cards.j.JolraelsCentaur;
 import com.github.laxika.magicalvibes.cards.m.MerfolkRaiders;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TropicalStorm.class, AzimaetDrake.class, CrimsonRoc.class, MerfolkRaiders.class,
-        JolraelsCentaur.class})
+        JolraelsCentaur.class, BenevolentUnicorn.class})
 class TropicalStormTest extends BaseCardTest {
 
     private void castStorm(int x) {
@@ -81,5 +82,45 @@ class TropicalStormTest extends BaseCardTest {
         assertThat(ownBlueGround.getMarkedDamage()).isEqualTo(1);
         assertThat(opposingRedFlyer.getMarkedDamage()).isZero();
         assertThat(opposingGreenGround.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("The additional blue damage can make damage lethal")
+    void additionalBlueDamageKillsFlyer() {
+        harness.addToBattlefield(player2, new AzimaetDrake());
+
+        castStorm(2);
+
+        harness.assertInGraveyard(player2, "Azimaet Drake");
+    }
+
+    @Test
+    @DisplayName("Flying creatures on both battlefields take damage")
+    void damagesFlyersRegardlessOfController() {
+        Permanent ownFlyer = harness.addToBattlefieldAndReturn(player1, new CrimsonRoc());
+        Permanent opposingFlyer = harness.addToBattlefieldAndReturn(player2, new CrimsonRoc());
+
+        castStorm(1);
+
+        assertThat(ownFlyer.getMarkedDamage()).isEqualTo(1);
+        assertThat(opposingFlyer.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Crimson Roc");
+        harness.assertOnBattlefield(player2, "Crimson Roc");
+    }
+
+    @Test
+    @DisplayName("Benevolent Unicorn reduces the combined blue flying damage only once")
+    void reducesCombinedDamageOnce() {
+        harness.addToBattlefield(player1, new BenevolentUnicorn());
+        Permanent blueFlyer = harness.addToBattlefieldAndReturn(player2, new AzimaetDrake());
+        Permanent blueGround = harness.addToBattlefieldAndReturn(player2, new MerfolkRaiders());
+        Permanent redFlyer = harness.addToBattlefieldAndReturn(player2, new CrimsonRoc());
+
+        castStorm(1);
+
+        assertThat(blueFlyer.getMarkedDamage()).isEqualTo(1);
+        assertThat(blueGround.getMarkedDamage()).isZero();
+        assertThat(redFlyer.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Azimaet Drake");
     }
 }
