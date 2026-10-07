@@ -85,4 +85,67 @@ class SoulswornJuryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        var jury = harness.addToBattlefieldAndReturn(player1, new SoulswornJury());
+        jury.setSummoningSick(true);
+        jury.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        MistralCharger charger = new MistralCharger();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, charger, "{1}{W}");
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, charger.getId());
+        harness.assertInGraveyard(player1, "Soulsworn Jury");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Mistral Charger");
+        harness.assertNotOnBattlefield(player2, "Mistral Charger");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's creature spell")
+    void canCounterOwnCreatureSpell() {
+        addCreatureReady(player1, new SoulswornJury());
+        MistralCharger charger = new MistralCharger();
+        harness.castFromHand(player1, charger, "{1}{W}");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, charger.getId());
+        harness.assertInGraveyard(player1, "Soulsworn Jury");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Mistral Charger");
+        harness.assertNotOnBattlefield(player1, "Mistral Charger");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the blue activation cost with two colorless mana")
+    void cannotActivateWithoutBlueMana() {
+        addCreatureReady(player1, new SoulswornJury());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        MistralCharger charger = new MistralCharger();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, charger, "{1}{W}");
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, charger.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Soulsworn Jury");
+        harness.assertNotInGraveyard(player1, "Soulsworn Jury");
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Mistral Charger");
+        harness.assertNotInGraveyard(player2, "Mistral Charger");
+        assertThat(gd.stack).isEmpty();
+    }
 }
