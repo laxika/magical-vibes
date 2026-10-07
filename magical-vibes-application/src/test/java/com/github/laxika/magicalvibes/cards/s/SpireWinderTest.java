@@ -1,17 +1,16 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.h.HardyVeteran;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SpireWinder.class, Forest.class, HardyVeteran.class})
 class SpireWinderTest extends BaseCardTest {
 
     @Test
@@ -39,14 +38,52 @@ class SpireWinderTest extends BaseCardTest {
         assertThat(gd.playersWithCityBlessing).doesNotContain(player1.getId());
         assertThat(gqs.getEffectivePower(gd, winder)).isEqualTo(2);
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HardyVeteran(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.playersWithCityBlessing).contains(player1.getId());
         assertThat(gqs.getEffectivePower(gd, winder)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, winder)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Spire Winder itself can be the tenth permanent and the blessing persists")
+    void ascendsOnEnteringAndRetainsBonusBelowTenPermanents() {
+        for (int i = 0; i < 9; i++) {
+            harness.addToBattlefield(player1, new Forest());
+        }
+
+        harness.castFromHand(player1, new SpireWinder(), "{3}{U}");
+        assertThat(gd.playersWithCityBlessing).doesNotContain(player1.getId());
+        harness.passBothPriorities();
+
+        Permanent winder = gd.playerBattlefields.get(player1.getId()).get(9);
+        assertThat(gd.playersWithCityBlessing).contains(player1.getId());
+        assertThat(gqs.getEffectivePower(gd, winder)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, winder)).isEqualTo(4);
+
+        gd.playerBattlefields.get(player1.getId()).remove(0);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playersWithCityBlessing).contains(player1.getId());
+        assertThat(gqs.getEffectivePower(gd, winder)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, winder)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("An opponent's permanents and blessing do not enable Spire Winder's bonus")
+    void onlyControllersPermanentsAndBlessingCount() {
+        Permanent winder = harness.addToBattlefieldAndReturn(player1, new SpireWinder());
+        for (int i = 0; i < 9; i++) {
+            harness.addToBattlefield(player2, new Forest());
+        }
+
+        Permanent opposingWinder = harness.enterBattlefieldAndReturn(player2, new SpireWinder());
+
+        assertThat(gd.playersWithCityBlessing).contains(player2.getId()).doesNotContain(player1.getId());
+        assertThat(gqs.getEffectivePower(gd, opposingWinder)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposingWinder)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, winder)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, winder)).isEqualTo(3);
     }
 }
