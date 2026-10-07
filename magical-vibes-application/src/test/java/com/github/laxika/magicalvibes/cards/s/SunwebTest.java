@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.e.EtherealChampion;
+import com.github.laxika.magicalvibes.cards.e.Enfeeblement;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GorillaChieftain;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -16,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EtherealChampion.class, GiantGrowth.class, GorillaChieftain.class, GrizzlyBears.class, PearlDragon.class, Sunweb.class})
+@CardUsed({Enfeeblement.class, EtherealChampion.class, GiantGrowth.class, GorillaChieftain.class, GrizzlyBears.class, PearlDragon.class, Sunweb.class})
 class SunwebTest extends BaseCardTest {
 
     @Test
@@ -111,5 +112,41 @@ class SunwebTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(sunweb.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sunweb cannot block a creature whose effective power is reduced to 2")
+    void cannotBlockCreatureAfterPowerReduction() {
+        addCreatureReady(player2, new Sunweb());
+        Permanent attacker = addCreatureReady(player1, new PearlDragon());
+
+        harness.setHand(player1, List.of(new Enfeeblement()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castEnchantment(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can only block creatures with power 3 or greater");
+    }
+
+    @Test
+    @DisplayName("Sunweb cannot block a creature whose effective power is reduced to 1")
+    void cannotBlockCreatureWithPowerBelowTwo() {
+        addCreatureReady(player2, new Sunweb());
+        Permanent attacker = addCreatureReady(player1, new EtherealChampion());
+
+        harness.setHand(player1, List.of(new Enfeeblement()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castEnchantment(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can only block creatures with power 3 or greater");
     }
 }
