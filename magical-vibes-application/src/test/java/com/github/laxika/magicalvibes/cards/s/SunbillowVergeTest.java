@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SunbillowVerge.class, Mountain.class, Plains.class})
 class SunbillowVergeTest extends BaseCardTest {
 
     @Test
@@ -71,10 +73,55 @@ class SunbillowVergeTest extends BaseCardTest {
         assertThat(verge.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("A tapped Plains still enables red mana")
+    void tappedPlainsEnablesRedMana() {
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        plains.tap();
+        Permanent verge = addReadyVerge(player1);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(verge.isTapped()).isTrue();
+        assertThat(plains.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Red mana becomes unavailable after the qualifying land leaves")
+    void redManaUnavailableAfterMountainLeaves() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent verge = addReadyVerge(player1);
+        gd.playerBattlefields.get(player1.getId()).remove(mountain);
+        gd.playerGraveyards.get(player1.getId()).add(mountain.getCard());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(verge.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(verge.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A newly controlled Verge can produce white mana immediately")
+    void newlyControlledVergeCanProduceWhiteMana() {
+        Permanent verge = harness.addToBattlefieldAndReturn(player1, new SunbillowVerge());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(verge.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyVerge(Player player) {
-        Permanent verge = new Permanent(new SunbillowVerge());
+        Permanent verge = harness.addToBattlefieldAndReturn(player, new SunbillowVerge());
         verge.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(verge);
         return verge;
     }
 }
