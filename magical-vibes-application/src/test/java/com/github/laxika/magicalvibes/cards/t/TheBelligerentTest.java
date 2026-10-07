@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.b.BitterTriumph;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TheBelligerent.class, AirElemental.class, Forest.class, Shock.class})
+@CardUsed({TheBelligerent.class, AirElemental.class, BitterTriumph.class, Forest.class, Shock.class})
 class TheBelligerentTest extends BaseCardTest {
 
     @Test
@@ -63,20 +65,120 @@ class TheBelligerentTest extends BaseCardTest {
                 .noneMatch(message -> message.contains("\"revealedLibraryTopCards\"")
                         && message.contains("Shock"));
 
-        com.github.laxika.magicalvibes.testutil.GameTestEngineContext.get()
-                .getBean(com.github.laxika.magicalvibes.service.turn.TurnCleanupService.class)
-                .applyCleanupResets(gd);
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.playersAllowedToPlayFromLibraryTopUntilEndOfTurn).doesNotContain(player1.getId());
         assertThatThrownBy(() -> harness.castFromLibraryTop(player1, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void attackWithBelligerent(com.github.laxika.magicalvibes.model.Card topCard) {
-        Permanent belligerent = harness.addToBattlefieldAndReturn(player1, new TheBelligerent());
-        belligerent.setSummoningSick(false);
+    @Test
+    @DisplayName("The permission follows the changing top card and allows multiple spells")
+    void canCastSuccessiveTopCards() {
+        attackWithBelligerent(new Shock());
+        harness.setLibrary(player1, List.of(new Shock(), new Shock(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveFromLibraryTop(player1, player2.getId());
+        harness.castAndResolveFromLibraryTop(player1, player2.getId());
+
+        harness.assertLife(player2, 11);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Top-library permission does not grant an additional land play")
+    void cannotPlayASecondLand() {
+        attackWithBelligerent(new Forest());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.castFromLibraryTop(player1);
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Top-library permission preserves land timing")
+    void cannotPlayLandDuringCombat() {
+        attackWithBelligerent(new Forest());
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Top-library permission preserves creature spell timing")
+    void cannotCastCreatureDuringCombat() {
+        attackWithBelligerent(new AirElemental());
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.castAndResolveFromLibraryTop(player1);
+        assertThat(countPermanents(player1, "Air Elemental")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Top-library spells still require their mana cost")
+    void cannotCastWithoutEnoughMana() {
+        attackWithBelligerent(new AirElemental());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(countPermanents(player1, "Air Elemental")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick creature can pay Crew 3")
+    void summoningSickCreatureCanCrew() {
+        addCreatureReady(player1, new TheBelligerent());
         Permanent crew = harness.addToBattlefieldAndReturn(player1, new AirElemental());
-        crew.setSummoningSick(false);
+        crew.setSummoningSick(true);
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(crew.isTapped()).isTrue();
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+        resolveCombat(player1);
+
+        harness.assertLife(player2, 15);
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A spell from the library may pay its mandatory additional life cost")
+    void canPayAdditionalLifeCostFromLibraryTop() {
+        attackWithBelligerent(new BitterTriumph());
+        Permanent target = findPermanent(player1, "Air Elemental");
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveFromLibraryTop(player1, target.getId());
+
+        harness.assertLife(player1, 17);
+        harness.assertInGraveyard(player1, "Air Elemental");
+        harness.assertInGraveyard(player1, "Bitter Triumph");
+    }
+
+    private void attackWithBelligerent(Card topCard) {
+        addCreatureReady(player1, new TheBelligerent());
+        addCreatureReady(player1, new AirElemental());
         harness.setLibrary(player1, List.of(topCard));
 
         harness.activateAbility(player1, 0, 0, null, null);
