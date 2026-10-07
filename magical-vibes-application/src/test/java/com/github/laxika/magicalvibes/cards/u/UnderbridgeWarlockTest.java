@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DragonbornImmolator;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UnderbridgeWarlock.class, GrizzlyBears.class})
+@CardUsed({UnderbridgeWarlock.class, DragonbornImmolator.class})
 class UnderbridgeWarlockTest extends BaseCardTest {
 
     @Test
@@ -46,6 +47,89 @@ class UnderbridgeWarlockTest extends BaseCardTest {
         assertThat(gd.boons).hasSize(1);
     }
 
+    @Test
+    void noBoonMeansNoMillDrawOrLifeLoss() {
+        harness.addToBattlefield(player1, new UnderbridgeWarlock());
+        setLibraryWithFourCards();
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        triggerEndStep();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+    }
+
+    @Test
+    void qualifyingDeathsCanBeSplitBetweenBothPlayers() {
+        addWarlock();
+        setLibraryWithFourCards();
+        gd.creatureDeathCountThisTurn.put(player1.getId(), 1);
+        gd.creatureDeathCountThisTurn.put(player2.getId(), 2);
+
+        triggerEndStep();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 15);
+        assertThat(gd.boons).isEmpty();
+    }
+
+    @Test
+    void opponentsBoonDoesNotEnableTheRider() {
+        harness.addToBattlefield(player1, new UnderbridgeWarlock());
+        harness.enterBattlefieldAndReturn(player2, new UnderbridgeWarlock());
+        harness.passBothPriorities();
+        setLibraryWithFourCards();
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        triggerEndStep();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.boons).hasSize(1);
+    }
+
+    @Test
+    void boonResolvesAfterWarlockLeavesWithoutItsPermanentRider() {
+        Permanent warlock = harness.enterBattlefieldAndReturn(player1, new UnderbridgeWarlock());
+        harness.passBothPriorities();
+        setLibraryWithFourCards();
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, warlock));
+        gd.creatureDeathCountThisTurn.put(player1.getId(), 3);
+
+        triggerEndStep();
+
+        harness.assertLife(player1, 25);
+        harness.assertLife(player2, 15);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.boons).isEmpty();
+    }
+
+    @Test
+    @CardUsed({UnderbridgeWarlock.class, DragonbornImmolator.class})
+    void riderRecognizesGiftOfTiamatBoonWithoutWarlocksOwnBoon() {
+        harness.addToBattlefield(player1, new UnderbridgeWarlock());
+        Permanent immolator = harness.addToBattlefieldAndReturn(player1, new DragonbornImmolator());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, immolator));
+        harness.passBothPriorities();
+        setLibraryWithFourCards();
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        triggerEndStep();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+    }
+
     private void addWarlock() {
         harness.enterBattlefieldAndReturn(player1, new UnderbridgeWarlock());
         harness.passBothPriorities();
@@ -53,10 +137,10 @@ class UnderbridgeWarlockTest extends BaseCardTest {
 
     private void setLibraryWithFourCards() {
         List<Card> cards = List.of(
-                new GrizzlyBears(),
-                new GrizzlyBears(),
-                new GrizzlyBears(),
-                new GrizzlyBears());
+                new UnderbridgeWarlock(),
+                new UnderbridgeWarlock(),
+                new UnderbridgeWarlock(),
+                new UnderbridgeWarlock());
         harness.setLibrary(player1, cards);
     }
 
