@@ -39,10 +39,27 @@ class UnifiedFrontTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertKorAllyTokens(1);
+    }
+
+    @Test
+    @DisplayName("Converge uses mana spent at casting, not mana added before resolution")
+    void ignoresManaAddedAfterCasting() {
+        harness.setHand(player1, List.of(new UnifiedFront()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
         harness.castSorcery(player1, 0, 0);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
         harness.passBothPriorities();
 
         assertKorAllyTokens(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
     private void castWithMana(ManaColor... manaColors) {
@@ -51,8 +68,7 @@ class UnifiedFrontTest extends BaseCardTest {
             harness.addMana(player1, manaColor, 1);
         }
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     private void assertKorAllyTokens(int count) {
