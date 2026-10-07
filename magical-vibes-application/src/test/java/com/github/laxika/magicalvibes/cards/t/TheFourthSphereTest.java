@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TheFourthSphere.class, GrizzlyBears.class, ZulaportEnforcer.class})
@@ -78,5 +80,58 @@ class TheFourthSphereTest extends BaseCardTest {
         StepTriggerService steps = GameTestEngineContext.get().getBean(StepTriggerService.class);
         harness.inMutationScope(() -> steps.handleUpkeepTriggers(gd));
         harness.passBothPriorities();
+    }
+
+    @Test
+    void upkeepLetsControllerChooseExactlyOneNonblackCreature() {
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        Permanent black = addCreatureReady(player1, new ZulaportEnforcer());
+        Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
+
+        triggerUpkeep();
+        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(second.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(first, black);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(opponent);
+    }
+
+    @Test
+    void upkeepOnOtherPlayersTurnSacrificesOnlyTheirCreature() {
+        Permanent originalControllerCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent activePlayerCreature = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+
+        triggerUpkeep();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(activePlayerCreature.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(originalControllerCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void chaosAfterControlChangesCreatesTokenForNewController() {
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+        triggerUpkeep();
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        Permanent token = gd.playerBattlefields.get(player2.getId()).getFirst();
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.ZOMBIE);
+    }
+
+    @Test
+    void upkeepDoesNothingOnEmptyBattlefield() {
+        triggerUpkeep();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 }
