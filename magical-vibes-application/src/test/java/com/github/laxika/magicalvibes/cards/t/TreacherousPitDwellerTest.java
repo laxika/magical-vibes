@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.Cloudshift;
+import com.github.laxika.magicalvibes.cards.d.DefyDeath;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -7,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TreacherousPitDweller.class, LightningBolt.class, DefyDeath.class, Cloudshift.class})
 class TreacherousPitDwellerTest extends BaseCardTest {
 
     private static final String NAME = "Treacherous Pit-Dweller";
@@ -29,12 +33,6 @@ class TreacherousPitDwellerTest extends BaseCardTest {
         }
     }
 
-    private Permanent pitDweller(GameData gd, com.github.laxika.magicalvibes.model.Player owner) {
-        return gd.playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(NAME))
-                .findFirst().orElse(null);
-    }
-
     @Test
     @DisplayName("Casting it from hand does not trigger the control-change ability")
     void castFromHandDoesNotTrigger() {
@@ -47,8 +45,8 @@ class TreacherousPitDwellerTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(pitDweller(gd, player1)).isNotNull();
-        assertThat(pitDweller(gd, player2)).isNull();
+        harness.assertOnBattlefield(player1, NAME);
+        harness.assertNotOnBattlefield(player2, NAME);
     }
 
     @Test
@@ -66,15 +64,15 @@ class TreacherousPitDwellerTest extends BaseCardTest {
         // enters-from-graveyard trigger is asking for the target opponent.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
-        Permanent returned = pitDweller(gd, player1);
+        Permanent returned = findPermanent(player1, NAME);
         assertThat(returned).isNotNull();
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         harness.handlePermanentChosen(player1, player2.getId());
         resolveUntilInputOrEmpty();
 
-        assertThat(pitDweller(gd, player1)).isNull();
-        assertThat(pitDweller(gd, player2)).isNotNull();
+        harness.assertNotOnBattlefield(player1, NAME);
+        harness.assertOnBattlefield(player2, NAME);
     }
 
     @Test
@@ -94,7 +92,54 @@ class TreacherousPitDwellerTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, NAME);
-        assertThat(pitDweller(gd, player1)).isNull();
-        assertThat(pitDweller(gd, player2)).isNull();
+        harness.assertNotOnBattlefield(player1, NAME);
+        harness.assertNotOnBattlefield(player2, NAME);
+    }
+
+    @Test
+    @DisplayName("Reanimation triggers the control change independently of undying")
+    void reanimationGivesOpponentControlWithoutCounters() {
+        TreacherousPitDweller card = new TreacherousPitDweller();
+        harness.setGraveyard(player1, List.of(card));
+        harness.setHand(player1, List.of(new DefyDeath()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castSorcery(player1, 0, card.getId());
+        resolveUntilInputOrEmpty();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(findPermanent(player1, NAME).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveUntilInputOrEmpty();
+
+        harness.assertNotOnBattlefield(player1, NAME);
+        harness.assertOnBattlefield(player2, NAME);
+        harness.assertNotInGraveyard(player1, NAME);
+    }
+
+    @Test
+    @DisplayName("Blinking in response leaves the new permanent under its controller's control")
+    void blinkingInResponseDoesNotGiveAwayNewPermanent() {
+        TreacherousPitDweller card = new TreacherousPitDweller();
+        harness.setGraveyard(player1, List.of(card));
+        harness.setHand(player1, List.of(new DefyDeath(), new Cloudshift()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+
+        harness.castSorcery(player1, 0, card.getId());
+        resolveUntilInputOrEmpty();
+        harness.handlePermanentChosen(player1, player2.getId());
+        Permanent original = findPermanent(player1, NAME);
+
+        harness.castInstant(player1, 0, original.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, NAME).getId()).isNotEqualTo(original.getId());
+        assertThat(gd.stack).hasSize(1);
+        resolveUntilInputOrEmpty();
+
+        harness.assertOnBattlefield(player1, NAME);
+        harness.assertNotOnBattlefield(player2, NAME);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
