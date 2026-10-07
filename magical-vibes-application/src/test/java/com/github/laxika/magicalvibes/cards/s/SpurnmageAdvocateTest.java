@@ -106,6 +106,65 @@ class SpurnmageAdvocateTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Returns the graveyard cards but does not destroy a creature that stopped attacking")
+    void doesNotDestroyCreatureThatStoppedAttacking() {
+        Permanent advocate = addReadyAdvocate();
+        Card first = new AvenWarcraft();
+        Card second = new GuidedStrike();
+        Permanent attacker = addAttacker();
+        harness.setGraveyard(player2, List.of(first, second));
+
+        harness.activateAbilityWithMultiTargets(player1, index(advocate), 0,
+                List.of(first.getId(), second.getId(), attacker.getId()));
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getId)
+                .contains(first.getId(), second.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+    }
+
+    @Test
+    @DisplayName("Destroys the attacker even when both graveyard targets have left")
+    void destroysAttackerWithBothGraveyardTargetsGone() {
+        Permanent advocate = addReadyAdvocate();
+        Card first = new AvenWarcraft();
+        Card second = new GuidedStrike();
+        Permanent attacker = addAttacker();
+        harness.setGraveyard(player2, List.of(first, second));
+        harness.setHand(player2, List.of());
+
+        harness.activateAbilityWithMultiTargets(player1, index(advocate), 0,
+                List.of(first.getId(), second.getId(), attacker.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(attacker);
+        assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getId)
+                .containsExactly(attacker.getCard().getId());
+    }
+
+    @Test
+    @DisplayName("Returns the graveyard cards when the attacking creature has left the battlefield")
+    void returnsCardsWithAttackerGone() {
+        Permanent advocate = addReadyAdvocate();
+        Card first = new AvenWarcraft();
+        Card second = new GuidedStrike();
+        Permanent attacker = addAttacker();
+        harness.setGraveyard(player2, List.of(first, second));
+
+        harness.activateAbilityWithMultiTargets(player1, index(advocate), 0,
+                List.of(first.getId(), second.getId(), attacker.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(attacker);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getId)
+                .contains(first.getId(), second.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
     private Permanent addReadyAdvocate() {
         return addCreatureReady(player1, new SpurnmageAdvocate());
     }
