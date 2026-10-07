@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.c.CopperLonglegs;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianArena;
+import com.github.laxika.magicalvibes.cards.p.PropheticPrism;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TamiyosImmobilizer.class, PropheticPrism.class, CopperLonglegs.class, PhyrexianArena.class})
 class TamiyosImmobilizerTest extends BaseCardTest {
 
     @Test
@@ -80,29 +82,107 @@ class TamiyosImmobilizerTest extends BaseCardTest {
                 .hasMessageContaining("Not enough counters");
     }
 
+    @Test
+    void costsArePaidBeforeTargetIsTapped() {
+        Permanent immobilizer = addReadyImmobilizer(player1, 4);
+        Permanent target = addReadyCreature(player2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(immobilizer.isTapped()).isTrue();
+        assertThat(immobilizer.getCounterCount(CounterType.OIL)).isEqualTo(3);
+        assertThat(target.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(immobilizer.getCounterCount(CounterType.OIL)).isEqualTo(3);
+    }
+
+    @Test
+    void canTargetAnAlreadyTappedPermanent() {
+        Permanent immobilizer = addReadyImmobilizer(player1, 2);
+        Permanent target = addReadyCreature(player2);
+        target.tap();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(immobilizer.getCounterCount(CounterType.OIL)).isEqualTo(1);
+    }
+
+    @Test
+    void canTargetItself() {
+        Permanent immobilizer = addReadyImmobilizer(player1, 2);
+
+        harness.activateAbility(player1, 0, null, immobilizer.getId());
+        harness.passBothPriorities();
+
+        assertThat(immobilizer.isTapped()).isTrue();
+        assertThat(immobilizer.getCounterCount(CounterType.OIL)).isEqualTo(1);
+    }
+
+    @Test
+    void canActivateTheTurnItEnters() {
+        Permanent immobilizer = harness.enterBattlefieldAndReturn(player1, new TamiyosImmobilizer());
+        Permanent target = addReadyCreature(player2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(immobilizer.isTapped()).isTrue();
+        assertThat(immobilizer.getCounterCount(CounterType.OIL)).isEqualTo(3);
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent immobilizer = addReadyImmobilizer(player1, 2);
+        Permanent target = addReadyCreature(player2);
+        immobilizer.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(immobilizer.getCounterCount(CounterType.OIL)).isEqualTo(2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void otherCounterTypesCannotPayTheOilCost() {
+        Permanent immobilizer = addReadyImmobilizer(player1, 0);
+        immobilizer.setCounterCount(CounterType.CHARGE, 4);
+        Permanent target = addReadyCreature(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough counters");
+
+        assertThat(immobilizer.isTapped()).isFalse();
+        assertThat(immobilizer.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
+        assertThat(target.isTapped()).isFalse();
+    }
+
     private Permanent addReadyImmobilizer(Player player, int counters) {
-        Permanent immobilizer = new Permanent(new TamiyosImmobilizer());
+        Permanent immobilizer = harness.addToBattlefieldAndReturn(player, new TamiyosImmobilizer());
         immobilizer.setSummoningSick(false);
         immobilizer.setCounterCount(CounterType.OIL, counters);
-        gd.playerBattlefields.get(player.getId()).add(immobilizer);
         return immobilizer;
     }
 
     private Permanent addReadyArtifact(Player player) {
-        return addReady(player, new Permanent(new AngelsFeather()));
+        return harness.addToBattlefieldAndReturn(player, new PropheticPrism());
     }
 
     private Permanent addReadyCreature(Player player) {
-        return addReady(player, new Permanent(new GrizzlyBears()));
+        Permanent creature = harness.addToBattlefieldAndReturn(player, new CopperLonglegs());
+        creature.setSummoningSick(false);
+        return creature;
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        return addReady(player, new Permanent(new Pacifism()));
-    }
-
-    private Permanent addReady(Player player, Permanent permanent) {
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return harness.addToBattlefieldAndReturn(player, new PhyrexianArena());
     }
 }
