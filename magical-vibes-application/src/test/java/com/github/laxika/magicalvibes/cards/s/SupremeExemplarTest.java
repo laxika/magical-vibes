@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.f.FlamekinBladewhirl;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SupremeExemplar.class, FlamekinBladewhirl.class, GrizzlyBears.class, Unsummon.class})
+@CardUsed({SupremeExemplar.class, FlamekinBladewhirl.class, GrizzlyBears.class, Unsummon.class, RayOfCommand.class})
 class SupremeExemplarTest extends BaseCardTest {
 
     private void castSupremeExemplar() {
@@ -97,20 +97,76 @@ class SupremeExemplarTest extends BaseCardTest {
         UUID elementalId = harness.getPermanentId(player1, "Flamekin Bladewhirl");
         harness.handlePermanentChosen(player1, elementalId);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new Unsummon()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID exemplarId = harness.getPermanentId(player1, "Supreme Exemplar");
-        harness.castInstant(player1, 0, exemplarId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, exemplarId);
 
         harness.assertNotOnBattlefield(player1, "Supreme Exemplar");
+        harness.assertNotOnBattlefield(player1, "Flamekin Bladewhirl");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities(); // resolve the champion return trigger
+
         harness.assertOnBattlefield(player1, "Flamekin Bladewhirl");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Flamekin Bladewhirl"));
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Controller may decline champion even with an Elemental available")
+    void mayDeclineChampionWithElementalAvailable() {
+        harness.addToBattlefield(player1, new FlamekinBladewhirl());
+        castSupremeExemplar();
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        harness.assertInGraveyard(player1, "Supreme Exemplar");
+        harness.assertNotOnBattlefield(player1, "Supreme Exemplar");
+        harness.assertOnBattlefield(player1, "Flamekin Bladewhirl");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Elemental exiled after Supreme Exemplar leaves remains exiled")
+    void championAfterSourceLeavesDoesNotReturnElemental() {
+        harness.addToBattlefield(player1, new FlamekinBladewhirl());
+        castSupremeExemplar();
+
+        UUID exemplarId = harness.getPermanentId(player1, "Supreme Exemplar");
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, exemplarId);
+        harness.assertNotOnBattlefield(player1, "Supreme Exemplar");
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Flamekin Bladewhirl"));
+
+        harness.assertNotOnBattlefield(player1, "Flamekin Bladewhirl");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Flamekin Bladewhirl"));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Champion cannot sacrifice Supreme Exemplar after an opponent gains control")
+    void cannotSacrificeSourceControlledByOpponent() {
+        castSupremeExemplar();
+
+        UUID exemplarId = harness.getPermanentId(player1, "Supreme Exemplar");
+        harness.setHand(player2, List.of(new RayOfCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castAndResolveInstant(player2, 0, exemplarId);
+        harness.assertOnBattlefield(player2, "Supreme Exemplar");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Supreme Exemplar");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(c -> c.getName().equals("Supreme Exemplar"));
     }
 }
