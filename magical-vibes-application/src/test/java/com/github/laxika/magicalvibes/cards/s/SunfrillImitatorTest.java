@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.AureliaTheWarleader;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PygmyAllosaurus;
+import com.github.laxika.magicalvibes.cards.r.RampagingBrontodon;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SunfrillImitator.class, PygmyAllosaurus.class, GrizzlyBears.class,
-        AureliaTheWarleader.class})
+        AureliaTheWarleader.class, RampagingBrontodon.class})
 class SunfrillImitatorTest extends BaseCardTest {
 
     @Test
@@ -97,4 +99,55 @@ class SunfrillImitatorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
+    @Test
+    @DisplayName("Copying preserves the imitator's counters without copying the target's counters")
+    void preservesOwnCountersWithoutCopyingTargetCounters() {
+        Permanent imitator = addCreatureReady(player1, new SunfrillImitator());
+        Permanent dinosaur = addCreatureReady(player1, new RampagingBrontodon());
+        imitator.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        dinosaur.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, dinosaur.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.getEffectivePower(gd, imitator)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, imitator)).isEqualTo(8);
+        assertThat(imitator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The copy ability fizzles when the target leaves the battlefield")
+    void doesNotCopyMissingTarget() {
+        Permanent imitator = addCreatureReady(player1, new SunfrillImitator());
+        Permanent dinosaur = addCreatureReady(player1, new RampagingBrontodon());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, dinosaur.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(dinosaur);
+        gd.playerGraveyards.get(player1.getId()).add(dinosaur.getOriginalCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gqs.getEffectivePower(gd, imitator)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, imitator)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The copy ability fizzles when the target is no longer controlled by its controller")
+    void doesNotCopyTargetThatChangesController() {
+        Permanent imitator = addCreatureReady(player1, new SunfrillImitator());
+        Permanent dinosaur = addCreatureReady(player1, new RampagingBrontodon());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, dinosaur.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(dinosaur);
+        gd.playerBattlefields.get(player2.getId()).add(dinosaur);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gqs.getEffectivePower(gd, imitator)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, imitator)).isEqualTo(3);
+    }
 }
