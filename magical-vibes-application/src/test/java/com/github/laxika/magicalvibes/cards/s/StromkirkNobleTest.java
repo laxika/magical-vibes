@@ -2,14 +2,14 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.g.Geistflame;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,16 +19,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({StromkirkNoble.class, SelflessCathar.class, WalkingCorpse.class, Geistflame.class})
 class StromkirkNobleTest extends BaseCardTest {
 
     private Permanent addReadyNoble() {
-        Permanent perm = new Permanent(new StromkirkNoble());
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new StromkirkNoble());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
         return perm;
     }
-
-    // ===== Blocking restriction: can't be blocked by Humans =====
 
     @Test
     @DisplayName("Stromkirk Noble can't be blocked by Humans")
@@ -36,9 +34,7 @@ class StromkirkNobleTest extends BaseCardTest {
         Permanent noble = addReadyNoble();
         noble.setAttacking(true);
 
-        Permanent human = new Permanent(createSubtypeCreature("Test Human", CardSubtype.HUMAN));
-        human.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(human);
+        harness.addToBattlefield(player2, new SelflessCathar());
 
         prepareDeclareBlockers();
 
@@ -53,9 +49,7 @@ class StromkirkNobleTest extends BaseCardTest {
         Permanent noble = addReadyNoble();
         noble.setAttacking(true);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        harness.addToBattlefield(player2, new WalkingCorpse());
 
         prepareDeclareBlockers();
 
@@ -64,8 +58,6 @@ class StromkirkNobleTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declares 1 blocker"));
     }
 
-    // ===== Combat damage +1/+1 counter trigger =====
-
     @Test
     @DisplayName("Gets a +1/+1 counter when dealing combat damage to a player")
     void getsCounterOnCombatDamage() {
@@ -73,10 +65,7 @@ class StromkirkNobleTest extends BaseCardTest {
         noble.setAttacking(true);
         harness.setLife(player2, 20);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // combat damage
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
 
@@ -94,10 +83,7 @@ class StromkirkNobleTest extends BaseCardTest {
         noble.setAttacking(true);
         harness.setLife(player2, 20);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // combat damage
+        resolveCombat();
 
         // 1 base power + 1 from counter = 2 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -114,30 +100,58 @@ class StromkirkNobleTest extends BaseCardTest {
         noble.setAttacking(true);
 
         // 2/2 blocker kills the 1/1 Noble
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // combat damage
+        resolveCombat();
 
         // Noble should be dead
         harness.assertInGraveyard(player1, "Stromkirk Noble");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("No counter when combat damage hits a creature and Noble survives")
+    void noCounterForCombatDamageToCreature() {
+        Permanent noble = addReadyNoble();
+        noble.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        noble.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.setLife(player2, 20);
 
-    private Card createSubtypeCreature(String name, CardSubtype subtype) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setPower(2);
-        card.setToughness(2);
-        card.setSubtypes(List.of(subtype));
-        return card;
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(noble);
+        assertThat(noble.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertInGraveyard(player2, "Walking Corpse");
+    }
+
+    @Test
+    @DisplayName("A pending counter trigger does not put counters on a different Noble")
+    void removedSourceDoesNotGiveCounterToAnotherNoble() {
+        Permanent noble = addReadyNoble();
+        noble.setAttacking(true);
+        Permanent otherNoble = addReadyNoble();
+        harness.setHand(player1, List.of(new Geistflame()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        assertThat(noble.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.castInstant(player1, 0, noble.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Stromkirk Noble");
+        resolveAllTriggers();
+
+        assertThat(otherNoble.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
