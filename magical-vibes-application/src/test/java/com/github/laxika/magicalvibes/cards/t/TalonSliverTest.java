@@ -48,4 +48,43 @@ class TalonSliverTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, giant, Keyword.FIRST_STRIKE)).isFalse();
     }
+
+    @Test
+    @DisplayName("Slivers lose granted first strike when Talon Sliver dies")
+    void losesFirstStrikeWhenSourceDies() {
+        Permanent source = addCreatureReady(player1, new TalonSliver());
+        Permanent friendlySliver = addCreatureReady(player1, new WingedSliver());
+        Permanent opposingSliver = addCreatureReady(player2, new WingedSliver());
+
+        assertThat(gqs.hasKeyword(gd, friendlySliver, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingSliver, Keyword.FIRST_STRIKE)).isTrue();
+
+        source.setMarkedDamage(1);
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Talon Sliver");
+        assertThat(gqs.hasKeyword(gd, friendlySliver, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingSliver, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("One surviving Talon Sliver keeps first strike active for all Slivers")
+    void survivingSourceKeepsFirstStrike() {
+        Permanent firstSource = addCreatureReady(player1, new TalonSliver());
+        Permanent secondSource = addCreatureReady(player2, new TalonSliver());
+        Permanent sliver = addCreatureReady(player1, new WingedSliver());
+
+        firstSource.setMarkedDamage(1);
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Talon Sliver");
+        assertThat(gqs.hasKeyword(gd, secondSource, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, sliver, Keyword.FIRST_STRIKE)).isTrue();
+
+        secondSource.setMarkedDamage(1);
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player2, "Talon Sliver");
+        assertThat(gqs.hasKeyword(gd, sliver, Keyword.FIRST_STRIKE)).isFalse();
+    }
 }
