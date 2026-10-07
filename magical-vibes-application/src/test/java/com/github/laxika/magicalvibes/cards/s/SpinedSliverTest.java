@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.h.HibernationSliver;
+import com.github.laxika.magicalvibes.cards.i.Imagecrafter;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -13,8 +15,51 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SpinedSliver.class, SpinedWurm.class, HibernationSliver.class})
+@CardUsed({SpinedSliver.class, SpinedWurm.class, HibernationSliver.class, Imagecrafter.class})
 class SpinedSliverTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A creature changed into a Sliver receives the blocked Sliver boost")
+    void creatureChangedIntoSliverTriggersBoost() {
+        addCreatureReady(player1, new Imagecrafter());
+        Permanent attacker = addCreatureReady(player1, new SpinedWurm());
+        addCreatureReady(player1, new SpinedSliver());
+        addCreatureReady(player2, new SpinedWurm());
+
+        harness.forceActivePlayer(player1);
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.SLIVER.name());
+        assertThat(gqs.effectiveCreatureSubtypes(gd, attacker)).containsExactly(CardSubtype.SLIVER);
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A Sliver changed into another creature type does not trigger the boost")
+    void sliverChangedIntoNonSliverDoesNotTriggerBoost() {
+        addCreatureReady(player1, new Imagecrafter());
+        Permanent attacker = addCreatureReady(player1, new SpinedSliver());
+        addCreatureReady(player2, new SpinedWurm());
+
+        harness.forceActivePlayer(player1);
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+        assertThat(gqs.effectiveCreatureSubtypes(gd, attacker)).containsExactly(CardSubtype.GOBLIN);
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+    }
 
     @Test
     @DisplayName("With one blocker Spined Sliver gets +1/+1 until end of turn")
@@ -130,5 +175,76 @@ class SpinedSliverTest extends BaseCardTest {
 
         assertThat(sliver.getPowerModifier()).isEqualTo(1);
         assertThat(sliver.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each Spined Sliver independently boosts a blocked Sliver")
+    void multipleSpinedSliversStackTheirBoosts() {
+        Permanent attacker = addCreatureReady(player1, new SpinedSliver());
+        Permanent otherSliver = addCreatureReady(player2, new SpinedSliver());
+        addCreatureReady(player2, new SpinedWurm());
+        addCreatureReady(player2, new SpinedWurm());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(2, 0)
+        ));
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(4);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(4);
+        assertThat(otherSliver.getPowerModifier()).isZero();
+        assertThat(otherSliver.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The boost counts only creatures still blocking when it resolves")
+    void blockerLeavingBeforeResolutionReducesBoost() {
+        Permanent attacker = addCreatureReady(player1, new SpinedSliver());
+        addCreatureReady(player2, new HibernationSliver());
+        addCreatureReady(player2, new SpinedWurm());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)
+        ));
+
+        assertThat(gd.stack).hasSize(1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertInHand(player2, "Hibernation Sliver");
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each blocked Sliver receives its own blocker count")
+    void multipleBlockedSliversReceiveIndependentBoosts() {
+        Permanent first = addCreatureReady(player1, new SpinedSliver());
+        Permanent second = addCreatureReady(player1, new HibernationSliver());
+        addCreatureReady(player2, new SpinedWurm());
+        addCreatureReady(player2, new SpinedWurm());
+        addCreatureReady(player2, new SpinedWurm());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 1),
+                new BlockerAssignment(2, 1)
+        ));
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(first.getPowerModifier()).isEqualTo(1);
+        assertThat(first.getToughnessModifier()).isEqualTo(1);
+        assertThat(second.getPowerModifier()).isEqualTo(2);
+        assertThat(second.getToughnessModifier()).isEqualTo(2);
     }
 }
