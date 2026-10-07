@@ -122,4 +122,46 @@ class SphereOfReasonTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(16);
     }
+
+    @Test
+    @DisplayName("Multiple Spheres each prevent damage from the same blue source")
+    void multipleSpheresStack() {
+        harness.addToBattlefield(player1, new SphereOfReason());
+        harness.addToBattlefield(player1, new SphereOfReason());
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new PsionicBlast()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Prevention applies again to later damage events in the same turn")
+    void preventionIsNotConsumed() {
+        harness.addToBattlefield(player1, new SphereOfReason());
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new PsionicBlast(), new PsionicBlast()));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("Does not protect creatures controlled by its controller")
+    void doesNotProtectControllerCreatures() {
+        harness.addToBattlefield(player1, new SphereOfReason());
+        harness.addToBattlefield(player1, new AirElemental());
+        harness.setHand(player2, List.of(new PsionicBlast()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Air Elemental"));
+
+        harness.assertNotOnBattlefield(player1, "Air Elemental");
+        harness.assertInGraveyard(player1, "Air Elemental");
+    }
 }
