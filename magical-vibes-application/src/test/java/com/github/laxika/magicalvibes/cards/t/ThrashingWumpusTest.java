@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.c.CloudSprite;
+import com.github.laxika.magicalvibes.cards.c.ChoMannoRevolutionary;
 import com.github.laxika.magicalvibes.cards.g.GerrardsIrregulars;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThrashingWumpus.class, CloudSprite.class, GerrardsIrregulars.class})
+@CardUsed({ThrashingWumpus.class, CloudSprite.class, GerrardsIrregulars.class, ChoMannoRevolutionary.class})
 class ThrashingWumpusTest extends BaseCardTest {
 
     @Test
@@ -68,5 +69,74 @@ class ThrashingWumpusTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent wumpus = harness.addToBattlefieldAndReturn(player1, new ThrashingWumpus());
+        wumpus.setTapped(true);
+        wumpus.setSummoningSick(true);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wumpus.isTapped()).isTrue();
+        assertThat(wumpus.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("stacked abilities still deal damage after Wumpus dies")
+    void stackedAbilitiesResolveAfterSourceDies() {
+        harness.addToBattlefield(player1, new ThrashingWumpus());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        for (int i = 0; i < 4; i++) {
+            harness.activateAbility(player1, 0, null, null);
+        }
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        for (int i = 0; i < 3; i++) {
+            harness.passBothPriorities();
+        }
+        harness.assertNotOnBattlefield(player1, "Thrashing Wumpus");
+        harness.assertInGraveyard(player1, "Thrashing Wumpus");
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 16);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("damage prevention protects a creature without preventing damage to others")
+    void respectsCreatureDamagePrevention() {
+        Permanent wumpus = harness.addToBattlefieldAndReturn(player1, new ThrashingWumpus());
+        Permanent choManno = harness.addToBattlefieldAndReturn(player2, new ChoMannoRevolutionary());
+        harness.addToBattlefield(player2, new CloudSprite());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(choManno.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Cho-Manno, Revolutionary");
+        assertThat(wumpus.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player2, "Cloud Sprite");
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
     }
 }
