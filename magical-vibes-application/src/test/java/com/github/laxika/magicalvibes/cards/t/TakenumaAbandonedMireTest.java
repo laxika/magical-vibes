@@ -1,22 +1,23 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JukaiPreserver;
+import com.github.laxika.magicalvibes.cards.k.KaitoShizuki;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TakenumaAbandonedMire.class, Forest.class, GrizzlyBears.class})
+@CardUsed({TakenumaAbandonedMire.class, Forest.class, JukaiPreserver.class,
+        TatsunariToadRider.class, KaitoShizuki.class})
 class TakenumaAbandonedMireTest extends BaseCardTest {
 
     @Test
@@ -32,18 +33,17 @@ class TakenumaAbandonedMireTest extends BaseCardTest {
     @Test
     @DisplayName("Channel mills three cards and returns a creature card to hand")
     void channelMillsAndReturnsCreatureWithLegendaryCostReduction() {
-        Card target = new GrizzlyBears();
-        GrizzlyBears legendaryCreature = new GrizzlyBears();
-        legendaryCreature.setSupertypes(Set.of(CardSupertype.LEGENDARY));
-        harness.addToBattlefield(player1, legendaryCreature);
+        Card target = new JukaiPreserver();
+        harness.addToBattlefield(player1, new TatsunariToadRider());
         harness.setGraveyard(player1, List.of(target));
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
         harness.setHand(player1, List.of(new TakenumaAbandonedMire()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateHandAbilityWithGraveyardTargets(player1, 0, List.of(target.getId()));
+        harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
+        harness.handleGraveyardCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(target);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
@@ -53,17 +53,77 @@ class TakenumaAbandonedMireTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Channel cannot target a noncreature, nonplaneswalker card")
-    void channelCannotTargetNonCreatureOrPlaneswalkerCard() {
+    @DisplayName("Channel cannot return a noncreature, nonplaneswalker card")
+    void channelCannotReturnNonCreatureOrPlaneswalkerCard() {
         Card target = new Forest();
-        harness.setGraveyard(player1, List.of(target));
+        harness.setGraveyard(player1, List.of(target, new JukaiPreserver()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         harness.setHand(player1, List.of(new TakenumaAbandonedMire()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        assertThatThrownBy(() -> harness.activateHandAbilityWithGraveyardTargets(
-                player1, 0, List.of(target.getId())))
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
-        harness.assertInHand(player1, "Takenuma, Abandoned Mire");
+        harness.handleGraveyardCardChosen(player1, 1);
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInHand(player1, "Jukai Preserver");
+    }
+
+    @Test
+    @DisplayName("Channel can return a creature milled during its resolution")
+    void returnsNewlyMilledCreature() {
+        Card creature = new JukaiPreserver();
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of(creature, new Forest(), new Forest()));
+        prepareChannel();
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        harness.handleGraveyardCardChosen(player1, gd.playerGraveyards.get(player1.getId()).indexOf(creature));
+        assertThat(gd.playerHands.get(player1.getId())).contains(creature);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Channel returns a planeswalker chosen after milling")
+    void returnsPlaneswalker() {
+        Card planeswalker = new KaitoShizuki();
+        harness.setGraveyard(player1, List.of(planeswalker));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        prepareChannel();
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(planeswalker);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Channel can mill with no creature or planeswalker available")
+    void millsWithoutReturnableCard() {
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        prepareChannel();
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    private void prepareChannel() {
+        harness.setHand(player1, List.of(new TakenumaAbandonedMire()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
     }
 }
