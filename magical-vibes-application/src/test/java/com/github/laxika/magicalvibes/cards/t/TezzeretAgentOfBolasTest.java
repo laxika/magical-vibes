@@ -1,6 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.l.LeoninSkyhunter;
+import com.github.laxika.magicalvibes.cards.l.LichsMastery;
+import com.github.laxika.magicalvibes.cards.s.SwordOfFeastAndFamine;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,24 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({TezzeretAgentOfBolas.class, ShimmerMyr.class, LeoninSkyhunter.class, SwordOfFeastAndFamine.class, LichsMastery.class})
 class TezzeretAgentOfBolasTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has three loyalty abilities")
-    void hasThreeAbilities() {
-        TezzeretAgentOfBolas card = new TezzeretAgentOfBolas();
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-    }
-
-    
-
-    
-
-    
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Resolving puts planeswalker on battlefield with 3 loyalty")
@@ -54,8 +44,6 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
         assertThat(tezz.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
 
-    // ===== -1 ability: Animate target artifact =====
-
     @Test
     @DisplayName("-1 makes target artifact a 5/5 creature")
     void minusOneAnimatesArtifact() {
@@ -74,14 +62,13 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
     @Test
     @DisplayName("-1 animation persists across turns (not until end of turn)")
     void minusOneAnimationPersistsAcrossTurns() {
-        Permanent tezz = addReadyTezzeret(player1);
+        addReadyTezzeret(player1);
         Permanent solRing = addArtifact(player1);
 
         harness.activateAbility(player1, 0, 1, null, solRing.getId());
         harness.passBothPriorities();
 
-        // Simulate end of turn reset
-        solRing.resetModifiers();
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         // Animation should persist - it's permanent, not "until end of turn"
         assertThat(solRing.isPermanentlyAnimated()).isTrue();
@@ -94,11 +81,9 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
     void minusOneCannotTargetNonArtifact() {
         addReadyTezzeret(player1);
         // Add a creature (not an artifact)
-        com.github.laxika.magicalvibes.cards.g.GrizzlyBears bears = new com.github.laxika.magicalvibes.cards.g.GrizzlyBears();
-        Permanent bearsPerm = new Permanent(bears);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new LeoninSkyhunter());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, bearsPerm.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("artifact");
     }
@@ -112,10 +97,8 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, solRing.getId());
         harness.passBothPriorities();
 
-        // Should still be an artifact
-        assertThat(solRing.getCard().getType()).isEqualTo(CardType.ARTIFACT);
-        // And now also a creature via permanent animation
-        assertThat(solRing.isPermanentlyAnimated()).isTrue();
+        assertThat(harness.getGameQueryService().isArtifact(gd, solRing)).isTrue();
+        assertThat(harness.getGameQueryService().isCreature(gd, solRing)).isTrue();
     }
 
     @Test
@@ -123,14 +106,10 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
     void minusOneOnEquipmentUnattachesIt() {
         addReadyTezzeret(player1);
         // Add a creature and equip it
-        com.github.laxika.magicalvibes.cards.g.GrizzlyBears bears = new com.github.laxika.magicalvibes.cards.g.GrizzlyBears();
-        Permanent bearsPerm = new Permanent(bears);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new LeoninSkyhunter());
 
-        com.github.laxika.magicalvibes.cards.s.SwordOfFeastAndFamine sword = new com.github.laxika.magicalvibes.cards.s.SwordOfFeastAndFamine();
-        Permanent swordPerm = new Permanent(sword);
-        swordPerm.setAttachedTo(bearsPerm.getId());
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(swordPerm);
+        Permanent swordPerm = harness.addToBattlefieldAndReturn(player1, new SwordOfFeastAndFamine());
+        swordPerm.setAttachedTo(creature.getId());
 
         // Animate the equipment
         harness.activateAbility(player1, 0, 1, null, swordPerm.getId());
@@ -142,8 +121,6 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
         assertThat(swordPerm.getEffectivePower()).isEqualTo(5);
         assertThat(swordPerm.getEffectiveToughness()).isEqualTo(5);
     }
-
-    // ===== -4 ability: Drain life =====
 
     @Test
     @DisplayName("-4 drains target player for twice artifact count")
@@ -157,10 +134,9 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // 3 artifacts × 2 = 6 life drained
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(26);
+        harness.assertLife(player2, 14);
+        harness.assertLife(player1, 26);
         assertThat(tezz.getCounterCount(CounterType.LOYALTY)).isEqualTo(0);
     }
 
@@ -173,10 +149,9 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // No artifacts = 0 drain
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
     }
 
     @Test
@@ -191,10 +166,9 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Only 1 artifact controlled by player1 × 2 = 2 life
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 22);
     }
 
     @Test
@@ -207,12 +181,9 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, player1.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // 1 artifact × 2 = 2. Player1 loses 2 then gains 2 = net 0
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
     }
-
-    // ===== Loyalty ability restrictions =====
 
     @Test
     @DisplayName("Cannot activate -4 with only 3 loyalty")
@@ -235,31 +206,140 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Tezzeret should be dead (0 loyalty)
         harness.assertNotOnBattlefield(player1, "Tezzeret, Agent of Bolas");
         // But ability still resolved: 2 artifacts × 2 = 4
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
+        harness.assertLife(player2, 16);
+        harness.assertLife(player1, 24);
     }
 
-    // ===== Helpers =====
+    @Test
+    void plusOneSelectsOnlyOneArtifactAndOrdersTheRestBelowUnseenCards() {
+        Permanent tezz = addReadyTezzeret(player1);
+        Card first = new ShimmerMyr();
+        Card second = new LeoninSkyhunter();
+        Card third = new SwordOfFeastAndFamine();
+        Card fourth = new LeoninSkyhunter();
+        Card fifth = new LeoninSkyhunter();
+        Card unseen = new ShimmerMyr();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, fifth, unseen));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(tezz.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(first, third);
+        harness.handleCardChosen(player1, 1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(third);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
+                .containsExactly(first, second, fourth, fifth);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unseen, fifth, fourth, second, first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void plusOneMayDeclineAnArtifactInAShortLibrary() {
+        addReadyTezzeret(player1);
+        Card artifact = new ShimmerMyr();
+        Card creature = new LeoninSkyhunter();
+        harness.setLibrary(player1, List.of(artifact, creature));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature, artifact);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void plusOneWithoutArtifactsStillAllowsBottomOrdering() {
+        addReadyTezzeret(player1);
+        Card first = new LeoninSkyhunter();
+        Card second = new LeoninSkyhunter();
+        harness.setLibrary(player1, List.of(first, second));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void plusOneWithEmptyLibraryStillAddsLoyalty() {
+        Permanent tezz = addReadyTezzeret(player1);
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(tezz.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void minusOneCanAnimateOpponentsNoncreatureArtifact() {
+        addReadyTezzeret(player1);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new SwordOfFeastAndFamine());
+
+        harness.activateAbility(player1, 0, 1, null, artifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(artifact.isPermanentlyAnimated()).isTrue();
+        assertThat(artifact.getEffectivePower()).isEqualTo(5);
+        assertThat(artifact.getEffectiveToughness()).isEqualTo(5);
+        harness.assertOnBattlefield(player2, "Sword of Feast and Famine");
+    }
+
+    @Test
+    void minusFourCountsArtifactsAtResolution() {
+        Permanent tezz = addReadyTezzeret(player1);
+        tezz.setCounterCount(CounterType.LOYALTY, 4);
+        addArtifact(player1);
+
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        addArtifact(player1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        harness.assertLife(player1, 24);
+    }
+
+    @Test
+    void minusFourTriggersTargetsLifeLossAbilities() {
+        Permanent tezz = addReadyTezzeret(player1);
+        tezz.setCounterCount(CounterType.LOYALTY, 4);
+        addArtifact(player1);
+        harness.addToBattlefield(player2, new LichsMastery());
+
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 22);
+        assertThat(gd.lifeLostThisTurn.get(player2.getId())).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Lich's Mastery");
+    }
 
     private Permanent addReadyTezzeret(Player player) {
-        TezzeretAgentOfBolas card = new TezzeretAgentOfBolas();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new TezzeretAgentOfBolas());
         perm.setCounterCount(CounterType.LOYALTY, 3);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
     }
 
     private Permanent addArtifact(Player player) {
-        ShimmerMyr shimmerMyr = new ShimmerMyr();
-        Permanent perm = new Permanent(shimmerMyr);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new ShimmerMyr());
     }
 }
