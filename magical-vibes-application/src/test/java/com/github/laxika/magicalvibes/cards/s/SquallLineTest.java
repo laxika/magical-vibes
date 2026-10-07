@@ -36,9 +36,8 @@ class SquallLineTest extends BaseCardTest {
     void dealsDamageToEachPlayer() {
         castSquallLine(3);
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
     }
 
     @Test
@@ -75,5 +74,42 @@ class SquallLineTest extends BaseCardTest {
         castSquallLine(1);
 
         harness.assertNotOnBattlefield(player2, "Suntail Hawk");
+    }
+
+    @Test
+    @DisplayName("X zero deals no damage to players or flying creatures")
+    void zeroDealsNoDamage() {
+        harness.addToBattlefield(player1, new SuntailHawk());
+        harness.addToBattlefield(player2, new AirElemental());
+
+        castSquallLine(0);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(findPermanent(player1, "Suntail Hawk").getMarkedDamage()).isZero();
+        assertThat(findPermanent(player2, "Air Elemental").getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Squall Line");
+    }
+
+    @Test
+    @DisplayName("Damages every flyer on both sides while leaving ground creatures unharmed")
+    void damagesAllFlyersRegardlessOfController() {
+        harness.addToBattlefield(player1, new SuntailHawk());
+        harness.addToBattlefield(player1, new AirElemental());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new SuntailHawk());
+        harness.addToBattlefield(player2, new AirElemental());
+        harness.addToBattlefield(player2, new GiantSpider());
+
+        castSquallLine(2);
+
+        harness.assertInGraveyard(player1, "Suntail Hawk");
+        harness.assertInGraveyard(player2, "Suntail Hawk");
+        assertThat(findPermanent(player1, "Air Elemental").getMarkedDamage()).isEqualTo(2);
+        assertThat(findPermanent(player2, "Air Elemental").getMarkedDamage()).isEqualTo(2);
+        assertThat(findPermanent(player1, "Grizzly Bears").getMarkedDamage()).isZero();
+        assertThat(findPermanent(player2, "Giant Spider").getMarkedDamage()).isZero();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
     }
 }
