@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
+import com.github.laxika.magicalvibes.cards.j.JadeGuardian;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TempestCaller.class, GrizzlyBears.class, JayemdaeTome.class, JadeGuardian.class})
 class TempestCallerTest extends BaseCardTest {
-
-    // ===== ETB trigger =====
 
     @Test
     @DisplayName("Resolving creature spell puts ETB trigger on stack targeting opponent")
@@ -29,8 +30,6 @@ class TempestCallerTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
     }
-
-    // ===== ETB resolution =====
 
     @Test
     @DisplayName("ETB taps all creatures target opponent controls")
@@ -102,7 +101,7 @@ class TempestCallerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TempestCaller()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(gd, player1, 0, 0, player1.getId(), null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
     }
@@ -118,11 +117,50 @@ class TempestCallerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Tempest Caller");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Hexproof creatures are tapped because only their controller is targeted")
+    void tapsHexproofCreatures() {
+        harness.addToBattlefield(player2, new JadeGuardian());
+        Permanent creature = gd.playerBattlefields.get(player2.getId()).getFirst();
+
+        castTempestCaller();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creatures entering before the trigger resolves are tapped too")
+    void tapsCreaturesPresentAtResolution() {
+        castTempestCaller();
+        harness.passBothPriorities();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent creature = gd.playerBattlefields.get(player2.getId()).getFirst();
+
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The trigger resolves even if Tempest Caller leaves the battlefield")
+    void triggerSurvivesSourceLeavingBattlefield() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent creature = gd.playerBattlefields.get(player2.getId()).getFirst();
+        castTempestCaller();
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 
     private void castTempestCaller() {
         harness.setHand(player1, List.of(new TempestCaller()));
         harness.addMana(player1, ManaColor.BLUE, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, player2.getId(), null);
+        harness.castCreature(player1, 0, player2.getId());
     }
 }
