@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.e.EchoOfDeathsWail;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MukotaiAmbusher;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TributeToHorobi.class, EchoOfDeathsWail.class, GrizzlyBears.class, TyphoidRats.class})
+@CardUsed({TributeToHorobi.class, EchoOfDeathsWail.class, MukotaiAmbusher.class})
 class TributeToHorobiTest extends BaseCardTest {
 
     @Test
@@ -53,7 +53,7 @@ class TributeToHorobiTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent ratToken = findRatTokens(player2).getFirst();
-        Permanent nontokenRat = harness.addToBattlefieldAndReturn(player2, new TyphoidRats());
+        Permanent nontokenRat = harness.addToBattlefieldAndReturn(player2, new MukotaiAmbusher());
         harness.enterBattlefieldAndReturn(player1, new EchoOfDeathsWail());
         harness.passBothPriorities();
 
@@ -65,8 +65,8 @@ class TributeToHorobiTest extends BaseCardTest {
     void echoMaySacrificeAnotherCreatureToDraw() {
         Permanent echo = harness.addToBattlefieldAndReturn(player1, new EchoOfDeathsWail());
         echo.setSummoningSick(false);
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MukotaiAmbusher());
+        harness.setLibrary(player1, List.of(new MukotaiAmbusher()));
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -78,10 +78,93 @@ class TributeToHorobiTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Mukotai Ambusher");
         assertThat(gd.playerHands.get(player1.getId())).extracting(card -> card.getName())
-                .filteredOn(name -> name.equals("Grizzly Bears"))
+                .filteredOn(name -> name.equals("Mukotai Ambusher"))
                 .hasSize(1);
+    }
+
+    @Test
+    void sacrificeDrawsDuringTheAttackAbilityResolution() {
+        harness.addToBattlefield(player1, new EchoOfDeathsWail());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MukotaiAmbusher());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new MukotaiAmbusher()));
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handlePermanentChosen(player1, creature.getId());
+
+            harness.assertInGraveyard(player1, "Mukotai Ambusher");
+            harness.assertInHand(player1, "Mukotai Ambusher");
+            assertThat(gd.stack).isEmpty();
+        });
+    }
+
+    @Test
+    void decliningSacrificeDoesNotDrawOrRemoveTheCreature() {
+        harness.addToBattlefield(player1, new EchoOfDeathsWail());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MukotaiAmbusher());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new MukotaiAmbusher()));
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, false);
+
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+            assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+            assertThat(gd.stack).isEmpty();
+        });
+    }
+
+    @Test
+    void echoCannotSacrificeItselfOrAnOpponentsCreature() {
+        harness.addToBattlefield(player1, new EchoOfDeathsWail());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new MukotaiAmbusher());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new MukotaiAmbusher()));
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.passBothPriorities();
+            if (gd.interaction.isAwaitingInput()) {
+                harness.handleMayAbilityChosen(player1, true);
+            }
+
+            harness.assertOnBattlefield(player1, "Echo of Death's Wail");
+            assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
+            assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+            assertThat(gd.stack).isEmpty();
+        });
+    }
+
+    @Test
+    void transformingSagaCapturesBothRatTokensAndCanAttackImmediately() {
+        addSagaWithLore(0);
+        advanceToNextChapter(player1);
+        harness.passBothPriorities();
+        advanceToNextChapter(player1);
+        harness.passBothPriorities();
+        List<Permanent> rats = findRatTokens(player2);
+        assertThat(rats).hasSize(2);
+
+        advanceToNextChapter(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsAll(rats);
+        assertThat(findRatTokens(player2)).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Tribute to Horobi");
+        Permanent echo = findPermanent(player1, "Echo of Death's Wail");
+        int echoIndex = gd.playerBattlefields.get(player1.getId()).indexOf(echo);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(echoIndex));
+            assertThat(echo.isAttacking()).isTrue();
+        });
     }
 
     private Permanent addSagaWithLore(int loreCounters) {
@@ -91,10 +174,7 @@ class TributeToHorobiTest extends BaseCardTest {
     }
 
     private Permanent findSaga(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getOriginalCard() instanceof TributeToHorobi)
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player, "Tribute to Horobi");
     }
 
     private List<Permanent> findRatTokens(Player player) {
