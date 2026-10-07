@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.i.IcatianJavelineers;
 import com.github.laxika.magicalvibes.cards.i.IcatianPriest;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SporeFlower.class)
+@CardUsed({SporeFlower.class, IcatianPriest.class, IcatianJavelineers.class})
 class SporeFlowerTest extends BaseCardTest {
 
     @Test
@@ -94,6 +95,81 @@ class SporeFlowerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Spore counters are paid immediately and only three are removed")
+    void countersArePaidBeforeResolution() {
+        Permanent flower = addFlower();
+        flower.setCounterCount(CounterType.FUNGUS, 5);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(flower.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+        assertThat(gd.preventAllCombatDamage).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+
+        assertThat(flower.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+        assertThat(gd.preventAllCombatDamage).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Spore Flower can activate its prevention ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent flower = addFlower();
+        flower.setSummoningSick(true);
+        flower.setTapped(true);
+        flower.setCounterCount(CounterType.FUNGUS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(flower.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(gd.preventAllCombatDamage).isTrue();
+    }
+
+    @Test
+    @CardUsed(IcatianPriest.class)
+    @DisplayName("The activated ability resolves even after Spore Flower leaves the battlefield")
+    void preventionResolvesWithoutSource() {
+        Permanent flower = addFlower();
+        flower.setCounterCount(CounterType.FUNGUS, 3);
+        addCreatureReady(player2, new IcatianPriest());
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(flower);
+        gd.playerGraveyards.get(player1.getId()).add(flower.getCard());
+        harness.passBothPriorities();
+
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @CardUsed(IcatianPriest.class)
+    @DisplayName("Combat damage is prevented for attacking and blocking creatures")
+    void preventsCombatDamageToBothCreatures() {
+        Permanent flower = addFlower();
+        flower.setCounterCount(CounterType.FUNGUS, 3);
+        Permanent attacker = addCreatureReady(player1, new IcatianPriest());
+        Permanent blocker = addCreatureReady(player2, new IcatianPriest());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isZero();
     }
 
     private Permanent addFlower() {
