@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TurretOgre.class, AirElemental.class})
 class TurretOgreTest extends BaseCardTest {
 
     @Test
@@ -39,10 +38,70 @@ class TurretOgreTest extends BaseCardTest {
     }
 
     private void castTurretOgre() {
-        harness.setHand(player1, List.of(new TurretOgre()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new TurretOgre(), "{3}{R}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    void doesNotTriggerWhenItIsTheOnlyCreature() {
+        harness.setLife(player2, 20);
+
+        castTurretOgre();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void anotherCreatureWithPowerThreeDoesNotQualify() {
+        var other = harness.addToBattlefieldAndReturn(player1, new TurretOgre());
+        other.setPowerModifier(-1);
+
+        castTurretOgre();
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void conditionIsRecheckedWhenOtherCreatureLeaves() {
+        harness.setLife(player2, 20);
+        var other = harness.addToBattlefieldAndReturn(player1, new TurretOgre());
+        castTurretOgre();
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(other);
+        gd.playerGraveyards.get(player1.getId()).add(other.getCard());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void conditionIsRecheckedWhenOtherCreatureLosesPower() {
+        harness.setLife(player2, 20);
+        var other = harness.addToBattlefieldAndReturn(player1, new TurretOgre());
+        castTurretOgre();
+        assertThat(gd.stack).hasSize(1);
+
+        other.setPowerModifier(-1);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void triggerStillDealsDamageAfterSourceLeaves() {
+        harness.setLife(player2, 20);
+        var other = harness.addToBattlefieldAndReturn(player1, new TurretOgre());
+        castTurretOgre();
+        assertThat(gd.stack).hasSize(1);
+        var source = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent != other).findFirst().orElseThrow();
+
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
     }
 }
