@@ -49,6 +49,53 @@ class UlvenwaldOddityTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, oddity)).isEqualTo(8);
     }
 
+    @Test
+    void canTransformWhileTappedAndSummoningSick() {
+        Permanent oddity = harness.addToBattlefieldAndReturn(player1, new UlvenwaldOddity());
+        oddity.setTapped(true);
+        oddity.setSummoningSick(true);
+        addTransformMana();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(oddity.isTransformed()).isTrue();
+        assertThat(oddity.isTapped()).isTrue();
+        assertThat(oddity.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    void twoPendingActivationsTransformOnlyOnce() {
+        Permanent oddity = addCreatureReady(player1, new UlvenwaldOddity());
+        addTransformMana();
+        addTransformMana();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(oddity.isTransformed()).isTrue();
+        assertThat(oddity.getCard()).isInstanceOf(UlvenwaldBehemoth.class);
+    }
+
+    @Test
+    void twoBehemothsBoostEachOther() {
+        Permanent first = addCreatureReady(player1, new UlvenwaldOddity());
+        Permanent second = addCreatureReady(player1, new UlvenwaldOddity());
+        addTransformMana();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        addTransformMana();
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(9);
+    }
+
     private void addTransformMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.addMana(player1, ManaColor.GREEN, 2);
