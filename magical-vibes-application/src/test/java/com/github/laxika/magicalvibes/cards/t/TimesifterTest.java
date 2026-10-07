@@ -107,4 +107,50 @@ class TimesifterTest extends BaseCardTest {
         assertThat(gd.exiledCards).extracting(entry -> entry.card())
                 .containsExactly(player1Card, player2Card);
     }
+
+    @Test
+    @DisplayName("A land wins against a player who cannot exile a card")
+    void zeroManaValueWinsAgainstEmptyLibrary() {
+        Card land = new Forest();
+
+        resolveTimesifter(List.of(), List.of(land));
+
+        assertThat(gd.extraTurns).containsExactly(player2.getId());
+        assertThat(gd.exiledCards).extracting(entry -> entry.card()).containsExactly(land);
+    }
+
+    @Test
+    @DisplayName("No extra turn is awarded when both tied players exhaust their libraries")
+    void tiedPlayersBothExhaustLibraries() {
+        Card player1Card = new AlphaMyr();
+        Card player2Card = new AlphaMyr();
+
+        resolveTimesifter(List.of(player1Card), List.of(player2Card));
+
+        assertThat(gd.extraTurns).isEmpty();
+        assertThat(gd.exiledCards).extracting(entry -> entry.card())
+                .containsExactly(player1Card, player2Card);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Multiple Timesifters resolve independently and create extra turns in reverse order")
+    void multipleTimesiftersCreateIndependentExtraTurns() {
+        Card firstPlayer1Card = new MyrEnforcer();
+        Card firstPlayer2Card = new AlphaMyr();
+        Card secondPlayer1Card = new Forest();
+        Card secondPlayer2Card = new MyrEnforcer();
+        harness.addToBattlefield(player1, new Timesifter());
+        harness.addToBattlefield(player2, new Timesifter());
+        harness.setLibrary(player1, List.of(firstPlayer1Card, secondPlayer1Card));
+        harness.setLibrary(player2, List.of(firstPlayer2Card, secondPlayer2Card));
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.extraTurns).containsExactly(player2.getId(), player1.getId());
+        assertThat(gd.exiledCards).extracting(entry -> entry.card())
+                .containsExactly(firstPlayer1Card, firstPlayer2Card, secondPlayer1Card, secondPlayer2Card);
+    }
 }
