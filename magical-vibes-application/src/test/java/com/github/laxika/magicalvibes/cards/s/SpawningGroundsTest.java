@@ -56,4 +56,68 @@ class SpawningGroundsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void opposingLandControllerCreatesTheBeast() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new SpawningGrounds()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castEnchantment(player1, 0, land.getId());
+        resolveAllTriggers();
+
+        harness.activateAbility(player2, 0, 0, null, null);
+        assertThat(land.isTapped()).isTrue();
+        assertThat(countPermanents(player2, "Beast")).isZero();
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player2, "Beast")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Beast")).isZero();
+    }
+
+    @Test
+    void tappedLandCannotPayForTheGrantedAbility() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SpawningGrounds());
+        aura.setAttachedTo(land.getId());
+        land.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(countPermanents(player1, "Beast")).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void grantedAbilityIsLostWhenAuraLeaves() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SpawningGrounds());
+        aura.setAttachedTo(land.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .destroyPermanentToGraveyard(gd, aura));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(land.isTapped()).isFalse();
+        assertThat(countPermanents(player1, "Beast")).isZero();
+    }
+
+    @Test
+    void activatedAbilityResolvesAfterEnchantedLandLeaves() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SpawningGrounds());
+        aura.setAttachedTo(land.getId());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .destroyPermanentToGraveyard(gd, land));
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Beast")).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(land, aura);
+    }
 }
