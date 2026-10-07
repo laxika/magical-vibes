@@ -69,4 +69,67 @@ class UnclesMusingsTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(spell.getId()));
     }
+
+    @Test
+    void returnsThreeCardsWhenThreeColorsWereSpent() {
+        Card bears = new GrizzlyBears();
+        Card firstForest = new Forest();
+        Card secondForest = new Forest();
+        Card remainingForest = new Forest();
+        UnclesMusings spell = new UnclesMusings();
+        harness.setGraveyard(player1, List.of(bears, firstForest, secondForest, remainingForest));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears, firstForest, secondForest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(remainingForest);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void fourGreenManaAllowsOnlyOneReturn() {
+        Card bears = new GrizzlyBears();
+        Card forest = new Forest();
+        UnclesMusings spell = new UnclesMusings();
+        harness.setGraveyard(player1, List.of(bears, forest));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void exilesItselfWhenNoPermanentCardsCanBeReturned() {
+        Card shock = new Shock();
+        UnclesMusings spell = new UnclesMusings();
+        harness.setGraveyard(player1, List.of(shock));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(shock);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+        assertThat(gd.stack).isEmpty();
+    }
 }
