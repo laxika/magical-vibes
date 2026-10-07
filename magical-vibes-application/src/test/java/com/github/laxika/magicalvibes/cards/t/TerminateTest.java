@@ -120,4 +120,37 @@ class TerminateTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         harness.assertInGraveyard(player1, "Terminate");
     }
+
+    @Test
+    @DisplayName("Terminate can destroy a creature its caster controls")
+    void destroysOwnCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ThornscapeFamiliar());
+        harness.setHand(player1, List.of(new Terminate()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        harness.assertNotOnBattlefield(player1, "Thornscape Familiar");
+        harness.assertInGraveyard(player1, "Thornscape Familiar");
+        harness.assertInGraveyard(player1, "Terminate");
+    }
+
+    @Test
+    @DisplayName("Terminate does not destroy an opposing target that gains hexproof before resolution")
+    void targetGainingHexproofBecomesIllegal() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ThornscapeFamiliar());
+        harness.setHand(player1, List.of(new Terminate()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, creature.getId());
+        creature.getGrantedKeywords().add(Keyword.HEXPROOF);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Thornscape Familiar");
+        harness.assertNotInGraveyard(player2, "Thornscape Familiar");
+        harness.assertInGraveyard(player1, "Terminate");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
 }
