@@ -85,6 +85,48 @@ class TickingGnomesTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Ticking Gnomes");
     }
 
+    @Test
+    @DisplayName("Entering the battlefield does not put an echo registration ability on the stack")
+    void enteringDoesNotCreateEchoRegistrationTrigger() {
+        harness.castFromHand(player1, new TickingGnomes(), "{3}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ticking Gnomes");
+        assertThat(gd.stack).isEmpty();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Ticking Gnomes");
+    }
+
+    @Test
+    @DisplayName("Ticking Gnomes can sacrifice itself immediately to damage its controller")
+    void canDamageItsControllerWhileSummoningSick() {
+        harness.addToBattlefield(player1, new TickingGnomes());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.assertInGraveyard(player1, "Ticking Gnomes");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Sacrificing Gnomes before upkeep leaves no echo ability to resolve")
+    void sacrificedGnomesDoNotTriggerEcho() {
+        castAndResolveGnomes();
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Ticking Gnomes");
+    }
     private void castAndResolveGnomes() {
         harness.castFromHand(player1, new TickingGnomes(), "{3}");
         harness.passBothPriorities();
