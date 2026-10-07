@@ -94,4 +94,50 @@ class ThriveTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, List.of(land.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Can target creatures controlled by both players")
+    void targetsCreaturesWithDifferentControllers() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new MarshBoa());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new VintaraElephant());
+        harness.setHand(player1, List.of(new Thrive()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castSorcery(player1, 0, 2, List.of(own.getId(), opposing.getId()));
+        harness.passBothPriorities();
+
+        assertThat(own.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opposing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Still puts a counter on a remaining legal target when another target leaves")
+    void resolvesForRemainingLegalTarget() {
+        Permanent removed = harness.addToBattlefieldAndReturn(player2, new MarshBoa());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new VintaraElephant());
+        harness.setHand(player1, List.of(new Thrive()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castSorcery(player1, 0, 2, List.of(removed.getId(), remaining.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(removed);
+        harness.passBothPriorities();
+
+        assertThat(removed.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(remaining.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Thrive");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Repeated casts add counters rather than replacing existing counters")
+    void addsToExistingCounters() {
+        Permanent boa = harness.addToBattlefieldAndReturn(player1, new MarshBoa());
+        harness.setHand(player1, List.of(new Thrive(), new Thrive()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 1, boa.getId());
+        harness.castAndResolveSorcery(player1, 0, 1, boa.getId());
+
+        assertThat(boa.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
 }
