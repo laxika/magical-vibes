@@ -896,6 +896,8 @@ public class CombatAttackService {
             gameData.playersWhoAttackedWithTokenThisTurn.add(playerId);
         }
         gameData.creaturesAttackedCountThisTurn.merge(playerId, attackerIndices.size(), Integer::sum);
+        declaredAttackers.forEach(attacker -> gameData.creaturesAttackedWithThisTurn
+                .computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet()).add(attacker.getId()));
         Map<CardSubtype, Integer> subtypeCounts = gameData.creaturesAttackedCountBySubtypeThisTurn
                 .computeIfAbsent(playerId, ignored -> new ConcurrentHashMap<>());
         for (int idx : attackerIndices) {
@@ -992,8 +994,13 @@ public class CombatAttackService {
             Permanent attacker = battlefield.get(idx);
             int previousCopies = beginAttackTriggerCopies(gameData, playerId, attacker);
             try {
+            // An Equipment's printed attack trigger is "whenever equipped creature attacks", so it
+            // doesn't fire when an animated Equipment attacks itself (Captain America's Shield).
+            boolean equipmentAttackTrigger = gameQueryService.hasEffectiveSubtype(gameData, attacker, CardSubtype.EQUIPMENT)
+                    && !gameQueryService.hasReconfigure(gameData, attacker);
             List<CardEffect> nativeAttackEffects = attacker.isFaceDown()
                     || gameQueryService.hasLostPrintedAbilities(gameData, attacker)
+                    || equipmentAttackTrigger
                     ? List.of() : attacker.getCard().getEffects(EffectSlot.ON_ATTACK);
             List<CardEffect> temporaryAttackEffects = attacker.getTemporaryTriggeredEffects(EffectSlot.ON_ATTACK);
             // Continuously granted ON_ATTACK abilities (Thorncaster Sliver giving every Sliver

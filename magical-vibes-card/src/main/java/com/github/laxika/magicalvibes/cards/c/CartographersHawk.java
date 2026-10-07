@@ -18,8 +18,9 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class CartographersHawk extends Card {
 
     public CartographersHawk() {
+        // "to a player who controls more lands than you" qualifies the event; it isn't rechecked
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                new ConditionalEffect(
+                ConditionalEffect.atTriggerTime(
                         new TargetPlayerControlsMoreLandsThanController(),
                         new ReturnSelfToHandThenEffect(
                                 new MayEffect(

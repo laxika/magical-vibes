@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -28,7 +29,7 @@ public class CaptainOfTheMists extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{U}",
-                List.of(new TapOrUntapTargetPermanentEffect()),
+                List.of(new MayEffect(new TapOrUntapTargetPermanentEffect(), "Tap or untap target permanent?")),
                 "{1}{U}, {T}: You may tap or untap target permanent.",
                 TargetFilters.permanent()
         ));

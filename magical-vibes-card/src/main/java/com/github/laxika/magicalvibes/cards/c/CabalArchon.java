@@ -8,9 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 
@@ -23,10 +21,7 @@ public class CabalArchon extends Card {
                 "{B}",
                 List.of(
                         new SacrificePermanentCost(
-                                new PermanentAllOfPredicate(List.of(
-                                        new PermanentIsCreaturePredicate(),
-                                        new PermanentHasSubtypePredicate(CardSubtype.CLERIC)
-                                )),
+                                new PermanentHasSubtypePredicate(CardSubtype.CLERIC),
                                 "Sacrifice a Cleric",
                                 false
                         ),

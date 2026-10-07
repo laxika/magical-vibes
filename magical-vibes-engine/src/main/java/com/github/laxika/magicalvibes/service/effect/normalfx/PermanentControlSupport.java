@@ -158,9 +158,9 @@ public class PermanentControlSupport {
             additionalTreasureTokenCount = TokenCreationReplacementSupport.additionalTreasureTokenCount(
                     gameData, controllerId, CreateTokenEffect.ofFoodToken(1), foodCount);
         }
-        boolean addClueToken = applyAdditionalReplacements
-                && totalAmount > 0
-                && hasSolvedClueReplacement(gameData, controllerId);
+        // Each solved Case of the Pilfered Proof is its own replacement, adding one Clue apiece
+        int addedClueTokens = applyAdditionalReplacements && totalAmount > 0
+                ? solvedClueReplacementCount(gameData, controllerId) : 0;
         CreateTokenEffect evaluatedToken = token.withPowerToughness(power, toughness);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
@@ -325,9 +325,9 @@ public class PermanentControlSupport {
             }
         }
 
-        if (addClueToken) {
-            createdIds.addAll(applyCreateToken(gameData, controllerId, CreateTokenEffect.ofClueToken(1), 1,
-                    sourceSetCode, 0, 0, false, false, false));
+        if (addedClueTokens > 0) {
+            createdIds.addAll(applyCreateToken(gameData, controllerId, CreateTokenEffect.ofClueToken(1),
+                    addedClueTokens, sourceSetCode, 0, 0, false, false, false));
         }
 
         UUID tokenControllerId = createdIds.isEmpty()
@@ -346,16 +346,17 @@ public class PermanentControlSupport {
         return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness, true, true, true, additionalEffects);
     }
 
-    private boolean hasSolvedClueReplacement(GameData gameData, UUID controllerId) {
+    private int solvedClueReplacementCount(GameData gameData, UUID controllerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) {
-            return false;
+            return 0;
         }
-        return battlefield.stream()
+        return (int) battlefield.stream()
                 .filter(permanent -> permanent.isSolved()
                         && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
                         && !permanent.isStaticEffectSuppressed(AddClueTokenToTokenCreationEffect.class))
                 .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
-                .anyMatch(AddClueTokenToTokenCreationEffect.class::isInstance);
+                .filter(AddClueTokenToTokenCreationEffect.class::isInstance)
+                .count();
     }
 }

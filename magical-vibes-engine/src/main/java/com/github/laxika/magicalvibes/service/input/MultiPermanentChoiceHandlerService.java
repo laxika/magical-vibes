@@ -370,6 +370,11 @@ public class MultiPermanentChoiceHandlerService {
         if (mandatoryCounterChoice && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one permanent must be selected");
         }
+        // Calamity, Galloping Inferno: "choose a nonlegendary creature that saddled it" is mandatory
+        if (context instanceof MultiPermanentChoiceContext.CreateTokenCopiesOfSaddledCreature
+                && permanentIds.size() != 1) {
+            throw new IllegalStateException("Exactly one creature must be selected");
+        }
         if (context instanceof MultiPermanentChoiceContext.ChoosePlayersAsEnter
                 && permanentIds.size() != 2) {
             throw new IllegalStateException("Exactly two players must be selected");

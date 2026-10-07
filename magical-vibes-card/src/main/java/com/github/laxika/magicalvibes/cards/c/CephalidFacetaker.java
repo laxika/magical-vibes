@@ -5,9 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -15,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "NCC", collectorNumber = "23")
@@ -34,11 +33,9 @@ public class CephalidFacetaker extends Card {
                 )),
                 "Target must be another creature"
         )).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new MayEffect(
-                SequenceEffect.of(
-                        new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
-                                1, 4, Set.of(), Set.of(), Set.of()),
-                        new GrantStaticEffectToSourceUntilEndOfTurnEffect(new CantBeBlockedEffect())
-                ),
+                new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
+                        null, Set.of(), 1, 4, Set.of(), Set.of(), Set.of(), null,
+                        Map.of(EffectSlot.STATIC, List.of(new CantBeBlockedEffect()))),
                 "Become a copy of the target creature?"));
     }
 }

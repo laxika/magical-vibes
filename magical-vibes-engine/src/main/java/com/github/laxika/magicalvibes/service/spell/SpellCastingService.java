@@ -7101,7 +7101,8 @@ public class SpellCastingService {
                 resolvedXValue = stats.manaValue();
             }
             if (sacCreatureCost.trackSacrificedPower()) {
-                resolvedXValue = stats.power();
+                // CR 107.1b — a negative power can't make X negative
+                resolvedXValue = Math.max(0, stats.power());
                 sacrificedPower = stats.power();
             }
             if (sacCreatureCost.trackSacrificedToughness()) {

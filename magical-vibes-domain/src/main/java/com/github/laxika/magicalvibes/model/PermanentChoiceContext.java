@@ -176,7 +176,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record AttachTargetAuraToAnotherPermanentWithSameController(UUID auraPermanentId)
             implements PermanentChoiceContext {}
 
-    record LegendRule(String cardName) implements PermanentChoiceContext {}
+    /** Legend rule: {@code candidateIds} are the non-exempt same-named legends; all but the kept one leave. */
+    record LegendRule(String cardName, List<UUID> candidateIds) implements PermanentChoiceContext {
+        public LegendRule(String cardName) {
+            this(cardName, List.of());
+        }
+    }
 
     record BounceCreature(UUID bouncingPlayerId, PermanentPredicate thenCondition, CardEffect thenEffect)
             implements PermanentChoiceContext {
@@ -1317,11 +1322,24 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                  List<UUID> chosenAttackTargets) implements PermanentChoiceContext {}
 
     /** Remembers the attack target for each copy entering tapped and attacking. */
+    /**
+     * Attack-target choices for token copies entering attacking. {@code resumeSaddledCopies} is the
+     * Calamity, Galloping Inferno copy loop to continue once these tokens exist, or {@code null}.
+     */
     record CreateTokenCopiesAttacking(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
                                        UUID targetPermanentId,
                                        com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect copyEffect,
-                                       int tokenCount, List<UUID> chosenAttackTargets)
-            implements PermanentChoiceContext {}
+                                       int tokenCount, List<UUID> chosenAttackTargets,
+                                       MultiPermanentChoiceContext.CreateTokenCopiesOfSaddledCreature resumeSaddledCopies)
+            implements PermanentChoiceContext {
+        public CreateTokenCopiesAttacking(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
+                                          UUID targetPermanentId,
+                                          com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect copyEffect,
+                                          int tokenCount, List<UUID> chosenAttackTargets) {
+            this(controllerId, sourceCard, sourcePermanentId, targetPermanentId, copyEffect, tokenCount,
+                    chosenAttackTargets, null);
+        }
+    }
 
     /** Prepared copies whose player or planeswalker attack targets are chosen before their simultaneous entry. */
     record PreparedOpponentTokenCopiesAttacking(UUID controllerId, StackEntry entry,

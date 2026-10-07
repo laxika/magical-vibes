@@ -131,14 +131,14 @@ class CallDamageControlTest extends BaseCardTest {
     }
 
     @Test
-    void allowsSameArtifactCreatureAsTargetOfBothModes() {
+    void returnsAnArtifactCreatureChosenForOneMode() {
         Card artifactCreature = new Ornithopter();
         harness.setGraveyard(player1, List.of(artifactCreature));
         harness.setHand(player1, List.of(new CallDamageControl()));
         addManaForSpell();
 
         harness.castSorcery(player1, 0, 0);
-        harness.handleMultipleCardsChosen(player1, List.of(artifactCreature.getId(), artifactCreature.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(artifactCreature.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(artifactCreature);

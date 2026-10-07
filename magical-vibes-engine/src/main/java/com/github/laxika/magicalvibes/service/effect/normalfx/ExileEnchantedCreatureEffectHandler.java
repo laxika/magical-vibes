@@ -36,6 +36,10 @@ public class ExileEnchantedCreatureEffectHandler implements NormalEffectHandlerB
         if (enchantedId == null && auraPerm != null) {
             enchantedId = auraPerm.getAttachedTo();
         }
+        // An Aura that left the battlefield uses what it was last attached to (CR 608.2h)
+        if (enchantedId == null && auraPerm == null && entry.getSourcePermanentSnapshot() != null) {
+            enchantedId = entry.getSourcePermanentSnapshot().getAttachedTo();
+        }
         if (enchantedId == null) {
             if (auraPerm == null) {
                 log.info("Game {} - Aura {} no longer on battlefield, skipping exile trigger",

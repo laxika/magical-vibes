@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamag
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -23,7 +24,8 @@ public class BurnTogether extends Card {
         var victimTarget = target(new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentIsPlaneswalkerPredicate())),
+                        new PermanentIsPlaneswalkerPredicate(),
+                        new PermanentIsBattlePredicate())),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Second target must be any other target"));
         victimTarget.addEffect(EffectSlot.SPELL, new TargetCreatureDealsPowerDamageToAnyTargetEffect());

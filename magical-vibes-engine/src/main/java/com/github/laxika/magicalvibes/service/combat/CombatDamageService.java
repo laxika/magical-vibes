@@ -475,11 +475,6 @@ public class CombatDamageService {
             }
         });
 
-        // Process lifelink before removing dead creatures
-        processLifelink(gameData, state.combatDamageDealt);
-        processGainLifeEqualToDamageDealt(gameData, state.combatDamageDealt);
-        processGainLifeEqualToControlledCreatureCombatDamage(gameData, state.combatDamageDealt);
-
         // Collect ON_DEALT_DAMAGE trigger data before dead creatures are removed from battlefield
         List<DealtDamageTriggerData> dealtDamageTriggerData = collectDealtDamageTriggerData(gameData, state);
 
@@ -490,6 +485,11 @@ public class CombatDamageService {
         updateMarkedDamageFromCombat(gameData, atkBf, defBf, state);
         applyPendingDralnuReplacements(gameData, state);
         applyPlaneswalkerDamage(gameData, state);
+        // CR 510.2 — lifelink gains life as the simultaneous damage is dealt, so it can't change
+        // whether a life-dependent prevention applied to that same damage. Before dead creatures leave.
+        processLifelink(gameData, state.combatDamageDealt);
+        processGainLifeEqualToDamageDealt(gameData, state.combatDamageDealt);
+        processGainLifeEqualToControlledCreatureCombatDamage(gameData, state.combatDamageDealt);
         checkCombatExcessDamageTriggers(gameData, state, atkBf, defBf);
         processAllyDealtDamageToPlaneswalkerTriggers(gameData, state);
         processOpponentSourceDamageToYouOrYourPermanentTriggers(gameData, state);

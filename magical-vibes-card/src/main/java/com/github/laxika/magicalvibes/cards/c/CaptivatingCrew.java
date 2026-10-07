@@ -29,8 +29,8 @@ public class CaptivatingCrew extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false, "{3}{R}",
                 List.of(
-                        new UntapPermanentsEffect(TapUntapScope.TARGET),
                         new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                        new UntapPermanentsEffect(TapUntapScope.TARGET),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)),
                 "{3}{R}: Gain control of target creature an opponent controls until end of turn. Untap that creature. It gains haste until end of turn. Activate only as a sorcery.",
                 TargetFilters.creatureAnOpponentControls(),

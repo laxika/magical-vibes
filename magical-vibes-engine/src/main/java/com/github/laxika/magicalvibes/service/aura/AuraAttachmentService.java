@@ -390,6 +390,10 @@ public class AuraAttachmentService {
         }
 
         if (isFortification) {
+            // CR 301.6 — a Fortification that's also a creature (not a land) can't fortify a land
+            if (gameQueryService.isCreature(gameData, attachment) && !gameQueryService.isLand(gameData, attachment)) {
+                return "it is a creature";
+            }
             if (!gameQueryService.isLand(gameData, host)) {
                 return "fortified permanent is no longer a land";
             }

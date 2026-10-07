@@ -21,9 +21,10 @@ public class CallapheBelovedOfTheSea extends Card {
     public CallapheBelovedOfTheSea() {
         addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
                 new ColorManaSymbolsAmongControlledPermanents(ManaColor.BLUE), new Fixed(3)));
-        addEffect(EffectSlot.STATIC, new IncreaseOpponentCostForTargetingControlledPermanentEffect(
+        // Each creature and enchantment has the tax ability, so it's paid once per protected target
+        addEffect(EffectSlot.STATIC, IncreaseOpponentCostForTargetingControlledPermanentEffect.perTargetedPermanent(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentIsEnchantmentPredicate())), 1, false));
+                        new PermanentIsEnchantmentPredicate())), 1));
     }
 }

@@ -107,6 +107,7 @@ class CacklingSlasherTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, bears.getId());
         harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 

@@ -2156,12 +2156,15 @@ public class DamageSupport {
                 gameLogService.append(gameData, GameLog.textCardText(
                         damage + " damage is redirected to ", targetPerm.getCard(), "."));
 
+                // The redirected damage can itself be redirected by the new recipient's own shield
+                // (a second Carom); that chained part is dealt when the queue is processed again.
+                damage = damagePreventionService.applyCreatureRedirectShields(gameData, targetPerm.getId(), sourceId, damage);
+                if (damage <= 0) continue;
+
                 int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, targetPerm, damage);
                 if (effectiveDamage > 0) {
-                    if (entry != null && entry.isExilesCreaturesDamaged()
-                            && gameQueryService.isCreature(gameData, targetPerm)) {
-                        targetPerm.setExileInsteadOfDieThisTurn(true);
-                    }
+                    // An "exile it if it would die" rider follows the creature the spell damaged
+                    // (Carbonize's "that creature"), not one that received redirected damage.
                     gameData.recordDamageDealtBySource(sourceId, effectiveDamage);
                     damagePreventionService.applyDamageHealingReplacement(gameData, targetPerm, effectiveDamage);
                     // A planeswalker destination loses that much loyalty (CR 120.3c) and a battle
@@ -2204,6 +2207,7 @@ public class DamageSupport {
                 }
             }
         }
+        processSourceRedirectDamage(gameData, entry);
     }
 
 

@@ -4739,6 +4739,22 @@ public class TriggerCollectionService {
                 }
             }
         }
+
+        // CR 603.10a — leaving the battlefield looks back in time, so the sacrificed permanent's own
+        // watcher triggers too (Carmen, Cruel Skymarcher sacrificing herself). Only its controller
+        // could sacrifice it. "Sacrifices another permanent" watchers (Mazirek) exclude themselves.
+        List<CardEffect> ownEffects = sacrificedCard.getEffects(EffectSlot.ON_ANY_PERMANENT_SACRIFICED);
+        boolean excludesSelf = sacrificedCard.getCardText() != null
+                && sacrificedCard.getCardText().toLowerCase(java.util.Locale.ROOT).contains("sacrifices another");
+        if (ownEffects != null && !ownEffects.isEmpty() && sacrificingPlayerId != null && !excludesSelf
+                && !gameData.anyPermanentMatches(p -> p.getCard().getId().equals(sacrificedCard.getId())
+                        || p.getOriginalCard().getId().equals(sacrificedCard.getId()))) {
+            Permanent departed = new Permanent(sacrificedCard);
+            for (CardEffect effect : ownEffects) {
+                var match = new TriggerMatchContext(gameData, departed, sacrificingPlayerId, effect);
+                dispatch(match, EffectSlot.ON_ANY_PERMANENT_SACRIFICED, effect, ctx);
+            }
+        }
     }
 
     /**
@@ -9547,11 +9563,24 @@ public class TriggerCollectionService {
         if (controllerId == null || controllerId.equals(damagedPlayerId)) return;
 
         Card sourceCard = entry.getEffectiveDamageSourceCard();
-        if (sourceCard == null || !sourceCard.getColors().contains(CardColor.RED)) return;
+        if (sourceCard == null) return;
+        // An ability's source permanent is judged by its current characteristics (a planeswalker
+        // made blue by Prismatic Lace isn't red), falling back to last-known information.
+        Permanent sourcePermanent = entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (sourcePermanent == null) {
+            sourcePermanent = entry.getSourcePermanentSnapshot();
+        }
+        boolean red = sourcePermanent != null
+                ? gameQueryService.getEffectiveColors(gameData, sourcePermanent).contains(CardColor.RED)
+                : sourceCard.getColors().contains(CardColor.RED);
+        if (!red) return;
 
         boolean redSpell = entry.getEntryType() == StackEntryType.INSTANT_SPELL
                 || entry.getEntryType() == StackEntryType.SORCERY_SPELL;
-        boolean redPlaneswalker = sourceCard.hasType(CardType.PLANESWALKER);
+        boolean redPlaneswalker = sourcePermanent != null
+                ? gameQueryService.isPlaneswalker(gameData, sourcePermanent)
+                : sourceCard.hasType(CardType.PLANESWALKER);
         if (!redSpell && !redPlaneswalker) return;
 
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
@@ -10719,7 +10748,18 @@ public class TriggerCollectionService {
                 dyingPermanent.getEffectivePower(), dyingPermanent.getEffectiveToughness(), dyingPermanent.getId(),
                 dyingPermanent, wasCreature);
 
-        for (Permanent perm : battlefield) {
+        // Leaves-the-battlefield triggers look back in time (CR 603.10a): a watcher that died in the
+        // same event (Carth dying alongside the planeswalker) still sees the death.
+        List<Permanent> watchers = new ArrayList<>(battlefield);
+        gameData.simultaneousDyingPermanents.forEach((permanentId, source) -> {
+            if (dyingControllerId.equals(gameData.simultaneousDyingPermanentControllers.get(permanentId))
+                    && !permanentId.equals(dyingPermanent.getId())
+                    && watchers.stream().noneMatch(watcher -> watcher.getId().equals(permanentId))) {
+                watchers.add(source);
+            }
+        });
+
+        for (Permanent perm : watchers) {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_OR_PLANESWALKER_DIES);
             if (effects == null || effects.isEmpty()) continue;
 

@@ -100,6 +100,7 @@ class CallToHeelTest extends BaseCardTest {
     void targetLeavesBeforeResolution() {
         var creature = harness.addToBattlefieldAndReturn(player2, new DregscapeZombie());
         harness.setLibrary(player2, List.of(new Island(), new Island()));
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new CallToHeel(), new CallToHeel()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

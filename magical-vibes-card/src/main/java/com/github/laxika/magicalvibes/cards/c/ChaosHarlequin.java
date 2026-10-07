@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardMatches;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -29,11 +29,10 @@ public class ChaosHarlequin extends Card {
                                 new ImprintedCardMatches(new CardTypePredicate(CardType.LAND), "a land card"),
                                 new BoostSelfEffect(-4, 0)
                         ),
+                        // "Otherwise" also covers exiling nothing from an empty library
                         new ConditionalEffect(
-                                new ImprintedCardMatches(
-                                        new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
-                                        "not a land card"
-                                ),
+                                new NotCondition(new ImprintedCardMatches(
+                                        new CardTypePredicate(CardType.LAND), "a land card")),
                                 new BoostSelfEffect(2, 0)
                         )
                 ),

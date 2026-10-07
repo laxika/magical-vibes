@@ -35,7 +35,11 @@ public class EnchantedCreatureFightsTargetCreatureEffectHandler implements Norma
 
         // The fighting creature is the one this Aura is attached to (the enchanted creature), not the
         // Aura permanent itself. Re-derive it from the attachment at resolution.
+        // An Aura that has left the battlefield uses what it was last attached to (CR 608.2h).
         Permanent aura = gameQueryService.findPermanentById(gameData, auraId);
+        if (aura == null) {
+            aura = entry.getSourcePermanentSnapshot();
+        }
         if (aura == null || aura.getAttachedTo() == null) {
             return;
         }

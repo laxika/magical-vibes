@@ -64,9 +64,10 @@ class CadricSoulKindlerTest extends BaseCardTest {
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst().orElseThrow();
-        assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+                .anyMatch(action -> action.permanentId().equals(token.getId())
+                        && action.kind() == DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
     }
 
     @Test
@@ -168,7 +169,7 @@ class CadricSoulKindlerTest extends BaseCardTest {
     void sacrificeWaitsForDelayedTriggerToResolve() {
         Permanent token = createCopy();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
         assertThat(gd.stack).hasSize(1);
@@ -182,7 +183,7 @@ class CadricSoulKindlerTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(token);
         gd.playerBattlefields.get(player2.getId()).add(token);
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         if (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
         }

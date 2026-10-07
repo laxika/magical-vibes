@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnAndBoostTargetCreatureByManaValueEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -16,7 +18,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves Lucky Slots' top-card exile, play permission, and target-creature boost. */
+/** Resolves Lucky Slots' top-card exile and play permission, then queues its reflexive boost trigger. */
 @Component
 @RequiredArgsConstructor
 public class ExileTopCardMayPlayThisTurnAndBoostTargetCreatureByManaValueEffectHandler
@@ -24,7 +26,7 @@ public class ExileTopCardMayPlayThisTurnAndBoostTargetCreatureByManaValueEffectH
 
     private final ExileService exileService;
     private final GameLogService gameLogService;
-    private final BoostTargetCreatureEffectHandler boostTargetCreatureEffectHandler;
+    private final QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -51,7 +53,9 @@ public class ExileTopCardMayPlayThisTurnAndBoostTargetCreatureByManaValueEffectH
                 .text(" from the top of their library (may play it this turn).").build());
 
         entry.setEventValue(topCard.getManaValue());
-        boostTargetCreatureEffectHandler.resolve(gameData, entry,
-                new BoostTargetCreatureEffect(new EventValue(), new Fixed(0)));
+        queueReflexiveAbilityEffectHandler.resolve(gameData, entry, new QueueReflexiveAbilityEffect(
+                new BoostTargetCreatureEffect(new EventValue(), new Fixed(0),
+                        new PermanentControlledBySourceControllerPredicate()),
+                false, true));
     }
 }

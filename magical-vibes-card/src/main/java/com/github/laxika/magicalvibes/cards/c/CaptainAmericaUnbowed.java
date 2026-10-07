@@ -16,7 +16,7 @@ public class CaptainAmericaUnbowed extends Card {
 
     public CaptainAmericaUnbowed() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_OWN_CREATURES,
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_PERMANENTS,
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SOLDIER, CardSubtype.HERO))));
     }
 }

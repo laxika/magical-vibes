@@ -26,6 +26,7 @@ public class CampusRenovation extends Card {
                         new CardTypePredicate(CardType.ENCHANTMENT))))
                 .targetGraveyard(true)
                 .upTo(true)
+                .chooseAuraAttachment(true)
                 .build());
         addEffect(EffectSlot.SPELL, new ExileTopCardsMayPlayUntilNextTurnEffect(2));
     }

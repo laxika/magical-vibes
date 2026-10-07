@@ -73,7 +73,7 @@ public class LegendRuleService {
                 if (nonExemptPermanents.size() < 2) {
                     continue;
                 }
-                gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.LegendRule(entry.getKey()));
+                gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.LegendRule(entry.getKey(), nonExemptPermanents));
                 playerInputService.beginPermanentChoice(gameData, controllerId, nonExemptPermanents,
                         "You control multiple legendary permanents named " + entry.getKey() + ". Choose one to keep.");
                 return true;

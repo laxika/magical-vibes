@@ -72,7 +72,7 @@ class CarnelianOrbOfDragonkindTest extends BaseCardTest {
         Permanent dragon = findPermanent(player1, "Shivan Dragon");
         assertThat(dragon.hasKeyword(Keyword.HASTE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(dragon.hasKeyword(Keyword.HASTE)).isFalse();
     }

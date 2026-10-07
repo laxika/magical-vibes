@@ -4,12 +4,19 @@ import com.github.laxika.magicalvibes.cards.w.WallOfRazors;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -137,8 +144,15 @@ class CannibalizeTest extends BaseCardTest {
         Permanent giant = addCreatureReady(player2, new CravenGiant());
 
         castCannibalizeWithoutResolving(wall, giant);
-        gd.playerBattlefields.get(player2.getId()).removeAll(List.of(wall, giant));
-        gd.playerBattlefields.get(player1.getId()).addAll(List.of(wall, giant));
+        for (Permanent stolen : List.of(wall, giant)) {
+            gd.stolenCreatures.put(stolen.getId(), player2.getId());
+            gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Control effect", null,
+                    player1.getId(), new GainControlOfTargetEffect(ControlDuration.PERMANENT), stolen.getId(),
+                    null, null, EffectDuration.PERMANENT, 0));
+        }
+        harness.inMutationScope(() -> GameTestEngineContext.get()
+                .getBean(CreatureControlService.class)
+                .reconcileControl(gd));
         harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice choice =

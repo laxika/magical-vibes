@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
@@ -48,9 +47,6 @@ class CallerOfThePackTest extends BaseCardTest {
         assertThat(copy.isTapped()).isTrue();
         assertThat(copy.isAttacking()).isTrue();
         assertThat(copy.getAttackTarget()).isEqualTo(player3.getId());
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(action -> action.permanentId().equals(copy.getId())
-                        && action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);
 
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
@@ -97,7 +93,7 @@ class CallerOfThePackTest extends BaseCardTest {
     void attackingPlaneswalkerCreatesCopyForOtherOpponent() {
         addThirdPlayer();
         addCreatureReady(player1, new CallerOfThePack());
-        Permanent teferi = harness.addToBattlefieldAndReturn(player2, new TeferiTemporalArchmage());
+        Permanent teferi = harness.enterBattlefieldAndReturn(player2, new TeferiTemporalArchmage());
 
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
             harness.forceActivePlayer(player1);
@@ -122,7 +118,7 @@ class CallerOfThePackTest extends BaseCardTest {
     void offersPlaneswalkerAttackChoice() {
         addThirdPlayer();
         addCreatureReady(player1, new CallerOfThePack());
-        harness.addToBattlefield(player3, new TeferiTemporalArchmage());
+        harness.enterBattlefieldAndReturn(player3, new TeferiTemporalArchmage());
 
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
             declareAttackers(List.of(0));

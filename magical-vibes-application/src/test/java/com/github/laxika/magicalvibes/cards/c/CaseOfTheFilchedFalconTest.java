@@ -173,7 +173,9 @@ class CaseOfTheFilchedFalconTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Case of the Filched Falcon");
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(findPermanent(player2, "Candlestick")).isSameAs(target);
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);

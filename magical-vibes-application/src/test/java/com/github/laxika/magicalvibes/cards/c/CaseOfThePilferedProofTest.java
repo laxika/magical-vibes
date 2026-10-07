@@ -32,6 +32,7 @@ class CaseOfThePilferedProofTest extends BaseCardTest {
         harness.setLibrary(player1, List.of());
         harness.setHand(player1, List.of(new CaseFileAuditor()));
         harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castCreature(player1, 0);
         resolveAllTriggers();
@@ -81,6 +82,7 @@ class CaseOfThePilferedProofTest extends BaseCardTest {
         addThreeDetectives();
         solveAtEndStep();
         Permanent detective = findPermanent(player1, "Cold Case Cracker");
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new Doppelgang()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);

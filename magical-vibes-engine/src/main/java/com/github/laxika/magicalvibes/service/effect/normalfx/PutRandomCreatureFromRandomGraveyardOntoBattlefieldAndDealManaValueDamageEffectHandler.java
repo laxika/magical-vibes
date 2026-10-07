@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutRandomCreatureFromRandomGraveyardOntoBattlefieldAndDealManaValueDamageEffect;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -29,7 +29,6 @@ public class PutRandomCreatureFromRandomGraveyardOntoBattlefieldAndDealManaValue
         implements NormalEffectHandlerBean {
 
     private final BattlefieldEntryService battlefieldEntryService;
-    private final DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final PermanentRemovalService permanentRemovalService;
@@ -85,7 +84,9 @@ public class PutRandomCreatureFromRandomGraveyardOntoBattlefieldAndDealManaValue
                 gameData, entry.getControllerId(), permanent, card);
 
         entry.setEventValue(card.getManaValue());
-        dealDamageToPlayersEffectHandler.resolve(gameData, entry,
-                new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.CONTROLLER));
+        entry.setTargetId(permanent.getId());
+        int effectIndex = entry.getEffectsToResolve().indexOf(effect);
+        entry.insertEffectsToResolve(effectIndex + 1,
+                List.of(new DealDamageToPlayersEffect(new TargetManaValue(), DamageRecipient.CONTROLLER)));
     }
 }

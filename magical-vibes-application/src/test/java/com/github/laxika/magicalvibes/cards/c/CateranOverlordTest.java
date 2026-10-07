@@ -23,8 +23,8 @@ class CateranOverlordTest extends BaseCardTest {
         Permanent overlord = addCreatureReady(player1, new CateranOverlord());
         overlord.setRegenerationShield(1);
 
+        // It's the only creature, so the sacrifice cost picks it automatically
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, overlord.getId());
 
         harness.assertNotOnBattlefield(player1, "Cateran Overlord");
         harness.assertInGraveyard(player1, "Cateran Overlord");

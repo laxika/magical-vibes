@@ -18,6 +18,9 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 
 import java.util.List;
 
@@ -30,7 +33,7 @@ public class CavalierOfFlame extends Card {
                 "{1}{R}",
                 List.of(
                         new BoostAllOwnCreaturesEffect(1, 0),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES)
+                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES)
                 ),
                 "{1}{R}: Creatures you control get +1/+0 and gain haste until end of turn."
         ));
@@ -43,6 +46,8 @@ public class CavalierOfFlame extends Card {
         addEffect(EffectSlot.ON_DEATH, SequenceEffect.of(
                 new DealDamageToPlayersEffect(landsInGraveyard, DamageRecipient.EACH_OPPONENT),
                 new MassDamageEffect(landsInGraveyard, false, true,
-                        new PermanentIsPlaneswalkerPredicate())));
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsPlaneswalkerPredicate(),
+                                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))))));
     }
 }

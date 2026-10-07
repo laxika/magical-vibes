@@ -102,9 +102,11 @@ class CapricopianTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.ensurePriority(player2);
 
-        harness.activateAbility(player2, 0, null, null);
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.activateAbility(player2, 0, null, null);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player2, false);
+        });
 
         assertThat(capricopian.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(capricopian.getAttackTarget()).isEqualTo(player2.getId());
@@ -162,14 +164,16 @@ class CapricopianTest extends BaseCardTest {
         harness.ensurePriority(player2);
         harness.activateAbility(player2, 0, null, null);
         harness.addToBattlefield(player2, new FormOfTheDragon());
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, true);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player2, true);
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.validPlayerIds()).containsExactly(player2.getId());
-        harness.handlePermanentChosen(player2, player2.getId());
+            PendingInteraction.PermanentChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+            assertThat(choice).isNotNull();
+            assertThat(choice.validPlayerIds()).containsExactly(player2.getId());
+            harness.handlePermanentChosen(player2, player2.getId());
+        });
         assertThat(capricopian.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(capricopian.getAttackTarget()).isEqualTo(player2.getId());
     }

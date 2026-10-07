@@ -708,8 +708,8 @@ public class ConditionEvaluationService {
                             && gameData.playersWhoseCreatureCardsLeftGraveyardThisTurn
                             .contains(ctx.controllerId());
             case CreatureCardsPutIntoGraveyardThisTurnAtLeast c ->
-                    gameData.creatureCardsPutIntoGraveyardFromAnywhereThisTurn.values().stream()
-                            .mapToInt(Set::size)
+                    gameData.creatureCardGraveyardEntriesThisTurn.values().stream()
+                            .mapToInt(Integer::intValue)
                             .sum() >= c.minimum();
             case CreatureDeathsThisTurnAtLeast c ->
                     c.scope() == CountScope.CONTROLLER
@@ -788,7 +788,8 @@ public class ConditionEvaluationService {
                             && gameData.playersWhoSacrificedArtifactsThisTurn.contains(ctx.controllerId());
             case AttackedWithCreaturesThisTurn c ->
                     ctx.controllerId() != null
-                            && gameData.creaturesAttackedCountThisTurn.getOrDefault(ctx.controllerId(), 0) >= c.minimum();
+                            && gameData.creaturesAttackedWithThisTurn.getOrDefault(ctx.controllerId(), Set.of()).size()
+                            >= c.minimum();
             case AttackedWithCreaturesOfSubtypeThisTurn c ->
                     ctx.controllerId() != null
                             && gameData.creaturesAttackedCountBySubtypeThisTurn

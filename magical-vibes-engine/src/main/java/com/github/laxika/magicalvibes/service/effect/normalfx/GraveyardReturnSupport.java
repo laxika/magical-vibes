@@ -599,8 +599,11 @@ public class GraveyardReturnSupport {
                 p.setCounterCount(CounterType.MANNEQUIN, 1);
             }
             if (enterWithCounter) {
-                p.setCounterCount(effect.enterWithCounter(),
-                        p.getCounterCount(effect.enterWithCounter()) + effect.enterWithCounterCount());
+                int placed = gameQueryService.replaceCounters(gameData, p, controllerId, effect.enterWithCounter(),
+                        effect.enterWithCounterCount(), entry == null ? controllerId : entry.getControllerId());
+                if (placed > 0) {
+                    p.setCounterCount(effect.enterWithCounter(), p.getCounterCount(effect.enterWithCounter()) + placed);
+                }
             }
             if (enterWithCounters) {
                 for (CounterType counterType : effect.enterWithCounters()) {

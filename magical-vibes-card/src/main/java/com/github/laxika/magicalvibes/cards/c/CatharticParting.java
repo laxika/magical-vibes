@@ -32,6 +32,6 @@ public class CatharticParting extends Card {
                 "Target must be an artifact or enchantment an opponent controls"
         )).addEffect(EffectSlot.SPELL, new ShuffleTargetPermanentIntoLibraryEffect());
         addEffect(EffectSlot.SPELL,
-                new ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect(null, 4));
+                ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect.optional(null, 4));
     }
 }

@@ -40,7 +40,9 @@ public class RevealTopCardSameNameInGraveyardOrDrawEffectHandler implements Norm
         String sourceName = entry.getCard().getName();
 
         if (deck == null || deck.isEmpty()) {
+            // Nothing is revealed, so the "otherwise, draw a card" branch still attempts the draw
             gameLogService.append(gameData, GameLog.text(playerName + "'s library is empty (" + sourceName + ")."));
+            playerInteractionSupport.applyDrawCards(gameData, controllerId, 1);
             return;
         }
 

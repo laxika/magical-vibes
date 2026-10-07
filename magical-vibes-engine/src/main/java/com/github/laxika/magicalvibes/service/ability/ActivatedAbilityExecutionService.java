@@ -1542,7 +1542,10 @@ public class ActivatedAbilityExecutionService {
                     }
                 }
             } else if (effect instanceof AwardHasteGrantingManaEffect ahg) {
-                ahg.applyTo(gameData.playerManaPools.get(playerId));
+                new AwardHasteGrantingManaEffect(
+                        ManaProductionSupport.effectiveColor(gameData, playerId, permanent, ahg.color()),
+                        ahg.amount() * manaMultiplier, ahg.creatureSubtype())
+                        .applyTo(gameData.playerManaPools.get(playerId));
             } else if (effect instanceof AwardUncounterableGrantingManaEffect aug) {
                 new AwardUncounterableGrantingManaEffect(
                         ManaProductionSupport.effectiveColor(gameData, playerId, permanent, aug.color()),

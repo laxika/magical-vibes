@@ -52,8 +52,10 @@ public class SearchLibraryForUpToTwoBasicLandsWithSameNameAsChosenLandEffectHand
         }
 
         if (lands.isEmpty()) {
+            // No land can be chosen, but the library is still searched (finding nothing) and shuffled
             log.info("Game {} - {} controls no land to choose for same-name basic-land search",
                     gameData.id, entry.getCard().getName());
+            search(gameData, entry, "");
             return;
         }
 

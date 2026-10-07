@@ -126,6 +126,7 @@ public class TurnCleanupService {
                 com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat.class);
         gameData.controlLossUnattachTriggers.clear();
         gameData.controlLossTapTriggers.clear();
+        gameData.sacrificeForbiddenThisTurn.clear();
     }
 
     /** Expires control effects whose controller has just finished their next turn. */
@@ -397,6 +398,7 @@ public class TurnCleanupService {
         gameData.allDamagePreventionPredicatesByController.clear();
         gameData.creaturesWithCombatDamagePrevented.clear();
         gameData.creaturesPreventedFromDealingCombatDamage.clear();
+        gameData.creaturesAssigningNoCombatDamage.clear();
         gameData.creaturesAssigningNoCombatDamageThisTurn.clear();
         gameData.creaturesWithCombatDamagePreventedThisCombat.clear();
         gameData.creaturesPreventedFromDealingCombatDamageThisCombat.clear();

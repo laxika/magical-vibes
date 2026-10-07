@@ -115,6 +115,8 @@ class CaptiveWeirdTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.setLibrary(player1, List.of(new CaptiveWeird(), new CaptiveWeird()));
         harness.setLibrary(player2, List.of(new CaptiveWeird(), new CaptiveWeird()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());

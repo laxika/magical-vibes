@@ -2900,7 +2900,7 @@ public class AmountEvaluationService {
         }
 
         int total = gameData.getSpellsCastThisTurn(ctx.controllerId()).stream()
-                .mapToInt(Card::getManaValue)
+                .mapToInt(gameData::getSpellCastStackManaValue)
                 .sum();
         StackEntry resolvingEntry = ctx.stackEntry();
         if (resolvingEntry != null && resolvingEntry.getCard() != null) {

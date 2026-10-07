@@ -149,7 +149,7 @@ class CalamityGallopingInfernoTest extends BaseCardTest {
         addCreatureReady(player1, new CalamityGallopingInferno());
         Permanent saddler = addCreatureReady(player1, new BristlepackSentry());
         addCreatureReady(player2, new BristlepackSentry());
-        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceReawakened());
+        Permanent jace = harness.enterBattlefieldAndReturn(player2, new JaceReawakened());
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         declareAttackers(List.of(0));

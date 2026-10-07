@@ -8250,12 +8250,19 @@ public class AbilityActivationService {
         if (ability.isToughnessAsLoyalty()) {
             permanent.setToughnessAsLoyalty(
                     gameQueryService.getToughnessAsLoyalty(permanent) + loyaltyCost);
+        } else if (loyaltyCost > 0) {
+            // A positive loyalty cost puts counters, so counter-placement replacements apply
+            // (Vorinclex doubles the full cost, including Carth's additional +1).
+            int placed = gameQueryService.replaceCounters(gameData, permanent, CounterType.LOYALTY,
+                    loyaltyCost, playerId);
+            permanent.setCounterCount(CounterType.LOYALTY,
+                    permanent.getCounterCount(CounterType.LOYALTY) + placed);
+            if (placed > 0) {
+                permanentCounterSupport.notifyCountersPlaced(gameData, null, permanent, placed);
+            }
         } else {
             permanent.setCounterCount(CounterType.LOYALTY,
                     permanent.getCounterCount(CounterType.LOYALTY) + loyaltyCost);
-            if (loyaltyCost > 0) {
-                permanentCounterSupport.notifyCountersPlaced(gameData, null, permanent, loyaltyCost);
-            }
         }
         permanent.setLoyaltyActivationsThisTurn(permanent.getLoyaltyActivationsThisTurn() + 1);
         gameData.playersWhoActivatedLoyaltyAbilityThisTurn.add(playerId);

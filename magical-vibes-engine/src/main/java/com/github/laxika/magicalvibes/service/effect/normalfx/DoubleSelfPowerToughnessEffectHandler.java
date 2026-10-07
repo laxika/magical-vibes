@@ -37,7 +37,8 @@ public class DoubleSelfPowerToughnessEffectHandler implements NormalEffectHandle
         }
 
         int currentPower = gameQueryService.getEffectivePower(gameData, self);
-        int currentToughness = gameQueryService.getEffectiveToughness(gameData, self);
+        int currentToughness = ((DoubleSelfPowerToughnessEffect) effect).powerOnly()
+                ? 0 : gameQueryService.getEffectiveToughness(gameData, self);
 
         self.setPowerModifier(self.getPowerModifier()
                 + MaroGoneNutsSupport.apply(gameData, effect, currentPower));

@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.TargetSorceryDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield;
 import com.github.laxika.magicalvibes.model.TurnSourceDamageRedirectToControllerShield;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAttachedCreatureEffect;
@@ -581,7 +582,8 @@ public class DamagePreventionService {
             if (gameQueryService.isDamageFromDesertsToCamelOrBandedCreaturePrevented(
                     gameData, permanent, null, damageSource, isCombatDamage)) return 0;
             if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;
-            if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAttachedCreatureEffect.class)) return 0;
+            if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAttachedCreatureEffect.class)
+                    && grantedAttachedPreventionSurvives(gameData, permanent)) return 0;
             if (isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) return 0;
             // General's Kabuto: "Prevent all combat damage that would be dealt to equipped creature."
             if (isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllCombatDamageToAttachedCreatureEffect.class)) return 0;
@@ -2909,5 +2911,18 @@ public class DamagePreventionService {
             gameData.plusOnePlusOneCountersPutOnControlledCreaturesThisTurn.merge(
                     controllerId, count, Integer::sum);
         }
+    }
+
+    /**
+     * Caduceus grants the equipped creature "Prevent all damage that would be dealt to this
+     * creature", so ability removal with a later timestamp than the Equipment ends the prevention.
+     */
+    private boolean grantedAttachedPreventionSurvives(GameData gameData, Permanent creature) {
+        return gameData.anyPermanentMatches(p -> p.isAttached() && p.getAttachedTo().equals(creature.getId())
+                && p.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effect ->
+                        effect instanceof PreventAllDamageToAttachedCreatureEffect
+                                || effect instanceof ConditionalEffect conditional
+                                && conditional.wrapped() instanceof PreventAllDamageToAttachedCreatureEffect)
+                && gameQueryService.grantedAbilitySurvivesRemoval(gameData, creature, p.getTimestamp()));
     }
 }

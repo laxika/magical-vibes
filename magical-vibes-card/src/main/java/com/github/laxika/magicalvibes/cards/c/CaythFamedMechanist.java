@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PopulateEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -30,10 +30,11 @@ import java.util.Set;
 public class CaythFamedMechanist extends Card {
 
     public CaythFamedMechanist() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, fabricate());
+        // Fabricate's counter-or-Servo choice is made as the ability resolves
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtResolutionEffect(fabricate()));
         addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseOneAtTriggerTimeEffect(fabricate()),
+                new ChooseOneAtResolutionEffect(fabricate()),
                 GrantScope.OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

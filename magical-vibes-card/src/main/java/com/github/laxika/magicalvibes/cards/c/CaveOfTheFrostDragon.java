@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
@@ -23,7 +23,7 @@ public class CaveOfTheFrostDragon extends Card {
 
     public CaveOfTheFrostDragon() {
         addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
-                new ControlsPermanentCountAtMost(1, new PermanentIsLandPredicate()),
+                new ControlsPermanentCount(2, new PermanentIsLandPredicate()),
                 new EntersTappedEffect()));
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.WHITE));

@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -22,6 +25,7 @@ import org.springframework.stereotype.Component;
 public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
+    private final QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
@@ -38,6 +42,10 @@ public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implem
         List<UUID> groupTargets = entry.targetsForBoundEffectGroup(revealEffect);
         UUID targetId = revealEffect.fixedTargetId();
 
+        if (revealEffect.reflexive()) {
+            resolveForTarget(gameData, entry, null, revealEffect.randomizeBottom(), true);
+            return;
+        }
         if (targetId == null && groupTargets != null) {
             if (groupTargets.isEmpty()) {
                 return;
@@ -48,7 +56,7 @@ public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implem
             targetId = entry.getTargetId();
         }
 
-        resolveForTarget(gameData, entry, targetId, revealEffect.randomizeBottom());
+        resolveForTarget(gameData, entry, targetId, revealEffect.randomizeBottom(), false);
     }
 
     private void insertFollowUpEffects(StackEntry entry,
@@ -70,7 +78,7 @@ public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implem
     }
 
     private void resolveForTarget(GameData gameData, StackEntry entry, UUID targetId,
-                                  boolean randomizeBottom) {
+                                  boolean randomizeBottom, boolean reflexive) {
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -96,7 +104,9 @@ public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implem
         gameLogService.append(gameData, GameLog.text(playerName + " reveals " + revealedNames
                 + " from the top of their library with " + sourceName + "."));
 
-        if (nonland != null) {
+        if (nonland != null && reflexive) {
+            entry.setEventValue(nonland.getManaValue());
+        } else if (nonland != null) {
             int manaValue = nonland.getManaValue();
             gameLogService.append(gameData, GameLog.builder()
                     .text(sourceName + " deals damage equal to ")
@@ -115,6 +125,10 @@ public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implem
             deck.addAll(revealed);
         } else {
             libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, revealed);
+        }
+        if (nonland != null && reflexive) {
+            queueReflexiveAbilityEffectHandler.resolve(gameData, entry, new QueueReflexiveAbilityEffect(
+                    new DealDamageToAnyTargetEffect(new EventValue(), false, false), false, true));
         }
     }
 }

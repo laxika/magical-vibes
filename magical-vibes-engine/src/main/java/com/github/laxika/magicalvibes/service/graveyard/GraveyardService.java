@@ -1727,6 +1727,7 @@ public class GraveyardService {
                 gameData.creatureCardsPutIntoGraveyardFromAnywhereThisTurn
                         .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet())
                         .add(card.getId());
+                gameData.creatureCardGraveyardEntriesThisTurn.merge(ownerId, 1, Integer::sum);
             }
         }
     }

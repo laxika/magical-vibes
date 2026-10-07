@@ -157,6 +157,7 @@ class CanyonCrabTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castWithAlternateCost(player1, 0, List.of());
+        harness.setHand(player2, List.of());
 
         harness.passUntil(player2, TurnStep.UPKEEP);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
@@ -206,6 +207,8 @@ class CanyonCrabTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
-        harness.passBothPriorities();
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
     }
 }

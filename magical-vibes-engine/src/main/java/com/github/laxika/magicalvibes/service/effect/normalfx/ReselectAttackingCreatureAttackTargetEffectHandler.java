@@ -46,12 +46,13 @@ public class ReselectAttackingCreatureAttackTargetEffectHandler implements Norma
             return;
         }
 
+        // Reselecting what a creature attacks ignores all attack requirements, restrictions and
+        // costs; only the kinds of objects it could attack at all are offered.
         Set<UUID> validAttackTargetIds =
                 attackLegalityService.getValidAttackTargetIds(gameData, attackerControllerId);
         List<UUID> validPlayerIds = gameData.orderedPlayerIds.stream()
                 .filter(validAttackTargetIds::contains)
                 .filter(playerId -> !playerId.equals(attackerControllerId))
-                .filter(playerId -> attackLegalityService.canAttackDefender(gameData, attacker, playerId))
                 .toList();
         List<UUID> validPermanentIds = reselectEffect.playersOnly()
                 ? List.of()
@@ -60,7 +61,6 @@ public class ReselectAttackingCreatureAttackTargetEffectHandler implements Norma
                         .filter(permanent -> validAttackTargetIds.contains(permanent.getId()))
                         .filter(permanent -> !attackerControllerId.equals(gameData.findControllerOf(permanent)))
                         .map(Permanent::getId)
-                        .filter(targetId -> attackLegalityService.canAttackDefender(gameData, attacker, targetId))
                         .toList();
 
         if (validPlayerIds.isEmpty() && validPermanentIds.isEmpty()) {

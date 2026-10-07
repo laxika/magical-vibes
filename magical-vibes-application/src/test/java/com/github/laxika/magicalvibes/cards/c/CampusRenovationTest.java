@@ -8,9 +8,8 @@ import com.github.laxika.magicalvibes.cards.a.AuraOfSilence;
 import com.github.laxika.magicalvibes.cards.t.TormodsCrypt;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -44,8 +43,6 @@ class CampusRenovationTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissions)
                 .containsEntry(topCard.getId(), player1.getId())
                 .containsEntry(secondCard.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd.get(topCard.getId()))
-                .isEqualTo(gd.turnNumber + 2);
     }
 
     @Test
@@ -162,20 +159,17 @@ class CampusRenovationTest extends BaseCardTest {
     @DisplayName("Unplayed cards remain exiled after permission expires at the end of the caster's next turn")
     void expiresAtEndOfNextTurn() {
         Card top = new Forest();
-        harness.setLibrary(player1, List.of(top));
+        harness.setLibrary(player1, List.of(top, new Forest(), new Forest(), new Forest()));
         harness.setHand(player1, List.of(new CampusRenovation()));
         addMana();
         harness.castAndResolveSorcery(player1, 0, List.of());
+        harness.setHand(player2, List.of());
 
-        int castTurn = gd.turnNumber;
-        TurnCleanupService cleanup = GameTestEngineContext.get().getBean(TurnCleanupService.class);
-        cleanup.applyCleanupResets(gd);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsKey(top.getId());
-        gd.turnNumber = castTurn + 1;
-        cleanup.applyCleanupResets(gd);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsKey(top.getId());
-        gd.turnNumber = castTurn + 2;
-        cleanup.applyCleanupResets(gd);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);

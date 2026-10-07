@@ -125,7 +125,6 @@ class CabalPatriarchTest extends BaseCardTest {
         addMana();
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
-        harness.handlePermanentChosen(player1, patriarch.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(patriarch);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(patriarchCard);

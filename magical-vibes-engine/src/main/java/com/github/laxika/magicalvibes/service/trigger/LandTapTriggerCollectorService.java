@@ -457,8 +457,12 @@ public class LandTapTriggerCollectorService {
                         match.gameData(), tappedLand, trigger.landFilter())) return false;
 
         ManaColor chosenManaColor = ManaColor.valueOf(chosenColor.name());
-        boolean producesChosenColor = tappedLand.getCard().getEffects(EffectSlot.ON_TAP).stream()
-                .anyMatch(e -> e instanceof AwardManaEffect award && award.color() == chosenManaColor);
+        // A land's activated mana ability reports the colors it actually added; a plain tap
+        // reports none, so fall back to the land's printed tap mana.
+        boolean producesChosenColor = lt.producedColors().isEmpty()
+                ? tappedLand.getCard().getEffects(EffectSlot.ON_TAP).stream()
+                        .anyMatch(e -> e instanceof AwardManaEffect award && award.color() == chosenManaColor)
+                : lt.producedColors().contains(chosenManaColor);
         if (!producesChosenColor) return false;
 
         UUID landControllerId = gameQueryService.findPermanentController(

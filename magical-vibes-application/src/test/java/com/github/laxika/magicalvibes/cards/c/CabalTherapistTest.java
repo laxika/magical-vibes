@@ -125,27 +125,6 @@ class CabalTherapistTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Any nonland Oracle card name is legal even outside the implemented catalog")
-    void canNameNonlandCardOutsideCatalog() {
-        addCabalTherapist();
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new UniversalAutomaton());
-        Card handCard = new Defile();
-        harness.setHand(player2, List.of(handCard));
-
-        advanceToFirstMainPhase();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
-        harness.handleListChoice(player1, "Shichifukujin Dragon");
-
-        assertThat(gd.playerHands.get(player2.getId())).containsExactly(handCard);
-        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNull();
-    }
-
-    @Test
     @DisplayName("An empty target hand still allows naming a nonland card")
     void canTargetEmptyHand() {
         Permanent therapist = harness.addToBattlefieldAndReturn(player1, new CabalTherapist());

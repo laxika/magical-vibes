@@ -2064,7 +2064,9 @@ public class GameService {
                 () -> payLifeForColorlessMana(gameData, actionPlayer))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            requirePriority(gameData, player);
+            if (!isCombatCostManaPayment(gameData, player) && !isMayCostManaPayment(gameData, player)) {
+                requirePriority(gameData, player);
+            }
             abilityActivationService.payLifeForColorlessMana(gameData, player);
         }
     }

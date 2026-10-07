@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.s.SkirkProspector;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -110,7 +111,7 @@ class CabalSlaverTest extends BaseCardTest {
         Permanent goblin = addCreatureReady(player2, new SkirkProspector());
         goblin.setAttacking(true);
 
-        resolveCombat(player2);
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat(player2));
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
@@ -145,11 +146,11 @@ class CabalSlaverTest extends BaseCardTest {
         goblin.setAttacking(true);
 
         resolveCombat();
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         harness.assertLife(player2, 19);
     }
 

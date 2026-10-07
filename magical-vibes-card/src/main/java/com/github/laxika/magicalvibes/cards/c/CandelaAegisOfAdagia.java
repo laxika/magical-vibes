@@ -64,11 +64,14 @@ public class CandelaAegisOfAdagia extends Card {
                 new SourceCounterThreshold(8, CounterType.CHARGE),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
 
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new PutCardToBattlefieldEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardTypePredicate(CardType.CREATURE),
-                        new CardMaxManaValuePredicate(3)
-                )),
-                "creature"));
+        // Station 8+ also grants the combat damage trigger
+        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new ConditionalEffect(
+                new SourceCounterThreshold(8, CounterType.CHARGE),
+                new PutCardToBattlefieldEffect(
+                        new CardAllOfPredicate(List.of(
+                                new CardTypePredicate(CardType.CREATURE),
+                                new CardMaxManaValuePredicate(3)
+                        )),
+                        "creature")));
     }
 }

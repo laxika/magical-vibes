@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -24,9 +25,12 @@ public class CaravanVigil extends Card {
         // Morbid — If a creature died this turn, you may put that card onto the battlefield instead.
         addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Morbid(), 
                 new SearchLibraryEffect(CardPredicateUtils.basicLand()),
-                new SearchLibraryEffect(
-                        new CardAllOfPredicate(List.of(new CardSupertypePredicate(CardSupertype.BASIC), new CardTypePredicate(CardType.LAND))),
-                        LibrarySearchDestination.BATTLEFIELD)
+                new MayEffect(
+                        new SearchLibraryEffect(
+                                new CardAllOfPredicate(List.of(new CardSupertypePredicate(CardSupertype.BASIC), new CardTypePredicate(CardType.LAND))),
+                                LibrarySearchDestination.BATTLEFIELD),
+                        "Put the basic land card onto the battlefield instead of into your hand?",
+                        new SearchLibraryEffect(CardPredicateUtils.basicLand()))
         ));
     }
 }

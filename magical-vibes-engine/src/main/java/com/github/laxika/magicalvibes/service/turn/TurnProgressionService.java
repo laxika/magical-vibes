@@ -1083,6 +1083,7 @@ public class TurnProgressionService {
         gameData.playersWhoSacrificedPermanentsThisTurn.clear();
         gameData.playersWhoSacrificedArtifactsThisTurn.clear();
         gameData.creaturesAttackedCountThisTurn.clear();
+        gameData.creaturesAttackedWithThisTurn.clear();
         gameData.creaturesAttackedCountBySubtypeThisTurn.clear();
         gameData.permanentsThatAttackedBattlesThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();
@@ -1114,6 +1115,7 @@ public class TurnProgressionService {
         gameData.cardsPutIntoHandThisTurn.clear();
         gameData.cardsPutIntoGraveyardFromHandThisTurn.clear();
         gameData.creatureCardsPutIntoGraveyardFromAnywhereThisTurn.clear();
+        gameData.creatureCardGraveyardEntriesThisTurn.clear();
         gameData.playersWhoDescendedThisTurn.clear();
         gameData.descentsThisTurn.clear();
         gameData.playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn.clear();

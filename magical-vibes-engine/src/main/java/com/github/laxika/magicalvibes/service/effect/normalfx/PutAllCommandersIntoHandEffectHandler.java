@@ -82,13 +82,11 @@ public class PutAllCommandersIntoHandEffectHandler implements NormalEffectHandle
         }
     }
 
+    /**
+     * CR 903.9b — the owner may put a commander that would go to their hand into the command zone
+     * instead; adding it to the hand defers the move until that choice is made.
+     */
     private void putIntoHand(GameData gameData, UUID playerId, Card card) {
-        UUID previousMove = gameData.completingCommanderZoneMove;
-        gameData.completingCommanderZoneMove = card.getId();
-        try {
-            gameData.addCardToHand(playerId, card);
-        } finally {
-            gameData.completingCommanderZoneMove = previousMove;
-        }
+        gameData.addCardToHand(playerId, card);
     }
 }

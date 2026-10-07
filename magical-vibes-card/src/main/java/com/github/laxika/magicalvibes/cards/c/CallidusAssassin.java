@@ -28,11 +28,10 @@ public class CallidusAssassin extends Card {
         ));
         CardEffect destroyAbility = new DestroyUpToOneTargetPermanentEffect(otherCreatureWithSameName);
 
+        // "You may have this creature enter tapped as a copy of any creature on the battlefield"
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyPermanentOnEnterEffect(
-                new PermanentIsCreaturePredicate(),
-                "creature",
-                Set.of(),
-                Map.of(EffectSlot.ON_ENTER_BATTLEFIELD, List.of(destroyAbility))
-        ));
+                new PermanentIsCreaturePredicate(), "creature", null, null, Set.of(), List.of(), null, null,
+                false, null, Set.of(), Map.of(EffectSlot.ON_ENTER_BATTLEFIELD, List.of(destroyAbility)),
+                false, true, null, Set.of(), Set.of(), false, true, Set.of(), false, false, null, false, false));
     }
 }

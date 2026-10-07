@@ -18,11 +18,11 @@ public class CeremonialGroundbreaker extends Card {
             new PermanentHasSubtypePredicate(CardSubtype.CITIZEN);
 
     public CeremonialGroundbreaker() {
-        setAttachRestriction(CITIZEN);
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility(
                 "{1}", CITIZEN,
                 "Ceremonial Groundbreaker can be attached only to a Citizen"));
+        addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

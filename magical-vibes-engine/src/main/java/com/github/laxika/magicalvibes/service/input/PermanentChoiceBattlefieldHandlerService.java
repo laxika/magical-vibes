@@ -716,7 +716,8 @@ public class PermanentChoiceBattlefieldHandlerService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         List<Permanent> toRemove = new ArrayList<>();
         for (Permanent perm : battlefield) {
-            if (legendRule.cardName().equals(gameQueryService.getEffectiveName(gameData, perm)) && !perm.getId().equals(permanentId)) {
+            // Legends exempt from the rule (e.g. Cadric's tokens) were never candidates and stay
+            if (legendRule.candidateIds().contains(perm.getId()) && !perm.getId().equals(permanentId)) {
                 toRemove.add(perm);
             }
         }
@@ -2751,6 +2752,13 @@ public class PermanentChoiceBattlefieldHandlerService {
         // A null thenEffect means a bare "sacrifice a permanent" with no follow-up.
         // When the rider needs a target (Sorin, Imperious Bloodlord: "When you do, … deals 3 damage
         // to any target"), choose the target as the reflexive trigger goes on the stack.
+        if (ctx.thenEffect() instanceof com.github.laxika.magicalvibes.model.effect.ChooseOneEffect modal) {
+            // A modal reflexive trigger ("When you do, choose two —") has its modes and their
+            // targets chosen as it's put on the stack, before anyone gets priority.
+            playerInputService.beginTriggeredModalChoice(gameData, ctx.controllerId(), ctx.sourceCard(),
+                    modal, sourcePermanentId);
+            return;
+        }
         if (ctx.thenEffect() != null) {
             List<CardEffect> thenEffects = new ArrayList<>(List.of(ctx.thenEffect()));
             int targetGroupIndex = ctx.sourceCard().getEffectTargetIndex(ctx.thenEffect());

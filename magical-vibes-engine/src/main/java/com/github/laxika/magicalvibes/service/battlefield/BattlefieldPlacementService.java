@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryRequest;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -485,6 +486,13 @@ public class BattlefieldPlacementService {
         // Delayed "sacrifice this token at the beginning of the next end step" (Choreographed Sparks).
         if (permanent.getCard().isSacrificeAtEndStep()) {
             gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+        }
+        // CR 702.152a — a spell cast for its printed blitz cost creates the delayed "sacrifice at the
+        // beginning of the next end step" trigger as it resolves, independent of any ETB trigger.
+        if (permanent.isAlternateCost() && permanent.getCard().getCastingOption(AlternateHandCast.class)
+                .filter(AlternateHandCast::blitz).isPresent()) {
+            gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(),
+                    DelayedPermanentActionKind.SACRIFICE_AT_END_STEP, false, null, null, controllerId));
         }
         // "As this enters, you may reveal a [subtype] card from your hand; if you don't, it enters
         // tapped." Must run after the permanent is on the battlefield so we can reference/tap it.

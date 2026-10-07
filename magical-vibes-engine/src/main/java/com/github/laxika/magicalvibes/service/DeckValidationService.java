@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 
 @Service
 public class DeckValidationService {
+    private static final Pattern FORBIDDEN = Pattern.compile("(?m)^forbidden\\b|this card can.t be in your starting deck");
     private final DeckLegalityRegistry legalities;
     public DeckValidationService(DeckLegalityRegistry legalities) { this.legalities = legalities; }
 
@@ -49,6 +50,8 @@ public class DeckValidationService {
             }
             if (entry.getValue().size() > limit) errors.add(card.getName() + ": maximum " + limit + " copies across the deck and sideboard.");
             if (card.getType() != null && card.getType().isPlanar()) errors.add(card.getName() + ": planar cards belong in the planar deck.");
+            // Forbidden (Can't Quite Recall): the card can't be in any starting deck
+            if (FORBIDDEN.matcher(text(card)).find()) errors.add(card.getName() + ": forbidden cards can't be in a starting deck.");
             if (format == DeckFormat.COMMANDER && deck.commander() != null) {
                 Set<CardColor> colors = new HashSet<>(card.getColorIdentity());
                 if (card.hasType(CardType.LAND)) {

@@ -118,6 +118,8 @@ class CaseyJonesAsphaltHooliganTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         resolveCombat();
+        // Double strike: pass the first-strike damage step to reach regular combat damage
+        harness.passBothPriorities();
 
         harness.assertLife(player2, 12);
     }

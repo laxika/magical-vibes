@@ -17,7 +17,8 @@ import java.util.List;
 public class CaptiveAudience extends Card {
 
     public CaptiveAudience() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentGainsControlOfSourceEffect());
+        // "enters under the control of an opponent of your choice" is a replacement, not a trigger
+        addEffect(EffectSlot.STATIC, new ChooseOpponentGainsControlOfSourceEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ChooseModeNotYetChosenEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Your life total becomes 4",

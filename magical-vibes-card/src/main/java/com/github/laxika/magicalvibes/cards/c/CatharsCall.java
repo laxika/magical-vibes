@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -26,8 +27,11 @@ public class CatharsCall extends Card {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.STATIC,
                         new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_END_STEP_TRIGGERED,
+                // The granted ability is the creature's own, so its controller gets the token
+                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                        EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                         new CreateTokenEffect("Human", 1, 1,
-                                CardColor.WHITE, List.of(CardSubtype.HUMAN), Set.of(), Set.of()));
+                                CardColor.WHITE, List.of(CardSubtype.HUMAN), Set.of(), Set.of()),
+                        GrantScope.ENCHANTED_CREATURE));
     }
 }

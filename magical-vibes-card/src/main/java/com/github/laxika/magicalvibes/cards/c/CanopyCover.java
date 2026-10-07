@@ -5,9 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentCantBeTargetedByOpponentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -25,7 +23,7 @@ public class CanopyCover extends Card {
                                 new PermanentHasKeywordPredicate(Keyword.REACH)
                         )),
                         "creatures with flying or reach"))
-                .addEffect(EffectSlot.STATIC, new GrantEffectEffect(
-                        TargetingRestrictionEffect.opponentSpellsAndAbilities(), GrantScope.ENCHANTED_CREATURE));
+                // "your opponents" are the Aura controller's opponents, not the creature controller's
+                .addEffect(EffectSlot.STATIC, new EnchantedPermanentCantBeTargetedByOpponentsEffect());
     }
 }

@@ -9,11 +9,24 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
  * E.g. Kopala, Warden of Waves: {@code PermanentHasSubtypePredicate(MERFOLK)}, amount = 2.
  * The optional ability flag is false for effects that tax only spells, such as Boreal Elemental.
  * When {@code taxesController} is true, spells and abilities targeting the effect's controller
- * are taxed as well.
+ * are taxed as well. When {@code perTargetedPermanent} is true the tax is charged once for each
+ * distinct matching target, as when every protected permanent has the tax ability itself
+ * (Callaphe, Beloved of the Sea); otherwise it is charged once per spell or ability.
  */
 public record IncreaseOpponentCostForTargetingControlledPermanentEffect(
         PermanentPredicate predicate, int amount, boolean taxesActivatedAbilities,
-        boolean taxesController) implements CardEffect {
+        boolean taxesController, boolean perTargetedPermanent) implements CardEffect {
+
+    public IncreaseOpponentCostForTargetingControlledPermanentEffect(
+            PermanentPredicate predicate, int amount, boolean taxesActivatedAbilities, boolean taxesController) {
+        this(predicate, amount, taxesActivatedAbilities, taxesController, false);
+    }
+
+    /** Spell-only tax charged once for each distinct targeted permanent matching {@code predicate}. */
+    public static IncreaseOpponentCostForTargetingControlledPermanentEffect perTargetedPermanent(
+            PermanentPredicate predicate, int amount) {
+        return new IncreaseOpponentCostForTargetingControlledPermanentEffect(predicate, amount, false, false, true);
+    }
 
     public IncreaseOpponentCostForTargetingControlledPermanentEffect(PermanentPredicate predicate, int amount) {
         this(predicate, amount, true, false);

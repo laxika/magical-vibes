@@ -33,8 +33,8 @@ class CabarettiConfluenceTest extends BaseCardTest {
         assertThat(tokens).hasSize(3);
         assertThat(tokens).allSatisfy(token -> assertThat(token.hasKeyword(Keyword.HASTE)).isTrue());
 
-        harness.passUntil(TurnStep.END_STEP);
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().isToken());
@@ -81,7 +81,7 @@ class CabarettiConfluenceTest extends BaseCardTest {
     void mixedModesCopyBeforeBoostingEvenWhenSelectedInReverseOrder() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        cast(new int[]{2, 0, 0}, List.of(player1.getId(), creature.getId(), creature.getId()));
+        cast(new int[]{2, 0, 0}, List.of(creature.getId(), creature.getId(), player1.getId()));
         harness.passBothPriorities();
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
@@ -158,7 +158,7 @@ class CabarettiConfluenceTest extends BaseCardTest {
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()).findFirst().orElseThrow();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
         assertThat(gd.stack).isNotEmpty();
@@ -198,7 +198,7 @@ class CabarettiConfluenceTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(token);
         gd.playerBattlefields.get(player2.getId()).add(token);
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(token);

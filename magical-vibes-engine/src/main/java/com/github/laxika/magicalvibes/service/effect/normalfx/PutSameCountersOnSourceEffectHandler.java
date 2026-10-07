@@ -35,8 +35,10 @@ public class PutSameCountersOnSourceEffectHandler implements NormalEffectHandler
 
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         Permanent target = gameQueryService.findPermanentById(gameData, e.targetPermanentId());
-        if (source == null || (e.placingPlayerId() == null
-                && (target == null || source.getId().equals(target.getId())
+        // The number and kind of counters were fixed by the triggering event, so a creature that has
+        // since left the battlefield (e.g. died to its -1/-1 counter) still lets them be copied.
+        if (source == null || (e.placingPlayerId() == null && target != null
+                && (source.getId().equals(target.getId())
                 || !gameQueryService.isCreature(gameData, target)
                 || (e.requiresNonKree()
                 && gameQueryService.effectiveCreatureSubtypes(gameData, target).contains(CardSubtype.KREE))))) {

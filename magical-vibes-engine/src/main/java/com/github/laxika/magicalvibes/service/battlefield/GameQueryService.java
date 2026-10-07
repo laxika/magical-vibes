@@ -3879,6 +3879,11 @@ public class GameQueryService {
         if (isRingBearer(gameData, permanent)) {
             return true;
         }
+        UUID forbiddenPlayerId = gameData.sacrificeForbiddenThisTurn.get(permanent.getId());
+        if (forbiddenPlayerId != null
+                && forbiddenPlayerId.equals(findPermanentController(gameData, permanent.getId()))) {
+            return true;
+        }
         if (!permanent.isFaceDown() && !computeStaticBonus(gameData, permanent).losesAllAbilities()
                 && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CantBeSacrificedEffect.class::isInstance)) {
@@ -10952,6 +10957,8 @@ public class GameQueryService {
      * prevention effects (e.g. {@link PreventAllCombatDamageToAndByEnchantedCreatureEffect}).
      */
     public boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature, boolean isCombatDamage) {
+        // Assigning no combat damage isn't prevention, so unpreventable damage doesn't override it
+        if (isCombatDamage && gameData.creaturesAssigningNoCombatDamage.contains(creature.getId())) return true;
         if (!isDamagePreventable(gameData, isCombatDamage)) return false;
         if (damageCantBePreventedFromSource(gameData, creature, isCombatDamage)) return false;
         UUID sourceControllerId = findPermanentController(gameData, creature.getId());

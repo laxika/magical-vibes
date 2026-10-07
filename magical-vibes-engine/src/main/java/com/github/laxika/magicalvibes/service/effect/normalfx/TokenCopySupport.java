@@ -149,7 +149,7 @@ public class TokenCopySupport {
                 }
                 tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
                         gameData, tokenControllerId, tokenCard);
-                tokens.add(new Permanent(tokenCard));
+                tokens.add(withGrantedHaste(tokenCard, sourceCard, effect));
                 expandedAttackTargets.add(sourceAttackTarget);
             }
         }
@@ -270,6 +270,31 @@ public class TokenCopySupport {
                 context.controllerId(), context.copyEffect(), chosenTargets, true);
     }
 
+    /**
+     * "It gains haste" is an effect granting the token haste, not an exception to the copy
+     * (CR 707.2), so it is moved off the copiable token card onto the permanent where a copy of the
+     * token won't pick it up. A frozen token card is replaced by a mutable runtime copy first.
+     */
+    private static Permanent withGrantedHaste(Card tokenCard, Card sourceCard,
+                                              CreateTokenCopyOfTargetPermanentEffect effect) {
+        if (!effect.grantHaste()) {
+            return new Permanent(tokenCard);
+        }
+        boolean copiedHaste = sourceCard.hasKeyword(Keyword.HASTE)
+                || (effect.additionalKeywords() != null && effect.additionalKeywords().contains(Keyword.HASTE));
+        Card copiableCard = tokenCard;
+        if (!copiedHaste && tokenCard.getKeywords() != null && tokenCard.getKeywords().contains(Keyword.HASTE)) {
+            Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+            keywords.addAll(tokenCard.getKeywords());
+            keywords.remove(Keyword.HASTE);
+            copiableCard = tokenCard.createRuntimeCopy();
+            copiableCard.setKeywords(keywords);
+        }
+        Permanent token = new Permanent(copiableCard);
+        token.getPersistentGrantedKeywords().add(Keyword.HASTE);
+        return token;
+    }
+
     private List<UUID> putPreparedTokenCopiesOntoBattlefield(GameData gameData, StackEntry entry,
                                                             List<Permanent> tokens, Permanent sourcePermanent,
                                                             UUID tokenControllerId,
@@ -313,8 +338,10 @@ public class TokenCopySupport {
                         tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
             }
             if (effect.sacrificeAtEndStep()) {
+                // Only the player who created the token sacrifices it, and only while they control it
                 gameData.queueDelayedAction(new DelayedPermanentAction(
-                        tokenPermanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+                        tokenPermanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
+                        false, null, null, tokenControllerId));
             }
             if (effect.sacrificeAtNextUpkeep()) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(

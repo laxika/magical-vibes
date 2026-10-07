@@ -4,6 +4,11 @@ import com.github.laxika.magicalvibes.cards.h.HelixPinnacle;
 import com.github.laxika.magicalvibes.cards.w.WickerboughElder;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import java.util.UUID;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -109,10 +114,13 @@ class CacheRaidersTest extends BaseCardTest {
     @DisplayName("Returns a controlled permanent to its owner rather than its controller")
     void returnsBorrowedPermanentToOwnersHand() {
         addCreatureReady(player1, new CacheRaiders());
-        Permanent elder = addCreatureReady(player2, new WickerboughElder());
-        gd.playerBattlefields.get(player2.getId()).remove(elder);
-        gd.playerBattlefields.get(player1.getId()).add(elder);
+        WickerboughElder card = new WickerboughElder();
+        card.setOwnerId(player2.getId());
+        Permanent elder = addCreatureReady(player1, card);
         gd.stolenCreatures.put(elder.getId(), player2.getId());
+        gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Control effect", null,
+                player1.getId(), new GainControlOfTargetEffect(ControlDuration.PERMANENT), elder.getId(),
+                null, null, EffectDuration.PERMANENT, 0));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();

@@ -68,7 +68,7 @@ class CapennaExpressTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.isCreature(gd, express)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, express)).isFalse();
     }
@@ -142,11 +142,11 @@ class CapennaExpressTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(gqs.isCreature(gd, express)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, express)).isFalse();
     }

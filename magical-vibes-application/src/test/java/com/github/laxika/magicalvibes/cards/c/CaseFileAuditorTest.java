@@ -181,7 +181,8 @@ class CaseFileAuditorTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.passUntil(TurnStep.END_STEP);
-        harness.passBothPriorities();
+        // Stop before player 1's draw step so the untouched library can be checked
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
 
         assertThat(opponentsCase.isSolved()).isTrue();
         assertThat(gd.stack).isEmpty();

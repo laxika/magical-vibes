@@ -57,7 +57,7 @@ class CephalidFacetakerTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(facetaker.getCard().getName()).isEqualTo("Cephalid Facetaker");
     }
@@ -133,7 +133,7 @@ class CephalidFacetakerTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(first.getCard().getName()).isEqualTo("Cephalid Facetaker");
         assertThat(second.getCard().getName()).isEqualTo("Grizzly Bears");

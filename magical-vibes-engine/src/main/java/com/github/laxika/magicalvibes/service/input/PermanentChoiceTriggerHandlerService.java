@@ -70,6 +70,8 @@ import org.springframework.stereotype.Service;
 public class PermanentChoiceTriggerHandlerService {
 
     private final GameQueryService gameQueryService;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopiesOfSaddledCreatureEffectHandler
+            createTokenCopiesOfSaddledCreatureEffectHandler;
     private final AttackLegalityService attackLegalityService;
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
@@ -1253,7 +1255,8 @@ public class PermanentChoiceTriggerHandlerService {
             beginCreateTokenCopiesAttackingTargetChoice(gameData,
                     new PermanentChoiceContext.CreateTokenCopiesAttacking(
                             context.controllerId(), context.sourceCard(), context.sourcePermanentId(),
-                            context.targetPermanentId(), context.copyEffect(), context.tokenCount(), chosenTargets));
+                            context.targetPermanentId(), context.copyEffect(), context.tokenCount(), chosenTargets,
+                            context.resumeSaddledCopies()));
             return;
         }
 
@@ -1272,6 +1275,13 @@ public class PermanentChoiceTriggerHandlerService {
                     context.controllerId(), context.copyEffect(), chosenTargets);
         }
 
+        if (context.resumeSaddledCopies() != null) {
+            createTokenCopiesOfSaddledCreatureEffectHandler.continueIterations(
+                    gameData, context.resumeSaddledCopies());
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

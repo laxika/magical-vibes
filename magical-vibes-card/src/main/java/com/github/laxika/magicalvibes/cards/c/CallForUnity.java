@@ -19,6 +19,6 @@ public class CallForUnity extends Card {
                 new PermanentLeftBattlefieldUnderYourControlThisTurn(),
                 new PutCountersOnSelfEffect(CounterType.UNITY)));
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, CounterType.UNITY));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES, CounterType.UNITY));
     }
 }

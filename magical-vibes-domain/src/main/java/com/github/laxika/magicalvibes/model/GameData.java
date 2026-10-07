@@ -219,6 +219,8 @@ public class GameData {
      * {@link #getSpellCastOrdinalThisTurn}.
      */
     private final List<UUID> spellCastOrderThisTurn = Collections.synchronizedList(new ArrayList<>());
+    /** Mana value each X spell cast this turn had on the stack, X included (CR 202.3e). */
+    private final Map<UUID, Integer> spellCastStackManaValuesThisTurn = new ConcurrentHashMap<>();
     /** The spell most recently cast by any player this turn, regardless of controller. */
     private Card mostRecentSpellCastThisTurn;
     /**
@@ -354,6 +356,8 @@ public class GameData {
     public final Set<UUID> playersWhoSacrificedArtifactsThisTurn = ConcurrentHashMap.newKeySet();
     /** Cumulative count of attacking creatures each player declared this turn (for Windbrisk Heights etc.). */
     public final Map<UUID, Integer> creaturesAttackedCountThisTurn = new ConcurrentHashMap<>();
+    /** Distinct permanents each player attacked with this turn; an additional combat's repeat attacker counts once. */
+    public final Map<UUID, Set<UUID>> creaturesAttackedWithThisTurn = new ConcurrentHashMap<>();
     public final Set<UUID> permanentsThatAttackedBattlesThisTurn = ConcurrentHashMap.newKeySet();
     /** Cumulative count of attacking creatures by subtype each player declared this turn. */
     public final Map<UUID, Map<CardSubtype, Integer>> creaturesAttackedCountBySubtypeThisTurn = new ConcurrentHashMap<>();
@@ -574,6 +578,8 @@ public class GameData {
     public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardFromHandThisTurn = new ConcurrentHashMap<>();
     /** Tracks non-token creature card IDs put into graveyards from any zone this turn. */
     public final Map<UUID, Set<UUID>> creatureCardsPutIntoGraveyardFromAnywhereThisTurn = new ConcurrentHashMap<>();
+    /** Number of times creature cards were put into each owner's graveyard this turn (repeats count). */
+    public final Map<UUID, Integer> creatureCardGraveyardEntriesThisTurn = new ConcurrentHashMap<>();
     /** Players who put a permanent card into their graveyard from anywhere this turn. */
     public final Set<UUID> playersWhoDescendedThisTurn = ConcurrentHashMap.newKeySet();
     /** Counts each permanent card put into each player's graveyard from anywhere this turn. */
@@ -1132,6 +1138,8 @@ public class GameData {
     /** Delayed tap triggers registered until the watched permanent changes controllers. */
     public final Map<UUID, List<ControlLossTapTrigger>> controlLossTapTriggers =
             new ConcurrentHashMap<>();
+    /** Permanent id to the player who can't sacrifice it this turn (Call for Aid). */
+    public final Map<UUID, UUID> sacrificeForbiddenThisTurn = new ConcurrentHashMap<>();
     /** Number of end steps that have begun during the current turn. */
     public int endStepsThisTurn;
     /** Extra end steps waiting to occur during the current turn. */
@@ -1361,6 +1369,11 @@ public class GameData {
     public final Set<UUID> creaturesWithCombatDamagePrevented = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose combat damage is prevented this turn (Resistance Fighter). */
     public final Set<UUID> creaturesPreventedFromDealingCombatDamage = ConcurrentHashMap.newKeySet();
+    /**
+     * Creatures that assign no combat damage this turn (Carrion Wurm). Unlike prevention this
+     * can't be overridden by "damage can't be prevented" effects.
+     */
+    public final Set<UUID> creaturesAssigningNoCombatDamage = ConcurrentHashMap.newKeySet();
 
     /** Creatures that assign no combat damage this turn, even if damage cannot be prevented. */
     public final Set<UUID> creaturesAssigningNoCombatDamageThisTurn = ConcurrentHashMap.newKeySet();
@@ -4243,6 +4256,14 @@ public class GameData {
         }
         recordPlayerActionDuringOwnTurn(playerId);
         spellCastOrderThisTurn.add(card.getId());
+        int xSymbols = card.getManaCost() == null ? 0 : card.getManaCost().split("\\{X\\}", -1).length - 1;
+        if (xSymbols > 0) {
+            stack.stream()
+                    .filter(entry -> entry.getCard() != null && entry.getCard().getId().equals(card.getId()))
+                    .findFirst()
+                    .ifPresent(entry -> spellCastStackManaValuesThisTurn.put(card.getId(),
+                            card.getManaValue() + xSymbols * Math.max(0, entry.getXValue())));
+        }
         if (spellCastUsedTreasureMana(card.getId())) {
             spellsCastUsingTreasureManaThisTurn.add(card.getId());
         }
@@ -5128,6 +5149,11 @@ public class GameData {
     /**
      * Returns an unmodifiable view of the spells the given player has cast this turn.
      */
+    /** The mana value a spell cast this turn had on the stack, including its chosen X (CR 202.3e). */
+    public int getSpellCastStackManaValue(Card card) {
+        return spellCastStackManaValuesThisTurn.getOrDefault(card.getId(), card.getManaValue());
+    }
+
     public List<Card> getSpellsCastThisTurn(UUID playerId) {
         return Collections.unmodifiableList(spellsCastThisTurn.getOrDefault(playerId, List.of()));
     }
@@ -5205,6 +5231,7 @@ public class GameData {
         spellCastCountsByZoneThisTurn.clear();
         kickedSpellsCastThisTurn.clear();
         spellCastOrderThisTurn.clear();
+        spellCastStackManaValuesThisTurn.clear();
         mostRecentSpellCastThisTurn = null;
         spellWarpedThisTurn = false;
         manaSpentToCastSpellsThisTurn.clear();
@@ -7066,6 +7093,7 @@ public class GameData {
                         .addAll(predicates));
         copy.creaturesWithCombatDamagePrevented.addAll(this.creaturesWithCombatDamagePrevented);
         copy.creaturesPreventedFromDealingCombatDamage.addAll(this.creaturesPreventedFromDealingCombatDamage);
+        copy.creaturesAssigningNoCombatDamage.addAll(this.creaturesAssigningNoCombatDamage);
         copy.creaturesAssigningNoCombatDamageThisTurn.addAll(this.creaturesAssigningNoCombatDamageThisTurn);
         copy.creaturesWithCombatDamagePreventedThisCombat.addAll(
                 this.creaturesWithCombatDamagePreventedThisCombat);
@@ -7270,6 +7298,7 @@ public class GameData {
                 copy.kickedSpellsCastThisTurn.get(k).addAll(v));
         copy.spellWarpedThisTurn = this.spellWarpedThisTurn;
         copy.spellCastOrderThisTurn.addAll(this.spellCastOrderThisTurn);
+        copy.spellCastStackManaValuesThisTurn.putAll(this.spellCastStackManaValuesThisTurn);
         copy.mostRecentSpellCastThisTurn = this.mostRecentSpellCastThisTurn;
         this.spellNameCastCountsThisGame.forEach((k, v) ->
                 copy.spellNameCastCountsThisGame.put(k, new ConcurrentHashMap<>(v)));
@@ -7333,6 +7362,11 @@ public class GameData {
         copy.playersWhoSacrificedArtifactsThisTurn.addAll(this.playersWhoSacrificedArtifactsThisTurn);
         copy.sacrificedPermanentCountThisTurn.putAll(this.sacrificedPermanentCountThisTurn);
         copy.creaturesAttackedCountThisTurn.putAll(this.creaturesAttackedCountThisTurn);
+        this.creaturesAttackedWithThisTurn.forEach((k, v) -> {
+            Set<UUID> attackers = ConcurrentHashMap.newKeySet();
+            attackers.addAll(v);
+            copy.creaturesAttackedWithThisTurn.put(k, attackers);
+        });
         this.creaturesAttackedCountBySubtypeThisTurn.forEach((playerId, counts) ->
                 copy.creaturesAttackedCountBySubtypeThisTurn.put(playerId, new ConcurrentHashMap<>(counts)));
         copy.playerLifeTotals.putAll(this.playerLifeTotals);
@@ -7352,6 +7386,7 @@ public class GameData {
         copy.playerDamagePreventionShields.putAll(this.playerDamagePreventionShields);
         copy.playerCombatDamagePreventionShields.putAll(this.playerCombatDamagePreventionShields);
         copy.stolenCreatures.putAll(this.stolenCreatures);
+        copy.sacrificeForbiddenThisTurn.putAll(this.sacrificeForbiddenThisTurn);
         this.controlLossUnattachTriggers.forEach((equipmentId, triggers) ->
                 copy.controlLossUnattachTriggers.put(equipmentId,
                         Collections.synchronizedList(new ArrayList<>(triggers))));
@@ -7647,6 +7682,7 @@ public class GameData {
                 copy.cardsPutIntoGraveyardFromHandThisTurn.put(k, new HashSet<>(v)));
         this.creatureCardsPutIntoGraveyardFromAnywhereThisTurn.forEach((k, v) ->
                 copy.creatureCardsPutIntoGraveyardFromAnywhereThisTurn.put(k, new HashSet<>(v)));
+        copy.creatureCardGraveyardEntriesThisTurn.putAll(this.creatureCardGraveyardEntriesThisTurn);
         this.cardsPutIntoGraveyardThisCombat.forEach((k, v) ->
                 copy.cardsPutIntoGraveyardThisCombat.put(k, new HashSet<>(v)));
         copy.playersWhoPutEnchantmentIntoGraveyardFromBattlefieldThisTurn

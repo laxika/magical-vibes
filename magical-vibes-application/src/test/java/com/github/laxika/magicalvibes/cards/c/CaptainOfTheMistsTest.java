@@ -74,6 +74,7 @@ class CaptainOfTheMistsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isTapped()).isTrue();
     }
@@ -88,6 +89,7 @@ class CaptainOfTheMistsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isTapped()).isFalse();
     }
@@ -101,6 +103,7 @@ class CaptainOfTheMistsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(captain.isTapped()).isTrue();
         assertThat(target.isTapped()).isTrue();
@@ -159,6 +162,7 @@ class CaptainOfTheMistsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, captain.getId());
         assertThat(captain.isTapped()).isTrue();
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(captain.isTapped()).isFalse();
     }

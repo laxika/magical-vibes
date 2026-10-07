@@ -15,17 +15,20 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class CankerousThirst extends Card {
 
     public CankerousThirst() {
-        // Single mandatory creature target shared by both hybrid clauses ("target creature").
-        SpellTarget creatureTarget = target(TargetFilters.creature());
+        // Each clause has its own "target creature"; both are chosen whatever mana is spent, and
+        // they may be the same creature.
+        setAllowSharedTargets(true);
+        SpellTarget shrinkTarget = target(TargetFilters.creature());
+        SpellTarget pumpTarget = target(TargetFilters.creature());
 
         // If {B} was spent to cast this spell, you may have target creature get -3/-3 until end of turn.
-        creatureTarget.addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        shrinkTarget.addEffect(EffectSlot.SPELL, new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.BLACK),
                 new MayEffect(new BoostTargetCreatureEffect(-3, -3),
                         "Have target creature get -3/-3 until end of turn?")));
 
         // If {G} was spent to cast this spell, you may have target creature get +3/+3 until end of turn.
-        creatureTarget.addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        pumpTarget.addEffect(EffectSlot.SPELL, new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.GREEN),
                 new MayEffect(new BoostTargetCreatureEffect(3, 3),
                         "Have target creature get +3/+3 until end of turn?")));

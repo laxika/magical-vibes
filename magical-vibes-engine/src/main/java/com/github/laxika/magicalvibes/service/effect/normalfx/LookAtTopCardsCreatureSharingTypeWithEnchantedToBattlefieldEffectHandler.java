@@ -36,33 +36,20 @@ public class LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffectHa
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffect e = (LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffect) effect;
 
-        // Find the source aura permanent and the enchanted creature
-        UUID sourcePermanentId = entry.getSourcePermanentId();
-        if (sourcePermanentId == null) {
-            log.warn("Game {} - No source permanent for Call to the Kindred effect", gameData.id);
-            return;
-        }
-        Permanent auraPerm = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (auraPerm == null || !auraPerm.isAttached()) {
-            log.info("Game {} - Aura no longer on battlefield or not attached, effect does nothing", gameData.id);
-            return;
-        }
-        Permanent enchantedCreature = gameQueryService.findPermanentById(gameData, auraPerm.getAttachedTo());
+        // The Aura and the enchanted creature are read with last-known information when either left
+        // the battlefield before the trigger resolved (CR 608.2h).
+        Permanent auraPerm = entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent enchantedSnapshot = entry.getAttachedPermanentSnapshot();
+        UUID enchantedId = auraPerm != null && auraPerm.isAttached() ? auraPerm.getAttachedTo()
+                : enchantedSnapshot != null ? enchantedSnapshot.getId() : null;
+        Permanent enchantedCreature = enchantedId == null ? null
+                : gameQueryService.findPermanentById(gameData, enchantedId);
         if (enchantedCreature == null) {
-            log.info("Game {} - Enchanted creature no longer on battlefield, effect does nothing", gameData.id);
-            return;
+            enchantedCreature = enchantedSnapshot;
         }
-
-        // Collect the enchanted creature's creature subtypes (including transient subtypes)
-        List<CardSubtype> enchantedTypes = new ArrayList<>(enchantedCreature.getCard().getSubtypes());
-        enchantedTypes.addAll(enchantedCreature.getTransientSubtypes());
-        boolean enchantedIsChangeling = enchantedCreature.hasKeyword(Keyword.CHANGELING);
-
-        if (enchantedTypes.isEmpty() && !enchantedIsChangeling) {
-            // Enchanted creature has no creature types — no card can share a type
-            LibraryRevealSupport.TopCardsResult result = libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, e.count(), true);
-            if (result == null) return;
-            libraryRevealSupport.reorderRemainingToBottom(gameData, result.controllerId(), result.topCards());
+        if (enchantedCreature == null) {
+            log.info("Game {} - Call to the Kindred has no enchanted creature, effect does nothing", gameData.id);
             return;
         }
 
@@ -72,17 +59,11 @@ public class LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffectHa
         List<Card> topCards = result.topCards();
 
         // Filter for creature cards that share a creature type with the enchanted creature
+        Permanent enchanted = enchantedCreature;
         List<Card> matchingCards = topCards.stream()
                 .filter(card -> card.getType() == CardType.CREATURE
                         || card.getAdditionalTypes().contains(CardType.CREATURE))
-                .filter(card -> {
-                    List<CardSubtype> cardTypes = card.getSubtypes();
-                    boolean cardIsChangeling = card.hasKeyword(Keyword.CHANGELING);
-
-                    return (enchantedIsChangeling && (cardIsChangeling || !cardTypes.isEmpty()))
-                            || (cardIsChangeling && !enchantedTypes.isEmpty())
-                            || enchantedTypes.stream().anyMatch(cardTypes::contains);
-                })
+                .filter(card -> gameQueryService.shareCreatureType(gameData, enchanted, card))
                 .toList();
 
         if (matchingCards.isEmpty()) {

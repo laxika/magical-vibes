@@ -148,8 +148,10 @@ class CaseOfTheShiftingVisageTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.passBothPriorities();
+        // Stop in the opponent's end step, before your upkeep surveil trigger
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).isEmpty();
         assertThat(casePermanent.isSolved()).isFalse();
     }

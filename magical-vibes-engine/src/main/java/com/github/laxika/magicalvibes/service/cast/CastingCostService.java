@@ -843,7 +843,8 @@ public class CastingCostService {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                List<CardEffect> effects = new ArrayList<>(perm.getCard().getEffects(EffectSlot.STATIC));
+                List<CardEffect> effects = new ArrayList<>(gameQueryService.hasLostPrintedAbilities(gameData, perm)
+                        ? List.of() : perm.getCard().getEffects(EffectSlot.STATIC));
                 effects.addAll(gameQueryService.getGrantedEffects(gameData, perm));
                 for (CardEffect effect : effects) {
                     CardEffect activeEffect = effect;
@@ -855,7 +856,20 @@ public class CastingCostService {
                         }
                         activeEffect = conditional.wrapped();
                     }
-                    if (activeEffect instanceof IncreaseOpponentCostForTargetingControlledPermanentEffect taxEffect) {
+                    if (activeEffect instanceof IncreaseOpponentCostForTargetingControlledPermanentEffect taxEffect
+                            && taxEffect.perTargetedPermanent()) {
+                        if (activatedAbility && !taxEffect.taxesActivatedAbilities()) continue;
+                        for (UUID tid : allTargetIds) {
+                            Permanent targetPerm = gameQueryService.findPermanentById(gameData, tid);
+                            if (targetPerm != null
+                                    && controllerId.equals(gameQueryService.findPermanentController(gameData, tid))
+                                    && predicateEvaluationService.matchesPermanentPredicate(
+                                            targetPerm, taxEffect.predicate(),
+                                            FilterContext.of(gameData).withSourcePermanentSnapshot(perm))) {
+                                tax += taxEffect.amount();
+                            }
+                        }
+                    } else if (activeEffect instanceof IncreaseOpponentCostForTargetingControlledPermanentEffect taxEffect) {
                         if (activatedAbility && !taxEffect.taxesActivatedAbilities()) continue;
                         for (UUID tid : allTargetIds) {
                             if (taxEffect.taxesController() && controllerId.equals(tid)) {

@@ -28,6 +28,7 @@ class CaptivatingGyreTest extends BaseCardTest {
                 .map(permanent -> permanent.getId())
                 .toList();
         harness.setHand(player1, List.of(new CaptivatingGyre()));
+        harness.setHand(player2, List.of());
         addMana();
 
         harness.castAndResolveSorcery(player1, 0, targetIds);
@@ -45,6 +46,7 @@ class CaptivatingGyreTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.setHand(player1, List.of(new CaptivatingGyre()));
+        harness.setHand(player2, List.of());
         addMana();
 
         harness.castAndResolveSorcery(player1, 0, List.of(targetId));
@@ -57,6 +59,7 @@ class CaptivatingGyreTest extends BaseCardTest {
     @DisplayName("Can choose no creatures")
     void returnsNoCreatures() {
         harness.setHand(player1, List.of(new CaptivatingGyre()));
+        harness.setHand(player2, List.of());
         addMana();
 
         harness.castAndResolveSorcery(player1, 0, List.of());
@@ -71,6 +74,7 @@ class CaptivatingGyreTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Spellbook());
         UUID artifactId = harness.getPermanentId(player2, "Spellbook");
         harness.setHand(player1, List.of(new CaptivatingGyre()));
+        harness.setHand(player2, List.of());
         addMana();
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(artifactId)))
@@ -83,6 +87,7 @@ class CaptivatingGyreTest extends BaseCardTest {
         var opposing = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         var unchosen = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new CaptivatingGyre()));
+        harness.setHand(player2, List.of());
         addMana();
 
         harness.castAndResolveSorcery(player1, 0, List.of(own.getId(), opposing.getId()));
@@ -99,6 +104,7 @@ class CaptivatingGyreTest extends BaseCardTest {
         var stolen = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         gd.stolenCreatures.put(stolen.getId(), player2.getId());
         harness.setHand(player1, List.of(new CaptivatingGyre()));
+        harness.setHand(player2, List.of());
         addMana();
 
         harness.castAndResolveSorcery(player1, 0, List.of(stolen.getId()));
@@ -116,6 +122,7 @@ class CaptivatingGyreTest extends BaseCardTest {
         List<UUID> targets = gd.playerBattlefields.get(player2.getId()).stream()
                 .map(permanent -> permanent.getId()).toList();
         harness.setHand(player1, List.of(new CaptivatingGyre()));
+        harness.setHand(player2, List.of());
         addMana();
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, targets))
@@ -126,6 +133,7 @@ class CaptivatingGyreTest extends BaseCardTest {
     void cannotChooseSameCreatureTwice() {
         var creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new CaptivatingGyre()));
+        harness.setHand(player2, List.of());
         addMana();
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0,
@@ -138,6 +146,7 @@ class CaptivatingGyreTest extends BaseCardTest {
         var departed = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         var remaining = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new CaptivatingGyre()));
+        harness.setHand(player2, List.of());
         addMana();
 
         harness.castSorcery(player1, 0, List.of(departed.getId(), remaining.getId()));
@@ -155,6 +164,7 @@ class CaptivatingGyreTest extends BaseCardTest {
     void choosingZeroTargetsLeavesAvailableCreaturesAlone() {
         var creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new CaptivatingGyre()));
+        harness.setHand(player2, List.of());
         addMana();
 
         harness.castAndResolveSorcery(player1, 0, List.of());
@@ -170,6 +180,7 @@ class CaptivatingGyreTest extends BaseCardTest {
         var departed = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         var unchosen = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new CaptivatingGyre()));
+        harness.setHand(player2, List.of());
         addMana();
 
         harness.castSorcery(player1, 0, List.of(departed.getId()));

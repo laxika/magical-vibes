@@ -1492,16 +1492,18 @@ public class GraveyardChoiceHandlerService {
                 .findFirst()
                 .orElse(null);
         if (typeLimitedEffect != null) {
-            for (CardType cardType : typeLimitedEffect.maxOnePerCardType()) {
-                long matchingTargets = cardIds.stream()
-                        .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
-                        .filter(java.util.Objects::nonNull)
-                        .filter(card -> card.hasType(cardType))
-                        .count();
-                if (matchingTargets > 1) {
-                    throw new IllegalStateException("Cannot choose more than one "
-                            + cardType.name().toLowerCase() + " card");
-                }
+            List<Card> selectedCards = cardIds.stream()
+                    .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
+                    .filter(java.util.Objects::nonNull)
+                    .toList();
+            if (!canAssignDistinctCardTypes(selectedCards, List.copyOf(typeLimitedEffect.maxOnePerCardType()),
+                    new HashSet<>())) {
+                CardType conflict = typeLimitedEffect.maxOnePerCardType().stream()
+                        .filter(type -> selectedCards.stream().filter(card -> card.hasType(type)).count() > 1)
+                        .findFirst().orElse(null);
+                throw new IllegalStateException(conflict == null
+                        ? "Each selected card must fill a different card type"
+                        : "Cannot choose more than one " + conflict.name().toLowerCase() + " card");
             }
         }
 
@@ -2328,6 +2330,24 @@ public class GraveyardChoiceHandlerService {
                     return true;
                 }
                 usedFilters[filterIndex] = false;
+            }
+        }
+        return false;
+    }
+
+    /** Whether each card can be matched to a different one of {@code types} that it has. */
+    private static boolean canAssignDistinctCardTypes(List<Card> cards, List<CardType> types, Set<CardType> used) {
+        if (cards.isEmpty()) {
+            return true;
+        }
+        Card card = cards.getFirst();
+        for (CardType type : types) {
+            if (!used.contains(type) && card.hasType(type)) {
+                used.add(type);
+                if (canAssignDistinctCardTypes(cards.subList(1, cards.size()), types, used)) {
+                    return true;
+                }
+                used.remove(type);
             }
         }
         return false;

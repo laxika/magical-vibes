@@ -35,6 +35,9 @@ public class ExileTopCardOfOwnLibraryEffectHandler implements NormalEffectHandle
         String controllerName = gameData.playerIdToName.get(controllerId);
 
         if (deck == null || deck.isEmpty()) {
+            if (e.trackWithSource() && entry.getSourcePermanentId() != null) {
+                gameData.setImprintedCard(entry.getCard(), null);
+            }
             String logEntry = controllerName + "'s library is empty — nothing to exile.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             return;

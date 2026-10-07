@@ -2643,6 +2643,9 @@ public class PredicateEvaluationService {
                 // Find the source permanent by its current card ID (important for clones
                 // where card differs from originalCard)
                 Permanent sourcePermanent = findPermanentByCurrentCardId(gameData, sourceCardId);
+                if (sourcePermanent == null && filterContext != null) {
+                    sourcePermanent = filterContext.sourcePermanentSnapshot();
+                }
                 if (sourcePermanent == null) {
                     yield false;
                 }

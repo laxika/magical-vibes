@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -30,12 +32,16 @@ public class CaughtInTheCrossfire extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Caught in the Crossfire deals 2 damage to each outlaw creature",
                         new DealDamageToEachMatchingPermanentEffect(2,
-                                new PermanentHasAnySubtypePredicate(OUTLAW_SUBTYPES),
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentHasAnySubtypePredicate(OUTLAW_SUBTYPES))),
                                 EachPermanentScope.ALL_PLAYERS)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Caught in the Crossfire deals 2 damage to each non-outlaw creature",
                         new DealDamageToEachMatchingPermanentEffect(2,
-                                new PermanentNotPredicate(new PermanentHasAnySubtypePredicate(OUTLAW_SUBTYPES)),
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentNotPredicate(new PermanentHasAnySubtypePredicate(OUTLAW_SUBTYPES)))),
                                 EachPermanentScope.ALL_PLAYERS))
         )));
     }

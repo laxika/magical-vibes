@@ -27,7 +27,7 @@ class CalamityOfTheTitansTest extends BaseCardTest {
     @DisplayName("Exiles creatures and planeswalkers below the revealed card's mana value")
     void exilesQualifyingCreaturesAndPlaneswalkers() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        Permanent jace = harness.enterBattlefieldAndReturn(player2, new JaceBeleren());
         Permanent airElemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         Permanent mindStone = harness.addToBattlefieldAndReturn(player1, new MindStone());
         Card revealed = new ThoughtKnotSeer();
@@ -60,7 +60,7 @@ class CalamityOfTheTitansTest extends BaseCardTest {
     void strictCutoffAndExileDestination() {
         Permanent equal = harness.addToBattlefieldAndReturn(player2, new ThoughtKnotSeer());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        Permanent jace = harness.enterBattlefieldAndReturn(player2, new JaceBeleren());
         Card revealed = new ThoughtKnotSeer();
         harness.setHand(player1, List.of(revealed, new CalamityOfTheTitans()));
         harness.addMana(player1, ManaColor.COLORLESS, 6);
@@ -82,7 +82,7 @@ class CalamityOfTheTitansTest extends BaseCardTest {
     void zeroManaValueExilesNothing() {
         Permanent thopter = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        Permanent jace = harness.enterBattlefieldAndReturn(player2, new JaceBeleren());
         Card revealed = new Ornithopter();
         harness.setHand(player1, List.of(new CalamityOfTheTitans(), revealed));
         harness.addMana(player1, ManaColor.COLORLESS, 6);
@@ -99,7 +99,7 @@ class CalamityOfTheTitansTest extends BaseCardTest {
     @Test
     @DisplayName("A colorless noncreature cannot pay the reveal cost")
     void rejectsColorlessNoncreature() {
-        harness.setHand(player1, List.of(new CalamityOfTheTitans(), new MindStone()));
+        harness.setHand(player1, List.of(new CalamityOfTheTitans(), new MindStone(), new ThoughtKnotSeer()));
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         assertThatThrownBy(() -> harness.castSorceryWithDiscard(player1, 0, 1))
