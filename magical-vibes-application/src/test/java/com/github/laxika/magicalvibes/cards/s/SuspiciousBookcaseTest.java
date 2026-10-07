@@ -1,25 +1,26 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SuspiciousBookcase.class, GreenwoodSentinel.class, Forest.class})
 class SuspiciousBookcaseTest extends BaseCardTest {
 
     @Test
     @DisplayName("Makes a target creature unblockable until end of turn")
     void makesTargetCreatureUnblockableUntilEndOfTurn() {
-        Permanent bookcase = addReadyBookcase(player1);
-        Permanent target = addCreature(player2);
+        Permanent bookcase = addCreatureReady(player1, new SuspiciousBookcase());
+        Permanent target = addCreatureReady(player2, new GreenwoodSentinel());
         addActivationMana();
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -32,8 +33,8 @@ class SuspiciousBookcaseTest extends BaseCardTest {
     @Test
     @DisplayName("Unblockable wears off at cleanup")
     void unblockableWearsOffAtCleanup() {
-        addReadyBookcase(player1);
-        Permanent target = addCreature(player1);
+        addCreatureReady(player1, new SuspiciousBookcase());
+        Permanent target = addCreatureReady(player1, new GreenwoodSentinel());
         addActivationMana();
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -50,7 +51,7 @@ class SuspiciousBookcaseTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a land")
     void cannotTargetLand() {
-        Permanent bookcase = addReadyBookcase(player1);
+        Permanent bookcase = addCreatureReady(player1, new SuspiciousBookcase());
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         addActivationMana();
 
@@ -59,18 +60,76 @@ class SuspiciousBookcaseTest extends BaseCardTest {
         assertThat(bookcase.isTapped()).isFalse();
     }
 
-    private Permanent addReadyBookcase(Player player) {
-        Permanent bookcase = new Permanent(new SuspiciousBookcase());
-        bookcase.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(bookcase);
-        return bookcase;
+    @Test
+    @DisplayName("Cannot activate with fewer than three mana")
+    void cannotActivateWithInsufficientMana() {
+        Permanent bookcase = addCreatureReady(player1, new SuspiciousBookcase());
+        Permanent target = addCreatureReady(player1, new GreenwoodSentinel());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(bookcase.isTapped()).isFalse();
+        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
-    private Permanent addCreature(Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent bookcase = harness.addToBattlefieldAndReturn(player1, new SuspiciousBookcase());
+        bookcase.setSummoningSick(true);
+        Permanent target = addCreatureReady(player1, new GreenwoodSentinel());
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(bookcase.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate a tapped bookcase")
+    void cannotActivateWhileTapped() {
+        Permanent bookcase = addCreatureReady(player1, new SuspiciousBookcase());
+        bookcase.setTapped(true);
+        Permanent target = addCreatureReady(player1, new GreenwoodSentinel());
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target itself")
+    void canTargetItself() {
+        Permanent bookcase = addCreatureReady(player1, new SuspiciousBookcase());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, bookcase.getId());
+        assertThat(bookcase.isTapped()).isTrue();
+        assertThat(bookcase.isCantBeBlocked()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(bookcase.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after the bookcase leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        Permanent bookcase = addCreatureReady(player1, new SuspiciousBookcase());
+        Permanent target = addCreatureReady(player1, new GreenwoodSentinel());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bookcase);
+        gd.playerGraveyards.get(player1.getId()).add(bookcase.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addActivationMana() {
