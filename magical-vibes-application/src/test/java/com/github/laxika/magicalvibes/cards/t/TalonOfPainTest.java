@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TalonOfPain.class, Fireball.class, Juggernaut.class})
 class TalonOfPainTest extends BaseCardTest {
@@ -103,5 +104,77 @@ class TalonOfPainTest extends BaseCardTest {
         assertThat(talon.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
         assertThat(juggernaut.getMarkedDamage()).isEqualTo(2);
         assertThat(talon.isTapped()).isTrue();
+    }
+
+    @Test
+    void combatDamageAddsOneCounterPerSource() {
+        Permanent talon = harness.addToBattlefieldAndReturn(player1, new TalonOfPain());
+        addCreatureReady(player1, new Juggernaut()).setAttacking(true);
+        addCreatureReady(player1, new Juggernaut()).setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(talon.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        harness.assertLife(player2, 10);
+    }
+
+    @Test
+    void damageToControllerDoesNotAddCounter() {
+        Permanent talon = harness.addToBattlefieldAndReturn(player1, new TalonOfPain());
+        harness.setHand(player1, List.of(new Fireball()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 2, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(talon.getCounterCount(CounterType.CHARGE)).isZero();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    void anotherTalonDamageAddsCounterOnlyToOtherTalon() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new TalonOfPain());
+        Permanent watcher = harness.addToBattlefieldAndReturn(player1, new TalonOfPain());
+        source.setCounterCount(CounterType.CHARGE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 2, player2.getId());
+        assertThat(source.getCounterCount(CounterType.CHARGE)).isZero();
+        harness.assertLife(player2, 20);
+        resolveAllTriggers();
+
+        assertThat(source.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(watcher.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void zeroXCanBeActivatedWithoutCountersOrManaAndDoesNotDealDamage() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new TalonOfPain());
+        Permanent watcher = harness.addToBattlefieldAndReturn(player1, new TalonOfPain());
+
+        harness.activateAbility(player1, 0, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(source.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(watcher.getCounterCount(CounterType.CHARGE)).isZero();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void cannotChooseXGreaterThanAvailableCounters() {
+        Permanent talon = harness.addToBattlefieldAndReturn(player1, new TalonOfPain());
+        talon.setCounterCount(CounterType.CHARGE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(talon.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(talon.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
     }
 }
