@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.c.CloudSprite;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -19,9 +18,9 @@ class TheFabulousFrogManTest extends BaseCardTest {
     @Test
     @DisplayName("The Fabulous Frog-Man can block a creature with flying")
     void canBlockFlyingCreature() {
-        Permanent attacker = addReady(player1, new CloudSprite());
+        Permanent attacker = addCreatureReady(player1, new CloudSprite());
         attacker.setAttacking(true);
-        Permanent blocker = addReady(player2, new TheFabulousFrogMan());
+        Permanent blocker = addCreatureReady(player2, new TheFabulousFrogMan());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -30,10 +29,19 @@ class TheFabulousFrogManTest extends BaseCardTest {
         assertThat(blocker.getMarkedDamage()).isEqualTo(1);
     }
 
-    private Permanent addReady(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Reach also allows blocking creatures without flying")
+    void canBlockGroundCreature() {
+        Permanent attacker = addCreatureReady(player1, new TheFabulousFrogMan());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new TheFabulousFrogMan());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "The Fabulous Frog-Man");
+        harness.assertInGraveyard(player2, "The Fabulous Frog-Man");
     }
 }
