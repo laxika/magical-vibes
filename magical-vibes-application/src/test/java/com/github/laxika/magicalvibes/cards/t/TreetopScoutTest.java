@@ -41,4 +41,31 @@ class TreetopScoutTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Every creature blocking Treetop Scout must have flying")
+    void cannotBeBlockedByMixedFlyingAndNonFlyingCreatures() {
+        addCreatureReady(player1, new TreetopScout());
+        addCreatureReady(player2, new DawnElemental());
+        addCreatureReady(player2, new ScornfulEgotist());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can only be blocked by creatures with flying");
+    }
+
+    @Test
+    @DisplayName("Treetop Scout can block a creature without flying")
+    void canBlockCreatureWithoutFlying() {
+        addCreatureReady(player1, new ScornfulEgotist());
+        Permanent scout = addCreatureReady(player2, new TreetopScout());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(scout.isBlocking()).isTrue();
+    }
 }
