@@ -53,8 +53,7 @@ class TinkerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Crawlspace"));
+        harness.assertOnBattlefield(player1, "Crawlspace");
         assertThat(gd.playerDecks.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Crawlspace"));
         harness.assertInGraveyard(player1, "Tinker");
@@ -73,6 +72,39 @@ class TinkerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Tinker");
         harness.assertNotOnBattlefield(player1, "Crawlspace");
+    }
+
+    @Test
+    @DisplayName("Can decline to find an artifact even when one is available")
+    void canDeclineAvailableArtifact() {
+        castTinker();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(c -> c.getName())
+                .containsExactlyInAnyOrder("Crawlspace", "Giant Cockroach");
+        harness.assertNotOnBattlefield(player1, "Crawlspace");
+        harness.assertInGraveyard(player1, "Grim Monolith");
+        harness.assertInGraveyard(player1, "Tinker");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent resolving after the sacrifice is paid")
+    void resolvesWithEmptyLibrary() {
+        castTinker();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Grim Monolith");
+        harness.assertInGraveyard(player1, "Tinker");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
