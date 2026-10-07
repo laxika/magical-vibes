@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(StalkingStones.class)
 class StalkingStonesTest extends BaseCardTest {
@@ -85,6 +86,73 @@ class StalkingStonesTest extends BaseCardTest {
 
         assertThat(gqs.isLand(gd, stones)).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Animation uses the stack and affects only the activated Stalking Stones")
+    void animationWaitsForResolutionAndAffectsOnlyItsSource() {
+        Permanent stones = addStones(player1);
+        Permanent otherStones = addStones(player1);
+        Permanent opposingStones = addStones(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.isCreature(gd, stones)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, stones)).isTrue();
+        assertThat(gqs.isCreature(gd, otherStones)).isFalse();
+        assertThat(gqs.isCreature(gd, opposingStones)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Stalking Stones can animate without becoming untapped")
+    void tappedStonesCanAnimate() {
+        Permanent stones = addStones(player1);
+        harness.tapPermanent(player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, stones)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, stones)).isEqualTo(3);
+        assertThat(stones.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Animation cannot be activated without six available mana")
+    void animationRequiresSixMana() {
+        Permanent stones = addStones(player1);
+        harness.tapPermanent(player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.isCreature(gd, stones)).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Newly entered Stalking Stones can animate but cannot tap for mana as a creature")
+    void newlyEnteredStonesCanAnimateButCannotTapForMana() {
+        Permanent stones = harness.addToBattlefieldAndReturn(player1, new StalkingStones());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, stones)).isTrue();
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(stones.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     private Permanent addStones(Player player) {
