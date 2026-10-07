@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.b.BondsOfFaith;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TheWindCrystal.class, BondsOfFaith.class, GrizzlyBears.class})
+@CardUsed({TheWindCrystal.class, BondsOfFaith.class, GrizzlyBears.class,
+        MarchOfTheMachines.class, TaintedRemedy.class})
 class TheWindCrystalTest extends BaseCardTest {
 
     @Test
@@ -72,11 +74,76 @@ class TheWindCrystalTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.FLYING)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    void animatedCrystalAlsoGainsFlyingAndLifelink() {
+        Permanent crystal = harness.addToBattlefieldAndReturn(player1, new TheWindCrystal());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        crystal.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThat(gqs.isCreature(gd, crystal)).isTrue();
+        harness.activateAbility(player1, battlefieldIndex(player1, crystal), null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, crystal, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, crystal, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    void affectedPlayerChoosesCompetingLifeGainReplacement() {
+        harness.addToBattlefield(player1, new TheWindCrystal());
+        harness.addToBattlefield(player2, new TaintedRemedy());
+        harness.setLife(player1, 20);
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void doesNotDoubleOpponentsLifeGain() {
+        harness.addToBattlefield(player1, new TheWindCrystal());
+        harness.setLife(player2, 20);
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3));
+
+        harness.assertLife(player2, 23);
+    }
+
+    @Test
+    void doesNotReduceOpponentsWhiteSpells() {
+        harness.addToBattlefield(player1, new TheWindCrystal());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new BondsOfFaith()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        gd.activePlayerId = player2.getId();
+        gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+
+        assertThatThrownBy(() -> harness.castEnchantment(player2, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void creaturesEnteringAfterResolutionDoNotGainKeywords() {
+        Permanent crystal = harness.addToBattlefieldAndReturn(player1, new TheWindCrystal());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, battlefieldIndex(player1, crystal), null, null);
+        assertThat(crystal.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.LIFELINK)).isFalse();
     }
 
     private int battlefieldIndex(Player player, Permanent permanent) {
