@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.ImiStatue;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.r.RealityRipple;
 import com.github.laxika.magicalvibes.cards.t.TitaniasSong;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -20,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({StorageMatrix.class, GrizzlyBears.class, Forest.class, AngelsFeather.class, TitaniasSong.class,
-        ImiStatue.class, Ornithopter.class})
+        ImiStatue.class, Ornithopter.class, RealityRipple.class})
 class StorageMatrixTest extends BaseCardTest {
 
     @Test
@@ -161,6 +163,66 @@ class StorageMatrixTest extends BaseCardTest {
 
         assertThat(bears.isTapped()).isFalse();
         assertThat(forest.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An artifact creature also untaps when artifact is chosen")
+    void artifactCreatureUntapsWhenArtifactTypeIsChosen() {
+        addCreatureReady(player1, new StorageMatrix());
+        Permanent ornithopter = addCreatureReady(player1, new Ornithopter());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        ornithopter.tap();
+        bears.tap();
+
+        advanceToNextTurn(player2);
+        harness.handleListChoice(player1, "ARTIFACT");
+
+        assertThat(ornithopter.isTapped()).isFalse();
+        assertThat(bears.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Choosing land under Imi Statue leaves every artifact tapped")
+    void choosingLandWithArtifactUntapLimit() {
+        addCreatureReady(player1, new StorageMatrix());
+        addCreatureReady(player1, new ImiStatue());
+        Permanent firstFeather = addCreatureReady(player1, new AngelsFeather());
+        Permanent secondFeather = addCreatureReady(player1, new AngelsFeather());
+        Permanent forest = addCreatureReady(player1, new Forest());
+        firstFeather.tap();
+        secondFeather.tap();
+        forest.tap();
+
+        advanceToNextTurn(player2);
+        harness.handleListChoice(player1, "LAND");
+
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(firstFeather.isTapped()).isTrue();
+        assertThat(secondFeather.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An untapped Storage Matrix phases in before the untap type is chosen")
+    void phasedInStorageMatrixRestrictsSameUntapStep() {
+        Permanent matrix = addCreatureReady(player1, new StorageMatrix());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent forest = addCreatureReady(player1, new Forest());
+        bears.tap();
+        forest.tap();
+        harness.setHand(player1, List.of(new RealityRipple()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, matrix.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Storage Matrix");
+
+        advanceToNextTurn(player2);
+
+        harness.assertOnBattlefield(player1, "Storage Matrix");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "CREATURE");
+
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(forest.isTapped()).isTrue();
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
