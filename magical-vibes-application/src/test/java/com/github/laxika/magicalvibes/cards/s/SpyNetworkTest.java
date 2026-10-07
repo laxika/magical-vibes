@@ -122,6 +122,35 @@ class SpyNetworkTest extends BaseCardTest {
                 .hasMessageContaining("can only target players");
     }
 
+    @Test
+    @DisplayName("Still looks at the target's information when the caster's library is empty")
+    void emptyOwnLibraryDoesNotPreventLookingAtTarget() {
+        Card topCard = new ElvishWarrior();
+        harness.setHand(player2, List.of(new ElvishWarrior()));
+        harness.setLibrary(player2, List.of(topCard));
+        harness.setLibrary(player1, List.of());
+        Permanent faceDownCreature = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+        faceDownCreature.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of(new SpyNetwork()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
+                .anyMatch(message -> message.contains("Elvish Warrior"));
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_LIBRARY_TOP"))
+                .anyMatch(message -> message.contains("Elvish Warrior"));
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_PERMANENT"))
+                .hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard);
+        assertThat(faceDownCreature.isFaceDown()).isTrue();
+        harness.assertInGraveyard(player1, "Spy Network");
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_LIBRARY_TOP")).isEmpty();
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_PERMANENT")).isEmpty();
+    }
     private List<Card> cards(int count) {
         return java.util.stream.IntStream.range(0, count)
                 .mapToObj(index -> (Card) new ElvishWarrior())
