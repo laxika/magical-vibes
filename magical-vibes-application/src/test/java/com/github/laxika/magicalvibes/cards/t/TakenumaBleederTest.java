@@ -127,4 +127,33 @@ class TakenumaBleederTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
     }
+
+    @Test
+    @DisplayName("A Demon entering before the attack trigger resolves prevents life loss")
+    void demonEnteringBeforeAttackTriggerResolvesPreventsLifeLoss() {
+        addCreatureReady(player1, new TakenumaBleeder());
+        harness.setLife(player1, 20);
+
+        declareAttackers(player1, List.of(0));
+        addCreatureReady(player1, new ScourgeOfNumai());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A Demon entering before the block trigger resolves prevents life loss")
+    void demonEnteringBeforeBlockTriggerResolvesPreventsLifeLoss() {
+        Permanent attacker = addCreatureReady(player1, new FrostOgre());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new TakenumaBleeder());
+        harness.setLife(player2, 20);
+
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        addCreatureReady(player2, new ScourgeOfNumai());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+    }
 }
