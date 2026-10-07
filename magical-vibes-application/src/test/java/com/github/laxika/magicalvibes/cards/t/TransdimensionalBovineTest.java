@@ -63,4 +63,41 @@ class TransdimensionalBovineTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sickness");
     }
+
+    @Test
+    @DisplayName("A tapped Bovine cannot produce mana again without untapping")
+    void cannotActivateAgainWhileTapped() {
+        Permanent bovine = harness.addToBattlefieldAndReturn(player1, new TransdimensionalBovine());
+        bovine.setSummoningSick(false);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Bovine controlled by the other player gives mana only to that player")
+    void manaGoesToActivatingController() {
+        Permanent bovine = harness.addToBattlefieldAndReturn(player2, new TransdimensionalBovine());
+        bovine.setSummoningSick(false);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleListChoice(player2, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(2);
+        for (ManaColor color : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isZero();
+            if (color != ManaColor.BLUE) {
+                assertThat(gd.playerManaPools.get(player2.getId()).get(color)).isZero();
+            }
+        }
+        assertThat(bovine.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }
