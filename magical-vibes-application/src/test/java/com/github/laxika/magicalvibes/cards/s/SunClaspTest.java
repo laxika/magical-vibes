@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AuraFinesse;
 import com.github.laxika.magicalvibes.cards.l.LongbowArcher;
 import com.github.laxika.magicalvibes.cards.u.UndiscoveredParadise;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SunClasp.class, LongbowArcher.class, UndiscoveredParadise.class})
+@CardUsed({SunClasp.class, LongbowArcher.class, UndiscoveredParadise.class, AuraFinesse.class})
 class SunClaspTest extends BaseCardTest {
 
     @Test
@@ -101,10 +102,7 @@ class SunClaspTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent paradise = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard() instanceof UndiscoveredParadise)
-                .findFirst()
-                .orElseThrow();
+        Permanent paradise = findPermanent(player1, "Undiscovered Paradise");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, paradise.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -125,10 +123,7 @@ class SunClaspTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, archer.getId());
         harness.passBothPriorities();
 
-        Permanent clasp = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard() instanceof SunClasp)
-                .findFirst()
-                .orElseThrow();
+        Permanent clasp = findPermanent(player1, "Sun Clasp");
         assertThat(gqs.getEffectivePower(gd, archer)).isEqualTo(3);
 
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -144,5 +139,49 @@ class SunClaspTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard() instanceof SunClasp);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card instanceof SunClasp);
+    }
+    @Test
+    @CardUsed({SunClasp.class, LongbowArcher.class, AuraFinesse.class, UndiscoveredParadise.class})
+    @DisplayName("Moving Sun Clasp in response returns the creature enchanted at resolution")
+    void returnsCurrentHostAfterAuraMovesInResponse() {
+        Permanent original = addCreatureReady(player1, new LongbowArcher());
+        Permanent destination = addCreatureReady(player2, new LongbowArcher());
+        destination.getCard().setOwnerId(player2.getId());
+        Permanent clasp = harness.addToBattlefieldAndReturn(player1, new SunClasp());
+        clasp.setAttachedTo(original.getId());
+        harness.setHand(player1, List.of(new AuraFinesse()));
+        harness.setLibrary(player1, List.of(new UndiscoveredParadise()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.castInstant(player1, 0, List.of(clasp.getId(), destination.getId()));
+        harness.passBothPriorities();
+        assertThat(clasp.getAttachedTo()).isEqualTo(destination.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(original);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(destination);
+        assertThat(gd.playerHands.get(player2.getId())).contains(destination.getCard());
+        harness.assertInGraveyard(player1, "Sun Clasp");
+    }
+
+    @Test
+    @DisplayName("Returning a creature controlled by another player still uses its owner")
+    void returnsStolenCreatureToOwner() {
+        LongbowArcher card = new LongbowArcher();
+        card.setOwnerId(player2.getId());
+        Permanent creature = addCreatureReady(player1, card);
+        Permanent clasp = harness.addToBattlefieldAndReturn(player1, new SunClasp());
+        clasp.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(card);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(card);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature, clasp);
+        harness.assertInGraveyard(player1, "Sun Clasp");
     }
 }
