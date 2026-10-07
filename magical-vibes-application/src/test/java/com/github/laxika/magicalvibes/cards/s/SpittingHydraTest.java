@@ -90,4 +90,52 @@ class SpittingHydraTest extends BaseCardTest {
 
         assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }
+    @Test
+    @DisplayName("Counter is paid immediately and ability works while tapped on the opponent's turn")
+    void paysCounterBeforeResolutionWhileTappedOnOpponentsTurn() {
+        Permanent hydra = harness.enterBattlefieldAndReturn(player1, new SpittingHydra());
+        Permanent target = harness.enterBattlefieldAndReturn(player2, new SpittingHydra());
+        hydra.setTapped(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(target.getMarkedDamage()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Ability still deals damage after removing the last counter kills its source")
+    void lastCounterActivationResolvesAfterSourceDies() {
+        Permanent hydra = harness.enterBattlefieldAndReturn(player1, new SpittingHydra());
+        Permanent target = harness.enterBattlefieldAndReturn(player2, new SpittingHydra());
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        for (int activation = 0; activation < 3; activation++) {
+            harness.activateAbility(player1, 0, null, target.getId());
+            harness.passBothPriorities();
+        }
+
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Spitting Hydra");
+        harness.assertInGraveyard(player1, "Spitting Hydra");
+        harness.assertOnBattlefield(player2, "Spitting Hydra");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Spitting Hydra");
+        harness.assertInGraveyard(player2, "Spitting Hydra");
+    }
 }
