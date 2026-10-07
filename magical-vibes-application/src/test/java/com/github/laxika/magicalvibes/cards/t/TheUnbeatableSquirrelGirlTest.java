@@ -53,12 +53,67 @@ class TheUnbeatableSquirrelGirlTest extends BaseCardTest {
         assertThat(squirrelTokens(player1)).hasSize(3);
     }
 
+    @Test
+    @DisplayName("Opponent's Squirrels do not increase the token count")
+    void activatedAbilityIgnoresOpponentsSquirrels() {
+        castSquirrelGirl();
+        addCreatureReady(player2, new TheUnbeatableSquirrelGirl());
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(squirrelTokens(player1)).hasSize(3);
+        assertThat(squirrelTokens(player2)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each activation counts Squirrels when it resolves")
+    void stackedActivationsCountNewlyCreatedSquirrels() {
+        addCreatureReady(player1, new TheUnbeatableSquirrelGirl());
+        harness.addMana(player1, ManaColor.GREEN, 8);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(squirrelTokens(player1)).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Activation still resolves after the source leaves and counts remaining Squirrels")
+    void activatedAbilityCountsRemainingSquirrelsWithoutSource() {
+        castSquirrelGirl();
+        Permanent source = findPermanent(player1, "The Unbeatable Squirrel Girl");
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+
+        resolveAllTriggers();
+
+        assertThat(squirrelTokens(player1)).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Activation creates no tokens if no Squirrels remain on resolution")
+    void activatedAbilityWithNoRemainingSquirrels() {
+        Permanent source = addCreatureReady(player1, new TheUnbeatableSquirrelGirl());
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+
+        resolveAllTriggers();
+
+        assertThat(squirrelTokens(player1)).isEmpty();
+    }
+
     private void castSquirrelGirl() {
         harness.setHand(player1, List.of(new TheUnbeatableSquirrelGirl()));
         harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private List<Permanent> squirrelTokens(com.github.laxika.magicalvibes.model.Player player) {
