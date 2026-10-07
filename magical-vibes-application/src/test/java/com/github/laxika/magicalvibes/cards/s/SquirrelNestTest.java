@@ -113,6 +113,43 @@ class SquirrelNestTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The granted ability uses the stack and creates no token until resolution")
+    void grantedAbilityUsesStack() {
+        Permanent forest = setUpEnchantedForest();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The granted ability resolves after the enchanted land leaves the battlefield")
+    void activatedAbilityResolvesAfterLandLeaves() {
+        Permanent forest = setUpEnchantedForest(player2, player1);
+
+        harness.activateAbility(player2, 0, null, null);
+        gd.playerBattlefields.get(player2.getId()).remove(forest);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement()
+                .satisfies(token -> assertThat(token.getCard().getName()).isEqualTo("Squirrel"));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
     @DisplayName("Squirrel Nest can enchant only a land")
     void cannotEnchantNonLandPermanent() {
         Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new SquirrelNest());
