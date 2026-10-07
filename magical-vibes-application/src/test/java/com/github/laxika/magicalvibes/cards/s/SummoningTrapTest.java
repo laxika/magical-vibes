@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +20,90 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SummoningTrap.class, Cancel.class, GrizzlyBears.class, LlanowarElves.class,
+        MightOfOaks.class, ResilientKhenra.class, StoneworkPuma.class})
 class SummoningTrapTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Can pay the normal mana cost and select an artifact creature from a short library")
+    void normalCostWithShortLibrary() {
+        StoneworkPuma puma = new StoneworkPuma();
+        Cancel first = new Cancel();
+        Cancel second = new Cancel();
+        harness.setHand(player1, List.of(new SummoningTrap()));
+        harness.setLibrary(player1, List.of(first, puma, second));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        harness.assertOnBattlefield(player1, "Stonework Puma");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first);
+        harness.assertInGraveyard(player1, "Summoning Trap");
+    }
+
+    @Test
+    @DisplayName("May decline a creature and put all looked-at cards below the untouched eighth card")
+    void mayDeclineCreature() {
+        List<Card> top = List.of(new Cancel(), new StoneworkPuma(), new Cancel(),
+                new Cancel(), new Cancel(), new Cancel(), new Cancel());
+        StoneworkPuma eighth = new StoneworkPuma();
+        List<Card> library = new java.util.ArrayList<>(top);
+        library.add(eighth);
+        harness.setLibrary(player1, library);
+        harness.setHand(player1, List.of(new SummoningTrap()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleCardChosen(player1, -1);
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(6, 5, 4, 3, 2, 1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(
+                eighth, top.get(6), top.get(5), top.get(4), top.get(3),
+                top.get(2), top.get(1), top.get(0));
+        harness.assertNotOnBattlefield(player1, "Stonework Puma");
+    }
+
+    @Test
+    @DisplayName("Cannot select a creature below the top seven")
+    void noCreatureAmongTopSeven() {
+        List<Card> top = List.of(new Cancel(), new Cancel(), new Cancel(),
+                new Cancel(), new Cancel(), new Cancel(), new Cancel());
+        StoneworkPuma eighth = new StoneworkPuma();
+        List<Card> library = new java.util.ArrayList<>(top);
+        library.add(eighth);
+        harness.setLibrary(player1, library);
+        harness.setHand(player1, List.of(new SummoningTrap()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castAndResolveInstant(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3, 4, 5, 6)));
+
+        library.clear();
+        library.add(eighth);
+        library.addAll(top);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library);
+        harness.assertNotOnBattlefield(player1, "Stonework Puma");
+    }
+
+    @Test
+    @DisplayName("An empty library resolves without requiring a selection")
+    void emptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new SummoningTrap()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Summoning Trap");
+    }
 
     @Test
     @DisplayName("Can be cast for no mana after an opponent counters your creature spell")
@@ -37,9 +121,7 @@ class SummoningTrapTest extends BaseCardTest {
         harness.castInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
 
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(
+        harness.setLibrary(player1, List.of(
                 new LlanowarElves(), new MightOfOaks(), new LlanowarElves(), new MightOfOaks(),
                 new LlanowarElves(), new MightOfOaks(), new LlanowarElves()));
 
@@ -47,7 +129,7 @@ class SummoningTrapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(findPermanents(player1, "Llanowar Elves")).hasSize(1);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -56,8 +138,8 @@ class SummoningTrapTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Returns the remaining cards after the found creature's ETB interaction")
-    void returnsRemainingCardsAfterFoundCreatureEtbInteraction() {
+    @DisplayName("Returns the remaining cards before the found creature's triggered ability")
+    void returnsRemainingCardsBeforeFoundCreatureTriggeredAbility() {
         GrizzlyBears counteredCreature = new GrizzlyBears();
         SummoningTrap trap = new SummoningTrap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -76,26 +158,27 @@ class SummoningTrapTest extends BaseCardTest {
         List<Card> remaining = List.of(
                 new LlanowarElves(), new MightOfOaks(), new LlanowarElves(),
                 new MightOfOaks(), new LlanowarElves(), new MightOfOaks());
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.add(khenra);
-        deck.addAll(remaining);
+        List<Card> library = new java.util.ArrayList<>();
+        library.add(khenra);
+        library.addAll(remaining);
+        harness.setLibrary(player1, library);
 
         harness.castWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         harness.getGameService().handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3, 4, 5)));
 
-        assertThat(deck).containsExactlyElementsOf(remaining);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(remaining);
         assertThat(gd.pendingLibraryBottomReorders).isEmpty();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
     }
 
     @Test
