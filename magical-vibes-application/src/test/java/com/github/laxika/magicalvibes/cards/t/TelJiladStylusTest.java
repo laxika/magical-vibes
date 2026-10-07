@@ -14,6 +14,51 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TelJiladStylus.class, Ornithopter.class, Forest.class})
 class TelJiladStylusTest extends BaseCardTest {
+    @Test
+    @DisplayName("Taps as a cost and cannot activate again while tapped")
+    void paysTapCost() {
+        Permanent stylus = harness.addToBattlefieldAndReturn(player1, new TelJiladStylus());
+        Permanent ornithopter = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+
+        harness.activateAbility(player1, 0, null, ornithopter.getId());
+
+        assertThat(stylus.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ornithopter);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, ornithopter.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).last().isSameAs(ornithopter.getCard());
+    }
+
+    @Test
+    @DisplayName("Can put a land on the bottom without disturbing the cards above it")
+    void putsLandBelowExistingLibrary() {
+        harness.addToBattlefield(player1, new TelJiladStylus());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Card topCard = new Ornithopter();
+        harness.setLibrary(player1, java.util.List.of(topCard));
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(forest);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, forest.getCard());
+    }
+
+    @Test
+    @DisplayName("Cannot target an opponent-owned permanent even when you control it")
+    void cannotTargetOpponentOwnedPermanentUnderOwnControl() {
+        harness.addToBattlefield(player1, new TelJiladStylus());
+        Permanent borrowed = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        gd.stolenCreatures.put(borrowed.getId(), player2.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, borrowed.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a permanent you own");
+    }
 
     @Test
     @DisplayName("Puts a permanent you own on the bottom of your library")
