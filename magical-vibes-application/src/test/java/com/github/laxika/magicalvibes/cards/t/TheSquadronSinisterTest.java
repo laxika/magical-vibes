@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.d.DocOcksHenchmen;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.ScarletWitchWandaMaximoff;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +18,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TheSquadronSinister.class, DocOcksHenchmen.class, GrizzlyBears.class})
+@CardUsed({TheSquadronSinister.class, DocOcksHenchmen.class, ScarletWitchWandaMaximoff.class})
 class TheSquadronSinisterTest extends BaseCardTest {
 
     @Test
@@ -39,7 +39,7 @@ class TheSquadronSinisterTest extends BaseCardTest {
     @Test
     @DisplayName("Does not buff non-Villains or the opponent's Villains")
     void onlyBuffsOtherVillainsYouControl() {
-        Permanent nonVillain = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent nonVillain = harness.addToBattlefieldAndReturn(player1, new ScarletWitchWandaMaximoff());
         int nonVillainBasePower = gqs.getEffectivePower(gd, nonVillain);
         Permanent opponentVillain = harness.addToBattlefieldAndReturn(player2, new DocOcksHenchmen());
         int opponentVillainBasePower = gqs.getEffectivePower(gd, opponentVillain);
@@ -82,6 +82,115 @@ class TheSquadronSinisterTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The anthem does not boost its own source")
+    void doesNotBoostItself() {
+        TheSquadronSinister card = new TheSquadronSinister();
+        Permanent source = harness.addToBattlefieldAndReturn(player1, card);
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(card.getPower());
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(card.getToughness());
+    }
+
+    @Test
+    @DisplayName("Villains lose the anthem's bonuses when its source leaves")
+    void bonusesEndWhenSourceLeaves() {
+        Permanent villain = harness.addToBattlefieldAndReturn(player1, new DocOcksHenchmen());
+        int basePower = gqs.getEffectivePower(gd, villain);
+        int baseToughness = gqs.getEffectiveToughness(gd, villain);
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new TheSquadronSinister());
+        assertThat(gqs.getEffectivePower(gd, villain)).isEqualTo(basePower + 2);
+        assertThat(gqs.hasKeyword(gd, villain, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, villain, Keyword.HASTE)).isTrue();
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, source);
+
+        assertThat(gqs.getEffectivePower(gd, villain)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, villain)).isEqualTo(baseToughness);
+        assertThat(gqs.hasKeyword(gd, villain, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, villain, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Mayhem does not allow casting during combat")
+    void mayhemPreservesSorceryTiming() {
+        TheSquadronSinister card = new TheSquadronSinister();
+        harness.setGraveyard(player1, List.of(card));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(card.getId())));
+        prepareMainPhase();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mayhem requires the red mana in its alternative cost")
+    void mayhemRequiresCorrectColoredMana() {
+        TheSquadronSinister card = new TheSquadronSinister();
+        harness.setGraveyard(player1, List.of(card));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(card.getId())));
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Discarding another card does not enable this card's Mayhem")
+    void mayhemRequiresThisSpecificCardToBeDiscarded() {
+        TheSquadronSinister card = new TheSquadronSinister();
+        DocOcksHenchmen discarded = new DocOcksHenchmen();
+        harness.setGraveyard(player1, List.of(card, discarded));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(discarded.getId())));
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+    }
+
+    @Test
+    @DisplayName("Mayhem cannot reuse a discard after the card was cast and died")
+    void mayhemDoesNotSurviveLeavingTheGraveyard() {
+        TheSquadronSinister card = new TheSquadronSinister();
+        harness.setGraveyard(player1, List.of(card));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(card.getId())));
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+        Permanent source = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard() == card)
+                .findFirst().orElseThrow();
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, source);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void prepareMainPhase() {
