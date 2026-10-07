@@ -86,6 +86,43 @@ class StaminaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrifice is paid immediately but regeneration waits for resolution")
+    void sacrificeIsPaidBeforeRegenerationResolves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AlabasterWall());
+        attachAura(creature);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Stamina");
+        harness.assertInGraveyard(player1, "Stamina");
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
+        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(creature.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The Aura controller can regenerate an opponent's enchanted creature")
+    void regeneratesOpponentsEnchantedCreature() {
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new AlabasterWall());
+        Permanent enchantedCreature = harness.addToBattlefieldAndReturn(player2, new AlabasterWall());
+        attachAura(enchantedCreature);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(enchantedCreature.getRegenerationShield()).isEqualTo(1);
+        assertThat(otherCreature.getRegenerationShield()).isZero();
+        assertThat(gqs.hasKeyword(gd, enchantedCreature, Keyword.VIGILANCE)).isFalse();
+        harness.assertInGraveyard(player1, "Stamina");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player1, new AssemblyHall());
