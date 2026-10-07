@@ -81,6 +81,54 @@ class UktabiEfreetTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Age counters are counted when the upkeep trigger resolves")
+    void countsAgeCountersAtResolution() {
+        Permanent efreet = harness.addToBattlefieldAndReturn(player1, new UktabiEfreet());
+
+        advanceToUpkeep(player1);
+        assertThat(efreet.getCounterCount(CounterType.AGE)).isZero();
+        efreet.setCounterCount(CounterType.AGE, 2);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.passBothPriorities();
+
+        assertThat(efreet.getCounterCount(CounterType.AGE)).isEqualTo(3);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Uktabi Efreet");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Non-green mana cannot pay the cumulative upkeep")
+    void wrongManaColorCannotPayUpkeep() {
+        harness.addToBattlefield(player1, new UktabiEfreet());
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Uktabi Efreet");
+        harness.assertInGraveyard(player1, "Uktabi Efreet");
+    }
+
+    @Test
+    @DisplayName("The controller may decline an affordable cumulative upkeep")
+    void canDeclineAffordableUpkeep() {
+        Permanent efreet = harness.addToBattlefieldAndReturn(player1, new UktabiEfreet());
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.passBothPriorities();
+
+        assertThat(efreet.getCounterCount(CounterType.AGE)).isEqualTo(1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Uktabi Efreet");
+        harness.assertInGraveyard(player1, "Uktabi Efreet");
+    }
+
+    @Test
     @DisplayName("Declining the cumulative upkeep sacrifices Uktabi Efreet")
     void decliningUpkeepSacrifices() {
         harness.addToBattlefield(player1, new UktabiEfreet());
