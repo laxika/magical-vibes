@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.t.TeardropKami;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -46,9 +47,8 @@ class UncheckedGrowthTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new TeardropKami());
         castUncheckedGrowth(target.getId());
 
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
@@ -63,6 +63,42 @@ class UncheckedGrowthTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(4);
         assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Grants trample to an opponent's Spirit without affecting other creatures")
+    void boostsOnlyTargetedOpponentsSpirit() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TeardropKami());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new TeardropKami());
+
+        castUncheckedGrowth(target.getId());
+
+        assertThat(target.getPowerModifier()).isEqualTo(4);
+        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(other.hasKeyword(Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Multiple Unchecked Growth boosts accumulate and expire together")
+    void repeatedBoostsAccumulateUntilCleanup() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new TeardropKami());
+
+        castUncheckedGrowth(target.getId());
+        castUncheckedGrowth(target.getId());
+
+        assertThat(target.getPowerModifier()).isEqualTo(8);
+        assertThat(target.getToughnessModifier()).isEqualTo(8);
+        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.UPKEEP);
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
         assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
     }
 
