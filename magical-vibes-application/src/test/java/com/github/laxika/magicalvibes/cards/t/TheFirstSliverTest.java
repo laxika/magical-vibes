@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.c.CloudshredderSliver;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.m.ManaweftSliver;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.u.UniversalAutomaton;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -17,15 +18,15 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheFirstSliver.class, HillGiant.class, GrizzlyBears.class, ManaweftSliver.class, LlanowarElves.class, CloudshredderSliver.class})
+@CardUsed({TheFirstSliver.class, GrizzlyBears.class, LlanowarElves.class,
+        CloudshredderSliver.class, Ornithopter.class, UniversalAutomaton.class})
 class TheFirstSliverTest extends BaseCardTest {
 
     @Test
     @DisplayName("The First Sliver cascades when cast")
     void cascadesWhenCast() {
         setupCasterTurn();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new LlanowarElves());
+        harness.setLibrary(player1, List.of(new LlanowarElves()));
 
         harness.setHand(player1, List.of(new TheFirstSliver()));
         addFiveColors();
@@ -40,8 +41,7 @@ class TheFirstSliverTest extends BaseCardTest {
     void sliverSpellCascades() {
         setupCasterTurn();
         harness.addToBattlefield(player1, new TheFirstSliver());
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new LlanowarElves());
+        harness.setLibrary(player1, List.of(new LlanowarElves()));
 
         harness.setHand(player1, List.of(new CloudshredderSliver()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -61,8 +61,7 @@ class TheFirstSliverTest extends BaseCardTest {
         setupCasterTurn();
         harness.addToBattlefield(player1, new TheFirstSliver());
         LlanowarElves untouched = new LlanowarElves();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(untouched);
+        harness.setLibrary(player1, List.of(untouched));
 
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -72,6 +71,95 @@ class TheFirstSliverTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched);
+    }
+
+    @Test
+    void changelingSpellGetsCascade() {
+        setupCasterTurn();
+        harness.addToBattlefield(player1, new TheFirstSliver());
+        Ornithopter hit = new Ornithopter();
+        harness.setLibrary(player1, List.of(hit));
+        harness.setHand(player1, List.of(new UniversalAutomaton()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards()).containsExactly(hit);
+    }
+
+    @Test
+    void sliverHitDoesNotCascadeWhileFirstSliverIsStillOnStack() {
+        setupCasterTurn();
+        LlanowarElves untouched = new LlanowarElves();
+        harness.setLibrary(player1, List.of(new CloudshredderSliver(), untouched));
+        harness.setHand(player1, List.of(new TheFirstSliver()));
+        addFiveColors();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Cloudshredder Sliver");
+        harness.assertNotOnBattlefield(player1, "The First Sliver");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "The First Sliver");
+    }
+
+    @Test
+    void sliverCastFromCascadeGetsAnotherCascade() {
+        setupCasterTurn();
+        harness.addToBattlefield(player1, new TheFirstSliver());
+        Ornithopter hit = new Ornithopter();
+        harness.setLibrary(player1, List.of(new CloudshredderSliver(), hit));
+        harness.setHand(player1, List.of(new TheFirstSliver()));
+        addFiveColors();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards()).containsExactly(hit);
+    }
+
+    @Test
+    void opponentsFirstSliverDoesNotGrantCascade() {
+        setupCasterTurn();
+        harness.addToBattlefield(player2, new TheFirstSliver());
+        LlanowarElves untouched = new LlanowarElves();
+        harness.setLibrary(player1, List.of(untouched));
+        harness.setHand(player1, List.of(new CloudshredderSliver()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Cloudshredder Sliver");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched);
+    }
+
+    @Test
+    void decliningCascadeReturnsHitAndLetsFirstSliverResolve() {
+        setupCasterTurn();
+        LlanowarElves hit = new LlanowarElves();
+        harness.setLibrary(player1, List.of(hit));
+        harness.setHand(player1, List.of(new TheFirstSliver()));
+        addFiveColors();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "The First Sliver");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(hit);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void setupCasterTurn() {
