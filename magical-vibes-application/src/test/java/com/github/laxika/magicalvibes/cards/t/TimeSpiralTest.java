@@ -26,7 +26,7 @@ class TimeSpiralTest extends BaseCardTest {
         Card graveyardCard = new Zephid();
         harness.setHand(player1, List.of(new TimeSpiral()));
         harness.setHand(player2, List.of(handCard));
-        gd.playerGraveyards.get(player2.getId()).add(graveyardCard);
+        harness.setGraveyard(player2, List.of(graveyardCard));
         harness.setLibrary(player1, deckOf(20));
         harness.setLibrary(player2, deckOf(20));
 
@@ -118,12 +118,51 @@ class TimeSpiralTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Time Spiral");
     }
 
+    @Test
+    @DisplayName("Time Spiral is already exiled when lands are chosen")
+    void exiledBeforeChoosingLands() {
+        Card spiral = new TimeSpiral();
+        harness.setHand(player1, List.of(spiral));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, deckOf(20));
+        harness.setLibrary(player2, deckOf(20));
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        land.tap();
+
+        cast();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spiral);
+        harness.handleMultiplePermanentsChosen(player1, List.of(land.getId()));
+        assertThat(land.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Shuffles the caster's remaining hand and graveyard without shuffling Time Spiral")
+    void shufflesCastersHandAndGraveyard() {
+        Card spiral = new TimeSpiral();
+        Card handCard = new Zephid();
+        Card graveyardCard = new Forest();
+        harness.setHand(player1, List.of(spiral, handCard));
+        harness.setGraveyard(player1, List.of(graveyardCard));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, deckOf(5));
+        harness.setLibrary(player2, deckOf(7));
+
+        cast();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .hasSize(7).contains(handCard, graveyardCard).doesNotContain(spiral);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spiral);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
+    }
+
     private void cast() {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.forceActivePlayer(player1);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     private List<Card> deckOf(int count) {
