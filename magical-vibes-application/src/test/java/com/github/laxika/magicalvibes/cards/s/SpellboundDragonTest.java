@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SpellboundDragon.class, GrizzlyBears.class, Cancel.class, Mountain.class, StinkweedImp.class})
 class SpellboundDragonTest extends BaseCardTest {
 
     @Test
@@ -54,23 +57,66 @@ class SpellboundDragonTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("An empty hand can discard the card just drawn")
+    void discardsNewlyDrawnCardFromEmptyHand() {
+        SpellboundDragon drawn = new SpellboundDragon();
+        harness.setLibrary(player1, List.of());
+        Permanent dragon = attackWithDragon(List.of(), drawn);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(drawn);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Dredge finishes before the attack trigger asks for a discard")
+    void dredgesBeforeDiscarding() {
+        Permanent dragon = addCreatureReady(player1, new SpellboundDragon());
+        GrizzlyBears held = new GrizzlyBears();
+        StinkweedImp imp = new StinkweedImp();
+        List<Card> milled = List.of(new SpellboundDragon(), new SpellboundDragon(),
+                new SpellboundDragon(), new SpellboundDragon(), new SpellboundDragon());
+        harness.setHand(player1, List.of(held));
+        harness.setGraveyard(player1, List.of(imp));
+        harness.setLibrary(player1, milled);
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(held);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(held, imp);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(milled);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        discardByName(player1, "Stinkweed Imp");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(held);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(imp);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(5);
+    }
+
     /**
      * Puts a ready Spellbound Dragon onto the battlefield with the given hand and a card to draw,
      * declares it as the sole attacker, and resolves the attack trigger up to the discard choice.
      */
     private Permanent attackWithDragon(List<Card> hand, Card cardToDraw) {
-        Permanent dragon = harness.addToBattlefieldAndReturn(player1, new SpellboundDragon());
-        dragon.setSummoningSick(false);
+        Permanent dragon = addCreatureReady(player1, new SpellboundDragon());
 
         harness.setHand(player1, hand);
         gd.playerDecks.get(player1.getId()).add(cardToDraw);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
         int dragonIdx = gd.playerBattlefields.get(player1.getId()).indexOf(dragon);
-        gs.declareAttackers(gd, player1, List.of(dragonIdx), null);
+        declareAttackers(player1, List.of(dragonIdx));
 
         // Resolve the attack trigger: draws a card, then begins the discard choice.
         harness.passBothPriorities();
