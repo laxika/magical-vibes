@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,28 +14,74 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SurgeNode.class, Forest.class})
 class SurgeNodeTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    
-
     @Test
-    @DisplayName("Has activated ability: {1}, tap, remove charge counter to put charge counter on target artifact")
-    void hasActivatedAbility() {
-        SurgeNode card = new SurgeNode();
+    void canTargetItselfAndPaysCostsBeforeResolution() {
+        Permanent node = harness.addToBattlefieldAndReturn(player1, new SurgeNode());
+        node.setCounterCount(CounterType.CHARGE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{1}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .hasSize(2)
-                .anyMatch(e -> e instanceof RemoveCounterFromSourceCost rc && rc.count() == 1 && rc.counterType() == CounterType.CHARGE)
-                .anyMatch(e -> e instanceof PutCounterOnTargetPermanentEffect pct && pct.counterType() == CounterType.CHARGE);
-        assertThat(card.getActivatedAbilities().getFirst().getTargetFilter()).isNotNull();
+        harness.activateAbility(player1, 0, null, node.getId());
+
+        assertThat(node.isTapped()).isTrue();
+        assertThat(node.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(node.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
-    // ===== Entering the battlefield with charge counters =====
+    @Test
+    void cannotTargetNonartifactPermanent() {
+        Permanent node = harness.addToBattlefieldAndReturn(player1, new SurgeNode());
+        node.setCounterCount(CounterType.CHARGE, 6);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(node.isTapped()).isFalse();
+        assertThat(node.getCounterCount(CounterType.CHARGE)).isEqualTo(6);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent node = harness.addToBattlefieldAndReturn(player1, new SurgeNode());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SurgeNode());
+        node.setCounterCount(CounterType.CHARGE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(node);
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void removedTargetDoesNotRefundCostsOrAffectOtherArtifacts() {
+        Permanent node = harness.addToBattlefieldAndReturn(player1, new SurgeNode());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SurgeNode());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new SurgeNode());
+        node.setCounterCount(CounterType.CHARGE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(node.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(node.isTapped()).isTrue();
+        assertThat(other.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Enters the battlefield with 6 charge counters")
@@ -50,19 +96,14 @@ class SurgeNodeTest extends BaseCardTest {
         assertThat(node.getCounterCount(CounterType.CHARGE)).isEqualTo(6);
     }
 
-    // ===== Activated ability: put charge counter on target artifact =====
-
     @Test
     @DisplayName("Activating ability removes a charge counter from Surge Node and puts one on target artifact")
     void activateRemovesCounterAndPutsOnTarget() {
-        harness.addToBattlefield(player1, new SurgeNode());
-        // Add another artifact as a target
-        harness.addToBattlefield(player1, new SurgeNode());
+        Permanent surgeNode = harness.addToBattlefieldAndReturn(player1, new SurgeNode());
+        Permanent targetArtifact = harness.addToBattlefieldAndReturn(player1, new SurgeNode());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent surgeNode = gd.playerBattlefields.get(player1.getId()).get(0);
         surgeNode.setCounterCount(CounterType.CHARGE, 6);
-        Permanent targetArtifact = gd.playerBattlefields.get(player1.getId()).get(1);
         targetArtifact.setCounterCount(CounterType.CHARGE, 0);
 
         harness.activateAbility(player1, 0, null, targetArtifact.getId());
@@ -75,13 +116,11 @@ class SurgeNodeTest extends BaseCardTest {
     @Test
     @DisplayName("Can target an opponent's artifact")
     void canTargetOpponentArtifact() {
-        harness.addToBattlefield(player1, new SurgeNode());
-        harness.addToBattlefield(player2, new SurgeNode());
+        Permanent surgeNode = harness.addToBattlefieldAndReturn(player1, new SurgeNode());
+        Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new SurgeNode());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent surgeNode = gd.playerBattlefields.get(player1.getId()).get(0);
         surgeNode.setCounterCount(CounterType.CHARGE, 6);
-        Permanent opponentArtifact = gd.playerBattlefields.get(player2.getId()).get(0);
         opponentArtifact.setCounterCount(CounterType.CHARGE, 0);
 
         harness.activateAbility(player1, 0, null, opponentArtifact.getId());
@@ -94,13 +133,11 @@ class SurgeNodeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate with 0 charge counters")
     void cannotActivateWithNoCounters() {
-        harness.addToBattlefield(player1, new SurgeNode());
-        harness.addToBattlefield(player1, new SurgeNode());
+        Permanent surgeNode = harness.addToBattlefieldAndReturn(player1, new SurgeNode());
+        Permanent targetArtifact = harness.addToBattlefieldAndReturn(player1, new SurgeNode());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent surgeNode = gd.playerBattlefields.get(player1.getId()).get(0);
         surgeNode.setCounterCount(CounterType.CHARGE, 0);
-        Permanent targetArtifact = gd.playerBattlefields.get(player1.getId()).get(1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetArtifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -109,12 +146,10 @@ class SurgeNodeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutMana() {
-        harness.addToBattlefield(player1, new SurgeNode());
-        harness.addToBattlefield(player1, new SurgeNode());
+        Permanent surgeNode = harness.addToBattlefieldAndReturn(player1, new SurgeNode());
+        Permanent targetArtifact = harness.addToBattlefieldAndReturn(player1, new SurgeNode());
 
-        Permanent surgeNode = gd.playerBattlefields.get(player1.getId()).get(0);
         surgeNode.setCounterCount(CounterType.CHARGE, 6);
-        Permanent targetArtifact = gd.playerBattlefields.get(player1.getId()).get(1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetArtifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -123,14 +158,12 @@ class SurgeNodeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
-        harness.addToBattlefield(player1, new SurgeNode());
-        harness.addToBattlefield(player1, new SurgeNode());
+        Permanent surgeNode = harness.addToBattlefieldAndReturn(player1, new SurgeNode());
+        Permanent targetArtifact = harness.addToBattlefieldAndReturn(player1, new SurgeNode());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent surgeNode = gd.playerBattlefields.get(player1.getId()).get(0);
         surgeNode.setCounterCount(CounterType.CHARGE, 6);
         surgeNode.tap();
-        Permanent targetArtifact = gd.playerBattlefields.get(player1.getId()).get(1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetArtifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -139,13 +172,11 @@ class SurgeNodeTest extends BaseCardTest {
     @Test
     @DisplayName("Multiple activations deplete charge counters")
     void multipleActivationsDepleteCounters() {
-        harness.addToBattlefield(player1, new SurgeNode());
-        harness.addToBattlefield(player1, new SurgeNode());
+        Permanent surgeNode = harness.addToBattlefieldAndReturn(player1, new SurgeNode());
+        Permanent targetArtifact = harness.addToBattlefieldAndReturn(player1, new SurgeNode());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        Permanent surgeNode = gd.playerBattlefields.get(player1.getId()).get(0);
         surgeNode.setCounterCount(CounterType.CHARGE, 6);
-        Permanent targetArtifact = gd.playerBattlefields.get(player1.getId()).get(1);
         targetArtifact.setCounterCount(CounterType.CHARGE, 0);
 
         // First activation
