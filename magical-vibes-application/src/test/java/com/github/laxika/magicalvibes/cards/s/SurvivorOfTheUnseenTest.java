@@ -46,6 +46,58 @@ class SurvivorOfTheUnseenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can put a card already in hand above the remaining library")
+    void canPutOriginalHandCardOnTop() {
+        addCreatureReady(player1, new SurvivorOfTheUnseen());
+        Card original = new BalduvianRage();
+        Card first = new BorealDruid();
+        Card second = new BalduvianRage();
+        Card remaining = new BorealDruid();
+        harness.setHand(player1, List.of(original));
+        harness.setLibrary(player1, List.of(first, second, remaining));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(original.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(original, remaining);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep does not trigger on the opponent's upkeep")
+    void opponentUpkeepDoesNotAddAgeCounter() {
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new SurvivorOfTheUnseen());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(survivor.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(survivor);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Insufficient mana for cumulative upkeep sacrifices the permanent")
+    void insufficientManaSacrifices() {
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new SurvivorOfTheUnseen());
+        survivor.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(survivor.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(survivor);
+        harness.assertInGraveyard(player1, "Survivor of the Unseen");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Paying cumulative upkeep keeps Survivor of the Unseen")
     void paysCumulativeUpkeep() {
         Permanent survivor = harness.addToBattlefieldAndReturn(player1, new SurvivorOfTheUnseen());
