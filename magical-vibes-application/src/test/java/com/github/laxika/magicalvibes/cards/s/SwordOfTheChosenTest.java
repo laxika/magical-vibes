@@ -83,4 +83,60 @@ class SwordOfTheChosenTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+
+    @Test
+    @DisplayName("A newly entered Sword can boost its controller's legendary creature")
+    void canActivateImmediatelyAndTargetOwnCreature() {
+        Permanent sword = harness.addToBattlefieldAndReturn(player1, new SwordOfTheChosen());
+        Permanent queen = addCreatureReady(player1, new SliverQueen());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, queen.getId());
+        harness.passBothPriorities();
+
+        assertThat(sword.isTapped()).isTrue();
+        assertThat(queen.getEffectivePower()).isEqualTo(9);
+        assertThat(queen.getEffectiveToughness()).isEqualTo(9);
+    }
+
+    @Test
+    @DisplayName("The ability resolves even if Sword leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        Permanent sword = addCreatureReady(player1, new SwordOfTheChosen());
+        Permanent queen = addCreatureReady(player2, new SliverQueen());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, queen.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(sword);
+        gd.playerGraveyards.get(player1.getId()).add(sword.getCard());
+        harness.passBothPriorities();
+
+        assertThat(queen.getEffectivePower()).isEqualTo(9);
+        assertThat(queen.getEffectiveToughness()).isEqualTo(9);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability does not boost a legendary creature that left and returned")
+    void doesNotBoostReturnedTarget() {
+        Permanent sword = addCreatureReady(player1, new SwordOfTheChosen());
+        Permanent queen = addCreatureReady(player2, new SliverQueen());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, queen.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(queen);
+        Permanent returnedQueen = harness.addToBattlefieldAndReturn(player2, queen.getCard());
+        harness.passBothPriorities();
+
+        assertThat(sword.isTapped()).isTrue();
+        assertThat(returnedQueen.getEffectivePower()).isEqualTo(7);
+        assertThat(returnedQueen.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gd.stack).isEmpty();
+    }
 }
