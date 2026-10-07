@@ -29,14 +29,12 @@ class UmaraMysticTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock(), new Divination()));
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
         assertThat(mystic.getPowerModifier()).isEqualTo(2);
 
         harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         assertThat(mystic.getPowerModifier()).isEqualTo(4);
     }
 
@@ -78,21 +76,98 @@ class UmaraMysticTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setHand(player1, List.of(new Shock()));
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(mystic.getPowerModifier()).isEqualTo(2);
 
+        resolveAllTriggers();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        assertThat(mystic.getPowerModifier()).isEqualTo(2);
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(mystic.getPowerModifier()).isEqualTo(0);
     }
 
+    @Test
+    void opponentsMatchingSpellDoesNotTrigger() {
+        Permanent mystic = addMystic(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.setHand(player2, List.of(new UmaraMystic()));
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(mystic.getPowerModifier()).isZero();
+        assertThat(mystic.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void controllerInstantTriggersDuringOpponentsTurn() {
+        Permanent mystic = addMystic(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new Shock()));
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(mystic.getPowerModifier()).isEqualTo(2);
+        assertThat(mystic.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void castingMysticBoostsExistingMysticsButNotTheNewOne() {
+        Permanent first = addMystic(player1);
+        Permanent second = addMystic(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setHand(player1, List.of(new UmaraMystic()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.getPowerModifier()).isEqualTo(2);
+        assertThat(second.getPowerModifier()).isEqualTo(2);
+        assertThat(first.getToughnessModifier()).isZero();
+        assertThat(second.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent != first && permanent != second)
+                .singleElement()
+                .satisfies(permanent -> {
+                    assertThat(permanent.getPowerModifier()).isZero();
+                    assertThat(permanent.getToughnessModifier()).isZero();
+                });
+    }
+
+    @Test
+    void mysticDoesNotTriggerFromItsOwnCast() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setHand(player1, List.of(new UmaraMystic()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement()
+                .satisfies(permanent -> {
+                    assertThat(permanent.getPowerModifier()).isZero();
+                    assertThat(permanent.getToughnessModifier()).isZero();
+                });
+    }
+
     private Permanent addMystic(Player player) {
-        Permanent mystic = new Permanent(new UmaraMystic());
-        mystic.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(mystic);
-        return mystic;
+        return addCreatureReady(player, new UmaraMystic());
     }
 }
