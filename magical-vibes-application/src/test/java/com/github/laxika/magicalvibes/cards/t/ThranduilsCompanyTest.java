@@ -59,4 +59,78 @@ class ThranduilsCompanyTest extends BaseCardTest {
     private void addCompany() {
         harness.addToBattlefield(player1, new ThranduilsCompany());
     }
+
+    @Test
+    @DisplayName("An opponent's Elf does not enable the additional land play")
+    void opposingElfDoesNotEnableAdditionalLand() {
+        addCompany();
+        harness.addToBattlefield(player2, new ThranduilsCompany());
+
+        assertThat(gqs.getMaxLandsThisTurn(gd, player1.getId())).isEqualTo(1);
+        assertThat(gqs.getMaxLandsThisTurn(gd, player2.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two Companies enable each other and lose the permission when one leaves")
+    void additionalLandPermissionsStackAndUpdateImmediately() {
+        addCompany();
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ThranduilsCompany());
+
+        assertThat(gqs.getMaxLandsThisTurn(gd, player1.getId())).isEqualTo(3);
+
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+
+        assertThat(gqs.getMaxLandsThisTurn(gd, player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Landfall can target the Company without another Elf")
+    void landfallCanTargetItselfWithoutAnotherElf() {
+        Permanent company = harness.addToBattlefieldAndReturn(player1, new ThranduilsCompany());
+        harness.setHand(player1, java.util.List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, company.getId());
+        harness.passBothPriorities();
+
+        assertThat(company.getEffectivePower()).isEqualTo(5);
+        assertThat(company.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, company, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's land does not trigger landfall")
+    void opponentsLandDoesNotTriggerLandfall() {
+        Permanent company = harness.addToBattlefieldAndReturn(player1, new ThranduilsCompany());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, java.util.List.of(new Forest()));
+
+        harness.playLand(player2, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(company.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, company, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Both permitted land plays trigger landfall independently")
+    void bothLandPlaysTriggerLandfall() {
+        Permanent company = harness.addToBattlefieldAndReturn(player1, new ThranduilsCompany());
+        harness.addToBattlefield(player1, new ElvishMystic());
+        harness.setHand(player1, java.util.List.of(new Forest(), new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, company.getId());
+        harness.passBothPriorities();
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, company.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())
+                .stream().filter(p -> p.getCard() instanceof Forest)).hasSize(2);
+        assertThat(company.getEffectivePower()).isEqualTo(7);
+        assertThat(company.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.hasKeyword(gd, company, Keyword.VIGILANCE)).isTrue();
+    }
 }
