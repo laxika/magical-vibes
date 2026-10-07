@@ -28,8 +28,7 @@ class StruggleForSanityTest extends BaseCardTest {
         harness.setHand(player1, List.of(new StruggleForSanity()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
     @Test
@@ -163,5 +162,59 @@ class StruggleForSanityTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handleCardChosen(player2, 7))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid card index");
+    }
+
+    @Test
+    @DisplayName("A single card returns to the target's hand")
+    void singleCardReturnsToHand() {
+        LanternKami card = new LanternKami();
+        harness.setHand(player2, List.of(card));
+
+        castStruggle();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(card);
+        assertThat(gd.exiledCards).isEmpty();
+        harness.assertNotInGraveyard(player2, "Lantern Kami");
+        harness.assertInGraveyard(player1, "Struggle for Sanity");
+    }
+
+    @Test
+    @DisplayName("Nonzero choices distinguish copies with the same name")
+    void nonzeroChoicesTrackIndividualCopies() {
+        LanternKami first = new LanternKami();
+        LanternKami second = new LanternKami();
+        Forest land = new Forest();
+        harness.setHand(player2, List.of(first, second, land));
+
+        castStruggle();
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(land);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Caster's picks enter the graveyard from exile, not from the hand")
+    void graveyardMoveDoesNotCountAsComingFromHand() {
+        LanternKami kept = new LanternKami();
+        HumbleBudoka binned = new HumbleBudoka();
+        harness.setHand(player2, List.of(kept, binned));
+
+        castStruggle();
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(kept);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(binned);
+        assertThat(gd.cardsPutIntoGraveyardFromAnywhereThisTurn.get(player2.getId()))
+                .contains(binned.getId());
+        assertThat(gd.cardsPutIntoGraveyardFromHandThisTurn
+                .getOrDefault(player2.getId(), java.util.Set.of())).doesNotContain(binned.getId());
     }
 }
