@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({UndercityPlague.class, GrizzlyBears.class, Forest.class})
 class UndercityPlagueTest extends BaseCardTest {
 
     @Test
@@ -25,8 +27,7 @@ class UndercityPlagueTest extends BaseCardTest {
         harness.setHand(player1, List.of(new UndercityPlague()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertLife(player2, 19);
 
@@ -53,8 +54,7 @@ class UndercityPlagueTest extends BaseCardTest {
         harness.setHand(player1, List.of(new UndercityPlague()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player2, 0);
 
         PendingInteraction.MultiPermanentChoice choice =
@@ -74,15 +74,13 @@ class UndercityPlagueTest extends BaseCardTest {
     @Test
     @DisplayName("Encoded copy repeats the whole effect after combat damage")
     void cipherCopyOnCombatDamage() {
-        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new Forest());
         harness.setHand(player2, new ArrayList<>(List.of(new Forest(), new Forest())));
         harness.setHand(player1, List.of(new UndercityPlague()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player2, 0);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, attacker.getId());
@@ -107,5 +105,83 @@ class UndercityPlagueTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty hand does not prevent sacrificing a land")
+    void emptyHandStillSacrificesLand() {
+        harness.setHand(player2, List.of());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new UndercityPlague()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player1, "Undercity Plague");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An empty battlefield does not prevent discarding")
+    void emptyBattlefieldStillDiscards() {
+        harness.setHand(player2, List.of(new Forest()));
+        harness.setHand(player1, List.of(new UndercityPlague()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 0);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cipher can encode even when the target has no cards or permanents")
+    void emptyTargetZonesStillAllowEncoding() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new UndercityPlague()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, creature.getId());
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Undercity Plague");
+        assertThat(gd.exiledCards).hasSize(1)
+                .anyMatch(exiled -> exiled.card().getName().equals("Undercity Plague"));
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The caster can target themselves and sacrifice their only creature before cipher")
+    void canTargetCasterAndSacrificeOnlyEncodingCreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new UndercityPlague(), new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.assertLife(player1, 19);
+        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Undercity Plague");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
