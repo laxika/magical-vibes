@@ -52,4 +52,62 @@ class TriceratonRegentaTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid permanent");
     }
+
+    @Test
+    @DisplayName("The controller may choose no target even when another creature is available")
+    void mayChooseNoTarget() {
+        Permanent regenta = addCreatureReady(player1, new TriceratonRegenta());
+        Permanent ally = addCreatureReady(player1, new TriceratonRegenta());
+        ally.tap();
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(ally.isTapped()).isTrue();
+        assertThat(regenta.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Attacking alone needs no target and does not tap the vigilant attacker")
+    void attacksWithoutAnotherCreature() {
+        Permanent regenta = addCreatureReady(player1, new TriceratonRegenta());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(regenta.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Another copy is a legal target and is untapped by the attack trigger")
+    void untapsAnotherCopy() {
+        Permanent regenta = addCreatureReady(player1, new TriceratonRegenta());
+        Permanent ally = addCreatureReady(player1, new TriceratonRegenta());
+        ally.tap();
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, ally.getId());
+        resolveAllTriggers();
+
+        assertThat(ally.isTapped()).isFalse();
+        assertThat(regenta.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An already untapped creature is a legal target")
+    void mayTargetUntappedCreature() {
+        addCreatureReady(player1, new TriceratonRegenta());
+        Permanent ally = addCreatureReady(player1, new TriceratonRegenta());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, ally.getId());
+        resolveAllTriggers();
+
+        assertThat(ally.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }
