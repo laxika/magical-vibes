@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.Cultivate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Tidal Barracuda")
-@CardUsed({TidalBarracuda.class, GrizzlyBears.class, Shock.class})
+@CardUsed({TidalBarracuda.class, GrizzlyBears.class, Shock.class, Cultivate.class, SolRing.class})
 class TidalBarracudaTest extends BaseCardTest {
 
     @Test
@@ -24,7 +26,6 @@ class TidalBarracudaTest extends BaseCardTest {
     void controllerMayCastSpellsAtInstantSpeed() {
         harness.addToBattlefield(player1, new TidalBarracuda());
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
@@ -39,7 +40,6 @@ class TidalBarracudaTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TidalBarracuda());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.addMana(player2, ManaColor.GREEN, 2);
 
@@ -56,11 +56,71 @@ class TidalBarracudaTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, barracuda.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("The controller may cast a sorcery during an opponent's turn")
+    void controllerMayCastSorceryDuringOpponentsTurn() {
+        harness.addToBattlefield(player1, new TidalBarracuda());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new Cultivate()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castSorcery(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotInHand(player1, "Cultivate");
+    }
+
+    @Test
+    @DisplayName("An opponent may cast an artifact outside their main phase on their own turn")
+    void opponentMayCastArtifactOutsideMainPhase() {
+        harness.addToBattlefield(player1, new TidalBarracuda());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player2, List.of(new SolRing()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castArtifact(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotInHand(player2, "Sol Ring");
+    }
+
+    @Test
+    @DisplayName("Opponents can activate mana abilities during the controller's turn")
+    void opponentMayActivateManaAbilityDuringControllerTurn() {
+        harness.addToBattlefield(player1, new TidalBarracuda());
+        Permanent ring = harness.addToBattlefieldAndReturn(player2, new SolRing());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(ring.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opposing Barracuda's casting prohibition overrides flash permission")
+    void opposingBarracudasDoNotLetOpponentCast() {
+        harness.addToBattlefield(player1, new TidalBarracuda());
+        harness.addToBattlefield(player2, new TidalBarracuda());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player2, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 }
