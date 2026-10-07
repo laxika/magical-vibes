@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -71,6 +72,54 @@ class SuperSoldierSerumTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(equipment.getAttachedTo()).isEqualTo(blocker.getId());
+    }
+
+    @Test
+    void canChooseNoEquipmentEvenWhenEquipmentIsAvailable() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        addSerum(creature);
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new AccordersShield());
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(creature)));
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(equipment.getAttachedTo()).isNull();
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    void auraControllerCanAttachTheirEquipmentToAnOpponentsAttacker() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        addSerum(creature);
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new AccordersShield());
+        Permanent opponentsEquipment = harness.addToBattlefieldAndReturn(player2, new AccordersShield());
+
+        declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(creature)));
+        harness.handlePermanentChosen(player1, equipment.getId());
+        harness.passBothPriorities();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(opponentsEquipment.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void anyNumberOfEquipmentHasNoNinetyNineTargetLimit() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        addSerum(creature);
+        List<Permanent> equipment = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            equipment.add(harness.addToBattlefieldAndReturn(player1, new AccordersShield()));
+        }
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(creature)));
+        for (Permanent target : equipment) {
+            harness.handlePermanentChosen(player1, target.getId());
+        }
+        harness.passBothPriorities();
+
+        assertThat(equipment).allSatisfy(target ->
+                assertThat(target.getAttachedTo()).isEqualTo(creature.getId()));
     }
 
     private Permanent addSerum(Permanent creature) {
