@@ -2,15 +2,15 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RaptorCompanion;
+import com.github.laxika.magicalvibes.cards.l.LoomingAltisaur;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.amount.SourceToughness;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,36 +21,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({SteadfastArmasaur.class, RaptorCompanion.class, LoomingAltisaur.class})
 class SteadfastArmasaurTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has activated ability: {1}{W}, {T} deal toughness damage to creature in combat with it")
-    void hasCorrectAbility() {
-        SteadfastArmasaur card = new SteadfastArmasaur();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{1}{W}");
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isEqualTo(new DealDamageToTargetCreatureEffect(new SourceToughness()));
-    }
-
-    
-
-    // ===== Deals damage when attacking and blocked =====
 
     @Test
     @DisplayName("Deals damage equal to toughness to a creature blocking it")
     void dealsToughnessDamageToBlocker() {
         Permanent armasaur = addReadyArmasaur(player1);
-        GrizzlyBears bears = new GrizzlyBears();
-        bears.setToughness(4);
-        harness.addToBattlefield(player2, bears);
-        Permanent blocker = findPermanent(player2, "Grizzly Bears");
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new LoomingAltisaur());
 
         setupArmasaurAttackingBlockedBy(armasaur, blocker);
 
@@ -58,17 +36,16 @@ class SteadfastArmasaurTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        // Armasaur has 3 toughness, so deals 3 damage to a 2/4 — survives
+        // Three damage is not lethal to Looming Altisaur.
         assertThat(blocker.getMarkedDamage()).isEqualTo(3);
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Looming Altisaur");
     }
 
     @Test
     @DisplayName("Kills blocker when toughness damage is lethal")
     void killsBlockerWithLethalToughnessDamage() {
         Permanent armasaur = addReadyArmasaur(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent blocker = findPermanent(player2, "Grizzly Bears");
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
 
         setupArmasaurAttackingBlockedBy(armasaur, blocker);
 
@@ -76,18 +53,15 @@ class SteadfastArmasaurTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        // Armasaur has 3 toughness, so deals 3 damage to a 2/2 — lethal
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        // Three damage is lethal to Raptor Companion.
+        harness.assertInGraveyard(player2, "Raptor Companion");
     }
-
-    // ===== Deals damage when blocking =====
 
     @Test
     @DisplayName("Deals damage equal to toughness to a creature it is blocking")
     void dealsToughnessDamageToAttackerItBlocks() {
         Permanent armasaur = addReadyArmasaur(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent attacker = findPermanent(player2, "Grizzly Bears");
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
 
         setupArmasaurBlockingAttacker(armasaur, attacker);
 
@@ -95,11 +69,9 @@ class SteadfastArmasaurTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, attacker.getId());
         harness.passBothPriorities();
 
-        // Armasaur has 3 toughness, 3 damage kills a 2/2
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        // Three damage is lethal to Raptor Companion.
+        harness.assertInGraveyard(player2, "Raptor Companion");
     }
-
-    // ===== Cannot target creature not in combat with it =====
 
     @Test
     @DisplayName("Cannot target a creature not in combat with it")
@@ -107,20 +79,18 @@ class SteadfastArmasaurTest extends BaseCardTest {
         Permanent armasaur = addReadyArmasaur(player1);
         armasaur.setAttacking(true);
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new RaptorCompanion());
+        UUID companionId = harness.getPermanentId(player2, "Raptor Companion");
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        // Bears is not blocking the Armasaur, so it should not be a valid target
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bearsId))
+        // Raptor Companion is not blocking the Armasaur, so it should not be a valid target
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, companionId))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Uses toughness, not power =====
 
     @Test
     @DisplayName("Damage is based on toughness — boosted toughness deals more damage")
@@ -128,10 +98,8 @@ class SteadfastArmasaurTest extends BaseCardTest {
         Permanent armasaur = addReadyArmasaur(player1);
         armasaur.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2); // becomes 4/5
 
-        GrizzlyBears bears = new GrizzlyBears();
-        bears.setToughness(5);
-        harness.addToBattlefield(player2, bears);
-        Permanent blocker = findPermanent(player2, "Grizzly Bears");
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
 
         setupArmasaurAttackingBlockedBy(armasaur, blocker);
 
@@ -139,18 +107,15 @@ class SteadfastArmasaurTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        // Toughness is 3 + 2 = 5, so deals 5 damage to a 2/5 — lethal
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        // Five damage is lethal to Raptor Companion with four counters.
+        harness.assertInGraveyard(player2, "Raptor Companion");
     }
-
-    // ===== Tap cost =====
 
     @Test
     @DisplayName("Taps when activating ability")
     void tapsOnActivation() {
         Permanent armasaur = addReadyArmasaur(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent blocker = findPermanent(player2, "Grizzly Bears");
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
 
         setupArmasaurAttackingBlockedBy(armasaur, blocker);
 
@@ -160,14 +125,11 @@ class SteadfastArmasaurTest extends BaseCardTest {
         assertThat(armasaur.isTapped()).isTrue();
     }
 
-    // ===== Mana cost =====
-
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
         Permanent armasaur = addReadyArmasaur(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent blocker = findPermanent(player2, "Grizzly Bears");
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
 
         setupArmasaurAttackingBlockedBy(armasaur, blocker);
 
@@ -178,14 +140,11 @@ class SteadfastArmasaurTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
-    // ===== Activation puts ability on stack =====
-
     @Test
     @DisplayName("Activating ability puts it on the stack")
     void activatingPutsOnStack() {
         Permanent armasaur = addReadyArmasaur(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent blocker = findPermanent(player2, "Grizzly Bears");
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
 
         setupArmasaurAttackingBlockedBy(armasaur, blocker);
 
@@ -198,16 +157,11 @@ class SteadfastArmasaurTest extends BaseCardTest {
         assertThat(entry.getCard().getName()).isEqualTo("Steadfast Armasaur");
     }
 
-    // ===== Source removed before resolution =====
-
     @Test
     @DisplayName("Uses Armasaur's last known toughness if it is removed before resolution")
     void usesLastKnownToughnessIfSourceRemoved() {
         Permanent armasaur = addReadyArmasaur(player1);
-        GrizzlyBears bears = new GrizzlyBears();
-        bears.setToughness(4);
-        harness.addToBattlefield(player2, bears);
-        Permanent blocker = findPermanent(player2, "Grizzly Bears");
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new LoomingAltisaur());
 
         setupArmasaurAttackingBlockedBy(armasaur, blocker);
 
@@ -224,14 +178,11 @@ class SteadfastArmasaurTest extends BaseCardTest {
         assertThat(blocker.getMarkedDamage()).isEqualTo(3);
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Ability fizzles if target creature is removed before resolution")
     void fizzlesIfTargetCreatureRemoved() {
         Permanent armasaur = addReadyArmasaur(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent blocker = findPermanent(player2, "Grizzly Bears");
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
 
         setupArmasaurAttackingBlockedBy(armasaur, blocker);
 
@@ -247,13 +198,67 @@ class SteadfastArmasaurTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Uses toughness at resolution rather than at activation")
+    void usesCurrentToughnessOnResolution() {
+        Permanent armasaur = addReadyArmasaur(player1);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new LoomingAltisaur());
+        setupArmasaurAttackingBlockedBy(armasaur, blocker);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 0, null, blocker.getId());
+
+        armasaur.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.passBothPriorities();
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(5);
+        harness.assertOnBattlefield(player2, "Looming Altisaur");
+    }
+
+    @Test
+    @DisplayName("Ability fizzles when its target stops blocking")
+    void fizzlesWhenTargetLeavesCombat() {
+        Permanent armasaur = addReadyArmasaur(player1);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new LoomingAltisaur());
+        setupArmasaurAttackingBlockedBy(armasaur, blocker);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 0, null, blocker.getId());
+
+        blocker.clearCombatState();
+        harness.passBothPriorities();
+
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent armasaur = addReadyArmasaur(player1);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
+        setupArmasaurBlockingAttacker(armasaur, attacker);
+        armasaur.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate when already tapped")
+    void cannotActivateWhenTapped() {
+        Permanent armasaur = addReadyArmasaur(player1);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
+        setupArmasaurAttackingBlockedBy(armasaur, blocker);
+        armasaur.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, blocker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
     private Permanent addReadyArmasaur(Player player) {
-        SteadfastArmasaur card = new SteadfastArmasaur();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new SteadfastArmasaur());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
