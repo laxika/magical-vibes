@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TerrorOfThePeaks.class, HillGiant.class, GrizzlyBears.class, LightningBolt.class})
 class TerrorOfThePeaksTest extends BaseCardTest {
 
     @Test
@@ -28,11 +29,11 @@ class TerrorOfThePeaksTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -46,17 +47,13 @@ class TerrorOfThePeaksTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
-        UUID enteringId = harness.getPermanentId(player1, "Hill Giant");
-        Permanent entering = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getId().equals(enteringId))
-                .findFirst()
-                .orElseThrow();
+        Permanent entering = findPermanent(player1, "Hill Giant");
         entering.setPowerModifier(2);
 
         harness.handlePermanentChosen(player1, player2.getId());
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
@@ -70,13 +67,13 @@ class TerrorOfThePeaksTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         UUID enteringId = harness.getPermanentId(player1, "Hill Giant");
         gd.playerBattlefields.get(player1.getId()).removeIf(permanent -> permanent.getId().equals(enteringId));
 
         harness.handlePermanentChosen(player1, player2.getId());
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -120,14 +117,64 @@ class TerrorOfThePeaksTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
     }
 
-    private void resolveUntilInputOrEmpty() {
-        for (int i = 0; i < 12; i++) {
-            GameData gameData = harness.getGameData();
-            if (gameData.interaction.isAwaitingInput() || gameData.stack.isEmpty()) {
-                return;
-            }
-            harness.passBothPriorities();
-        }
+    @Test
+    void doesNotTriggerForItself() {
+        harness.setHand(player1, List.of(new TerrorOfThePeaks()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void doesNotTriggerForOpponentsCreature() {
+        harness.addToBattlefield(player1, new TerrorOfThePeaks());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new HillGiant()));
+        harness.addMana(player2, ManaColor.RED, 4);
+
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void controllerDoesNotPayLifeToTargetTerror() {
+        Permanent terror = harness.addToBattlefieldAndReturn(player1, new TerrorOfThePeaks());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, terror.getId());
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void usesModifiedLastKnownPowerAfterCreatureDiesInResponse() {
+        harness.addToBattlefield(player1, new TerrorOfThePeaks());
+        harness.setHand(player1, List.of(new HillGiant()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        Permanent giant = findPermanent(player1, "Hill Giant");
+        giant.setPowerModifier(2);
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, giant.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Hill Giant");
+        harness.assertLife(player2, 15);
     }
 
     private void prepareOpponentCast(LightningBolt spell, ManaColor color, int amount) {
