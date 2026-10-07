@@ -75,4 +75,55 @@ class TelekineticSliverTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void summoningSickSliverCannotPayTapCost() {
+        addCreatureReady(player1, new TelekineticSliver());
+        Permanent otherSliver = harness.addToBattlefieldAndReturn(player1, new BonesplitterSliver());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(otherSliver.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void tapCostIsPaidBeforeTargetIsTapped() {
+        Permanent sliver = addCreatureReady(player1, new TelekineticSliver());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(sliver.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void tappedSliverCannotActivateAgain() {
+        Permanent sliver = addCreatureReady(player1, new TelekineticSliver());
+        sliver.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void canTargetItselfEvenThoughTapCostTapsIt() {
+        Permanent sliver = addCreatureReady(player1, new TelekineticSliver());
+
+        harness.activateAbility(player1, 0, null, sliver.getId());
+        harness.passBothPriorities();
+
+        assertThat(sliver.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
