@@ -138,6 +138,67 @@ class TeekasDragonTest extends BaseCardTest {
         assertThat(dragon.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("Rampage counts remaining blockers when its trigger resolves")
+    void blockerLeavingBeforeResolutionReducesBonus() {
+        Permanent dragon = addReadyDragon(player1);
+        dragon.setAttacking(true);
+        Permanent blocker = addReadyBlocker(player2);
+        addReadyBlocker(player2);
+        addReadyBlocker(player2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(2, 0)
+        ));
+        assertThat(gd.stack).hasSize(1);
+        assertThat(dragon.getPowerModifier()).isZero();
+
+        harness.setHand(player2, List.of(new DarkBanishing()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, blocker.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Bay Falcon");
+        assertThat(dragon.getPowerModifier()).isEqualTo(4);
+        assertThat(dragon.getToughnessModifier()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Removing a blocker after rampage resolves does not change its bonus")
+    void blockerLeavingAfterResolutionDoesNotReduceBonus() {
+        Permanent dragon = addReadyDragon(player1);
+        dragon.setAttacking(true);
+        Permanent blocker = addReadyBlocker(player2);
+        addReadyBlocker(player2);
+        addReadyBlocker(player2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(2, 0)
+        ));
+        resolveAllTriggers();
+        assertThat(dragon.getPowerModifier()).isEqualTo(8);
+        assertThat(dragon.getToughnessModifier()).isEqualTo(8);
+
+        harness.setHand(player2, List.of(new DarkBanishing()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, blocker.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Bay Falcon");
+        assertThat(dragon.getPowerModifier()).isEqualTo(8);
+        assertThat(dragon.getToughnessModifier()).isEqualTo(8);
+    }
+
     private Permanent addReadyDragon(Player player) {
         return addCreatureReady(player, new TeekasDragon());
     }
