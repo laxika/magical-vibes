@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TelimTorsDarts.class, GarrukWildspeaker.class})
 class TelimTorsDartsTest extends BaseCardTest {
@@ -54,6 +55,59 @@ class TelimTorsDartsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cannot activate again while tapped")
+    void cannotActivateAgainWhileTapped() {
+        addReadyDarts(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Activation requires two mana")
+    void cannotActivateWithOnlyOneMana() {
+        Permanent darts = addReadyDarts(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(darts.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate on the turn it enters and target its controller")
+    void canActivateImmediatelyTargetingController() {
+        harness.setLife(player1, 20);
+        harness.enterBattlefieldAndReturn(player1, new TelimTorsDarts());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Cannot target an ordinary artifact")
+    void cannotTargetArtifact() {
+        Permanent darts = addReadyDarts(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TelimTorsDarts());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(darts.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addReadyDarts(Player player) {
