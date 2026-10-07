@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -21,7 +22,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThawingGlaciers.class, Forest.class, Island.class, GrizzlyBears.class})
+@CardUsed({ThawingGlaciers.class, Forest.class, Island.class, GrizzlyBears.class, PsychogenicProbe.class})
 class ThawingGlaciersTest extends BaseCardTest {
 
     @Test
@@ -64,6 +65,38 @@ class ThawingGlaciersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Nonbasic lands cannot be found with its search")
+    void cannotFindNonbasicLand() {
+        harness.addToBattlefield(player1, new ThawingGlaciers());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLibrary(player1, List.of(new ThawingGlaciers(), new Forest()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).singleElement().isInstanceOf(Forest.class);
+    }
+
+    @Test
+    @DisplayName("An empty library still schedules the cleanup return")
+    void emptyLibraryStillSchedulesReturn() {
+        harness.addToBattlefield(player1, new ThawingGlaciers());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Thawing Glaciers");
+        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.assertOnBattlefield(player1, "Thawing Glaciers");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Thawing Glaciers");
+    }
+
+    @Test
     @DisplayName("It returns to its owner's hand at the beginning of the next cleanup step")
     void returnsToHandAtCleanup() {
         activate();
@@ -73,8 +106,12 @@ class ThawingGlaciersTest extends BaseCardTest {
 
         GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Thawing Glaciers"));
+        harness.assertOnBattlefield(player1, "Thawing Glaciers");
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Thawing Glaciers");
         harness.assertInHand(player1, "Thawing Glaciers");
     }
 
@@ -97,8 +134,10 @@ class ThawingGlaciersTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard() instanceof Forest)
                 .noneMatch(p -> p.getCard() instanceof Island);
         GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c instanceof ThawingGlaciers);
+        harness.assertOnBattlefield(player1, "Thawing Glaciers");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Thawing Glaciers");
     }
 
     @Test
@@ -115,7 +154,7 @@ class ThawingGlaciersTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        harness.assertLife(player1, 18);
     }
 
     private void activate() {
