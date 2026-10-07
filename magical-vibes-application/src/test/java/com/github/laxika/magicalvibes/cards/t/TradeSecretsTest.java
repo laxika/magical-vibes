@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -98,6 +99,72 @@ class TradeSecretsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(initialOpponentHandSize + 6);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Controller may draw the full four cards and choose zero on a repeat")
+    void controllerMayChangeDrawCountOnRepeat() {
+        int initialOpponentHandSize = gd.playerHands.get(player2.getId()).size();
+        castTradeSecrets();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(initialOpponentHandSize + 2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.handleXValueChosen(player1, 4);
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(initialOpponentHandSize + 4);
+        harness.handleXValueChosen(player1, 0);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Trade Secrets");
+    }
+
+    @Test
+    @DisplayName("Draw and repeat choices follow the controller when the other player casts")
+    void choicesFollowTheSpellController() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new TradeSecrets()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleXValueChosen(player2, 3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleXValueChosen(player2, 1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(4);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player2, "Trade Secrets");
+    }
+
+    @Test
+    @DisplayName("An opponent who draws from an empty library still chooses repeats before losing")
+    void emptyLibraryLossWaitsForTheEntireProcess() {
+        castTradeSecrets();
+        harness.setLibrary(player2, List.of());
+
+        harness.handleXValueChosen(player1, 0);
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleXValueChosen(player1, 4);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
     }
 
     @Test
