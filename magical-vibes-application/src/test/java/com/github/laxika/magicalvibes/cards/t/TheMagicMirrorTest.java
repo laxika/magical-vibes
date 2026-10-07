@@ -68,4 +68,63 @@ class TheMagicMirrorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(8);
     }
+
+    @Test
+    @DisplayName("The first upkeep adds the first knowledge counter and draws one card")
+    void firstUpkeepDrawsOneCard() {
+        Permanent mirror = harness.addToBattlefieldAndReturn(player1, new TheMagicMirror());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(mirror.getCounterCount(CounterType.KNOWLEDGE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's upkeep does not trigger the Mirror")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent mirror = harness.addToBattlefieldAndReturn(player1, new TheMagicMirror());
+        mirror.setCounterCount(CounterType.KNOWLEDGE, 2);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(mirror.getCounterCount(CounterType.KNOWLEDGE)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Excess reduction removes only generic mana and leaves three blue mana payable")
+    void excessReductionLeavesBlueManaCost() {
+        harness.setGraveyard(player1, List.of(
+                new Shock(), new Shock(), new Shock(), new Shock(),
+                new Divination(), new Divination(), new Divination()));
+        harness.setHand(player1, List.of(new TheMagicMirror()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Instant and sorcery cards in an opponent's graveyard do not reduce the cost")
+    void opponentsGraveyardDoesNotReduceCost() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new Shock(), new Divination()));
+        harness.setHand(player1, List.of(new TheMagicMirror()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }
