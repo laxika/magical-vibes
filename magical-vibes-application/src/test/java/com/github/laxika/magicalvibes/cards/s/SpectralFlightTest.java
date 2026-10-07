@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -24,19 +23,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         HillGiant.class, Mountain.class})
 class SpectralFlightTest extends BaseCardTest {
 
-    // ===== Casting and resolving =====
-
     @Test
     @DisplayName("Casting Spectral Flight puts it on the stack as enchantment spell")
     void castingPutsOnStack() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new SpectralFlight()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
@@ -46,9 +41,7 @@ class SpectralFlightTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Spectral Flight attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new SpectralFlight()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -63,18 +56,13 @@ class SpectralFlightTest extends BaseCardTest {
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 
-    // ===== Static effects: +2/+2 and flying =====
-
     @Test
     @DisplayName("Enchanted creature gets +2/+2")
     void enchantedCreatureGetsBoost() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears()); // 2/2
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent flightPerm = new Permanent(new SpectralFlight());
+        Permanent flightPerm = harness.addToBattlefieldAndReturn(player1, new SpectralFlight());
         flightPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(flightPerm);
 
         // Grizzly Bears 2/2 + 2/2 = 4/4
         assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(4);
@@ -84,13 +72,10 @@ class SpectralFlightTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature has flying")
     void enchantedCreatureHasFlying() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent flightPerm = new Permanent(new SpectralFlight());
+        Permanent flightPerm = harness.addToBattlefieldAndReturn(player1, new SpectralFlight());
         flightPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(flightPerm);
 
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
     }
@@ -98,35 +83,25 @@ class SpectralFlightTest extends BaseCardTest {
     @Test
     @DisplayName("Spectral Flight does not affect other creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent otherBears = new Permanent(new GrizzlyBears());
-        otherBears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(otherBears);
+        Permanent otherBears = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent flightPerm = new Permanent(new SpectralFlight());
+        Permanent flightPerm = harness.addToBattlefieldAndReturn(player1, new SpectralFlight());
         flightPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(flightPerm);
 
         assertThat(gqs.getEffectivePower(gd, otherBears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, otherBears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, otherBears, Keyword.FLYING)).isFalse();
     }
 
-    // ===== Removal restores original stats =====
-
     @Test
     @DisplayName("Creature loses boost and flying when Spectral Flight is removed")
     void creatureLosesBoostWhenRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent flightPerm = new Permanent(new SpectralFlight());
+        Permanent flightPerm = harness.addToBattlefieldAndReturn(player1, new SpectralFlight());
         flightPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(flightPerm);
 
         // Verify effects are applied
         assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(4);
@@ -141,14 +116,10 @@ class SpectralFlightTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isFalse();
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Spectral Flight fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new SpectralFlight()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -164,31 +135,19 @@ class SpectralFlightTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Spectral Flight");
     }
 
-    // ===== Orphaned aura =====
-
     @Test
     @DisplayName("Spectral Flight goes to graveyard when enchanted creature dies")
     void goesToGraveyardWhenCreatureDies() {
         // Player2 has a 1/1 Honor Guard enchanted with Spectral Flight (becomes 3/3 with flying)
-        Permanent guardPerm = new Permanent(new HonorGuard()); // 1/1
-        guardPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(guardPerm);
+        Permanent guardPerm = addCreatureReady(player2, new HonorGuard());
 
-        Permanent flightPerm = new Permanent(new SpectralFlight());
+        Permanent flightPerm = harness.addToBattlefieldAndReturn(player2, new SpectralFlight());
         flightPerm.setAttachedTo(guardPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(flightPerm);
 
         // Player1 has a 3/3 Hill Giant attacker — enough to kill the enchanted 3/3
-        Permanent attackerPerm = new Permanent(new HillGiant());
-        attackerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(attackerPerm);
+        addCreatureReady(player1, new HillGiant());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         // Enchanted creature (3/3 with flying) blocks the 3/3 attacker — both die
         harness.beginBlockerDeclarationInput();
@@ -199,8 +158,6 @@ class SpectralFlightTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Spectral Flight");
         harness.assertInGraveyard(player2, "Spectral Flight");
     }
-
-    // ===== Targeting restriction =====
 
     @Test
     @DisplayName("Cannot enchant a land")
@@ -216,5 +173,46 @@ class SpectralFlightTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can enchant an opponent's creature and grant both bonuses")
+    void enchantsOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SpectralFlight()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Spectral Flight");
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Two copies stack their boosts and either remaining copy grants flying")
+    void multipleCopiesStack() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SpectralFlight(), new SpectralFlight()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spectral Flight")).hasSize(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Spectral Flight"));
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
     }
 }
