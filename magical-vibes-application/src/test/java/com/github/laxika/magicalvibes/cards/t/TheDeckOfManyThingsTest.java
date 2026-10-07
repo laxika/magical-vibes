@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NeverwinterDryad;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheDeckOfManyThings.class, GrizzlyBears.class})
+@CardUsed({TheDeckOfManyThings.class, NeverwinterDryad.class, TurnToFrog.class})
 class TheDeckOfManyThingsTest extends BaseCardTest {
 
     private RollD20EffectHandler rollD20EffectHandler;
@@ -41,7 +41,7 @@ class TheDeckOfManyThingsTest extends BaseCardTest {
     @Test
     void subtractsHandSizeAndReturnsRandomCardOnResultFromOneThroughNine() {
         setRoll(9);
-        Card returned = new GrizzlyBears();
+        Card returned = new NeverwinterDryad();
         harness.addToBattlefield(player1, new TheDeckOfManyThings());
         harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(returned));
@@ -56,9 +56,9 @@ class TheDeckOfManyThingsTest extends BaseCardTest {
     @Test
     void drawsTwoCardsOnResultFromTenThroughNineteen() {
         setRoll(10);
-        Card first = new GrizzlyBears();
-        Card second = new GrizzlyBears();
-        Card third = new GrizzlyBears();
+        Card first = new NeverwinterDryad();
+        Card second = new NeverwinterDryad();
+        Card third = new NeverwinterDryad();
         harness.addToBattlefield(player1, new TheDeckOfManyThings());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(first, second, third));
@@ -74,8 +74,8 @@ class TheDeckOfManyThingsTest extends BaseCardTest {
     @Test
     void discardsHandWhenAdjustedResultIsZeroOrLess() {
         setRoll(2);
-        Card first = new GrizzlyBears();
-        Card second = new GrizzlyBears();
+        Card first = new NeverwinterDryad();
+        Card second = new NeverwinterDryad();
         harness.addToBattlefield(player1, new TheDeckOfManyThings());
         harness.setHand(player1, List.of(first, second));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -90,7 +90,7 @@ class TheDeckOfManyThingsTest extends BaseCardTest {
     @Test
     void returnsCreatureFromAnyGraveyardAndItsOwnerLosesWhenItDies() {
         setRoll(20);
-        Card returnedCard = new GrizzlyBears();
+        Card returnedCard = new NeverwinterDryad();
         harness.addToBattlefield(player1, new TheDeckOfManyThings());
         harness.setHand(player1, List.of());
         harness.setGraveyard(player2, List.of(returnedCard));
@@ -106,7 +106,107 @@ class TheDeckOfManyThingsTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard() == returnedCard)
                 .findFirst()
                 .orElseThrow();
-        returned.setMarkedDamage(2);
+        returned.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    void naturalTwentyWithOneCardInHandDrawsInsteadOfReanimating() {
+        setRoll(20);
+        Card held = new NeverwinterDryad();
+        Card first = new NeverwinterDryad();
+        Card second = new NeverwinterDryad();
+        harness.addToBattlefield(player1, new TheDeckOfManyThings());
+        harness.setHand(player1, List.of(held));
+        harness.setLibrary(player1, List.of(first, second, new NeverwinterDryad()));
+        harness.setGraveyard(player2, List.of(new NeverwinterDryad()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(held, first, second);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    void randomReturnDoesNotUseOpponentsGraveyard() {
+        setRoll(1);
+        Card opponentCard = new NeverwinterDryad();
+        harness.addToBattlefield(player1, new TheDeckOfManyThings());
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(opponentCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
+    }
+
+    @Test
+    void twentyDoesNothingWhenGraveyardsContainOnlyNoncreatures() {
+        setRoll(20);
+        Card artifact = new TheDeckOfManyThings();
+        harness.addToBattlefield(player1, new TheDeckOfManyThings());
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.setGraveyard(player2, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifact);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    void countsHandAtResolutionRatherThanActivation() {
+        setRoll(10);
+        Card held = new NeverwinterDryad();
+        Card returned = new NeverwinterDryad();
+        harness.addToBattlefield(player1, new TheDeckOfManyThings());
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(returned));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.setHand(player1, List.of(held));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(held, returned);
+    }
+
+    @Test
+    void losingAbilitiesDoesNotRemoveDelayedOwnerLoss() {
+        setRoll(20);
+        Card returnedCard = new NeverwinterDryad();
+        harness.addToBattlefield(player1, new TheDeckOfManyThings());
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player2, List.of(returnedCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Neverwinter Dryad"));
+
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() == returnedCard)
+                .findFirst().orElseThrow();
+        returned.setMarkedDamage(1);
         harness.runStateBasedActions();
         harness.passBothPriorities();
 
