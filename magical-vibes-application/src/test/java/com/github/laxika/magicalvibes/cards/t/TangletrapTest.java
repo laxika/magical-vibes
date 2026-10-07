@@ -1,10 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.b.BiblioplexAssistant;
+import com.github.laxika.magicalvibes.cards.c.CogworkArchivist;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -12,10 +16,14 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Tangletrap.class, AirElemental.class, GrizzlyBears.class, Millstone.class,
+        BiblioplexAssistant.class, CogworkArchivist.class})
 class TangletrapTest extends BaseCardTest {
 
     @Nested
+    @CardUsed({Tangletrap.class, AirElemental.class, GrizzlyBears.class})
     @DisplayName("Mode 0: Deal 5 damage to target creature with flying")
     class DamageMode {
 
@@ -50,6 +58,7 @@ class TangletrapTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({Tangletrap.class, Millstone.class, GrizzlyBears.class})
     @DisplayName("Mode 1: Destroy target artifact")
     class DestroyMode {
 
@@ -81,5 +90,59 @@ class TangletrapTest extends BaseCardTest {
                     harness.getPermanentId(player2, "Grizzly Bears")))
                     .isInstanceOf(IllegalStateException.class);
         }
+    }
+
+    @Test
+    void marksExactlyFiveDamageOnSurvivingFlyer() {
+        harness.addToBattlefield(player2, new AirElemental());
+        var flyer = gd.playerBattlefields.get(player2.getId()).getFirst();
+        flyer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, List.of(new Tangletrap()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, 0, flyer.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        assertThat(flyer.getMarkedDamage()).isEqualTo(5);
+    }
+
+    @Test
+    void canDamageOwnFlyingArtifactCreature() {
+        harness.addToBattlefield(player1, new BiblioplexAssistant());
+        harness.setHand(player1, List.of(new Tangletrap()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, 0,
+                harness.getPermanentId(player1, "Biblioplex Assistant"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Biblioplex Assistant");
+        harness.assertInGraveyard(player1, "Biblioplex Assistant");
+    }
+
+    @Test
+    void destroysOwnNonFlyingArtifactCreature() {
+        harness.addToBattlefield(player1, new CogworkArchivist());
+        harness.setHand(player1, List.of(new Tangletrap()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, 1,
+                harness.getPermanentId(player1, "Cogwork Archivist"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Cogwork Archivist");
+        harness.assertInGraveyard(player1, "Cogwork Archivist");
+    }
+
+    @Test
+    void reachDoesNotQualifyForFlyingDamageMode() {
+        harness.addToBattlefield(player2, new CogworkArchivist());
+        harness.setHand(player1, List.of(new Tangletrap()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 0,
+                harness.getPermanentId(player2, "Cogwork Archivist")))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
