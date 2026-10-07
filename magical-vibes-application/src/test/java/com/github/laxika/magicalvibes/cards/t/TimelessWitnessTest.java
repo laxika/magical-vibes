@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TimelessWitness.class, Shock.class, GrizzlyBears.class})
 class TimelessWitnessTest extends BaseCardTest {
@@ -71,5 +72,69 @@ class TimelessWitnessTest extends BaseCardTest {
         assertThat(token.getCard().getSubtypes())
                 .contains(CardSubtype.ZOMBIE, CardSubtype.HUMAN, CardSubtype.SHAMAN);
         assertThat(token.getCard().getManaCost()).isEmpty();
+    }
+
+    @Test
+    void eternalizedTokenReturnsAnotherCardAndExilesSourceAsCost() {
+        TimelessWitness source = new TimelessWitness();
+        TimelessWitness target = new TimelessWitness();
+        TimelessWitness opponentsCard = new TimelessWitness();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player1, List.of(source, target));
+        harness.setGraveyard(player2, List.of(opponentsCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateGraveyardAbility(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(source);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(target);
+        harness.assertNotOnBattlefield(player1, "Timeless Witness");
+
+        harness.passBothPriorities();
+        PendingInteraction.MultiGraveyardChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(target.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(target).doesNotContain(source);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentsCard);
+        harness.assertOnBattlefield(player1, "Timeless Witness");
+    }
+
+    @Test
+    void eternalizeCannotBeActivatedOutsideMainPhase() {
+        TimelessWitness source = new TimelessWitness();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.setGraveyard(player1, List.of(source));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(source);
+        harness.assertNotOnBattlefield(player1, "Timeless Witness");
+    }
+
+    @Test
+    void etbDoesNotReturnTargetThatLeavesGraveyardBeforeResolution() {
+        TimelessWitness target = new TimelessWitness();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new TimelessWitness()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Timeless Witness");
+        harness.assertOnBattlefield(player1, "Timeless Witness");
     }
 }
