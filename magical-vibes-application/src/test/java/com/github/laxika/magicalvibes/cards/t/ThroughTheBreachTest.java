@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -37,11 +35,9 @@ class ThroughTheBreachTest extends BaseCardTest {
         Permanent creature = findPermanent(player1, "Wandering Ones");
         assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(creature.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
-
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Wandering Ones");
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Wandering Ones");
@@ -108,5 +104,70 @@ class ThroughTheBreachTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("cannot be spliced");
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(timeStop, breach);
+    }
+
+    @Test
+    @DisplayName("Casting during the end step delays sacrifice until the next turn's end step")
+    void endStepCastingWaitsForNextEndStep() {
+        harness.passUntil(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new ThroughTheBreach(), new WanderingOnes()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Wandering Ones");
+        assertThat(gd.stack).isEmpty();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(findPermanent(player1, "Wandering Ones").hasKeyword(Keyword.HASTE)).isTrue();
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Wandering Ones");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Wandering Ones");
+        harness.assertInGraveyard(player1, "Wandering Ones");
+    }
+
+    @Test
+    @DisplayName("Ending the turn with the sacrifice trigger on the stack preserves the creature and haste")
+    void endingTurnExilesSacrificeTriggerWithoutRemovingHaste() {
+        harness.setHand(player1, List.of(new ThroughTheBreach(), new WanderingOnes(), new TimeStop()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(findPermanent(player1, "Wandering Ones").hasKeyword(Keyword.HASTE)).isTrue();
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Wandering Ones");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Resolving without a creature in hand does nothing")
+    void noCreatureInHandDoesNothing() {
+        harness.setHand(player1, List.of(new ThroughTheBreach(), new TimeStop()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Time Stop");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }
