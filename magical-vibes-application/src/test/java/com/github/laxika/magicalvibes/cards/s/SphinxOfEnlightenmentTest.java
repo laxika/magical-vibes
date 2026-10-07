@@ -26,8 +26,7 @@ class SphinxOfEnlightenmentTest extends BaseCardTest {
         addMana();
 
         harness.castCreature(player1, 0, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
                 .containsExactly("Forest", "Forest", "Forest");
@@ -44,6 +43,44 @@ class SphinxOfEnlightenmentTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
+    }
+
+    @Test
+    @DisplayName("Entering without being cast draws for the actual controller and target opponent")
+    void enteringWithoutCastingDrawsForActualController() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+
+        harness.enterBattlefieldAndReturn(player2, new SphinxOfEnlightenment());
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The draw trigger resolves after the Sphinx leaves the battlefield")
+    void triggerResolvesAfterSourceLeaves() {
+        harness.setHand(player1, List.of(new SphinxOfEnlightenment()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        addMana();
+
+        harness.castCreature(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+        var sphinx = gd.playerBattlefields.get(player1.getId()).removeFirst();
+        gd.playerGraveyards.get(player1.getId()).add(sphinx.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Sphinx of Enlightenment");
     }
 
     private void addMana() {
