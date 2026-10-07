@@ -5,7 +5,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.m.MaritimeGuard;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -18,9 +23,8 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StormtideLeviathan.class, Forest.class, Mountain.class, MaritimeGuard.class})
 class StormtideLeviathanTest extends BaseCardTest {
-
-    // ===== All lands are Islands =====
 
     @Test
     @DisplayName("All lands gain Island subtype when Stormtide Leviathan is on the battlefield")
@@ -67,8 +71,6 @@ class StormtideLeviathanTest extends BaseCardTest {
         assertThat(bonus.grantedSubtypes()).doesNotContain(CardSubtype.ISLAND);
     }
 
-    // ===== Attack restrictions =====
-
     @Test
     @DisplayName("Creature with flying can attack when Stormtide Leviathan is on the battlefield")
     void flyingCreatureCanAttack() {
@@ -82,17 +84,10 @@ class StormtideLeviathanTest extends BaseCardTest {
         flyer.setKeywords(Set.of(Keyword.FLYING));
         flyer.setPower(2);
         flyer.setToughness(2);
-        Permanent flyerPerm = new Permanent(flyer);
-        flyerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(flyerPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        Permanent flyerPerm = addCreatureReady(player1, flyer);
 
         int flyerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(flyerPerm);
-        gs.declareAttackers(gd, player1, List.of(flyerIndex));
+        declareAttackers(player1, List.of(flyerIndex));
 
         // Combat auto-advances; verify attack went through by checking damage dealt
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -111,17 +106,10 @@ class StormtideLeviathanTest extends BaseCardTest {
         walker.setKeywords(Set.of(Keyword.ISLANDWALK));
         walker.setPower(2);
         walker.setToughness(2);
-        Permanent walkerPerm = new Permanent(walker);
-        walkerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(walkerPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        Permanent walkerPerm = addCreatureReady(player1, walker);
 
         int walkerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(walkerPerm);
-        gs.declareAttackers(gd, player1, List.of(walkerIndex));
+        declareAttackers(player1, List.of(walkerIndex));
 
         // Combat auto-advances; verify attack went through by checking damage dealt
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -138,17 +126,10 @@ class StormtideLeviathanTest extends BaseCardTest {
         grunt.setSubtypes(new ArrayList<>());
         grunt.setPower(3);
         grunt.setToughness(3);
-        Permanent gruntPerm = new Permanent(grunt);
-        gruntPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(gruntPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        Permanent gruntPerm = addCreatureReady(player1, grunt);
 
         int gruntIndex = gd.playerBattlefields.get(player1.getId()).indexOf(gruntPerm);
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(gruntIndex)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(gruntIndex)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -163,33 +144,19 @@ class StormtideLeviathanTest extends BaseCardTest {
         grunt.setSubtypes(new ArrayList<>());
         grunt.setPower(3);
         grunt.setToughness(3);
-        Permanent gruntPerm = new Permanent(grunt);
-        gruntPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(gruntPerm);
+        addCreatureReady(player2, grunt);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Stormtide Leviathan itself can attack (has islandwalk)")
     void stormtideLeviathanCanAttack() {
-        Permanent leviathanPerm = new Permanent(new StormtideLeviathan());
-        leviathanPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(leviathanPerm);
+        addCreatureReady(player1, new StormtideLeviathan());
 
         harness.setLife(player2, 20);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(player1, List.of(0));
 
         // Combat auto-advances; Stormtide Leviathan is 8/8
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
@@ -198,9 +165,7 @@ class StormtideLeviathanTest extends BaseCardTest {
     @Test
     @DisplayName("Ground creatures can attack again after Stormtide Leviathan leaves the battlefield")
     void restrictionLiftsWhenLeviathanLeaves() {
-        Permanent leviathanPerm = new Permanent(new StormtideLeviathan());
-        leviathanPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(leviathanPerm);
+        Permanent leviathanPerm = addCreatureReady(player1, new StormtideLeviathan());
 
         Card grunt = new Card();
         grunt.setName("Test Grunt");
@@ -208,22 +173,69 @@ class StormtideLeviathanTest extends BaseCardTest {
         grunt.setSubtypes(new ArrayList<>());
         grunt.setPower(3);
         grunt.setToughness(3);
-        Permanent gruntPerm = new Permanent(grunt);
-        gruntPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(gruntPerm);
+        addCreatureReady(player1, grunt);
 
         // Remove Stormtide Leviathan from battlefield
         gd.playerBattlefields.get(player1.getId()).remove(leviathanPerm);
 
         harness.setLife(player2, 20);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(player1, List.of(0));
 
         // Combat auto-advances; grunt is 3/3
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    void landsRetainOriginalTypesAndGainBlueMana() {
+        harness.addToBattlefield(player1, new StormtideLeviathan());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest))
+                .containsExactlyInAnyOrder(CardSubtype.FOREST, CardSubtype.ISLAND);
+        assertThat(gqs.effectiveBasicLandTypes(gd, mountain))
+                .containsExactlyInAnyOrder(CardSubtype.MOUNTAIN, CardSubtype.ISLAND);
+        assertThat(gqs.intrinsicBasicLandManaColors(gd, forest))
+                .containsExactlyInAnyOrder(ManaColor.GREEN, ManaColor.BLUE);
+        assertThat(gqs.intrinsicBasicLandManaColors(gd, mountain))
+                .containsExactlyInAnyOrder(ManaColor.RED, ManaColor.BLUE);
+    }
+
+    @Test
+    void islandGrantEndsWhenLeviathanLeaves() {
+        Permanent leviathan = harness.addToBattlefieldAndReturn(player1, new StormtideLeviathan());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        assertThat(gqs.hasEffectiveSubtype(gd, forest, CardSubtype.ISLAND)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(leviathan);
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
+        assertThat(gqs.intrinsicBasicLandManaColors(gd, forest)).containsExactly(ManaColor.GREEN);
+    }
+
+    @Test
+    void islandwalkPreventsBlockingWithAnOriginallyNonIslandLand() {
+        addCreatureReady(player1, new StormtideLeviathan());
+        harness.addToBattlefield(player2, new Mountain());
+        addCreatureReady(player2, new MaritimeGuard());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    void islandwalkDoesNotPreventBlockingWhenDefenderHasNoLands() {
+        addCreatureReady(player1, new StormtideLeviathan());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent blocker = addCreatureReady(player2, new MaritimeGuard());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }
