@@ -12,7 +12,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(ThranWarMachine.class)
+@CardUsed({ThranWarMachine.class})
 class ThranWarMachineTest extends BaseCardTest {
 
     @Test
@@ -84,10 +84,72 @@ class ThranWarMachineTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
-    private void castAndResolveThranWarMachine() {
+    @Test
+    @DisplayName("Echo does not create an enters-the-battlefield trigger")
+    void echoDoesNotTriggerOnEntry() {
         harness.castFromHand(player1, new ThranWarMachine(), "{4}");
         harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Thran War Machine");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Thran War Machine is not required to attack")
+    void tappedWarMachineDoesNotHaveToAttack() {
+        addCreatureReady(player1, new ThranWarMachine()).setTapped(true);
+
+        declareAttackers(List.of());
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        harness.assertOnBattlefield(player1, "Thran War Machine");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Thran War Machine is not required to attack")
+    void summoningSickWarMachineDoesNotHaveToAttack() {
+        harness.addToBattlefield(player1, new ThranWarMachine());
+
+        declareAttackers(List.of());
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        harness.assertOnBattlefield(player1, "Thran War Machine");
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay Thran War Machine's generic echo cost")
+    void coloredManaPaysEcho() {
+        castAndResolveThranWarMachine();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Thran War Machine");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Echo can be declined even when its controller has enough mana")
+    void echoPaymentIsOptionalWithEnoughMana() {
+        castAndResolveThranWarMachine();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Thran War Machine");
+        harness.assertInGraveyard(player1, "Thran War Machine");
+    }
+
+    private void castAndResolveThranWarMachine() {
+        harness.castFromHand(player1, new ThranWarMachine(), "{4}");
+        resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Thran War Machine");
     }
 }
