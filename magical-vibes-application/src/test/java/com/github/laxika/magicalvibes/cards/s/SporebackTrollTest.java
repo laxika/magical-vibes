@@ -175,6 +175,64 @@ class SporebackTrollTest extends BaseCardTest {
         assertThat(charger.getRegenerationShield()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Moving the last graft counter kills the Troll but keeps the moved counter")
+    void movingLastCounterKillsTroll() {
+        Permanent troll = castTroll();
+        troll.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.castFromHand(player1, new MistralCharger(), "{1}{W}");
+        harness.passBothPriorities();
+        Permanent charger = findPermanent(player1, "Mistral Charger");
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Sporeback Troll");
+        harness.assertInGraveyard(player1, "Sporeback Troll");
+    }
+
+    @Test
+    @DisplayName("Graft does not move a counter if its source leaves before resolution")
+    void graftDoesNothingWhenSourceLeaves() {
+        Permanent troll = castTroll();
+        harness.castFromHand(player1, new MistralCharger(), "{1}{W}");
+        harness.passBothPriorities();
+        Permanent charger = findPermanent(player1, "Mistral Charger");
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.setHand(player1, List.of(new WreckingBall()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, troll.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Sporeback Troll");
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Regeneration resolves even if the Troll leaves the battlefield")
+    void regenerationResolvesAfterSourceLeaves() {
+        Permanent troll = castTroll();
+        Permanent charger = addCreatureReady(player1, new MistralCharger());
+        charger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, charger.getId());
+
+        harness.setHand(player1, List.of(new WreckingBall()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, troll.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Sporeback Troll");
+        assertThat(charger.getRegenerationShield()).isEqualTo(1);
+    }
+
     private Permanent castTroll() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
