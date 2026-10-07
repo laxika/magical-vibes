@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(TalismanOfImpulse.class)
+@CardUsed({TalismanOfImpulse.class})
 class TalismanOfImpulseTest extends BaseCardTest {
 
     @Test
@@ -71,6 +71,24 @@ class TalismanOfImpulseTest extends BaseCardTest {
 
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("A newly resolved Talisman can immediately tap for colored mana")
+    void canTapForColoredManaImmediatelyAfterResolving() {
+        harness.setLife(player1, 20);
+        harness.castFromHand(player1, new TalismanOfImpulse(), "{2}");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Talisman of Impulse");
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
     }
 
     @Test
