@@ -36,8 +36,7 @@ class ThaliasGeistcallerTest extends BaseCardTest {
         prepareMainPhase();
 
         harness.castFromGraveyardTargeting(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent spirit = findSpiritToken();
         assertThat(spirit.getCard().getColor()).isEqualTo(CardColor.WHITE);
@@ -75,6 +74,122 @@ class ThaliasGeistcallerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Casting from hand does not create a Spirit")
+    void doesNotTriggerForHandCast() {
+        harness.addToBattlefield(player1, new ThaliasGeistcaller());
+        harness.setHand(player1, List.of(new LightningStrike()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        prepareMainPhase();
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Spirit")).isZero();
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("An opponent casting from their graveyard does not create a Spirit")
+    void doesNotTriggerForOpponentGraveyardCast() {
+        harness.addToBattlefield(player1, new ThaliasGeistcaller());
+        harness.addToBattlefield(player2, new YawgmothsAgenda());
+        harness.setGraveyard(player2, List.of(new LightningStrike()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        prepareMainPhase();
+
+        harness.castFromGraveyardTargeting(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Spirit")).isZero();
+        assertThat(countPermanents(player2, "Spirit")).isZero();
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("The Spirit is created before the graveyard spell resolves and can pay the ability's cost")
+    void canSacrificeNewTokenInResponseToGraveyardSpell() {
+        Permanent thalia = harness.addToBattlefieldAndReturn(player1, new ThaliasGeistcaller());
+        harness.addToBattlefield(player1, new YawgmothsAgenda());
+        harness.setGraveyard(player1, List.of(new LightningStrike()));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        prepareMainPhase();
+
+        harness.castFromGraveyardTargeting(player1, 0, thalia.getId());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(thalia.getMarkedDamage()).isZero();
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(countPermanents(player1, "Spirit")).isZero();
+        assertThat(gqs.hasKeyword(gd, thalia, Keyword.INDESTRUCTIBLE)).isFalse();
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, thalia, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(thalia);
+        assertThat(thalia.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An opponent's Spirit cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsSpirit() {
+        harness.addToBattlefield(player1, new ThaliasGeistcaller());
+        Permanent spirit = harness.addToBattlefieldAndReturn(player2, new LanternKami());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(spirit);
+    }
+
+    @Test
+    @DisplayName("A tapped Spirit can be sacrificed while the Geistcaller is summoning sick")
+    void canSacrificeTappedSpiritImmediately() {
+        Permanent thalia = harness.addToBattlefieldAndReturn(player1, new ThaliasGeistcaller());
+        thalia.setSummoningSick(true);
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new LanternKami());
+        spirit.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(spirit);
+        assertThat(gqs.hasKeyword(gd, thalia, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The cast trigger still creates a Spirit if the Geistcaller dies in response")
+    void triggerSurvivesSourceRemoval() {
+        Permanent thalia = harness.addToBattlefieldAndReturn(player1, new ThaliasGeistcaller());
+        harness.addToBattlefield(player1, new YawgmothsAgenda());
+        harness.setGraveyard(player1, List.of(new LightningStrike()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new LightningStrike()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        prepareMainPhase();
+
+        harness.castFromGraveyardTargeting(player1, 0, player2.getId());
+        harness.castInstant(player2, 0, thalia.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Thalia's Geistcaller");
+        assertThat(countPermanents(player1, "Spirit")).isZero();
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(1);
+        harness.assertLife(player2, 17);
     }
 
     private void prepareMainPhase() {
