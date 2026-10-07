@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -78,7 +79,9 @@ class TheBeastDeathlessPrinceTest extends BaseCardTest {
         card.setOwnerId(player1.getId());
         Permanent beast = harness.enterBattlefieldAndReturn(player1, card);
 
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        GrizzlyBears ownedByPlayer1 = new GrizzlyBears();
+        ownedByPlayer1.setOwnerId(player1.getId());
+        Permanent attacker = addCreatureReady(player1, ownedByPlayer1);
         attacker.setAttacking(true);
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -88,5 +91,109 @@ class TheBeastDeathlessPrinceTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
         assertThat(beast.getCounterCount(CounterType.STUN)).isEqualTo(6);
         assertThat(beast.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("One combat-damage ability untaps and draws in the same resolution")
+    void untapsAndDrawsInOneResolution() {
+        Permanent beast = harness.enterBattlefieldAndReturn(player1, new TheBeastDeathlessPrince());
+        GrizzlyBears stolenCreature = new GrizzlyBears();
+        stolenCreature.setOwnerId(player2.getId());
+        addCreatureReady(player1, stolenCreature).setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.resolveCombatDamage();
+        harness.passBothPriorities();
+
+        assertThat(beast.getCounterCount(CounterType.STUN)).isEqualTo(5);
+        assertThat(beast.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Untaps without stun counters and draws for an opponent's creature")
+    void observesOpponentsCreatureDamagingItsOwner() {
+        Permanent beast = harness.enterBattlefieldAndReturn(player1, new TheBeastDeathlessPrince());
+        beast.setCounterCount(CounterType.STUN, 0);
+        GrizzlyBears stolenCreature = new GrizzlyBears();
+        stolenCreature.setOwnerId(player1.getId());
+        addCreatureReady(player2, stolenCreature).setAttacking(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        int opponentHandSizeBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+
+        assertThat(beast.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSizeBefore);
+    }
+
+    @Test
+    @DisplayName("Each creature damaging its owner removes a stun counter and draws")
+    void triggersForEachCreatureRatherThanEachDamageBatch() {
+        Permanent beast = harness.enterBattlefieldAndReturn(player1, new TheBeastDeathlessPrince());
+        for (int i = 0; i < 2; i++) {
+            GrizzlyBears stolenCreature = new GrizzlyBears();
+            stolenCreature.setOwnerId(player2.getId());
+            addCreatureReady(player1, stolenCreature).setAttacking(true);
+        }
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+
+        assertThat(beast.getCounterCount(CounterType.STUN)).isEqualTo(4);
+        assertThat(beast.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Can be cast with no creatures available for the cast trigger")
+    void canBeCastWithoutAnAvailableCreatureTarget() {
+        harness.setHand(player1, List.of(new TheBeastDeathlessPrince()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent beast = findPermanent(player1, "The Beast, Deathless Prince");
+        assertThat(beast.isTapped()).isTrue();
+        assertThat(beast.getCounterCount(CounterType.STUN)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Control, menace and haste from the cast ability expire at end of turn")
+    void castAbilityExpiresAtEndOfTurn() {
+        GrizzlyBears ownedByPlayer2 = new GrizzlyBears();
+        ownedByPlayer2.setOwnerId(player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, ownedByPlayer2);
+        harness.setHand(player1, List.of(new TheBeastDeathlessPrince()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0, target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 }
