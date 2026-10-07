@@ -1,16 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 
-import com.github.laxika.magicalvibes.cards.g.GolemsHeart;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WurmcoilEngine;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.m.ManaforceMace;
+import com.github.laxika.magicalvibes.cards.p.ParagonOfTheAmesha;
+import com.github.laxika.magicalvibes.cards.p.ParasiticStrix;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SphinxSummoner.class, ParasiticStrix.class, ManaforceMace.class, ParagonOfTheAmesha.class})
 class SphinxSummonerTest extends BaseCardTest {
 
     @Test
@@ -46,10 +45,9 @@ class SphinxSummonerTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        // WurmcoilEngine and another artifact creature should be offered; GolemsHeart / GrizzlyBears excluded
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
-                .allMatch(c -> c.hasType(CardType.ARTIFACT) && c.hasType(CardType.CREATURE))
-                .hasSize(1);
+                .extracting(c -> c.getName())
+                .containsExactly("Parasitic Strix");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().reveals()).isTrue();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isTrue();
     }
@@ -68,7 +66,7 @@ class SphinxSummonerTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
@@ -94,9 +92,7 @@ class SphinxSummonerTest extends BaseCardTest {
     void nonMatchingCardsExcluded() {
         setupAndCast();
         // Library with only a non-creature artifact and a non-artifact creature
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GolemsHeart(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new ManaforceMace(), new ParagonOfTheAmesha()));
 
         harness.passBothPriorities();
         harness.passBothPriorities(); // resolve MayEffect → may prompt
@@ -118,9 +114,43 @@ class SphinxSummonerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Accepted search of an empty library completes and shuffles")
+    void emptyLibraryCompletesSearch() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+        assertThat(harness.getGameData().gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("library but it is empty") && entry.contains("Library is shuffled"));
+    }
+
+    @Test
+    @DisplayName("Search reveals and takes only one of multiple matching cards")
+    void takesOnlyOneMatchingCard() {
+        setupAndCast();
+        ParasiticStrix chosen = new ParasiticStrix();
+        SphinxSummoner remaining = new SphinxSummoner();
+        harness.setLibrary(player1, List.of(chosen, remaining));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("reveals Parasitic Strix"));
     }
 
     private void setupAndCast() {
@@ -132,10 +162,6 @@ class SphinxSummonerTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        // WurmcoilEngine (artifact creature) matches; GolemsHeart (artifact, non-creature) and
-        // GrizzlyBears (creature, non-artifact) do not.
-        deck.addAll(List.of(new WurmcoilEngine(), new GolemsHeart(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new ParasiticStrix(), new ManaforceMace(), new ParagonOfTheAmesha()));
     }
 }
