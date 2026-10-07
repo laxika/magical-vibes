@@ -66,13 +66,36 @@ class SpittingGournaTest extends BaseCardTest {
         Permanent flyer = addCreatureReady(player1, new AvenSoulgazer());
         Permanent gourna = addCreatureReady(player2, new SpittingGourna());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(gourna),
                 gd.playerBattlefields.get(player1.getId()).indexOf(flyer))));
 
         assertThat(gourna.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Face-down Spitting Gourna cannot block flying until it turns face up")
+    void gainsReachImmediatelyWhenTurnedFaceUp() {
+        harness.setHand(player1, List.of(new SpittingGourna()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent gourna = findPermanent(player1, "Spitting Gourna");
+        Permanent flyer = addCreatureReady(player2, new AvenSoulgazer());
+        List<Permanent> defenders = gd.playerBattlefields.get(player1.getId());
+
+        assertThat(gourna.isFaceDown()).isTrue();
+        assertThat(bls.canBlockAttacker(gd, gourna, flyer, defenders)).isFalse();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.turnFaceUp(player1, defenders.indexOf(gourna));
+
+        assertThat(gourna.isFaceDown()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(bls.canBlockAttacker(gd, gourna, flyer, defenders)).isTrue();
     }
 }
