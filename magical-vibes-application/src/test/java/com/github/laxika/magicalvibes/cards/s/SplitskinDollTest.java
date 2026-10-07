@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -40,11 +41,8 @@ class SplitskinDollTest extends BaseCardTest {
     @DisplayName("Draws a card without discarding when another creature has power 2 or less")
     void doesNotDiscardWithAnotherSmallCreature() {
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new SplitskinDoll()));
         harness.setLibrary(player1, List.of(new Forest()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SplitskinDoll(), "{1}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -69,5 +67,84 @@ class SplitskinDollTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Forest");
         harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void opponentsSmallCreatureDoesNotPreventDiscard() {
+        harness.addToBattlefield(player2, new SplitskinDoll());
+        harness.setHand(player1, List.of(new SplitskinDoll(), new Forest()));
+        harness.setLibrary(player1, List.of(new SplitskinDoll()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 1);
+        harness.assertInGraveyard(player1, "Splitskin Doll");
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    void anotherDollPreventsDiscard() {
+        harness.addToBattlefield(player1, new SplitskinDoll());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.castFromHand(player1, new SplitskinDoll(), "{1}{W}");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void checksForAnotherCreatureWhenTriggerResolves() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.castFromHand(player1, new SplitskinDoll(), "{1}{W}");
+        harness.passBothPriorities();
+
+        harness.addToBattlefield(player1, new SplitskinDoll());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void discardsIfOtherCreatureLeavesBeforeTriggerResolves() {
+        harness.addToBattlefield(player1, new SplitskinDoll());
+        harness.setHand(player1, List.of(new SplitskinDoll(), new Forest()));
+        harness.setLibrary(player1, List.of(new SplitskinDoll()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).removeFirst();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 1);
+        harness.assertInGraveyard(player1, "Splitskin Doll");
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    void usesCurrentPowerRatherThanPrintedPower() {
+        harness.addToBattlefield(player1, new SplitskinDoll());
+        gd.playerBattlefields.get(player1.getId()).getFirst().setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player1, List.of(new SplitskinDoll(), new Forest()));
+        harness.setLibrary(player1, List.of(new SplitskinDoll()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 1);
+        harness.assertInGraveyard(player1, "Splitskin Doll");
+        harness.assertInHand(player1, "Forest");
     }
 }
