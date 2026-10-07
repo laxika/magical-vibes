@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.b.Befoul;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.m.MothriderSamurai;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TatsumasaTheDragonsFang.class, MothriderSamurai.class, Befoul.class})
+@CardUsed({TatsumasaTheDragonsFang.class, MothriderSamurai.class, Befoul.class, Humility.class})
 class TatsumasaTheDragonsFangTest extends BaseCardTest {
 
     @Test
@@ -141,14 +142,47 @@ class TatsumasaTheDragonsFangTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Dragon Spirit");
     }
 
+    @Test
+    @DisplayName("Exile and mana are paid before the token ability resolves")
+    void activationPaysCostsBeforeResolution() {
+        harness.addToBattlefieldAndReturn(player1, new TatsumasaTheDragonsFang());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Tatsumasa, the Dragon's Fang");
+        harness.assertNotOnBattlefield(player1, "Dragon Spirit");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Tatsumasa, the Dragon's Fang"));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Dragon Spirit");
+    }
+
+    @Test
+    @DisplayName("The delayed return still triggers when Humility removes the token's abilities")
+    void tokenDeathReturnsTatsumasaAfterLosingAbilities() {
+        harness.addToBattlefieldAndReturn(player1, new TatsumasaTheDragonsFang());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.addToBattlefield(player2, new Humility());
+
+        killCreature(findPermanent(player1, "Dragon Spirit"));
+
+        harness.assertOnBattlefield(player1, "Tatsumasa, the Dragon's Fang");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(c -> c.getName().equals("Tatsumasa, the Dragon's Fang"));
+    }
+
     private void killCreature(Permanent creature) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Befoul()));
         harness.addMana(player2, ManaColor.BLACK, 4);
-        harness.castSorcery(player2, 0, creature.getId());
-        harness.passBothPriorities(); // resolve Befoul — the token dies, its trigger goes on the stack
+        harness.castAndResolveSorcery(player2, 0, creature.getId());
         harness.passBothPriorities(); // resolve the return trigger
     }
 }
