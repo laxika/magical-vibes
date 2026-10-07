@@ -76,4 +76,41 @@ class TrumpetBlastTest extends BaseCardTest {
         assertThat(opponentNonAttacker.getEffectivePower()).isEqualTo(2);
         assertThat(opponentNonAttacker.getEffectiveToughness()).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Trumpet Blast cast before combat does not boost later attackers")
+    void doesNotBoostCreaturesThatAttackLater() {
+        Permanent creature = addCreatureReady(player1, new GoblinBerserker());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new TrumpetBlast(), "{2}{R}");
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(java.util.List.of(0)));
+
+        assertThat(creature.isAttacking()).isTrue();
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Trumpet Blast boost remains after combat ends")
+    void boostRemainsAfterCombat() {
+        Permanent attacker = addCreatureReady(player1, new GoblinBerserker());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.castFromHand(player1, new TrumpetBlast(), "{2}{R}");
+        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(attacker.isAttacking()).isFalse();
+        assertThat(attacker.getEffectivePower()).isEqualTo(4);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+    }
 }
