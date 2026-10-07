@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AuriokGlaivemaster;
+import com.github.laxika.magicalvibes.cards.b.BraveTheSands;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Spincrusher.class, AuriokGlaivemaster.class})
+@CardUsed({Spincrusher.class, AuriokGlaivemaster.class, BraveTheSands.class})
 class SpincrusherTest extends BaseCardTest {
 
     @Test
@@ -97,6 +98,56 @@ class SpincrusherTest extends BaseCardTest {
 
         assertThat(spincrusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(spincrusher.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Blocking multiple creatures puts only one counter on Spincrusher")
+    void blockingMultipleCreaturesTriggersOnlyOnce() {
+        Permanent spincrusher = addCreatureReady(player2, new Spincrusher());
+        harness.addToBattlefield(player2, new BraveTheSands());
+        addAttackingCreature(player1);
+        addAttackingCreature(player1);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1)));
+        resolveAllTriggers();
+
+        assertThat(spincrusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The counter is paid immediately and unblockability waits for resolution")
+    void counterIsRemovedAsAnActivationCost() {
+        Permanent spincrusher = addCreatureReady(player1, new Spincrusher());
+        spincrusher.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(spincrusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(spincrusher.isCantBeBlocked()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(spincrusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(spincrusher.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Spincrusher can activate its ability")
+    void abilityDoesNotRequireTappingOrHaste() {
+        Permanent spincrusher = harness.addToBattlefieldAndReturn(player1, new Spincrusher());
+        spincrusher.setSummoningSick(true);
+        spincrusher.setTapped(true);
+        spincrusher.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(spincrusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(spincrusher.isCantBeBlocked()).isTrue();
+        assertThat(spincrusher.isTapped()).isTrue();
     }
 
     private void addAttackingCreature(Player player) {
