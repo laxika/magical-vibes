@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.FlailingManticore;
+import com.github.laxika.magicalvibes.cards.f.FlamingSword;
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.cards.l.LastBreath;
 import com.github.laxika.magicalvibes.cards.l.Lunge;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({
         ThermalGlider.class,
         FlailingManticore.class,
+        FlamingSword.class,
         FreshVolunteers.class,
         Lunge.class,
         LastBreath.class,
@@ -100,10 +102,40 @@ class ThermalGliderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, glider.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, glider.getId());
 
         harness.assertNotOnBattlefield(player2, "Thermal Glider");
         harness.assertLife(player2, 24);
+    }
+
+    @Test
+    @DisplayName("A white flying creature can block Thermal Glider")
+    void whiteFlyingCreatureCanBlock() {
+        Permanent attacker = addCreatureReady(player1, new ThermalGlider());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new ThermalGlider());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+        resolveCombat();
+
+        harness.assertNotOnBattlefield(player1, "Thermal Glider");
+        harness.assertNotOnBattlefield(player2, "Thermal Glider");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Protection prevents even its controller from enchanting Thermal Glider with a red Aura")
+    void controllerCannotEnchantWithRedAura() {
+        Permanent glider = addCreatureReady(player1, new ThermalGlider());
+        harness.setHand(player1, List.of(new FlamingSword()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, glider.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
     }
 }
