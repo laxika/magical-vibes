@@ -16,7 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpectralShift.class, AuriokChampion.class, SylvokExplorer.class, VedalkenShackles.class})
+@CardUsed({SpectralShift.class, AuriokChampion.class, SylvokExplorer.class, VedalkenShackles.class, Swamp.class})
 class SpectralShiftTest extends BaseCardTest {
 
     private void castMode(int mode, UUID targetId) {
@@ -133,6 +133,61 @@ class SpectralShiftTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> castMode(0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void changedLandTypeAppliesToActivatedAbilityTargetRestriction() {
+        Permanent shackles = harness.addToBattlefieldAndReturn(player1, new VedalkenShackles());
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AuriokChampion());
+        harness.setHand(player1, List.of(new SpectralShift()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        castMode(0, shackles.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "ISLAND");
+        harness.handleListChoice(player1, "SWAMP");
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    void entwineCanChangeTwoDifferentPermanents() {
+        Permanent shackles = harness.addToBattlefieldAndReturn(player2, new VedalkenShackles());
+        Permanent champion = harness.addToBattlefieldAndReturn(player2, new AuriokChampion());
+        Permanent greenSource = harness.addToBattlefieldAndReturn(player1, new SylvokExplorer());
+        harness.setHand(player1, List.of(new SpectralShift()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0, 1},
+                shackles.getId(), List.of(champion.getId()));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "ISLAND");
+        harness.handleListChoice(player1, "SWAMP");
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(shackles.getTextReplacements()).containsExactly(new TextReplacement("Island", "Swamp"));
+        assertThat(champion.getTextReplacements()).containsExactly(new TextReplacement("red", "green"));
+        assertThat(gqs.hasProtectionFromSource(gd, champion, greenSource)).isTrue();
+    }
+
+    @Test
+    void cannotChooseBothModesWithoutPayingEntwine() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AuriokChampion());
+        harness.setHand(player1, List.of(new SpectralShift()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(player1, 0, 1, 2,
+                new int[]{0, 1}, target.getId(), List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
