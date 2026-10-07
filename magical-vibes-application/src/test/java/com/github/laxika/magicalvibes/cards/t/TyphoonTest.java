@@ -43,6 +43,28 @@ class TyphoonTest extends BaseCardTest {
         harness.assertLife(player2, 18);
     }
 
+    @Test
+    @DisplayName("Counts tapped Islands as well as untapped Islands")
+    void countsTappedIslands() {
+        harness.addToBattlefieldAndReturn(player2, new Island()).setTapped(true);
+        harness.addToBattlefield(player2, new Island());
+        castTyphoon();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("The caster's Islands do not cause damage to either player")
+    void ignoresCastersIslandsWhenOpponentHasNone() {
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        castTyphoon();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
     private void castTyphoon() {
         harness.castFromHand(player1, new Typhoon(), "{2}{G}");
         harness.passBothPriorities();
