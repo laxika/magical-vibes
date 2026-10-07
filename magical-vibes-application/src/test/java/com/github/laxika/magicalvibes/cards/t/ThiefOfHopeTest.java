@@ -119,12 +119,15 @@ class ThiefOfHopeTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(kami.getId()));
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(kami.getId()));
     }
 
     @Test
-    @DisplayName("Soulshift may be declined")
+    @DisplayName("Soulshift may be declined at resolution after choosing a target")
     void soulshiftCanBeDeclined() {
         ThiefOfHope thief = new ThiefOfHope();
         harness.addToBattlefield(player1, thief);
@@ -137,8 +140,11 @@ class ThiefOfHopeTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(kami.getId()));
         harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(kami.getId()));
@@ -158,5 +164,77 @@ class ThiefOfHopeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Thief of Hope"));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Soulshift requires one target even when its controller intends to decline")
+    void soulshiftRequiresTargetBeforeResolution() {
+        harness.addToBattlefield(player1, new ThiefOfHope());
+        Card kami = new LanternKami();
+        harness.setGraveyard(player1, List.of(kami));
+        harness.setHand(player1, List.of(new RendSpirit()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Thief of Hope"));
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(kami.getId());
+        assertThat(choice.minCount()).isEqualTo(1);
+        assertThat(choice.maxCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Soulshift cannot target an opponent's Spirit card")
+    void soulshiftDoesNotUseOpponentsGraveyard() {
+        harness.addToBattlefield(player1, new ThiefOfHope());
+        harness.setGraveyard(player2, List.of(new LanternKami()));
+        harness.setHand(player1, List.of(new RendSpirit()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Thief of Hope"));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player2, "Lantern Kami");
+        harness.assertNotInHand(player1, "Lantern Kami");
+    }
+
+    @Test
+    @DisplayName("Casting Thief of Hope does not trigger its own drain ability")
+    void castingThiefDoesNotTriggerItself() {
+        harness.setHand(player1, List.of(new ThiefOfHope()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        int startingLife = gd.getLife(player1.getId());
+        int opponentStartingLife = gd.getLife(player2.getId());
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Thief of Hope");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(startingLife);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentStartingLife);
+    }
+
+    @Test
+    @DisplayName("The drain trigger resolves even if Thief of Hope is destroyed in response")
+    void drainResolvesAfterSourceIsDestroyed() {
+        harness.addToBattlefield(player1, new ThiefOfHope());
+        harness.setHand(player1, List.of(new LanternKami()));
+        harness.setHand(player2, List.of(new RendSpirit()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        int startingLife = gd.getLife(player1.getId());
+        int opponentStartingLife = gd.getLife(player2.getId());
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.ensurePriority(player2);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Thief of Hope"));
+        harness.assertNotOnBattlefield(player1, "Thief of Hope");
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(startingLife + 1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentStartingLife - 1);
     }
 }
