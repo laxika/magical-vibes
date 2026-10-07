@@ -102,6 +102,53 @@ class ThoughtDissectorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void findsArtifactExactlyAtXLimit() {
+        addReadyThoughtDissector();
+        Card first = new EchoingDecay();
+        Card artifact = new DarksteelIngot();
+        Card remains = new BarbedLightning();
+        harness.setLibrary(player2, List.of(first, artifact, remains));
+
+        harness.activateAbility(player1, 0, 2, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Darksteel Ingot");
+        harness.assertNotOnBattlefield(player2, "Darksteel Ingot");
+        harness.assertInGraveyard(player1, "Thought Dissector");
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(first);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remains);
+    }
+
+    @Test
+    void exhaustsShortLibraryWithoutSacrificingSource() {
+        addReadyThoughtDissector();
+        Card onlyCard = new EchoingDecay();
+        harness.setLibrary(player2, List.of(onlyCard));
+
+        harness.activateAbility(player1, 0, 3, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Thought Dissector");
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(onlyCard);
+        harness.assertNotInGraveyard(player1, "Thought Dissector");
+    }
+
+    @Test
+    void emptyLibraryDoesNotSacrificeSource() {
+        addReadyThoughtDissector();
+        harness.setLibrary(player2, List.of());
+
+        harness.activateAbility(player1, 0, 3, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Thought Dissector");
+        harness.assertNotInGraveyard(player1, "Thought Dissector");
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
     private void addReadyThoughtDissector() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new ThoughtDissector());
         source.setSummoningSick(false);
