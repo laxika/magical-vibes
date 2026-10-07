@@ -126,11 +126,69 @@ class SurgeOfSalvationTest extends BaseCardTest {
         assertThat(ownCreature.hasKeyword(Keyword.HEXPROOF)).isTrue();
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(ownCreature.hasKeyword(Keyword.HEXPROOF)).isFalse();
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("Prevents damage to creatures entering after resolution without granting them hexproof")
+    void preventsDamageToLaterCreatures() {
+        harness.setHand(player1, List.of(new SurgeOfSalvation()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent laterCreature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Pestilence());
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(laterCreature.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(laterCreature.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Does not prevent black damage to players or opposing creatures")
+    void doesNotPreventDamageToPlayersOrOpposingCreatures() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Pestilence());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new SurgeOfSalvation()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.activateAbility(player2, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(ownCreature.getMarkedDamage()).isZero();
+        assertThat(opposingCreature.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Damage prevention wears off at end of turn")
+    void damagePreventionWearsOffAtEndOfTurn() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Pestilence());
+        harness.setHand(player1, List.of(new SurgeOfSalvation()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(ownCreature.getMarkedDamage()).isEqualTo(1);
     }
 }
