@@ -118,6 +118,54 @@ class SummonersPactTest extends BaseCardTest {
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
+    @Test
+    @DisplayName("Failing to find an available green creature still requires upkeep payment")
+    void canDeclineAvailableCreature() {
+        Card greenCreature = new LlanowarEmpath();
+        harness.setLibrary(player1, List.of(greenCreature));
+        castPact();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(greenCreature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(greenCreature);
+        reachNextUpkeepPrompt();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Four mana with only one green mana cannot pay the upkeep cost")
+    void insufficientGreenManaCausesLoss() {
+        harness.setLibrary(player1, List.of());
+        castPact();
+        reachNextUpkeepPrompt();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("The upkeep payment is required only once")
+    void paymentDoesNotRepeatOnLaterUpkeep() {
+        harness.setLibrary(player1, List.of());
+        castPact();
+        reachNextUpkeepPrompt();
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player2);
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
     private void castPact() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
