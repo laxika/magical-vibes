@@ -57,6 +57,40 @@ class SpurGrapplerTest extends BaseCardTest {
         assertStats(spurGrappler, 4, 2);
     }
 
+    @Test
+    void oneUntappedLandPreventsBoostAmongTappedLands() {
+        Permanent spurGrappler = addSpurGrappler();
+        Permanent tappedForest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        tappedForest.tap();
+        Permanent otherForest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        assertStats(spurGrappler, 2, 1);
+
+        otherForest.tap();
+        assertStats(spurGrappler, 4, 2);
+    }
+
+    @Test
+    void untappedNonlandCreaturesDoNotPreventBoost() {
+        Permanent spurGrappler = addSpurGrappler();
+        Permanent otherGrappler = addSpurGrappler();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.tap();
+
+        assertStats(spurGrappler, 4, 2);
+        assertStats(otherGrappler, 4, 2);
+    }
+
+    @Test
+    void eachGrapplerChecksItsOwnControllersLands() {
+        Permanent spurGrappler = addSpurGrappler();
+        Permanent opponentGrappler = harness.addToBattlefieldAndReturn(player2, new SpurGrappler());
+        harness.addToBattlefield(player1, new Forest());
+
+        assertStats(spurGrappler, 2, 1);
+        assertStats(opponentGrappler, 4, 2);
+    }
+
     private Permanent addSpurGrappler() {
         return harness.addToBattlefieldAndReturn(player1, new SpurGrappler());
     }
