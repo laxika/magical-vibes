@@ -29,6 +29,7 @@ class UltimateGreenGoblinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
         harness.handleCardChosen(player1, 0);
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -61,6 +62,76 @@ class UltimateGreenGoblinTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void createsTreasureEvenWithAnEmptyHand() {
+        harness.addToBattlefield(player1, new UltimateGreenGoblin());
+        harness.setHand(player1, List.of());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new UltimateGreenGoblin());
+        harness.setHand(player1, List.of(new UltimateGreenGoblin()));
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+    }
+
+    @Test
+    void mayhemCanBePaidWithRedMana() {
+        UltimateGreenGoblin goblin = new UltimateGreenGoblin();
+        harness.setGraveyard(player1, List.of(goblin));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(goblin.getId())));
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Ultimate Green Goblin")).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void mayhemDoesNotAllowCastingDuringUpkeep() {
+        UltimateGreenGoblin goblin = new UltimateGreenGoblin();
+        harness.setGraveyard(player1, List.of(goblin));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(goblin.getId())));
+        prepareMainPhase();
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Ultimate Green Goblin");
+    }
+
+    @Test
+    void mayhemRequiresAColoredManaForTheHybridSymbol() {
+        UltimateGreenGoblin goblin = new UltimateGreenGoblin();
+        harness.setGraveyard(player1, List.of(goblin));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(goblin.getId())));
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Ultimate Green Goblin");
     }
 
     private void prepareMainPhase() {
