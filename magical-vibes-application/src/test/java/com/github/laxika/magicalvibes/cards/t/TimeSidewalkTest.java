@@ -3,10 +3,9 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
+import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -71,6 +70,47 @@ class TimeSidewalkTest extends BaseCardTest {
         assertThat(openingGame.playerDecks.get(openingPlayer.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("The opening-hand choice is offered before the first turn begins")
+    void openingHandChoiceHappensBeforeTheGameStarts() {
+        GameTestHarness openingHarness = new GameTestHarness();
+        var openingPlayer = openingHarness.getPlayer1();
+        openingHarness.setHand(openingPlayer, List.of(new TimeSidewalk()));
+        openingHarness.setLibrary(openingPlayer, List.of());
+        openingHarness.skipMulligan();
+
+        assertThat(openingHarness.getGameData().status).isEqualTo(GameStatus.MULLIGAN);
+        openingHarness.handleMayAbilityChosen(openingPlayer, true);
+
+        assertThat(openingHarness.getGameData().getPlayerExiledCards(openingPlayer.getId()))
+                .extracting(Card::getName).containsExactly("Time Sidewalk");
+        assertThat(openingHarness.getGameData().playerDecks.get(openingPlayer.getId())).hasSize(4);
+        assertThat(openingHarness.getGameData().status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("A generated Time Walk can be cast and remains in the graveyard after resolving")
+    void generatedTimeWalkGrantsAnExtraTurnAndPersists() {
+        GameTestHarness openingHarness = new GameTestHarness();
+        var openingPlayer = openingHarness.getPlayer1();
+        openingHarness.setHand(openingPlayer, List.of(new TimeSidewalk()));
+        openingHarness.setLibrary(openingPlayer, List.of());
+        openingHarness.skipMulligan();
+        openingHarness.passBothPriorities();
+        openingHarness.handleMayAbilityChosen(openingPlayer, true);
+
+        GameData openingGame = openingHarness.getGameData();
+        openingHarness.passUntil(TurnStep.PRECOMBAT_MAIN);
+        Card timeWalk = openingGame.playerDecks.get(openingPlayer.getId()).removeFirst();
+        openingHarness.castFromHand(openingPlayer, timeWalk, "{1}{U}");
+        openingHarness.passBothPriorities();
+
+        assertThat(openingGame.extraTurns).containsExactly(openingPlayer.getId());
+        openingHarness.assertInGraveyard(openingPlayer, "Time Walk");
+        assertThat(openingGame.playerGraveyards.get(openingPlayer.getId())).contains(timeWalk);
+        assertThat(openingGame.playerDecks.get(openingPlayer.getId())).hasSize(3);
+    }
+
     private static void assertTimeWalkTokenCard(Card card) {
         assertThat(card.getName()).isEqualTo("Time Walk");
         assertThat(card.getType()).isEqualTo(CardType.SORCERY);
@@ -78,8 +118,5 @@ class TimeSidewalkTest extends BaseCardTest {
         assertThat(card.getColor()).isEqualTo(CardColor.BLUE);
         assertThat(card.isToken()).isTrue();
         assertThat(card.isTokenCard()).isTrue();
-        List<CardEffect> effects = card.getEffects(EffectSlot.SPELL);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(ControllerExtraTurnEffect.class);
     }
 }
