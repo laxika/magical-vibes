@@ -96,6 +96,51 @@ class SynodCenturionTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Myr Servitor");
     }
 
+    @Test
+    @DisplayName("Two Centurions count as other artifacts for each other")
+    void twoCenturionsKeepEachOtherAlive() {
+        harness.addToBattlefield(player1, new SynodCenturion());
+        harness.addToBattlefield(player1, new SynodCenturion());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Synod Centurion")).isEqualTo(2);
+        harness.assertNotInGraveyard(player1, "Synod Centurion");
+    }
+
+    @Test
+    @DisplayName("Restoring another artifact after triggering does not prevent sacrifice")
+    void stillSacrificesWhenAnotherArtifactIsRestoredInResponse() {
+        var transmuter = addCreatureReady(player1, new NeurokTransmuter());
+        var servitor = addCreatureReady(player1, new MyrServitor());
+        addCreatureReady(player1, new SynodCenturion());
+        harness.passBothPriorities();
+
+        int transmuterIndex = gd.playerBattlefields.get(player1.getId()).indexOf(transmuter);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.activateAbility(player1, transmuterIndex, 1, null, servitor.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Synod Centurion");
+        assertThat(gqs.isArtifact(gd, servitor)).isFalse();
+
+        harness.activateAbility(player1, transmuterIndex, 0, null, servitor.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isArtifact(gd, servitor)).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Synod Centurion");
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Synod Centurion");
+        harness.assertInGraveyard(player1, "Synod Centurion");
+        harness.assertOnBattlefield(player1, "Myr Servitor");
+    }
+
     private void castCenturion() {
         harness.setHand(player1, List.of(new SynodCenturion()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
