@@ -56,12 +56,69 @@ class UnexplainedVisionTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(mountain);
     }
 
+    @Test
+    @DisplayName("Two blue mana is insufficient for adamant")
+    void twoBlueManaDoesNotScry() {
+        Forest first = new Forest();
+        Island second = new Island();
+        Mountain third = new Mountain();
+        Island remaining = new Island();
+        harness.setLibrary(player1, List.of(first, second, third, remaining));
+
+        castUnexplainedVision(2, 3);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second, third);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Spending five blue mana allows reordering and bottoming the next three cards")
+    void fiveBlueManaScriesOnlyTheNextThreeCards() {
+        Forest first = new Forest();
+        Island second = new Island();
+        Mountain third = new Mountain();
+        Island scryFirst = new Island();
+        Forest scrySecond = new Forest();
+        Mountain scryThird = new Mountain();
+        Forest untouched = new Forest();
+        harness.setLibrary(player1, List.of(first, second, third,
+                scryFirst, scrySecond, scryThird, untouched));
+
+        castUnexplainedVision(5, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second, third);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(scryFirst, scrySecond, scryThird);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(2, 0), List.of(1)));
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(scryThird, scryFirst, untouched, scrySecond);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Drawing the last three cards leaves no scry choice")
+    void adamantWithEmptyLibraryAfterDrawing() {
+        Forest first = new Forest();
+        Island second = new Island();
+        Mountain third = new Mountain();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        castUnexplainedVision(3, 2);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second, third);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castUnexplainedVision(int blueMana, int colorlessMana) {
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new UnexplainedVision()));
         harness.addMana(player1, ManaColor.BLUE, blueMana);
         harness.addMana(player1, ManaColor.COLORLESS, colorlessMana);
-        harness.castSorcery(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
     }
 }
