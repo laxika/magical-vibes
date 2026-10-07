@@ -27,11 +27,9 @@ class SpectralGuardianTest extends BaseCardTest {
     @Test
     @DisplayName("Noncreature artifacts have shroud while the Guardian is untapped")
     void noncreatureArtifactsHaveShroud() {
-        harness.addToBattlefield(player1, new ManaPrism());
+        Permanent ownManaPrism = harness.addToBattlefieldAndReturn(player1, new ManaPrism());
         harness.addToBattlefield(player1, new SpectralGuardian());
-        harness.addToBattlefield(player2, new ManaPrism());
-        Permanent ownManaPrism = findPermanent(player1, "Mana Prism");
-        Permanent opponentManaPrism = findPermanent(player2, "Mana Prism");
+        Permanent opponentManaPrism = harness.addToBattlefieldAndReturn(player2, new ManaPrism());
 
         assertThat(gqs.hasKeyword(gd, ownManaPrism, Keyword.SHROUD)).isTrue();
         assertThat(gqs.hasKeyword(gd, opponentManaPrism, Keyword.SHROUD)).isTrue();
@@ -41,8 +39,7 @@ class SpectralGuardianTest extends BaseCardTest {
     @DisplayName("Artifact creatures are unaffected")
     void artifactCreaturesUnaffected() {
         harness.addToBattlefield(player1, new SpectralGuardian());
-        harness.addToBattlefield(player2, new IgneousGolem());
-        Permanent golem = findPermanent(player2, "Igneous Golem");
+        Permanent golem = harness.addToBattlefieldAndReturn(player2, new IgneousGolem());
 
         assertThat(gqs.hasKeyword(gd, golem, Keyword.SHROUD)).isFalse();
     }
@@ -51,8 +48,7 @@ class SpectralGuardianTest extends BaseCardTest {
     @DisplayName("Nonartifact permanents are unaffected")
     void nonArtifactsUnaffected() {
         harness.addToBattlefield(player1, new SpectralGuardian());
-        harness.addToBattlefield(player2, new ZhalfirinKnight());
-        Permanent knight = findPermanent(player2, "Zhalfirin Knight");
+        Permanent knight = harness.addToBattlefieldAndReturn(player2, new ZhalfirinKnight());
 
         assertThat(gqs.hasKeyword(gd, knight, Keyword.SHROUD)).isFalse();
     }
@@ -60,10 +56,8 @@ class SpectralGuardianTest extends BaseCardTest {
     @Test
     @DisplayName("Shroud is lost while the Guardian is tapped")
     void shroudLostWhileTapped() {
-        harness.addToBattlefield(player1, new SpectralGuardian());
-        Permanent guardian = findPermanent(player1, "Spectral Guardian");
-        harness.addToBattlefield(player2, new ManaPrism());
-        Permanent manaPrism = findPermanent(player2, "Mana Prism");
+        Permanent guardian = harness.addToBattlefieldAndReturn(player1, new SpectralGuardian());
+        Permanent manaPrism = harness.addToBattlefieldAndReturn(player2, new ManaPrism());
 
         guardian.tap();
 
@@ -73,10 +67,8 @@ class SpectralGuardianTest extends BaseCardTest {
     @Test
     @DisplayName("Shroud is lost once the Guardian leaves the battlefield")
     void shroudLostWhenGuardianLeaves() {
-        harness.addToBattlefield(player1, new SpectralGuardian());
-        Permanent guardian = findPermanent(player1, "Spectral Guardian");
-        harness.addToBattlefield(player2, new ManaPrism());
-        Permanent manaPrism = findPermanent(player2, "Mana Prism");
+        Permanent guardian = harness.addToBattlefieldAndReturn(player1, new SpectralGuardian());
+        Permanent manaPrism = harness.addToBattlefieldAndReturn(player2, new ManaPrism());
 
         assertThat(gqs.hasKeyword(gd, manaPrism, Keyword.SHROUD)).isTrue();
 
@@ -113,5 +105,78 @@ class SpectralGuardianTest extends BaseCardTest {
         UUID manaPrismId = harness.getPermanentId(player2, "Mana Prism");
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, manaPrismId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Shroud returns immediately when the Guardian untaps")
+    void shroudReturnsAfterUntapping() {
+        Permanent guardian = harness.addToBattlefieldAndReturn(player1, new SpectralGuardian());
+        Permanent prism = harness.addToBattlefieldAndReturn(player2, new ManaPrism());
+
+        guardian.tap();
+        assertThat(gqs.hasKeyword(gd, prism, Keyword.SHROUD)).isFalse();
+
+        guardian.untap();
+        assertThat(gqs.hasKeyword(gd, prism, Keyword.SHROUD)).isTrue();
+    }
+
+    @Test
+    @DisplayName("One untapped Guardian continues protecting artifacts when another taps")
+    void anotherUntappedGuardianMaintainsShroud() {
+        Permanent guardian = harness.addToBattlefieldAndReturn(player1, new SpectralGuardian());
+        harness.addToBattlefield(player2, new SpectralGuardian());
+        Permanent prism = harness.addToBattlefieldAndReturn(player1, new ManaPrism());
+
+        guardian.tap();
+
+        assertThat(gqs.hasKeyword(gd, prism, Keyword.SHROUD)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Shroud also prevents the artifact's controller from targeting it")
+    void controllerCannotTargetOwnArtifact() {
+        harness.addToBattlefield(player2, new SpectralGuardian());
+        Permanent prism = harness.addToBattlefieldAndReturn(player1, new ManaPrism());
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, prism.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An artifact can be destroyed while the Guardian is tapped")
+    void tappedGuardianAllowsTargeting() {
+        Permanent guardian = harness.addToBattlefieldAndReturn(player2, new SpectralGuardian());
+        Permanent prism = harness.addToBattlefieldAndReturn(player2, new ManaPrism());
+        guardian.tap();
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, prism.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(prism);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(prism.getCard());
+    }
+
+    @Test
+    @DisplayName("Untapping the Guardian makes an artifact target illegal before resolution")
+    void untappingGuardianProtectsPendingTarget() {
+        Permanent guardian = harness.addToBattlefieldAndReturn(player2, new SpectralGuardian());
+        Permanent prism = harness.addToBattlefieldAndReturn(player2, new ManaPrism());
+        guardian.tap();
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, prism.getId());
+
+        guardian.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(prism);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof Disenchant);
     }
 }
