@@ -91,6 +91,38 @@ class StompingGroundTest extends BaseCardTest {
         harness.playLand(player1, 0);
     }
 
+    @Test
+    @DisplayName("Stomping Ground can produce mana immediately after paying life")
+    void producesManaOnTurnItEnters() {
+        playStompingGround(20);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(findStompingGround(player1).isTapped()).isTrue();
+        harness.assertLife(player1, 18);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The player playing Stomping Ground pays life, not their opponent")
+    void secondPlayerPaysOwnLife() {
+        harness.setLife(player1, 15);
+        harness.setLife(player2, 10);
+        harness.setHand(player2, List.of(new StompingGround()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player2, 0);
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 8);
+        assertThat(findStompingGround(player2).isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addStompingGroundReady(Player player) {
         Permanent stompingGround = harness.addToBattlefieldAndReturn(player, new StompingGround());
         stompingGround.setSummoningSick(false);
