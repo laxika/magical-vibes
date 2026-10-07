@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,9 +20,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SteelHellkite.class, DarksteelAxe.class, Forest.class, GrizzlyBears.class,
+        LlanowarElves.class, Memnite.class})
 class SteelHellkiteTest extends BaseCardTest {
-
-    // ===== Ability 0: Pump =====
 
     @Test
     @DisplayName("{2}: Steel Hellkite gets +1/+0 until end of turn")
@@ -48,8 +49,6 @@ class SteelHellkiteTest extends BaseCardTest {
 
         assertThat(hellkite.getPowerModifier()).isEqualTo(2);
     }
-
-    // ===== Ability 1: X destroy =====
 
     @Test
     @DisplayName("Destroys nonland permanents with matching mana value after combat damage")
@@ -121,7 +120,7 @@ class SteelHellkiteTest extends BaseCardTest {
     @Test
     @DisplayName("Does not destroy permanents controlled by a player not damaged this turn")
     void doesNotDestroyPermanentsOfUndamagedPlayer() {
-        Permanent hellkite = addReadyHellkite(player1);
+        addReadyHellkite(player1);
         // Note: no combat damage dealt to anyone
 
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -190,10 +189,7 @@ class SteelHellkiteTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         // Resolve combat damage
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player1);
 
         // Verify combat damage was dealt (player2 should have lost 5 life from 5/5 hellkite)
         harness.assertLife(player2, 15);
@@ -224,10 +220,7 @@ class SteelHellkiteTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Memnite()); // MV 0 - should survive at X=1
 
         // Add another MV 1 creature
-        LlanowarElves secondElves = new LlanowarElves();
-        Permanent secondElvesPerm = new Permanent(secondElves);
-        secondElvesPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(secondElvesPerm);
+        addCreatureReady(player2, new LlanowarElves());
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, 1, 1, null);
@@ -239,14 +232,91 @@ class SteelHellkiteTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Memnite");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Destruction includes permanents entering after activation")
+    void destroysPermanentsEnteringBeforeResolution() {
+        Permanent hellkite = addReadyHellkite(player1);
+        simulateCombatDamageToPlayer(hellkite, player2);
+
+        harness.activateAbility(player1, 0, 1, 0, null);
+        harness.addToBattlefield(player2, new Memnite());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Memnite");
+        harness.assertInGraveyard(player2, "Memnite");
+    }
+
+    @Test
+    @DisplayName("A second Hellkite does not share the first Hellkite's combat damage")
+    void combatDamageTrackingIsPerHellkite() {
+        Permanent first = addReadyHellkite(player1);
+        addReadyHellkite(player1);
+        simulateCombatDamageToPlayer(first, player2);
+        harness.addToBattlefield(player2, new Memnite());
+
+        harness.activateAbility(player1, 1, 1, 0, null);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Memnite");
+
+        harness.activateAbility(player1, 0, 1, 0, null);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Memnite");
+    }
+
+    @Test
+    @DisplayName("Once-per-turn restriction applies before the first activation resolves")
+    void cannotActivateAgainWhileAbilityIsOnStack() {
+        addReadyHellkite(player1);
+        harness.activateAbility(player1, 0, 1, 0, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Destruction still resolves after its source leaves the battlefield")
+    void destructionResolvesWithoutSourceOnBattlefield() {
+        Permanent hellkite = addReadyHellkite(player1);
+        simulateCombatDamageToPlayer(hellkite, player2);
+        harness.addToBattlefield(player2, new Memnite());
+
+        harness.activateAbility(player1, 0, 1, 0, null);
+        gd.playerBattlefields.get(player1.getId()).remove(hellkite);
+        gd.playerGraveyards.get(player1.getId()).add(hellkite.getCard());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Memnite");
+        harness.assertInGraveyard(player2, "Memnite");
+    }
+
+    @Test
+    @DisplayName("Pump, combat damage tracking, and activation limit reset on the next turn")
+    void temporaryStateResetsOnNextTurn() {
+        Permanent hellkite = addReadyHellkite(player1);
+        harness.forceActivePlayer(player1);
+        simulateCombatDamageToPlayer(hellkite, player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(hellkite.getPowerModifier()).isEqualTo(1);
+        harness.activateAbility(player1, 0, 1, 0, null);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(hellkite.getPowerModifier()).isZero();
+
+        harness.addToBattlefield(player2, new Memnite());
+        harness.activateAbility(player1, 0, 1, 0, null);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Memnite");
+    }
 
     private Permanent addReadyHellkite(Player player) {
-        SteelHellkite card = new SteelHellkite();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new SteelHellkite());
     }
 
     private void simulateCombatDamageToPlayer(Permanent source, Player damagedPlayer) {
