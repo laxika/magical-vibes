@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JhoiraWeatherlightCaptain;
+import com.github.laxika.magicalvibes.cards.r.RiskyResearch;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpiderSense.class, Shock.class, GrizzlyBears.class, JhoiraWeatherlightCaptain.class, Spellbook.class})
+@CardUsed({SpiderSense.class, Shock.class, GrizzlyBears.class, JhoiraWeatherlightCaptain.class, Spellbook.class, RiskyResearch.class})
 class SpiderSenseTest extends BaseCardTest {
 
     @Test
@@ -33,8 +34,7 @@ class SpiderSenseTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, shock.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, shock.getId());
 
         harness.assertInGraveyard(player1, "Shock");
         harness.assertInGraveyard(player2, "Spider-Sense");
@@ -86,5 +86,99 @@ class SpiderSenseTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Counters a sorcery without resolving its effects")
+    void countersSorcerySpell() {
+        RiskyResearch research = new RiskyResearch();
+        harness.setHand(player1, List.of(research));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player2, List.of(new SpiderSense()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castSorcery(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, research.getId());
+
+        harness.assertInGraveyard(player1, "Risky Research");
+        harness.assertInGraveyard(player2, "Spider-Sense");
+        harness.assertLife(player1, 20);
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Web-slinging returns the creature as a cost before the spell resolves")
+    void returnsCreatureBeforeResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.tap();
+        Shock shock = prepareShockForWebSlinging();
+
+        harness.castInstantWithAlternateCost(player2, 0, shock.getId(), List.of(creature.getId()));
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(harness.getGameData().stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertInGraveyard(player2, "Spider-Sense");
+    }
+
+    @Test
+    @DisplayName("Web-slinging cannot return an untapped creature")
+    void cannotReturnUntappedCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Shock shock = prepareShockForWebSlinging();
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(
+                player2, 0, shock.getId(), List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Spider-Sense");
+        assertThat(harness.getGameData().stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Web-slinging cannot return an opponent's tapped creature")
+    void cannotReturnOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.tap();
+        Shock shock = prepareShockForWebSlinging();
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(
+                player2, 0, shock.getId(), List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player2, "Spider-Sense");
+        assertThat(harness.getGameData().stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Web-slinging requires returning a creature")
+    void cannotOmitReturnedCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.tap();
+        Shock shock = prepareShockForWebSlinging();
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(
+                player2, 0, shock.getId(), List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Spider-Sense");
+        assertThat(harness.getGameData().stack).hasSize(1);
+    }
+
+    private Shock prepareShockForWebSlinging() {
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new SpiderSense()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        return shock;
     }
 }
