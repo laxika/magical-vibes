@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -52,5 +54,39 @@ class TarnishedCitadelTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("Each colored mana choice damages only the activating controller")
+    void eachColorDamagesOnlyController(ManaColor color) {
+        harness.addToBattlefield(player2, new TarnishedCitadel());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.handleListChoice(player2, color.name());
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(color)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Colored mana can be produced with less than three life because damage is not a cost")
+    void canActivateWithLessThanThreeLife() {
+        harness.addToBattlefield(player1, new TarnishedCitadel());
+        harness.setLife(player1, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        harness.assertLife(player1, -1);
+        assertThat(gd.stack).isEmpty();
     }
 }
