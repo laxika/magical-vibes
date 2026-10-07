@@ -1,21 +1,22 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.v.Vorstclaw;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({UndeadExecutioner.class, GrizzlyBears.class, Vorstclaw.class, WrathOfGod.class})
 class UndeadExecutionerTest extends BaseCardTest {
 
     /**
@@ -29,11 +30,9 @@ class UndeadExecutionerTest extends BaseCardTest {
         GrizzlyBears bigBear = new GrizzlyBears();
         bigBear.setPower(3);
         bigBear.setToughness(4);
-        Permanent blocker = new Permanent(bigBear);
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, bigBear);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -149,15 +148,57 @@ class UndeadExecutionerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new UndeadExecutioner());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities(); // resolve Wrath — every creature dies at once
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player1, "Undead Executioner");
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("The death trigger can target a creature its controller controls")
+    void deathTriggerCanTargetOwnCreature() {
+        Permanent executioner = addCreatureReady(player1, new UndeadExecutioner());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Vorstclaw());
+        Permanent blocker = addCreatureReady(player2, new Vorstclaw());
+        executioner.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+        harness.assertInGraveyard(player1, "Undead Executioner");
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.getPowerModifier()).isEqualTo(-2);
+        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("A death trigger whose target dies before resolution does not affect another creature")
+    void deathTriggerDoesNotResolveWhenTargetIsGone() {
+        Permanent executioner = addCreatureReady(player1, new UndeadExecutioner());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Vorstclaw());
+        Permanent blocker = addCreatureReady(player2, new Vorstclaw());
+        executioner.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, target.getId());
+        target.setToughnessModifier(-7);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Vorstclaw");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(blocker.getPowerModifier()).isZero();
+        assertThat(blocker.getToughnessModifier()).isZero();
     }
 }
