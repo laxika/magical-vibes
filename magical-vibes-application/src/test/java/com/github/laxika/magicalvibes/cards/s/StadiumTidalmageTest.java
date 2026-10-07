@@ -2,12 +2,11 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,14 +14,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({StadiumTidalmage.class, Forest.class, GrizzlyBears.class})
 class StadiumTidalmageTest extends BaseCardTest {
-
-    // ===== ETB loot =====
 
     @Test
     @DisplayName("Entering the battlefield lets controller draw then discard (accept)")
     void entersAndLoots() {
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -69,20 +67,14 @@ class StadiumTidalmageTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore - 1);
     }
 
-    // ===== Attack loot =====
-
     @Test
     @DisplayName("Attacking lets controller loot")
     void attacksAndLoots() {
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
         addCreatureReady(player1, new StadiumTidalmage());
         harness.setHand(player1, List.of(new GrizzlyBears()));
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(player1, List.of(0));
 
         // Attack trigger on stack
         assertThat(gd.stack).isNotEmpty();
@@ -94,8 +86,71 @@ class StadiumTidalmageTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
     }
 
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+    @Test
+    @DisplayName("Declining the attack loot leaves the hand and library unchanged")
+    void attacksAndDeclinesLoot() {
+        Forest drawnCard = new Forest();
+        Forest heldCard = new Forest();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(heldCard));
+        harness.setGraveyard(player1, List.of());
+        addCreatureReady(player1, new StadiumTidalmage());
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(heldCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The card drawn by the entry trigger can be discarded from an initially empty hand")
+    void entersAndDiscardsTheDrawnCard() {
+        Forest drawnCard = new Forest();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setGraveyard(player1, List.of());
+        harness.castFromHand(player1, new StadiumTidalmage(), "{2}{U}{R}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's attack trigger draws and discards only for that opponent")
+    void opponentAttacksAndLoots() {
+        Forest heldCard = new Forest();
+        Forest drawnCard = new Forest();
+        Forest otherPlayersCard = new Forest();
+        harness.setHand(player1, List.of(otherPlayersCard));
+        harness.setHand(player2, List.of(heldCard));
+        harness.setLibrary(player2, List.of(drawnCard));
+        harness.setGraveyard(player2, List.of());
+        addCreatureReady(player2, new StadiumTidalmage());
+
+        declareAttackers(player2, List.of(0));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(heldCard, drawnCard);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(heldCard);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(otherPlayersCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
