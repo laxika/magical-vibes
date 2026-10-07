@@ -1,75 +1,79 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({StampedingHorncrest.class, SunCrestedPterodon.class, SunSentinel.class})
 class StampedingHorncrestTest extends BaseCardTest {
 
     @Test
     void hasHasteWithAnotherDinosaur() {
-        harness.addToBattlefield(player1, new StampedingHorncrest());
-        harness.addToBattlefield(player1, createDinosaur());
-
-        Permanent horncrest = findPermanent(player1, "Stampeding Horncrest");
+        Permanent horncrest = harness.addToBattlefieldAndReturn(player1, new StampedingHorncrest());
+        harness.addToBattlefield(player1, new SunCrestedPterodon());
 
         assertThat(gqs.hasKeyword(gd, horncrest, Keyword.HASTE)).isTrue();
     }
 
     @Test
     void doesNotHaveHasteWithoutAnotherDinosaur() {
-        harness.addToBattlefield(player1, new StampedingHorncrest());
-
-        Permanent horncrest = findPermanent(player1, "Stampeding Horncrest");
+        Permanent horncrest = harness.addToBattlefieldAndReturn(player1, new StampedingHorncrest());
 
         assertThat(gqs.hasKeyword(gd, horncrest, Keyword.HASTE)).isFalse();
     }
 
     @Test
     void nonDinosaurDoesNotGrantHaste() {
-        harness.addToBattlefield(player1, new StampedingHorncrest());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent horncrest = findPermanent(player1, "Stampeding Horncrest");
+        Permanent horncrest = harness.addToBattlefieldAndReturn(player1, new StampedingHorncrest());
+        harness.addToBattlefield(player1, new SunSentinel());
 
         assertThat(gqs.hasKeyword(gd, horncrest, Keyword.HASTE)).isFalse();
     }
 
     @Test
     void opponentDinosaurDoesNotGrantHaste() {
-        harness.addToBattlefield(player1, new StampedingHorncrest());
-        harness.addToBattlefield(player2, createDinosaur());
-
-        Permanent horncrest = findPermanent(player1, "Stampeding Horncrest");
+        Permanent horncrest = harness.addToBattlefieldAndReturn(player1, new StampedingHorncrest());
+        harness.addToBattlefield(player2, new SunCrestedPterodon());
 
         assertThat(gqs.hasKeyword(gd, horncrest, Keyword.HASTE)).isFalse();
     }
 
     @Test
     void losesHasteWhenTheOtherDinosaurLeaves() {
-        harness.addToBattlefield(player1, new StampedingHorncrest());
-        harness.addToBattlefield(player1, createDinosaur());
-
-        Permanent horncrest = findPermanent(player1, "Stampeding Horncrest");
+        Permanent horncrest = harness.addToBattlefieldAndReturn(player1, new StampedingHorncrest());
+        harness.addToBattlefield(player1, new SunCrestedPterodon());
         assertThat(gqs.hasKeyword(gd, horncrest, Keyword.HASTE)).isTrue();
 
         gd.playerBattlefields.get(player1.getId())
-                .removeIf(permanent -> permanent.getCard().getName().equals("Grizzly Bears"));
+                .removeIf(permanent -> permanent.getCard().getName().equals("Sun-Crested Pterodon"));
 
         assertThat(gqs.hasKeyword(gd, horncrest, Keyword.HASTE)).isFalse();
     }
 
-    private Card createDinosaur() {
-        Card card = new GrizzlyBears();
-        card.setSubtypes(List.of(CardSubtype.DINOSAUR));
-        return card;
+    @Test
+    void gainsHasteWhenAnotherDinosaurEntersLater() {
+        Permanent horncrest = harness.addToBattlefieldAndReturn(player1, new StampedingHorncrest());
+        assertThat(gqs.hasKeyword(gd, horncrest, Keyword.HASTE)).isFalse();
+
+        harness.addToBattlefield(player1, new SunCrestedPterodon());
+
+        assertThat(gqs.hasKeyword(gd, horncrest, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void twoHorncrestsGrantEachOtherHaste() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new StampedingHorncrest());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new StampedingHorncrest());
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.HASTE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isFalse();
     }
 }
