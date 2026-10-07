@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TarriansJournal.class, TheTombOfAclazotz.class, GrizzlyBears.class, Forest.class})
+@CardUsed({TarriansJournal.class, TheTombOfAclazotz.class, GrizzlyBears.class, Forest.class, TithingBlade.class})
 class TarriansJournalTest extends BaseCardTest {
 
     @Test
@@ -85,6 +85,8 @@ class TarriansJournalTest extends BaseCardTest {
         assertThat(gqs.effectiveCreatureSubtypes(gd, bears)).contains(CardSubtype.VAMPIRE);
 
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -103,13 +105,110 @@ class TarriansJournalTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void transformsDuringOpponentsEndStep() {
+        Permanent journal = harness.addToBattlefieldAndReturn(player1, new TarriansJournal());
+        Forest discarded = new Forest();
+        harness.setHand(player1, List.of(discarded));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(journal.isTransformed()).isFalse();
+        harness.passBothPriorities();
+        assertThat(journal.isTransformed()).isTrue();
+        assertThat(journal.isTapped()).isTrue();
+    }
+
+    @Test
+    void transformsWithEmptyHand() {
+        Permanent journal = harness.addToBattlefieldAndReturn(player1, new TarriansJournal());
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        prepareMainPhase();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(journal.isTransformed()).isTrue();
+        assertThat(journal.isTapped()).isTrue();
+    }
+
+    @Test
+    void drawAbilityCannotSacrificeItselfLandOrOpponentsCreature() {
+        harness.addToBattlefield(player1, new TarriansJournal());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void drawAbilityCannotActivateDuringEndStep() {
+        harness.addToBattlefield(player1, new TarriansJournal());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void sacrificesAnotherArtifactAsCostBeforeDrawing() {
+        harness.addToBattlefield(player1, new TarriansJournal());
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new TithingBlade());
+        Forest drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+        prepareMainPhase();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(blade);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(blade.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawn);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
+    }
+
+    @Test
+    void permissionSurvivesSourceLeavingAndAppliesToCreatureAddedLater() {
+        Permanent tomb = addReadyTomb();
+        prepareMainPhase();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(tomb);
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(bears.getCounterCount(CounterType.FINALITY)).isEqualTo(1);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, bears)).contains(CardSubtype.BEAR, CardSubtype.VAMPIRE);
+        bears.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(bears.getCard());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(bears.getCard());
+    }
+
     private Permanent addReadyTomb() {
         TarriansJournal front = new TarriansJournal();
-        Permanent tomb = new Permanent(front);
+        Permanent tomb = harness.addToBattlefieldAndReturn(player1, front);
         tomb.setCard(front.getBackFaceCard());
         tomb.setTransformed(true);
         tomb.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(tomb);
         return tomb;
     }
 
