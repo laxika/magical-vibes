@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BatteringCraghorn;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -45,8 +45,7 @@ class SpitfireHandlerTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("declares 1 blocker"));
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
     }
 
     @Test
@@ -65,8 +64,7 @@ class SpitfireHandlerTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("declares 1 blocker"));
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
     }
 
     @Test
@@ -80,8 +78,7 @@ class SpitfireHandlerTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("declares 1 blocker"));
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
     }
 
     @Test
@@ -96,9 +93,83 @@ class SpitfireHandlerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, spitfireHandler)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, spitfireHandler)).isEqualTo(1);
 
-        spitfireHandler.resetModifiers();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, spitfireHandler)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each Handler uses its own power for its blocking restriction")
+    void separateCopiesUseTheirOwnPower() {
+        addReadySpitfireHandler(player2);
+        addReadySpitfireHandler(player2);
+        Permanent attacker = addCreatureReady(player1, new BatteringCraghorn());
+        attacker.setAttacking(true);
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(DENIAL);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
+    }
+
+    @Test
+    @DisplayName("An attacker's power boost is included in the blocking restriction")
+    void restrictionUsesAttackersCurrentPower() {
+        addReadySpitfireHandler(player2);
+        Permanent attacker = addReadySpitfireHandler(player1);
+        attacker.setAttacking(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(DENIAL);
+    }
+
+    @Test
+    @DisplayName("Spitfire Handler can block a creature with less power")
+    void lowerPowerCreatureCanBeBlocked() {
+        addReadySpitfireHandler(player2);
+        Permanent attacker = addReadySpitfireHandler(player1);
+        attacker.setAttacking(true);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability works while tapped and summoning sick and boosts only its source")
+    void abilityDoesNotRequireTapOrHasteAndOnlyBoostsSource() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new SpitfireHandler());
+        Permanent other = addReadySpitfireHandler(player1);
+        source.setSummoningSick(true);
+        source.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(1);
+        assertThat(source.isTapped()).isTrue();
     }
 
     private Permanent addReadySpitfireHandler(Player player) {
