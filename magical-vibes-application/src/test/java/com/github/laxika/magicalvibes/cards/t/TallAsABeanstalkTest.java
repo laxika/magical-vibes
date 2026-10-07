@@ -60,6 +60,65 @@ class TallAsABeanstalkTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Resolving the Aura on an opponent's creature preserves its original type and affects only it")
+    void resolvesOnOpponentsCreature() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent other = addBears();
+        harness.setHand(player1, List.of(new TallAsABeanstalk()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Tall as a Beanstalk").getAttachedTo()).isEqualTo(enchanted.getId());
+        assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, enchanted)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, enchanted, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, enchanted, CardSubtype.GIANT)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, enchanted, CardSubtype.BEAR)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.REACH)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, other, CardSubtype.GIANT)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Two copies add their bonuses, and removing one leaves the other's effects")
+    void multipleAurasStack() {
+        Permanent bears = addBears();
+        Permanent first = attachAura(bears);
+        attachAura(bears);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(8);
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.GIANT)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.BEAR)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The Aura goes to the graveyard when its target leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        Permanent bears = addBears();
+        harness.setHand(player1, List.of(new TallAsABeanstalk()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castEnchantment(player1, 0, bears.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        gd.playerGraveyards.get(player1.getId()).add(bears.getCard());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Tall as a Beanstalk");
+        harness.assertInGraveyard(player1, "Tall as a Beanstalk");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addBears() {
         return harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
     }
