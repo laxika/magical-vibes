@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
 import com.github.laxika.magicalvibes.cards.f.Fervor;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerrasBlessing;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BenalishInfantry.class, Fervor.class, SerrasBlessing.class, TranquilGrove.class})
+@CardUsed({Fervor.class, GrizzlyBears.class, SerrasBlessing.class, TranquilGrove.class})
 class TranquilGroveTest extends BaseCardTest {
 
     private void payCost() {
@@ -54,13 +54,13 @@ class TranquilGroveTest extends BaseCardTest {
     @DisplayName("Does not destroy creatures")
     void doesNotDestroyCreatures() {
         harness.addToBattlefield(player1, new TranquilGrove());
-        harness.addToBattlefield(player1, new BenalishInfantry());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         payCost();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Benalish Infantry");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -87,5 +87,68 @@ class TranquilGroveTest extends BaseCardTest {
 
         Assertions.assertThat(countPermanents(player1, "Tranquil Grove")).isEqualTo(1);
         harness.assertInGraveyard(player1, "Tranquil Grove");
+    }
+
+    @Test
+    @DisplayName("Requires the generic mana in addition to two green mana")
+    void requiresGenericManaAsWellAsTwoGreenMana() {
+        harness.addToBattlefield(player1, new TranquilGrove());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        Assertions.assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Tranquil Grove");
+    }
+
+    @Test
+    @DisplayName("Can activate with no other enchantments and activate again later")
+    void canActivateWithNoOtherEnchantmentsAndActivateAgain() {
+        harness.addToBattlefield(player1, new TranquilGrove());
+        payCost();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Tranquil Grove");
+        assertThat(gd.stack).isEmpty();
+
+        harness.addToBattlefield(player2, new SerrasBlessing());
+        payCost();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Tranquil Grove");
+        harness.assertNotOnBattlefield(player2, "Serra's Blessing");
+        harness.assertInGraveyard(player2, "Serra's Blessing");
+    }
+
+    @Test
+    @DisplayName("An activation still resolves after another Grove destroys its source")
+    void stackedActivationsDestroyBothGroves() {
+        harness.addToBattlefield(player1, new TranquilGrove());
+        harness.addToBattlefield(player1, new TranquilGrove());
+        harness.addToBattlefield(player2, new Fervor());
+        payCost();
+        payCost();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null, null);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Tranquil Grove")).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Tranquil Grove");
+        harness.assertInGraveyard(player2, "Fervor");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Tranquil Grove");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Tranquil Grove"))
+                .hasSize(2);
+        assertThat(gd.stack).isEmpty();
     }
 }
