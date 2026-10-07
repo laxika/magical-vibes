@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,8 +16,102 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TempestEfreet.class, GrizzlyBears.class})
+@CardUsed({TempestEfreet.class, GrizzlyBears.class, Unsummon.class})
 class TempestEfreetTest extends BaseCardTest {
+
+    @Test
+    void exchangedCreatureReturnsToItsNewOwnersHand() {
+        TempestEfreet efreet = new TempestEfreet();
+        efreet.setOwnerId(player1.getId());
+        GrizzlyBears bears = new GrizzlyBears();
+        bears.setOwnerId(player2.getId());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(bears));
+        addCreatureReady(player1, efreet);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, findPermanent(player1, "Grizzly Bears").getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void exchangeMovesTheSourceFromExile() {
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        TempestEfreet efreet = new TempestEfreet();
+        addCreatureReady(player1, efreet);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerGraveyards.get(player1.getId()).remove(efreet);
+        harness.setExile(player1, List.of(efreet));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(efreet);
+        harness.assertInGraveyard(player2, "Tempest Efreet");
+    }
+
+    @Test
+    void exchangeTakesExactlyOneRandomCard() {
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(first, second));
+        addCreatureReady(player1, new TempestEfreet());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        List<Card> remainingCards = new ArrayList<>(gd.playerHands.get(player1.getId()));
+        remainingCards.addAll(gd.playerHands.get(player2.getId()));
+        assertThat(remainingCards).containsExactlyInAnyOrder(first, second);
+    }
+
+    @Test
+    void activationSacrificesTheSourceBeforeResolution() {
+        addCreatureReady(player1, new TempestEfreet());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        harness.assertNotOnBattlefield(player1, "Tempest Efreet");
+        harness.assertInGraveyard(player1, "Tempest Efreet");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.assertLife(player2, 10);
+    }
+
+    @Test
+    void cannotPayLifeWhenLifeLossIsProhibited() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        gd.playersWhoCantLoseLifeThisTurn.add(player2.getId());
+        addCreatureReady(player1, new TempestEfreet());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player2, true);
+        }
+
+        harness.assertLife(player2, 20);
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Tempest Efreet");
+    }
 
     @Test
     void exchangeMovesTheSourceAfterItReturnsToTheBattlefield() {
