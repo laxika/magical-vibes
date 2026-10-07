@@ -57,6 +57,42 @@ class SpringingTigerTest extends BaseCardTest {
         assertStats(3, 3);
     }
 
+    @Test
+    @DisplayName("Gains the boost immediately when the graveyard reaches seven cards")
+    void gainsBoostWhenGraveyardGrows() {
+        fillGraveyard(player1, 6);
+        harness.addToBattlefield(player1, new SpringingTiger());
+        assertStats(3, 3);
+
+        fillGraveyard(player1, 7);
+
+        assertStats(5, 5);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The boost remains +2/+2 with more than seven cards")
+    void boostDoesNotScaleWithGraveyardSize() {
+        fillGraveyard(player1, 14);
+        harness.addToBattlefield(player1, new SpringingTiger());
+
+        assertStats(5, 5);
+    }
+
+    @Test
+    @DisplayName("Each Tiger checks its own controller's graveyard")
+    void opposingTigersUseSeparateGraveyards() {
+        fillGraveyard(player1, 7);
+        fillGraveyard(player2, 6);
+        harness.addToBattlefield(player1, new SpringingTiger());
+        harness.addToBattlefield(player2, new SpringingTiger());
+
+        assertStats(5, 5);
+        Permanent opposingTiger = findPermanent(player2, "Springing Tiger");
+        assertThat(gqs.getEffectivePower(gd, opposingTiger)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposingTiger)).isEqualTo(3);
+    }
+
     private void fillGraveyard(Player player, int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
