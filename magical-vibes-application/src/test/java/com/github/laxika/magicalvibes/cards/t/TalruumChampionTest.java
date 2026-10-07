@@ -18,6 +18,38 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TalruumChampionTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Two Champions remove each other's first strike even though both have the ability")
+    void championsRemoveEachOthersFirstStrike() {
+        Permanent attacker = addCreatureReady(player1, new TalruumChampion());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new TalruumChampion());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The block trigger still removes first strike after the Champion dies")
+    void blockTriggerResolvesAfterChampionDies() {
+        Permanent attacker = addCreatureReady(player1, new YouthfulKnight());
+        attacker.setAttacking(true);
+        Permanent champion = addCreatureReady(player2, new TalruumChampion());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        champion.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player2, "Talruum Champion");
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
     @DisplayName("When the Champion blocks a creature, that attacker loses first strike until end of turn")
     void blocksCreatureRemovesFirstStrike() {
         Permanent attacker = addCreatureReady(player1, new YouthfulKnight());
