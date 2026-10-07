@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WindDrake;
+import com.github.laxika.magicalvibes.cards.s.SnappingDrake;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -24,7 +25,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TheHive.class, GrizzlyBears.class, WindDrake.class, GiantSpider.class})
+@CardUsed({TheHive.class, GrizzlyBears.class, SnappingDrake.class, GiantSpider.class, Naturalize.class})
 class TheHiveTest extends BaseCardTest {
 
     // ===== Activation =====
@@ -117,7 +118,7 @@ class TheHiveTest extends BaseCardTest {
     @DisplayName("Wasp can be blocked by a creature with flying")
     void waspCanBeBlockedByFlyingCreature() {
         Permanent wasp = createWaspReadyToAttack();
-        Permanent drake = addCreatureReady(player2, new WindDrake());
+        Permanent drake = addCreatureReady(player2, new SnappingDrake());
 
         prepareDeclareBlockers();
         declareBlocker(drake, wasp);
@@ -254,6 +255,41 @@ class TheHiveTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
+
+    @Test
+    @DisplayName("A newly entered noncreature Hive can activate immediately")
+    void newlyEnteredHiveCanActivate() {
+        harness.enterBattlefieldAndReturn(player1, new TheHive());
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Wasp")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Wasp")).isZero();
+        assertThat(findPermanent(player1, "Wasp").isTapped()).isFalse();
+        assertThat(findPermanent(player1, "Wasp").getCard().isToken()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability creates a Wasp even if The Hive is destroyed in response")
+    void abilityResolvesAfterHiveIsDestroyed() {
+        Permanent hive = addHiveReady(player1);
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, hive.getId());
+
+        harness.assertInGraveyard(player1, "The Hive");
+        harness.assertNotOnBattlefield(player1, "The Hive");
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Wasp")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Wasp")).isZero();
+    }
 
     private Permanent addHiveReady(Player player) {
         return harness.addToBattlefieldAndReturn(player, new TheHive());
