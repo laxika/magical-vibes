@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GoblinSharpshooter;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.k.KamahlFistOfKrosa;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Tephraderm.class, Shock.class, GoblinSharpshooter.class})
+@CardUsed({Tephraderm.class, Shock.class, GoblinSharpshooter.class, Forest.class, KamahlFistOfKrosa.class})
 class TephradermTest extends BaseCardTest {
 
     @Test
@@ -24,8 +26,7 @@ class TephradermTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, tephraderm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, tephraderm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
@@ -53,8 +54,7 @@ class TephradermTest extends BaseCardTest {
         addCreatureReady(player1, new GoblinSharpshooter());
         Permanent tephraderm = addCreatureReady(player2, new Tephraderm());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player1);
 
@@ -64,5 +64,45 @@ class TephradermTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Goblin Sharpshooter");
         harness.assertOnBattlefield(player2, "Tephraderm");
+    }
+
+    @Test
+    @DisplayName("Lethal spell damage still reflects the full amount after Tephraderm dies")
+    void lethalSpellDamageStillReflects() {
+        Permanent tephraderm = harness.addToBattlefieldAndReturn(player2, new Tephraderm());
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        for (int i = 0; i < 3; i++) {
+            harness.castAndResolveInstant(player1, 0, tephraderm.getId());
+            resolveAllTriggers();
+        }
+
+        harness.assertInGraveyard(player2, "Tephraderm");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(14);
+    }
+
+    @Test
+    @DisplayName("Damage from an animated land is reflected even when Tephraderm dies")
+    void animatedLandDamageIsReflected() {
+        addCreatureReady(player1, new KamahlFistOfKrosa());
+        Permanent forest = addCreatureReady(player1, new Forest());
+        addCreatureReady(player2, new Tephraderm());
+        harness.addMana(player1, ManaColor.GREEN, 11);
+
+        harness.activateAbility(player1, 0, 0, null, forest.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(player1, List.of(1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        resolveCombat(player1);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Tephraderm");
+        harness.assertInGraveyard(player1, "Forest");
     }
 }
