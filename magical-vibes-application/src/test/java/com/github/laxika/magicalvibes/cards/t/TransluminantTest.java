@@ -43,7 +43,7 @@ class TransluminantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        gs.advanceStep(gd);
+        harness.passUntil(TurnStep.END_STEP);
         assertThat(gd.stack).isNotEmpty();
         harness.passBothPriorities();
 
@@ -102,6 +102,62 @@ class TransluminantTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid before the activated ability resolves")
+    void sacrificeIsPaidImmediately() {
+        setupTransluminant();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Transluminant");
+        harness.assertInGraveyard(player1, "Transluminant");
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Spirit");
+        assertThat(gd.getDelayedActions(DelayedCreateToken.class)).isEmpty();
+
+        harness.passBothPriorities();
+        assertThat(gd.getDelayedActions(DelayedCreateToken.class)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Activation on an opponent's turn creates the Spirit for the ability controller")
+    void createsTokenDuringOpponentsEndStep() {
+        setupTransluminant();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertNotOnBattlefield(player1, "Spirit");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(1);
+        harness.assertNotOnBattlefield(player2, "Spirit");
+    }
+
+    @Test
+    @DisplayName("The delayed trigger creates a token only once")
+    void delayedTriggerDoesNotRepeat() {
+        setupTransluminant();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(1);
+        harness.assertNotOnBattlefield(player2, "Spirit");
     }
 
     private void setupTransluminant() {
