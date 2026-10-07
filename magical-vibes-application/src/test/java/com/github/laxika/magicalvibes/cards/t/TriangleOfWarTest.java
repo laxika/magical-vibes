@@ -77,8 +77,8 @@ class TriangleOfWarTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Ability fizzles if a target leaves before resolution")
-    void fizzlesWhenTargetLeaves() {
+    @DisplayName("Neither creature deals fight damage if one target leaves before resolution")
+    void noFightWhenTargetLeaves() {
         harness.addToBattlefield(player1, new TriangleOfWar());
         Permanent mine = addCreatureReady(player1, new PantherWarriors());
         Permanent theirs = addCreatureReady(player2, new Warthog());
@@ -90,5 +90,65 @@ class TriangleOfWarTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(mine.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately and tapped creatures can fight")
+    void tappedCreaturesCanFight() {
+        Permanent triangle = harness.addToBattlefieldAndReturn(player1, new TriangleOfWar());
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new PantherWarriors());
+        Permanent theirs = harness.addToBattlefieldAndReturn(player2, new Warthog());
+        triangle.setTapped(true);
+        mine.setTapped(true);
+        theirs.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(mine.getId(), theirs.getId()));
+
+        harness.assertInGraveyard(player1, "Triangle of War");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(triangle);
+        assertThat(mine.getMarkedDamage()).isZero();
+        assertThat(theirs.getMarkedDamage()).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Panther Warriors");
+        harness.assertInGraveyard(player2, "Warthog");
+    }
+
+    @Test
+    @DisplayName("No fight occurs if your target becomes controlled by the opponent")
+    void noFightWhenFirstTargetChangesController() {
+        harness.addToBattlefield(player1, new TriangleOfWar());
+        Permanent mine = addCreatureReady(player1, new PantherWarriors());
+        Permanent theirs = addCreatureReady(player2, new Warthog());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(mine.getId(), theirs.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(mine);
+        gd.playerBattlefields.get(player2.getId()).add(mine);
+        harness.passBothPriorities();
+
+        assertThat(mine.getMarkedDamage()).isZero();
+        assertThat(theirs.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(mine, theirs);
+    }
+
+    @Test
+    @DisplayName("No fight occurs if the opponent's target becomes controlled by you")
+    void noFightWhenSecondTargetChangesController() {
+        harness.addToBattlefield(player1, new TriangleOfWar());
+        Permanent mine = addCreatureReady(player1, new PantherWarriors());
+        Permanent theirs = addCreatureReady(player2, new Warthog());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(mine.getId(), theirs.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(theirs);
+        gd.playerBattlefields.get(player1.getId()).add(theirs);
+        harness.passBothPriorities();
+
+        assertThat(mine.getMarkedDamage()).isZero();
+        assertThat(theirs.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(mine, theirs);
     }
 }
