@@ -46,7 +46,6 @@ class TinWingChimeraTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
@@ -93,5 +92,44 @@ class TinWingChimeraTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Tin-Wing Chimera");
         harness.assertInGraveyard(player1, "Tin-Wing Chimera");
         assertThat(source.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Chimera can sacrifice itself and pays the cost immediately")
+    void sacrificeIsPaidBeforeResolutionWithoutTapRestrictions() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new TinWingChimera());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BrassTalonChimera());
+        source.setTapped(true);
+        source.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Tin-Wing Chimera");
+        harness.assertInGraveyard(player1, "Tin-Wing Chimera");
+        assertThat(target.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A Chimera sacrificed in response receives neither the counter nor flying")
+    void sacrificedTargetMakesAbilityFailToResolve() {
+        harness.addToBattlefield(player1, new TinWingChimera());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BrassTalonChimera());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player2, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Tin-Wing Chimera");
+        harness.assertInGraveyard(player2, "Brass-Talon Chimera");
+        assertThat(target.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
