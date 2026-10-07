@@ -120,6 +120,47 @@ class SparringCollarTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, secondCreature, Keyword.FIRST_STRIKE)).isTrue();
     }
 
+    @Test
+    @DisplayName("Red ability moves a tapped, summoning-sick Collar and transfers first strike")
+    void redAbilityMovesTappedCollar() {
+        Permanent collar = harness.addToBattlefieldAndReturn(player1, new SparringCollar());
+        collar.setTapped(true);
+        collar.setSummoningSick(true);
+        Permanent firstCreature = addCreatureReady(player1, new DrossCrocodile());
+        Permanent secondCreature = addCreatureReady(player1, new DrossCrocodile());
+        collar.setAttachedTo(firstCreature.getId());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, secondCreature.getId());
+
+        assertThat(collar.getAttachedTo()).isEqualTo(firstCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(collar.getAttachedTo()).isEqualTo(secondCreature.getId());
+        assertThat(collar.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, firstCreature, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, secondCreature, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Red ability leaves the old attachment intact when its target leaves")
+    void redAbilityKeepsOldAttachmentWhenTargetLeaves() {
+        Permanent collar = addCollarReady(player1);
+        Permanent firstCreature = addCreatureReady(player1, new DrossCrocodile());
+        Permanent secondCreature = addCreatureReady(player1, new DrossCrocodile());
+        collar.setAttachedTo(firstCreature.getId());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, secondCreature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(secondCreature);
+        gd.playerGraveyards.get(player1.getId()).add(secondCreature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(collar.getAttachedTo()).isEqualTo(firstCreature.getId());
+        assertThat(gqs.hasKeyword(gd, firstCreature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addCollarReady(Player player) {
         Permanent permanent = harness.addToBattlefieldAndReturn(player, new SparringCollar());
         permanent.setSummoningSick(false);
