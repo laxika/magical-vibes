@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GoblinPicker;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SqueeDubiousMonarch.class, GrizzlyBears.class})
+@CardUsed({SqueeDubiousMonarch.class, GoblinPicker.class})
 class SqueeDubiousMonarchTest extends BaseCardTest {
 
     @Test
@@ -26,6 +27,7 @@ class SqueeDubiousMonarchTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
+        assertThat(countPermanents(player1, "Goblin")).isEqualTo(1);
         Permanent goblin = findPermanents(player1, "Goblin").stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
@@ -42,10 +44,10 @@ class SqueeDubiousMonarchTest extends BaseCardTest {
     @DisplayName("Can be cast from the graveyard for {3}{R} by exiling four other cards")
     void castFromGraveyardExilesFourOtherCards() {
         SqueeDubiousMonarch squee = new SqueeDubiousMonarch();
-        GrizzlyBears first = new GrizzlyBears();
-        GrizzlyBears second = new GrizzlyBears();
-        GrizzlyBears third = new GrizzlyBears();
-        GrizzlyBears fourth = new GrizzlyBears();
+        GoblinPicker first = new GoblinPicker();
+        GoblinPicker second = new GoblinPicker();
+        GoblinPicker third = new GoblinPicker();
+        GoblinPicker fourth = new GoblinPicker();
         harness.setGraveyard(player1, List.of(squee, first, second, third, fourth));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -62,11 +64,90 @@ class SqueeDubiousMonarchTest extends BaseCardTest {
     @DisplayName("Cannot be cast from the graveyard without four other cards")
     void requiresFourOtherCardsToCastFromGraveyard() {
         harness.setGraveyard(player1, List.of(
-                new SqueeDubiousMonarch(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+                new SqueeDubiousMonarch(), new GoblinPicker(), new GoblinPicker(), new GoblinPicker()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0, List.of(1, 2, 3)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotExileSqueeForItsOwnCastingCost() {
+        harness.setGraveyard(player1, List.of(new SqueeDubiousMonarch(),
+                new GoblinPicker(), new GoblinPicker(), new GoblinPicker(), new GoblinPicker()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0, List.of(0, 1, 2, 3)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Squee, Dubious Monarch");
+    }
+
+    @Test
+    void cannotExileTheSameCardMoreThanOnce() {
+        harness.setGraveyard(player1, List.of(new SqueeDubiousMonarch(),
+                new GoblinPicker(), new GoblinPicker(), new GoblinPicker(), new GoblinPicker()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0, List.of(1, 2, 3, 3)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void normalManaCostIsInsufficientForGraveyardCasting() {
+        harness.setGraveyard(player1, List.of(new SqueeDubiousMonarch(),
+                new GoblinPicker(), new GoblinPicker(), new GoblinPicker(), new GoblinPicker()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0, List.of(1, 2, 3, 4)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Squee, Dubious Monarch");
+    }
+
+    @Test
+    void graveyardCastingPreservesUnchosenCardsWhenSqueeIsNotFirst() {
+        GoblinPicker unchosen = new GoblinPicker();
+        SqueeDubiousMonarch squee = new SqueeDubiousMonarch();
+        harness.setGraveyard(player1, List.of(new GoblinPicker(), unchosen, squee,
+                new GoblinPicker(), new GoblinPicker(), new GoblinPicker()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castFromGraveyard(player1, 2, List.of(5, 0, 4, 3));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(unchosen);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(4).doesNotContain(squee, unchosen);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Squee, Dubious Monarch");
+    }
+
+    @Test
+    void graveyardPermissionDoesNotAllowCastingDuringOpponentsTurn() {
+        harness.setGraveyard(player1, List.of(new SqueeDubiousMonarch(),
+                new GoblinPicker(), new GoblinPicker(), new GoblinPicker(), new GoblinPicker()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0, List.of(1, 2, 3, 4)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Squee, Dubious Monarch");
+    }
+
+    @Test
+    void canAttackImmediatelyAfterBeingCastAndTokenDealsCombatDamage() {
+        harness.castFromHand(player1, new SqueeDubiousMonarch(), "{2}{R}");
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        resolveCombat();
+
+        harness.assertLife(player2, 17);
+        assertThat(countPermanents(player1, "Goblin")).isEqualTo(1);
     }
 }
