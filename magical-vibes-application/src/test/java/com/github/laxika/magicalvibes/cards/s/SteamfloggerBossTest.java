@@ -34,4 +34,34 @@ class SteamfloggerBossTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, opposingBoss)).isEqualTo(opposingBossPower);
         assertThat(gqs.hasKeyword(gd, opposingBoss, Keyword.HASTE)).isFalse();
     }
+
+    @Test
+    void bonusesStackWithoutIncreasingToughness() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SteamfloggerBoss());
+        int initialPower = gqs.getEffectivePower(gd, first);
+        int initialToughness = gqs.getEffectiveToughness(gd, first);
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SteamfloggerBoss());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new SteamfloggerBoss());
+
+        for (Permanent boss : new Permanent[]{first, second, third}) {
+            assertThat(gqs.getEffectivePower(gd, boss)).isEqualTo(initialPower + 2);
+            assertThat(gqs.getEffectiveToughness(gd, boss)).isEqualTo(initialToughness);
+            assertThat(gqs.hasKeyword(gd, boss, Keyword.HASTE)).isTrue();
+        }
+    }
+
+    @Test
+    void bonusAndHasteDisappearWhenOtherBossLeaves() {
+        Permanent remainingBoss = harness.addToBattlefieldAndReturn(player1, new SteamfloggerBoss());
+        int initialPower = gqs.getEffectivePower(gd, remainingBoss);
+        Permanent departingBoss = harness.addToBattlefieldAndReturn(player1, new SteamfloggerBoss());
+        assertThat(gqs.getEffectivePower(gd, remainingBoss)).isEqualTo(initialPower + 1);
+        assertThat(gqs.hasKeyword(gd, remainingBoss, Keyword.HASTE)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, departingBoss));
+
+        assertThat(gqs.getEffectivePower(gd, remainingBoss)).isEqualTo(initialPower);
+        assertThat(gqs.hasKeyword(gd, remainingBoss, Keyword.HASTE)).isFalse();
+    }
 }
