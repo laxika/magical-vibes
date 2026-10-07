@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.cards.c.ChangelingOutcast;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,11 +17,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UmezawasCharm.class, GrizzlyBears.class, Forest.class})
+@CardUsed({UmezawasCharm.class, GrizzlyBears.class, Forest.class, ChangelingOutcast.class})
 class UmezawasCharmTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 0: Target creature gets +2/+2 until end of turn")
+    @CardUsed({UmezawasCharm.class, GrizzlyBears.class})
     class PumpMode {
 
         @Test
@@ -39,16 +41,28 @@ class UmezawasCharmTest extends BaseCardTest {
 
             cast(0, bear.getId());
             harness.forceStep(TurnStep.END_STEP);
-            harness.clearPriorityPassed();
             harness.passBothPriorities();
 
             assertThat(bear.getPowerModifier()).isZero();
             assertThat(bear.getToughnessModifier()).isZero();
         }
+
+        @Test
+        void canBoostOpponentsCreatureWithoutGainingLife() {
+            Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            harness.setLife(player1, 15);
+
+            cast(0, bear.getId());
+
+            assertThat(bear.getPowerModifier()).isEqualTo(2);
+            assertThat(bear.getToughnessModifier()).isEqualTo(2);
+            harness.assertLife(player1, 15);
+        }
     }
 
     @Nested
     @DisplayName("Mode 1: Target creature gets -1/-1 until end of turn")
+    @CardUsed({UmezawasCharm.class, GrizzlyBears.class, Forest.class, ChangelingOutcast.class})
     class DebuffMode {
 
         @Test
@@ -71,6 +85,39 @@ class UmezawasCharmTest extends BaseCardTest {
                     player1, 0, 1, harness.getPermanentId(player2, "Forest")))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Target must be a creature");
+        }
+
+        @Test
+        void debuffWearsOffAtEndOfTurn() {
+            Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+            cast(1, bear.getId());
+            harness.forceStep(TurnStep.END_STEP);
+            harness.passBothPriorities();
+
+            assertThat(bear.getPowerModifier()).isZero();
+            assertThat(bear.getToughnessModifier()).isZero();
+            harness.assertOnBattlefield(player2, "Grizzly Bears");
+        }
+
+        @Test
+        void putsCreatureWithZeroToughnessIntoGraveyard() {
+            Permanent outcast = harness.addToBattlefieldAndReturn(player2, new ChangelingOutcast());
+
+            cast(1, outcast.getId());
+
+            harness.assertNotOnBattlefield(player2, "Changeling Outcast");
+            harness.assertInGraveyard(player2, "Changeling Outcast");
+        }
+
+        @Test
+        void canWeakenControllersCreature() {
+            Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+            cast(1, bear.getId());
+
+            assertThat(bear.getPowerModifier()).isEqualTo(-1);
+            assertThat(bear.getToughnessModifier()).isEqualTo(-1);
         }
     }
 
