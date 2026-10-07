@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -100,16 +99,89 @@ class SurgingSentinelsTest extends BaseCardTest {
                 .containsExactly("Snow-Covered Mountain", "Snow-Covered Forest");
     }
 
+    @Test
+    @DisplayName("The reveal choice is made when the ripple trigger resolves")
+    void revealChoiceWaitsForTriggerResolution() {
+        prepareCaster(List.of(new SnowCoveredMountain()));
+
+        castSentinels();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Surging Sentinels");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Ripple reveals only four cards and leaves a fifth matching card on top")
+    void rippleDoesNotRevealFifthCard() {
+        SurgingSentinels fifthCard = new SurgingSentinels();
+        prepareCaster(List.of(new SnowCoveredMountain(), new SnowCoveredForest(),
+                new SnowCoveredMountain(), new SnowCoveredForest(), fifthCard));
+
+        castSentinels();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(4);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(fifthCard);
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Surging Sentinels")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A matching revealed card may be declined and goes to the bottom")
+    void declinedMatchingCardGoesToBottom() {
+        SurgingSentinels revealedCard = new SurgingSentinels();
+        prepareCaster(List.of(revealedCard));
+
+        castSentinels();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(revealedCard);
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Surging Sentinels")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Ripple with an empty library leaves the original creature spell able to resolve")
+    void rippleWithEmptyLibrary() {
+        prepareCaster(List.of());
+
+        castSentinels();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Surging Sentinels");
+    }
+
     private void prepareCaster(List<Card> libraryTop) {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player1);
         harness.setLibrary(player1, libraryTop);
-        harness.setHand(player1, List.of(new SurgingSentinels()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
     }
 
     private void castSentinels() {
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SurgingSentinels(), "{2}{W}");
     }
 }
