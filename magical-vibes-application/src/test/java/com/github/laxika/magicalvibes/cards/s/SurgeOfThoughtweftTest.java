@@ -104,6 +104,45 @@ class SurgeOfThoughtweftTest extends BaseCardTest {
         assertThat(giant.getEffectiveToughness()).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("The Kithkin spell itself does not satisfy the draw condition")
+    void doesNotDrawOnEmptyBattlefield() {
+        harness.setLibrary(player1, List.of(new HillcomberGiant()));
+
+        cast();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Checks for a Kithkin when the spell resolves")
+    void drawsForKithkinEnteringBeforeResolution() {
+        harness.setLibrary(player1, List.of(new HillcomberGiant()));
+        harness.castFromHand(player1, new SurgeOfThoughtweft(), "{1}{W}");
+        Permanent kithkin = harness.addToBattlefieldAndReturn(player1, new GoldmeadowStalwart());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(kithkin.getEffectivePower()).isEqualTo(3);
+        assertThat(kithkin.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not receive the boost")
+    void doesNotBoostLaterCreatures() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new HillcomberGiant());
+
+        cast();
+        Permanent later = harness.addToBattlefieldAndReturn(player1, new HillcomberGiant());
+
+        assertThat(original.getEffectivePower()).isEqualTo(4);
+        assertThat(original.getEffectiveToughness()).isEqualTo(4);
+        assertThat(later.getEffectivePower()).isEqualTo(3);
+        assertThat(later.getEffectiveToughness()).isEqualTo(3);
+    }
+
     private void cast() {
         harness.castFromHand(player1, new SurgeOfThoughtweft(), "{1}{W}");
         harness.passBothPriorities();
