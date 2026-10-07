@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -127,8 +126,45 @@ class TimeEbbTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(timeEbb.getId()));
+    }
+
+    @Test
+    @DisplayName("Time Ebb can put your own creature into an empty library")
+    void putsOwnCreatureIntoEmptyLibrary() {
+        WindDrake targetCard = new WindDrake();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, targetCard);
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new TimeEbb()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(targetCard);
+        harness.assertNotOnBattlefield(player1, "Wind Drake");
+        harness.assertNotInGraveyard(player1, "Wind Drake");
+        harness.assertInGraveyard(player1, "Time Ebb");
+    }
+
+    @Test
+    @DisplayName("Time Ebb preserves the order of cards already in the library")
+    void preservesExistingLibraryOrder() {
+        WindDrake targetCard = new WindDrake();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, targetCard);
+        Forest firstCard = new Forest();
+        WindDrake secondCard = new WindDrake();
+        harness.setLibrary(player2, List.of(firstCard, secondCard));
+        harness.setHand(player1, List.of(new TimeEbb()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .containsExactly(targetCard, firstCard, secondCard);
+        harness.assertNotOnBattlefield(player2, "Wind Drake");
     }
 }
