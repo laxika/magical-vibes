@@ -23,8 +23,7 @@ class UnnerveTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Unnerve(), retainedCard));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
@@ -48,8 +47,7 @@ class UnnerveTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Unnerve()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -64,12 +62,32 @@ class UnnerveTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Unnerve()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The opponent chooses which two cards to discard")
+    void opponentChoosesCardsToDiscard() {
+        GoblinRaider retainedCard = new GoblinRaider();
+        Unnerve firstDiscard = new Unnerve();
+        GoblinRaider secondDiscard = new GoblinRaider();
+        harness.setHand(player2, List.of(retainedCard, firstDiscard, secondDiscard));
+        harness.setHand(player1, List.of(new Unnerve()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(retainedCard);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactlyInAnyOrder(firstDiscard, secondDiscard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }
