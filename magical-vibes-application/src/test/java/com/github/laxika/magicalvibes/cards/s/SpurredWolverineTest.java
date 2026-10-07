@@ -100,13 +100,64 @@ class SpurredWolverineTest extends BaseCardTest {
         Permanent wolverine = addCreatureReady(player1, new SpurredWolverine());
         Permanent beast1 = addCreatureReady(player1, new BarkhideMauler());
         Permanent beast2 = addCreatureReady(player1, new BarkhideMauler());
-        Permanent enchantment = new Permanent(new Pacifism());
-        gd.playerBattlefields.get(player2.getId()).add(enchantment);
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new Pacifism());
+        enchantment.setAttachedTo(wolverine.getId());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(wolverine), null, enchantment.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(beast1.isTapped()).isFalse();
         assertThat(beast2.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Summoning-sick Beasts, including Wolverine, can pay the tap cost")
+    void summoningSickBeastsMayPayCost() {
+        Permanent wolverine = harness.addToBattlefieldAndReturn(player1, new SpurredWolverine());
+        Permanent beast = harness.addToBattlefieldAndReturn(player1, new BarkhideMauler());
+
+        harness.activateAbility(player1, battlefieldIndex(wolverine), null, wolverine.getId());
+
+        assertThat(wolverine.isTapped()).isTrue();
+        assertThat(beast.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, wolverine, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, wolverine, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Wolverine can activate by tapping two other Beasts")
+    void tappedSourceMayActivate() {
+        Permanent wolverine = addCreatureReady(player1, new SpurredWolverine());
+        wolverine.tap();
+        Permanent beast1 = addCreatureReady(player1, new BarkhideMauler());
+        Permanent beast2 = addCreatureReady(player1, new BarkhideMauler());
+
+        harness.activateAbility(player1, battlefieldIndex(wolverine), null, wolverine.getId());
+        harness.passBothPriorities();
+
+        assertThat(beast1.isTapped()).isTrue();
+        assertThat(beast2.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, wolverine, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability resolves after Wolverine leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        Permanent wolverine = addCreatureReady(player1, new SpurredWolverine());
+        Permanent beast1 = addCreatureReady(player1, new BarkhideMauler());
+        Permanent beast2 = addCreatureReady(player1, new BarkhideMauler());
+        Permanent target = addCreatureReady(player2, new ScreechingBuzzard());
+
+        activateAbility(wolverine, beast1, beast2, target);
+        gd.playerBattlefields.get(player1.getId()).remove(wolverine);
+        gd.playerGraveyards.get(player1.getId()).add(wolverine.getCard());
+        harness.passBothPriorities();
+
+        assertThat(beast1.isTapped()).isTrue();
+        assertThat(beast2.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     private void activateAbility(Permanent wolverine, Permanent beast1, Permanent beast2, Permanent target) {
