@@ -80,16 +80,87 @@ class SurlyBadgersaurTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The controller may choose no fight target even when a target is available")
+    void fightTargetCanBeDeclined() {
+        Permanent badgersaur = addBadgersaur();
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent scribe = prepareDiscard(new Shock(), new Forest());
+
+        discardOneCard(scribe);
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
+        assertThat(opponentCreature.getMarkedDamage()).isZero();
+        assertThat(badgersaur.getMarkedDamage()).isZero();
+        assertThat(badgersaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Discarding a noncreature nonland with no opposing creatures needs no target")
+    void fightWithoutAvailableTargetsDoesNothing() {
+        Permanent badgersaur = addBadgersaur();
+        Permanent scribe = prepareDiscard(new Shock(), new Forest());
+
+        discardOneCard(scribe);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(badgersaur.getMarkedDamage()).isZero();
+        assertThat(scribe.getMarkedDamage()).isZero();
+        assertThat(badgersaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opposing creature leaving before the fight prevents damage to Badgersaur")
+    void removedFightTargetDealsNoDamage() {
+        Permanent badgersaur = addBadgersaur();
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent scribe = prepareDiscard(new Shock(), new Forest());
+
+        discardOneCard(scribe);
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, opponentCreature.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opponentCreature);
+        assertThat(badgersaur.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's creature discard does not trigger Badgersaur")
+    void opponentDiscardDoesNotTrigger() {
+        Permanent badgersaur = addBadgersaur();
+        Permanent scribe = addCreatureReady(player2, new ZephyrScribe());
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        int scribeIndex = gd.playerBattlefields.get(player2.getId()).indexOf(scribe);
+        harness.activateAbility(player2, scribeIndex, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(badgersaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(badgersaur.getMarkedDamage()).isZero();
+    }
+
     private Permanent addBadgersaur() {
         return harness.addToBattlefieldAndReturn(player1, new SurlyBadgersaur());
     }
 
     private Permanent prepareDiscard(Card discardedCard, Card libraryCard) {
-        Permanent scribe = harness.addToBattlefieldAndReturn(player1, new ZephyrScribe());
-        scribe.setSummoningSick(false);
+        Permanent scribe = addCreatureReady(player1, new ZephyrScribe());
         harness.setHand(player1, List.of(discardedCard));
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(libraryCard);
+        harness.setLibrary(player1, List.of(libraryCard));
         harness.addMana(player1, ManaColor.BLUE, 1);
         return scribe;
     }
