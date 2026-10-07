@@ -15,6 +15,49 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TouchstoneTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Can tap a noncreature artifact")
+    void tapsNoncreatureArtifact() {
+        harness.addToBattlefield(player1, new Touchstone());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Touchstone());
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(artifact.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An already tapped artifact is a legal target")
+    void canTargetTappedArtifact() {
+        Permanent touchstone = harness.addToBattlefieldAndReturn(player1, new Touchstone());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new JanglingAutomaton());
+        artifact.tap();
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(touchstone.isTapped()).isTrue();
+        assertThat(artifact.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not tap a target that comes under your control before resolution")
+    void targetBecomesIllegalWhenItsControllerChanges() {
+        Permanent touchstone = harness.addToBattlefieldAndReturn(player1, new Touchstone());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new JanglingAutomaton());
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(artifact);
+        gd.playerBattlefields.get(player1.getId()).add(artifact);
+        harness.passBothPriorities();
+
+        assertThat(artifact.isTapped()).isFalse();
+        assertThat(touchstone.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Taps target artifact an opponent controls")
     void tapsTargetArtifactOpponentControls() {
         Permanent touchstone = harness.addToBattlefieldAndReturn(player1, new Touchstone());
