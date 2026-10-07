@@ -1,9 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.e.EyeOfVecna;
+import com.github.laxika.magicalvibes.cards.h.HandOfVecna;
+import com.github.laxika.magicalvibes.cards.h.HillGiantHerdgorger;
 import com.github.laxika.magicalvibes.cards.j.JinnieFayJetmirsSecond;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -11,9 +15,13 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
-@CardUsed(TheBookOfVileDarkness.class)
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({TheBookOfVileDarkness.class, EyeOfVecna.class, HandOfVecna.class,
+        HillGiantHerdgorger.class, JinnieFayJetmirsSecond.class})
 class TheBookOfVileDarknessTest extends BaseCardTest {
 
     @Test
@@ -66,7 +74,6 @@ class TheBookOfVileDarknessTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(JinnieFayJetmirsSecond.class)
     void retainsVecnasTriggeredAbilitiesWhenTokenReplacementIsDeclined() {
         activateBookWithTokenReplacement();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
@@ -79,7 +86,6 @@ class TheBookOfVileDarknessTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(JinnieFayJetmirsSecond.class)
     void replacementCatDoesNotGainVecnasTriggeredAbilities() {
         activateBookWithTokenReplacement();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
@@ -90,6 +96,145 @@ class TheBookOfVileDarknessTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Vecna")).isEmpty();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+    }
+
+    @Test
+    void realEyeEntryAbilityDrawsAndLosesLifeAndBookAbilityCreatesZombie() {
+        harness.setLife(player1, 20);
+        harness.setLibrary(player1, List.of(new HillGiantHerdgorger(), new HillGiantHerdgorger()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        createVecnaWithRealArtifacts();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+        harness.assertLife(player1, 18);
+        harness.assertNotOnBattlefield(player1, "The Book of Vile Darkness");
+        harness.assertNotOnBattlefield(player1, "Eye of Vecna");
+        harness.assertNotOnBattlefield(player1, "Hand of Vecna");
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Zombie")).hasSize(1);
+    }
+
+    @Test
+    void vecnaInheritedHandAbilityBoostsItByHandSizeAtCombat() {
+        createVecnaWithRealArtifacts();
+        harness.setHand(player1, List.of(new HillGiantHerdgorger(), new HillGiantHerdgorger()));
+        Permanent vecna = findPermanent(player1, "Vecna");
+
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, vecna)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, vecna)).isEqualTo(10);
+    }
+
+    @Test
+    void vecnaInheritedEyeUpkeepAbilityCanBePaid() {
+        harness.setLife(player1, 20);
+        harness.setLibrary(player1, List.of(new HillGiantHerdgorger(), new HillGiantHerdgorger()));
+        createVecnaWithRealArtifacts();
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        harness.forceStep(TurnStep.UNTAP);
+
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+        harness.assertLife(player1, 16);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void vecnaInheritedEyeUpkeepAbilityCanBeDeclined() {
+        harness.setLife(player1, 20);
+        createVecnaWithRealArtifacts();
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        harness.forceStep(TurnStep.UNTAP);
+
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    void controllerLifeLossDoesNotTriggerDuringOpponentsEndStep() {
+        harness.addToBattlefield(player1, new TheBookOfVileDarkness());
+        gd.lifeLostThisTurn.put(player1.getId(), 2);
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+    }
+
+    @Test
+    void losingLifeAfterEndStepBeginsDoesNotRetroactivelyTrigger() {
+        harness.addToBattlefield(player1, new TheBookOfVileDarkness());
+        gd.lifeLostThisTurn.put(player1.getId(), 1);
+
+        advanceToEndStep(player1);
+        gd.lifeLostThisTurn.put(player1.getId(), 2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+    }
+
+
+    @Test
+    void cannotActivateWithoutHandOfVecna() {
+        harness.addToBattlefield(player1, new TheBookOfVileDarkness());
+        harness.addToBattlefield(player1, new EyeOfVecna());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "The Book of Vile Darkness");
+        harness.assertOnBattlefield(player1, "Eye of Vecna");
+        assertThat(findPermanents(player1, "Vecna")).isEmpty();
+    }
+
+    @Test
+    void cannotExileOpponentsEyeToPayActivationCost() {
+        harness.addToBattlefield(player1, new TheBookOfVileDarkness());
+        harness.addToBattlefield(player1, new HandOfVecna());
+        harness.addToBattlefield(player2, new EyeOfVecna());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "The Book of Vile Darkness");
+        harness.assertOnBattlefield(player1, "Hand of Vecna");
+        harness.assertOnBattlefield(player2, "Eye of Vecna");
+        assertThat(findPermanents(player1, "Vecna")).isEmpty();
+    }
+
+    private void createVecnaWithRealArtifacts() {
+        harness.addToBattlefield(player1, new TheBookOfVileDarkness());
+        harness.addToBattlefield(player1, new EyeOfVecna());
+        harness.addToBattlefield(player1, new HandOfVecna());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
     }
 
     private void activateBookWithTokenReplacement() {
@@ -122,6 +267,6 @@ class TheBookOfVileDarknessTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 }
