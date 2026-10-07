@@ -3,10 +3,13 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.cards.p.PaintersServant;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ThrunBreakerOfSilence.class, Cancel.class, GiantGrowth.class, ProdigalPyromancer.class,
+        Shock.class, TurnToFrog.class, PaintersServant.class})
 class ThrunBreakerOfSilenceTest extends BaseCardTest {
 
     @Test
@@ -29,8 +34,7 @@ class ThrunBreakerOfSilenceTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, thrun.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, thrun.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -78,10 +82,67 @@ class ThrunBreakerOfSilenceTest extends BaseCardTest {
     @DisplayName("Thrun cannot be targeted by an opponent's nongreen ability")
     void opponentNongreenAbilityCannotTarget() {
         Permanent thrun = addReadyThrun(player1);
-        harness.addToBattlefield(player2, new ProdigalPyromancer());
+        addCreatureReady(player2, new ProdigalPyromancer());
 
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, thrun.getId()))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be the target of non-green");
+    }
+
+    @Test
+    void controllerNongreenAbilityCanTarget() {
+        Permanent thrun = addReadyThrun(player1);
+        addCreatureReady(player1, new ProdigalPyromancer());
+
+        harness.activateAbility(player1, 1, null, thrun.getId());
+        harness.passBothPriorities();
+
+        assertThat(thrun.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(thrun);
+    }
+
+    @Test
+    void losingAbilitiesRemovesTargetingRestriction() {
+        Permanent thrun = addReadyThrun(player1);
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, thrun.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.ensurePriority(player2);
+
+        harness.castAndResolveInstant(player2, 0, thrun.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(thrun);
+        harness.assertInGraveyard(player1, "Thrun, Breaker of Silence");
+    }
+
+    @Test
+    void opponentSpellMadeGreenCanTarget() {
+        Permanent thrun = addReadyThrun(player1);
+        Permanent painter = harness.addToBattlefieldAndReturn(player1, new PaintersServant());
+        painter.setChosenColor(CardColor.GREEN);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.ensurePriority(player2);
+
+        harness.castAndResolveInstant(player2, 0, thrun.getId());
+
+        assertThat(thrun.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void opponentAbilityFromSourceMadeGreenCanTarget() {
+        Permanent thrun = addReadyThrun(player1);
+        Permanent painter = harness.addToBattlefieldAndReturn(player1, new PaintersServant());
+        painter.setChosenColor(CardColor.GREEN);
+        addCreatureReady(player2, new ProdigalPyromancer());
+        harness.ensurePriority(player2);
+
+        harness.activateAbility(player2, 0, null, thrun.getId());
+        harness.passBothPriorities();
+
+        assertThat(thrun.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
