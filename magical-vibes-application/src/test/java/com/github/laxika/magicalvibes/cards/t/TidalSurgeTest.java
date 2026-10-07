@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.c.CravenGiant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.l.Leap;
 import com.github.laxika.magicalvibes.cards.s.SkyshroudFalcon;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,7 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CravenGiant.class, GrizzlyBears.class, Island.class, SkyshroudFalcon.class, TidalSurge.class, WindDrake.class})
+@CardUsed({CravenGiant.class, GrizzlyBears.class, Island.class, Leap.class, SkyshroudFalcon.class, TidalSurge.class, WindDrake.class})
 class TidalSurgeTest extends BaseCardTest {
 
     private void castTidalSurge(List<UUID> targets) {
@@ -66,7 +66,6 @@ class TidalSurgeTest extends BaseCardTest {
 
         castTidalSurge(List.of(creature.getId()));
 
-        GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> p.getId().equals(creature.getId()))
                 .allMatch(Permanent::isTapped);
@@ -165,5 +164,66 @@ class TidalSurgeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(islandId)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same creature twice")
+    void cannotChooseDuplicateTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CravenGiant());
+        prepareTidalSurge();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An already tapped creature is a legal target")
+    void canTargetTappedCreature() {
+        Permanent tapped = harness.addToBattlefieldAndReturn(player2, new CravenGiant());
+        tapped.setTapped(true);
+        Permanent untapped = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castTidalSurge(List.of(tapped.getId(), untapped.getId()));
+
+        assertThat(tapped.isTapped()).isTrue();
+        assertThat(untapped.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Tidal Surge");
+    }
+
+    @Test
+    @DisplayName("A target gaining flying is skipped while the other target is tapped")
+    void skipsTargetThatGainsFlyingBeforeResolution() {
+        Permanent airborne = harness.addToBattlefieldAndReturn(player2, new CravenGiant());
+        Permanent grounded = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Leap()));
+        harness.setLibrary(player2, List.of(new Island()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        prepareTidalSurge();
+        harness.castSorcery(player1, 0, List.of(airborne.getId(), grounded.getId()));
+
+        harness.castAndResolveInstant(player2, 0, airborne.getId());
+        harness.passBothPriorities();
+
+        assertThat(airborne.isTapped()).isFalse();
+        assertThat(grounded.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Tidal Surge");
+    }
+
+    @Test
+    @DisplayName("Does not tap its sole target if that target gains flying before resolution")
+    void doesNotResolveWhenAllTargetsGainFlying() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CravenGiant());
+        harness.setHand(player2, List.of(new Leap()));
+        harness.setLibrary(player2, List.of(new Island()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        prepareTidalSurge();
+        harness.castSorcery(player1, 0, List.of(creature.getId()));
+
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Tidal Surge");
     }
 }
