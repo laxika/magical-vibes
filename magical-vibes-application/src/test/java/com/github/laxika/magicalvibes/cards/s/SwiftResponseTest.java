@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AlpineWatchdog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,27 +15,26 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SwiftResponse.class, AlpineWatchdog.class, Forest.class})
 class SwiftResponseTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys target tapped creature")
     void destroysTappedCreature() {
-        Permanent tappedCreature = new Permanent(new GrizzlyBears());
+        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player2, new AlpineWatchdog());
         tappedCreature.tap();
-        gd.playerBattlefields.get(player2.getId()).add(tappedCreature);
 
         castSwiftResponse(tappedCreature.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Alpine Watchdog");
+        harness.assertInGraveyard(player2, "Alpine Watchdog");
     }
 
     @Test
     @DisplayName("Cannot target an untapped creature")
     void cannotTargetUntappedCreature() {
-        Permanent untappedCreature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(untappedCreature);
+        Permanent untappedCreature = harness.addToBattlefieldAndReturn(player2, new AlpineWatchdog());
 
         harness.setHand(player1, List.of(new SwiftResponse()));
         addSwiftResponseMana();
@@ -47,9 +47,8 @@ class SwiftResponseTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a tapped noncreature")
     void cannotTargetTappedNoncreature() {
-        Permanent tappedLand = new Permanent(new Forest());
+        Permanent tappedLand = harness.addToBattlefieldAndReturn(player2, new Forest());
         tappedLand.tap();
-        gd.playerBattlefields.get(player2.getId()).add(tappedLand);
 
         harness.setHand(player1, List.of(new SwiftResponse()));
         addSwiftResponseMana();
@@ -62,9 +61,8 @@ class SwiftResponseTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if the target becomes untapped before resolution")
     void fizzlesIfTargetBecomesUntapped() {
-        Permanent tappedCreature = new Permanent(new GrizzlyBears());
+        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player2, new AlpineWatchdog());
         tappedCreature.tap();
-        gd.playerBattlefields.get(player2.getId()).add(tappedCreature);
 
         castSwiftResponse(tappedCreature.getId());
         tappedCreature.untap();
@@ -73,6 +71,35 @@ class SwiftResponseTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(tappedCreature);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         harness.assertInGraveyard(player1, "Swift Response");
+    }
+
+    @Test
+    @DisplayName("Can destroy your own tapped creature")
+    void destroysOwnTappedCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AlpineWatchdog());
+        creature.tap();
+
+        castSwiftResponse(creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Alpine Watchdog");
+        harness.assertInGraveyard(player1, "Alpine Watchdog");
+        harness.assertInGraveyard(player1, "Swift Response");
+    }
+
+    @Test
+    @DisplayName("Destroys a target that untaps and taps again before resolution")
+    void destroysTargetRetappedBeforeResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AlpineWatchdog());
+        creature.tap();
+
+        castSwiftResponse(creature.getId());
+        creature.untap();
+        creature.tap();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Alpine Watchdog");
+        harness.assertInGraveyard(player2, "Alpine Watchdog");
     }
 
     private void castSwiftResponse(java.util.UUID targetId) {
