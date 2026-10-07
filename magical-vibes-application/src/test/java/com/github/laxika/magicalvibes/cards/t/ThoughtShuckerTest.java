@@ -67,6 +67,81 @@ class ThoughtShuckerTest extends BaseCardTest {
                 .hasMessageContaining("activated only once");
     }
 
+    @Test
+    @DisplayName("Opponent's graveyard does not satisfy threshold")
+    void opponentsGraveyardDoesNotSatisfyThreshold() {
+        harness.setGraveyard(player1, graveyardCards(6));
+        harness.setGraveyard(player2, graveyardCards(7));
+        harness.addToBattlefield(player1, new ThoughtShucker());
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cards in your graveyard");
+    }
+
+    @Test
+    @DisplayName("Losing threshold after activation does not stop the counter or draw")
+    void losingThresholdAfterActivationDoesNotStopResolution() {
+        Card drawn = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setGraveyard(player1, graveyardCards(7));
+        Permanent thoughtShucker = harness.addToBattlefieldAndReturn(player1, new ThoughtShucker());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(thoughtShucker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    @DisplayName("The once-only limit applies before the first activation resolves")
+    void cannotActivateAgainWhileFirstActivationIsOnStack() {
+        harness.setGraveyard(player1, graveyardCards(7));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        Permanent thoughtShucker = harness.addToBattlefieldAndReturn(player1, new ThoughtShucker());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("activated only once");
+
+        harness.passBothPriorities();
+        assertThat(thoughtShucker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each Thought Shucker can activate once, even while tapped and summoning sick")
+    void eachPermanentHasItsOwnActivationLimit() {
+        Card firstDraw = new GrizzlyBears();
+        Card secondDraw = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.setGraveyard(player1, graveyardCards(7));
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ThoughtShucker());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ThoughtShucker());
+        first.setTapped(true);
+        second.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+    }
+
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
