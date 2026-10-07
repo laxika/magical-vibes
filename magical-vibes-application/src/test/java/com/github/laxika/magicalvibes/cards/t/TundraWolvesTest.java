@@ -17,6 +17,41 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TundraWolvesTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Opposing first-strike creatures deal lethal damage simultaneously")
+    void opposingFirstStrikersKillEachOther() {
+        Permanent attacker = addCreatureReady(player1, new TundraWolves());
+        Permanent blocker = addCreatureReady(player2, new TundraWolves());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getId).doesNotContain(attacker.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(Permanent::getId).doesNotContain(blocker.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(attacker.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker.getCard());
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An unblocked first striker deals combat damage only once")
+    void unblockedFirstStrikerDealsDamageOnlyOnce() {
+        addCreatureReady(player1, new TundraWolves());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+
+        resolveCombat();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
     @DisplayName("First-strike damage kills a 1/1 before it can deal regular combat damage")
     void firstStrikeDamageResolvesBeforeRegularCombatDamage() {
         Permanent attacker = addCreatureReady(player1, new TundraWolves());
