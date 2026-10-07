@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TheMeathookMassacre.class, GrizzlyBears.class, HillGiant.class, Shock.class})
 class TheMeathookMassacreTest extends BaseCardTest {
 
     @Test
@@ -47,7 +50,7 @@ class TheMeathookMassacreTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        assertThat(findMeathook()).isNotNull();
+        harness.assertOnBattlefield(player1, "The Meathook Massacre");
     }
 
     @Test
@@ -131,6 +134,77 @@ class TheMeathookMassacreTest extends BaseCardTest {
         harness.assertLife(player1, 21); // opponent death
     }
 
+    @Test
+    void zeroXLeavesCreaturesUnaffected() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castMeathook(0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(findPermanent(player1, "Grizzly Bears").getEffectiveToughness()).isEqualTo(2);
+        assertThat(findPermanent(player2, "Grizzly Bears").getEffectiveToughness()).isEqualTo(2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void creaturesEnteringAfterEtbResolutionAreUnaffected() {
+        castMeathook(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    void simultaneousDeathsTriggerOnceForEachCreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        castMeathook(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        for (int i = 0; i < 4; i++) {
+            harness.passBothPriorities();
+        }
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @CardUsed(Opalescence.class)
+    void animatedMeathookTriggersForItsOwnDeath() {
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        castMeathook(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "The Meathook Massacre");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+    }
+
     private void castMeathook(int x) {
         harness.setHand(player1, List.of(new TheMeathookMassacre()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -139,13 +213,6 @@ class TheMeathookMassacreTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         gs.playCard(gd, player1, 0, x, null, null);
-    }
-
-    private Permanent findMeathook() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("The Meathook Massacre"))
-                .findFirst()
-                .orElse(null);
     }
 
     private Permanent giant(com.github.laxika.magicalvibes.model.Player player) {
