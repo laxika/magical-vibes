@@ -55,4 +55,50 @@ class SpiderManNoirTest extends BaseCardTest {
         assertThat(firstAttacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Surveil counts every kind of counter when Noir attacks alone")
+    void surveilCountsEveryCounterKind() {
+        Permanent noir = addCreatureReady(player1, new SpiderManNoir());
+        noir.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        noir.setCounterCount(CounterType.REACH, 1);
+        Card first = new SpiderManNoir();
+        Card second = new SpiderManNoir();
+        Card third = new SpiderManNoir();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(noir.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(surveil).isNotNull();
+        assertThat(surveil.cards()).containsExactly(first, second, third);
+
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(2, 0), List.of(1)));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(second);
+        assertThat(gd.playerDecks.get(player1.getId())).startsWith(third, first);
+    }
+
+    @Test
+    @DisplayName("Noir's own lone attack adds a counter before calculating surveil")
+    void selfAttackStartsWithNoCounters() {
+        Permanent noir = addCreatureReady(player1, new SpiderManNoir());
+        Card top = new SpiderManNoir();
+        harness.setLibrary(player1, List.of(top));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(noir.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(surveil).isNotNull();
+        assertThat(surveil.cards()).containsExactly(top);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(top);
+    }
+
 }
