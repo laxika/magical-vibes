@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({StuntedGrowth.class, BalduvianBears.class})
 class StuntedGrowthTest extends BaseCardTest {
@@ -30,8 +31,7 @@ class StuntedGrowthTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
     @Test
@@ -60,8 +60,7 @@ class StuntedGrowthTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOfSatisfying(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class, choice -> {
@@ -122,6 +121,49 @@ class StuntedGrowthTest extends BaseCardTest {
 
         castStuntedGrowth();
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The target can choose cards in any order even with an empty library")
+    void choosesArbitraryOrderOntoEmptyLibrary() {
+        List<Card> hand = targetHand(5);
+        harness.setHand(player2, hand);
+        harness.setLibrary(player2, List.of());
+
+        castStuntedGrowth();
+
+        harness.handleMultipleCardsChosen(player2,
+                List.of(hand.get(4).getId(), hand.get(1).getId(), hand.get(3).getId()));
+
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .containsExactly(hand.get(4), hand.get(1), hand.get(3));
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(hand.get(0), hand.get(2));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Stunted Growth");
+    }
+
+    @Test
+    @DisplayName("The target cannot choose fewer than three cards when at least three are available")
+    void rejectsTooFewCards() {
+        List<Card> hand = targetHand(4);
+        harness.setHand(player2, hand);
+        List<Card> originalLibrary = List.copyOf(gd.playerDecks.get(player2.getId()));
+
+        castStuntedGrowth();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2,
+                List.of(hand.get(0).getId(), hand.get(1).getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyElementsOf(hand);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(originalLibrary);
+
+        harness.handleMultipleCardsChosen(player2,
+                List.of(hand.get(0).getId(), hand.get(1).getId(), hand.get(2).getId()));
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(hand.get(3));
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .startsWith(hand.get(0), hand.get(1), hand.get(2));
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
