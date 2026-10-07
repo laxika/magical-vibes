@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -74,6 +76,70 @@ class TaintedPeakTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(peak.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Swamp still enables colored mana")
+    void tappedSwampEnablesColoredMana() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        swamp.setTapped(true);
+        Permanent peak = addReadyPeak(player1);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(swamp.isTapped()).isTrue();
+        assertThat(peak.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Swamp in the graveyard does not enable colored mana")
+    void graveyardSwampDoesNotEnableColoredMana() {
+        harness.setGraveyard(player1, List.of(new Swamp()));
+        Permanent peak = addReadyPeak(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("a Swamp");
+
+        assertThat(peak.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("Losing the last Swamp disables colored mana but allows colorless mana")
+    void losingLastSwampDisablesOnlyColoredMana() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent peak = addReadyPeak(player1);
+        gd.playerBattlefields.get(player1.getId()).remove(swamp);
+        harness.setGraveyard(player1, List.of(swamp.getCard()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("a Swamp");
+        assertThat(peak.isTapped()).isFalse();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(peak.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A newly entered Tainted Peak can immediately produce colored mana")
+    void newlyEnteredPeakCanProduceColoredMana() {
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent peak = harness.enterBattlefieldAndReturn(player1, new TaintedPeak());
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(peak.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addReadyPeak(Player player) {
