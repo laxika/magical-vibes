@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.d.DungroveElder;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.cards.g.GoretuskFirebeast;
 import com.github.laxika.magicalvibes.cards.h.HarvesterDruid;
 import com.github.laxika.magicalvibes.cards.m.MentalNote;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -18,14 +19,11 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GiantWarthog.class, GoretuskFirebeast.class, HarvesterDruid.class, MentalNote.class, SuntailHawk.class, SuturedGhoul.class})
+@CardUsed({DungroveElder.class, Forest.class, GiantWarthog.class, GoretuskFirebeast.class, HarvesterDruid.class, MentalNote.class, SuntailHawk.class, SuturedGhoul.class})
 class SuturedGhoulTest extends BaseCardTest {
 
     private void castGhoul() {
-        harness.setHand(player1, List.of(new SuturedGhoul()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SuturedGhoul(), "{4}{B}{B}{B}");
         harness.passBothPriorities();
     }
 
@@ -163,7 +161,7 @@ class SuturedGhoulTest extends BaseCardTest {
         GoretuskFirebeast firebeast = new GoretuskFirebeast();
         harness.setGraveyard(player2, List.of(firebeast));
 
-        castGhoulForJudReview();
+        castGhoul();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(firebeast);
@@ -177,7 +175,7 @@ class SuturedGhoulTest extends BaseCardTest {
         GoretuskFirebeast firebeast = new GoretuskFirebeast();
         harness.setGraveyard(player1, List.of(firebeast));
 
-        castGhoulForJudReview();
+        castGhoul();
         harness.handleMultipleCardsChosen(player1, List.of(firebeast.getId()));
 
         Permanent ghoul = findPermanent(player1, "Sutured Ghoul");
@@ -188,8 +186,48 @@ class SuturedGhoulTest extends BaseCardTest {
         assertThat(gd.getCardsExiledByPermanent(ghoul.getId())).containsExactly(firebeast);
     }
 
-    private void castGhoulForJudReview() {
-        harness.castFromHand(player1, new SuturedGhoul(), "{4}{B}{B}{B}");
-        harness.passBothPriorities();
+    @Test
+    @DisplayName("Exiled Dungrove Elder updates the ghoul as its owner's Forest count changes")
+    void exiledCharacteristicDefiningAbilityUpdates() {
+        DungroveElder elder = new DungroveElder();
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setGraveyard(player1, List.of(elder));
+
+        castGhoul();
+        harness.handleMultipleCardsChosen(player1, List.of(elder.getId()));
+
+        Permanent ghoul = findPermanent(player1, "Sutured Ghoul");
+        assertThat(harness.getGameQueryService().getEffectivePower(gd, ghoul)).isEqualTo(2);
+        assertThat(harness.getGameQueryService().getEffectiveToughness(gd, ghoul)).isEqualTo(2);
+
+        harness.addToBattlefield(player1, new Forest());
+
+        assertThat(harness.getGameQueryService().getEffectivePower(gd, ghoul)).isEqualTo(3);
+        assertThat(harness.getGameQueryService().getEffectiveToughness(gd, ghoul)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Each ghoul counts only the creatures exiled with itself")
+    void separateGhoulsHaveIndependentExiledCards() {
+        GiantWarthog warthog = new GiantWarthog();
+        SuntailHawk hawk = new SuntailHawk();
+        harness.setGraveyard(player1, List.of(warthog, hawk));
+
+        castGhoul();
+        harness.handleMultipleCardsChosen(player1, List.of(warthog.getId()));
+        Permanent first = findPermanent(player1, "Sutured Ghoul");
+
+        castGhoul();
+        harness.handleMultipleCardsChosen(player1, List.of(hawk.getId()));
+        Permanent second = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof SuturedGhoul && !p.getId().equals(first.getId()))
+                .findFirst().orElseThrow();
+
+        assertThat(harness.getGameQueryService().getEffectivePower(gd, first)).isEqualTo(5);
+        assertThat(harness.getGameQueryService().getEffectiveToughness(gd, first)).isEqualTo(5);
+        assertThat(harness.getGameQueryService().getEffectivePower(gd, second)).isEqualTo(1);
+        assertThat(harness.getGameQueryService().getEffectiveToughness(gd, second)).isEqualTo(1);
     }
 }
