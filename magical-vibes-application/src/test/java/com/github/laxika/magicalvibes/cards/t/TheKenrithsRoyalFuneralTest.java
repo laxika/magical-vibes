@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.e.EiganjoCastle;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IsarethTheAwakener;
+import com.github.laxika.magicalvibes.cards.i.InvokeTheDivine;
+import com.github.laxika.magicalvibes.cards.v.VirtueOfKnowledge;
 import com.github.laxika.magicalvibes.cards.y.YomijiWhoBarsTheWay;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TheKenrithsRoyalFuneral.class, EiganjoCastle.class, GrizzlyBears.class,
-        IsarethTheAwakener.class, YomijiWhoBarsTheWay.class})
+        IsarethTheAwakener.class, YomijiWhoBarsTheWay.class, InvokeTheDivine.class, VirtueOfKnowledge.class})
 class TheKenrithsRoyalFuneralTest extends BaseCardTest {
 
     @Test
@@ -94,6 +96,112 @@ class TheKenrithsRoyalFuneralTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
+    @Test
+    void choosingNoTargetsDrawsNoCardsAndLosesNoLife() {
+        Card creature = new IsarethTheAwakener();
+        harness.setGraveyard(player1, List.of(creature));
+        castFuneral();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void choosingOneCardDrawsAndLosesItsManaValue() {
+        Card chosen = new IsarethTheAwakener();
+        Card unchosen = new YomijiWhoBarsTheWay();
+        harness.setGraveyard(player1, List.of(chosen, unchosen));
+        castFuneral();
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(unchosen);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void removingFuneralInResponseDoesNotPreventExileDrawOrLifeLoss() {
+        Card creature = new YomijiWhoBarsTheWay();
+        harness.setGraveyard(player1, List.of(creature));
+        castFuneral();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+
+        var funeral = findPermanent(player1, "The Kenriths' Royal Funeral");
+        harness.setHand(player2, List.of(new InvokeTheDivine()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0, funeral.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "The Kenriths' Royal Funeral");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        harness.assertLife(player1, 13);
+    }
+
+    @Test
+    void additionalTriggersChooseTargetsIndependentlyAndUseOnlyTheirOwnExiledCards() {
+        harness.addToBattlefield(player1, new VirtueOfKnowledge());
+        Card lower = new IsarethTheAwakener();
+        Card higher = new YomijiWhoBarsTheWay();
+        harness.setGraveyard(player1, List.of(lower, higher));
+        castFuneral();
+        harness.handleMultipleCardsChosen(player1, List.of(lower.getId()));
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(higher.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(lower, higher);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(10);
+        harness.assertLife(player1, 10);
+    }
+
+    @Test
+    void reductionCannotPayColoredManaCosts() {
+        Card first = new IsarethTheAwakener();
+        Card second = new YomijiWhoBarsTheWay();
+        harness.setGraveyard(player1, List.of(first, second));
+        castFuneral();
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        resolveAllTriggers();
+
+        harness.setHand(player1, List.of(new IsarethTheAwakener()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+    @Test
+    void twoExiledCardsReduceGenericCostsByExactlyTwo() {
+        Card first = new IsarethTheAwakener();
+        Card second = new YomijiWhoBarsTheWay();
+        harness.setGraveyard(player1, List.of(first, second));
+        castFuneral();
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        resolveAllTriggers();
+
+        harness.setHand(player1, List.of(new YomijiWhoBarsTheWay()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() instanceof YomijiWhoBarsTheWay);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
     private void castFuneral() {
         harness.setHand(player1, List.of(new TheKenrithsRoyalFuneral()));
         harness.addMana(player1, ManaColor.WHITE, 1);
