@@ -57,4 +57,35 @@ class StonehoofChieftainTest extends BaseCardTest {
 
         assertThat(attacker.getGrantedKeywords()).isEmpty();
     }
+
+    @Test
+    @DisplayName("Each other attacker gains both keywords while nonattackers do not")
+    void grantsKeywordsToEachOtherAttackerOnly() {
+        Permanent chieftain = addCreatureReady(player1, new StonehoofChieftain());
+        Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonattacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0, 1, 2));
+        resolveAllTriggers();
+
+        assertThat(firstAttacker.getGrantedKeywords())
+                .containsExactlyInAnyOrder(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
+        assertThat(secondAttacker.getGrantedKeywords())
+                .containsExactlyInAnyOrder(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
+        assertThat(chieftain.getGrantedKeywords()).isEmpty();
+        assertThat(nonattacker.getGrantedKeywords()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opposing attacker does not receive either keyword")
+    void doesNotGrantKeywordsToOpposingAttacker() {
+        addCreatureReady(player1, new StonehoofChieftain());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(attacker.getGrantedKeywords()).isEmpty();
+    }
 }
