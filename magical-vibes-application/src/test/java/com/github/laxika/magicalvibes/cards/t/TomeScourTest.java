@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,9 +12,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TomeScour.class})
 class TomeScourTest extends BaseCardTest {
-
-    // ===== Milling =====
 
     @Test
     @DisplayName("Mills five cards from target player's library")
@@ -25,8 +26,7 @@ class TomeScourTest extends BaseCardTest {
             deck.removeFirst();
         }
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(5);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(5);
@@ -45,8 +45,7 @@ class TomeScourTest extends BaseCardTest {
         Card topCard = deck.get(0);
         Card sixthCard = deck.get(5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(topCard);
         assertThat(gd.playerDecks.get(player2.getId()).getFirst()).isEqualTo(sixthCard);
@@ -63,8 +62,7 @@ class TomeScourTest extends BaseCardTest {
             deck.removeFirst();
         }
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
         // 5 milled cards + Tome Scour itself goes to graveyard after resolving
@@ -83,8 +81,7 @@ class TomeScourTest extends BaseCardTest {
             deck.removeFirst();
         }
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
@@ -98,8 +95,7 @@ class TomeScourTest extends BaseCardTest {
 
         gd.playerDecks.get(player2.getId()).clear();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -111,10 +107,27 @@ class TomeScourTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TomeScour()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertInGraveyard(player1, "Tome Scour");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Milling exactly five remaining cards does not make the target lose")
+    void millingExactlyFiveCardsDoesNotCauseLoss() {
+        harness.setHand(player1, List.of(new TomeScour()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        List<Card> library = List.of(new TomeScour(), new TomeScour(), new TomeScour(),
+                new TomeScour(), new TomeScour());
+        harness.setLibrary(player2, library);
+        List<Card> casterLibrary = List.copyOf(gd.playerDecks.get(player1.getId()));
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrderElementsOf(library);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(casterLibrary);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 }
