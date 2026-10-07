@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WoollyThoctar;
+import com.github.laxika.magicalvibes.cards.a.ArcaneSignet;
+import com.github.laxika.magicalvibes.cards.f.FusionElemental;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,15 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheManaRig.class, WoollyThoctar.class, GrizzlyBears.class})
+@CardUsed({TheManaRig.class, FusionElemental.class, ArcaneSignet.class})
 class TheManaRigTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting a multicolored spell creates a tapped Powerstone")
     void multicoloredSpellCreatesTappedPowerstone() {
         harness.addToBattlefield(player1, new TheManaRig());
-        harness.setHand(player1, List.of(new WoollyThoctar()));
-        addWoollyThoctarMana();
+        harness.setHand(player1, List.of(new FusionElemental()));
+        addFusionElementalMana();
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -35,10 +35,10 @@ class TheManaRigTest extends BaseCardTest {
     @Test
     @DisplayName("The activated ability puts up to two of the top X cards into hand")
     void activatedAbilityChoosesUpToTwoCards() {
-        Card first = new GrizzlyBears();
-        Card second = new WoollyThoctar();
-        Card third = new GrizzlyBears();
-        Card untouched = new WoollyThoctar();
+        Card first = new ArcaneSignet();
+        Card second = new FusionElemental();
+        Card third = new ArcaneSignet();
+        Card untouched = new FusionElemental();
         harness.setLibrary(player1, List.of(first, second, third, untouched));
         harness.addToBattlefield(player1, new TheManaRig());
         harness.setHand(player1, List.of());
@@ -56,14 +56,93 @@ class TheManaRigTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(third, untouched);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, third);
         assertThat(findPermanent(player1, "The Mana Rig").isTapped()).isTrue();
     }
 
-    private void addWoollyThoctarMana() {
+    @Test
+    void colorlessSpellDoesNotCreatePowerstone() {
+        harness.addToBattlefield(player1, new TheManaRig());
+        harness.setHand(player1, List.of(new ArcaneSignet()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Powerstone");
+    }
+
+    @Test
+    void opponentsMulticoloredSpellDoesNotTrigger() {
+        harness.addToBattlefield(player2, new TheManaRig());
+        harness.setHand(player1, List.of(new FusionElemental()));
+        addFusionElementalMana();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Powerstone");
+        harness.assertNotOnBattlefield(player2, "Powerstone");
+    }
+
+    @Test
+    void mayChooseNoCardsFromThreeLookedAtCards() {
+        Card first = new ArcaneSignet();
+        Card second = new FusionElemental();
+        Card third = new ArcaneSignet();
+        Card untouched = new FusionElemental();
+        harness.setLibrary(player1, List.of(first, second, third, untouched));
+        harness.setHand(player1, List.of());
+        harness.addToBattlefield(player1, new TheManaRig());
+        harness.addMana(player1, ManaColor.COLORLESS, 9);
+
+        harness.activateAbility(player1, 0, 3, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(untouched);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(first, second, third, untouched);
+    }
+
+    @Test
+    void mayDeclineTheOnlyLookedAtCard() {
+        Card first = new ArcaneSignet();
+        Card untouched = new FusionElemental();
+        harness.setLibrary(player1, List.of(first, untouched));
+        harness.setHand(player1, List.of());
+        harness.addToBattlefield(player1, new TheManaRig());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, first);
+    }
+
+    @Test
+    void zeroXDoesNotMoveAnyCards() {
+        Card first = new ArcaneSignet();
+        harness.setLibrary(player1, List.of(first));
+        harness.setHand(player1, List.of());
+        harness.addToBattlefield(player1, new TheManaRig());
+
+        harness.activateAbility(player1, 0, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first);
+        assertThat(findPermanent(player1, "The Mana Rig").isTapped()).isTrue();
+    }
+
+    private void addFusionElementalMana() {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
     }
 }
+
