@@ -97,6 +97,91 @@ class SporolothAncientTest extends BaseCardTest {
                 .hasMessageContaining("no activated ability");
     }
 
+    @Test
+    @DisplayName("An opponent's upkeep does not add spore counters")
+    void opponentUpkeepDoesNotAddCounters() {
+        Permanent ancient = harness.addToBattlefieldAndReturn(player1, new SporolothAncient());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FomoriNomad());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(ancient.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(creature.getCounterCount(CounterType.FUNGUS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Only Ancient receives the upkeep counter, not other controlled creatures")
+    void upkeepDoesNotAddCountersToOtherCreatures() {
+        Permanent ancient = harness.addToBattlefieldAndReturn(player1, new SporolothAncient());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FomoriNomad());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(ancient.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(creature.getCounterCount(CounterType.FUNGUS)).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick creature can pay the cost during an opponent's turn")
+    void tappedSummoningSickCreatureCanActivateOnOpponentTurn() {
+        Permanent ancient = harness.addToBattlefieldAndReturn(player1, new SporolothAncient());
+        ancient.setCounterCount(CounterType.FUNGUS, 3);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FomoriNomad());
+        creature.setSummoningSick(true);
+        creature.setTapped(true);
+        creature.setCounterCount(CounterType.FUNGUS, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, battlefieldIndex(creature), 0, null, null);
+
+        assertThat(creature.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(ancient.getCounterCount(CounterType.FUNGUS)).isEqualTo(3);
+        assertThat(controlledSaprolings()).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(controlledSaprolings()).hasSize(1);
+        assertThat(findPermanents(player2, "Saproling")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Spore counters on Ancient cannot pay another creature's activation cost")
+    void cannotSpendCountersFromGrantingAncient() {
+        Permanent ancient = harness.addToBattlefieldAndReturn(player1, new SporolothAncient());
+        ancient.setCounterCount(CounterType.FUNGUS, 2);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FomoriNomad());
+        creature.setCounterCount(CounterType.FUNGUS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(creature), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(ancient.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+        assertThat(creature.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(controlledSaprolings()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An activated ability resolves after Ancient leaves, but new activations are unavailable")
+    void grantedAbilityResolvesAfterAncientLeaves() {
+        Permanent ancient = harness.addToBattlefieldAndReturn(player1, new SporolothAncient());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FomoriNomad());
+        creature.setCounterCount(CounterType.FUNGUS, 4);
+
+        harness.activateAbility(player1, battlefieldIndex(creature), 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(ancient);
+        harness.passBothPriorities();
+
+        assertThat(controlledSaprolings()).hasSize(1);
+        assertThat(creature.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(creature), 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
+        assertThat(creature.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+    }
+
     private int battlefieldIndex(Permanent permanent) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
     }
