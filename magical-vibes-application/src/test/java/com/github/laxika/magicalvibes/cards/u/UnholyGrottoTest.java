@@ -95,6 +95,59 @@ class UnholyGrottoTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Puts the chosen Zombie on top of an empty library and leaves other cards alone")
+    void returnsOnlyChosenZombieToEmptyLibrary() {
+        addReadyGrotto();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        Card chosen = new EntrailsFeaster();
+        Card other = new EntrailsFeaster();
+        harness.setGraveyard(player1, List.of(chosen, other));
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 1, List.of(chosen.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+    }
+
+    @Test
+    @DisplayName("A Zombie that leaves the graveyard before resolution is not returned")
+    void doesNotReturnMissingTarget() {
+        Permanent grotto = addReadyGrotto();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        Card zombie = new EntrailsFeaster();
+        Card libraryCard = new FutureSight();
+        harness.setGraveyard(player1, List.of(zombie));
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 1, List.of(zombie.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(grotto.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Grotto cannot activate its Zombie-return ability")
+    void cannotActivateWhileTapped() {
+        Permanent grotto = addReadyGrotto();
+        grotto.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        Card zombie = new EntrailsFeaster();
+        harness.setGraveyard(player1, List.of(zombie));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 1, List.of(zombie.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(zombie);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+    }
+
     private Permanent addReadyGrotto() {
         Permanent grotto = harness.addToBattlefieldAndReturn(player1, new UnholyGrotto());
         grotto.setSummoningSick(false);
