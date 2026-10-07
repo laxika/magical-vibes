@@ -68,4 +68,45 @@ class TinderFarmTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
         harness.assertOnBattlefield(player1, "Tinder Farm");
     }
+
+    @Test
+    @DisplayName("Neither mana ability can be activated immediately after playing the tapped land")
+    void cannotActivateEitherAbilityAfterPlayingLand() {
+        harness.setHand(player1, List.of(new TinderFarm()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+
+        for (int abilityIndex = 0; abilityIndex < 2; abilityIndex++) {
+            int index = abilityIndex;
+            assertThatThrownBy(() -> harness.activateAbility(player1, 0, index, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("already tapped");
+        }
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Tinder Farm");
+        harness.assertNotInGraveyard(player1, "Tinder Farm");
+    }
+
+    @Test
+    @DisplayName("After untapping, the sacrifice ability produces both colors immediately without using the stack")
+    void sacrificeAfterUntappingResolvesImmediately() {
+        harness.setHand(player1, List.of(new TinderFarm()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+        harness.performUntapStep(player1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Tinder Farm");
+        harness.assertInGraveyard(player1, "Tinder Farm");
+    }
 }
