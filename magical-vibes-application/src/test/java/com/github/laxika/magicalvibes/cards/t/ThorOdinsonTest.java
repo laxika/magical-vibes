@@ -95,6 +95,53 @@ class ThorOdinsonTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, thor)).isEqualTo(4);
     }
 
+    @Test
+    @DisplayName("Prowess abilities resolve separately before the triggering spell")
+    void prowessAbilitiesResolveSeparately() {
+        Permanent thor = addThor();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, thor)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, thor)).isEqualTo(5);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, thor)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, thor)).isEqualTo(6);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each noncreature spell adds two more prowess boosts")
+    void multipleNoncreatureSpellsAccumulateBoosts() {
+        Permanent thor = addThor();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, thor)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, thor)).isEqualTo(8);
+        harness.assertLife(player2, 16);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addThor() {
         Permanent thor = harness.addToBattlefieldAndReturn(player1, new ThorOdinson());
         harness.forceActivePlayer(player1);
