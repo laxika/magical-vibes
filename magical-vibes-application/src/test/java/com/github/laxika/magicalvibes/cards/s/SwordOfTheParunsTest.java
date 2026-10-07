@@ -173,4 +173,78 @@ class SwordOfTheParunsTest extends BaseCardTest {
 
         assertThat(creature.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Tapping and untapping the equipped creature immediately switches the bonuses")
+    void activatedAbilitySwitchesBonusesWithEquippedCreaturesTapState() {
+        Permanent sword = harness.addToBattlefieldAndReturn(player1, new SwordOfTheParuns());
+        Permanent equippedCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherTappedCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherUntappedCreature = addCreatureReady(player1, new GrizzlyBears());
+        sword.setAttachedTo(equippedCreature.getId());
+        otherTappedCreature.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Tap equipped creature");
+
+        assertThat(gqs.getEffectivePower(gd, equippedCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, equippedCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherTappedCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, otherUntappedCreature)).isEqualTo(2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Untap equipped creature");
+
+        assertThat(gqs.getEffectivePower(gd, equippedCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, equippedCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, otherTappedCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherUntappedCreature)).isEqualTo(4);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("The Sword's controller can tap an opponent's equipped creature and receives the bonus")
+    void swordControllerReceivesBonusWhenEquippedCreatureIsControlledByOpponent() {
+        Permanent sword = harness.addToBattlefieldAndReturn(player1, new SwordOfTheParuns());
+        Permanent equippedCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ownTappedCreature = addCreatureReady(player1, new GrizzlyBears());
+        sword.setAttachedTo(equippedCreature.getId());
+        ownTappedCreature.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Tap equipped creature");
+
+        assertThat(equippedCreature.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, equippedCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, equippedCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownTappedCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownTappedCreature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The ability taps the creature equipped at resolution")
+    void activatedAbilityUsesCurrentAttachmentAtResolution() {
+        Permanent sword = harness.addToBattlefieldAndReturn(player1, new SwordOfTheParuns());
+        Permanent originalCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent newlyEquippedCreature = addCreatureReady(player1, new GrizzlyBears());
+        sword.setAttachedTo(originalCreature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        sword.setAttachedTo(newlyEquippedCreature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Tap equipped creature");
+
+        assertThat(originalCreature.isTapped()).isFalse();
+        assertThat(newlyEquippedCreature.isTapped()).isTrue();
+    }
 }
