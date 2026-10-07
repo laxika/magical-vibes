@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LavaAxe;
+import com.github.laxika.magicalvibes.cards.v.VolcanicRush;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({StratusDancer.class, LavaAxe.class, GrizzlyBears.class})
+@CardUsed({StratusDancer.class, LavaAxe.class, GrizzlyBears.class, VolcanicRush.class})
 class StratusDancerTest extends BaseCardTest {
 
     @Test
@@ -48,6 +49,57 @@ class StratusDancerTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void payingMegamorphCostAddsCounterEvenWithNoSpellToTarget() {
+        Permanent dancer = castFaceDown();
+        assertThat(dancer.isFaceDown()).isTrue();
+        assertThat(dancer.getPlusOnePlusOneCounters()).isZero();
+
+        turnFaceUp(dancer);
+
+        assertThat(dancer.isFaceDown()).isFalse();
+        assertThat(dancer.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void turningFaceUpCountersInstantSpell() {
+        Permanent dancer = castFaceDown();
+        VolcanicRush rush = new VolcanicRush();
+        preparePlayerTwoMainPhase();
+        harness.setHand(player2, List.of(rush));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.castInstant(player2, 0);
+        harness.passPriority(player2);
+
+        turnFaceUp(dancer);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(rush.getId());
+        harness.handlePermanentChosen(player1, rush.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Volcanic Rush");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void castingFaceUpDoesNotAddMegamorphCounterOrTriggerCounterspell() {
+        harness.setHand(player1, List.of(new StratusDancer()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent dancer = findPermanent(player1, "Stratus Dancer");
+        assertThat(dancer.isFaceDown()).isFalse();
+        assertThat(dancer.getPlusOnePlusOneCounters()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent castFaceDown() {
