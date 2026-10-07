@@ -53,4 +53,41 @@ class TasteOfParadiseTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
     }
+
+    @Test
+    @DisplayName("One additional payment gains 6 life only when the spell resolves")
+    void gainsSixLifeOnResolutionWithOneAdditionalPayment() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 17);
+        harness.setHand(player1, List.of(new TasteOfParadise()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castSorceryWithRepeatedCosts(player1, 0, List.of("{1}{G}"), List.of());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 26);
+        harness.assertLife(player2, 17);
+        harness.assertInGraveyard(player1, "Taste of Paradise");
+    }
+
+    @Test
+    @DisplayName("Additional payment requires its own green mana")
+    void cannotPayAdditionalCostWithOnlyGenericManaRemaining() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new TasteOfParadise()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.castSorceryWithRepeatedCosts(
+                player1, 0, List.of("{1}{G}"), List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Taste of Paradise");
+        harness.assertLife(player1, 20);
+    }
 }
