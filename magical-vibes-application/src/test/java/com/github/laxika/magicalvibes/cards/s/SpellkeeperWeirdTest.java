@@ -30,6 +30,10 @@ class SpellkeeperWeirdTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, battlefieldIndex(spellkeeper), null, instant.getId(), Zone.GRAVEYARD);
+        harness.assertNotOnBattlefield(player1, "Spellkeeper Weird");
+        harness.assertInGraveyard(player1, "Spellkeeper Weird");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(instant);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(instant);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Spellkeeper Weird");
@@ -65,10 +69,88 @@ class SpellkeeperWeirdTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Cannot target an instant in an opponent's graveyard")
+    void cannotTargetOpponentsGraveyard() {
+        Card instant = new HolyDay();
+        Permanent spellkeeper = addReadySpellkeeper();
+        harness.setGraveyard(player2, List.of(instant));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(spellkeeper), null, instant.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Spellkeeper Weird");
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(instant);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Card instant = new HolyDay();
+        Permanent spellkeeper = harness.addToBattlefieldAndReturn(player1, new SpellkeeperWeird());
+        spellkeeper.setSummoningSick(true);
+        harness.setGraveyard(player1, List.of(instant));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(spellkeeper), null, instant.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Spellkeeper Weird");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Card instant = new HolyDay();
+        Permanent spellkeeper = addReadySpellkeeper();
+        spellkeeper.setTapped(true);
+        harness.setGraveyard(player1, List.of(instant));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(spellkeeper), null, instant.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Spellkeeper Weird");
+    }
+
+    @Test
+    @DisplayName("Cannot activate with only one mana")
+    void cannotActivateWithInsufficientMana() {
+        Card instant = new HolyDay();
+        Permanent spellkeeper = addReadySpellkeeper();
+        harness.setGraveyard(player1, List.of(instant));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(spellkeeper), null, instant.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Spellkeeper Weird");
+    }
+
+    @Test
+    @DisplayName("Does not return another card when the target leaves the graveyard")
+    void doesNotReturnAnotherCardWhenTargetLeavesGraveyard() {
+        Card instant = new HolyDay();
+        Card sorcery = new Divination();
+        Permanent spellkeeper = addReadySpellkeeper();
+        harness.setGraveyard(player1, List.of(instant, sorcery));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, battlefieldIndex(spellkeeper), null, instant.getId(), Zone.GRAVEYARD);
+
+        gd.playerGraveyards.get(player1.getId()).remove(instant);
+        harness.setExile(player1, List.of(instant));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(instant, sorcery);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sorcery);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(instant);
+        harness.assertInGraveyard(player1, "Spellkeeper Weird");
+    }
+
     private Permanent addReadySpellkeeper() {
-        Permanent spellkeeper = new Permanent(new SpellkeeperWeird());
+        Permanent spellkeeper = harness.addToBattlefieldAndReturn(player1, new SpellkeeperWeird());
         spellkeeper.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(spellkeeper);
         return spellkeeper;
     }
 
