@@ -44,6 +44,56 @@ class TectonicReformationTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Card has no hand-activated ability");
     }
+
+    @Test
+    @DisplayName("Cycles Tectonic Reformation for two generic mana without entering the battlefield")
+    void cyclesItselfForTwoGenericMana() {
+        harness.setHand(player1, List.of(new TectonicReformation()));
+        harness.setLibrary(player1, List.of(new TectonicReformation()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Tectonic Reformation");
+        harness.assertNotInHand(player1, "Tectonic Reformation");
+        harness.assertNotOnBattlefield(player1, "Tectonic Reformation");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Tectonic Reformation");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Its static ability does not grant cycling while it is in hand")
+    void doesNotGrantCyclingFromHand() {
+        harness.setHand(player1, List.of(new Forest(), new TectonicReformation()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Card has no hand-activated ability");
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.stack).isEmpty();
+    }
+
+
+    @Test
+    @DisplayName("Granted cycling requires red mana and does not discard on failed payment")
+    void grantedCyclingRequiresRedMana() {
+        harness.addToBattlefield(player1, new TectonicReformation());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Forest");
+        assertThat(gd.stack).isEmpty();
+    }
+
 }
 
 @CardUsed({TectonicReformation.class, Forest.class, GrizzlyBears.class})
