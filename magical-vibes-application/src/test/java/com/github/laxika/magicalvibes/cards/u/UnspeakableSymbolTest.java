@@ -99,12 +99,50 @@ class UnspeakableSymbolTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.activateAbility(player1, 2, null, null);
         harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(feeder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Dawn Elemental");
+    }
+
+    @Test
+    @DisplayName("Life is paid on activation before the counter is placed")
+    void lifeIsPaidBeforeResolution() {
+        harness.addToBattlefield(player1, new UnspeakableSymbol());
+        Permanent target = addCreatureReady(player1, new DawnElemental());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertLife(player1, 17);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple activations can wait on the stack and each costs life")
+    void canStackMultipleActivations() {
+        harness.addToBattlefield(player1, new UnspeakableSymbol());
+        Permanent target = addCreatureReady(player1, new DawnElemental());
+        harness.setLife(player1, 10);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertLife(player1, 4);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(2);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 4);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 }
