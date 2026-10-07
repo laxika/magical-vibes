@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.AncestorsProphet;
 import com.github.laxika.magicalvibes.cards.f.FallenCleric;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -100,6 +101,116 @@ class StarlitSanctumTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Uses final toughness including counters and does not subtract marked damage")
+    void gainsLifeUsingModifiedToughness() {
+        Permanent sanctum = harness.addToBattlefieldAndReturn(player1, new StarlitSanctum());
+        Permanent cleric = harness.addToBattlefieldAndReturn(player1, new AncestorsProphet());
+        cleric.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        cleric.setMarkedDamage(3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setLife(player1, 10);
+        prepareAbility();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(sanctum.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Ancestor's Prophet");
+        harness.assertLife(player1, 10);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("Uses final power including counters when paying the sacrifice cost")
+    void losesLifeUsingModifiedPower() {
+        harness.addToBattlefield(player1, new StarlitSanctum());
+        Permanent cleric = harness.addToBattlefieldAndReturn(player1, new FallenCleric());
+        cleric.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setLife(player2, 20);
+        prepareAbility();
+
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+
+        harness.assertInGraveyard(player1, "Fallen Cleric");
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @DisplayName("Life gain uses the toughness of the Cleric chosen among multiple Clerics")
+    void gainsLifeFromChosenCleric() {
+        harness.addToBattlefield(player1, new StarlitSanctum());
+        harness.addToBattlefield(player1, new AncestorsProphet());
+        Permanent chosen = harness.addToBattlefieldAndReturn(player1, new FallenCleric());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setLife(player1, 10);
+        prepareAbility();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handlePermanentChosen(player1, chosen.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 12);
+        harness.assertInGraveyard(player1, "Fallen Cleric");
+        harness.assertOnBattlefield(player1, "Ancestor's Prophet");
+    }
+
+    @Test
+    @DisplayName("Life loss uses the power of the Cleric chosen among multiple Clerics")
+    void losesLifeFromChosenCleric() {
+        harness.addToBattlefield(player1, new StarlitSanctum());
+        Permanent chosen = harness.addToBattlefieldAndReturn(player1, new AncestorsProphet());
+        harness.addToBattlefield(player1, new FallenCleric());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setLife(player2, 20);
+        prepareAbility();
+
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        harness.handlePermanentChosen(player1, chosen.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Ancestor's Prophet");
+        harness.assertOnBattlefield(player1, "Fallen Cleric");
+    }
+
+    @Test
+    @DisplayName("A Cleric with negative power causes no life loss or life gain")
+    void negativePowerCausesNoLifeChange() {
+        harness.addToBattlefield(player1, new StarlitSanctum());
+        Permanent cleric = harness.addToBattlefieldAndReturn(player1, new AncestorsProphet());
+        cleric.setPowerModifier(-3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setLife(player2, 20);
+        prepareAbility();
+
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Ancestor's Prophet");
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's Cleric")
+    void cannotSacrificeOpponentsCleric() {
+        Permanent sanctum = harness.addToBattlefieldAndReturn(player1, new StarlitSanctum());
+        harness.addToBattlefield(player2, new AncestorsProphet());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        prepareAbility();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(sanctum.isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Ancestor's Prophet");
+        assertThat(gd.stack).isEmpty();
+    }
     private void prepareAbility() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
