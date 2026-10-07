@@ -60,12 +60,50 @@ class ThreeTreeBattalionTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("The conjured duplicate remains a creature card in the graveyard after dying")
+    void duplicateRemainsInGraveyardAfterDying() {
+        GrizzlyBears bears = new GrizzlyBears();
+        setLibrary(bears);
+        castBattalion();
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+
+        Permanent duplicate = findPermanents(player1, "Grizzly Bears").stream()
+                .filter(permanent -> permanent.getCard() != bears)
+                .findFirst().orElseThrow();
+        Card duplicateCard = duplicate.getCard();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, duplicate.getId());
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(duplicateCard);
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Only the top six cards are considered and the rest go below untouched cards")
+    void looksAtOnlySixCardsAndBottomsRemainder() {
+        GrizzlyBears bears = new GrizzlyBears();
+        Shock untouched = new Shock();
+        List<Card> rest = List.of(new Shock(), new HillGiant(), new Shock(), new HillGiant(), new Shock());
+        harness.setLibrary(player1, List.of(bears, rest.get(0), rest.get(1), rest.get(2),
+                rest.get(3), rest.get(4), untouched));
+
+        castBattalion();
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(6);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(untouched);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 6))
+                .containsExactlyInAnyOrderElementsOf(rest);
+    }
+
     private void castBattalion() {
         harness.setHand(player1, List.of(new ThreeTreeBattalion()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 
     private void setLibrary(Card... cards) {
