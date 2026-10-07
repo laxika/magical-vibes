@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.d.DuskImp;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ChildOfNight;
+import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.k.KalonianTusker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({StaffOfTheDeathMagus.class, DuskImp.class, GrizzlyBears.class, Swamp.class, Island.class})
+@CardUsed({StaffOfTheDeathMagus.class, ChildOfNight.class, DoomBlade.class, KalonianTusker.class, Swamp.class, Island.class})
 class StaffOfTheDeathMagusTest extends BaseCardTest {
 
     private void addStaff() {
@@ -28,12 +29,10 @@ class StaffOfTheDeathMagusTest extends BaseCardTest {
     @DisplayName("Gains 1 life when you cast a black spell")
     void gainsLifeOnBlackSpell() {
         addStaff();
-        harness.setHand(player1, List.of(new DuskImp()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ChildOfNight(), "{1}{B}");
         harness.passBothPriorities(); // resolve cast trigger
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
@@ -43,12 +42,10 @@ class StaffOfTheDeathMagusTest extends BaseCardTest {
     @DisplayName("Does not gain life when you cast a non-black spell")
     void noLifeOnNonBlackSpell() {
         addStaff();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KalonianTusker(), "{G}{G}");
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
@@ -63,7 +60,7 @@ class StaffOfTheDeathMagusTest extends BaseCardTest {
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
@@ -78,7 +75,7 @@ class StaffOfTheDeathMagusTest extends BaseCardTest {
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
         assertThat(gd.stack).isEmpty();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
@@ -93,15 +90,84 @@ class StaffOfTheDeathMagusTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new DuskImp()));
-        harness.addMana(player2, ManaColor.BLACK, 3);
-
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new ChildOfNight(), "{1}{B}");
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Opponent's Swamp entering does not trigger")
+    void opponentSwampDoesNotTrigger() {
+        addStaff();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Swamp()));
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.playLand(player2, 0);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Each Staff triggers separately before the black spell resolves")
+    void multipleStaffsTriggerOnBlackSpell() {
+        addStaff();
+        harness.addToBattlefield(player1, new StaffOfTheDeathMagus());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new ChildOfNight(), "{1}{B}");
+
+        assertThat(gd.stack).hasSize(3);
+        harness.assertLife(player1, lifeBefore);
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBefore + 1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBefore + 2);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each Staff triggers separately when a Swamp enters")
+    void multipleStaffsTriggerOnSwamp() {
+        addStaff();
+        harness.addToBattlefield(player1, new StaffOfTheDeathMagus());
+        harness.setHand(player1, List.of(new Swamp()));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.assertLife(player1, lifeBefore);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Casting a black instant on an opponent's turn gains life before it resolves")
+    void blackInstantOnOpponentTurnTriggers() {
+        addStaff();
+        var target = harness.addToBattlefieldAndReturn(player2, new KalonianTusker());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castInstant(player1, 0, target.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.assertLife(player1, lifeBefore);
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBefore + 1);
+        harness.assertOnBattlefield(player2, "Kalonian Tusker");
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Kalonian Tusker");
+        harness.assertLife(player1, lifeBefore + 1);
     }
 }
