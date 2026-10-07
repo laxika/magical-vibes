@@ -4,15 +4,12 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -54,16 +51,40 @@ class TheWallsOfBaSingSeTest extends BaseCardTest {
     void protectedPermanentsSurviveWrathOfGod() {
         harness.addToBattlefield(player1, new TheWallsOfBaSingSe());
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player2, List.of(new WrathOfGod()));
-        harness.addMana(player2, ManaColor.WHITE, 4);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castSorcery(player2, 0, 0);
+        harness.castFromHand(player2, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "The Walls of Ba Sing Se");
+    }
+
+    @Test
+    @DisplayName("Protection ends when the Walls leaves the battlefield")
+    void protectionEndsWhenWallsIsDestroyed() {
+        harness.addToBattlefield(player1, new TheWallsOfBaSingSe());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Forest());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player2, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "The Walls of Ba Sing Se");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Forest"), Keyword.INDESTRUCTIBLE)).isFalse();
+
+        harness.castFromHand(player2, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Forest");
     }
 }
