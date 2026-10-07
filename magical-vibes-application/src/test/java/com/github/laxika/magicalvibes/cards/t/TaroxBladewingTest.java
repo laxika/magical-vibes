@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TaroxBladewingTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Grandeur discards another Tarox and doubles its current power and toughness")
+    @DisplayName("Grandeur discards another Tarox and adds its current power to both stats")
     void grandeurBoostsByCurrentPower() {
         Permanent tarox = harness.addToBattlefieldAndReturn(player1, new TaroxBladewing());
         harness.setHand(player1, List.of(new TaroxBladewing()));
@@ -42,6 +42,33 @@ class TaroxBladewingTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, tarox)).isEqualTo(16);
+        assertThat(gqs.getEffectiveToughness(gd, tarox)).isEqualTo(15);
+    }
+
+    @Test
+    @DisplayName("Stacked grandeur abilities each use Tarox's power when they resolve")
+    void stackedGrandeurActivationsUsePowerAtResolution() {
+        Permanent tarox = harness.addToBattlefieldAndReturn(player1, new TaroxBladewing());
+        harness.setHand(player1, List.of(new TaroxBladewing(), new TaroxBladewing()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gqs.getEffectivePower(gd, tarox)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, tarox)).isEqualTo(3);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, tarox)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, tarox)).isEqualTo(7);
+
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, tarox)).isEqualTo(16);
