@@ -28,10 +28,8 @@ class StoneCatapultTest extends BaseCardTest {
         assertThat(catapult.isTapped()).isTrue();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(permanent -> permanent.getId().equals(target.getId()));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card.getId().equals(target.getCard().getId()));
+        harness.assertNotOnBattlefield(player2, "Alert Shu Infantry");
+        harness.assertInGraveyard(player2, "Alert Shu Infantry");
     }
 
     @Test
@@ -114,10 +112,8 @@ class StoneCatapultTest extends BaseCardTest {
         target.untap();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(permanent -> permanent.getId().equals(target.getId()));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(card -> card.getId().equals(target.getCard().getId()));
+        harness.assertOnBattlefield(player2, "Alert Shu Infantry");
+        harness.assertNotInGraveyard(player2, "Alert Shu Infantry");
     }
 
     @Test
@@ -129,6 +125,47 @@ class StoneCatapultTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can activate during the beginning of combat before attackers are declared")
+    void canActivateAtBeginningOfCombat() {
+        setupCatapultOnMyTurn(TurnStep.BEGINNING_OF_COMBAT);
+        Permanent target = addTappedCreature(player2, new AlertShuInfantry());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Alert Shu Infantry");
+        harness.assertInGraveyard(player2, "Alert Shu Infantry");
+    }
+
+    @Test
+    @DisplayName("Cannot activate the tap ability while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent catapult = setupCatapultOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        catapult.setSummoningSick(true);
+        Permanent target = addTappedCreature(player2, new AlertShuInfantry());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(catapult.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after Stone Catapult leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        Permanent catapult = setupCatapultOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent target = addTappedCreature(player2, new AlertShuInfantry());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(catapult);
+        gd.playerGraveyards.get(player1.getId()).add(catapult.getCard());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Alert Shu Infantry");
+        harness.assertInGraveyard(player2, "Alert Shu Infantry");
     }
 
     private Permanent setupCatapultOnMyTurn(TurnStep step) {
