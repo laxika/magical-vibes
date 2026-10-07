@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.m.MinimusContainment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.cards.t.Tremor;
@@ -15,7 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Statecraft.class, FreshVolunteers.class, Sizzle.class, Tremor.class})
+@CardUsed({Statecraft.class, FreshVolunteers.class, Sizzle.class, Tremor.class,
+        MinimusContainment.class, Disenchant.class})
 class StatecraftTest extends BaseCardTest {
 
     @Test
@@ -80,7 +82,6 @@ class StatecraftTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(MinimusContainment.class)
     @DisplayName("Stops preventing combat damage when Statecraft loses its abilities")
     void stopsPreventingCombatDamageWhenItLosesItsAbilities() {
         Permanent statecraft = harness.addToBattlefieldAndReturn(player1, new Statecraft());
@@ -92,6 +93,51 @@ class StatecraftTest extends BaseCardTest {
 
         harness.setLife(player2, 20);
         addAttacker(player1);
+        resolveCombat(player1);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Stops preventing combat damage when Statecraft leaves the battlefield")
+    void stopsPreventingCombatDamageWhenDestroyed() {
+        Permanent statecraft = harness.addToBattlefieldAndReturn(player1, new Statecraft());
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, statecraft.getId());
+
+        harness.setLife(player2, 20);
+        addAttacker(player1);
+        resolveCombat(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(statecraft);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Prevention follows Statecraft's current controller")
+    void preventionFollowsCurrentController() {
+        Permanent statecraft = harness.addToBattlefieldAndReturn(player1, new Statecraft());
+        gd.playerBattlefields.get(player1.getId()).remove(statecraft);
+        gd.playerBattlefields.get(player2.getId()).add(statecraft);
+        harness.setLife(player1, 20);
+        addAttacker(player2);
+
+        resolveCombat(player2);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Former controller's creatures can deal damage after Statecraft changes control")
+    void formerControllerCreaturesAreNotProtected() {
+        Permanent statecraft = harness.addToBattlefieldAndReturn(player1, new Statecraft());
+        gd.playerBattlefields.get(player1.getId()).remove(statecraft);
+        gd.playerBattlefields.get(player2.getId()).add(statecraft);
+        harness.setLife(player2, 20);
+        addAttacker(player1);
+
         resolveCombat(player1);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
