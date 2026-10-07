@@ -39,6 +39,34 @@ class StrangledCemeteryTest extends BaseCardTest {
     }
 
     @Test
+    void entersUntappedWhenControllerHasLessThan13Life() {
+        harness.setLife(player1, 12);
+        playCemetery();
+
+        assertThat(cemetery().isTapped()).isFalse();
+    }
+
+    @Test
+    void entersUntappedWhenOpponentHasLessThan13Life() {
+        harness.setLife(player2, 12);
+        playCemetery();
+
+        assertThat(cemetery().isTapped()).isFalse();
+    }
+
+    @Test
+    void canProduceManaImmediatelyAfterEnteringUntapped() {
+        harness.setLife(player1, 13);
+        playCemetery();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(cemetery().isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void tappingProducesBlackMana() {
         Permanent cemetery = addReadyCemetery();
 
@@ -64,9 +92,8 @@ class StrangledCemeteryTest extends BaseCardTest {
     }
 
     private Permanent addReadyCemetery() {
-        Permanent cemetery = new Permanent(new StrangledCemetery());
+        Permanent cemetery = harness.addToBattlefieldAndReturn(player1, new StrangledCemetery());
         cemetery.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(cemetery);
         return cemetery;
     }
 
