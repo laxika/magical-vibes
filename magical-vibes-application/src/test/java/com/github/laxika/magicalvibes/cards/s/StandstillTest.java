@@ -86,4 +86,61 @@ class StandstillTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }
+
+    @Test
+    @DisplayName("Casting Standstill does not trigger its own ability")
+    void doesNotTriggerOnItsOwnCast() {
+        harness.setHand(player1, List.of(new Standstill()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, tenCardLibrary());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Standstill");
+        harness.assertNotInGraveyard(player1, "Standstill");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Standstill sacrifices independently and draws for the caster's opponent")
+    void multipleStandstillsEachDrawThree() {
+        harness.addToBattlefield(player1, new Standstill());
+        harness.addToBattlefield(player2, new Standstill());
+        harness.setHand(player1, List.of(new DwarvenGrunt()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, tenCardLibrary());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(6);
+        harness.assertInGraveyard(player1, "Standstill");
+        harness.assertInGraveyard(player2, "Standstill");
+        harness.assertNotOnBattlefield(player1, "Standstill");
+        harness.assertNotOnBattlefield(player2, "Standstill");
+        harness.assertOnBattlefield(player1, "Dwarven Grunt");
+    }
+
+    @Test
+    @DisplayName("A Standstill that leaves and returns cannot be sacrificed by its old trigger")
+    void returnedStandstillIsANewObject() {
+        Standstill card = new Standstill();
+        Permanent original = harness.addToBattlefieldAndReturn(player1, card);
+        harness.setHand(player1, List.of(new DwarvenGrunt()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, tenCardLibrary());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        gd.playerBattlefields.get(player1.getId()).remove(original);
+        harness.addToBattlefield(player1, card);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Standstill");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
 }
