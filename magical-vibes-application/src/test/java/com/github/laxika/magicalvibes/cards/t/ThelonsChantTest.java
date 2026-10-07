@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.d.DwarvenHold;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.u.UrzasArmor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThelonsChant.class, GrizzlyBears.class, Swamp.class})
+@CardUsed({ThelonsChant.class, GrizzlyBears.class, Swamp.class, DwarvenHold.class, UrzasArmor.class})
 class ThelonsChantTest extends BaseCardTest {
 
     @Test
@@ -129,5 +130,60 @@ class ThelonsChantTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Thelon's Chant");
+    }
+
+    @Test
+    @DisplayName("The Chant's controller is also affected by their own Swamp entering")
+    void ownSwampDealsDamage() {
+        harness.addToBattlefield(player1, new ThelonsChant());
+
+        harness.setHand(player1, List.of(new Swamp()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot pay the Swamp controller's counter cost")
+    void opponentCreatureCannotPayCounterCost() {
+        harness.addToBattlefield(player2, new ThelonsChant());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new Swamp()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A Swamp put onto the battlefield without being played still triggers")
+    void swampEnteringWithoutBeingPlayedTriggers() {
+        harness.addToBattlefield(player2, new ThelonsChant());
+
+        harness.enterBattlefieldAndReturn(player1, new Swamp());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Urza's Armor prevents one damage from the Chant's penalty")
+    void armorPreventsOnePenaltyDamage() {
+        harness.addToBattlefield(player2, new ThelonsChant());
+        harness.addToBattlefield(player1, new UrzasArmor());
+
+        harness.setHand(player1, List.of(new Swamp()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
     }
 }
