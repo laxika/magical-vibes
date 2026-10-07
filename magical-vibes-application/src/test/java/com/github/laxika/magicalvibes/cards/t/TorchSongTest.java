@@ -95,4 +95,42 @@ class TorchSongTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Gorilla Warrior");
         harness.assertInGraveyard(player1, "Torch Song");
     }
+
+    @Test
+    @DisplayName("Torch Song can target its controller and counts only verse counters")
+    void sacrificeCanDamageControllerAndIgnoresOtherCounters() {
+        Permanent torchSong = harness.addToBattlefieldAndReturn(player1, new TorchSong());
+        torchSong.setCounterCount(CounterType.VERSE, 3);
+        torchSong.setCounterCount(CounterType.CHARGE, 5);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+
+        harness.assertNotOnBattlefield(player1, "Torch Song");
+        harness.assertInGraveyard(player1, "Torch Song");
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Activating in response to the upkeep trigger uses the existing verse counters")
+    void sacrificeBeforeUpkeepTriggerResolvesUsesExistingCounters() {
+        Permanent torchSong = harness.addToBattlefieldAndReturn(player1, new TorchSong());
+        torchSong.setCounterCount(CounterType.VERSE, 2);
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertNotOnBattlefield(player1, "Torch Song");
+        harness.assertInGraveyard(player1, "Torch Song");
+    }
 }
