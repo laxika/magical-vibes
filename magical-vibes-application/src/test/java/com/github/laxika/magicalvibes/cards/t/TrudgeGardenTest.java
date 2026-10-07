@@ -54,6 +54,61 @@ class TrudgeGardenTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
+    @Test
+    void gainingSeveralLifeCreatesOnlyOneTokenForOnePayment() {
+        harness.addToBattlefield(player1, new TrudgeGarden());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        gainLife(5);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findPermanents(player1, "Fungus Beast")).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void separateLifeGainsCanEachCreateATokenInTheSameTurn() {
+        harness.addToBattlefield(player1, new TrudgeGarden());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        gainLife(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        gainLife(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findPermanents(player1, "Fungus Beast")).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void opponentGainingLifeDoesNotTriggerGarden() {
+        harness.addToBattlefield(player1, new TrudgeGarden());
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanents(player1, "Fungus Beast")).isEmpty();
+    }
+
+    @Test
+    void insufficientManaDoesNotCreateTokenOrSpendPartialPayment() {
+        harness.addToBattlefield(player1, new TrudgeGarden());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        gainLife(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findPermanents(player1, "Fungus Beast")).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
     private void gainLife(int amount) {
         harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), amount));
     }
