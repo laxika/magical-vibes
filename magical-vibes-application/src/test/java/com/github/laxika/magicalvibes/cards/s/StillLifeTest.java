@@ -61,11 +61,66 @@ class StillLifeTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, stillLife)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, stillLife)).isFalse();
         assertThat(stillLife.getTransientSubtypes()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Still Life does not animate until its ability resolves")
+    void animationWaitsForResolution() {
+        Permanent stillLife = addStillLife();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.isCreature(gd, stillLife)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, stillLife)).isTrue();
+        assertThat(stillLife.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Still Life can animate while tapped and summoning sick on an opponent's turn")
+    void canAnimateWhileTappedOnOpponentsTurn() {
+        Permanent stillLife = addStillLife();
+        stillLife.setTapped(true);
+        stillLife.setSummoningSick(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, stillLife)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, stillLife)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, stillLife)).isEqualTo(3);
+        assertThat(stillLife.isTapped()).isTrue();
+        assertThat(stillLife.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations animate only their source and do not add power or toughness")
+    void repeatedActivationsOnlyAnimateTheirSource() {
+        Permanent stillLife = addStillLife();
+        Permanent otherStillLife = addStillLife();
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, stillLife)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, stillLife)).isEqualTo(3);
+        assertThat(gqs.isEnchantment(gd, stillLife)).isTrue();
+        assertThat(stillLife.getTransientSubtypes()).containsExactly(CardSubtype.CENTAUR);
+        assertThat(gqs.isCreature(gd, otherStillLife)).isFalse();
     }
 
     private Permanent addStillLife() {
