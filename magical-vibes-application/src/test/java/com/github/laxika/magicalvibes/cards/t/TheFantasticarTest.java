@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ConsumingVortex;
+import com.github.laxika.magicalvibes.cards.k.KamiOfOldStone;
 import com.github.laxika.magicalvibes.cards.r.ReachThroughMists;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheFantasticar.class, ReachThroughMists.class, GrizzlyBears.class})
+@CardUsed({TheFantasticar.class, ReachThroughMists.class, KamiOfOldStone.class, ConsumingVortex.class})
 class TheFantasticarTest extends BaseCardTest {
 
     @Test
@@ -31,10 +32,105 @@ class TheFantasticarTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, fantasticar)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, fantasticar)).isFalse();
+    }
+
+    @Test
+    void mayDeclineAnimation() {
+        Permanent fantasticar = addFantasticar();
+        castNoncreatureSpell(false);
+
+        assertThat(gqs.isCreature(gd, fantasticar)).isFalse();
+        assertThat(findPermanents(player1, "Construct")).isEmpty();
+    }
+
+    @Test
+    void decliningFourthSpellSacrificeDoesNotOfferSacrificeOnFifthSpell() {
+        Permanent fantasticar = addFantasticar();
+        for (int i = 0; i < 4; i++) {
+            castNoncreatureSpell(false);
+        }
+
+        assertThat(findPermanents(player1, "The Fantasticar")).containsExactly(fantasticar);
+        assertThat(findPermanents(player1, "Construct")).isEmpty();
+
+        castNoncreatureSpell(true);
+
+        assertThat(findPermanents(player1, "The Fantasticar")).containsExactly(fantasticar);
+        assertThat(gqs.isCreature(gd, fantasticar)).isTrue();
+        assertThat(findPermanents(player1, "Construct")).isEmpty();
+    }
+
+    @Test
+    void countsSpellsCastBeforeFantasticarEnteredBattlefield() {
+        for (int i = 0; i < 3; i++) {
+            castNoncreatureSpell(false);
+        }
+        addFantasticar();
+
+        castNoncreatureSpell(true);
+
+        assertThat(findPermanents(player1, "The Fantasticar")).isEmpty();
+        assertThat(findPermanents(player1, "Construct")).hasSize(4);
+    }
+
+    @Test
+    void creatureSpellNeitherAnimatesNorCountsTowardFourthNoncreatureSpell() {
+        Permanent fantasticar = addFantasticar();
+        harness.castFromHand(player1, new KamiOfOldStone(), "{3}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.isCreature(gd, fantasticar)).isFalse();
+
+        for (int i = 0; i < 3; i++) {
+            castNoncreatureSpell(true);
+        }
+        assertThat(findPermanents(player1, "The Fantasticar")).containsExactly(fantasticar);
+        assertThat(findPermanents(player1, "Construct")).isEmpty();
+
+        castNoncreatureSpell(true);
+        assertThat(findPermanents(player1, "The Fantasticar")).isEmpty();
+        assertThat(findPermanents(player1, "Construct")).hasSize(4);
+    }
+
+    @Test
+    void opponentSpellsDoNotTriggerFantasticar() {
+        Permanent fantasticar = addFantasticar();
+        for (int i = 0; i < 4; i++) {
+            harness.setLibrary(player2, List.of(new KamiOfOldStone()));
+            harness.castFromHand(player2, new ReachThroughMists(), "{U}");
+            harness.passBothPriorities();
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        }
+
+        assertThat(gqs.isCreature(gd, fantasticar)).isFalse();
+        castNoncreatureSpell(true);
+        assertThat(findPermanents(player1, "The Fantasticar")).containsExactly(fantasticar);
+        assertThat(findPermanents(player1, "Construct")).isEmpty();
+    }
+
+    @Test
+    void fourthSpellCountResetsAndWorksDuringOpponentTurn() {
+        addFantasticar();
+        for (int i = 0; i < 3; i++) {
+            castNoncreatureSpell(false);
+        }
+        harness.setLibrary(player2, List.of(new KamiOfOldStone()));
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        castNoncreatureSpell(true);
+        assertThat(findPermanents(player1, "The Fantasticar")).hasSize(1);
+        assertThat(findPermanents(player1, "Construct")).isEmpty();
+
+        for (int i = 0; i < 3; i++) {
+            castNoncreatureSpell(true);
+        }
+        assertThat(findPermanents(player1, "The Fantasticar")).isEmpty();
+        assertThat(findPermanents(player1, "Construct")).hasSize(4);
     }
 
     @Test
@@ -62,11 +158,34 @@ class TheFantasticarTest extends BaseCardTest {
         return harness.addToBattlefieldAndReturn(player1, new TheFantasticar());
     }
 
+    @Test
+    void cannotCreateConstructsWhenFantasticarLeavesBeforeSacrificeResolves() {
+        Permanent fantasticar = addFantasticar();
+        for (int i = 0; i < 3; i++) {
+            castNoncreatureSpell(true);
+        }
+
+        harness.setLibrary(player1, List.of(new KamiOfOldStone()));
+        harness.castFromHand(player1, new ReachThroughMists(), "{U}");
+        harness.setHand(player2, List.of(new ConsumingVortex()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, fantasticar.getId());
+
+        harness.passBothPriorities();
+        while (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+        }
+
+        assertThat(findPermanents(player1, "The Fantasticar")).isEmpty();
+        assertThat(findPermanents(player1, "Construct")).isEmpty();
+        harness.assertInHand(player1, "The Fantasticar");
+    }
+
     private void castNoncreatureSpell(boolean acceptAnimation) {
-        harness.setHand(player1, List.of(new ReachThroughMists()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0);
+        harness.setLibrary(player1, List.of(new KamiOfOldStone()));
+        harness.castFromHand(player1, new ReachThroughMists(), "{U}");
         harness.passBothPriorities();
         while (gd.interaction.isAwaitingInput()) {
             harness.handleMayAbilityChosen(player1, acceptAnimation);
