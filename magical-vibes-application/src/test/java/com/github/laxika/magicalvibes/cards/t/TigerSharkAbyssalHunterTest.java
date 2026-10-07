@@ -28,8 +28,7 @@ class TigerSharkAbyssalHunterTest extends BaseCardTest {
         addCardMana();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent shark = findPermanent(player1, "Tiger Shark, Abyssal Hunter");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -70,6 +69,69 @@ class TigerSharkAbyssalHunterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(shark.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Entering with black hybrid mana still connives, and a land discard adds no counter")
+    void enteringWithBlackManaAndDiscardingLand() {
+        harness.setHand(player1, List.of(new TigerSharkAbyssalHunter(), new Mountain()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        discardByName("Mountain");
+
+        Permanent shark = findPermanent(player1, "Tiger Shark, Abyssal Hunter");
+        assertThat(shark.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).containsExactly("Grizzly Bears");
+        harness.assertInGraveyard(player1, "Mountain");
+    }
+
+    @Test
+    @DisplayName("The ability accepts black mana without tapping and affects only Tiger Shark")
+    void abilityAcceptsBlackManaAndAffectsOnlySelf() {
+        Permanent shark = addReadyShark();
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(shark.isCantBeBlocked()).isTrue();
+        assertThat(shark.isTapped()).isFalse();
+        assertThat(other.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Connive uses Tiger Shark's current controller when control changes before resolution")
+    void conniveUsesCurrentController() {
+        harness.setHand(player1, List.of(new TigerSharkAbyssalHunter(), new Mountain()));
+        harness.setLibrary(player1, List.of(new Mountain()));
+        harness.setHand(player2, List.of(new Mountain()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        addCardMana();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent shark = findPermanent(player1, "Tiger Shark, Abyssal Hunter");
+        gd.playerBattlefields.get(player1.getId()).remove(shark);
+        gd.playerBattlefields.get(player2.getId()).add(shark);
+
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).containsExactly("Mountain");
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Mountain", "Grizzly Bears");
+        List<Card> hand = gd.playerHands.get(player2.getId());
+        int discardIndex = java.util.stream.IntStream.range(0, hand.size())
+                .filter(i -> hand.get(i).getName().equals("Grizzly Bears"))
+                .findFirst().orElseThrow();
+        harness.handleCardChosen(player2, discardIndex);
+
+        assertThat(shark.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     private Permanent addReadyShark() {
