@@ -176,4 +176,88 @@ class TortureTest extends BaseCardTest {
         assertThat(originalCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         assertThat(newCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Ability requires both its generic and black mana costs")
+    void cannotActivateWithOnlyOneBlackMana() {
+        Permanent creature = addCreatureReady(player1, new OldGhastbark());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Torture());
+        aura.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Six activations kill the enchanted creature and put Torture in the graveyard")
+    void countersReduceToughnessToZero() {
+        Permanent creature = addCreatureReady(player2, new OldGhastbark());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Torture());
+        aura.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        for (int i = 0; i < 5; i++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card instanceof OldGhastbark);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof Torture);
+    }
+
+    @Test
+    @DisplayName("A -1/-1 counter cancels an existing +1/+1 counter")
+    void minusCounterCancelsPlusCounter() {
+        Permanent creature = addCreatureReady(player1, new OldGhastbark());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Torture());
+        aura.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Ability cannot put a counter on a creature that has left the battlefield")
+    void abilityDoesNothingWhenEnchantedCreatureLeaves() {
+        Permanent creature = addCreatureReady(player2, new OldGhastbark());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Torture());
+        aura.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.getPermanentRemovalService().removePermanentToHand(gd, creature);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player2.getId())).contains(creature.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof Torture);
+    }
 }
