@@ -64,6 +64,64 @@ class TeamTacticsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void targetCanPayItsOwnTeamworkCost() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+
+        cast(target, List.of(target.getId()));
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void summoningSickCreatureCanPayTeamwork() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent teammate = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        teammate.setSummoningSick(true);
+
+        cast(target, List.of(teammate.getId()));
+
+        assertThat(teammate.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, teammate, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, teammate, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void cannotPayTeamworkWithOpponentsCreature() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> cast(target, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotPayTeamworkWithTappedCreature() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent teammate = addCreatureReady(player1, new GrizzlyBears());
+        teammate.tap();
+
+        assertThatThrownBy(() -> cast(target, List.of(teammate.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canTapMultipleCreaturesForTeamwork() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+
+        cast(target, List.of(first.getId(), second.getId()));
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+    }
     private void cast(Permanent target, List<java.util.UUID> teamworkPermanents) {
         harness.setHand(player1, List.of(new TeamTactics()));
         addMana();
