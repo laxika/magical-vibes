@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TheValeyard;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SplitDecision.class, Divination.class, Forest.class, GrizzlyBears.class})
+@CardUsed({SplitDecision.class, Counterspell.class, Divination.class, Forest.class, GrizzlyBears.class, TheValeyard.class})
 class SplitDecisionTest extends BaseCardTest {
 
     @BeforeEach
@@ -29,18 +31,14 @@ class SplitDecisionTest extends BaseCardTest {
 
     @Test
     void denialMajorityCountersTargetSpell() {
-        harness.setHand(player2, List.of(new Divination()));
-        harness.addMana(player2, ManaColor.BLUE, 2);
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player2, 0);
+        harness.castFromHand(player2, new Divination(), "{2}{U}");
         UUID targetId = gd.stack.getLast().getTargetableId();
         harness.passPriority(player2);
 
         harness.setHand(player1, List.of(new SplitDecision()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         assertThat(activeVote().playerId()).isEqualTo(player1.getId());
         harness.handleListChoice(player1, ChoiceContext.VoteForDenialOrDuplicationChoice.DENIAL);
@@ -59,18 +57,14 @@ class SplitDecisionTest extends BaseCardTest {
         Forest third = new Forest();
         harness.setLibrary(player1, List.of(first, second, third));
 
-        harness.setHand(player2, List.of(new Divination()));
-        harness.addMana(player2, ManaColor.BLUE, 2);
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player2, 0);
+        harness.castFromHand(player2, new Divination(), "{2}{U}");
         UUID targetId = gd.stack.getLast().getTargetableId();
         harness.passPriority(player2);
 
         harness.setHand(player1, List.of(new SplitDecision()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.handleListChoice(player1, ChoiceContext.VoteForDenialOrDuplicationChoice.DENIAL);
         harness.handleListChoice(player2, ChoiceContext.VoteForDenialOrDuplicationChoice.DUPLICATION);
@@ -81,10 +75,7 @@ class SplitDecisionTest extends BaseCardTest {
 
     @Test
     void cannotTargetPermanentSpell() {
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
         UUID permanentSpellId = gd.stack.getLast().getTargetableId();
         harness.passPriority(player2);
 
@@ -94,6 +85,86 @@ class SplitDecisionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, permanentSpellId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void duplicationMajorityCopiesSpellWithoutCounteringOriginal() {
+        Forest first = new Forest();
+        Forest second = new Forest();
+        harness.setLibrary(player1, List.of(first, second, new Forest()));
+
+        harness.castFromHand(player2, new Divination(), "{2}{U}");
+        UUID originalId = gd.stack.getLast().getTargetableId();
+        harness.passPriority(player2);
+
+        harness.setHand(player1, List.of(new SplitDecision()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, originalId);
+        harness.handleListChoice(player1, ChoiceContext.VoteForDenialOrDuplicationChoice.DUPLICATION);
+        harness.handleListChoice(player2, ChoiceContext.VoteForDenialOrDuplicationChoice.DUPLICATION);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getFirst().getTargetableId()).isEqualTo(originalId);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetableId()).isEqualTo(originalId);
+    }
+
+    @Test
+    void copiedInstantCanRetargetAndCounterTheOriginalInstant() {
+        harness.castFromHand(player2, new Divination(), "{2}{U}");
+        UUID sorceryId = gd.stack.getLast().getTargetableId();
+
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castInstant(player2, 0, sorceryId);
+        UUID counterspellId = gd.stack.getLast().getTargetableId();
+        harness.passPriority(player2);
+
+        harness.setHand(player1, List.of(new SplitDecision()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, counterspellId);
+        harness.handleListChoice(player1, ChoiceContext.VoteForDenialOrDuplicationChoice.DENIAL);
+        harness.handleListChoice(player2, ChoiceContext.VoteForDenialOrDuplicationChoice.DUPLICATION);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, counterspellId);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card instanceof Counterspell);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetableId()).isEqualTo(sorceryId);
+    }
+
+    @Test
+    void opponentCanUseValeyardsAdditionalVoteToMakeDenialWin() {
+        harness.addToBattlefield(player2, new TheValeyard());
+        harness.castFromHand(player2, new Divination(), "{2}{U}");
+        UUID originalId = gd.stack.getLast().getTargetableId();
+        harness.passPriority(player2);
+
+        harness.setHand(player1, List.of(new SplitDecision()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, originalId);
+        harness.handleListChoice(player1, ChoiceContext.VoteForDenialOrDuplicationChoice.DUPLICATION);
+        harness.handleListChoice(player2, ChoiceContext.VoteForDenialOrDuplicationChoice.DENIAL);
+
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player2, true);
+        }
+        assertThat(activeVote().playerId()).isEqualTo(player2.getId());
+        harness.handleListChoice(player2, ChoiceContext.VoteForDenialOrDuplicationChoice.DENIAL);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card instanceof Divination);
     }
 
     private PendingInteraction.ColorChoice activeVote() {
