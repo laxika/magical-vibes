@@ -95,4 +95,39 @@ class TormodsCryptTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .containsExactly(player2GraveyardCard);
     }
+
+    @Test
+    @DisplayName("Exiles cards that enter the graveyard after activation")
+    void exilesCardsAddedBeforeResolution() {
+        harness.addToBattlefield(player1, new TormodsCrypt());
+        var originalCard = new GoblinHero();
+        var laterCard = new ScarwoodGoblins();
+        harness.setGraveyard(player2, List.of(originalCard));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(originalCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.setGraveyard(player2, List.of(originalCard, laterCard));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .containsExactlyInAnyOrder(originalCard, laterCard);
+    }
+
+    @Test
+    @DisplayName("Cannot target a permanent instead of a player or sacrifice the crypt for an invalid target")
+    void cannotTargetPermanent() {
+        var crypt = harness.addToBattlefieldAndReturn(player1, new TormodsCrypt());
+        var creature = harness.addToBattlefieldAndReturn(player2, new GoblinHero());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Tormod's Crypt");
+        harness.assertNotInGraveyard(player1, "Tormod's Crypt");
+        assertThat(crypt.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }
