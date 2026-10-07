@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(TimeStretch.class)
+@CardUsed({TimeStretch.class})
 class TimeStretchTest extends BaseCardTest {
 
     /**
@@ -187,10 +187,15 @@ class TimeStretchTest extends BaseCardTest {
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
         assertThat(gd.turnNumber).isEqualTo(turnBefore + 2);
 
-        // End second extra turn → normal alternation (player1's turn)
+        // The opponent's scheduled normal turn still follows the caster's normal turn.
+        advanceTurn(player2);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.turnNumber).isEqualTo(turnBefore + 3);
+        assertThat(gd.currentTurnIsExtraTurn).isFalse();
+
         advanceTurn(player1);
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.turnNumber).isEqualTo(turnBefore + 3);
+        assertThat(gd.turnNumber).isEqualTo(turnBefore + 4);
     }
 
     // ===== Stacking with multiple extra turn effects =====
@@ -269,6 +274,34 @@ class TimeStretchTest extends BaseCardTest {
         // Normal turn order resumes
         advanceTurn(player2);
         assertThat(harness.getGameData().activePlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Later-resolved Time Stretch inserts both turns before earlier extra turns")
+    void laterResolutionTakesPrecedenceDuringSameTurn() {
+        harness.setHand(player1, List.of(new TimeStretch(), new TimeStretch()));
+        harness.addMana(player1, ManaColor.BLUE, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        int turnBefore = gd.turnNumber;
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.extraTurns).containsExactly(
+                player2.getId(), player2.getId(), player1.getId(), player1.getId());
+        advanceTurn(player2);
+        assertThat(gd.turnNumber).isEqualTo(turnBefore + 1);
+        advanceTurn(player2);
+        assertThat(gd.turnNumber).isEqualTo(turnBefore + 2);
+        advanceTurn(player1);
+        assertThat(gd.turnNumber).isEqualTo(turnBefore + 3);
+        advanceTurn(player1);
+        assertThat(gd.turnNumber).isEqualTo(turnBefore + 4);
+        advanceTurn(player2);
+        assertThat(gd.turnNumber).isEqualTo(turnBefore + 5);
+        assertThat(gd.currentTurnIsExtraTurn).isFalse();
+        assertThat(gd.extraTurns).isEmpty();
     }
 }
 
