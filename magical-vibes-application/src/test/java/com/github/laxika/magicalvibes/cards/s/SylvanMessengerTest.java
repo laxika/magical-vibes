@@ -110,4 +110,61 @@ class SylvanMessengerTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
+    @Test
+    @DisplayName("The controller chooses the bottom order without disturbing unrevealed cards")
+    void controllerChoosesBottomOrder() {
+        SylvanMessenger elf = new SylvanMessenger();
+        CavesOfKoilos firstLand = new CavesOfKoilos();
+        CavesOfKoilos secondLand = new CavesOfKoilos();
+        CavesOfKoilos thirdLand = new CavesOfKoilos();
+        SylvanMessenger unrevealedElf = new SylvanMessenger();
+        harness.setLibrary(player1, List.of(elf, firstLand, secondLand, thirdLand, unrevealedElf));
+
+        castMessenger();
+
+        var reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        assertThat(reorder.playerId()).isEqualTo(player1.getId());
+        assertThat(reorder.cards()).containsExactly(firstLand, secondLand, thirdLand);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(elf);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(unrevealedElf, thirdLand, firstLand, secondLand);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("All four revealed Elves go to hand without a reorder choice")
+    void allRevealedElvesGoToHand() {
+        SylvanMessenger first = new SylvanMessenger();
+        SylvanMessenger second = new SylvanMessenger();
+        SylvanMessenger third = new SylvanMessenger();
+        SylvanMessenger fourth = new SylvanMessenger();
+        CavesOfKoilos unrevealed = new CavesOfKoilos();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, unrevealed));
+
+        castMessenger();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second, third, fourth);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unrevealed);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A single non-Elf is put on the bottom without a reorder choice")
+    void singleNonElfGoesToBottom() {
+        SylvanMessenger first = new SylvanMessenger();
+        SylvanMessenger second = new SylvanMessenger();
+        SylvanMessenger third = new SylvanMessenger();
+        CavesOfKoilos revealedLand = new CavesOfKoilos();
+        SylvanMessenger unrevealedElf = new SylvanMessenger();
+        harness.setLibrary(player1, List.of(first, revealedLand, second, third, unrevealedElf));
+
+        castMessenger();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second, third);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unrevealedElf, revealedLand);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }
