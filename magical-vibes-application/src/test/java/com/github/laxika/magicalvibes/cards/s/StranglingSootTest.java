@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AetherflameWall;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -71,5 +72,56 @@ class StranglingSootTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Strangling Soot");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Strangling Soot"));
+    }
+
+    @Test
+    @DisplayName("A target whose toughness increases above three survives resolution")
+    void increasedToughnessMakesTargetIllegal() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Sangrophage());
+        harness.setHand(player1, List.of(new StranglingSoot()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Sangrophage");
+        harness.assertInGraveyard(player1, "Strangling Soot");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flashback exiles the spell even when its target becomes illegal")
+    void flashbackExilesWhenTargetBecomesIllegal() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Sangrophage());
+        harness.setGraveyard(player1, List.of(new StranglingSoot()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castFlashback(player1, 0, target.getId());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Sangrophage");
+        harness.assertNotInGraveyard(player1, "Strangling Soot");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Strangling Soot"));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can destroy your own creature and goes to the graveyard when cast normally")
+    void destroysOwnCreatureAndGoesToGraveyard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Sangrophage());
+        harness.setHand(player1, List.of(new StranglingSoot()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Sangrophage");
+        harness.assertInGraveyard(player1, "Sangrophage");
+        harness.assertInGraveyard(player1, "Strangling Soot");
     }
 }
