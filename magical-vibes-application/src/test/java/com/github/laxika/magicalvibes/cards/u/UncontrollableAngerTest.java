@@ -152,5 +152,39 @@ class UncontrollableAngerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Opponent's enchanted creature must attack during its controller's combat")
+    void opponentCreatureMustAttack() {
+        Permanent creature = addCreatureReady(player2, new IsamaruHoundOfKonda());
+        harness.setHand(player1, List.of(new UncontrollableAnger()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+    }
+
+    @Test
+    @DisplayName("Aura does not resolve when its only target has left the battlefield")
+    void auraDoesNotResolveWhenTargetLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        harness.setHand(player1, List.of(new UncontrollableAnger()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerGraveyards.get(player1.getId()).add(creature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard() instanceof UncontrollableAnger);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof UncontrollableAnger);
+    }
 }
 
