@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TempleOfMalice.class})
 class TempleOfMaliceTest extends BaseCardTest {
 
     @Test
@@ -76,6 +78,45 @@ class TempleOfMaliceTest extends BaseCardTest {
         }
     }
 
+    @Test
+    @DisplayName("Temple of Malice's controller may keep the top card without changing either library")
+    void controllerKeepsTopCard() {
+        Card top = new TempleOfMalice();
+        Card second = new TempleOfMalice();
+        Card opponentTop = new TempleOfMalice();
+        harness.setLibrary(player2, List.of(top, second));
+        harness.setLibrary(player1, List.of(opponentTop));
+        playTempleOfMalice(player2);
+
+        harness.passBothPriorities();
+
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry).isNotNull();
+        assertThat(scry.playerId()).isEqualTo(player2.getId());
+        assertThat(scry.cards()).containsExactly(top);
+
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(top, second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(opponentTop);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Temple of Malice's scry resolves with an empty library without asking for a choice")
+    void scryWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        playTempleOfMalice(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findTemple(player1).isTapped()).isTrue();
+    }
+
     private void playTempleOfMalice(Player player) {
         harness.setHand(player, List.of(new TempleOfMalice()));
         harness.forceActivePlayer(player);
@@ -84,9 +125,8 @@ class TempleOfMaliceTest extends BaseCardTest {
     }
 
     private Permanent addTempleReady(Player player) {
-        Permanent temple = new Permanent(new TempleOfMalice());
+        Permanent temple = harness.addToBattlefieldAndReturn(player, new TempleOfMalice());
         temple.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(temple);
         return temple;
     }
 
