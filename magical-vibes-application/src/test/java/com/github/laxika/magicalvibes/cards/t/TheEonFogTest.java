@@ -66,6 +66,38 @@ class TheEonFogTest extends BaseCardTest {
         assertThat(opponentPermanent.isTapped()).isTrue();
     }
 
+    @Test
+    void untapStepsResumeAfterThePlaneLeaves() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        land.tap();
+
+        advanceToNextTurn(player1);
+        assertThat(land.isTapped()).isTrue();
+
+        gd.planechase.faceUp.clear();
+        advanceToNextTurn(player2);
+        advanceToNextTurn(player1);
+
+        assertThat(land.isTapped()).isFalse();
+    }
+
+    @Test
+    void chaosKeepsItsControllerWhenThePlanarControllerChangesBeforeResolution() {
+        Permanent firstPlayersLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent secondPlayersLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        firstPlayersLand.tap();
+        secondPlayersLand.tap();
+        harness.forceActivePlayer(player2);
+        gd.planechase.controllerId = player2.getId();
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        gd.planechase.controllerId = player1.getId();
+        harness.passBothPriorities();
+
+        assertThat(firstPlayersLand.isTapped()).isTrue();
+        assertThat(secondPlayersLand.isTapped()).isFalse();
+    }
+
     private void advanceToNextTurn(Player currentActivePlayer) {
         harness.forceActivePlayer(currentActivePlayer);
         harness.setHand(player1, List.of());
