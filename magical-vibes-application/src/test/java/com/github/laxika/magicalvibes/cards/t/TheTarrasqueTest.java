@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.y.YouComeToARiver;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TheTarrasque.class, HillGiant.class, Shock.class})
+@CardUsed({TheTarrasque.class, HillGiant.class, Shock.class, YouComeToARiver.class})
 class TheTarrasqueTest extends BaseCardTest {
 
     @Test
@@ -53,8 +54,7 @@ class TheTarrasqueTest extends BaseCardTest {
     @Test
     @DisplayName("A Tarrasque put onto the battlefield without being cast has neither conditional keyword ability")
     void putOntoBattlefieldWithoutCastingHasNoConditionalAbilities() {
-        Permanent tarrasque = new Permanent(new TheTarrasque());
-        gd.playerBattlefields.get(player1.getId()).add(tarrasque);
+        Permanent tarrasque = harness.addToBattlefieldAndReturn(player1, new TheTarrasque());
 
         assertThat(gqs.hasKeyword(gd, tarrasque, Keyword.HASTE)).isFalse();
 
@@ -97,11 +97,71 @@ class TheTarrasqueTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void payingWardAllowsOpponentsSpellToResolve() {
+        Permanent tarrasque = castTarrasque(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 10);
+
+        harness.castInstant(player2, 0, tarrasque.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(tarrasque.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    void controllersSpellDoesNotTriggerWard() {
+        Permanent tarrasque = castTarrasque(player1);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, tarrasque.getId());
+        harness.passBothPriorities();
+
+        assertThat(tarrasque.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Shock");
+    }
+
+    @Test
+    void attackTriggerDoesNotFightWhenTarrasqueLeavesBattlefield() {
+        Permanent tarrasque = castTarrasque(player1);
+        Permanent giant = addCreatureReady(player2, new HillGiant());
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, giant.getId());
+
+        harness.setHand(player1, List.of(new YouComeToARiver()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, 0, tarrasque.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "The Tarrasque");
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(giant.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void uncastTarrasqueStillFightsWhenItAttacks() {
+        Permanent tarrasque = addCreatureReady(player1, new TheTarrasque());
+        Permanent giant = addCreatureReady(player2, new HillGiant());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, giant.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Hill Giant");
+        assertThat(tarrasque.getMarkedDamage()).isEqualTo(3);
+    }
+
     private Permanent castTarrasque(Player player) {
-        harness.setHand(player, List.of(new TheTarrasque()));
-        harness.addMana(player, ManaColor.COLORLESS, 6);
-        harness.addMana(player, ManaColor.GREEN, 3);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new TheTarrasque(), "{6}{G}{G}{G}");
         harness.passBothPriorities();
         return findPermanent(player, "The Tarrasque");
     }
