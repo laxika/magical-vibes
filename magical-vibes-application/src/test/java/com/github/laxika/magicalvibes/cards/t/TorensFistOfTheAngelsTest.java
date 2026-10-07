@@ -3,12 +3,15 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TorensFistOfTheAngels.class, GrizzlyBears.class, GloriousAnthem.class, HillGiant.class})
 class TorensFistOfTheAngelsTest extends BaseCardTest {
 
     @Test
@@ -34,6 +38,8 @@ class TorensFistOfTheAngelsTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Human Soldier")).isEqualTo(1);
         Permanent token = findPermanent(player1, "Human Soldier");
         assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.getCard().getColors()).containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);
+        assertThat(token.getCard().getSubtypes()).containsExactlyInAnyOrder(CardSubtype.HUMAN, CardSubtype.SOLDIER);
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
     }
@@ -103,6 +109,73 @@ class TorensFistOfTheAngelsTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1));
         harness.passBothPriorities();
+
+        assertThat(torens.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void castingTorensDoesNotTriggerItsOwnAbility() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(new TorensFistOfTheAngels()));
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Torens, Fist of the Angels")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Human Soldier")).isZero();
+    }
+
+    @Test
+    void tokenIsCreatedBeforeCreatureSpellResolves() {
+        addReadyTorens(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Human Soldier")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Grizzly Bears")).isZero();
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Human Soldier")).isEqualTo(1);
+    }
+
+    @Test
+    void equalPowerAttackerDoesNotEnableTraining() {
+        Permanent torens = addReadyTorens(player1);
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(torens.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void greaterPowerCreatureMustAlsoAttack() {
+        Permanent torens = addReadyTorens(player1);
+        addCreatureReady(player1, new HillGiant());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(torens.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void multipleGreaterPowerAttackersTrainTorensOnlyOnce() {
+        Permanent torens = addReadyTorens(player1);
+        addCreatureReady(player1, new HillGiant());
+        addCreatureReady(player1, new HillGiant());
+
+        declareAttackers(List.of(0, 1, 2));
+        resolveAllTriggers();
 
         assertThat(torens.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
