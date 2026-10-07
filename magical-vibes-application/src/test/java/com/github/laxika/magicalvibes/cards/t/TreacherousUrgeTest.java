@@ -54,7 +54,7 @@ class TreacherousUrgeTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Gossamer Phantasm");
@@ -116,11 +116,67 @@ class TreacherousUrgeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The delayed sacrifice uses the stack before removing the creature")
+    void delayedSacrificeAllowsResponses() {
+        harness.setHand(player2, List.of(new GossamerPhantasm()));
+        castTreacherousUrge();
+        harness.handleCardChosen(player1, 0);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Gossamer Phantasm");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Gossamer Phantasm");
+        harness.assertInGraveyard(player2, "Gossamer Phantasm");
+    }
+
+    @Test
+    @DisplayName("The caster cannot sacrifice the creature after losing control before the end step")
+    void cannotSacrificeCreatureControlledByOpponent() {
+        harness.setHand(player2, List.of(new GossamerPhantasm()));
+        castTreacherousUrge();
+        harness.handleCardChosen(player1, 0);
+
+        Permanent creature = findPermanent(player1, "Gossamer Phantasm");
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerBattlefields.get(player2.getId()).add(creature);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Gossamer Phantasm");
+        harness.assertNotInGraveyard(player2, "Gossamer Phantasm");
+    }
+
+    @Test
+    @DisplayName("Losing control in response to the delayed trigger prevents the caster from sacrificing it")
+    void cannotSacrificeAfterControlChangesInResponse() {
+        harness.setHand(player2, List.of(new GossamerPhantasm()));
+        castTreacherousUrge();
+        harness.handleCardChosen(player1, 0);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        Permanent creature = findPermanent(player1, "Gossamer Phantasm");
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerBattlefields.get(player2.getId()).add(creature);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Gossamer Phantasm");
+        harness.assertNotInGraveyard(player2, "Gossamer Phantasm");
+    }
+
     private void castTreacherousUrge() {
         harness.setHand(player1, List.of(new TreacherousUrge()));
         addManaForSpell();
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
     }
 
     private void addManaForSpell() {
