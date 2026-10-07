@@ -31,8 +31,7 @@ class SuddenInsightTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SuddenInsight()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second, third);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth);
@@ -49,10 +48,59 @@ class SuddenInsightTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SuddenInsight()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second);
+    }
+
+    @Test
+    @DisplayName("An empty graveyard draws nothing and the resolving spell does not count itself")
+    void emptyGraveyardDoesNotCountResolvingSpell() {
+        Card top = new Island();
+        harness.setLibrary(player1, List.of(top));
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new SuddenInsight()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        harness.assertInGraveyard(player1, "Sudden Insight");
+    }
+
+    @Test
+    @DisplayName("A graveyard containing only lands draws nothing")
+    void landOnlyGraveyardDrawsNothing() {
+        Card top = new Island();
+        harness.setLibrary(player1, List.of(top));
+        harness.setGraveyard(player1, List.of(new Island(), new Island()));
+        harness.setHand(player1, List.of(new SuddenInsight()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+    }
+
+    @Test
+    @DisplayName("Counts mana values when the spell resolves rather than when it is cast")
+    void countsGraveyardAtResolution() {
+        Card first = new Island();
+        Card second = new Island();
+        Card third = new Island();
+        harness.setLibrary(player1, List.of(first, second, third));
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new SuddenInsight()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castInstant(player1, 0);
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new HillGiant()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
     }
 }
