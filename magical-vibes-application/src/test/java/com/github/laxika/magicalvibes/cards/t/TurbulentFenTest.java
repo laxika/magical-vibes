@@ -87,18 +87,64 @@ class TurbulentFenTest extends BaseCardTest {
         assertThat(fen.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Enters tapped when opponents control no lands")
+    void entersTappedWithoutOpponentLands() {
+        playTurbulentFen();
+
+        assertThat(findFen(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Enters untapped when opponents control more than eight lands")
+    void entersUntappedWithMoreThanEightOpponentLands() {
+        addLands(player2, 9);
+
+        playTurbulentFen();
+
+        assertThat(findFen(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Own lands cannot supplement seven opponent lands")
+    void ownLandsDoNotSupplementOpponentLands() {
+        addLands(player1, 1);
+        addLands(player2, 7);
+
+        playTurbulentFen();
+
+        assertThat(findFen(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Replacement applies when put onto the battlefield without a land play")
+    void entersTappedWithoutBeingPlayed() {
+        addLands(player2, 7);
+
+        Permanent fen = harness.enterBattlefieldAndReturn(player1, new TurbulentFen());
+
+        assertThat(fen.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Replacement uses the entering controller's opponents")
+    void enteringForOpponentCountsOurLands() {
+        addLands(player1, 8);
+
+        Permanent fen = harness.enterBattlefieldAndReturn(player2, new TurbulentFen());
+
+        assertThat(fen.isTapped()).isFalse();
+    }
+
     private void playTurbulentFen() {
         harness.setHand(player1, List.of(new TurbulentFen()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
     }
 
     private Permanent addReadyFen(Player player) {
-        Permanent fen = new Permanent(new TurbulentFen());
-        fen.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(fen);
-        return fen;
+        return harness.addToBattlefieldAndReturn(player, new TurbulentFen());
     }
 
     private void addLands(Player player, int count) {
