@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.p.Pariah;
 import com.github.laxika.magicalvibes.cards.k.KrosanReclamation;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TevalsJudgment.class, KrosanReclamation.class, Pariah.class})
+@CardUsed({TevalsJudgment.class, KrosanReclamation.class})
 class TevalsJudgmentTest extends BaseCardTest {
 
     private static final String DRAW = "Draw a card.";
@@ -65,7 +66,7 @@ class TevalsJudgmentTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new KrosanReclamation()));
         harness.setGraveyard(player1, List.of(new KrosanReclamation()));
-        harness.setLibrary(player1, List.of(new Pariah()));
+        harness.setLibrary(player1, List.of(new TevalsJudgment()));
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 1);
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 1);
         harness.castInstant(player1, 0, player1.getId());
@@ -81,11 +82,127 @@ class TevalsJudgmentTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
+    @Test
+    void simultaneousDeparturesTriggerOnlyOnce() {
+        addJudgmentAndReclamation();
+
+        triggerAndChoose(ZOMBIE);
+
+        assertThat(findPermanents(player1, "Zombie Druid")).singleElement()
+                .satisfies(token -> assertThat(token.getCard().getSubtypes())
+                        .containsExactlyInAnyOrder(CardSubtype.ZOMBIE, CardSubtype.DRUID));
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void fourthDepartureHasNoAvailableMode() {
+        addJudgmentAndReclamation();
+        triggerAndChoose(DRAW);
+        prepareAnotherReclamation();
+        triggerAndChoose(TREASURE);
+        prepareAnotherReclamation();
+        triggerAndChoose(ZOMBIE);
+        prepareAnotherReclamation();
+
+        harness.castInstant(player1, 0, player1.getId());
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        harness.handleMultipleCardsChosen(player1, choice.validCardIds());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Zombie Druid")).isEqualTo(1);
+    }
+
+    @Test
+    void chosenModesResetOnOpponentsTurn() {
+        addJudgmentAndReclamation();
+        triggerAndChoose(TREASURE);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player2, List.of(new TevalsJudgment(), new TevalsJudgment()));
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        prepareAnotherReclamation();
+        triggerAndChoose(TREASURE);
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+    }
+
+    @Test
+    void separateJudgmentsCanChooseTheSameMode() {
+        addJudgmentAndReclamation();
+        harness.addToBattlefield(player1, new TevalsJudgment());
+
+        harness.castInstant(player1, 0, player1.getId());
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        harness.handleMultipleCardsChosen(player1, choice.validCardIds());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, TREASURE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        harness.handleListChoice(player1, TREASURE);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+    }
+
+    @Test
+    void opponentsGraveyardDoesNotTriggerJudgment() {
+        addJudgmentAndReclamation();
+        harness.setGraveyard(player2, List.of(new TevalsJudgment()));
+
+        harness.castInstant(player1, 0, player2.getId());
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        harness.handleMultipleCardsChosen(player1, choice.validCardIds());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+        assertThat(countPermanents(player1, "Zombie Druid")).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void choosingNoGraveyardCardsDoesNotTriggerJudgment() {
+        addJudgmentAndReclamation();
+
+        harness.castInstant(player1, 0, player1.getId());
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    private void prepareAnotherReclamation() {
+        harness.setHand(player1, List.of(new KrosanReclamation()));
+        harness.setGraveyard(player1, List.of(new TevalsJudgment()));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 1);
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 1);
+    }
+
     private void addJudgmentAndReclamation() {
         harness.addToBattlefield(player1, new TevalsJudgment());
         harness.setGraveyard(player1, List.of(new KrosanReclamation(), new KrosanReclamation()));
         harness.setHand(player1, List.of(new KrosanReclamation()));
-        harness.setLibrary(player1, List.of(new Pariah()));
+        harness.setLibrary(player1, List.of(new TevalsJudgment()));
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 1);
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 1);
     }
