@@ -1,37 +1,33 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IntrepidTenderfoot;
+import com.github.laxika.magicalvibes.cards.h.HaliyaGuidedByLight;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TheSeriema.class, GrizzlyBears.class})
+@CardUsed({TheSeriema.class, IntrepidTenderfoot.class, HaliyaGuidedByLight.class})
 class TheSeriemaTest extends BaseCardTest {
 
     @Test
     void entersAndSearchesForLegendaryCreature() {
-        Card legendaryCreature = card("Legendary creature", CardType.CREATURE);
-        legendaryCreature.setSupertypes(Set.of(CardSupertype.LEGENDARY));
-        Card nonlegendaryCreature = card("Nonlegendary creature", CardType.CREATURE);
-        Card legendaryArtifact = card("Legendary artifact", CardType.ARTIFACT);
-        legendaryArtifact.setSupertypes(Set.of(CardSupertype.LEGENDARY));
-        setLibrary(nonlegendaryCreature, legendaryArtifact, legendaryCreature);
+        Card legendaryCreature = new HaliyaGuidedByLight();
+        Card nonlegendaryCreature = new IntrepidTenderfoot();
+        Card legendaryArtifact = new TheSeriema();
+        harness.setLibrary(player1, List.of(nonlegendaryCreature, legendaryArtifact, legendaryCreature));
         harness.setHand(player1, List.of(new TheSeriema()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -48,8 +44,7 @@ class TheSeriemaTest extends BaseCardTest {
         assertThat(search.params().reveals()).isTrue();
         assertThat(search.params().canFailToFind()).isTrue();
 
-        harness.getGameService().handleInteractionAnswer(gameData, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gameData.playerHands.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(legendaryCreature.getId()));
@@ -60,7 +55,7 @@ class TheSeriemaTest extends BaseCardTest {
     @Test
     void stationUsesTappedCreaturePowerAndUnlocksTheSeriemaAtSevenCounters() {
         Permanent seriema = harness.addToBattlefieldAndReturn(player1, new TheSeriema());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new IntrepidTenderfoot());
 
         harness.activateAbility(player1, battlefieldIndex(seriema), null, null);
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
@@ -81,14 +76,12 @@ class TheSeriemaTest extends BaseCardTest {
     @Test
     void grantsIndestructibleOnlyToOtherTappedLegendaryCreaturesYouControl() {
         harness.addToBattlefieldAndReturn(player1, new TheSeriema());
-        Card tappedLegendaryCard = card("Tapped legendary", CardType.CREATURE);
-        tappedLegendaryCard.setSupertypes(Set.of(CardSupertype.LEGENDARY));
-        Permanent tappedLegendary = addCreatureReady(player1, tappedLegendaryCard);
+        Permanent tappedLegendary = addCreatureReady(player1, new HaliyaGuidedByLight());
         tappedLegendary.tap();
-        Permanent untappedLegendary = addCreatureReady(player1, legendaryCreature("Untapped legendary"));
-        Permanent tappedNonlegendary = addCreatureReady(player1, card("Tapped nonlegendary", CardType.CREATURE));
+        Permanent untappedLegendary = addCreatureReady(player1, new HaliyaGuidedByLight());
+        Permanent tappedNonlegendary = addCreatureReady(player1, new IntrepidTenderfoot());
         tappedNonlegendary.tap();
-        Permanent opponentLegendary = addCreatureReady(player2, legendaryCreature("Opponent legendary"));
+        Permanent opponentLegendary = addCreatureReady(player2, new HaliyaGuidedByLight());
         opponentLegendary.tap();
 
         assertThat(gqs.hasKeyword(gd, tappedLegendary, Keyword.INDESTRUCTIBLE)).isTrue();
@@ -105,25 +98,55 @@ class TheSeriemaTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Card legendaryCreature(String name) {
-        Card card = card(name, CardType.CREATURE);
-        card.setSupertypes(Set.of(CardSupertype.LEGENDARY));
-        return card;
+    @Test
+    void stationCanTapASummoningSickCreatureWhileTheSeriemaIsTapped() {
+        Permanent seriema = harness.addToBattlefieldAndReturn(player1, new TheSeriema());
+        seriema.tap();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new IntrepidTenderfoot());
+
+        harness.activateAbility(player1, battlefieldIndex(seriema), null, null);
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(seriema.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
-    private Card card(String name, CardType type) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(type);
-        return card;
+    @Test
+    void losesCreatureStatusAndFlyingBelowSevenAndDoesNotProtectItself() {
+        Permanent seriema = harness.addToBattlefieldAndReturn(player1, new TheSeriema());
+        seriema.setCounterCount(CounterType.CHARGE, 7);
+        seriema.tap();
+
+        assertThat(gqs.isCreature(gd, seriema)).isTrue();
+        assertThat(gqs.hasKeyword(gd, seriema, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, seriema, Keyword.INDESTRUCTIBLE)).isFalse();
+
+        seriema.setCounterCount(CounterType.CHARGE, 6);
+
+        assertThat(gqs.isCreature(gd, seriema)).isFalse();
+        assertThat(gqs.hasKeyword(gd, seriema, Keyword.FLYING)).isFalse();
     }
 
-    private void setLibrary(Card... cards) {
-        List<Card> library = gd.playerDecks.get(player1.getId());
-        library.clear();
-        library.addAll(List.of(cards));
+    @Test
+    void stationCannotTapItselfOnceAnimated() {
+        Permanent seriema = harness.addToBattlefieldAndReturn(player1, new TheSeriema());
+        seriema.setCounterCount(CounterType.CHARGE, 7);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(seriema), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(seriema.isTapped()).isFalse();
     }
 
+    @Test
+    void stationCannotBeActivatedOutsideMainPhase() {
+        Permanent seriema = harness.addToBattlefieldAndReturn(player1, new TheSeriema());
+        Permanent creature = addCreatureReady(player1, new IntrepidTenderfoot());
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(seriema), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(creature.isTapped()).isFalse();
+    }
     private int battlefieldIndex(Permanent permanent) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
     }
