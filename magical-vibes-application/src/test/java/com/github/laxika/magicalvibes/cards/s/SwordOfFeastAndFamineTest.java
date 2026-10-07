@@ -8,10 +8,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,35 +18,23 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SwordOfFeastAndFamine.class, GrizzlyBears.class, SerraAngel.class, Forest.class})
 class SwordOfFeastAndFamineTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    
-
-    
-
-    
 
     @Test
     @DisplayName("Sword of Feast and Famine has equip {2} ability")
     void hasEquipAbility() {
-        SwordOfFeastAndFamine card = new SwordOfFeastAndFamine();
+        Permanent sword = addSwordReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{2}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getTargetFilter())
-                .isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(card.getActivatedAbilities().get(0).getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(EquipEffect.class);
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(sword.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(sword.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
     }
-
-    // ===== Static effects: power/toughness boost =====
 
     @Test
     @DisplayName("Equipped creature gets +2/+2")
@@ -75,8 +61,6 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
-
-    // ===== Static effects: protection from black and green =====
 
     @Test
     @DisplayName("Equipped creature has protection from black")
@@ -124,8 +108,6 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFrom(gd, creature, CardColor.GREEN)).isFalse();
     }
 
-    // ===== Combat damage trigger: discard =====
-
     @Test
     @DisplayName("Damaged player must discard a card when equipped creature deals combat damage")
     void discardOnCombatDamage() {
@@ -166,8 +148,6 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
         // But lands still untap (per MTG ruling)
         assertThat(land.isTapped()).isFalse();
     }
-
-    // ===== Combat damage trigger: untap lands =====
 
     @Test
     @DisplayName("Untaps all lands controller controls when equipped creature deals combat damage")
@@ -227,8 +207,6 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
         assertThat(otherCreature.isTapped()).isTrue();
     }
 
-    // ===== Both effects fire =====
-
     @Test
     @DisplayName("Both discard and untap fire when equipped creature deals combat damage")
     void bothEffectsFireOnCombatDamage() {
@@ -246,6 +224,8 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
 
         // Discard prompt appears
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(land1.isTapped()).isTrue();
+        assertThat(land2.isTapped()).isTrue();
         harness.handleCardChosen(player2, 0);
 
         // Discard happened
@@ -259,7 +239,31 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
-    // ===== No trigger when blocked =====
+    @Test
+    @DisplayName("Sword controller untaps their lands when another player's equipped creature hits them")
+    void swordControllerUntapsLandsRatherThanCreatureController() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent sword = addSwordReady(player2);
+        sword.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+        Permanent creatureControllersLand = addTappedLand(player1);
+        Permanent swordControllersLand = addTappedLand(player2);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new Forest()));
+
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(swordControllersLand.isTapped()).isFalse();
+        assertThat(creatureControllersLand.isTapped()).isTrue();
+    }
 
     @Test
     @DisplayName("No trigger when equipped creature is blocked and deals no player damage")
@@ -269,10 +273,8 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
 
-        // Blocker with 5 toughness survives the 4 power creature
-        Permanent blocker = new Permanent(new SerraAngel());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        // A white blocker can block despite protection from black and green.
+        Permanent blocker = addCreatureReady(player2, new SerraAngel());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -290,8 +292,6 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
         // Land still tapped
         assertThat(land.isTapped()).isTrue();
     }
-
-    // ===== Re-equip =====
 
     @Test
     @DisplayName("Sword can be moved to another creature")
@@ -319,11 +319,9 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFrom(gd, creature2, CardColor.GREEN)).isTrue();
     }
 
-    // ===== Animated equipment (creature itself deals combat damage) =====
-
     @Test
-    @DisplayName("Animated Sword triggers discard when it deals combat damage as a creature")
-    void animatedSwordTriggersDiscardOnCombatDamage() {
+    @DisplayName("Unattached animated Sword does not trigger discard from its own combat damage")
+    void animatedSwordDoesNotTriggerDiscardOnCombatDamage() {
         Permanent sword = addAnimatedSword(player1);
         sword.setAttacking(true);
 
@@ -331,19 +329,13 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
 
         resolveCombat();
 
-        // Game pauses for discard choice
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
-        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
-
-        harness.handleCardChosen(player2, 0);
-
-        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 
     @Test
-    @DisplayName("Animated Sword triggers untap when it deals combat damage as a creature")
-    void animatedSwordTriggersUntapOnCombatDamage() {
+    @DisplayName("Unattached animated Sword does not untap lands from its own combat damage")
+    void animatedSwordDoesNotTriggerUntapOnCombatDamage() {
         Permanent sword = addAnimatedSword(player1);
         sword.setAttacking(true);
 
@@ -352,12 +344,12 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(land.isTapped()).isFalse();
+        assertThat(land.isTapped()).isTrue();
     }
 
     @Test
-    @DisplayName("Animated Sword fires both discard and untap when dealing combat damage as a creature")
-    void animatedSwordFiresBothEffects() {
+    @DisplayName("Unattached animated Sword deals damage without triggering either effect")
+    void animatedSwordDealsDamageWithoutTriggering() {
         harness.setLife(player2, 20);
         Permanent sword = addAnimatedSword(player1);
         sword.setAttacking(true);
@@ -367,44 +359,29 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
 
         resolveCombat();
 
-        // Discard prompt appears
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
-        harness.handleCardChosen(player2, 0);
-
-        // Discard happened
-        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-
-        // Land untapped
-        assertThat(land.isTapped()).isFalse();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(land.isTapped()).isTrue();
 
         // Combat damage dealt (animated 3/3)
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
-    // ===== Helpers =====
-
     private Permanent addAnimatedSword(Player player) {
-        Permanent perm = new Permanent(new SwordOfFeastAndFamine());
-        perm.setSummoningSick(false);
+        Permanent perm = addSwordReady(player);
         perm.setAnimatedUntilEndOfTurn(true);
         perm.setAnimatedPower(3);
         perm.setAnimatedToughness(3);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addSwordReady(Player player) {
-        Permanent perm = new Permanent(new SwordOfFeastAndFamine());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new SwordOfFeastAndFamine());
     }
 
     private Permanent addTappedLand(Player player) {
-        Permanent perm = new Permanent(new Forest());
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new Forest());
         perm.tap();
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
