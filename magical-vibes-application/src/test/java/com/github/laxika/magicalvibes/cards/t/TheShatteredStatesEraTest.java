@@ -61,6 +61,61 @@ class TheShatteredStatesEraTest extends BaseCardTest {
         assertThat(conqueror.isTransformed()).isTrue();
     }
 
+    @Test
+    @DisplayName("Chapter I triggers when the Saga is cast and resolves")
+    void chapterITriggersOnEntry() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.tap();
+
+        harness.castFromHand(player1, new TheShatteredStatesEra(), "{4}{R}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+        assertThat(findPermanent(player1, "The Shattered States Era").getCounterCount(CounterType.LORE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Chapter I control and haste expire at cleanup")
+    void chapterIExpiresAtEndOfTurn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addSagaWithLore(0);
+        advanceToNextChapter();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Chapter II affects only creatures present at resolution and expires at cleanup")
+    void chapterIIBoostIsTemporaryAndDoesNotAffectLaterCreatures() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        addSagaWithLore(1);
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        Permanent laterCreature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+    }
+
     private Permanent addSagaWithLore(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheShatteredStatesEra());
         saga.setCounterCount(CounterType.LORE, loreCounters);
@@ -71,7 +126,6 @@ class TheShatteredStatesEraTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
     }
 }
