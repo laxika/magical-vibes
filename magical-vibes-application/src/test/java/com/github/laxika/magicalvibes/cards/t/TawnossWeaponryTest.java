@@ -12,10 +12,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TawnossWeaponry.class, GrizzlyBears.class, AmuletOfKroog.class})
+@CardUsed({TawnossWeaponry.class, GrizzlyBears.class, AmuletOfKroog.class, Twiddle.class})
 class TawnossWeaponryTest extends BaseCardTest {
 
     @Test
@@ -169,6 +171,65 @@ class TawnossWeaponryTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bear.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Untapping the artifact in response prevents the boost")
+    void untappingBeforeResolutionPreventsBoost() {
+        Permanent weaponry = addReadyWeaponry(player1);
+        Permanent bear = addReadyBear(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, bear.getId());
+
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, weaponry.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(weaponry.isTapped()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Reactivating after an untap does not restore the previous boost")
+    void reactivationDoesNotRestoreExpiredBoost() {
+        Permanent weaponry = addReadyWeaponry(player1);
+        Permanent firstBear = addReadyBear(player1);
+        Permanent secondBear = addReadyBear(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, firstBear.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, weaponry.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.activateAbility(player1, 0, null, secondBear.getId());
+        harness.passBothPriorities();
+
+        assertThat(weaponry.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, firstBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstBear)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondBear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, secondBear)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Removing the target in response leaves the artifact tapped without boosting another creature")
+    void removedTargetDoesNotRedirectBoost() {
+        Permanent weaponry = addReadyWeaponry(player1);
+        Permanent target = addReadyBear(player1);
+        Permanent otherBear = addReadyBear(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(weaponry.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, otherBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherBear)).isEqualTo(2);
     }
 
     private Permanent addReadyWeaponry(Player player) {
