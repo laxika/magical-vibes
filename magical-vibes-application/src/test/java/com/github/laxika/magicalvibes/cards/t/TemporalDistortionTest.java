@@ -13,7 +13,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TemporalDistortion.class, RagingKavu.class, Forest.class, ChromaticSphere.class})
+@CardUsed({TemporalDistortion.class, RagingKavu.class, Forest.class, ChromaticSphere.class,
+        MinimusContainment.class})
 class TemporalDistortionTest extends BaseCardTest {
 
     @Test
@@ -86,7 +87,6 @@ class TemporalDistortionTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(MinimusContainment.class)
     @DisplayName("Losing its abilities stops the opponent-permanent tap trigger")
     void losingAbilitiesStopsOpponentPermanentTapTrigger() {
         Permanent distortion = harness.addToBattlefieldAndReturn(player1, new TemporalDistortion());
@@ -108,7 +108,69 @@ class TemporalDistortionTest extends BaseCardTest {
         permanent.tap();
         harness.inMutationScope(
                 () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Tapping a land for mana queues an hourglass counter rather than placing it immediately")
+    void manaTapQueuesCounter() {
+        harness.addToBattlefield(player1, new TemporalDistortion());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(land.getCounterCount(CounterType.HOURGLASS)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(land.getCounterCount(CounterType.HOURGLASS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Upkeep removes counters only when its triggered ability resolves")
+    void upkeepRemovalUsesTheStack() {
+        harness.addToBattlefield(player1, new TemporalDistortion());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new RagingKavu());
+        creature.tap();
+        creature.setCounterCount(CounterType.HOURGLASS, 3);
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        advanceToUpkeep(player2);
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getCounterCount(CounterType.HOURGLASS)).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(creature.getCounterCount(CounterType.HOURGLASS)).isZero();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A pending tap trigger resolves after Temporal Distortion leaves, but counters alone do not prevent untapping")
+    void pendingTriggerSurvivesSourceLeaving() {
+        Permanent distortion = harness.addToBattlefieldAndReturn(player1, new TemporalDistortion());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new RagingKavu());
+        creature.tap();
+        harness.inMutationScope(
+                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, creature));
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(distortion);
+        gd.playerGraveyards.get(player1.getId()).add(distortion.getCard());
+        resolveAllTriggers();
+
+        assertThat(creature.getCounterCount(CounterType.HOURGLASS)).isEqualTo(1);
+
+        advanceToUpkeep(player2);
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(creature.getCounterCount(CounterType.HOURGLASS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 
 }
