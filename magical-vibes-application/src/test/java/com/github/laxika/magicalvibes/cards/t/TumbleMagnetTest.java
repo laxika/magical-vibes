@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.g.GraftedExoskeleton;
+import com.github.laxika.magicalvibes.cards.a.AlphaTyrranax;
+import com.github.laxika.magicalvibes.cards.t.TemperedSteel;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,9 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({TumbleMagnet.class, AlphaTyrranax.class, GraftedExoskeleton.class, TemperedSteel.class})
 class TumbleMagnetTest extends BaseCardTest {
-
-    // ===== Entering the battlefield with charge counters =====
 
     @Test
     @DisplayName("Enters the battlefield with 3 charge counters")
@@ -38,13 +37,11 @@ class TumbleMagnetTest extends BaseCardTest {
         assertThat(magnet.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
-    // ===== Activating ability: targeting creatures =====
-
     @Test
     @DisplayName("Activating ability puts it on the stack targeting a creature")
     void activatingTargetingCreaturePutsOnStack() {
-        Permanent magnet = addReadyMagnet(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addReadyMagnet(player1);
+        Permanent target = addCreatureReady(player2, new AlphaTyrranax());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -52,7 +49,6 @@ class TumbleMagnetTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Tumble Magnet");
         assertThat(entry.getTargetId()).isEqualTo(target.getId());
     }
 
@@ -60,7 +56,7 @@ class TumbleMagnetTest extends BaseCardTest {
     @DisplayName("Activating ability taps Tumble Magnet")
     void activatingTapsMagnet() {
         Permanent magnet = addReadyMagnet(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new AlphaTyrranax());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -71,7 +67,7 @@ class TumbleMagnetTest extends BaseCardTest {
     @DisplayName("Resolving ability taps target creature")
     void resolvingTapsTargetCreature() {
         addReadyMagnet(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new AlphaTyrranax());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -80,18 +76,16 @@ class TumbleMagnetTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Resolving ability removes a charge counter")
-    void resolvingRemovesChargeCounter() {
+    @DisplayName("Resolution leaves the charge counter spent during activation")
+    void resolutionDoesNotSpendAnotherCounter() {
         Permanent magnet = addReadyMagnet(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new AlphaTyrranax());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
         assertThat(magnet.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
-
-    // ===== Activating ability: targeting artifacts =====
 
     @Test
     @DisplayName("Can tap target artifact")
@@ -105,8 +99,6 @@ class TumbleMagnetTest extends BaseCardTest {
         assertThat(targetArtifact.isTapped()).isTrue();
     }
 
-    // ===== Invalid targets =====
-
     @Test
     @DisplayName("Cannot target an enchantment")
     void cannotTargetEnchantment() {
@@ -118,13 +110,11 @@ class TumbleMagnetTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an artifact or creature");
     }
 
-    // ===== Charge counter depletion =====
-
     @Test
     @DisplayName("Can activate multiple times with enough counters (untapping between)")
     void canActivateMultipleTimes() {
         Permanent magnet = addReadyMagnet(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new AlphaTyrranax());
 
         // First activation
         harness.activateAbility(player1, 0, null, target.getId());
@@ -151,33 +141,29 @@ class TumbleMagnetTest extends BaseCardTest {
     void cannotActivateWithNoCounters() {
         Permanent magnet = addReadyMagnet(player1);
         magnet.setCounterCount(CounterType.CHARGE, 0);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new AlphaTyrranax());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Cannot activate when tapped =====
 
     @Test
     @DisplayName("Cannot activate ability when already tapped")
     void cannotActivateWhenTapped() {
         Permanent magnet = addReadyMagnet(player1);
         magnet.tap();
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new AlphaTyrranax());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
 
-    // ===== Can target own permanents =====
-
     @Test
     @DisplayName("Can tap own creature")
     void canTapOwnCreature() {
         addReadyMagnet(player1);
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new AlphaTyrranax());
 
         harness.activateAbility(player1, 0, null, ownCreature.getId());
         harness.passBothPriorities();
@@ -185,13 +171,11 @@ class TumbleMagnetTest extends BaseCardTest {
         assertThat(ownCreature.isTapped()).isTrue();
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addReadyMagnet(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new AlphaTyrranax());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -202,17 +186,75 @@ class TumbleMagnetTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Charge counter is paid immediately, before the target is tapped")
+    void paysCounterDuringActivation() {
+        Permanent magnet = addReadyMagnet(player1);
+        Permanent target = addCreatureReady(player2, new AlphaTyrranax());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(magnet.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(magnet.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+        harness.passBothPriorities();
+        assertThat(magnet.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can activate on the turn it enters and target itself")
+    void canActivateImmediatelyTargetingItself() {
+        harness.setHand(player1, List.of(new TumbleMagnet()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        Permanent magnet = findMagnet(player1);
+
+        harness.activateAbility(player1, 0, null, magnet.getId());
+        harness.passBothPriorities();
+
+        assertThat(magnet.isTapped()).isTrue();
+        assertThat(magnet.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An already tapped creature is a legal target")
+    void canTargetTappedCreature() {
+        Permanent magnet = addReadyMagnet(player1);
+        Permanent target = addCreatureReady(player2, new AlphaTyrranax());
+        target.tap();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(magnet.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability still resolves after Tumble Magnet leaves the battlefield")
+    void resolvesWithoutSource() {
+        addReadyMagnet(player1);
+        Permanent target = addCreatureReady(player2, new AlphaTyrranax());
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addReadyMagnet(Player player) {
-        TumbleMagnet card = new TumbleMagnet();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new TumbleMagnet());
         perm.setSummoningSick(false);
         perm.setCounterCount(CounterType.CHARGE, 3);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
@@ -221,16 +263,10 @@ class TumbleMagnetTest extends BaseCardTest {
     }
 
     private Permanent addReadyArtifact(Player player) {
-        AngelsFeather card = new AngelsFeather();
-        Permanent perm = new Permanent(card);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new GraftedExoskeleton());
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        Pacifism card = new Pacifism();
-        Permanent perm = new Permanent(card);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new TemperedSteel());
     }
 }
