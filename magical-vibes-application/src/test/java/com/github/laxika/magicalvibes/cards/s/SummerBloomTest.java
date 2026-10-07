@@ -129,4 +129,40 @@ class SummerBloomTest extends BaseCardTest {
 
         assertThat(gd.getMaxLandsThisTurn(player1.getId())).isEqualTo(7);
     }
+
+    @Test
+    @DisplayName("Additional land plays are granted only when Summer Bloom resolves")
+    void grantsAdditionalPlaysOnlyOnResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new SummerBloom(), "{1}{G}");
+
+        assertThat(gd.getMaxLandsThisTurn(player1.getId())).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getMaxLandsThisTurn(player1.getId())).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Unused additional land plays remain available in the second main phase")
+    void unusedLandPlaysRemainAvailableInSecondMainPhase() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new SummerBloom(),
+                new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.playLand(player1, 0);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        for (int i = 0; i < 3; i++) {
+            harness.playLand(player1, 0);
+        }
+
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(4);
+        assertThat(harness.getGameActionAvailabilityService().getPlayableCardIndices(gd, player1.getId()))
+                .doesNotContain(0);
+    }
 }
