@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheCrystalsChosen.class, GrizzlyBears.class})
+@CardUsed({TheCrystalsChosen.class, GrizzlyBears.class, Plains.class})
 class TheCrystalsChosenTest extends BaseCardTest {
 
     @Test
@@ -23,11 +23,7 @@ class TheCrystalsChosenTest extends BaseCardTest {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.setHand(player1, List.of(new TheCrystalsChosen()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new TheCrystalsChosen(), "{5}{W}{W}");
         harness.passBothPriorities();
 
         List<Permanent> heroes = gd.playerBattlefields.get(player1.getId()).stream()
@@ -42,5 +38,38 @@ class TheCrystalsChosenTest extends BaseCardTest {
         });
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Resolves without existing creatures and gives each new Hero a counter")
+    void createsHeroesOnEmptyBattlefield() {
+        harness.castFromHand(player1, new TheCrystalsChosen(), "{5}{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(4).allSatisfy(hero -> {
+            assertThat(hero.getCard().isToken()).isTrue();
+            assertThat(hero.getCard().getSubtypes()).containsExactly(CardSubtype.HERO);
+            assertThat(hero.getCard().getColors()).isEmpty();
+            assertThat(hero.isTapped()).isFalse();
+            assertThat(hero.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+            assertThat(hero.getEffectivePower()).isEqualTo(2);
+            assertThat(hero.getEffectiveToughness()).isEqualTo(2);
+        });
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not put counters on noncreature permanents")
+    void excludesNoncreaturePermanents() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
+
+        harness.castFromHand(player1, new TheCrystalsChosen(), "{5}{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(5);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent != land)).allSatisfy(hero ->
+                assertThat(hero.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1));
     }
 }
