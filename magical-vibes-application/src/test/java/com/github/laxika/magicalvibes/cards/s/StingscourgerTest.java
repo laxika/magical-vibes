@@ -125,6 +125,47 @@ class StingscourgerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Stingscourger");
     }
 
+    @Test
+    @DisplayName("Echo still triggers when there is no legal target for the ETB ability")
+    void echoTriggersWithoutAnEtbTarget() {
+        harness.castFromHand(player1, new Stingscourger(), "{1}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Stingscourger");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertNotOnBattlefield(player1, "Stingscourger");
+        harness.assertInGraveyard(player1, "Stingscourger");
+    }
+
+    @Test
+    @DisplayName("Echo still triggers when the ETB target leaves before resolution")
+    void echoTriggersAfterEtbTargetBecomesIllegal() {
+        var target = harness.addToBattlefieldAndReturn(player2, new Stingscourger());
+        prepareStingscourger();
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, target));
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Stingscourger");
+        harness.assertInHand(player2, "Stingscourger");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertNotOnBattlefield(player1, "Stingscourger");
+        harness.assertInGraveyard(player1, "Stingscourger");
+    }
+
     private void prepareStingscourger() {
         harness.setHand(player1, List.of(new Stingscourger()));
         harness.addMana(player1, ManaColor.RED, 1);
