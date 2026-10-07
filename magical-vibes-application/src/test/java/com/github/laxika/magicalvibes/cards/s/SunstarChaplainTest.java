@@ -114,10 +114,124 @@ class SunstarChaplainTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void rechecksTappedCreatureCountOnResolution() {
+        Permanent chaplain = addCreatureReady(player1, new SunstarChaplain());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        first.tap();
+        second.tap();
+
+        advanceToEndStep(player1);
+        harness.handlePermanentChosen(player1, chaplain.getId());
+        first.untap();
+        harness.passBothPriorities();
+
+        assertThat(chaplain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void countsTappedChaplainAndCanTargetItself() {
+        Permanent chaplain = addCreatureReady(player1, new SunstarChaplain());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        chaplain.tap();
+        other.tap();
+
+        advanceToEndStep(player1);
+        harness.handlePermanentChosen(player1, chaplain.getId());
+        harness.passBothPriorities();
+
+        assertThat(chaplain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void doesNotCountOpponentsTappedCreatures() {
+        Permanent chaplain = addCreatureReady(player1, new SunstarChaplain());
+        chaplain.tap();
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        opponentCreature.tap();
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingInteractions).isEmpty();
+        assertThat(chaplain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsEndStep() {
+        Permanent chaplain = addCreatureReady(player1, new SunstarChaplain());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        chaplain.tap();
+        other.tap();
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingInteractions).isEmpty();
+    }
+
+    @Test
+    void cannotTargetOpponentsCreatureWithEndStepAbility() {
+        Permanent chaplain = addCreatureReady(player1, new SunstarChaplain());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        chaplain.tap();
+        other.tap();
+
+        advanceToEndStep(player1);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, chaplain.getId());
+        harness.passBothPriorities();
+
+        assertThat(chaplain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void canRemoveOwnCounterWhileTappedAndSummoningSick() {
+        Permanent chaplain = harness.addToBattlefieldAndReturn(player1, new SunstarChaplain());
+        chaplain.setSummoningSick(true);
+        chaplain.tap();
+        chaplain.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(chaplain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(target.isTapped()).isFalse();
+        harness.passBothPriorities();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotRemoveCounterFromNoncreatureOrOpponentsCreature() {
+        addCreatureReady(player1, new SunstarChaplain());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        artifact.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        opponentCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(artifact.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opponentCreature.isTapped()).isFalse();
+    }
+
     private void advanceToEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.END_STEP);
     }
 }
