@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TwinBolt.class, GrizzlyBears.class})
+@CardUsed({TwinBolt.class, GrizzlyBears.class, Forest.class})
 class TwinBoltTest extends BaseCardTest {
 
     @Test
@@ -62,5 +63,98 @@ class TwinBoltTest extends BaseCardTest {
                 bears2.getId(), 1,
                 bears3.getId(), 1
         ))).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void dealsLethalDamageToOneCreature() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new TwinBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.castInstant(player1, 0, Map.of(bears.getId(), 2));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Twin Bolt");
+    }
+
+    @Test
+    void canDivideDamageBetweenBothPlayers() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new TwinBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0, Map.of(player1.getId(), 1, player2.getId(), 1));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void cannotAssignZeroDamageToATarget() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new TwinBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                Map.of(player1.getId(), 0, player2.getId(), 2)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotAssignLessThanTwoTotalDamage() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new TwinBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, Map.of(player2.getId(), 1)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotAssignMoreThanTwoTotalDamage() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new TwinBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, Map.of(player2.getId(), 3)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotTargetANoncreatureLand() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new TwinBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, Map.of(forest.getId(), 2)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotRedistributeDamageWhenOneTargetLeavesTheBattlefield() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new TwinBolt(), new TwinBolt()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.setLife(player2, 20);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.castInstant(player1, 0, Map.of(bears.getId(), 1, player2.getId(), 1));
+        harness.castInstant(player1, 0, Map.of(bears.getId(), 2));
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof TwinBolt).hasSize(2);
     }
 }
