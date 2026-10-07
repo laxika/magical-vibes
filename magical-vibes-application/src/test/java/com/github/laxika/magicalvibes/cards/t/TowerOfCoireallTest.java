@@ -67,12 +67,8 @@ class TowerOfCoireallTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new LandLeeches());
         Permanent wall = addCreatureReady(player1, new CarnivorousPlant());
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        harness.inMutationScope(() -> harness.getCombatAttackService()
-                .declareAttackers(gd, player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)), null));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker))));
 
         harness.activateAbility(player1, 0, null, attacker.getId());
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
@@ -82,6 +78,53 @@ class TowerOfCoireallTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player1.getId()).indexOf(wall),
                 gd.playerBattlefields.get(player2.getId()).indexOf(attacker)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("non-Wall creatures");
+    }
+
+    @Test
+    @DisplayName("Walls can still block creatures that were not targeted")
+    void untargetedCreatureCanBeBlockedByWall() {
+        activateTowerAndSetAttacker();
+        Permanent otherAttacker = addCreatureReady(player1, new LandLeeches());
+        otherAttacker.setAttacking(true);
+        Permanent wall = addCreatureReady(player2, new CarnivorousPlant());
+
+        prepareDeclareBlockers();
+        declareBlock(wall, otherAttacker);
+
+        assertThat(wall.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A noncreature cannot be targeted and an illegal activation does not tap the Tower")
+    void noncreatureCannotBeTargeted() {
+        Permanent tower = harness.addToBattlefieldAndReturn(player1, new TowerOfCoireall());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, tower.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(tower.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability resolves even if the Tower leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        Permanent tower = harness.addToBattlefieldAndReturn(player1, new TowerOfCoireall());
+        Permanent attacker = addCreatureReady(player1, new LandLeeches());
+        Permanent wall = addCreatureReady(player2, new CarnivorousPlant());
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.inMutationScope(() -> {
+            gd.playerBattlefields.get(player1.getId()).remove(tower);
+            gd.playerGraveyards.get(player1.getId()).add(tower.getCard());
+        });
+        harness.passBothPriorities();
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> declareBlock(wall, attacker))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("non-Wall creatures");
     }
