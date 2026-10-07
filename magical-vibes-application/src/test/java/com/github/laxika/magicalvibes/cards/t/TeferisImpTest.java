@@ -86,4 +86,45 @@ class TeferisImpTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedCard);
     }
+
+    @Test
+    @DisplayName("Phasing out with an empty hand does not require a discard choice")
+    void effectDrivenPhaseOutWithEmptyHand() {
+        Permanent imp = harness.addToBattlefieldAndReturn(player1, new TeferisImp());
+        harness.setHand(player1, List.of(new RealityRipple()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, imp.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(imp);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent-controlled Imp makes its controller discard, not the spell's caster")
+    void opponentControlledImpDiscardsFromItsControllersHand() {
+        Permanent imp = harness.addToBattlefieldAndReturn(player2, new TeferisImp());
+        Card retainedCard = new Island();
+        Card discardedCard = new Island();
+        harness.setHand(player1, List.of(new RealityRipple(), retainedCard));
+        harness.setHand(player2, List.of(discardedCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, imp.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(imp);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retainedCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(discardedCard);
+    }
 }
