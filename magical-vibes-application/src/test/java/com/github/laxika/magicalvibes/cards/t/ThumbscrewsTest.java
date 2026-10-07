@@ -112,4 +112,62 @@ class ThumbscrewsTest extends BaseCardTest {
         assertThat(choice.validPermanentIds()).containsExactly(player2.getId());
         assertThat(choice.validPermanentIds()).doesNotContain(hawk.getId(), player1.getId());
     }
+
+    @Test
+    @DisplayName("Does not trigger during the opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new Thumbscrews());
+        harness.setHand(player1, handOf(5));
+        harness.setHand(player2, handOf(5));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("The opponent's large hand cannot satisfy the controller's hand-size condition")
+    void opponentsHandDoesNotSatisfyCondition() {
+        harness.addToBattlefield(player1, new Thumbscrews());
+        harness.setHand(player1, handOf(4));
+        harness.setHand(player2, handOf(7));
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Reaching five cards after upkeep begins does not create a trigger")
+    void gainingCardsAfterUpkeepBeginsDoesNotTrigger() {
+        harness.addToBattlefield(player1, new Thumbscrews());
+        harness.setHand(player1, handOf(4));
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        harness.setHand(player1, handOf(5));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        harness.passBothPriorities();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A temporary drop below five cards does not stop damage if the hand recovers before resolution")
+    void dealsDamageIfHandRecoversBeforeResolution() {
+        harness.addToBattlefield(player1, new Thumbscrews());
+        harness.setHand(player1, handOf(5));
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.setHand(player1, handOf(4));
+        harness.setHand(player1, handOf(6));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
 }
