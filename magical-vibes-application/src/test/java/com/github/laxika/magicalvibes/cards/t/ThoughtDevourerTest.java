@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,8 +15,34 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThoughtDevourer.class, GrizzlyBears.class, Forest.class, Mountain.class, Plains.class})
+@CardUsed({ThoughtDevourer.class, Forest.class, Mountain.class, Plains.class})
 class ThoughtDevourerTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Excess cards remain until cleanup, then the controller discards down to three")
+    void excessCardsAreDiscardedOnlyAtCleanup() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(), new Forest()
+        ));
+
+        harness.enterBattlefieldAndReturn(player1, new ThoughtDevourer());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                .isEqualTo(2);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+    }
 
     @Test
     @DisplayName("Controller must discard down to three during cleanup")
@@ -26,7 +51,7 @@ class ThoughtDevourerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.setHand(player1, new ArrayList<>(List.of(
-                new GrizzlyBears(), new Forest(), new Mountain(), new Plains()
+                new Forest(), new Forest(), new Mountain(), new Plains()
         )));
 
         gs.advanceStep(gd);
@@ -43,7 +68,7 @@ class ThoughtDevourerTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
         harness.setHand(player2, new ArrayList<>(List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new Forest(), new Forest(), new Forest(),
                 new Forest(), new Forest(), new Mountain(), new Plains(), new Plains()
         )));
 
@@ -61,7 +86,7 @@ class ThoughtDevourerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.setHand(player1, new ArrayList<>(List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new Forest(), new Forest(), new Forest(),
                 new Forest(), new Forest(), new Mountain(), new Plains(), new Plains()
         )));
 
@@ -78,7 +103,7 @@ class ThoughtDevourerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.setHand(player1, new ArrayList<>(List.of(
-                new GrizzlyBears(), new Forest(), new Mountain()
+                new Forest(), new Forest(), new Mountain()
         )));
 
         gs.advanceStep(gd);
@@ -94,7 +119,7 @@ class ThoughtDevourerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ThoughtDevourer());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player1, new ArrayList<>(List.of(new Forest())));
 
         gs.advanceStep(gd);
 
