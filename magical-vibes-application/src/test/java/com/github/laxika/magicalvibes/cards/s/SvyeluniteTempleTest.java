@@ -65,4 +65,41 @@ class SvyeluniteTempleTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Svyelunite Temple");
         harness.assertInGraveyard(player1, "Svyelunite Temple");
     }
+
+    @Test
+    @DisplayName("A newly played Temple cannot produce mana or be sacrificed while tapped")
+    void newlyPlayedTempleCannotActivateEitherManaAbility() {
+        harness.setHand(player1, List.of(new SvyeluniteTemple()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        harness.assertOnBattlefield(player1, "Svyelunite Temple");
+        harness.assertNotInGraveyard(player1, "Svyelunite Temple");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Temple can produce mana again after untapping, then sacrifice for two more")
+    void canUseBothManaAbilitiesAcrossUntapSteps() {
+        harness.addToBattlefield(player1, new SvyeluniteTemple());
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.stack).isEmpty();
+
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(3);
+        harness.assertNotOnBattlefield(player1, "Svyelunite Temple");
+        harness.assertInGraveyard(player1, "Svyelunite Temple");
+        assertThat(gd.stack).isEmpty();
+    }
 }
