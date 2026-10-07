@@ -52,8 +52,7 @@ class StenchOfDecayTest extends BaseCardTest {
         assertThat(crow.getEffectivePower()).isEqualTo(0);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(crow.getEffectivePower()).isEqualTo(1);
         assertThat(crow.getEffectiveToughness()).isEqualTo(2);
@@ -68,6 +67,42 @@ class StenchOfDecayTest extends BaseCardTest {
 
         assertThat(laterCrow.getEffectivePower()).isEqualTo(1);
         assertThat(laterCrow.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Creatures entering while the spell is on the stack are affected")
+    void affectsCreaturesEnteringBeforeResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new StenchOfDecay(), "{1}{B}{B}");
+
+        Permanent crow = addCreatureReady(player2, new StormCrow());
+        Permanent glider = addCreatureReady(player2, new AesthirGlider());
+        harness.passBothPriorities();
+
+        assertThat(crow.getEffectivePower()).isEqualTo(0);
+        assertThat(crow.getEffectiveToughness()).isEqualTo(1);
+        assertThat(glider.getEffectivePower()).isEqualTo(2);
+        assertThat(glider.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple casts accumulate and kill two-toughness nonartifact creatures")
+    void multipleCastsAccumulate() {
+        Permanent ownCrow = addCreatureReady(player1, new StormCrow());
+        Permanent opponentCrow = addCreatureReady(player2, new StormCrow());
+        Permanent glider = addCreatureReady(player2, new AesthirGlider());
+
+        castStench();
+        castStench();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ownCrow);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownCrow.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opponentCrow);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentCrow.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(glider);
+        assertThat(glider.getEffectivePower()).isEqualTo(2);
+        assertThat(glider.getEffectiveToughness()).isEqualTo(1);
     }
 
     private void castStench() {
