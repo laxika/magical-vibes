@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SurgeEngine.class, Forest.class})
 class SurgeEngineTest extends BaseCardTest {
 
     @Test
@@ -57,7 +59,7 @@ class SurgeEngineTest extends BaseCardTest {
 
     @Test
     void drawsThreeCardsOnlyOnceAndRequiresBlue() {
-        Permanent engine = addCreatureReady(player1, new SurgeEngine());
+        addCreatureReady(player1, new SurgeEngine());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.BLUE, 10);
@@ -80,5 +82,68 @@ class SurgeEngineTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("activated only once");
+    }
+
+    @Test
+    void cannotUpgradeBeforeDefenderRemovalResolves() {
+        Permanent engine = addCreatureReady(player1, new SurgeEngine());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must not have defender");
+
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, engine)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, engine)).isEqualTo(4);
+    }
+
+    @Test
+    void drawActivationIsConsumedBeforeResolutionAndIsSeparateForEachPermanent() {
+        addCreatureReady(player1, new SurgeEngine());
+        addCreatureReady(player1, new SurgeEngine());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 26);
+
+        for (int index = 0; index < 2; index++) {
+            harness.activateAbility(player1, index, 0, null, null);
+            harness.passBothPriorities();
+            harness.activateAbility(player1, index, 1, null, null);
+            harness.passBothPriorities();
+        }
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("activated only once");
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(6);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void defenderRemovalAndUnblockabilitySurviveTurnCleanup() {
+        Permanent engine = addCreatureReady(player1, new SurgeEngine());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(engine.hasKeyword(Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, engine)).isTrue();
     }
 }
