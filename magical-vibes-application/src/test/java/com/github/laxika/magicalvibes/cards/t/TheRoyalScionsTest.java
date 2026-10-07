@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.ScorchingDragonfire;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheRoyalScions.class, Forest.class, GrizzlyBears.class})
+@CardUsed({TheRoyalScions.class, Forest.class, GrizzlyBears.class, ScorchingDragonfire.class})
 class TheRoyalScionsTest extends BaseCardTest {
 
     @Test
@@ -82,15 +84,77 @@ class TheRoyalScionsTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
 
+    @Test
+    @DisplayName("The first +1 can discard the card it just drew from an empty hand")
+    void firstPlusOneDiscardsNewlyDrawnCard() {
+        addReadyScions(player1, 5);
+        Card drawn = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    @DisplayName("The ultimate's damage uses hand size at resolution and survives losing its source")
+    void ultimateUsesCurrentHandSizeAfterResponseRemovesSource() {
+        Permanent scions = addReadyScions(player1, 9);
+        harness.setHand(player1, List.of(new ScorchingDragonfire()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, scions.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(scions);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("The ultimate can deal damage to a planeswalker")
+    void ultimateDamagesPlaneswalker() {
+        addReadyScions(player1, 8);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TheRoyalScions());
+        target.setCounterCount(CounterType.LOYALTY, 7);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(scionLoyalty(target)).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
     private int scionLoyalty(Permanent scions) {
         return scions.getCounterCount(CounterType.LOYALTY);
     }
 
     private Permanent addReadyScions(Player player, int loyalty) {
-        Permanent scions = new Permanent(new TheRoyalScions());
+        Permanent scions = harness.addToBattlefieldAndReturn(player, new TheRoyalScions());
         scions.setCounterCount(CounterType.LOYALTY, loyalty);
         scions.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(scions);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return scions;
