@@ -47,6 +47,61 @@ class SteelfinWhaleTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Affinity leaves the unreduced generic cost payable")
+    void partialAffinityReduction() {
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new Spellbook());
+        }
+        harness.setHand(player1, List.of(new SteelfinWhale()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Excess affinity cannot pay the blue mana requirement")
+    void excessAffinityDoesNotReduceColoredCost() {
+        for (int i = 0; i < 7; i++) {
+            harness.addToBattlefield(player1, new Spellbook());
+        }
+        harness.setHand(player1, List.of(new SteelfinWhale()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Artifact entry puts an untap ability on the stack before untapping")
+    void untapWaitsForTriggerResolution() {
+        Permanent whale = addCreatureReady(player1, new SteelfinWhale());
+        whale.tap();
+        harness.setHand(player1, List.of(new Spellbook()));
+        harness.castArtifact(player1, 0);
+
+        assertThat(whale.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(whale.isTapped()).isTrue();
+
+        resolveAllTriggers();
+
+        assertThat(whale.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("An artifact you control entering untaps Steelfin Whale")
     void ownArtifactEntryUntapsSteelfinWhale() {
         Permanent whale = addCreatureReady(player1, new SteelfinWhale());
