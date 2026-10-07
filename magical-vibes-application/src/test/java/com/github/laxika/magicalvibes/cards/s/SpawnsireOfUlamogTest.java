@@ -4,12 +4,14 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HandOfEmrakul;
 import com.github.laxika.magicalvibes.cards.p.PathrazerOfUlamog;
+import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SpawnsireOfUlamog.class, Forest.class, GrizzlyBears.class,
+        HandOfEmrakul.class, PathrazerOfUlamog.class})
 class SpawnsireOfUlamogTest extends BaseCardTest {
 
     @Test
@@ -83,5 +87,63 @@ class SpawnsireOfUlamogTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Hand of Emrakul");
         harness.assertOnBattlefield(player1, "Pathrazer of Ulamog");
+    }
+
+    @Test
+    @DisplayName("The defending player can sacrifice a land instead of a creature")
+    void defenderChoosesWhichPermanentToSacrifice() {
+        Permanent spawnsire = addCreatureReady(player1, new SpawnsireOfUlamog());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addToBattlefield(player2, new HandOfEmrakul());
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(spawnsire)));
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of(forest.getId()));
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertOnBattlefield(player2, "Hand of Emrakul");
+        harness.assertOnBattlefield(player1, "Spawnsire of Ulamog");
+    }
+
+    @Test
+    @DisplayName("The controller can decline one Eldrazi and cast another")
+    void canCastOnlySomeOutsideGameEldrazi() {
+        harness.addToBattlefield(player1, new SpawnsireOfUlamog());
+        HandOfEmrakul hand = new HandOfEmrakul();
+        PathrazerOfUlamog pathrazer = new PathrazerOfUlamog();
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(hand, pathrazer)));
+        harness.addMana(player1, ManaColor.COLORLESS, 20);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(hand);
+        harness.assertNotOnBattlefield(player1, "Hand of Emrakul");
+        harness.assertOnBattlefield(player1, "Pathrazer of Ulamog");
+    }
+
+    @Test
+    @CardUsed({RuleOfLaw.class})
+    @DisplayName("Rule of Law still prevents casting a second outside-game Eldrazi")
+    void outsideGameCastingRespectsRuleOfLaw() {
+        harness.addToBattlefield(player1, new SpawnsireOfUlamog());
+        harness.addToBattlefield(player1, new RuleOfLaw());
+        HandOfEmrakul hand = new HandOfEmrakul();
+        PathrazerOfUlamog pathrazer = new PathrazerOfUlamog();
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(hand, pathrazer)));
+        harness.addMana(player1, ManaColor.COLORLESS, 20);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(pathrazer);
     }
 }
