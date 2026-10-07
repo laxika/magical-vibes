@@ -7,12 +7,16 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StudentOfWarfare.class})
 class StudentOfWarfareTest extends BaseCardTest {
 
     @Test
@@ -70,6 +74,80 @@ class StudentOfWarfareTest extends BaseCardTest {
                 .hasMessageContaining("sorcery speed");
 
         assertThat(student.getCounterCount(CounterType.LEVEL)).isZero();
+    }
+
+    @Test
+    void levelUpWaitsForResolutionAndCannotRespondToItself() {
+        Permanent student = addCreatureReady(player1, new StudentOfWarfare());
+        prepareForLeveling(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(student.getCounterCount(CounterType.LEVEL)).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+
+        harness.passBothPriorities();
+        assertThat(student.getCounterCount(CounterType.LEVEL)).isEqualTo(1);
+    }
+
+    @Test
+    void levelUpCannotBeActivatedDuringOpponentsMainPhase() {
+        Permanent student = addCreatureReady(player1, new StudentOfWarfare());
+        prepareForLeveling(player1);
+        harness.forceActivePlayer(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        assertThat(student.getCounterCount(CounterType.LEVEL)).isZero();
+    }
+
+    @Test
+    void tappedSummoningSickStudentCanLevelBeyondSevenInSecondMainPhase() {
+        Permanent student = harness.addToBattlefieldAndReturn(player1, new StudentOfWarfare());
+        student.setSummoningSick(true);
+        student.setTapped(true);
+        student.setCounterCount(CounterType.LEVEL, 7);
+        prepareForLeveling(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        levelUp(player1);
+
+        assertThat(student.getCounterCount(CounterType.LEVEL)).isEqualTo(8);
+        assertStats(student, 4, 4);
+        assertThat(gqs.hasKeyword(gd, student, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(student.isTapped()).isTrue();
+    }
+
+    @Test
+    void losingLevelCountersRestoresEarlierLevels() {
+        Permanent student = addCreatureReady(player1, new StudentOfWarfare());
+        student.setCounterCount(CounterType.LEVEL, 7);
+        assertStats(student, 4, 4);
+
+        student.setCounterCount(CounterType.LEVEL, 6);
+        assertStats(student, 3, 3);
+        assertThat(gqs.hasKeyword(gd, student, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, student, Keyword.DOUBLE_STRIKE)).isFalse();
+
+        student.setCounterCount(CounterType.LEVEL, 1);
+        assertStats(student, 1, 1);
+        assertThat(gqs.hasKeyword(gd, student, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, student, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    void fullyLeveledStudentDealsDamageInBothCombatDamageSteps() {
+        Permanent student = addCreatureReady(player1, new StudentOfWarfare());
+        student.setCounterCount(CounterType.LEVEL, 7);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 12);
     }
 
     private void prepareForLeveling(Player player) {
