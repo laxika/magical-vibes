@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.Abundance;
+import com.github.laxika.magicalvibes.cards.a.AshiokWickedManipulator;
 import com.github.laxika.magicalvibes.cards.f.FontOfAgonies;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -21,7 +22,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SylvanLibrary.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({SylvanLibrary.class, GrizzlyBears.class, LlanowarElves.class,
+        Abundance.class, FontOfAgonies.class, NarsetParterOfVeils.class,
+        PlatinumEmperion.class, AshiokWickedManipulator.class})
 class SylvanLibraryTest extends BaseCardTest {
 
     private Card bears;
@@ -316,6 +319,42 @@ class SylvanLibraryTest extends BaseCardTest {
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("At less than four life the player can choose both cards and their library order")
+    void choosesBothCardsWhenLifeIsInsufficient() {
+        setup();
+        harness.setLife(player1, 3);
+        advanceToDrawAndTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.handleMultipleCardsChosen(player1, List.of(thirdCard.getId(), elves.getId()));
+
+        assertThat(library()).extracting(Card::getId)
+                .containsExactly(thirdCard.getId(), elves.getId(), filler1.getId(), filler2.getId());
+        assertThat(hand()).extracting(Card::getId).containsExactly(bears.getId());
+        harness.assertLife(player1, 3);
+    }
+
+    @Test
+    @CardUsed(AshiokWickedManipulator.class)
+    @DisplayName("Putting a card back before paying lets Ashiok exile that card")
+    void ashiokExilesCardPutBackBeforePayment() {
+        setup();
+        Card lastCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bears, elves, thirdCard, filler1, filler2, lastCard));
+        harness.addToBattlefield(player1, new AshiokWickedManipulator());
+        advanceToDrawAndTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+
+        assertThat(library()).isEmpty();
+        assertThat(hand()).extracting(Card::getId).containsExactlyInAnyOrder(elves.getId(), thirdCard.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
+                .containsExactly(bears.getId(), filler1.getId(), filler2.getId(), lastCard.getId());
+        harness.assertLife(player1, 20);
     }
 
     @Test
