@@ -1,6 +1,11 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.d.DuskborneSkymarcher;
+import com.github.laxika.magicalvibes.cards.i.InspiringCleric;
+import com.github.laxika.magicalvibes.cards.r.Rile;
+import com.github.laxika.magicalvibes.cards.s.SunbirdsInvocation;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -17,7 +22,95 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({UnclaimedTerritory.class, DuskborneSkymarcher.class, InspiringCleric.class,
+        Rile.class, SunbirdsInvocation.class})
 class UnclaimedTerritoryTest extends BaseCardTest {
+
+    @Test
+    void playingLandChoosesCreatureTypeWithoutUsingStack() {
+        harness.setHand(player1, List.of(new UnclaimedTerritory()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "CLERIC");
+        Permanent territory = findPermanent(player1, "Unclaimed Territory");
+        assertThat(territory.getChosenSubtype()).isEqualTo(CardSubtype.CLERIC);
+        assertThat(territory.isTapped()).isFalse();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "WHITE");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player1, List.of(new InspiringCleric()));
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Inspiring Cleric");
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeCreatureManaTotal(java.util.Set.of(CardSubtype.CLERIC))).isZero();
+    }
+
+    @Test
+    void restrictedColoredManaPaysGenericCreatureCost() {
+        Permanent territory = harness.addToBattlefieldAndReturn(player1, new UnclaimedTerritory());
+        territory.setChosenSubtype(CardSubtype.VAMPIRE);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "BLUE");
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new InspiringCleric()));
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeCreatureManaTotal(java.util.Set.of(CardSubtype.VAMPIRE))).isZero();
+    }
+
+    @Test
+    void producedRestrictedManaCannotPayForNoncreatureSpell() {
+        Permanent territory = harness.addToBattlefieldAndReturn(player1, new UnclaimedTerritory());
+        territory.setChosenSubtype(CardSubtype.VAMPIRE);
+        Permanent vampire = harness.addToBattlefieldAndReturn(player1, new DuskborneSkymarcher());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "RED");
+        harness.setHand(player1, List.of(new Rile()));
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, vampire.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void producedRestrictedManaCannotPayForVampireActivatedAbility() {
+        Permanent territory = harness.addToBattlefieldAndReturn(player1, new UnclaimedTerritory());
+        territory.setChosenSubtype(CardSubtype.VAMPIRE);
+        Permanent vampire = harness.addToBattlefieldAndReturn(player1, new DuskborneSkymarcher());
+        vampire.setSummoningSick(false);
+        vampire.setAttacking(true);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, vampire.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(vampire.isTapped()).isFalse();
+    }
+
+    @Test
+    void colorlessManaPaysForNoncreatureSpell() {
+        harness.addToBattlefield(player1, new UnclaimedTerritory());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setHand(player1, List.of(new SunbirdsInvocation()));
+
+        harness.castEnchantment(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
 
     private static Card createCreature(String name, String manaCost, CardColor color, CardSubtype... subtypes) {
         Card card = new Card();
@@ -31,13 +124,10 @@ class UnclaimedTerritoryTest extends BaseCardTest {
         return card;
     }
 
-    // ===== Colorless mana ability =====
-
     @Test
     @DisplayName("Tapping with first ability adds colorless mana")
     void tappingForColorlessMana() {
-        harness.addToBattlefield(player1, new UnclaimedTerritory());
-        Permanent territory = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent territory = harness.addToBattlefieldAndReturn(player1, new UnclaimedTerritory());
         territory.setChosenSubtype(CardSubtype.PIRATE);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -47,13 +137,10 @@ class UnclaimedTerritoryTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isGreaterThanOrEqualTo(1);
     }
 
-    // ===== Restricted mana ability =====
-
     @Test
     @DisplayName("Tapping with second ability prompts for mana color choice")
     void tappingForRestrictedManaPromptsColorChoice() {
-        harness.addToBattlefield(player1, new UnclaimedTerritory());
-        Permanent territory = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent territory = harness.addToBattlefieldAndReturn(player1, new UnclaimedTerritory());
         territory.setChosenSubtype(CardSubtype.DINOSAUR);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -66,8 +153,7 @@ class UnclaimedTerritoryTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a color adds mana to the subtype creature mana pool")
     void choosingColorAddsRestrictedMana() {
-        harness.addToBattlefield(player1, new UnclaimedTerritory());
-        Permanent territory = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent territory = harness.addToBattlefieldAndReturn(player1, new UnclaimedTerritory());
         territory.setChosenSubtype(CardSubtype.MERFOLK);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -80,13 +166,10 @@ class UnclaimedTerritoryTest extends BaseCardTest {
         assertThat(pool.getSubtypeCreatureManaForColor(java.util.Set.of(CardSubtype.MERFOLK), ManaColor.BLUE)).isEqualTo(1);
     }
 
-    // ===== Mana restriction: can cast creature of chosen type =====
-
     @Test
     @DisplayName("Mana from second ability can be used to cast a creature spell of the chosen type")
     void manaCanCastCreatureOfChosenType() {
-        harness.addToBattlefield(player1, new UnclaimedTerritory());
-        Permanent territory = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent territory = harness.addToBattlefieldAndReturn(player1, new UnclaimedTerritory());
         territory.setChosenSubtype(CardSubtype.VAMPIRE);
 
         ManaPool pool = gd.playerManaPools.get(player1.getId());
@@ -102,13 +185,10 @@ class UnclaimedTerritoryTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Test Vampire");
     }
 
-    // ===== Mana restriction: cannot cast creature of different type =====
-
     @Test
     @DisplayName("Mana from second ability cannot be used to cast a creature spell of a different type")
     void manaCannotCastCreatureOfDifferentType() {
-        harness.addToBattlefield(player1, new UnclaimedTerritory());
-        Permanent territory = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent territory = harness.addToBattlefieldAndReturn(player1, new UnclaimedTerritory());
         territory.setChosenSubtype(CardSubtype.VAMPIRE);
 
         ManaPool pool = gd.playerManaPools.get(player1.getId());
@@ -121,13 +201,10 @@ class UnclaimedTerritoryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Mana restriction: cannot cast non-creature spell =====
-
     @Test
     @DisplayName("Mana from second ability cannot be used to cast a non-creature spell")
     void manaCannotCastNonCreatureSpell() {
-        harness.addToBattlefield(player1, new UnclaimedTerritory());
-        Permanent territory = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent territory = harness.addToBattlefieldAndReturn(player1, new UnclaimedTerritory());
         territory.setChosenSubtype(CardSubtype.VAMPIRE);
 
         ManaPool pool = gd.playerManaPools.get(player1.getId());
@@ -144,13 +221,10 @@ class UnclaimedTerritoryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Mixed mana usage =====
-
     @Test
     @DisplayName("Restricted mana supplements regular mana for casting creature of chosen type")
     void restrictedManaSupplementsRegularMana() {
-        harness.addToBattlefield(player1, new UnclaimedTerritory());
-        Permanent territory = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent territory = harness.addToBattlefieldAndReturn(player1, new UnclaimedTerritory());
         territory.setChosenSubtype(CardSubtype.DINOSAUR);
 
         ManaPool pool = gd.playerManaPools.get(player1.getId());
