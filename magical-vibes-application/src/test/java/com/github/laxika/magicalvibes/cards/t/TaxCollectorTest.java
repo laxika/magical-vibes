@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -77,12 +79,105 @@ class TaxCollectorTest extends BaseCardTest {
     @DisplayName("Arrest cannot target a creature you control")
     void arrestRejectsOwnCreature() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new TaxCollector()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0, 1, bears.getId()))
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Arrest — Detain target creature an opponent controls");
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void enteringWithoutBeingCastAllowsChoosingArrest() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.enterBattlefieldAndReturn(player1, new TaxCollector());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "Arrest — Detain target creature an opponent controls");
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isLockedFromAttacking(gd, bears.getId())).isTrue();
+        assertThat(gqs.isLockedFromBlocking(gd, bears.getId())).isTrue();
+        assertThat(gqs.isLockedFromActivatingAbilities(gd, bears.getId())).isTrue();
+    }
+
+    @Test
+    void taxDoesNotIncreaseControllersSpellCosts() {
+        castTaxMode();
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void opponentCanPayExactlyOneAdditionalManaForTax() {
+        castTaxMode();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player2, new GrizzlyBears(), "{2}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void arrestPreventsBlocking() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castArrestMode(bears);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void arrestExpiresOnlyAtAbilityControllersNextTurn() {
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        elves.setSummoningSick(false);
+        castArrestMode(elves);
+
+        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+        assertThatThrownBy(() -> harness.tapPermanent(player2, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+
+        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        harness.tapPermanent(player2, 0);
+
+        assertThat(elves.isTapped()).isTrue();
+    }
+
+    @Test
+    void arrestPersistsAfterTaxCollectorDies() {
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        elves.setSummoningSick(false);
+        castArrestMode(elves);
+        Permanent collector = gd.playerBattlefields.get(player1.getId()).getFirst();
+        collector.setMarkedDamage(2);
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Tax Collector");
+        assertThat(gqs.isLockedFromAttacking(gd, elves.getId())).isTrue();
+        assertThat(gqs.isLockedFromBlocking(gd, elves.getId())).isTrue();
+        assertThatThrownBy(() -> harness.tapPermanent(player2, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
     }
 
     private void castTaxMode() {
