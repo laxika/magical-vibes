@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.n.Negate;
+import com.github.laxika.magicalvibes.cards.p.Ponder;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 
-@CardUsed({Spellseeker.class, Negate.class, Shock.class, Divination.class, GrizzlyBears.class, LightningBolt.class, Island.class})
+@CardUsed({Spellseeker.class, Negate.class, Shock.class, Divination.class, GrizzlyBears.class, LightningBolt.class, Island.class, Ponder.class})
 class SpellseekerTest extends BaseCardTest {
 
     @Test
@@ -50,8 +50,7 @@ class SpellseekerTest extends BaseCardTest {
         castSpellseeker();
         resolveEnterTheBattlefieldTrigger();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(negate);
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(negate);
@@ -79,14 +78,12 @@ class SpellseekerTest extends BaseCardTest {
     }
 
     private void resolveEnterTheBattlefieldTrigger() {
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
     }
 
     private void setLibrary(Card... cards) {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
     }
     @Test
     @DisplayName("Accepting the ETB may ability offers only instant or sorcery cards with mana value 2 or less")
@@ -112,7 +109,7 @@ class SpellseekerTest extends BaseCardTest {
         resolveMayAbility(true);
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInHand(player1, "Lightning Bolt");
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -145,9 +142,53 @@ class SpellseekerTest extends BaseCardTest {
     }
 
     private void resolveMayAbility(boolean accept) {
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, accept);
     }
 
+    @Test
+    @DisplayName("An eligible sorcery is revealed and put into hand before the library is shuffled")
+    void searchesForSorcery() {
+        Ponder ponder = new Ponder();
+        setLibrary(ponder, new Island());
+        castSpellseeker();
+        resolveEnterTheBattlefieldTrigger();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(ponder);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(ponder);
+        assertThat(gameLogContains("reveals Ponder")).isTrue();
+        assertThat(gameLogContains("shuffled")).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An accepted search may fail to find even when an eligible card exists")
+    void canFailToFindEligibleCard() {
+        Ponder ponder = new Ponder();
+        setLibrary(ponder, new Island());
+        castSpellseeker();
+        resolveEnterTheBattlefieldTrigger();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).contains(ponder);
+        assertThat(gameLogContains("shuffled")).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Accepting a search with an empty library completes and shuffles")
+    void emptyLibrarySearchCompletes() {
+        setLibrary();
+        castSpellseeker();
+        resolveEnterTheBattlefieldTrigger();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains("shuffled")).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }
