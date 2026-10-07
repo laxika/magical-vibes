@@ -116,6 +116,37 @@ class StasisCocoonTest extends BaseCardTest {
                 .hasMessageContaining("Invalid blocker index");
     }
 
+    @Test
+    @DisplayName("Resolved Stasis Cocoon prevents abilities of your own artifact")
+    void resolvedAuraPreventsOwnArtifactsAbilities() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new GemstoneArray());
+        harness.setHand(player1, List.of(new StasisCocoon()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, artifact.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+        assertThat(artifact.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Stasis Cocoon does not prevent another artifact's abilities")
+    void unrelatedArtifactCanActivateAbilities() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new GemstoneArray());
+        Permanent unrelated = harness.addToBattlefieldAndReturn(player1, new GemstoneArray());
+        addAura(player2, enchanted);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(unrelated.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(enchanted.getCounterCount(CounterType.CHARGE)).isZero();
+    }
     private Permanent addAura(com.github.laxika.magicalvibes.model.Player controller, Permanent host) {
         Permanent aura = harness.addToBattlefieldAndReturn(controller, new StasisCocoon());
         aura.setAttachedTo(host.getId());
