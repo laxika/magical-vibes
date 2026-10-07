@@ -2,11 +2,15 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
+import com.github.laxika.magicalvibes.cards.f.FontOfAgonies;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,18 +19,76 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SwordPointDiplomacy.class, ColossalDreadmaw.class, Forest.class, Island.class,
+        PlatinumEmperion.class, FontOfAgonies.class})
 class SwordPointDiplomacyTest extends BaseCardTest {
+    @Test
+    void opponentWhoseLifeCannotChangeCannotDenyCards() {
+        Card revealed = new ColossalDreadmaw();
+        harness.setLibrary(player1, List.of(revealed));
+        harness.addToBattlefield(player2, new PlatinumEmperion());
+        harness.setHand(player1, List.of(new SwordPointDiplomacy()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-    
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(revealed);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void denyingACardTriggersLifePaymentAbilities() {
+        Card revealed = new ColossalDreadmaw();
+        harness.setLibrary(player1, List.of(revealed));
+        var font = harness.addToBattlefieldAndReturn(player2, new FontOfAgonies());
+        harness.setHand(player1, List.of(new SwordPointDiplomacy()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player2, List.of(revealed.getId()));
+
+        harness.assertLife(player2, 17);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(revealed);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(font.getCounterCount(CounterType.BLOOD)).isEqualTo(3);
+    }
+
+    @Test
+    void cardsBelowTheTopThreeRemainInLibrary() {
+        Card first = new ColossalDreadmaw();
+        Card second = new Forest();
+        Card third = new Island();
+        Card fourth = new Forest();
+        harness.setLibrary(player1, List.of(first, second, third, fourth));
+        harness.setHand(player1, List.of(new SwordPointDiplomacy()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player2, List.of(second.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, third);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth);
+        harness.assertLife(player2, 17);
+    }
+
 
     @Test
     @DisplayName("Casting and resolving reveals top 3 and presents opponent with choice")
     void castingPresentsOpponentWithChoice() {
-        Card card1 = new GrizzlyBears();
+        Card card1 = new ColossalDreadmaw();
         Card card2 = new Forest();
         Card card3 = new Island();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(card1, card2, card3));
+        harness.setLibrary(player1, List.of(card1, card2, card3));
 
         harness.setHand(player1, List.of(new SwordPointDiplomacy()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -41,11 +103,10 @@ class SwordPointDiplomacyTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent denies no cards — all 3 go to controller's hand")
     void opponentDeniesNone() {
-        Card card1 = new GrizzlyBears();
+        Card card1 = new ColossalDreadmaw();
         Card card2 = new Forest();
         Card card3 = new Island();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(card1, card2, card3));
+        harness.setLibrary(player1, List.of(card1, card2, card3));
 
         harness.setHand(player1, List.of(new SwordPointDiplomacy()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -57,7 +118,7 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         // Opponent selects no cards to deny
         harness.handleMultipleCardsChosen(player2, List.of());
 
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Colossal Dreadmaw");
         harness.assertInHand(player1, "Forest");
         harness.assertInHand(player1, "Island");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
@@ -68,11 +129,10 @@ class SwordPointDiplomacyTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent denies one card — pays 3 life, denied card exiled, rest to hand")
     void opponentDeniesOne() {
-        Card card1 = new GrizzlyBears();
+        Card card1 = new ColossalDreadmaw();
         Card card2 = new Forest();
         Card card3 = new Island();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(card1, card2, card3));
+        harness.setLibrary(player1, List.of(card1, card2, card3));
 
         harness.setHand(player1, List.of(new SwordPointDiplomacy()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -81,25 +141,24 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        // Opponent denies Grizzly Bears
+        // Opponent denies Colossal Dreadmaw
         harness.handleMultipleCardsChosen(player2, List.of(card1.getId()));
 
-        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Colossal Dreadmaw");
         harness.assertInHand(player1, "Forest");
         harness.assertInHand(player1, "Island");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+                .anyMatch(c -> c.getName().equals("Colossal Dreadmaw"));
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
     @Test
     @DisplayName("Opponent denies all three cards — pays 9 life, all exiled")
     void opponentDeniesAll() {
-        Card card1 = new GrizzlyBears();
+        Card card1 = new ColossalDreadmaw();
         Card card2 = new Forest();
         Card card3 = new Island();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(card1, card2, card3));
+        harness.setLibrary(player1, List.of(card1, card2, card3));
 
         harness.setHand(player1, List.of(new SwordPointDiplomacy()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -119,11 +178,10 @@ class SwordPointDiplomacyTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent with less than 3 life cannot deny any card — all go to hand automatically")
     void opponentCannotAffordToPay() {
-        Card card1 = new GrizzlyBears();
+        Card card1 = new ColossalDreadmaw();
         Card card2 = new Forest();
         Card card3 = new Island();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(card1, card2, card3));
+        harness.setLibrary(player1, List.of(card1, card2, card3));
         harness.setLife(player2, 2);
 
         harness.setHand(player1, List.of(new SwordPointDiplomacy()));
@@ -135,7 +193,7 @@ class SwordPointDiplomacyTest extends BaseCardTest {
 
         // No choice presented — all go to hand automatically
         assertThat(gd.interaction.activeInteraction()).isNull();
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Colossal Dreadmaw");
         harness.assertInHand(player1, "Forest");
         harness.assertInHand(player1, "Island");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(2);
@@ -144,11 +202,10 @@ class SwordPointDiplomacyTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent with exactly 3 life can still pay for one card")
     void opponentWithExactly3LifeCanPayForOne() {
-        Card card1 = new GrizzlyBears();
+        Card card1 = new ColossalDreadmaw();
         Card card2 = new Forest();
         Card card3 = new Island();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(card1, card2, card3));
+        harness.setLibrary(player1, List.of(card1, card2, card3));
         harness.setLife(player2, 3);
 
         harness.setHand(player1, List.of(new SwordPointDiplomacy()));
@@ -165,7 +222,7 @@ class SwordPointDiplomacyTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(0);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+                .anyMatch(c -> c.getName().equals("Colossal Dreadmaw"));
         harness.assertInHand(player1, "Forest");
         harness.assertInHand(player1, "Island");
     }
@@ -173,11 +230,10 @@ class SwordPointDiplomacyTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent cannot pay for more cards than their life allows")
     void opponentCannotOverpay() {
-        Card card1 = new GrizzlyBears();
+        Card card1 = new ColossalDreadmaw();
         Card card2 = new Forest();
         Card card3 = new Island();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(card1, card2, card3));
+        harness.setLibrary(player1, List.of(card1, card2, card3));
         harness.setLife(player2, 5);
 
         harness.setHand(player1, List.of(new SwordPointDiplomacy()));
@@ -196,7 +252,7 @@ class SwordPointDiplomacyTest extends BaseCardTest {
     @Test
     @DisplayName("Empty library does nothing")
     void emptyLibraryDoesNothing() {
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         harness.setHand(player1, List.of(new SwordPointDiplomacy()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -212,10 +268,9 @@ class SwordPointDiplomacyTest extends BaseCardTest {
     @Test
     @DisplayName("Fewer than 3 cards in library reveals only what's available")
     void fewerThanThreeCards() {
-        Card card1 = new GrizzlyBears();
+        Card card1 = new ColossalDreadmaw();
         Card card2 = new Forest();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(card1, card2));
+        harness.setLibrary(player1, List.of(card1, card2));
 
         harness.setHand(player1, List.of(new SwordPointDiplomacy()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -237,9 +292,8 @@ class SwordPointDiplomacyTest extends BaseCardTest {
     @Test
     @DisplayName("Spell goes to graveyard after resolution")
     void spellGoesToGraveyard() {
-        Card card1 = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(card1);
+        Card card1 = new ColossalDreadmaw();
+        harness.setLibrary(player1, List.of(card1));
 
         SwordPointDiplomacy spd = new SwordPointDiplomacy();
         harness.setHand(player1, List.of(spd));
