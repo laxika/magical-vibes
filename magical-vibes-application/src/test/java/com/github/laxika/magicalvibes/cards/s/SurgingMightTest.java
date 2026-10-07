@@ -122,15 +122,82 @@ class SurgingMightTest extends BaseCardTest {
 
     @Test
     void cannotEnchantNonCreaturePermanent() {
-        harness.addToBattlefield(player1, new SnowCoveredForest());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new SnowCoveredForest());
         harness.setHand(player1, List.of(new SurgingMight()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        Permanent land = gd.playerBattlefields.get(player1.getId()).getFirst();
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void canEnchantAnOpponentsCreatureWithAnEmptyLibrary() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BorealCentaur());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new SurgingMight()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Surging Might").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    void decliningRevealedCopyPutsAllCardsOnBottomInChosenOrder() {
+        Permanent creature = addCreature();
+        Card copy = new SurgingMight();
+        Card land = new SnowCoveredForest();
+        harness.setLibrary(player1, List.of(copy, land));
+        harness.setHand(player1, List.of(new SurgingMight()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land, copy);
+        assertThat(countPermanents(player1, "Surging Might")).isEqualTo(1);
+    }
+
+    @Test
+    void uncastableCopiesStayInLibraryWhenNoCreatureRemains() {
+        Permanent creature = addCreature();
+        Card firstCopy = new SurgingMight();
+        Card secondCopy = new SurgingMight();
+        harness.setLibrary(player1, List.of(firstCopy, secondCopy));
+        harness.setHand(player1, List.of(new SurgingMight()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.LibraryReorder) {
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1)));
+        }
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(firstCopy, secondCopy);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(firstCopy, secondCopy);
+        harness.assertNotOnBattlefield(player1, "Surging Might");
     }
 
     private Permanent addCreature() {
