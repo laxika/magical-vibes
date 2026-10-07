@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.b.BeamtownBeatstick;
+import com.github.laxika.magicalvibes.cards.c.CutShort;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,15 +17,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StormclawRager.class, GrizzlyBears.class, LeoninScimitar.class})
+@CardUsed({StormclawRager.class, ShivanBranchBurner.class, BeamtownBeatstick.class, CutShort.class})
 class StormclawRagerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing another creature puts a counter on Stormclaw Rager and draws a card")
     void sacrificingCreaturePutsCounterAndDrawsCard() {
         Permanent rager = addReadyRager();
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new ShivanBranchBurner());
+        addCreatureReady(player1, new ShivanBranchBurner());
         prepareForSorcerySpeed();
         setUpLibraryAndHand();
 
@@ -41,8 +42,8 @@ class StormclawRagerTest extends BaseCardTest {
     @DisplayName("Sacrificing another artifact puts a counter on Stormclaw Rager and draws a card")
     void sacrificingArtifactPutsCounterAndDrawsCard() {
         Permanent rager = addReadyRager();
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
-        addCreatureReady(player1, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new BeamtownBeatstick());
+        addCreatureReady(player1, new ShivanBranchBurner());
         prepareForSorcerySpeed();
         setUpLibraryAndHand();
 
@@ -80,6 +81,94 @@ class StormclawRagerTest extends BaseCardTest {
                 .hasMessageContaining("No permanent to sacrifice");
     }
 
+    @Test
+    void sacrificeIsPaidBeforeTheAbilityResolves() {
+        Permanent rager = addReadyRager();
+        Permanent creature = addCreatureReady(player1, new ShivanBranchBurner());
+        addCreatureReady(player1, new ShivanBranchBurner());
+        prepareForSorcerySpeed();
+        setUpLibraryAndHand();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        choosePermanent(creature);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature.getOriginalCard());
+        assertThat(rager.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(rager.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void tappedSummoningSickRagerCanActivate() {
+        Permanent rager = harness.addToBattlefieldAndReturn(player1, new StormclawRager());
+        rager.setSummoningSick(true);
+        rager.setTapped(true);
+        Permanent creature = addCreatureReady(player1, new ShivanBranchBurner());
+        addCreatureReady(player1, new ShivanBranchBurner());
+        prepareForSorcerySpeed();
+        setUpLibraryAndHand();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        choosePermanent(creature);
+        harness.passBothPriorities();
+
+        assertThat(rager.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void cannotSacrificeOpponentsPermanents() {
+        addReadyRager();
+        addCreatureReady(player2, new ShivanBranchBurner());
+        harness.addToBattlefield(player2, new BeamtownBeatstick());
+        prepareForSorcerySpeed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permanent to sacrifice");
+    }
+
+    @Test
+    void cannotActivateDuringOpponentsMainPhase() {
+        addReadyRager();
+        addCreatureReady(player1, new ShivanBranchBurner());
+        prepareForSorcerySpeed();
+        harness.forceActivePlayer(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    void stillDrawsWhenRagerIsDestroyedInResponse() {
+        Permanent rager = addReadyRager();
+        rager.setTapped(true);
+        Permanent creature = addCreatureReady(player1, new ShivanBranchBurner());
+        addCreatureReady(player1, new ShivanBranchBurner());
+        prepareForSorcerySpeed();
+        setUpLibraryAndHand();
+        harness.setHand(player2, List.of(new CutShort()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        choosePermanent(creature);
+        harness.castAndResolveInstant(player2, 0, rager.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(rager);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(rager.getOriginalCard());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(rager.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private Permanent addReadyRager() {
         return addCreatureReady(player1, new StormclawRager());
     }
@@ -92,7 +181,7 @@ class StormclawRagerTest extends BaseCardTest {
     }
 
     private void setUpLibraryAndHand() {
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new ShivanBranchBurner()));
         harness.setHand(player1, List.of());
     }
 
