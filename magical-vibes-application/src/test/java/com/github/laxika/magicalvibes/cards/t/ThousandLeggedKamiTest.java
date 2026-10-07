@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.l.LanternKami;
 import com.github.laxika.magicalvibes.cards.r.RendSpirit;
 import com.github.laxika.magicalvibes.cards.s.SakuraTribeElder;
+import com.github.laxika.magicalvibes.cards.v.VineKami;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThousandLeggedKami.class, LanternKami.class, RendSpirit.class, SakuraTribeElder.class})
+@CardUsed({ThousandLeggedKami.class, LanternKami.class, RendSpirit.class, SakuraTribeElder.class, VineKami.class})
 class ThousandLeggedKamiTest extends BaseCardTest {
 
     /** Destroys Thousand-legged Kami so its soulshift trigger fires. */
@@ -23,8 +24,7 @@ class ThousandLeggedKamiTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RendSpirit()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0, findPermanent(player1, "Thousand-legged Kami").getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, findPermanent(player1, "Thousand-legged Kami").getId());
     }
 
     @Test
@@ -99,5 +99,50 @@ class ThousandLeggedKamiTest extends BaseCardTest {
         destroyKami();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Soulshift 7 includes a Spirit with mana value exactly seven")
+    void returnsSpiritAtManaValueLimit() {
+        harness.addToBattlefield(player1, new ThousandLeggedKami());
+        Card spirit = new VineKami();
+        harness.setGraveyard(player1, List.of(spirit));
+
+        destroyKami();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(spirit.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(spirit);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(spirit);
+        harness.assertInGraveyard(player1, "Thousand-legged Kami");
+    }
+
+    @Test
+    @DisplayName("Soulshift does not return a target that left the graveyard or choose a replacement")
+    void targetLeavingGraveyardMakesTriggerFail() {
+        harness.addToBattlefield(player1, new ThousandLeggedKami());
+        Card target = new LanternKami();
+        Card otherSpirit = new VineKami();
+        harness.setGraveyard(player1, List.of(target, otherSpirit));
+
+        destroyKami();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+
+        harness.setGraveyard(player1, List.of(otherSpirit,
+                gd.playerGraveyards.get(player1.getId()).stream()
+                        .filter(c -> c instanceof ThousandLeggedKami).findFirst().orElseThrow()));
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(target, otherSpirit);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherSpirit);
+        assertThat(gd.findExiledCard(target.getId())).isNotNull();
     }
 }
