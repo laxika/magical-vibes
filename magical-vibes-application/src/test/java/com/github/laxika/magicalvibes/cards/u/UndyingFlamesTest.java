@@ -3,18 +3,21 @@ package com.github.laxika.magicalvibes.cards.u;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.github.laxika.magicalvibes.cards.a.AkkiDrillmaster;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.Twincast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({UndyingFlames.class, Divination.class, Forest.class, Shock.class})
+@CardUsed({UndyingFlames.class, AkkiDrillmaster.class, Divination.class, Forest.class, Shock.class, Twincast.class})
 class UndyingFlamesTest extends BaseCardTest {
 
     @Test
@@ -112,7 +115,127 @@ class UndyingFlamesTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Stops exiling at the first nonland and damages a creature")
+    void stopsAtFirstNonlandAndDamagesCreature() {
+        Card forest = new Forest();
+        Card nonland = new AkkiDrillmaster();
+        Card remaining = new UndyingFlames();
+        var target = harness.addToBattlefieldAndReturn(player2, new AkkiDrillmaster());
+        harness.setLibrary(player1, List.of(forest, nonland, remaining));
+        harness.setHand(player1, List.of(new UndyingFlames()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(forest, nonland);
+        harness.assertInGraveyard(player2, "Akki Drillmaster");
+        harness.assertNotOnBattlefield(player2, "Akki Drillmaster");
+    }
+
+    @Test
+    @DisplayName("Epic still applies when the library is empty")
+    void emptyLibraryStillAppliesEpic() {
+        harness.setLibrary(player1, List.of());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new UndyingFlames()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Epic puts a delayed trigger on the stack before creating the upkeep copy")
+    void upkeepCopyWaitsForDelayedTriggerToResolve() {
+        harness.setLibrary(player1, List.of(new Shock()));
+        harness.setHand(player1, List.of(new UndyingFlames()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        Card nextCard = new UndyingFlames();
+        harness.setLibrary(player1, List.of(nextCard));
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Epic does not copy the spell during the opponent's upkeep")
+    void doesNotCopyDuringOpponentsUpkeep() {
+        harness.setLibrary(player1, List.of(new Shock()));
+        harness.setHand(player1, List.of(new UndyingFlames()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        Card nextCard = new UndyingFlames();
+        harness.setLibrary(player1, List.of(nextCard));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents both exiling cards and applying Epic")
+    void illegalTargetPreventsExilingAndEpic() {
+        var target = harness.addToBattlefieldAndReturn(player2, new AkkiDrillmaster());
+        Card libraryCard = new UndyingFlames();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player1, List.of(new UndyingFlames()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castSorcery(player1, 0, target.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Undying Flames");
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A copy made by Twincast retains Epic and restricts its own controller")
+    void twincastCopyRetainsEpic() {
+        Card flames = new UndyingFlames();
+        harness.setHand(player1, List.of(flames));
+        harness.setLibrary(player1, List.of(new UndyingFlames()));
+        harness.setLibrary(player2, List.of(new UndyingFlames()));
+        harness.setHand(player2, List.of(new Twincast()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castSorcery(player1, 0, player2.getId());
+
+        harness.castAndResolveInstant(player2, 0, flames.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 14);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
