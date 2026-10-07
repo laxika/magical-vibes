@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.c.CrossbonesMaliciousMercenary;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Murder;
+import com.github.laxika.magicalvibes.cards.s.ShallowGrave;
+import com.github.laxika.magicalvibes.cards.u.UnnaturalSelection;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Thunderbolts Conspiracy")
 @CardUsed({ThunderboltsConspiracy.class, CrossbonesMaliciousMercenary.class,
-        GrizzlyBears.class, Murder.class})
+        GrizzlyBears.class, Murder.class, ShallowGrave.class, UnnaturalSelection.class})
 class ThunderboltsConspiracyTest extends BaseCardTest {
 
     @Test
@@ -71,6 +73,105 @@ class ThunderboltsConspiracyTest extends BaseCardTest {
                 .anyMatch(card -> card.getId().equals(villain.getCard().getId()));
     }
 
+    @Test
+    void returnsCreatureThatBecameAVillainBeforeDying() {
+        harness.addToBattlefield(player1, new ThunderboltsConspiracy());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent selection = harness.addToBattlefieldAndReturn(player1, new UnnaturalSelection());
+        changeCreatureType(selection, creature, CardSubtype.VILLAIN);
+
+        destroyWithMurder(player2, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanentByCardId(creature.getCard().getId());
+        assertThat(returned.getCounterCount(CounterType.FINALITY)).isEqualTo(1);
+        assertThat(gqs.hasEffectiveSubtype(gd, returned, CardSubtype.HERO)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, returned, CardSubtype.BEAR)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, returned, CardSubtype.VILLAIN)).isFalse();
+    }
+
+    @Test
+    void doesNotReturnPrintedVillainThatLostVillainTypeBeforeDying() {
+        harness.addToBattlefield(player1, new ThunderboltsConspiracy());
+        Permanent creature = addCreatureReady(player1, new CrossbonesMaliciousMercenary());
+        Permanent selection = harness.addToBattlefieldAndReturn(player1, new UnnaturalSelection());
+        changeCreatureType(selection, creature, CardSubtype.HUMAN);
+
+        destroyWithMurder(player2, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Crossbones, Malicious Mercenary");
+        harness.assertNotOnBattlefield(player1, "Crossbones, Malicious Mercenary");
+    }
+
+    @Test
+    void oldTriggerCannotReturnCardThatLeftAndReenteredGraveyard() {
+        harness.addToBattlefield(player1, new ThunderboltsConspiracy());
+        Permanent creature = addCreatureReady(player1, new CrossbonesMaliciousMercenary());
+        Permanent selection = harness.addToBattlefieldAndReturn(player1, new UnnaturalSelection());
+        destroyWithMurder(player2, creature.getId());
+
+        harness.castFromHand(player1, new ShallowGrave(), "{1}{B}");
+        harness.passBothPriorities();
+        Permanent returned = findPermanentByCardId(creature.getCard().getId());
+        assertThat(returned.getCounterCount(CounterType.FINALITY)).isZero();
+        changeCreatureType(selection, returned, CardSubtype.HUMAN);
+        destroyWithMurder(player2, returned.getId());
+        harness.assertInGraveyard(player1, "Crossbones, Malicious Mercenary");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Crossbones, Malicious Mercenary");
+        harness.assertNotOnBattlefield(player1, "Crossbones, Malicious Mercenary");
+    }
+
+    @Test
+    void doesNotReturnOpponentsVillain() {
+        harness.addToBattlefield(player1, new ThunderboltsConspiracy());
+        Permanent creature = addCreatureReady(player2, new CrossbonesMaliciousMercenary());
+
+        destroyWithMurder(player1, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Crossbones, Malicious Mercenary");
+        harness.assertNotOnBattlefield(player2, "Crossbones, Malicious Mercenary");
+    }
+
+    @Test
+    void returnsBorrowedVillainUnderOwnersControl() {
+        harness.addToBattlefield(player1, new ThunderboltsConspiracy());
+        Permanent creature = addCreatureReady(player1, new CrossbonesMaliciousMercenary());
+        gd.stolenCreatures.put(creature.getId(), player2.getId());
+
+        destroyWithMurder(player2, creature.getId());
+        harness.assertInGraveyard(player2, "Crossbones, Malicious Mercenary");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Crossbones, Malicious Mercenary");
+        Permanent returned = findPermanent(player2, "Crossbones, Malicious Mercenary");
+        assertThat(returned.getCounterCount(CounterType.FINALITY)).isEqualTo(1);
+        assertThat(gqs.hasEffectiveSubtype(gd, returned, CardSubtype.HERO)).isTrue();
+    }
+
+    @Test
+    void canBeCastDuringOpponentsCombat() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.castFromHand(player1, new ThunderboltsConspiracy(), "{3}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Thunderbolts Conspiracy");
+    }
+
+    private void changeCreatureType(Permanent selection, Permanent creature, CardSubtype subtype) {
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.ensurePriority(player1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(selection),
+                null, creature.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, subtype.name());
+        assertThat(gqs.hasEffectiveSubtype(gd, creature, subtype)).isTrue();
+    }
+
     private void destroyWithMurder(Player caster, UUID targetId) {
         harness.forceActivePlayer(caster);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -78,8 +179,7 @@ class ThunderboltsConspiracyTest extends BaseCardTest {
         harness.setHand(caster, List.of(new Murder()));
         harness.addMana(caster, ManaColor.BLACK, 3);
 
-        harness.getGameService().playCard(harness.getGameData(), caster, 0, 0, targetId, null);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, targetId);
     }
 
     private Permanent findPermanentByCardId(UUID cardId) {
