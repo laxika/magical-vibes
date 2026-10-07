@@ -87,6 +87,60 @@ class SpikeWorkerTest extends BaseCardTest {
                 .hasMessageContaining("Not enough counters");
     }
 
+    @Test
+    @DisplayName("Can target itself while it has two counters")
+    void canTargetItself() {
+        Permanent worker = addWorker(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        prepareMainPhase(player1);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, worker), null, worker.getId());
+
+        assertThat(worker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(worker);
+        assertThat(worker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Targeting itself with its last counter cannot save it")
+    void selfTargetWithLastCounterDiesBeforeResolution() {
+        Permanent worker = addWorker(player1);
+        worker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        prepareMainPhase(player1);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, worker), null, worker.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(worker);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Spike Worker");
+        harness.assertNotOnBattlefield(player1, "Spike Worker");
+    }
+
+    @Test
+    @DisplayName("Can activate during an opponent's turn while tapped and summoning sick")
+    void activatesDuringOpponentsTurnWithoutTapCost() {
+        Permanent worker = addWorker(player1);
+        worker.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SkyshroudArcher());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, worker), null, target.getId());
+
+        assertThat(worker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private Permanent addWorker(Player player) {
         return harness.enterBattlefieldAndReturn(player, new SpikeWorker());
     }
