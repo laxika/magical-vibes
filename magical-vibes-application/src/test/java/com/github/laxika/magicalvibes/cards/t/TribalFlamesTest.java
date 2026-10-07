@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.r.RagingKavu;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.s.ShivanOasis;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TribalFlames.class, Forest.class, Island.class, Mountain.class, Plains.class, Swamp.class,
-        RagingKavu.class, JaceBeleren.class})
+        RagingKavu.class, JaceBeleren.class, ShivanOasis.class})
 class TribalFlamesTest extends BaseCardTest {
 
     @Test
@@ -99,9 +100,7 @@ class TribalFlamesTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player1, new Mountain());
-        harness.addToBattlefield(player2, new RagingKavu());
-
-        Permanent kavu = findPermanent(player2, "Raging Kavu");
+        Permanent kavu = harness.addToBattlefieldAndReturn(player2, new RagingKavu());
         harness.setHand(player1, List.of(new TribalFlames()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveSorcery(player1, 0, 0, kavu.getId());
@@ -137,6 +136,35 @@ class TribalFlamesTest extends BaseCardTest {
         Permanent forest = findPermanent(player2, "Forest");
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Mana-producing lands without basic land types do not contribute to domain")
+    void nonbasicLandWithoutBasicTypesDoesNotContribute() {
+        harness.addToBattlefield(player1, new ShivanOasis());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setLife(player2, 20);
+
+        castAtPlayer2();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Losing a basic land type before resolution reduces damage")
+    void domainDecreasesBeforeResolution() {
+        harness.addToBattlefield(player1, new Forest());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.setHand(player1, List.of(new TribalFlames()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setLife(player2, 20);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(island);
+        gd.playerGraveyards.get(player1.getId()).add(island.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
     }
 
     private void castAtPlayer2() {
