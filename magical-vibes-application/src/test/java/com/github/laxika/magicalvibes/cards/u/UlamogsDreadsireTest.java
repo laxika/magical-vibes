@@ -15,14 +15,14 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({UlamogsDreadsire.class, Forest.class, GrizzlyBears.class, Shock.class})
 class UlamogsDreadsireTest extends BaseCardTest {
 
     @Test
     void createsTenTenEldraziToken() {
-        Permanent dreadsire = harness.addToBattlefieldAndReturn(player1, new UlamogsDreadsire());
-        dreadsire.setSummoningSick(false);
+        addCreatureReady(player1, new UlamogsDreadsire());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
@@ -60,11 +60,7 @@ class UlamogsDreadsireTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(bears.getId())
-                .doesNotContain(gd.playerBattlefields.get(player2.getId()).stream()
-                        .filter(permanent -> permanent.getCard() instanceof Forest)
-                        .findFirst()
-                        .orElseThrow()
-                        .getId());
+                .doesNotContain(harness.getPermanentId(player2, "Forest"));
         harness.handlePermanentChosen(player2, bears.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -72,6 +68,81 @@ class UlamogsDreadsireTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Shock");
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    void createsExactlyOneUntappedColorlessCreatureTokenWithoutInheritedKeywords() {
+        addCreatureReady(player1, new UlamogsDreadsire());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Eldrazi")).hasSize(1);
+        Permanent token = findPermanent(player1, "Eldrazi");
+        assertThat(token.isTapped()).isFalse();
+        assertThat(token.getCard().getColor()).isNull();
+        assertThat(token.getCard().getKeywords()).isEmpty();
+        assertThat(gqs.isCreature(gd, token)).isTrue();
+        assertThat(countPermanents(player2, "Eldrazi")).isZero();
+    }
+
+    @Test
+    void decliningWardCountersShockWithoutSacrificing() {
+        Permanent dreadsire = harness.addToBattlefieldAndReturn(player1, new UlamogsDreadsire());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        prepareOpponentShock(dreadsire);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(dreadsire.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void controllersOwnSpellDoesNotTriggerWard() {
+        Permanent dreadsire = harness.addToBattlefieldAndReturn(player1, new UlamogsDreadsire());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, dreadsire.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(dreadsire.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Shock");
+    }
+
+    @Test
+    void summoningSicknessPreventsTokenActivation() {
+        harness.addToBattlefield(player1, new UlamogsDreadsire());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Eldrazi")).isZero();
+    }
+
+    @Test
+    void tappingForTokenPreventsAnotherActivation() {
+        Permanent dreadsire = addCreatureReady(player1, new UlamogsDreadsire());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(dreadsire.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+        assertThat(countPermanents(player1, "Eldrazi")).isEqualTo(1);
+    }
+
+    @Test
+    void vigilanceLeavesDreadsireUntappedWhenAttacking() {
+        Permanent dreadsire = addCreatureReady(player1, new UlamogsDreadsire());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        assertThat(dreadsire.isTapped()).isFalse();
     }
 
     private void prepareOpponentShock(Permanent target) {
