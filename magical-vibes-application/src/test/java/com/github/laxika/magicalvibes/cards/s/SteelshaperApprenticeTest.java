@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.v.VulshokMorningstar;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -41,7 +40,7 @@ class SteelshaperApprenticeTest extends BaseCardTest {
         assertThat(search.params().cards()).extracting(Card::getName)
                 .containsExactly("Vulshok Morningstar");
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInHand(player1, "Vulshok Morningstar");
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(goblin);
@@ -84,5 +83,54 @@ class SteelshaperApprenticeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertOnBattlefield(player1, "Steelshaper Apprentice");
+    }
+
+    @Test
+    @DisplayName("Can fail to find even when Equipment is in the library")
+    void canFailToFindEquipment() {
+        addCreatureReady(player1, new SteelshaperApprentice());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        VulshokMorningstar morningstar = new VulshokMorningstar();
+        harness.setLibrary(player1, List.of(morningstar));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertInHand(player1, "Steelshaper Apprentice");
+        harness.assertNotInHand(player1, "Vulshok Morningstar");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(morningstar);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Resolves with an empty library after paying the return cost")
+    void resolvesWithEmptyLibrary() {
+        addCreatureReady(player1, new SteelshaperApprentice());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.assertInHand(player1, "Steelshaper Apprentice");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        addCreatureReady(player1, new SteelshaperApprentice()).setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Steelshaper Apprentice");
+        harness.assertNotInHand(player1, "Steelshaper Apprentice");
+        assertThat(gd.stack).isEmpty();
     }
 }
