@@ -94,6 +94,74 @@ class TajNarSwordsmithTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isOne();
     }
 
+    @Test
+    @DisplayName("Paying two finds Equipment costing two or less, but not a non-Equipment")
+    void searchIncludesEquipmentBelowAndAtChosenValue() {
+        Card scimitar = new LeoninScimitar();
+        Card plate = new EmpyrialPlate();
+        harness.setLibrary(player1, List.of(scimitar, plate, new YotianSoldier()));
+        castSwordsmithWithMana(6);
+
+        resolveEnterAbility();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleXValueChosen(player1, 2);
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).extracting(Card::getId)
+                .containsExactly(scimitar.getId(), plate.getId());
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertOnBattlefield(player1, "Empyrial Plate");
+        harness.assertNotInHand(player1, "Empyrial Plate");
+        assertThat(gd.playerDecks.get(player1.getId())).contains(scimitar).doesNotContain(plate);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The controller may fail to find even when an Equipment is available")
+    void mayFailToFindAfterPaying() {
+        Card equipment = new LeoninScimitar();
+        harness.setLibrary(player1, List.of(equipment));
+        castSwordsmithWithMana(5);
+
+        resolveEnterAbility();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleXValueChosen(player1, 1);
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotOnBattlefield(player1, "Leonin Scimitar");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(equipment);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Artifact-spell-only mana cannot pay for the triggered ability")
+    void artifactOnlyManaCannotPayForSearch() {
+        harness.setLibrary(player1, List.of(new LeoninScimitar()));
+        castSwordsmithWithMana(4);
+        resolveEnterAbility();
+        gd.playerManaPools.get(player1.getId()).addArtifactOnlyColorless(3);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).maxValue()).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyColorless()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Myr-spell-only mana cannot pay for the triggered ability")
+    void myrOnlyManaCannotPayForSearch() {
+        harness.setLibrary(player1, List.of(new LeoninScimitar()));
+        castSwordsmithWithMana(4);
+        resolveEnterAbility();
+        gd.playerManaPools.get(player1.getId()).addMyrOnlyColorless(2);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).maxValue()).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getMyrOnlyColorless()).isEqualTo(2);
+    }
     private void castSwordsmithWithMana(int mana) {
         harness.setHand(player1, List.of(new TajNarSwordsmith()));
         harness.addMana(player1, ManaColor.WHITE, mana);
