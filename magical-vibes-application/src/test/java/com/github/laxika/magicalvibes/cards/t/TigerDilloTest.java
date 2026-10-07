@@ -67,6 +67,72 @@ class TigerDilloTest extends BaseCardTest {
         assertThat(tigerDillo.isBlocking()).isTrue();
     }
 
+    @Test
+    void canAttackWithAnotherTigerDilloEvenWhenItIsTapped() {
+        Permanent attacker = addCreatureReady(player1, new TigerDillo());
+        Permanent support = addCreatureReady(player1, new TigerDillo());
+        support.setTapped(true);
+
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0)));
+
+        assertThat(attacker.isAttacking()).isTrue();
+    }
+
+    @Test
+    void cannotAttackWithOnlyAnOpponentsLargeCreature() {
+        addCreatureReady(player1, new TigerDillo());
+        addCreatureReady(player2, new TigerDillo());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotAttackWithOnlyASmallCreature() {
+        addCreatureReady(player1, new TigerDillo());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canBlockWithAnotherTigerDilloEvenWhenItIsSummoningSick() {
+        Permanent blocker = addCreatureReady(player2, new TigerDillo());
+        Permanent support = addCreatureReady(player2, new TigerDillo());
+        support.setSummoningSick(true);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        prepareDeclareBlockers(attacker);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void cannotBlockWithOnlyAnOpponentsLargeCreature() {
+        addCreatureReady(player2, new TigerDillo());
+        addCreatureReady(player1, new TigerDillo());
+        addCreatureReady(player1, new TigerDillo());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotBlockWithOnlyASmallCreature() {
+        addCreatureReady(player2, new TigerDillo());
+        addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        prepareDeclareBlockers(attacker);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
     private void prepareDeclareBlockers(Permanent attacker) {
         attacker.setAttacking(true);
         prepareDeclareBlockers(player1);
