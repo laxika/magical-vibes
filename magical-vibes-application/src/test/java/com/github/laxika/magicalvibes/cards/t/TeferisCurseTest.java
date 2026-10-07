@@ -22,8 +22,7 @@ class TeferisCurseTest extends BaseCardTest {
     @Test
     @DisplayName("Teferi's Curse can enchant an artifact")
     void canTargetArtifact() {
-        harness.addToBattlefield(player2, new CharcoalDiamond());
-        Permanent artifact = findPermanent(player2, "Charcoal Diamond");
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new CharcoalDiamond());
 
         harness.setHand(player1, List.of(new TeferisCurse()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -39,8 +38,7 @@ class TeferisCurseTest extends BaseCardTest {
     @Test
     @DisplayName("Teferi's Curse can't enchant a land")
     void cannotTargetLand() {
-        harness.addToBattlefield(player2, new Forest());
-        Permanent land = findPermanent(player2, "Forest");
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         harness.setHand(player1, List.of(new TeferisCurse()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -114,6 +112,58 @@ class TeferisCurseTest extends BaseCardTest {
         advanceTurn();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+    }
+
+    @Test
+    @DisplayName("An opposing creature and the Curse phase together on the creature controller's untap steps")
+    void opposingCreatureAndCursePhaseTogether() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BayFalcon());
+        harness.setHand(player1, List.of(new TeferisCurse()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        Permanent curse = findPermanent(player1, "Teferi's Curse");
+
+        harness.performUntapStep(player1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(curse);
+
+        harness.performUntapStep(player2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(curse);
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(creature);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(curse);
+
+        harness.performUntapStep(player1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(curse);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(curse);
+
+        harness.performUntapStep(player2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(curse);
+        assertThat(curse.getAttachedTo()).isEqualTo(creature.getId());
+        harness.assertNotInGraveyard(player1, "Teferi's Curse");
+    }
+
+    @Test
+    @DisplayName("A tapped enchanted artifact phases out before untapping and untaps when it phases in")
+    void tappedArtifactUntapsOnlyWhenItPhasesIn() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new CharcoalDiamond());
+        artifact.setTapped(true);
+        Permanent curse = attachCurse(artifact);
+
+        harness.performUntapStep(player1);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(artifact, curse);
+        assertThat(artifact.isTapped()).isTrue();
+
+        harness.performUntapStep(player2);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(artifact, curse);
+        assertThat(artifact.isTapped()).isTrue();
+
+        harness.performUntapStep(player1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact, curse);
+        assertThat(artifact.isTapped()).isFalse();
+        assertThat(curse.getAttachedTo()).isEqualTo(artifact.getId());
     }
 
     private Permanent attachCurse(Permanent host) {
