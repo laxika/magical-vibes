@@ -10,16 +10,18 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SturdyHatchling.class, GrizzlyBears.class, FugitiveWizard.class, HillGiant.class,
+        Snakeform.class})
 class SturdyHatchlingTest extends BaseCardTest {
-
-    // ===== ETB: enters with four -1/-1 counters =====
 
     @Test
     @DisplayName("Enters the battlefield with four -1/-1 counters (6/6 becomes 2/2)")
@@ -32,15 +34,14 @@ class SturdyHatchlingTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB effect
+
+        assertThat(gd.stack).isEmpty();
 
         Permanent hatchling = findHatchling(player1);
         assertThat(hatchling.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(4);
         assertThat(hatchling.getEffectivePower()).isEqualTo(2);
         assertThat(hatchling.getEffectiveToughness()).isEqualTo(2);
     }
-
-    // ===== Spell-cast counter removal =====
 
     @Test
     @DisplayName("Casting a green spell removes a -1/-1 counter")
@@ -95,8 +96,6 @@ class SturdyHatchlingTest extends BaseCardTest {
         assertThat(hatchling.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(4);
     }
 
-    // ===== {G/U}: gains shroud until end of turn =====
-
     @Test
     @DisplayName("Activating {G/U} grants shroud until end of turn, wears off at end of turn")
     void shroudGrantWearsOffAtEndOfTurn() {
@@ -120,14 +119,152 @@ class SturdyHatchlingTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, hatchling, Keyword.SHROUD)).isFalse();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("A green-blue spell triggers twice even when paid for with only blue mana")
+    void hybridSpellRemovesTwoCountersBeforeSpellResolves() {
+        Permanent hatchling = addReadyHatchling(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new SturdyHatchling()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(hatchling.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(4);
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        assertThat(hatchling.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
+        harness.passBothPriorities();
+        assertThat(hatchling.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(countPermanents(player1, "Sturdy Hatchling")).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Sturdy Hatchling")).hasSize(2);
+        assertThat(findPermanents(player1, "Sturdy Hatchling").get(1)
+                .getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("An opponent's green-blue spell does not remove counters")
+    void opponentSpellDoesNotRemoveCounters() {
+        Permanent hatchling = addReadyHatchling(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new SturdyHatchling()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player2, 0);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(hatchling.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Both color triggers resolve with only one counter remaining")
+    void removalCannotReduceCountersBelowZero() {
+        Permanent hatchling = addReadyHatchling(player1);
+        hatchling.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new SturdyHatchling()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(hatchling.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(hatchling.getEffectivePower()).isEqualTo(6);
+        assertThat(hatchling.getEffectiveToughness()).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Blue mana pays for shroud, and shroud does not stop further activations")
+    void shroudCanBeActivatedAgainWithBlueMana() {
+        Permanent hatchling = addReadyHatchling(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gqs.hasKeyword(gd, hatchling, Keyword.SHROUD)).isFalse();
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, hatchling, Keyword.SHROUD)).isTrue();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, hatchling, Keyword.SHROUD)).isTrue();
+        assertThat(hatchling.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Entering without being cast still gives four counters and triggers no removal")
+    void enteringWithoutCastingHasFourCounters() {
+        Permanent existing = addReadyHatchling(player1);
+
+        Permanent entering = harness.enterBattlefieldAndReturn(player1, new SturdyHatchling());
+
+        assertThat(entering.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(4);
+        assertThat(existing.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Shroud prevents both players from targeting the Hatchling")
+    void shroudPreventsBothPlayersFromTargeting() {
+        Permanent hatchling = addReadyHatchling(player1);
+        addReadyHatchling(player2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Snakeform()));
+        harness.setHand(player2, List.of(new Snakeform()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player2, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, hatchling.getId()))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("shroud");
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, hatchling.getId()))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("shroud");
+    }
+
+    @Test
+    @DisplayName("Shroud gained in response makes an already cast spell fail to resolve")
+    void shroudInResponseStopsTargetedSpell() {
+        Permanent hatchling = addReadyHatchling(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Snakeform()));
+        harness.setLibrary(player2, List.of(new SturdyHatchling()));
+        harness.addMana(player2, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player2, 0, hatchling.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Sturdy Hatchling");
+        assertThat(hatchling.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(4);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Snakeform");
+    }
 
     private Permanent addReadyHatchling(Player player) {
-        SturdyHatchling card = new SturdyHatchling();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new SturdyHatchling());
         perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 4);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
