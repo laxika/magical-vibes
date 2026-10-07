@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ActOfAggression;
+import com.github.laxika.magicalvibes.cards.d.DregRecycler;
+import com.github.laxika.magicalvibes.cards.v.VanquishTheWeak;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,16 +19,16 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StormTheSeedcore.class, GrizzlyBears.class})
+@CardUsed({StormTheSeedcore.class, DregRecycler.class, VanquishTheWeak.class, ActOfAggression.class})
 class StormTheSeedcoreTest extends BaseCardTest {
 
     @Test
     @DisplayName("Distributes four counters and grants vigilance and trample to all own creatures")
     void distributesCountersAndGrantsKeywords() {
-        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent third = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new DregRecycler());
         prepareCast();
 
         harness.castSorcery(player1, 0, Map.of(
@@ -51,7 +53,7 @@ class StormTheSeedcoreTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing no targets still grants keywords to creatures you control")
     void noTargetsStillGrantKeywords() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
         prepareCast();
 
         harness.castSorcery(player1, 0, Map.of());
@@ -65,15 +67,13 @@ class StormTheSeedcoreTest extends BaseCardTest {
     @Test
     @DisplayName("Granted keywords wear off at end of turn while counters remain")
     void keywordsWearOffAtEndOfTurn() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
         prepareCast();
 
         harness.castSorcery(player1, 0, Map.of(creature.getId(), 4));
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
@@ -83,11 +83,125 @@ class StormTheSeedcoreTest extends BaseCardTest {
     @Test
     @DisplayName("Only creatures you control may receive the counters")
     void rejectsOpponentCreatureTarget() {
-        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new DregRecycler());
         prepareCast();
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of(opponent.getId(), 4)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void fourTargetsEachReceiveOneCounter() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
+        Permanent fourth = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
+        prepareCast();
+
+        harness.castSorcery(player1, 0, Map.of(first.getId(), 1, second.getId(), 1,
+                third.getId(), 1, fourth.getId(), 1));
+        harness.passBothPriorities();
+
+        for (Permanent creature : List.of(first, second, third, fourth)) {
+            assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+            assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+        }
+    }
+
+    @Test
+    void rejectsDistributionWithWrongTotal() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
+        prepareCast();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of(creature.getId(), 3)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void rejectsTargetAssignedZeroCounters() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
+        prepareCast();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                Map.of(first.getId(), 4, second.getId(), 0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @CardUsed(VanquishTheWeak.class)
+    void countersAssignedToRemovedTargetAreLost() {
+        Permanent removed = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
+        Permanent surviving = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
+        Permanent untargeted = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
+        prepareCast();
+        harness.setHand(player2, List.of(new VanquishTheWeak()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0, Map.of(removed.getId(), 3, surviving.getId(), 1));
+        harness.castAndResolveInstant(player2, 0, removed.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(removed);
+        assertThat(surviving.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(untargeted.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, surviving, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, surviving, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, untargeted, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, untargeted, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @CardUsed(VanquishTheWeak.class)
+    void allTargetsRemovedPreventsKeywordGrant() {
+        Permanent removed = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
+        Permanent untargeted = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
+        prepareCast();
+        harness.setHand(player2, List.of(new VanquishTheWeak()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0, Map.of(removed.getId(), 4));
+        harness.castAndResolveInstant(player2, 0, removed.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(removed);
+        assertThat(gqs.hasKeyword(gd, untargeted, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, untargeted, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @CardUsed(ActOfAggression.class)
+    void soleTargetTakenByOpponentPreventsAllEffects() {
+        Permanent stolen = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
+        Permanent untargeted = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
+        prepareCast();
+        harness.setHand(player2, List.of(new ActOfAggression()));
+        harness.addMana(player2, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, Map.of(stolen.getId(), 4));
+        harness.castAndResolveInstant(player2, 0, stolen.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(stolen);
+        assertThat(stolen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, untargeted, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, untargeted, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void creatureEnteringAfterResolutionDoesNotGainKeywords() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
+        prepareCast();
+        harness.castSorcery(player1, 0, Map.of(original.getId(), 4));
+        harness.passBothPriorities();
+
+        Permanent newcomer = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
+
+        assertThat(gqs.hasKeyword(gd, original, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, original, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, newcomer, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, newcomer, Keyword.TRAMPLE)).isFalse();
     }
 
     private void prepareCast() {
