@@ -103,6 +103,76 @@ class SuperSkrullTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handSizeBefore + 4);
     }
 
+    @Test
+    @DisplayName("White ability works while tapped and summoning sick, and can be repeated")
+    void createsWallsWhileTappedAndSummoningSick() {
+        Permanent superSkrull = harness.addToBattlefieldAndReturn(player1, new SuperSkrull());
+        superSkrull.setSummoningSick(true);
+        superSkrull.setTapped(true);
+        addMana(player1, ManaColor.WHITE, 2);
+        addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Wall")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Wall")).isZero();
+        assertThat(superSkrull.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated green activations stack their bonuses")
+    void repeatedBoostsAreCumulative() {
+        Permanent superSkrull = addReadySuperSkrull(player1);
+        int originalPower = gqs.getEffectivePower(gd, superSkrull);
+        int originalToughness = gqs.getEffectiveToughness(gd, superSkrull);
+        addMana(player1, ManaColor.GREEN, 2);
+        addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, superSkrull)).isEqualTo(originalPower + 8);
+        assertThat(gqs.getEffectiveToughness(gd, superSkrull)).isEqualTo(originalToughness + 8);
+    }
+
+    @Test
+    @DisplayName("Red ability can target its source and marks exactly four damage")
+    void damageAbilityCanTargetSelf() {
+        Permanent superSkrull = addReadySuperSkrull(player1);
+        addMana(player1, ManaColor.RED, 1);
+        addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 2, null, superSkrull.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Super-Skrull");
+        assertThat(superSkrull.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Blue ability can target its controller without drawing for the opponent")
+    void controllerCanDrawFourCards() {
+        addReadySuperSkrull(player1);
+        harness.setLibrary(player1, List.of(
+                new SuperSkrull(), new SuperSkrull(), new SuperSkrull(), new SuperSkrull()));
+        int controllerHandSize = gd.playerHands.get(player1.getId()).size();
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
+        addMana(player1, ManaColor.BLUE, 1);
+        addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, 3, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(controllerHandSize + 4);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
     private Permanent addReadySuperSkrull(Player player) {
         return addCreatureReady(player, new SuperSkrull());
     }
