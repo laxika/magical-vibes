@@ -121,6 +121,73 @@ class ToymakerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Animating a tapped artifact does not untap it")
+    void animatesTappedArtifactWithoutUntapping() {
+        prepareToymaker();
+        Permanent matrix = harness.addToBattlefieldAndReturn(player1, new PowerMatrix());
+        matrix.setTapped(true);
+
+        activateToymaker(matrix);
+
+        assertThat(matrix.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, matrix)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, matrix)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, matrix)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Discard is paid before resolution and the ability survives its source leaving")
+    void resolvesAfterSourceLeavesWithDiscardAlreadyPaid() {
+        Permanent toymaker = prepareToymaker();
+        Permanent matrix = harness.addToBattlefieldAndReturn(player1, new PowerMatrix());
+        prepareDiscardAndMana();
+
+        harness.activateAbility(player1, 0, 0, null, matrix.getId());
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Toymaker");
+        harness.assertNotInHand(player1, "Toymaker");
+        assertThat(toymaker.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, matrix)).isFalse();
+        gd.playerBattlefields.get(player1.getId()).remove(toymaker);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, matrix)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, matrix)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, matrix)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while Toymaker is summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent toymaker = prepareToymaker();
+        toymaker.setSummoningSick(true);
+        Permanent matrix = harness.addToBattlefieldAndReturn(player1, new PowerMatrix());
+        prepareDiscardAndMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, matrix.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.isCreature(gd, matrix)).isFalse();
+        harness.assertInHand(player1, "Toymaker");
+    }
+    @Test
+    @DisplayName("Does not animate a target that has left the battlefield")
+    void doesNotAnimateTargetThatLeftBattlefield() {
+        prepareToymaker();
+        Permanent matrix = harness.addToBattlefieldAndReturn(player1, new PowerMatrix());
+        prepareDiscardAndMana();
+        harness.activateAbility(player1, 0, 0, null, matrix.getId());
+        harness.handleCardChosen(player1, 0);
+        gd.playerBattlefields.get(player1.getId()).remove(matrix);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, matrix)).isFalse();
+        harness.assertNotOnBattlefield(player1, "Power Matrix");
+        harness.assertInGraveyard(player1, "Toymaker");
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent prepareToymaker() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
