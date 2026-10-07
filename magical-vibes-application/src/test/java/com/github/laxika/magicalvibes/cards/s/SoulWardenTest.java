@@ -82,6 +82,34 @@ class SoulWardenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An existing Soul Warden triggers for a second Soul Warden entering")
+    void existingWardenTriggersForAnotherWarden() {
+        harness.addToBattlefield(player1, new SoulWarden());
+        harness.setLife(player1, 20);
+
+        harness.castFromHand(player1, new SoulWarden(), "{W}");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 21);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Opposing Soul Wardens each give life to their own controller")
+    void opposingWardensGainLifeForTheirOwnControllers() {
+        harness.addToBattlefield(player1, new SoulWarden());
+        harness.addToBattlefield(player2, new SoulWarden());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castFromHand(player1, new RagingGoblin(), "{R}");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 21);
+    }
+
+    @Test
     @DisplayName("Does not trigger when Soul Warden itself enters")
     void doesNotTriggerForItself() {
         harness.setLife(player1, 20);
