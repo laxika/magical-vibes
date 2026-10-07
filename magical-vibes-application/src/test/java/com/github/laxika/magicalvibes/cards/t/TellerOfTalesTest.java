@@ -14,7 +14,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,13 +30,13 @@ class TellerOfTalesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DesperateRitual()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, (UUID) null);
+        harness.castInstant(player1, 0);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
                 .isEqualTo(player1.getId());
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(creature.isTapped()).isTrue();
     }
@@ -54,9 +53,9 @@ class TellerOfTalesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castCreature(player1, 0);
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(creature.isTapped()).isFalse();
     }
@@ -70,9 +69,10 @@ class TellerOfTalesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DesperateRitual()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, (UUID) null);
-        harness.handleMayAbilityChosen(player1, false);
+        harness.castInstant(player1, 0);
+        harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(creature.isTapped()).isFalse();
     }
@@ -99,8 +99,7 @@ class TellerOfTalesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DesperateRitual()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, (UUID) null);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.castInstant(player1, 0);
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -117,7 +116,57 @@ class TellerOfTalesTest extends BaseCardTest {
         harness.setHand(player2, List.of(new DesperateRitual()));
         harness.addMana(player2, ManaColor.RED, 2);
 
-        harness.castInstant(player2, 0, (UUID) null);
+        harness.castInstant(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Teller of Tales does not trigger from its own casting or entering the battlefield")
+    void ownCastingDoesNotTrigger() {
+        Permanent creature = addCreatureReady(player2, new DevotedRetainer());
+        harness.setHand(player1, List.of(new TellerOfTales()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Teller of Tales");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The controller can decline at resolution after the target becomes tapped")
+    void canDeclineAfterTargetBecomesTapped() {
+        addCreatureReady(player1, new TellerOfTales());
+        Permanent creature = addCreatureReady(player2, new DevotedRetainer());
+        harness.setHand(player1, List.of(new DesperateRitual()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0);
+        harness.handlePermanentChosen(player1, creature.getId());
+        creature.tap();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's Spirit spell does not trigger")
+    void opponentSpiritDoesNotTrigger() {
+        addCreatureReady(player1, new TellerOfTales());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new HarshDeceiver()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player2, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
