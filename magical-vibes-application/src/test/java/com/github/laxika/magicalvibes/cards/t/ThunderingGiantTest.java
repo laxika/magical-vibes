@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(ThunderingGiant.class)
 class ThunderingGiantTest extends BaseCardTest {
@@ -24,6 +25,21 @@ class ThunderingGiantTest extends BaseCardTest {
         Permanent giant = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(giant.isTapped()).isTrue();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("Haste does not allow a tapped creature to attack")
+    void cannotAttackWhileTappedDespiteHaste() {
+        harness.castFromHand(player1, new ThunderingGiant(), "{3}{R}{R}");
+        harness.passBothPriorities();
+        Permanent giant = findPermanent(player1, "Thundering Giant");
+        giant.tap();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }
 
