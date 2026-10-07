@@ -135,4 +135,59 @@ class ThaumatogTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Forest");
         harness.assertOnBattlefield(player2, "Earnest Fellowship");
     }
+
+    @Test
+    @DisplayName("Both sacrifices are paid before their boosts resolve")
+    void sacrificesArePaidBeforeResolution() {
+        Permanent thaumatog = addCreatureReady(player1, new Thaumatog());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new EarnestFellowship());
+        int powerBefore = gqs.getEffectivePower(gd, thaumatog);
+        int toughnessBefore = gqs.getEffectiveToughness(gd, thaumatog);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, thaumatog)).isEqualTo(powerBefore);
+        assertThat(gqs.getEffectiveToughness(gd, thaumatog)).isEqualTo(toughnessBefore);
+
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertInGraveyard(player1, "Earnest Fellowship");
+        harness.assertNotOnBattlefield(player1, "Earnest Fellowship");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, thaumatog)).isEqualTo(powerBefore + 1);
+        assertThat(gqs.getEffectiveToughness(gd, thaumatog)).isEqualTo(toughnessBefore + 1);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, thaumatog)).isEqualTo(powerBefore + 2);
+        assertThat(gqs.getEffectiveToughness(gd, thaumatog)).isEqualTo(toughnessBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Both abilities work while Thaumatog is tapped and summoning sick")
+    void tappedSummoningSickThaumatogCanActivateBothAbilities() {
+        Permanent thaumatog = harness.addToBattlefieldAndReturn(player1, new Thaumatog());
+        thaumatog.setSummoningSick(true);
+        thaumatog.setTapped(true);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        land.setTapped(true);
+        harness.addToBattlefield(player1, new EarnestFellowship());
+        int powerBefore = gqs.getEffectivePower(gd, thaumatog);
+        int toughnessBefore = gqs.getEffectiveToughness(gd, thaumatog);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Earnest Fellowship");
+        assertThat(gqs.getEffectivePower(gd, thaumatog)).isEqualTo(powerBefore + 2);
+        assertThat(gqs.getEffectiveToughness(gd, thaumatog)).isEqualTo(toughnessBefore + 2);
+    }
 }
