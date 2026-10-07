@@ -42,10 +42,71 @@ class UnburiedEarthcarverTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Unburied Earthcarver");
     }
 
+    @Test
+    @DisplayName("Sacrifice is paid before the counter ability resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent earthcarver = harness.addToBattlefieldAndReturn(player1, new UnburiedEarthcarver());
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new UnburiedEarthcarver());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrifice);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrifice.getCard());
+        assertThat(earthcarver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(earthcarver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent earthcarver = harness.addToBattlefieldAndReturn(player1, new UnburiedEarthcarver());
+        earthcarver.setTapped(true);
+        harness.addToBattlefield(player1, new UnburiedEarthcarver());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(earthcarver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(earthcarver.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsCreature() {
+        harness.addToBattlefield(player1, new UnburiedEarthcarver());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new UnburiedEarthcarver());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Insufficient mana prevents activation without sacrificing a creature")
+    void insufficientManaDoesNotSacrificeCreature() {
+        Permanent earthcarver = harness.addToBattlefieldAndReturn(player1, new UnburiedEarthcarver());
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new UnburiedEarthcarver());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(earthcarver, sacrifice);
+        assertThat(gd.stack).isEmpty();
+        assertThat(earthcarver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private Permanent addUnburiedEarthcarverReady(Player player) {
-        Permanent permanent = new Permanent(new UnburiedEarthcarver());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new UnburiedEarthcarver());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
