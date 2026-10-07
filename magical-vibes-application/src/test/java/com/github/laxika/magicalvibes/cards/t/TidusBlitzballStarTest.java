@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AccordersShield;
+import com.github.laxika.magicalvibes.cards.e.EncroachingMycosynth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TidusBlitzballStar.class, AccordersShield.class, GrizzlyBears.class})
+@CardUsed({TidusBlitzballStar.class, AccordersShield.class, GrizzlyBears.class, EncroachingMycosynth.class})
 class TidusBlitzballStarTest extends BaseCardTest {
 
     @Test
@@ -22,8 +23,7 @@ class TidusBlitzballStarTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new AccordersShield()));
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(tidus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -50,5 +50,61 @@ class TidusBlitzballStarTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void enteringAsArtifactTriggersTidusForItsOwnEntry() {
+        harness.addToBattlefield(player1, new EncroachingMycosynth());
+
+        Permanent tidus = harness.enterBattlefieldAndReturn(player1, new TidusBlitzballStar());
+        resolveAllTriggers();
+
+        assertThat(tidus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void opponentArtifactEnteringDoesNotPutCounterOnTidus() {
+        Permanent tidus = addCreatureReady(player1, new TidusBlitzballStar());
+
+        harness.enterBattlefieldAndReturn(player2, new AccordersShield());
+        resolveAllTriggers();
+
+        assertThat(tidus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void nonartifactEnteringDoesNotPutCounterOnTidus() {
+        Permanent tidus = addCreatureReady(player1, new TidusBlitzballStar());
+
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        resolveAllTriggers();
+
+        assertThat(tidus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void eachArtifactEntryPutsAnotherCounterOnTidus() {
+        Permanent tidus = addCreatureReady(player1, new TidusBlitzballStar());
+
+        harness.enterBattlefieldAndReturn(player1, new AccordersShield());
+        resolveAllTriggers();
+        harness.enterBattlefieldAndReturn(player1, new AccordersShield());
+        resolveAllTriggers();
+
+        assertThat(tidus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void attackTriggerCanTargetAlreadyTappedCreature() {
+        addCreatureReady(player1, new TidusBlitzballStar());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.setTapped(true);
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }
