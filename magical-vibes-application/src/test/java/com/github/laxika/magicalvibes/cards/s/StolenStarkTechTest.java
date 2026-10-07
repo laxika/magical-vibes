@@ -92,6 +92,97 @@ class StolenStarkTechTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Moving the Equipment does not move the ETB indestructible grant")
+    void indestructibleStaysWithOriginalTarget() {
+        Permanent firstCreature = addCreatureReady(player1);
+        Permanent secondCreature = addCreatureReady(player1);
+        castStolenStarkTech(firstCreature);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 2, null, secondCreature.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, firstCreature, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, secondCreature, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("ETB grants indestructible even if the Equipment leaves before resolution")
+    void sourceLeavingDoesNotPreventIndestructible() {
+        Permanent creature = addCreatureReady(player1);
+        harness.setHand(player1, List.of(new StolenStarkTech()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        Permanent tech = findPermanent(player1, "Stolen Stark Tech");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, tech));
+
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Stolen Stark Tech");
+    }
+
+    @Test
+    @DisplayName("Equipment stays unattached if the ETB target leaves before resolution")
+    void targetLeavingPreventsAttachmentAndGrant() {
+        Permanent creature = addCreatureReady(player1);
+        Permanent otherCreature = addCreatureReady(player1);
+        harness.setHand(player1, List.of(new StolenStarkTech()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Stolen Stark Tech").getAttachedTo()).isNull();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void equipCannotTargetOpponentsCreature() {
+        Permanent opponentCreature = addCreatureReady(player2);
+        harness.addToBattlefield(player1, new StolenStarkTech());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Flash does not allow activating equip during combat")
+    void equipRequiresSorceryTiming() {
+        Permanent creature = addCreatureReady(player1);
+        harness.addToBattlefield(player1, new StolenStarkTech());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can be cast with no creatures and enters unattached")
+    void entersWithoutCreatures() {
+        harness.castFromHand(player1, new StolenStarkTech(), "{1}{B}");
+
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Stolen Stark Tech").getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addCreatureReady(com.github.laxika.magicalvibes.model.Player player) {
         Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         creature.setSummoningSick(false);
@@ -103,7 +194,6 @@ class StolenStarkTechTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castArtifact(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
