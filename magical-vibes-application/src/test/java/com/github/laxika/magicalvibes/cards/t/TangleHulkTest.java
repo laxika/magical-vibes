@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.o.OgreResister;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -8,8 +8,9 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,23 +19,24 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TangleHulk.class, OgreResister.class})
 class TangleHulkTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
     @Test
-    @DisplayName("Tangle Hulk has regeneration activated ability costing {2}{G}")
-    void hasCorrectAbility() {
-        TangleHulk card = new TangleHulk();
+    @DisplayName("Regeneration can be activated while tapped and summoning sick")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent hulk = harness.addToBattlefieldAndReturn(player1, new TangleHulk());
+        hulk.setSummoningSick(true);
+        hulk.tap();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(RegenerateEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{2}{G}");
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(hulk.getRegenerationShield()).isEqualTo(1);
+        assertThat(hulk.isTapped()).isTrue();
     }
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Tangle Hulk puts it on the stack as an artifact spell")
@@ -62,10 +64,8 @@ class TangleHulkTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Tangle Hulk");
     }
 
-    // ===== Activate regeneration ability =====
-
     @Test
-    @DisplayName("Activating regeneration ability puts it on the stack with self as target")
+    @DisplayName("Activating regeneration ability puts it on the stack for its source")
     void activatingAbilityPutsOnStack() {
         Permanent hulkPerm = addTangleHulkReady(player1);
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -135,23 +135,19 @@ class TangleHulkTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
-    // ===== Regeneration saves from combat damage =====
-
     @Test
     @DisplayName("Regeneration shield saves blocking Tangle Hulk from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
-        // Tangle Hulk (5/3) with regen shield blocks Hill Giant (3/3)
-        // Hill Giant deals 3 damage >= 3 toughness — lethal, but regen saves
+        // Tangle Hulk (5/3) with regen shield blocks Ogre Resister (4/3)
+        // Ogre Resister deals 4 damage >= 3 toughness - lethal, but regen saves
         Permanent hulkPerm = addTangleHulkReady(player1);
         hulkPerm.setRegenerationShield(1);
         hulkPerm.setBlocking(true);
         hulkPerm.addBlockingTarget(0);
 
-        HillGiant giant = new HillGiant();
-        Permanent attacker = new Permanent(giant);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new OgreResister());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -164,24 +160,22 @@ class TangleHulkTest extends BaseCardTest {
         Permanent hulk = findPermanent(player1, "Tangle Hulk");
         assertThat(hulk.isTapped()).isTrue();
         assertThat(hulk.getRegenerationShield()).isEqualTo(0);
-        // Hill Giant should also die (5 damage from Tangle Hulk >= 3 toughness)
-        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        // Ogre Resister should also die (5 damage from Tangle Hulk >= 3 toughness)
+        harness.assertNotOnBattlefield(player2, "Ogre Resister");
     }
 
     @Test
     @DisplayName("Tangle Hulk dies to lethal combat damage without regeneration shield")
     void diesWithoutRegenerationShieldInCombat() {
-        // Tangle Hulk (5/3) without regen blocks Hill Giant (3/3)
-        // 3 damage >= 3 toughness — lethal, no regen to save it
+        // Tangle Hulk (5/3) without regen blocks Ogre Resister (4/3)
+        // 4 damage >= 3 toughness - lethal, no regen to save it
         Permanent hulkPerm = addTangleHulkReady(player1);
         hulkPerm.setBlocking(true);
         hulkPerm.addBlockingTarget(0);
 
-        HillGiant giant = new HillGiant();
-        Permanent attacker = new Permanent(giant);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new OgreResister());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -196,17 +190,15 @@ class TangleHulkTest extends BaseCardTest {
     @Test
     @DisplayName("Regeneration shield saves attacking Tangle Hulk from lethal blocker damage")
     void regenerationSavesAttackingCreature() {
-        // Tangle Hulk (5/3) with regen attacks, blocked by Hill Giant (3/3)
+        // Tangle Hulk (5/3) with regen attacks, blocked by Ogre Resister (4/3)
         Permanent hulkPerm = addTangleHulkReady(player1);
         hulkPerm.setRegenerationShield(1);
         hulkPerm.setAttacking(true);
 
-        HillGiant giant = new HillGiant();
-        Permanent blocker = new Permanent(giant);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new OgreResister());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -222,13 +214,85 @@ class TangleHulkTest extends BaseCardTest {
         assertThat(hulk.getRegenerationShield()).isEqualTo(0);
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("A resolved shield replaces lethal damage and removes all marked damage")
+    void resolvedShieldReplacesLethalDamage() {
+        Permanent hulk = addTangleHulkReady(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        hulk.setMarkedDamage(7);
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Tangle Hulk");
+        assertThat(hulk.getMarkedDamage()).isZero();
+        assertThat(hulk.getRegenerationShield()).isZero();
+        assertThat(hulk.isTapped()).isTrue();
+
+        hulk.setMarkedDamage(3);
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Tangle Hulk");
+        harness.assertNotOnBattlefield(player1, "Tangle Hulk");
+    }
+
+    @Test
+    @DisplayName("Repeated activations create independently consumable shields")
+    void repeatedActivationsCreateSeparateShields() {
+        Permanent hulk = addTangleHulkReady(player1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(hulk.getRegenerationShield()).isEqualTo(2);
+        assertThat(hulk.isTapped()).isFalse();
+
+        hulk.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        assertThat(hulk.getRegenerationShield()).isEqualTo(1);
+
+        hulk.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.assertOnBattlefield(player1, "Tangle Hulk");
+        assertThat(hulk.getRegenerationShield()).isZero();
+        assertThat(hulk.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Regeneration does not save a creature with zero toughness")
+    void regenerationDoesNotReplaceZeroToughness() {
+        Permanent hulk = addTangleHulkReady(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        hulk.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 3);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Tangle Hulk");
+        harness.assertInGraveyard(player1, "Tangle Hulk");
+    }
+
+    @Test
+    @DisplayName("Three generic mana cannot pay the green component")
+    void cannotActivateWithoutGreenMana() {
+        addTangleHulkReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
 
     private Permanent addTangleHulkReady(Player player) {
-        TangleHulk card = new TangleHulk();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new TangleHulk());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
