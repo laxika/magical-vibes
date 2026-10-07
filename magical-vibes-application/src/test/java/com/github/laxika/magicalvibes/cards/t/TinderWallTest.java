@@ -68,10 +68,54 @@ class TinderWallTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A tapped, summoning-sick Tinder Wall can produce mana immediately")
+    void tappedSummoningSickWallProducesManaWithoutUsingStack() {
+        Permanent wall = addCreatureReady(player1, new TinderWall());
+        wall.setSummoningSick(true);
+        wall.setTapped(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Tinder Wall");
+        harness.assertNotOnBattlefield(player1, "Tinder Wall");
+    }
+
+    @Test
+    @DisplayName("Damage ability requires red mana before sacrificing Tinder Wall")
+    void cannotPayDamageCostWithoutRedMana() {
+        Permanent attacker = addCreatureReady(player1, new BalduvianBears());
+        addCreatureReady(player2, new TinderWall());
+        blockWithWall();
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Tinder Wall");
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Damage ability cannot be activated when Tinder Wall is not blocking")
+    void cannotDamageCreatureOutsideCombat() {
+        addCreatureReady(player1, new TinderWall());
+        Permanent target = addCreatureReady(player2, new BalduvianBears());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Tinder Wall");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
     /** Declares player1's first creature as an attacker and blocks it with player2's Tinder Wall. */
     private void blockWithWall() {
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
     }
 }
