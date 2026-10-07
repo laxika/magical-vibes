@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,9 +11,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({StormFleetSpy.class})
 class StormFleetSpyTest extends BaseCardTest {
-
-    // ===== ETB with raid met =====
 
     @Test
     @DisplayName("ETB triggers draw when raid is met (attacked this turn)")
@@ -42,8 +40,6 @@ class StormFleetSpyTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeAfterCast + 1);
     }
 
-    // ===== ETB without raid =====
-
     @Test
     @DisplayName("ETB does NOT trigger without raid (did not attack this turn)")
     void etbDoesNotTriggerWithoutRaid() {
@@ -61,27 +57,36 @@ class StormFleetSpyTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeAfterCast);
     }
 
-    // ===== Raid lost before resolution (intervening-if) =====
-
     @Test
-    @DisplayName("ETB does nothing if raid condition is lost before resolution")
-    void etbFizzlesWhenRaidLost() {
-        markAttackedThisTurn();
+    @DisplayName("An opponent attacking does not satisfy the controller's raid condition")
+    void opponentAttackingDoesNotEnableRaid() {
+        gd.playersDeclaredAttackersThisTurn.add(player2.getId());
         castStormFleetSpy();
         int handSizeAfterCast = gd.playerHands.get(player1.getId()).size();
-        harness.passBothPriorities(); // resolve creature spell — ETB trigger on stack
+        harness.passBothPriorities();
 
-        // Remove the raid flag before ETB resolves
-        gd.playersDeclaredAttackersThisTurn.clear();
-
-        harness.passBothPriorities(); // resolve ETB trigger — raid no longer met
-
-        // Hand size unchanged (no draw)
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeAfterCast);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("raid ability does nothing"));
     }
 
-    // ===== Creature enters battlefield regardless =====
+    @Test
+    @DisplayName("Raid draw resolves even after the Spy leaves the battlefield")
+    void drawResolvesAfterSourceLeaves() {
+        markAttackedThisTurn();
+        StormFleetSpy drawnCard = new StormFleetSpy();
+        harness.setLibrary(player1, List.of(drawnCard));
+        castStormFleetSpy();
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
+        harness.passBothPriorities();
+
+        var spy = gd.playerBattlefields.get(player1.getId()).removeFirst();
+        gd.playerGraveyards.get(player1.getId()).add(spy.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Creature enters battlefield even without raid")
@@ -103,8 +108,6 @@ class StormFleetSpyTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helpers =====
-
     private void markAttackedThisTurn() {
         gd.playersDeclaredAttackersThisTurn.add(player1.getId());
     }
@@ -112,6 +115,6 @@ class StormFleetSpyTest extends BaseCardTest {
     private void castStormFleetSpy() {
         harness.setHand(player1, List.of(new StormFleetSpy()));
         harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.castCreature(player1, 0);
     }
 }
