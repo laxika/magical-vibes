@@ -117,8 +117,7 @@ class StarlightInvokerTest extends BaseCardTest {
     @DisplayName("Can activate the ability while summoning sick because it has no tap cost")
     void canActivateWhileSummoningSick() {
         harness.setLife(player1, 20);
-        Permanent invoker = addCreatureReady(player1, new StarlightInvoker());
-        invoker.setSummoningSick(true);
+        harness.addToBattlefield(player1, new StarlightInvoker());
         harness.addMana(player1, ManaColor.WHITE, 8);
 
         harness.activateAbility(player1, 0, null, null);
@@ -138,6 +137,72 @@ class StarlightInvokerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Generic portion of the activation cost can be paid with other mana")
+    void canPayGenericCostWithOtherMana() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new StarlightInvoker());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 7);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 25);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Eight mana without white mana cannot pay the activation cost")
+    void cannotActivateWithoutWhiteMana() {
+        addCreatureReady(player1, new StarlightInvoker());
+        harness.addMana(player1, ManaColor.BLUE, 8);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("A tapped Invoker can activate its ability")
+    void canActivateWhileTapped() {
+        harness.setLife(player1, 20);
+        Permanent invoker = addCreatureReady(player1, new StarlightInvoker());
+        invoker.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 8);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 25);
+        assertThat(invoker.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Multiple activations can be stacked and life is gained only on resolution")
+    void canStackMultipleActivations() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new StarlightInvoker());
+        harness.addMana(player1, ManaColor.WHITE, 16);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 25);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 30);
+        assertThat(gd.stack).isEmpty();
     }
 
 }
