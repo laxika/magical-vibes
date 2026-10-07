@@ -19,12 +19,10 @@ class SwampsnareTrapTest extends BaseCardTest {
 
     @Test
     void enchantedCreatureGetsMinusFiveMinusThree() {
-        Permanent creature = new Permanent(new AirElemental());
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AirElemental());
 
-        Permanent aura = new Permanent(new SwampsnareTrap());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SwampsnareTrap());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-1);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
@@ -32,8 +30,7 @@ class SwampsnareTrapTest extends BaseCardTest {
 
     @Test
     void costsOneLessWhenTargetingCreatureWithFlying() {
-        Permanent creature = new Permanent(new AirElemental());
-        gd.playerBattlefields.get(player2.getId()).add(creature);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
 
         harness.setHand(player1, List.of(new SwampsnareTrap()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -46,10 +43,8 @@ class SwampsnareTrapTest extends BaseCardTest {
 
     @Test
     void doesNotReduceCostWhenTargetingCreatureWithoutFlying() {
-        Permanent flyingCreature = new Permanent(new AirElemental());
-        gd.playerBattlefields.get(player2.getId()).add(flyingCreature);
-        Permanent creature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(creature);
+        harness.addToBattlefield(player2, new AirElemental());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new SwampsnareTrap()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -60,14 +55,70 @@ class SwampsnareTrapTest extends BaseCardTest {
 
     @Test
     void cannotTargetNoncreaturePermanent() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         harness.setHand(player1, List.of(new SwampsnareTrap()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-
-        Permanent artifact = findPermanent(player2, "Fountain of Youth");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void resolvesOntoFlyingCreatureAndOnlyWeakensThatCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new SwampsnareTrap()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Swampsnare Trap");
+        assertThat(findPermanent(player1, "Swampsnare Trap").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(4);
+    }
+
+    @Test
+    void canPayFullCostForNonflyingCreatureAndBothCreatureAndAuraGoToGraveyard() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SwampsnareTrap()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Swampsnare Trap");
+        harness.assertInGraveyard(player1, "Swampsnare Trap");
+    }
+
+    @Test
+    void reductionDoesNotRemoveBlackManaRequirement() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new SwampsnareTrap()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void reductionAlsoAppliesWhenTargetingOwnFlyingCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        harness.setHand(player1, List.of(new SwampsnareTrap()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertOnBattlefield(player1, "Swampsnare Trap");
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }
 }
