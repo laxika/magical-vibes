@@ -136,9 +136,7 @@ class SwelterTest extends BaseCardTest {
         assertThat(warthog.getMarkedDamage()).isEqualTo(2);
         assertThat(otherWarthog.getMarkedDamage()).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Giant Warthog");
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .filteredOn(p -> p.getCard().getName().equals("Giant Warthog"))
-                .hasSize(2);
+        assertThat(countPermanents(player2, "Giant Warthog")).isEqualTo(2);
     }
 
     @Test
@@ -155,5 +153,46 @@ class SwelterTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Suntail Hawk");
         assertThat(warthog.getMarkedDamage()).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Giant Warthog");
+    }
+
+    @Test
+    @DisplayName("Still damages the first target when the second target leaves before resolution")
+    void stillResolvesWithSecondTargetIllegal() {
+        Permanent survivingWarthog = harness.addToBattlefieldAndReturn(player2, new GiantWarthog());
+        Permanent removedHawk = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        harness.setHand(player1, List.of(new Swelter()));
+        harness.setHand(player2, List.of(new LavaDart()));
+        giveMana();
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castSorcery(player1, 0, List.of(survivingWarthog.getId(), removedHawk.getId()));
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, removedHawk.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Suntail Hawk");
+        assertThat(survivingWarthog.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Giant Warthog");
+        harness.assertInGraveyard(player1, "Swelter");
+    }
+
+    @Test
+    @DisplayName("Deals lethal damage to both creatures without damaging an untargeted creature")
+    void killsBothTargetsAndLeavesOtherCreaturesUndamaged() {
+        Permanent firstHawk = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        Permanent secondHawk = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent warthog = harness.addToBattlefieldAndReturn(player2, new GiantWarthog());
+        harness.setHand(player1, List.of(new Swelter()));
+        giveMana();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(firstHawk.getId(), secondHawk.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Suntail Hawk");
+        harness.assertNotOnBattlefield(player2, "Suntail Hawk");
+        harness.assertInGraveyard(player1, "Suntail Hawk");
+        harness.assertInGraveyard(player2, "Suntail Hawk");
+        assertThat(warthog.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Giant Warthog");
+        harness.assertInGraveyard(player1, "Swelter");
     }
 }
