@@ -111,4 +111,78 @@ class ThunderscapeMasterTest extends BaseCardTest {
     private Permanent addReadyMaster() {
         return addCreatureReady(player1, new ThunderscapeMaster());
     }
+
+    @Test
+    @DisplayName("The drain can target its controller, who survives losing and regaining their last two life")
+    void canDrainSelfAtTwoLife() {
+        addReadyMaster();
+        harness.setLife(player1, 2);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 2);
+        harness.assertLife(player2, 20);
+        assertThat(gd.status).isNotEqualTo(com.github.laxika.magicalvibes.model.GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("The boost affects creatures present at resolution, but not creatures entering afterward")
+    void boostLocksInCreaturesAtResolution() {
+        addReadyMaster();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new ThornscapeApprentice());
+
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new ThornscapeApprentice());
+
+        assertThat(beforeResolution.getPowerModifier()).isEqualTo(2);
+        assertThat(beforeResolution.getToughnessModifier()).isEqualTo(2);
+        assertThat(afterResolution.getPowerModifier()).isZero();
+        assertThat(afterResolution.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents both tap abilities")
+    void summoningSicknessPreventsBothAbilities() {
+        Permanent master = harness.addToBattlefieldAndReturn(player1, new ThunderscapeMaster());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(master.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The drain requires two black mana, not one black and one green")
+    void drainRequiresTwoBlackMana() {
+        Permanent master = addReadyMaster();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(master.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The boost requires two green mana, not one green and one black")
+    void boostRequiresTwoGreenMana() {
+        Permanent master = addReadyMaster();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(master.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }
