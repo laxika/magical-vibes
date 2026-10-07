@@ -76,6 +76,90 @@ class TunnelVisionTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Stops at the first matching copy and leaves later copies untouched")
+    void stopsAtFirstMatchingCopy() {
+        Card first = new HuntedPhantasm();
+        Card chosen = new HuntedLammasu();
+        Card laterCopy = new HuntedLammasu();
+        Card tail = new HuntedHorror();
+        harness.setLibrary(player2, List.of(first, chosen, laterCopy, tail));
+
+        castTunnelVision();
+        harness.handleListChoice(player1, chosen.getName());
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(chosen, laterCopy, tail);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(first);
+    }
+
+    @Test
+    @DisplayName("A matching top card leaves the entire library unchanged")
+    void matchingTopCardLeavesLibraryUnchanged() {
+        Card chosen = new HuntedLammasu();
+        Card tail = new HuntedHorror();
+        harness.setLibrary(player2, List.of(chosen, tail));
+
+        castTunnelVision();
+        harness.handleListChoice(player1, chosen.getName());
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(chosen, tail);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target its controller and find the bottom card")
+    void canTargetControllerAndFindBottomCard() {
+        Card first = new HuntedPhantasm();
+        Card chosen = new HuntedLammasu();
+        harness.setLibrary(player1, List.of(first, chosen));
+        harness.setHand(player1, List.of(new TunnelVision()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleListChoice(player1, chosen.getName());
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(chosen);
+        harness.assertInGraveyard(player1, first.getName());
+        harness.assertInGraveyard(player1, "Tunnel Vision");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Allows choosing a real card name that is absent from the game")
+    void canNameCardAbsentFromGame() {
+        Card card = new HuntedHorror();
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(card));
+
+        castTunnelVision();
+        harness.handleListChoice(player1, "Hunted Lammasu");
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(card);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Name options do not disclose the contents of the opponent's hidden hand")
+    void nameOptionsDoNotDependOnOpponentsHiddenHand() {
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player2, List.of(new HuntedHorror()));
+        castTunnelVision();
+        List<String> originalOptions = gd.interaction
+                .activeInteraction(PendingInteraction.ColorChoice.class).options();
+        harness.handleListChoice(player1, "Tunnel Vision");
+
+        harness.setHand(player2, List.of(new HuntedLammasu()));
+        castTunnelVision();
+        List<String> changedOptions = gd.interaction
+                .activeInteraction(PendingInteraction.ColorChoice.class).options();
+
+        assertThat(changedOptions).containsExactlyElementsOf(originalOptions);
+    }
+
     private void castTunnelVision() {
         harness.setHand(player1, List.of(new TunnelVision()));
         harness.addMana(player1, ManaColor.BLUE, 1);
