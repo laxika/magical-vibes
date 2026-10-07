@@ -141,4 +141,41 @@ class TrashForTreasureTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Alpha Myr");
         harness.assertInGraveyard(player1, "Trash for Treasure");
     }
+
+    @Test
+    @DisplayName("Cannot target the artifact sacrificed as the additional cost")
+    void cannotReturnSacrificedArtifact() {
+        Permanent sacrificedArtifact = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+        harness.setGraveyard(player1, List.of(new Ornithopter()));
+        harness.setHand(player1, List.of(new TrashForTreasure()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(
+                player1, 0, sacrificedArtifact.getCard().getId(), sacrificedArtifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Alpha Myr");
+        harness.assertInHand(player1, "Trash for Treasure");
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's artifact to pay the additional cost")
+    void cannotSacrificeOpponentsArtifact() {
+        Card artifactCard = new Ornithopter();
+        harness.addToBattlefield(player1, new LeoninScimitar());
+        Permanent opponentsArtifact = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+        harness.setGraveyard(player1, List.of(artifactCard));
+        harness.setHand(player1, List.of(new TrashForTreasure()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(
+                player1, 0, artifactCard.getId(), opponentsArtifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Alpha Myr");
+        harness.assertOnBattlefield(player1, "Leonin Scimitar");
+        harness.assertInGraveyard(player1, "Ornithopter");
+    }
 }
