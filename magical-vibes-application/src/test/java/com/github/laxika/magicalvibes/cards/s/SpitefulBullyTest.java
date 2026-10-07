@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SpitefulBully.class, BelbesPercher.class, BelbesArmor.class, FlowstoneWall.class})
+@CardUsed({SpitefulBully.class, BelbesPercher.class, BelbesArmor.class, FlowstoneWall.class, SealOfRemoval.class})
 class SpitefulBullyTest extends BaseCardTest {
 
     @Test
@@ -71,5 +71,47 @@ class SpitefulBullyTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Upkeep damage still resolves after Spiteful Bully leaves the battlefield")
+    void dealsDamageAfterSourceLeavesBattlefield() {
+        Permanent bully = addCreatureReady(player1, new SpitefulBully());
+        Permanent target = addCreatureReady(player1, new FlowstoneWall());
+        harness.addToBattlefield(player1, new SealOfRemoval());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.activateAbility(player1, 2, null, bully.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Spiteful Bully");
+        harness.assertInHand(player1, "Spiteful Bully");
+        resolveAllTriggers();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Flowstone Wall");
+    }
+
+    @Test
+    @DisplayName("Does not choose a new target when the chosen creature leaves the battlefield")
+    void doesNotRetargetAfterTargetLeavesBattlefield() {
+        Permanent bully = addCreatureReady(player1, new SpitefulBully());
+        Permanent target = addCreatureReady(player1, new FlowstoneWall());
+        harness.addToBattlefield(player1, new SealOfRemoval());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.activateAbility(player1, 2, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Flowstone Wall");
+        harness.assertInHand(player1, "Flowstone Wall");
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(bully.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Spiteful Bully");
     }
 }
