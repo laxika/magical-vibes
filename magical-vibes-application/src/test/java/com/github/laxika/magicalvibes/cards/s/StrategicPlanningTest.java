@@ -108,9 +108,8 @@ class StrategicPlanningTest extends BaseCardTest {
     @DisplayName("With 1 card in library, it automatically goes to hand")
     void oneCardInLibrary() {
         GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
         Card singleCard = new Island();
-        gd.playerDecks.get(player1.getId()).add(singleCard);
+        harness.setLibrary(player1, List.of(singleCard));
 
         cast();
 
@@ -123,12 +122,56 @@ class StrategicPlanningTest extends BaseCardTest {
     @DisplayName("With empty library, nothing happens")
     void emptyLibrary() {
         GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         cast();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot choose more than one card; a valid choice still completes resolution")
+    void cannotChooseMoreThanOneCard() {
+        Card first = new Island();
+        Card second = new Island();
+        Card third = new Island();
+        setupTopCards(List.of(first, second, third));
+        cast();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, third);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Cannot choose a card below the top three")
+    void cannotChooseCardBelowTopThree() {
+        Card first = new Island();
+        Card second = new Island();
+        Card third = new Island();
+        Card fourth = new Island();
+        setupTopCards(List.of(first, second, third, fourth));
+        cast();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(fourth.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(third.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void cast() {
