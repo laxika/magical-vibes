@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.cards.a.AxebaneGuardian;
+import com.github.laxika.magicalvibes.cards.e.EtherealArmor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -7,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({UltimatePrice.class, AxebaneGuardian.class, EtherealArmor.class})
 class UltimatePriceTest extends BaseCardTest {
 
     @Test
@@ -63,6 +67,44 @@ class UltimatePriceTest extends BaseCardTest {
                 .anyMatch(p -> p.getId().equals(mono.getId()));
     }
 
+    @Test
+    @DisplayName("Can destroy its controller's monocolored creature")
+    void destroysOwnCreature() {
+        Permanent guardian = harness.addToBattlefieldAndReturn(player1, new AxebaneGuardian());
+
+        castPrice(guardian);
+
+        harness.assertNotOnBattlefield(player1, "Axebane Guardian");
+        harness.assertInGraveyard(player1, "Axebane Guardian");
+    }
+
+    @Test
+    @DisplayName("Cannot target a monocolored noncreature permanent")
+    void cannotTargetMonocoloredEnchantment() {
+        Permanent guardian = harness.addToBattlefieldAndReturn(player2, new AxebaneGuardian());
+        Permanent armor = harness.addToBattlefieldAndReturn(player2, new EtherealArmor());
+        armor.setAttachedTo(guardian.getId());
+        prepare();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, armor.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not destroy a target that becomes multicolored before resolution")
+    void targetBecomesMulticolored() {
+        Permanent guardian = harness.addToBattlefieldAndReturn(player2, new AxebaneGuardian());
+        prepare();
+        harness.castInstant(player1, 0, guardian.getId());
+
+        guardian.getGrantedColors().add(CardColor.BLUE);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Axebane Guardian");
+        harness.assertInGraveyard(player1, "Ultimate Price");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void prepare() {
         harness.setHand(player1, List.of(new UltimatePrice()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -71,8 +113,7 @@ class UltimatePriceTest extends BaseCardTest {
 
     private void castPrice(Permanent target) {
         prepare();
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     /**
@@ -90,9 +131,8 @@ class UltimatePriceTest extends BaseCardTest {
         } else if (primary != null) {
             card.setColor(primary);
         }
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
