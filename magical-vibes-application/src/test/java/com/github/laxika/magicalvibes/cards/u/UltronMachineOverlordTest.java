@@ -33,4 +33,51 @@ class UltronMachineOverlordTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, opposingRobot)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opposingRobot)).isEqualTo(3);
     }
+
+    @Test
+    @DisplayName("The bonus starts when Ultron resolves and ends when it leaves the battlefield")
+    void bonusTracksUltronsPresence() {
+        Permanent robot = harness.addToBattlefieldAndReturn(player1, new UltronDrone());
+        Permanent construct = harness.addToBattlefieldAndReturn(player1, new MyriadConstruct());
+
+        harness.castFromHand(player1, new UltronMachineOverlord(), "{5}");
+        assertThat(gqs.getEffectivePower(gd, robot)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, robot)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, construct)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, construct)).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, robot)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, robot)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, construct)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, construct)).isEqualTo(6);
+
+        Permanent ultron = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof UltronMachineOverlord)
+                .findFirst().orElseThrow();
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, ultron));
+
+        harness.assertInGraveyard(player1, "Ultron, Machine Overlord");
+        assertThat(gqs.getEffectivePower(gd, robot)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, robot)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, construct)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, construct)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Robots entering after Ultron immediately receive the bonus")
+    void boostsRobotsEnteringLater() {
+        harness.addToBattlefield(player1, new UltronMachineOverlord());
+
+        harness.castFromHand(player1, new UltronDrone(), "{3}");
+        harness.passBothPriorities();
+
+        Permanent robot = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof UltronDrone)
+                .findFirst().orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, robot)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, robot)).isEqualTo(5);
+    }
 }
