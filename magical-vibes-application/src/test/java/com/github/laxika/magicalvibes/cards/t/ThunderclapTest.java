@@ -102,4 +102,53 @@ class ThunderclapTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A tapped Mountain can be sacrificed and the cost is paid before damage")
+    void sacrificesTappedMountainBeforeResolution() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        mountain.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new JhovallQueen());
+        harness.setHand(player1, List.of(new Thunderclap()));
+
+        harness.castInstantWithAlternateCost(player1, 0, target.getId(), List.of(mountain.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Mountain");
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        harness.assertInGraveyard(player1, "Thunderclap");
+    }
+
+    @Test
+    @DisplayName("Alternate cost cannot be paid without sacrificing a Mountain")
+    void alternateCostRequiresSacrifice() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new JhovallQueen());
+        harness.setHand(player1, List.of(new Thunderclap()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(
+                player1, 0, target.getId(), List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Thunderclap");
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can target a creature controlled by its caster")
+    void canTargetOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new JhovallQueen());
+        harness.setHand(player1, List.of(new Thunderclap()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Jhovall Queen");
+    }
 }
