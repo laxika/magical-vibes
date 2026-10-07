@@ -103,8 +103,7 @@ class SurgeOfZealTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
@@ -122,6 +121,36 @@ class SurgeOfZealTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, matchingCreature, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not gain haste")
+    void creaturesEnteringAfterResolutionDoNotGainHaste() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CivicWayfinder());
+        harness.setHand(player1, List.of(new SurgeOfZeal()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player2, new CivicWayfinder());
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Color sharing is determined only from the target, including an opposing target")
+    void colorSharingDoesNotSpreadThroughOtherAffectedCreatures() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ViashinoFangtail());
+        Permanent multicoloredCreature = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        Permanent whiteCreature = harness.addToBattlefieldAndReturn(player2, new CourierHawk());
+        harness.setHand(player1, List.of(new SurgeOfZeal()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, multicoloredCreature, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, whiteCreature, Keyword.HASTE)).isFalse();
     }
 
     @Test
