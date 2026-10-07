@@ -1,15 +1,18 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
+import com.github.laxika.magicalvibes.cards.h.HeadwaterSentries;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.j.JaceCunningCastaway;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,11 +21,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({StarOfExtinction.class, Forest.class, Island.class, HeadwaterSentries.class, JaceCunningCastaway.class})
 class StarOfExtinctionTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting targets a land and puts spell on the stack")
@@ -38,27 +39,22 @@ class StarOfExtinctionTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Star of Extinction");
         assertThat(entry.getTargetId()).isEqualTo(targetId);
     }
-
-    // ===== Target validation =====
 
     @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
         harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HeadwaterSentries());
         harness.setHand(player1, List.of(new StarOfExtinction()));
         harness.addMana(player1, ManaColor.RED, 7);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Headwater Sentries");
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
     }
-
-    // ===== Resolving =====
 
     @Test
     @DisplayName("Resolving destroys target land")
@@ -79,8 +75,8 @@ class StarOfExtinctionTest extends BaseCardTest {
     @DisplayName("Deals 20 damage to creatures on both sides, killing them")
     void deals20DamageToAllCreatures() {
         harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new HeadwaterSentries());
+        harness.addToBattlefield(player2, new HeadwaterSentries());
         harness.setHand(player1, List.of(new StarOfExtinction()));
         harness.addMana(player1, ManaColor.RED, 7);
 
@@ -88,21 +84,20 @@ class StarOfExtinctionTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        // Both bears should be dead
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        // Bears should be in graveyards
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        // Both creatures should be dead
+        harness.assertNotOnBattlefield(player1, "Headwater Sentries");
+        harness.assertNotOnBattlefield(player2, "Headwater Sentries");
+        // Creatures should be in graveyards
+        harness.assertInGraveyard(player1, "Headwater Sentries");
+        harness.assertInGraveyard(player2, "Headwater Sentries");
     }
 
     @Test
     @DisplayName("Deals 20 damage to planeswalkers, killing them")
     void deals20DamageToPlaneswalkers() {
         harness.addToBattlefield(player1, new Forest());
-        Permanent chandra = new Permanent(new ChandraNalaar());
-        chandra.setCounterCount(CounterType.LOYALTY, 6);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(chandra);
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceCunningCastaway());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
         harness.setHand(player1, List.of(new StarOfExtinction()));
         harness.addMana(player1, ManaColor.RED, 7);
 
@@ -110,7 +105,47 @@ class StarOfExtinctionTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Chandra Nalaar");
+        harness.assertNotOnBattlefield(player2, "Jace, Cunning Castaway");
+        harness.assertInGraveyard(player2, "Jace, Cunning Castaway");
+    }
+
+    @Test
+    @DisplayName("Deals exactly twenty damage to surviving creatures and planeswalkers")
+    void dealsExactlyTwentyDamage() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new HeadwaterSentries());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 16);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceCunningCastaway());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 21);
+        harness.setHand(player1, List.of(new StarOfExtinction()));
+        harness.addMana(player1, ManaColor.RED, 7);
+
+        harness.castSorcery(player1, 0, land.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Headwater Sentries");
+        assertThat(creature.getMarkedDamage()).isEqualTo(20);
+        harness.assertOnBattlefield(player2, "Jace, Cunning Castaway");
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({DarksteelCitadel.class})
+    @DisplayName("An indestructible target land survives but creatures still take damage")
+    void indestructibleLandDoesNotStopDamage() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new DarksteelCitadel());
+        harness.addToBattlefield(player1, new HeadwaterSentries());
+        harness.addToBattlefield(player2, new HeadwaterSentries());
+        harness.setHand(player1, List.of(new StarOfExtinction()));
+        harness.addMana(player1, ManaColor.RED, 7);
+
+        harness.castSorcery(player1, 0, land.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Darksteel Citadel");
+        harness.assertNotInGraveyard(player2, "Darksteel Citadel");
+        harness.assertInGraveyard(player1, "Headwater Sentries");
+        harness.assertInGraveyard(player2, "Headwater Sentries");
     }
 
     @Test
@@ -124,9 +159,8 @@ class StarOfExtinctionTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -145,13 +179,11 @@ class StarOfExtinctionTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Island");
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Fizzles if target land is removed — no damage dealt")
     void fizzlesIfTargetLandRemoved() {
         harness.addToBattlefield(player2, new Forest());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HeadwaterSentries());
         harness.setHand(player1, List.of(new StarOfExtinction()));
         harness.addMana(player1, ManaColor.RED, 7);
 
@@ -165,10 +197,8 @@ class StarOfExtinctionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature should survive because the spell fizzled
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Headwater Sentries");
     }
-
-    // ===== Cleanup =====
 
     @Test
     @DisplayName("Star of Extinction goes to graveyard after resolving")
