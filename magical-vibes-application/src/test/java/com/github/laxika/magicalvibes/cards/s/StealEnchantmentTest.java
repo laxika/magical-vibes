@@ -24,10 +24,47 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class StealEnchantmentTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Stealing a control Aura also transfers control of its enchanted permanent")
+    void stealingStealEnchantmentTransfersUnderlyingEnchantment() {
+        Permanent anthem = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+        harness.setHand(player1, List.of(new StealEnchantment()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, anthem.getId());
+        harness.passBothPriorities();
+        Permanent firstSteal = findPermanent(player1, "Steal Enchantment");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new StealEnchantment()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castEnchantment(player2, 0, firstSteal.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player1, "Glorious Anthem");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getId().equals(firstSteal.getId())
+                        && anthem.getId().equals(p.getAttachedTo()));
+    }
+
+    @Test
+    @DisplayName("Steal Enchantment can enchant an enchantment already controlled by its caster")
+    void canEnchantOwnEnchantment() {
+        Permanent anthem = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
+        harness.setHand(player1, List.of(new StealEnchantment()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, anthem.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Glorious Anthem");
+        assertThat(findPermanent(player1, "Steal Enchantment").getAttachedTo()).isEqualTo(anthem.getId());
+    }
+
+    @Test
     @DisplayName("Resolving Steal Enchantment gains control of the enchanted enchantment")
     void resolvingStealsEnchantment() {
-        harness.addToBattlefield(player2, new GloriousAnthem());
-        Permanent anthem = findPermanent(player2, "Glorious Anthem");
+        Permanent anthem = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
 
         harness.setHand(player1, List.of(new StealEnchantment()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -49,8 +86,7 @@ class StealEnchantmentTest extends BaseCardTest {
     @Test
     @DisplayName("Stolen Glorious Anthem pumps the new controller's creatures instead")
     void stolenAnthemBoostsNewController() {
-        harness.addToBattlefield(player2, new GloriousAnthem());
-        Permanent anthem = findPermanent(player2, "Glorious Anthem");
+        Permanent anthem = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent myBears = findPermanent(player1, "Grizzly Bears");
@@ -71,8 +107,7 @@ class StealEnchantmentTest extends BaseCardTest {
     @Test
     @DisplayName("Enchantment returns to its owner when Steal Enchantment leaves the battlefield")
     void enchantmentReturnsWhenAuraDestroyed() {
-        harness.addToBattlefield(player2, new GloriousAnthem());
-        Permanent anthem = findPermanent(player2, "Glorious Anthem");
+        Permanent anthem = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
 
         harness.setHand(player1, List.of(new StealEnchantment()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -100,8 +135,7 @@ class StealEnchantmentTest extends BaseCardTest {
     @Test
     @DisplayName("Steal Enchantment fizzles if the target enchantment is gone")
     void fizzlesIfTargetGone() {
-        harness.addToBattlefield(player2, new GloriousAnthem());
-        Permanent anthem = findPermanent(player2, "Glorious Anthem");
+        Permanent anthem = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
 
         harness.setHand(player1, List.of(new StealEnchantment()));
         harness.addMana(player1, ManaColor.BLUE, 5);
