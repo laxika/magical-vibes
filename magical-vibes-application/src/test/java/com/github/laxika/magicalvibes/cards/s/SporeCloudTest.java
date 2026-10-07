@@ -43,8 +43,7 @@ class SporeCloudTest extends BaseCardTest {
         Permanent attacker = addCreature(player1);
         Permanent blocker = addCreature(player2);
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         castAndResolve(player2);
 
@@ -78,6 +77,66 @@ class SporeCloudTest extends BaseCardTest {
 
         assertThat(attacker.isTapped()).isFalse();
         assertThat(blocker.isTapped()).isFalse();
+    }
+
+    @Test
+    void castingBeforeCombatPreventsDamageWithoutLockingLaterAttackers() {
+        Permanent attacker = addCreature(player1);
+        harness.setLife(player2, 20);
+
+        castAndResolve();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat(player1);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(attacker.getSkipUntapCount()).isZero();
+
+        advanceToNextUpkeep(player2);
+        assertThat(gd.preventAllCombatDamage).isFalse();
+        advanceToNextUpkeep(player1);
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
+    @Test
+    void eachCombatCreatureSkipsOnlyItsOwnControllersNextUntap() {
+        Permanent attacker = addCreature(player1);
+        Permanent blocker = addCreature(player2);
+        Permanent uninvolved = addCreature(player2);
+        uninvolved.tap();
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        castAndResolve(player2);
+        resolveCombat(player1);
+
+        advanceToNextUpkeep(player2);
+        assertThat(blocker.isTapped()).isTrue();
+        assertThat(uninvolved.isTapped()).isFalse();
+        assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+
+        advanceToNextUpkeep(player1);
+        assertThat(attacker.isTapped()).isTrue();
+
+        advanceToNextUpkeep(player2);
+        assertThat(blocker.isTapped()).isFalse();
+        advanceToNextUpkeep(player1);
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
+    @Test
+    void untappedAttackerConsumesRestrictionDuringItsNextUntapStep() {
+        Permanent attacker = addCreature(player2);
+        attacker.setAttacking(true);
+
+        castAndResolve();
+        advanceToNextUpkeep(player2);
+        assertThat(attacker.isTapped()).isFalse();
+
+        attacker.tap();
+        advanceToNextUpkeep(player1);
+        advanceToNextUpkeep(player2);
+        assertThat(attacker.isTapped()).isFalse();
     }
 
     private Permanent addCreature(Player player) {
