@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.d.DuskLegionDreadnought;
+import com.github.laxika.magicalvibes.cards.d.DependableQuinjet;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TruckToss.class, DuskLegionDreadnought.class, GrizzlyBears.class})
+@CardUsed({TruckToss.class, DuskLegionDreadnought.class, GrizzlyBears.class, DependableQuinjet.class})
 class TruckTossTest extends BaseCardTest {
 
     @Test
@@ -25,8 +26,7 @@ class TruckTossTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
@@ -34,20 +34,14 @@ class TruckTossTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 4 damage to a target creature")
     void dealsFourDamageToCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID creatureId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
         harness.setHand(player1, List.of(new TruckToss()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0, creatureId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creatureId);
 
-        Permanent creature = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(permanent -> permanent.getId().equals(creatureId))
-                .findFirst()
-                .orElse(null);
-        assertThat(creature).isNull();
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
@@ -87,5 +81,57 @@ class TruckTossTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("A tapped, uncrewed Vehicle still reduces the cost")
+    void tappedVehicleReducesCost() {
+        Permanent vehicle = harness.addToBattlefieldAndReturn(player1, new DependableQuinjet());
+        vehicle.setTapped(true);
+        harness.setHand(player1, List.of(new TruckToss()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Multiple Vehicles do not reduce the colored mana requirement")
+    void multipleVehiclesStillRequireTwoRedMana() {
+        harness.addToBattlefieldAndReturn(player1, new DependableQuinjet()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new DependableQuinjet()).setTapped(true);
+        harness.setHand(player1, List.of(new TruckToss()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("A Vehicle in hand does not reduce the cost")
+    void vehicleInHandDoesNotReduceCost() {
+        harness.setHand(player1, List.of(new TruckToss(), new DependableQuinjet()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("The caster may target themselves")
+    void canDamageCaster() {
+        harness.setHand(player1, List.of(new TruckToss()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
     }
 }
