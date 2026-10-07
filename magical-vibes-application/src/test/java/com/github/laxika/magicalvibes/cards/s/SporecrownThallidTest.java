@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.DeathbloomThallid;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalothGorger;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,9 +13,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SporecrownThallid.class, DeathbloomThallid.class, SaprolingMigration.class, BalothGorger.class})
 class SporecrownThallidTest extends BaseCardTest {
 
-    // ===== Static effect: buffs other Fungus/Saproling you control =====
 
     @Test
     @DisplayName("Other Fungus creatures you control get +1/+1")
@@ -38,8 +39,7 @@ class SporecrownThallidTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new SaprolingMigration()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         List<Permanent> saprolings = findPermanents(player1, "Saproling");
 
@@ -67,12 +67,12 @@ class SporecrownThallidTest extends BaseCardTest {
     @DisplayName("Does not buff non-Fungus/non-Saproling creatures")
     void doesNotBuffNonFungusNonSaproling() {
         harness.addToBattlefield(player1, new SporecrownThallid());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BalothGorger());
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent baloth = findPermanent(player1, "Baloth Gorger");
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(4);
     }
 
     @Test
@@ -88,7 +88,6 @@ class SporecrownThallidTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, opponentFungus)).isEqualTo(2);
     }
 
-    // ===== Multiple Sporecrown Thallids =====
 
     @Test
     @DisplayName("Two Sporecrown Thallids buff each other")
@@ -120,7 +119,6 @@ class SporecrownThallidTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, deathbloom)).isEqualTo(4);
     }
 
-    // ===== Bonus gone when source leaves =====
 
     @Test
     @DisplayName("Bonus is removed when Sporecrown Thallid leaves the battlefield")
@@ -137,6 +135,23 @@ class SporecrownThallidTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, deathbloom)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, deathbloom)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Does not buff opponent Saproling tokens")
+    void doesNotBuffOpponentSaprolings() {
+        harness.addToBattlefield(player1, new SporecrownThallid());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new SaprolingMigration()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castAndResolveSorcery(player2, 0, 0);
+
+        List<Permanent> saprolings = findPermanents(player2, "Saproling");
+        assertThat(saprolings).hasSize(2);
+        for (Permanent saproling : saprolings) {
+            assertThat(gqs.getEffectivePower(gd, saproling)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, saproling)).isEqualTo(1);
+        }
     }
 
 }
