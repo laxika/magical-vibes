@@ -1,16 +1,16 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InBolassClutches;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SylvanAwakening.class, Forest.class, Mountain.class, LlanowarElves.class, InBolassClutches.class})
 class SylvanAwakeningTest extends BaseCardTest {
-
-    // ===== Resolution: lands become creatures =====
 
     @Test
     @DisplayName("Casting Sylvan Awakening animates all lands you control as 2/2 Elemental creatures")
@@ -32,18 +31,10 @@ class SylvanAwakeningTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new SylvanAwakening()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new SylvanAwakening(), "{2}{G}");
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst().orElse(null);
+        Permanent forest = findPermanent(player1, "Forest");
         assertThat(forest).isNotNull();
         assertThat(forest.isAnimatedUntilNextTurn()).isTrue();
         assertThat(forest.getUntilNextTurnAnimatedPower()).isEqualTo(2);
@@ -55,9 +46,7 @@ class SylvanAwakeningTest extends BaseCardTest {
                 Keyword.REACH, Keyword.INDESTRUCTIBLE, Keyword.HASTE
         );
 
-        Permanent mountain = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mountain"))
-                .findFirst().orElse(null);
+        Permanent mountain = findPermanent(player1, "Mountain");
         assertThat(mountain).isNotNull();
         assertThat(mountain.isAnimatedUntilNextTurn()).isTrue();
         assertThat(mountain.getEffectivePower()).isEqualTo(2);
@@ -73,18 +62,10 @@ class SylvanAwakeningTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new SylvanAwakening()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new SylvanAwakening(), "{2}{G}");
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst().orElse(null);
+        Permanent forest = findPermanent(player1, "Forest");
         assertThat(forest).isNotNull();
         assertThat(gqs.isCreature(gd, forest)).isTrue();
     }
@@ -98,46 +79,32 @@ class SylvanAwakeningTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new SylvanAwakening()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new SylvanAwakening(), "{2}{G}");
         harness.passBothPriorities();
 
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst().orElse(null);
+        Permanent forest = findPermanent(player1, "Forest");
         assertThat(forest).isNotNull();
         assertThat(forest.hasKeyword(Keyword.REACH)).isTrue();
         assertThat(forest.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(forest.hasKeyword(Keyword.HASTE)).isTrue();
     }
 
-    // ===== Does not affect non-lands or opponent's lands =====
-
     @Test
     @DisplayName("Does not animate non-land permanents")
     void doesNotAnimateNonLands() {
         harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new LlanowarElves());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new SylvanAwakening()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new SylvanAwakening(), "{2}{G}");
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElse(null);
-        assertThat(bears).isNotNull();
-        assertThat(bears.isAnimatedUntilNextTurn()).isFalse();
+        Permanent elves = findPermanent(player1, "Llanowar Elves");
+        assertThat(elves).isNotNull();
+        assertThat(elves.isAnimatedUntilNextTurn()).isFalse();
     }
 
     @Test
@@ -150,24 +117,16 @@ class SylvanAwakeningTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new SylvanAwakening()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new SylvanAwakening(), "{2}{G}");
         harness.passBothPriorities();
 
-        Permanent opponentForest = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst().orElse(null);
+        Permanent opponentForest = findPermanent(player2, "Forest");
         assertThat(opponentForest).isNotNull();
         assertThat(opponentForest.isAnimatedUntilNextTurn()).isFalse();
     }
 
-    // ===== Duration: survives end of turn, cleared at next turn =====
-
     @Test
-    @DisplayName("Animation survives end-of-turn cleanup (resetModifiers)")
+    @DisplayName("Animation survives through the opponent's turn")
     void animationSurvivesEndOfTurn() {
         harness.addToBattlefield(player1, new Forest());
 
@@ -175,20 +134,13 @@ class SylvanAwakeningTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new SylvanAwakening()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new SylvanAwakening(), "{2}{G}");
         harness.passBothPriorities();
 
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst().orElse(null);
+        Permanent forest = findPermanent(player1, "Forest");
         assertThat(forest).isNotNull();
 
-        // Simulate end-of-turn cleanup
-        forest.resetModifiers();
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         // Animation should still be present
         assertThat(forest.isAnimatedUntilNextTurn()).isTrue();
@@ -201,40 +153,23 @@ class SylvanAwakeningTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Animation is cleared at beginning of controller's next turn")
+    @DisplayName("Animation is cleared at beginning of the caster's next turn")
     void animationClearedAtNextTurn() {
-        harness.addToBattlefield(player1, new Forest());
-
-        // Directly set up animation state to test clearUntilNextTurnEffects
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst().orElse(null);
-        assertThat(forest).isNotNull();
-
-        forest.setAnimatedUntilNextTurn(true);
-        forest.setUntilNextTurnAnimatedPower(2);
-        forest.setUntilNextTurnAnimatedToughness(2);
-        forest.getUntilNextTurnSubtypes().add(CardSubtype.ELEMENTAL);
-        forest.getUntilNextTurnKeywords().addAll(java.util.Set.of(Keyword.REACH, Keyword.INDESTRUCTIBLE, Keyword.HASTE));
-
-        // Advance to player1's next turn — this should clear the animation
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.CLEANUP);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // end player2's turn → advance to player1's turn
+        harness.castFromHand(player1, new SylvanAwakening(), "{2}{G}");
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
 
-        GameData gd = harness.getGameData();
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
-        forest = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst().orElse(null);
-        assertThat(forest).isNotNull();
-        assertThat(forest.isAnimatedUntilNextTurn()).isFalse();
+        assertThat(gqs.isCreature(gd, forest)).isFalse();
         assertThat(forest.getUntilNextTurnKeywords()).isEmpty();
         assertThat(forest.getUntilNextTurnSubtypes()).isEmpty();
     }
-
-    // ===== Lands are still lands =====
 
     @Test
     @DisplayName("Animated lands are still lands (retain land type)")
@@ -245,18 +180,65 @@ class SylvanAwakeningTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new SylvanAwakening()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new SylvanAwakening(), "{2}{G}");
         harness.passBothPriorities();
 
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst().orElse(null);
+        Permanent forest = findPermanent(player1, "Forest");
         assertThat(forest).isNotNull();
-        // Land type is preserved from the card itself
-        assertThat(forest.getCard().hasType(CardType.LAND)).isTrue();
+        assertThat(gqs.isLand(gd, forest)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Animated lands have the Elemental subtype in effective creature queries")
+    void animatedLandsAreElementals() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new SylvanAwakening(), "{2}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, forest)).contains(CardSubtype.ELEMENTAL);
+    }
+
+    @Test
+    @DisplayName("Lands entering after resolution are not animated, and tapped lands remain tapped")
+    void affectsOnlyLandsPresentAtResolutionWithoutUntapping() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setTapped(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new SylvanAwakening(), "{2}{G}");
+        harness.passBothPriorities();
+        Permanent mountain = harness.enterBattlefieldAndReturn(player1, new Mountain());
+
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, mountain)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A stolen animated land loses its animation at the caster's next turn")
+    void stolenLandAnimationExpiresAtCastersNextTurn() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new SylvanAwakening(), "{2}{G}");
+        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new InBolassClutches()));
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.BLUE, 6);
+        harness.castEnchantment(player2, 0, forest.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(forest);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
+
+        assertThat(gqs.isCreature(gd, forest)).isFalse();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.HASTE)).isFalse();
     }
 }
