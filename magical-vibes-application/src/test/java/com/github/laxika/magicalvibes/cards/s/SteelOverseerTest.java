@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CrystalBall;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({SteelOverseer.class, Ornithopter.class, GrizzlyBears.class, CrystalBall.class})
 class SteelOverseerTest extends BaseCardTest {
-
-    // ===== Resolving ability =====
 
     @Test
     @DisplayName("Resolving ability puts a +1/+1 counter on each artifact creature you control")
@@ -58,8 +58,6 @@ class SteelOverseerTest extends BaseCardTest {
         assertThat(opponentArtifact.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
-    // ===== Tap cost =====
-
     @Test
     @DisplayName("Activating ability taps Steel Overseer")
     void activatingTapsOverseer() {
@@ -73,15 +71,12 @@ class SteelOverseerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while summoning sick")
     void cannotActivateWhileSummoningSick() {
-        Permanent overseer = new Permanent(new SteelOverseer());
+        Permanent overseer = harness.addToBattlefieldAndReturn(player1, new SteelOverseer());
         overseer.setSummoningSick(true);
-        gd.playerBattlefields.get(player1.getId()).add(overseer);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Counters accumulate =====
 
     @Test
     @DisplayName("Counters accumulate across multiple activations")
@@ -105,35 +100,63 @@ class SteelOverseerTest extends BaseCardTest {
         assertThat(ornithopter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
-    // ===== Stack behavior =====
-
     @Test
     @DisplayName("Activating ability puts it on the stack")
     void putsAbilityOnStack() {
-        addReadyOverseer(player1);
+        Permanent overseer = addReadyOverseer(player1);
 
         harness.activateAbility(player1, 0, null, null);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Steel Overseer");
+        assertThat(entry.getSourcePermanentId()).isEqualTo(overseer.getId());
     }
 
-    // ===== Helpers =====
-
     private Permanent addReadyOverseer(Player player) {
-        Permanent perm = new Permanent(new SteelOverseer());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new SteelOverseer());
     }
 
     private Permanent addReadyArtifactCreature(Player player) {
-        Permanent perm = new Permanent(new Ornithopter());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new Ornithopter());
+    }
+
+    @Test
+    @DisplayName("Noncreature artifacts do not receive counters")
+    void doesNotAffectNoncreatureArtifacts() {
+        Permanent overseer = addReadyOverseer(player1);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new CrystalBall());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(overseer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(artifact.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Artifact creatures entering before resolution receive counters even when tapped and summoning sick")
+    void includesArtifactCreaturesEnteringBeforeResolution() {
+        addReadyOverseer(player1);
+        harness.activateAbility(player1, 0, null, null);
+        Permanent ornithopter = harness.enterBattlefieldAndReturn(player1, new Ornithopter());
+        ornithopter.setSummoningSick(true);
+        ornithopter.tap();
+
+        harness.passBothPriorities();
+
+        assertThat(ornithopter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while already tapped")
+    void cannotActivateWhileTapped() {
+        Permanent overseer = addReadyOverseer(player1);
+        overseer.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(overseer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
