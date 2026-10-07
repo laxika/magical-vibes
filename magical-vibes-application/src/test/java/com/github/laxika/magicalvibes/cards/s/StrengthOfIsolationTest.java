@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.CripplingFatigue;
+import com.github.laxika.magicalvibes.cards.c.CabalTorturer;
 import com.github.laxika.magicalvibes.cards.t.TaintedField;
 import com.github.laxika.magicalvibes.cards.t.TerohsFaithful;
 import com.github.laxika.magicalvibes.cards.u.Unhinge;
@@ -15,12 +16,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({StrengthOfIsolation.class, TerohsFaithful.class, TaintedField.class,
-        Unhinge.class, CripplingFatigue.class})
+        Unhinge.class, CripplingFatigue.class, CabalTorturer.class})
 class StrengthOfIsolationTest extends BaseCardTest {
 
     @Test
@@ -69,12 +71,10 @@ class StrengthOfIsolationTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new TaintedField());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new TaintedField());
         harness.setHand(player1, List.of(new StrengthOfIsolation()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        Permanent land = findPermanent(player1, "Tainted Field");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -135,6 +135,96 @@ class StrengthOfIsolationTest extends BaseCardTest {
                 .hasMessageContaining("protection from black");
     }
 
+    @Test
+    @DisplayName("Multiple copies stack their boosts only on the enchanted creature")
+    void multipleAurasBoostOnlyTheirHost() {
+        Permanent host = addCreatureReady(player1, new TerohsFaithful());
+        Permanent other = addCreatureReady(player1, new TerohsFaithful());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new StrengthOfIsolation());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new StrengthOfIsolation());
+        first.setAttachedTo(host.getId());
+        second.setAttachedTo(host.getId());
+
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(8);
+        assertThat(gqs.hasProtectionFrom(gd, host, CardColor.BLACK)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(4);
+        assertThat(gqs.hasProtectionFrom(gd, other, CardColor.BLACK)).isFalse();
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(6);
+        assertThat(gqs.hasProtectionFrom(gd, host, CardColor.BLACK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Aura goes to the graveyard when its target leaves before resolution")
+    void targetLeavingBeforeResolutionPreventsAttachment() {
+        Permanent target = addCreatureReady(player1, new TerohsFaithful());
+        StrengthOfIsolation isolation = new StrengthOfIsolation();
+        harness.setHand(player1, List.of(isolation));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Strength of Isolation");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(isolation.getId()));
+    }
+
+    @Test
+    @DisplayName("Madness without a legal creature target puts the Aura into the graveyard")
+    void madnessWithoutCreatureTargetDoesNotSpendMana() {
+        StrengthOfIsolation isolation = discardViaUnhinge();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(isolation.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(isolation.getId()));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Strength of Isolation");
+    }
+
+    @Test
+    @DisplayName("Protection from black prevents black creatures from blocking")
+    void blackCreatureCannotBlockEnchantedAttacker() {
+        Permanent host = addCreatureReady(player1, new TerohsFaithful());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new StrengthOfIsolation());
+        aura.setAttachedTo(host.getId());
+        addCreatureReady(player2, new CabalTorturer());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, Map.of(0, 0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Enchanted creature may block a black attacker and prevents its damage")
+    void enchantedBlockerPreventsBlackCombatDamage() {
+        Permanent attacker = addCreatureReady(player1, new CabalTorturer());
+        Permanent host = addCreatureReady(player2, new TerohsFaithful());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new StrengthOfIsolation());
+        aura.setAttachedTo(host.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, Map.of(0, 0)));
+        harness.resolveCombatDamage();
+
+        assertThat(host.getMarkedDamage()).isZero();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(host);
+    }
+
     private StrengthOfIsolation discardViaUnhinge() {
         StrengthOfIsolation isolation = new StrengthOfIsolation();
         harness.setHand(player1, List.of(isolation));
@@ -144,8 +234,7 @@ class StrengthOfIsolationTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
         harness.handleCardChosen(player1, 0);
         return isolation;
     }
