@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SpinedWurm;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -33,7 +32,6 @@ class TorturedExistenceTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardCostChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactly(1);
     }
@@ -127,6 +125,90 @@ class TorturedExistenceTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(discardedCreature);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentsCreature);
+    }
+
+    @Test
+    @DisplayName("The creature is discarded as a cost before the targeted card returns")
+    void discardIsPaidBeforeResolution() {
+        setUpMain();
+        harness.addToBattlefield(player1, new TorturedExistence());
+        Card discarded = new SpinedWurm();
+        Card target = new SpinedWurm();
+        harness.setHand(player1, List.of(discarded));
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(target, discarded);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+    }
+
+    @Test
+    @DisplayName("The creature that would be discarded cannot be chosen as the target from hand")
+    void cannotTargetCreatureBeforeItIsDiscarded() {
+        setUpMain();
+        harness.addToBattlefield(player1, new TorturedExistence());
+        Card discarded = new SpinedWurm();
+        harness.setHand(player1, List.of(discarded));
+        harness.setGraveyard(player1, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null,
+                discarded.getId(), Zone.GRAVEYARD)).isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Activation requires a target even when a creature can be discarded")
+    void cannotActivateWithoutTarget() {
+        setUpMain();
+        harness.addToBattlefield(player1, new TorturedExistence());
+        Card discarded = new SpinedWurm();
+        Card target = new SpinedWurm();
+        harness.setHand(player1, List.of(discarded));
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null, Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(target);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A target removed from the graveyard is not returned and the discard cost stays paid")
+    void removedTargetDoesNotRefundDiscard() {
+        setUpMain();
+        harness.addToBattlefield(player1, new TorturedExistence());
+        Card discarded = new SpinedWurm();
+        Card target = new SpinedWurm();
+        harness.setHand(player1, List.of(discarded));
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD);
+        harness.handleCardChosen(player1, 0);
+        harness.setGraveyard(player1, List.of(discarded));
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.findExiledCard(target.getId())).isNotNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void setUpMain() {
