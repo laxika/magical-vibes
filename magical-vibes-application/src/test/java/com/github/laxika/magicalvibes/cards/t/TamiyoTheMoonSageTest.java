@@ -1,14 +1,18 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AngelsMercy;
+import com.github.laxika.magicalvibes.cards.d.Dreadwaters;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.r.Recycle;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,18 +22,50 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TamiyoTheMoonSage.class, AngelsMercy.class, GrizzlyBears.class, Plains.class})
 class TamiyoTheMoonSageTest extends BaseCardTest {
 
     @Nested
     @DisplayName("+1: Tap target permanent")
+    @CardUsed({TamiyoTheMoonSage.class, GrizzlyBears.class, Plains.class})
     class PlusOne {
+
+        @Test
+        void skipsOnlyTargetsControllersNextUntapStep() {
+            addReadyTamiyo(player1, 4);
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+            harness.activateAbility(player1, 0, 0, null, bears.getId());
+            harness.passBothPriorities();
+
+            harness.performUntapStep(player1);
+            harness.performUntapStep(player2);
+            assertThat(bears.isTapped()).isTrue();
+
+            harness.performUntapStep(player2);
+            assertThat(bears.isTapped()).isFalse();
+        }
+
+        @Test
+        void alreadyTappedTargetStillSkipsNextUntap() {
+            addReadyTamiyo(player1, 4);
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            bears.tap();
+
+            harness.activateAbility(player1, 0, 0, null, bears.getId());
+            harness.passBothPriorities();
+            harness.performUntapStep(player2);
+
+            assertThat(bears.isTapped()).isTrue();
+            harness.performUntapStep(player2);
+            assertThat(bears.isTapped()).isFalse();
+        }
 
         @Test
         @DisplayName("Taps the target and marks it to skip its next untap step")
         void tapsAndLocksTarget() {
             addReadyTamiyo(player1, 4);
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            Permanent bears = findPermanent(player2, "Grizzly Bears");
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
             UUID bearsId = bears.getId();
 
             harness.activateAbility(player1, 0, 0, null, bearsId);
@@ -43,8 +79,7 @@ class TamiyoTheMoonSageTest extends BaseCardTest {
         @DisplayName("Can tap a noncreature permanent — any permanent is a legal target")
         void tapsLand() {
             addReadyTamiyo(player1, 4);
-            harness.addToBattlefield(player2, new Plains());
-            Permanent plains = findPermanent(player2, "Plains");
+            Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
 
             harness.activateAbility(player1, 0, 0, null, plains.getId());
             harness.passBothPriorities();
@@ -68,7 +103,23 @@ class TamiyoTheMoonSageTest extends BaseCardTest {
 
     @Nested
     @DisplayName("-2: Draw for each tapped creature target player controls")
+    @CardUsed({TamiyoTheMoonSage.class, GrizzlyBears.class, Plains.class})
     class MinusTwo {
+
+        @Test
+        void countsTappedCreaturesAtResolutionAndExcludesTappedLands() {
+            addReadyTamiyo(player1, 4);
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+            plains.tap();
+            int handBefore = gd.playerHands.get(player1.getId()).size();
+
+            harness.activateAbility(player1, 0, 1, null, player2.getId());
+            bears.tap();
+            harness.passBothPriorities();
+
+            assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        }
 
         @Test
         @DisplayName("Draws one card per tapped creature the targeted player controls")
@@ -126,7 +177,101 @@ class TamiyoTheMoonSageTest extends BaseCardTest {
 
     @Nested
     @DisplayName("-8: Emblem")
+    @CardUsed({TamiyoTheMoonSage.class, AngelsMercy.class, Plains.class})
     class MinusEight {
+
+        @Test
+        void emblemAllowsKeepingMoreThanSevenCardsThroughCleanup() {
+            giveEmblem(player1);
+            harness.setHand(player1, List.of(new Plains(), new Plains(), new Plains(),
+                    new Plains(), new Plains(), new Plains(), new Plains(), new Plains(), new Plains()));
+            harness.forceStep(TurnStep.END_STEP);
+
+            harness.passUntil(player2, TurnStep.UPKEEP);
+
+            assertThat(gd.playerHands.get(player1.getId())).hasSize(9);
+        }
+
+        @Test
+        @CardUsed(Recycle.class)
+        void laterHandSizeSettingEffectOverridesEmblem() {
+            giveEmblem(player1);
+            harness.castFromHand(player1, new Recycle(), "{4}{G}{G}");
+            harness.passBothPriorities();
+            harness.setHand(player1, List.of(new Plains(), new Plains(), new Plains()));
+            harness.forceStep(TurnStep.END_STEP);
+
+            gs.advanceStep(gd);
+
+            assertThat(gd.currentStep).isEqualTo(TurnStep.CLEANUP);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                    .isEqualTo(1);
+        }
+
+        @Test
+        void tamiyoDiesBeforeEmblemExistsWhenActivatedWithEightLoyalty() {
+            addReadyTamiyo(player1, 8);
+
+            harness.activateAbility(player1, 0, 2, null, null);
+            harness.assertInGraveyard(player1, "Tamiyo, the Moon Sage");
+            harness.passBothPriorities();
+
+            assertThat(gd.stack).isEmpty();
+            harness.assertInGraveyard(player1, "Tamiyo, the Moon Sage");
+            harness.assertNotInHand(player1, "Tamiyo, the Moon Sage");
+        }
+
+        @Test
+        @CardUsed(Dreadwaters.class)
+        void emblemReturnsCardMilledFromLibrary() {
+            giveEmblem(player1);
+            harness.addToBattlefield(player1, new Plains());
+            AngelsMercy milledCard = new AngelsMercy();
+            harness.setLibrary(player1, List.of(milledCard, new Plains()));
+            harness.setHand(player1, List.of(new Dreadwaters()));
+            harness.addMana(player1, ManaColor.BLUE, 4);
+
+            harness.castSorcery(player1, 0, player1.getId());
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, false);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+
+            assertThat(gd.playerHands.get(player1.getId())).contains(milledCard);
+            assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(milledCard);
+        }
+
+        @Test
+        void olderEmblemTriggerCannotReturnCardThatLeftAndReenteredGraveyard() {
+            giveEmblem(player1);
+            addReadyTamiyo(player1, 9);
+            harness.activateAbility(player1, 0, 2, null, null);
+            harness.passBothPriorities();
+            assertThat(gd.emblems).hasSize(2);
+
+            AngelsMercy mercy = new AngelsMercy();
+            harness.setHand(player1, List.of(mercy));
+            harness.addMana(player1, ManaColor.WHITE, 8);
+            harness.castInstant(player1, 0);
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            assertThat(gd.playerHands.get(player1.getId())).contains(mercy);
+
+            harness.castInstant(player1, 0);
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, false);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, false);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+
+            assertThat(gd.playerGraveyards.get(player1.getId())).contains(mercy);
+            assertThat(gd.playerHands.get(player1.getId())).doesNotContain(mercy);
+        }
 
         @Test
         @DisplayName("Grants no maximum hand size and creates the graveyard-return emblem")
@@ -197,18 +342,16 @@ class TamiyoTheMoonSageTest extends BaseCardTest {
     }
 
     private void giveEmblem(Player player) {
-        Permanent tamiyo = addReadyTamiyo(player, 8);
+        addReadyTamiyo(player, 8);
         harness.activateAbility(player, 0, 2, null, null);
         harness.passBothPriorities();
         assertThat(gd.emblems).hasSize(1);
-        assertThat(tamiyo).isNotNull();
     }
 
     private Permanent addReadyTamiyo(Player player, int loyalty) {
-        Permanent perm = new Permanent(new TamiyoTheMoonSage());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new TamiyoTheMoonSage());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
