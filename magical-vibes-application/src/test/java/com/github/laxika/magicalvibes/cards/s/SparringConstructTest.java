@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.cards.c.CastDown;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -22,10 +23,11 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({SparringConstruct.class, GrizzlyBears.class, WrathOfGod.class, CastDown.class})
 class SparringConstructTest extends BaseCardTest {
 
     /**
-     * Sets up combat where Sparring Construct (player1) attacks and is blocked by a 3/3 creature (player2).
+     * Sets up combat where Sparring Construct (player1) attacks and is blocked by Grizzly Bears (player2).
      * Sparring Construct will die from combat damage.
      */
     private void setupCombatWhereSparringConstructDies() {
@@ -33,14 +35,9 @@ class SparringConstructTest extends BaseCardTest {
         constructPerm.setSummoningSick(false);
         constructPerm.setAttacking(true);
 
-        GrizzlyBears bigBear = new GrizzlyBears();
-        bigBear.setPower(3);
-        bigBear.setToughness(3);
-        Permanent blockerPerm = new Permanent(bigBear);
-        blockerPerm.setSummoningSick(false);
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blockerPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -49,6 +46,7 @@ class SparringConstructTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Death trigger")
+    @CardUsed({SparringConstruct.class, GrizzlyBears.class, WrathOfGod.class, CastDown.class})
     class DeathTriggerTests {
 
         @Test
@@ -92,9 +90,7 @@ class SparringConstructTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Grizzly Bears should have 1 +1/+1 counter
-            Permanent bearsPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getId().equals(bearId))
-                    .findFirst().orElseThrow();
+            Permanent bearsPerm = findPermanent(player1, "Grizzly Bears");
             assertThat(bearsPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
             assertThat(bearsPerm.getEffectivePower()).isEqualTo(3);
             assertThat(bearsPerm.getEffectiveToughness()).isEqualTo(3);
@@ -113,7 +109,7 @@ class SparringConstructTest extends BaseCardTest {
 
             // No valid targets — trigger should be skipped
             assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no valid targets"));
+            assertThat(gameLogContains("no valid targets")).isTrue();
         }
 
         @Test
@@ -125,14 +121,51 @@ class SparringConstructTest extends BaseCardTest {
             harness.setHand(player1, List.of(new WrathOfGod()));
             harness.addMana(player1, ManaColor.WHITE, 4);
 
-            harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
-            harness.passBothPriorities(); // Resolve Wrath — all creatures die
+            harness.castAndResolveSorcery(player1, 0, 0);
 
             GameData gd = harness.getGameData();
 
             // All creatures dead — no valid targets for "creature you control"
             assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no valid targets"));
+            assertThat(gameLogContains("no valid targets")).isTrue();
+        }
+
+        @Test
+        @DisplayName("A surviving artifact creature can receive the counter")
+        void survivingConstructReceivesCounter() {
+            harness.addToBattlefield(player1, new SparringConstruct());
+            harness.addToBattlefield(player1, new SparringConstruct());
+            Permanent survivor = findPermanents(player1, "Sparring Construct").get(1);
+            setupCombatWhereSparringConstructDies();
+            harness.passBothPriorities();
+
+            harness.handlePermanentChosen(player1, survivor.getId());
+            harness.passBothPriorities();
+
+            assertThat(survivor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+            assertThat(countPermanents(player1, "Sparring Construct")).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("The death trigger does nothing if its target dies before resolution")
+        void targetDiesBeforeResolution() {
+            harness.addToBattlefield(player1, new SparringConstruct());
+            harness.addToBattlefield(player1, new GrizzlyBears());
+            Permanent target = findPermanent(player1, "Grizzly Bears");
+            setupCombatWhereSparringConstructDies();
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, target.getId());
+
+            harness.setHand(player2, List.of(new CastDown()));
+            harness.addMana(player2, ManaColor.BLACK, 2);
+            harness.castAndResolveInstant(player2, 0, target.getId());
+            harness.assertInGraveyard(player1, "Grizzly Bears");
+            harness.passBothPriorities();
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+            assertThat(findPermanent(player2, "Grizzly Bears")
+                    .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         }
     }
 }
