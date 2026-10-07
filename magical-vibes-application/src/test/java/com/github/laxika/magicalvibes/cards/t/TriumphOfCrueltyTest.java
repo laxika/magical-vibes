@@ -1,18 +1,21 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TriumphOfCruelty.class, GrizzlyBears.class, HillGiant.class, GiantGrowth.class})
 class TriumphOfCrueltyTest extends BaseCardTest {
 
     @Test
@@ -21,7 +24,7 @@ class TriumphOfCrueltyTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TriumphOfCruelty());
         harness.addToBattlefield(player1, new HillGiant());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, player2.getId());
@@ -40,7 +43,7 @@ class TriumphOfCrueltyTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TriumphOfCruelty());
         harness.addToBattlefield(player1, new HillGiant());
         harness.addToBattlefield(player2, new HillGiant());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, player2.getId());
@@ -57,7 +60,7 @@ class TriumphOfCrueltyTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TriumphOfCruelty());
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new HillGiant());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, player2.getId());
@@ -72,7 +75,7 @@ class TriumphOfCrueltyTest extends BaseCardTest {
     void noDiscardWithoutCreatures() {
         harness.addToBattlefield(player1, new TriumphOfCruelty());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, player2.getId());
@@ -86,7 +89,7 @@ class TriumphOfCrueltyTest extends BaseCardTest {
     void doesNotTriggerOnOpponentUpkeep() {
         harness.addToBattlefield(player1, new TriumphOfCruelty());
         harness.addToBattlefield(player1, new HillGiant());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
@@ -99,12 +102,79 @@ class TriumphOfCrueltyTest extends BaseCardTest {
     void controllerIsNotALegalTarget() {
         harness.addToBattlefield(player1, new TriumphOfCruelty());
         harness.addToBattlefield(player1, new HillGiant());
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player1, List.of(new GrizzlyBears()));
 
         advanceToUpkeep(player1);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void discardsWhenControllerGainsGreatestPowerInResponse() {
+        harness.addToBattlefield(player1, new TriumphOfCruelty());
+        var creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new HillGiant()));
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    void doesNotDiscardWhenOpponentGainsGreatestPowerInResponse() {
+        harness.addToBattlefield(player1, new TriumphOfCruelty());
+        harness.addToBattlefield(player1, new HillGiant());
+        var creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new GiantGrowth(), new GrizzlyBears()));
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    void noDiscardWhenNeitherPlayerControlsCreatures() {
+        harness.addToBattlefield(player1, new TriumphOfCruelty());
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    void emptyHandDoesNotRequireDiscardChoice() {
+        harness.addToBattlefield(player1, new TriumphOfCruelty());
+        harness.addToBattlefield(player1, new HillGiant());
+        harness.setHand(player2, List.of());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }
