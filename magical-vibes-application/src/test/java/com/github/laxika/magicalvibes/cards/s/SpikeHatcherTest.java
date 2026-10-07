@@ -104,6 +104,55 @@ class SpikeHatcherTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Can move a counter back onto itself")
+    void canTargetItself() {
+        Permanent spikeHatcher = addReadySpikeHatcher(6);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(spikeHatcher), 0, null, spikeHatcher.getId());
+        assertThat(spikeHatcher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        harness.passBothPriorities();
+
+        assertThat(spikeHatcher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Removing its last counter kills the source but still puts a counter on the target")
+    void lastCounterTransferResolvesAfterSourceDies() {
+        Permanent spikeHatcher = addReadySpikeHatcher(1);
+        Permanent goblin = addCreatureReady(player1, new RagingGoblin());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(spikeHatcher), 0, null, goblin.getId());
+
+        harness.assertNotOnBattlefield(player1, "Spike Hatcher");
+        harness.assertInGraveyard(player1, "Spike Hatcher");
+        assertThat(goblin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(goblin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An existing regeneration shield cannot save it when its last counter is removed")
+    void regenerationCannotPreventZeroToughnessDeath() {
+        Permanent spikeHatcher = addReadySpikeHatcher(2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(spikeHatcher), 1, null, null);
+        harness.passBothPriorities();
+        assertThat(spikeHatcher.getRegenerationShield()).isEqualTo(1);
+
+        harness.activateAbility(player1, battlefieldIndex(spikeHatcher), 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Spike Hatcher");
+        harness.assertInGraveyard(player1, "Spike Hatcher");
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Spike Hatcher");
+    }
+
     private Permanent addReadySpikeHatcher(int counters) {
         Permanent spikeHatcher = addCreatureReady(player1, new SpikeHatcher());
         spikeHatcher.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
