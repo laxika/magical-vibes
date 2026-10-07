@@ -1,19 +1,25 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.Conspiracy;
 import com.github.laxika.magicalvibes.cards.g.GargoyleFlock;
+import com.github.laxika.magicalvibes.cards.g.GoForTheThroat;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TyranidHarridan.class, GargoyleFlock.class, GrizzlyBears.class})
+@CardUsed({TyranidHarridan.class, GargoyleFlock.class, GrizzlyBears.class, Conspiracy.class, GoForTheThroat.class})
 class TyranidHarridanTest extends BaseCardTest {
 
     @Test
@@ -55,5 +61,59 @@ class TyranidHarridanTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Tyranid Gargoyle")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Harridan triggers for its own damage even when it is no longer a Tyranid")
+    void selfCombatDamageTriggersAfterCreatureTypeReplacement() {
+        Permanent conspiracy = harness.addToBattlefieldAndReturn(player1, new Conspiracy());
+        conspiracy.setChosenSubtype(CardSubtype.GOBLIN);
+        addCreatureReady(player1, new TyranidHarridan()).setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Tyranid Gargoyle")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each Tyranid dealing combat damage creates its own Gargoyle")
+    void simultaneousTyranidCombatDamageCreatesSeparateTokens() {
+        addCreatureReady(player1, new TyranidHarridan()).setAttacking(true);
+        addCreatureReady(player1, new GargoyleFlock()).setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Tyranid Gargoyle")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's Tyranid does not trigger Harridan")
+    void opponentTyranidCombatDamageDoesNotCreateGargoyle() {
+        addCreatureReady(player1, new TyranidHarridan());
+        addCreatureReady(player2, new GargoyleFlock()).setAttacking(true);
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Tyranid Gargoyle")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ward counters an opponent's removal spell when they cannot pay four mana")
+    void wardCountersOpponentSpellWhenTheyCannotPay() {
+        Permanent harridan = harness.addToBattlefieldAndReturn(player1, new TyranidHarridan());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new GoForTheThroat()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.castInstant(player2, 0, harridan.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Tyranid Harridan");
+        harness.assertInGraveyard(player2, "Go for the Throat");
     }
 }
