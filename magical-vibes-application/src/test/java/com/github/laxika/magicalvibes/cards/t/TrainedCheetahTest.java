@@ -29,6 +29,8 @@ class TrainedCheetahTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).hasSize(1);
+        assertThat(cheetah.getPowerModifier()).isZero();
+        assertThat(cheetah.getToughnessModifier()).isZero();
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(trigger.getSourcePermanentId()).isEqualTo(cheetah.getId());
@@ -78,6 +80,21 @@ class TrainedCheetahTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(cheetah.getPowerModifier()).isZero();
+        assertThat(cheetah.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Blocking another creature does not give Trained Cheetah a bonus")
+    void blockingDoesNotCreateTrigger() {
+        Permanent attacker = addCreatureReady(player1, new ShuFootSoldiers());
+        attacker.setAttacking(true);
+        Permanent cheetah = addCreatureReady(player2, new TrainedCheetah());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
         assertThat(cheetah.getPowerModifier()).isZero();
