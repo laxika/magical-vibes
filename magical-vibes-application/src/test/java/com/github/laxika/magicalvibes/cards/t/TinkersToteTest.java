@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(TinkersTote.class)
 class TinkersToteTest extends BaseCardTest {
@@ -47,8 +48,47 @@ class TinkersToteTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 3);
+        harness.assertLife(player1, lifeBefore + 3);
         harness.assertNotOnBattlefield(player1, "Tinker's Tote");
         harness.assertInGraveyard(player1, "Tinker's Tote");
+    }
+
+    @Test
+    void enterTriggerStillCreatesTokensAfterSacrificingToteInResponse() {
+        harness.setHand(player1, List.of(new TinkersTote()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Gnome")).isEmpty();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.assertNotOnBattlefield(player1, "Tinker's Tote");
+        harness.assertInGraveyard(player1, "Tinker's Tote");
+        harness.assertLife(player1, lifeBefore);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBefore + 3);
+        assertThat(findPermanents(player1, "Gnome")).isEmpty();
+
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Gnome")).hasSize(2);
+        assertThat(findPermanents(player2, "Gnome")).isEmpty();
+    }
+
+    @Test
+    void cannotSacrificeWithoutWhiteMana() {
+        harness.addToBattlefield(player1, new TinkersTote());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Tinker's Tote");
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.stack).isEmpty();
     }
 }
