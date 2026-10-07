@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SpiralIntoSolitude.class, GrizzlyBears.class, FountainOfYouth.class})
 class SpiralIntoSolitudeTest extends BaseCardTest {
 
     @Test
@@ -25,12 +26,7 @@ class SpiralIntoSolitudeTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attachAura(player2, creature);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -42,10 +38,7 @@ class SpiralIntoSolitudeTest extends BaseCardTest {
         attachAura(player1, blocker);
         addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -96,6 +89,61 @@ class SpiralIntoSolitudeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(enchanted);
         harness.assertOnBattlefield(player1, "Spiral into Solitude");
+    }
+
+    @Test
+    void castingAuraAttachesItToOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SpiralIntoSolitude()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Spiral into Solitude").getAttachedTo())
+                .isEqualTo(creature.getId());
+        prepareDeclareBlockers(player1);
+        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid blocker index");
+    }
+
+    @Test
+    void enchantedCreatureCanPayBlightAndIsExiledOnlyOnResolution() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = attachAura(player1, creature);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null);
+
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature).doesNotContain(aura);
+        harness.assertInGraveyard(player1, "Spiral into Solitude");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(creature.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature.getCard());
+    }
+
+    @Test
+    void lethalBlightCostDoesNotExileCreatureFromGraveyard() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        creature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        Permanent aura = attachAura(player1, creature);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Spiral into Solitude");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(creature.getCard());
     }
 
     private Permanent attachAura(Player controller, Permanent creature) {
