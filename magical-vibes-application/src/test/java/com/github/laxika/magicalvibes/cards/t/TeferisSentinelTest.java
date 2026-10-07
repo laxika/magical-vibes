@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.s.SkitteringSurveyor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,29 +12,24 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TeferisSentinel.class, TeferiTimebender.class, SkitteringSurveyor.class})
 class TeferisSentinelTest extends BaseCardTest {
-
-    // ===== With Teferi planeswalker =====
 
     @Test
     @DisplayName("Gets +4/+0 (becomes 6/6) when controller controls a Teferi planeswalker")
     void boostWithTeferi() {
-        harness.addToBattlefield(player1, new TeferisSentinel());
-        harness.addToBattlefield(player1, createTeferiPlaneswalker());
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new TeferisSentinel());
+        harness.addToBattlefield(player1, new TeferiTimebender());
 
-        Permanent sentinel = findPermanent(player1, "Teferi's Sentinel");
         assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(6);
     }
 
-    // ===== Without Teferi planeswalker =====
-
     @Test
     @DisplayName("Base 2/6 without a Teferi planeswalker")
     void noBoostWithoutTeferi() {
-        harness.addToBattlefield(player1, new TeferisSentinel());
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new TeferisSentinel());
 
-        Permanent sentinel = findPermanent(player1, "Teferi's Sentinel");
         assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(6);
     }
@@ -42,23 +37,19 @@ class TeferisSentinelTest extends BaseCardTest {
     @Test
     @DisplayName("No boost with a non-Teferi creature on the battlefield")
     void noBoostWithNonTeferiCreature() {
-        harness.addToBattlefield(player1, new TeferisSentinel());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new TeferisSentinel());
+        harness.addToBattlefield(player1, new SkitteringSurveyor());
 
-        Permanent sentinel = findPermanent(player1, "Teferi's Sentinel");
         assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(6);
     }
 
-    // ===== Loses boost when Teferi leaves =====
-
     @Test
     @DisplayName("Loses +4/+0 when Teferi planeswalker leaves the battlefield")
     void losesBoostWhenTeferiLeaves() {
-        harness.addToBattlefield(player1, new TeferisSentinel());
-        harness.addToBattlefield(player1, createTeferiPlaneswalker());
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new TeferisSentinel());
+        harness.addToBattlefield(player1, new TeferiTimebender());
 
-        Permanent sentinel = findPermanent(player1, "Teferi's Sentinel");
         assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(6);
 
         // Remove the Teferi planeswalker
@@ -70,28 +61,22 @@ class TeferisSentinelTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(6);
     }
 
-    // ===== Opponent's Teferi doesn't count =====
-
     @Test
     @DisplayName("Opponent's Teferi planeswalker does not grant the boost")
     void opponentTeferiDoesNotCount() {
-        harness.addToBattlefield(player1, new TeferisSentinel());
-        harness.addToBattlefield(player2, createTeferiPlaneswalker());
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new TeferisSentinel());
+        harness.addToBattlefield(player2, new TeferiTimebender());
 
-        Permanent sentinel = findPermanent(player1, "Teferi's Sentinel");
         assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(6);
     }
 
-    // ===== Static bonus survives end-of-turn reset =====
-
     @Test
     @DisplayName("Static boost survives end-of-turn modifier reset")
     void staticBoostSurvivesEndOfTurnReset() {
-        harness.addToBattlefield(player1, new TeferisSentinel());
-        harness.addToBattlefield(player1, createTeferiPlaneswalker());
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new TeferisSentinel());
+        harness.addToBattlefield(player1, new TeferiTimebender());
 
-        Permanent sentinel = findPermanent(player1, "Teferi's Sentinel");
         assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(6);
 
         // Simulate end-of-turn cleanup
@@ -102,13 +87,39 @@ class TeferisSentinelTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(6);
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Gains the boost immediately when Teferi enters after the Sentinel")
+    void gainsBoostWhenTeferiEnters() {
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new TeferisSentinel());
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(2);
 
-    private Card createTeferiPlaneswalker() {
-        // Create a card with the TEFERI subtype to simulate a Teferi planeswalker
-        Card card = new GrizzlyBears();
-        card.setSubtypes(List.of(CardSubtype.TEFERI));
-        return card;
+        harness.addToBattlefield(player1, new TeferiTimebender());
+
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(6);
+        assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Teferi cards in hand and graveyard do not grant the boost")
+    void teferiOutsideBattlefieldDoesNotCount() {
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new TeferisSentinel());
+        harness.setHand(player1, List.of(new TeferiTimebender()));
+        harness.setGraveyard(player1, List.of(new TeferiTimebender()));
+
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("The bonus applies only to the Sentinel")
+    void doesNotBoostOtherCreatures() {
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new TeferisSentinel());
+        Permanent surveyor = harness.addToBattlefieldAndReturn(player1, new SkitteringSurveyor());
+        harness.addToBattlefield(player1, new TeferiTimebender());
+
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, surveyor)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, surveyor)).isEqualTo(2);
+    }
 }
