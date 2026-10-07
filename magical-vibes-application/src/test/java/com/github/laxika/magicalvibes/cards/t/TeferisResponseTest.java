@@ -38,8 +38,7 @@ class TeferisResponseTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.castEnchantment(player2, 0, island.getId());
         harness.passPriority(player2);
-        harness.castInstant(player1, 0, fertileGround.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, fertileGround.getId());
 
         harness.assertOnBattlefield(player1, "Island");
         harness.assertInGraveyard(player2, "Fertile Ground");
@@ -60,9 +59,33 @@ class TeferisResponseTest extends BaseCardTest {
         int sourceIndex = gd.playerBattlefields.get(player2.getId()).indexOf(dreamThrush);
         harness.activateAbility(player2, sourceIndex, null, island.getId());
         harness.passPriority(player2);
-        harness.castInstant(player1, 0, dreamThrush.getCard().getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, dreamThrush.getCard().getId());
 
+        harness.assertOnBattlefield(player1, "Island");
+        harness.assertInGraveyard(player2, "Dream Thrush");
+    }
+
+    @Test
+    @DisplayName("Counters an ability and draws two cards even after its source leaves the battlefield")
+    void countersAbilityWhoseSourceHasLeftBattlefield() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent dreamThrush = addCreatureReady(player2, new DreamThrush());
+        harness.setHand(player1, List.of(new TeferisResponse()));
+        harness.setLibrary(player1, List.of(new Island(), new Island()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.forceActivePlayer(player2);
+        int sourceIndex = gd.playerBattlefields.get(player2.getId()).indexOf(dreamThrush);
+        harness.activateAbility(player2, sourceIndex, null, island.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(dreamThrush);
+        harness.setGraveyard(player2, List.of(dreamThrush.getCard()));
+        harness.passPriority(player2);
+        harness.castAndResolveInstant(player1, 0, dreamThrush.getCard().getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         harness.assertOnBattlefield(player1, "Island");
         harness.assertInGraveyard(player2, "Dream Thrush");
     }
