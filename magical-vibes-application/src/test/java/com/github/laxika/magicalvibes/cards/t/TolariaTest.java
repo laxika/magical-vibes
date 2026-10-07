@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.a.AdventurersGuildhouse;
 import com.github.laxika.magicalvibes.cards.f.FortifiedArea;
+import com.github.laxika.magicalvibes.cards.j.JasmineBoreal;
 import com.github.laxika.magicalvibes.cards.m.MasterOfTheHunt;
 import com.github.laxika.magicalvibes.cards.w.WallOfCaltrops;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -11,10 +13,13 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FortifiedArea.class, MasterOfTheHunt.class, Tolaria.class, WallOfCaltrops.class})
+@CardUsed({AdventurersGuildhouse.class, FortifiedArea.class, JasmineBoreal.class,
+        MasterOfTheHunt.class, Tolaria.class, WallOfCaltrops.class})
 class TolariaTest extends BaseCardTest {
 
     @Test
@@ -106,14 +111,82 @@ class TolariaTest extends BaseCardTest {
 
     @Test
     void cannotTargetNonCreature() {
-        Permanent tolaria = harness.addToBattlefieldAndReturn(player1, new Tolaria());
+        Permanent nonCreature = harness.addToBattlefieldAndReturn(player1, new FortifiedArea());
         Permanent source = harness.addToBattlefieldAndReturn(player1, new Tolaria());
 
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
         int sourceIndex = gd.playerBattlefields.get(player1.getId()).indexOf(source);
-        assertThatThrownBy(() -> harness.activateAbility(player1, sourceIndex, 1, null, tolaria.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, sourceIndex, 1, null, nonCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(source.isTapped()).isFalse();
+    }
+
+    @Test
+    void laterBandsWithOtherGrantRestoresAbility() {
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new JasmineBoreal());
+        Permanent tolaria = harness.enterBattlefieldAndReturn(player1, new Tolaria());
+        harness.forceStep(TurnStep.UPKEEP);
+        int tolariaIndex = gd.playerBattlefields.get(player1.getId()).indexOf(tolaria);
+
+        harness.activateAbility(player1, tolariaIndex, 1, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.canUseBandsWithOther(gd, List.of(creature), false)).isFalse();
+
+        harness.enterBattlefieldAndReturn(player1, new AdventurersGuildhouse());
+
+        assertThat(gqs.canUseBandsWithOther(gd, List.of(creature), false)).isTrue();
+    }
+
+    @Test
+    void removesPreviouslyGrantedBandsWithOther() {
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new JasmineBoreal());
+        harness.enterBattlefieldAndReturn(player1, new AdventurersGuildhouse());
+        Permanent tolaria = harness.enterBattlefieldAndReturn(player1, new Tolaria());
+        assertThat(gqs.canUseBandsWithOther(gd, List.of(creature), false)).isTrue();
+        harness.forceStep(TurnStep.UPKEEP);
+        int tolariaIndex = gd.playerBattlefields.get(player1.getId()).indexOf(tolaria);
+
+        harness.activateAbility(player1, tolariaIndex, 1, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.canUseBandsWithOther(gd, List.of(creature), false)).isFalse();
+    }
+
+    @Test
+    void targetsOpponentsCreatureAndPreservesOtherAbilitiesAndCreatures() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WallOfCaltrops());
+        Permanent otherWall = harness.addToBattlefieldAndReturn(player2, new WallOfCaltrops());
+        harness.addToBattlefield(player2, new FortifiedArea());
+        harness.addToBattlefield(player1, new Tolaria());
+        harness.forceStep(TurnStep.UPKEEP);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.BANDING)).isTrue();
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.BANDING)).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.BANDING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherWall, Keyword.BANDING)).isTrue();
+    }
+
+    @Test
+    void laterBandingGrantRestoresBanding() {
+        Permanent wall = harness.enterBattlefieldAndReturn(player1, new WallOfCaltrops());
+        Permanent tolaria = harness.enterBattlefieldAndReturn(player1, new Tolaria());
+        harness.forceStep(TurnStep.UPKEEP);
+        int tolariaIndex = gd.playerBattlefields.get(player1.getId()).indexOf(tolaria);
+
+        harness.activateAbility(player1, tolariaIndex, 1, null, wall.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, wall, Keyword.BANDING)).isFalse();
+
+        harness.enterBattlefieldAndReturn(player1, new FortifiedArea());
+
+        assertThat(gqs.hasKeyword(gd, wall, Keyword.BANDING)).isTrue();
     }
 }
