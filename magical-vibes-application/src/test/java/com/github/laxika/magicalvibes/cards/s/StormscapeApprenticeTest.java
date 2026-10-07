@@ -86,6 +86,70 @@ class StormscapeApprenticeTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("The tap ability can target the Apprentice itself")
+    void tapAbilityMayTargetItself() {
+        Permanent apprentice = addReadyApprentice();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, apprentice.getId());
+
+        assertThat(apprentice.isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertThat(apprentice.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The tap ability can target an already tapped creature")
+    void tapAbilityMayTargetTappedCreature() {
+        Permanent apprentice = addReadyApprentice();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingKavu());
+        target.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(apprentice.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents both tap-cost abilities")
+    void summoningSicknessPreventsBothAbilities() {
+        Permanent apprentice = harness.addToBattlefieldAndReturn(player1, new StormscapeApprentice());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingKavu());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(apprentice.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The life-loss ability cannot target a creature")
+    void lifeLossAbilityRejectsCreatureTarget() {
+        Permanent apprentice = addReadyApprentice();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingKavu());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(apprentice.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyApprentice() {
         return addCreatureReady(player1, new StormscapeApprentice());
     }
