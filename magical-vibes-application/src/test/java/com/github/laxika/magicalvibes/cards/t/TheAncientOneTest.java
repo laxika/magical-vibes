@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -31,7 +30,7 @@ class TheAncientOneTest extends BaseCardTest {
         List<Card> graveyard = new ArrayList<>(permanentCards(7));
         graveyard.add(new Shock());
         harness.setGraveyard(player1, graveyard);
-        addReady(player1, new TheAncientOne());
+        addCreatureReady(player1, new TheAncientOne());
         harness.setGraveyard(player2, permanentCards(8));
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
@@ -43,16 +42,16 @@ class TheAncientOneTest extends BaseCardTest {
     void canAttackAndBlockWithEightPermanentCards() {
         harness.setLife(player2, 20);
         harness.setGraveyard(player1, permanentCards(8));
-        Permanent attacker = addReady(player1, new TheAncientOne());
+        Permanent attacker = addCreatureReady(player1, new TheAncientOne());
 
         declareAttackers(player1, List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
 
         harness.setGraveyard(player2, permanentCards(8));
-        Permanent blocker = addReady(player2, new TheAncientOne());
+        Permanent blocker = addCreatureReady(player2, new TheAncientOne());
         attacker.setAttacking(true);
-        prepareBlockers();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -62,7 +61,7 @@ class TheAncientOneTest extends BaseCardTest {
     @Test
     @DisplayName("Draws, discards, then mills by the discarded card's mana value")
     void drawsDiscardsAndMillsByDiscardedManaValue() {
-        addReady(player1, new TheAncientOne());
+        addCreatureReady(player1, new TheAncientOne());
         HillGiant discarded = new HillGiant();
         Forest drawn = new Forest();
         harness.setHand(player1, List.of(discarded));
@@ -87,11 +86,73 @@ class TheAncientOneTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
     }
 
-    private Permanent addReady(com.github.laxika.magicalvibes.model.Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Cannot block with only seven permanent cards, even with eight cards total")
+    void cannotBlockBelowPermanentThreshold() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new TheAncientOne());
+        List<Card> graveyard = new ArrayList<>(permanentCards(7));
+        graveyard.add(new Shock());
+        harness.setGraveyard(player2, graveyard);
+        harness.setGraveyard(player1, permanentCards(8));
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Discarding a drawn land still triggers but mills zero cards")
+    void drawnLandCanBeDiscardedToMillZero() {
+        addCreatureReady(player1, new TheAncientOne());
+        Forest drawn = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn, new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A second activation's discard cannot change the first mill trigger's amount")
+    void millAmountBelongsToItsOwnDiscard() {
+        addCreatureReady(player1, new TheAncientOne());
+        harness.setHand(player1, List.of(new HillGiant()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(6);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
     }
 
     private List<Card> permanentCards(int count) {
@@ -100,10 +161,4 @@ class TheAncientOneTest extends BaseCardTest {
                 .toList();
     }
 
-    private void prepareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-    }
 }
