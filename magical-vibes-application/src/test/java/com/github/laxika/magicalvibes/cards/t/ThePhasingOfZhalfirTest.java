@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
+import com.github.laxika.magicalvibes.cards.s.SalvagedManaworker;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,12 +14,13 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThePhasingOfZhalfir.class, GrizzlyBears.class, Island.class, MindStone.class})
+@CardUsed({ThePhasingOfZhalfir.class, GrizzlyBears.class, Island.class, MindStone.class,
+        SalvagedManaworker.class})
 class ThePhasingOfZhalfirTest extends BaseCardTest {
 
     @Test
@@ -83,6 +85,86 @@ class ThePhasingOfZhalfirTest extends BaseCardTest {
         assertThat(findPermanents(player2, "Phyrexian")).hasSize(1);
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+    @DisplayName("Read ahead can start at either phase-out chapter without triggering skipped chapters")
+    void readAheadStartsAtPhaseOutChapter(int chapter) {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SalvagedManaworker());
+        harness.castFromHand(player1, new ThePhasingOfZhalfir(), "{2}{U}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, Integer.toString(chapter));
+        chooseTarget(target);
+
+        assertThat(findPermanent(player1, "The Phasing of Zhalfir").getCounterCount(CounterType.LORE))
+                .isEqualTo(chapter);
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(target);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Read ahead can skip directly to the creature wipe")
+    void readAheadStartsAtChapterThree() {
+        harness.addToBattlefield(player1, new SalvagedManaworker());
+        harness.addToBattlefield(player2, new SalvagedManaworker());
+        harness.castFromHand(player1, new ThePhasingOfZhalfir(), "{2}{U}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "3");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Salvaged Manaworker");
+        harness.assertInGraveyard(player2, "Salvaged Manaworker");
+        assertThat(findPermanents(player1, "Phyrexian")).hasSize(1);
+        assertThat(findPermanents(player2, "Phyrexian")).hasSize(1);
+        harness.assertInGraveyard(player1, "The Phasing of Zhalfir");
+    }
+
+    @Test
+    @DisplayName("Chapter II can protect your creature from chapter III until your next untap")
+    void chapterIIProtectsCreatureFromChapterIII() {
+        Permanent protectedCreature = harness.addToBattlefieldAndReturn(player1, new SalvagedManaworker());
+        harness.addToBattlefield(player2, new SalvagedManaworker());
+        addSaga(player1, 1);
+
+        triggerChapter();
+        chooseTarget(protectedCreature);
+        triggerChapter();
+        harness.passBothPriorities();
+
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(protectedCreature);
+        assertThat(findPermanents(player1, "Phyrexian")).isEmpty();
+        assertThat(findPermanents(player2, "Phyrexian")).hasSize(1);
+        harness.assertInGraveyard(player1, "The Phasing of Zhalfir");
+        harness.assertInGraveyard(player2, "Salvaged Manaworker");
+
+        harness.performUntapStep(player1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(protectedCreature);
+    }
+
+    @Test
+    @DisplayName("Destroyed creature tokens are replaced too, while noncreature permanents survive")
+    void chapterIIIReplacesCreatureTokensAndPreservesNoncreatures() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        harness.addToBattlefield(player1, new SalvagedManaworker());
+        addSaga(player1, 2);
+        triggerChapter();
+        harness.passBothPriorities();
+        Permanent originalToken = findPermanent(player1, "Phyrexian");
+
+        addSaga(player1, 2);
+        triggerChapter();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(originalToken);
+        assertThat(findPermanents(player1, "Phyrexian")).hasSize(1);
+        assertThat(findPermanents(player2, "Phyrexian")).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+    }
+
     private Permanent addSaga(Player player, int loreCounters) {
         Permanent saga = new Permanent(new ThePhasingOfZhalfir());
         saga.setCounterCount(CounterType.LORE, loreCounters);
@@ -91,9 +173,7 @@ class ThePhasingOfZhalfirTest extends BaseCardTest {
     }
 
     private Permanent addReady(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = addCreatureReady(player, card);
-        permanent.setSummoningSick(false);
-        return permanent;
+        return addCreatureReady(player, card);
     }
 
     private void triggerChapter() {
