@@ -86,8 +86,7 @@ class TerravoreTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new DuskImp());
         harness.setGraveyard(player1, List.of(new Plains(), new Plains(), new Plains()));
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -99,5 +98,72 @@ class TerravoreTest extends BaseCardTest {
                 player2.getId(), 2));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Terravore shrinks when lands leave either graveyard")
+    void shrinksWhenLandsLeaveGraveyards() {
+        harness.setGraveyard(player1, List.of(new Plains(), new Plains()));
+        harness.setGraveyard(player2, List.of(new Plains()));
+        Permanent terravore = addCreatureReady(player1, new Terravore());
+
+        assertThat(gqs.getEffectivePower(gd, terravore)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, terravore)).isEqualTo(3);
+
+        harness.setGraveyard(player1, List.of(new Plains()));
+        harness.setGraveyard(player2, List.of());
+
+        assertThat(gqs.getEffectivePower(gd, terravore)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, terravore)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Terravore dies after resolving with no lands in graveyards")
+    void diesWhenCastWithNoLandsInGraveyards() {
+        harness.castFromHand(player1, new Terravore(), "{1}{G}{G}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Terravore");
+        harness.assertInGraveyard(player1, "Terravore");
+    }
+
+    @Test
+    @DisplayName("Terravore dies when the last land leaves all graveyards")
+    void diesWhenLastLandLeavesGraveyards() {
+        harness.setGraveyard(player2, List.of(new Plains()));
+        addCreatureReady(player1, new Terravore());
+        harness.runStateBasedActions();
+        harness.assertOnBattlefield(player1, "Terravore");
+
+        harness.setGraveyard(player2, List.of());
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Terravore");
+        harness.assertInGraveyard(player1, "Terravore");
+    }
+
+    @Test
+    @DisplayName("Terravore's power and toughness are defined in hand, graveyard, and exile")
+    void definesPowerAndToughnessOutsideBattlefield() {
+        Terravore inHand = new Terravore();
+        Terravore inGraveyard = new Terravore();
+        Terravore inExile = new Terravore();
+        harness.setHand(player1, List.of(inHand, new Plains()));
+        harness.setGraveyard(player1, List.of(inGraveyard, new Plains()));
+        harness.setGraveyard(player2, List.of(new Plains(), new DuskImp()));
+        harness.setExile(player1, List.of(inExile, new Plains()));
+        harness.addToBattlefield(player2, new Plains());
+
+        for (Terravore terravore : List.of(inHand, inGraveyard, inExile)) {
+            assertThat(gqs.getEffectiveCardPower(gd, terravore)).isEqualTo(2);
+            assertThat(gqs.getEffectiveCardToughness(gd, terravore)).isEqualTo(2);
+        }
+
+        harness.setGraveyard(player2, List.of());
+
+        for (Terravore terravore : List.of(inHand, inGraveyard, inExile)) {
+            assertThat(gqs.getEffectiveCardPower(gd, terravore)).isEqualTo(1);
+            assertThat(gqs.getEffectiveCardToughness(gd, terravore)).isEqualTo(1);
+        }
     }
 }
