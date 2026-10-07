@@ -5,10 +5,14 @@ import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -64,6 +68,63 @@ class TaniwhaTest extends BaseCardTest {
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.UNTAP);
+    }
+
+    @Test
+    @DisplayName("Taniwha phases out before upkeep and does not trigger while phased out")
+    void phasedOutTaniwhaDoesNotTrigger() {
+        Permanent taniwha = harness.addToBattlefieldAndReturn(player1, new Taniwha());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(taniwha);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(island);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Taniwha does not phase out its controller's lands during an opponent's upkeep")
+    void opponentUpkeepDoesNotTrigger() {
+        Permanent taniwha = harness.addToBattlefieldAndReturn(player1, new Taniwha());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(taniwha, island);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The upkeep ability phases out lands present at resolution, not just at trigger time")
+    void includesLandsEnteringBeforeResolution() {
+        harness.addToBattlefield(player1, new Taniwha());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+
+        advanceToUpkeepWithTaniwhaPhasedIn();
+        assertThat(gd.stack).hasSize(1);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(island, forest);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(island, forest);
+    }
+
+    @Test
+    @DisplayName("Taniwha tramples over a blocker after assigning lethal damage")
+    void trampleDealsExcessDamage() {
+        Permanent taniwha = addCreatureReady(player1, new Taniwha());
+        Permanent elephant = addCreatureReady(player2, new IronTuskElephant());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0,
+                Map.of(elephant.getId(), 3, player2.getId(), 4));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(elephant);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(taniwha);
+        harness.assertLife(player2, 16);
     }
 
     private void advanceToUpkeepWithTaniwhaPhasedIn() {
