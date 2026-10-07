@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +20,59 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SpellPierce.class, GrizzlyBears.class, LlanowarElves.class, MightOfOaks.class,
+        SupremeVerdict.class})
 class SpellPierceTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Offers payment when mana abilities can produce the required mana")
+    void offersPaymentUsingManaAbilitiesDuringResolution() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        addCreatureReady(player1, new LlanowarElves());
+        addCreatureReady(player1, new LlanowarElves());
+        MightOfOaks might = new MightOfOaks();
+        harness.setHand(player1, List.of(might));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.setHand(player2, List.of(new SpellPierce()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, might.getId());
+
+        harness.assertNotInGraveyard(player1, "Might of Oaks");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Might of Oaks");
+    }
+
+    @Test
+    @DisplayName("Controller may pay even when the target spell cannot be countered")
+    void offersOptionalPaymentForUncounterableSpell() {
+        SupremeVerdict verdict = new SupremeVerdict();
+        harness.setHand(player1, List.of(verdict));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new SpellPierce()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, verdict.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertNotInGraveyard(player1, "Supreme Verdict");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Supreme Verdict");
+    }
 
     // ===== Targeting restriction =====
 
@@ -111,8 +164,7 @@ class SpellPierceTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, might.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, might.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -147,8 +199,7 @@ class SpellPierceTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, might.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, might.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -176,8 +227,7 @@ class SpellPierceTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, might.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, might.getId());
 
         GameData gd = harness.getGameData();
         int manaBefore = gd.playerManaPools.get(player1.getId()).getTotal();
@@ -235,8 +285,7 @@ class SpellPierceTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, might.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, might.getId());
 
         harness.assertInGraveyard(player2, "Spell Pierce");
     }
