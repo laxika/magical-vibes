@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,8 +11,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,10 +21,7 @@ class TheTriumphOfAnaxTest extends BaseCardTest {
     @DisplayName("Chapter I grants trample and power equal to lore counters")
     void chapterIGrantsTrampleAndLorePower() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new TheTriumphOfAnax()));
-        addSagaMana();
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new TheTriumphOfAnax(), "{2}{R}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
@@ -119,9 +113,85 @@ class TheTriumphOfAnaxTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
-    private void addSagaMana() {
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+    @Test
+    @DisplayName("Chapter power is determined at resolution and stays fixed afterward")
+    void chapterPowerUsesResolutionLoreCount() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheTriumphOfAnax());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        saga.setCounterCount(CounterType.LORE, 1);
+
+        advanceToNextChapterTarget();
+        harness.handlePermanentChosen(player1, target.getId());
+        saga.setCounterCount(CounterType.LORE, 3);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+
+        saga.setCounterCount(CounterType.LORE, 1);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Chapter IV does not fight if the controlled target changes controller")
+    void chapterIVDoesNotFightAfterOwnTargetChangesController() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheTriumphOfAnax());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        saga.setCounterCount(CounterType.LORE, 3);
+
+        advanceToNextChapterTarget();
+        harness.handlePermanentChosen(player1, ownCreature.getId());
+        harness.handlePermanentChosen(player1, opposingCreature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(ownCreature);
+        gd.playerBattlefields.get(player2.getId()).add(ownCreature);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(ownCreature.getMarkedDamage()).isZero();
+        assertThat(opposingCreature.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "The Triumph of Anax");
+    }
+
+    @Test
+    @DisplayName("Chapter IV does not fight if the opposing target becomes controlled by you")
+    void chapterIVDoesNotFightAfterOpposingTargetChangesController() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheTriumphOfAnax());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        saga.setCounterCount(CounterType.LORE, 3);
+
+        advanceToNextChapterTarget();
+        harness.handlePermanentChosen(player1, ownCreature.getId());
+        harness.handlePermanentChosen(player1, opposingCreature.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(opposingCreature);
+        gd.playerBattlefields.get(player1.getId()).add(opposingCreature);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(ownCreature.getMarkedDamage()).isZero();
+        assertThat(opposingCreature.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "The Triumph of Anax");
+    }
+
+    @Test
+    @DisplayName("Chapter IV resolves without an opposing creature available")
+    void chapterIVWithoutOpposingCreature() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheTriumphOfAnax());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        saga.setCounterCount(CounterType.LORE, 3);
+
+        advanceToNextChapterTarget();
+        harness.handlePermanentChosen(player1, ownCreature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        assertThat(ownCreature.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "The Triumph of Anax");
     }
 
     private void advanceToNextChapterTarget() {
