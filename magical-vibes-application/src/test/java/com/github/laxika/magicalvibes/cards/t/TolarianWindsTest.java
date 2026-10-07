@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AlmsCollector;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CoralMerfolk.class, GrizzlyBears.class, Island.class, TolarianWinds.class})
+@CardUsed({CoralMerfolk.class, Island.class, TolarianWinds.class})
 class TolarianWindsTest extends BaseCardTest {
 
     @Test
@@ -63,5 +63,71 @@ class TolarianWindsTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         harness.assertInHand(player2, "Coral Merfolk");
+    }
+
+    @Test
+    @DisplayName("Uses the hand at resolution when another Tolarian Winds resolves first")
+    void usesHandAtResolution() {
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island(), new Island()));
+        harness.setHand(player1, List.of(
+                new TolarianWinds(), new TolarianWinds(), new CoralMerfolk(), new CoralMerfolk()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castInstant(player1, 0);
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(6);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(c -> c.getName().equals("Island")).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({AlmsCollector.class, CoralMerfolk.class, Island.class, TolarianWinds.class})
+    @DisplayName("An opponent's Alms Collector replaces the entire multi-card draw")
+    void opponentCollectorReplacesMultiCardDraw() {
+        harness.addToBattlefield(player2, new AlmsCollector());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new Island(), new Island()));
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
+        harness.setHand(player1, List.of(
+                new TolarianWinds(), new CoralMerfolk(), new CoralMerfolk(), new Island()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+        harness.assertInGraveyard(player1, "Tolarian Winds");
+    }
+
+    @Test
+    @CardUsed({AlmsCollector.class, CoralMerfolk.class, Island.class, TolarianWinds.class})
+    @DisplayName("An opponent's Alms Collector does not replace a single-card draw")
+    void opponentCollectorDoesNotReplaceSingleCardDraw() {
+        harness.addToBattlefield(player2, new AlmsCollector());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new Island()));
+        harness.setLibrary(player1, List.of(new Island(), new Island()));
+        harness.setHand(player1, List.of(new TolarianWinds(), new CoralMerfolk()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
 }
