@@ -55,4 +55,44 @@ class TowerOfEonsTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(8);
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Colored mana pays the generic cost and life is gained only on resolution")
+    void coloredManaPaysCostAndLifeGainUsesStack() {
+        Permanent tower = harness.addToBattlefieldAndReturn(player1, new TowerOfEons());
+        harness.setLife(player1, 12);
+        harness.setLife(player2, 17);
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(tower.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(12);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Tower can be activated during the opponent's turn and benefits its controller")
+    void activatesDuringOpponentsTurn() {
+        harness.addToBattlefield(player2, new TowerOfEons());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 9);
+        harness.forceActivePlayer(player1);
+        harness.addMana(player2, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
 }
