@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SunbathingRootwalla;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TimelyInterference.class, GrizzlyBears.class, Forest.class})
+@CardUsed({TimelyInterference.class, SunbathingRootwalla.class, Forest.class})
 class TimelyInterferenceTest extends BaseCardTest {
 
     @Test
@@ -28,8 +28,7 @@ class TimelyInterferenceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TimelyInterference()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getPowerModifier()).isEqualTo(-1);
         assertThat(target.getToughnessModifier()).isZero();
@@ -100,8 +99,79 @@ class TimelyInterferenceTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("An illegal sole target prevents the card draw even when kicked")
+    void removedTargetPreventsDraw() {
+        Permanent target = addCreatureReady(player2);
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new TimelyInterference()));
+        addKickedMana();
+
+        harness.castKickedInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setGraveyard(player2, List.of(target.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Timely Interference");
+    }
+
+    @Test
+    @DisplayName("A tapped kicked target is not required to block")
+    void tappedTargetNeedNotBlock() {
+        Permanent attacker = addCreatureReady(player1);
+        Permanent target = addCreatureReady(player2);
+        target.setTapped(true);
+        castKicked(target);
+
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An unkicked target may decline to block")
+    void unkickedTargetNeedNotBlock() {
+        Permanent attacker = addCreatureReady(player1);
+        Permanent target = addCreatureReady(player2);
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new TimelyInterference()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(target.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can target a creature controlled by the caster")
+    void canTargetOwnCreature() {
+        Permanent target = addCreatureReady(player1);
+        castKicked(target);
+
+        assertThat(target.getPowerModifier()).isEqualTo(-1);
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(target.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).singleElement().isInstanceOf(Forest.class);
+    }
+
     private Permanent addCreatureReady(Player player) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new SunbathingRootwalla());
         permanent.setSummoningSick(false);
         return permanent;
     }
