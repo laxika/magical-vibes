@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.d.DarkPrivilege;
 import com.github.laxika.magicalvibes.cards.f.FreewindFalcon;
 import com.github.laxika.magicalvibes.cards.g.GossamerChains;
+import com.github.laxika.magicalvibes.cards.i.IvoryMask;
 import com.github.laxika.magicalvibes.cards.q.Quicksand;
 import com.github.laxika.magicalvibes.cards.s.SisaysRing;
 import com.github.laxika.magicalvibes.model.Card;
@@ -20,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TeferisRealm.class, DarkPrivilege.class, FreewindFalcon.class, GossamerChains.class,
-        Quicksand.class, SisaysRing.class})
+        Quicksand.class, SisaysRing.class, IvoryMask.class})
 class TeferisRealmTest extends BaseCardTest {
 
     @Test
@@ -171,10 +172,91 @@ class TeferisRealmTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
     }
 
+    @Test
+    @DisplayName("Choosing a type with no matching permanents completes resolution")
+    void choosingAbsentTypeCompletesResolution() {
+        Permanent realm = addToBattlefield(player1, new TeferisRealm());
+        Permanent creature = addToBattlefield(player1, new FreewindFalcon());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "ARTIFACT");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(realm, creature);
+        assertThat(gd.phasedOutPermanents.values()).allSatisfy(permanents -> assertThat(permanents).isEmpty());
+    }
+
+    @Test
+    @DisplayName("Opponent-controlled Aura returns with its host and the host untaps")
+    void opponentAuraReturnsWithHostRatherThanOnItsControllersUntap() {
+        addToBattlefield(player1, new TeferisRealm());
+        Permanent creature = addToBattlefield(player1, new FreewindFalcon());
+        creature.tap();
+        Permanent aura = addToBattlefield(player2, new DarkPrivilege());
+        aura.setAttachedTo(creature.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "CREATURE");
+
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(creature);
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(aura);
+        harness.performUntapStep(player2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(aura);
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(aura);
+
+        harness.performUntapStep(player1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(aura);
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Phased-out Realm does not trigger but triggers after returning before upkeep")
+    void phasedOutRealmDoesNotTriggerUntilItReturns() {
+        Permanent realm = addToBattlefield(player1, new TeferisRealm());
+        Permanent creature = addToBattlefield(player2, new FreewindFalcon());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "NON_AURA_ENCHANTMENT");
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(realm);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(realm);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "CREATURE");
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(creature);
+    }
+
+    @Test
+    @DisplayName("Player shroud does not prevent the nontargeting upkeep choice")
+    void playerWithShroudStillChoosesAndPhasesOutPermanents() {
+        addToBattlefield(player1, new TeferisRealm());
+        addToBattlefield(player2, new IvoryMask());
+        Permanent creature = addToBattlefield(player1, new FreewindFalcon());
+        Permanent opponentCreature = addToBattlefield(player2, new FreewindFalcon());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleListChoice(player2, "CREATURE");
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(creature);
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(opponentCreature);
+    }
+
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
     }
 
     private Permanent addToBattlefield(Player player, Card card) {
