@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.c.CarrionFeeder;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThatsRoughBuddy.class, CarrionFeeder.class, Forest.class, GrizzlyBears.class, ZuranOrb.class})
+@CardUsed({ThatsRoughBuddy.class, CarrionFeeder.class, Forest.class, GrizzlyBears.class, ZuranOrb.class, Unsummon.class})
 class ThatsRoughBuddyTest extends BaseCardTest {
 
     @Test
@@ -74,11 +75,64 @@ class ThatsRoughBuddyTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private void cast(Permanent target) {
+    @Test
+    void aCreatureReturnedToHandInResponseEnablesTheBonus() {
+        Permanent departing = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest()));
         harness.setHand(player1, List.of(new ThatsRoughBuddy()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castInstant(player2, 0, departing.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    void anOpponentsCreatureLeavingDoesNotEnableTheBonus() {
+        Permanent departing = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, departing.getId());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        cast(target);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertInHand(player1, "Forest");
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void doesNotDrawWhenItsOnlyTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new ThatsRoughBuddy()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, target.getId());
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castInstant(player2, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Forest");
+        harness.assertInGraveyard(player1, "That's Rough Buddy");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    private void cast(Permanent target) {
+        harness.setHand(player1, List.of(new ThatsRoughBuddy()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
