@@ -145,6 +145,87 @@ class TrumpetingArmodonTest extends BaseCardTest {
         assertThat(blocker.getMustBlockIds()).isEmpty();
     }
 
+    @Test
+    @DisplayName("A tapped, summoning-sick Armodon can activate its ability")
+    void tappedSummoningSickSourceCanActivate() {
+        Permanent armodon = harness.addToBattlefieldAndReturn(player1, new TrumpetingArmodon());
+        armodon.setSummoningSick(true);
+        armodon.setTapped(true);
+        Permanent blocker = addCreatureReady(player2, new TrainedArmodon());
+        giveMana();
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        armodon.setTapped(false);
+        armodon.setSummoningSick(false);
+        armodon.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+    }
+
+    @Test
+    @DisplayName("A tapped target is not untapped or required to block")
+    void tappedTargetDoesNotHaveToBlock() {
+        Permanent armodon = addCreatureReady(player1, new TrumpetingArmodon());
+        Permanent blocker = addCreatureReady(player2, new TrainedArmodon());
+        blocker.setTapped(true);
+        giveMana();
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        assertThat(blocker.isTapped()).isTrue();
+        armodon.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
+                .doesNotThrowAnyException();
+        assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability can target a creature controlled by its controller")
+    void canTargetOwnCreature() {
+        Permanent armodon = addCreatureReady(player1, new TrumpetingArmodon());
+        Permanent target = addCreatureReady(player1, new TrainedArmodon());
+        giveMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getMustBlockIds()).contains(armodon.getId());
+    }
+
+    @Test
+    @DisplayName("A blocker can satisfy either of two competing Armodon requirements")
+    void competingRequirementsAllowBlockingEitherSource() {
+        Permanent first = addCreatureReady(player1, new TrumpetingArmodon());
+        Permanent second = addCreatureReady(player1, new TrumpetingArmodon());
+        Permanent blocker = addCreatureReady(player2, new TrainedArmodon());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.activateAbility(player1, 1, null, blocker.getId());
+        harness.passBothPriorities();
+
+        first.setAttacking(true);
+        second.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
+                .doesNotThrowAnyException();
+    }
+
     private void giveMana() {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
