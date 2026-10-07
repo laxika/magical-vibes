@@ -26,8 +26,7 @@ class TuraKennerDSkyknightTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Soldier")).isEqualTo(1);
@@ -45,8 +44,7 @@ class TuraKennerDSkyknightTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Divination()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Soldier")).isEqualTo(1);
@@ -62,5 +60,58 @@ class TuraKennerDSkyknightTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         assertThat(countPermanents(player1, "Soldier")).isZero();
+    }
+
+    @Test
+    void opponentInstantCreatesNoSoldier() {
+        harness.addToBattlefield(player1, new TuraKennerDSkyknight());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(countPermanents(player1, "Soldier")).isZero();
+        assertThat(countPermanents(player2, "Soldier")).isZero();
+    }
+
+    @Test
+    void eachInstantCreatesSoldierBeforeSpellResolves() {
+        harness.addToBattlefield(player1, new TuraKennerDSkyknight());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.passBothPriorities();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    void illegalSpellTargetDoesNotPreventSoldierCreation() {
+        harness.addToBattlefield(player1, new TuraKennerDSkyknight());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        harness.setHand(player1, List.of(new Shock()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, bears.getId());
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        assertThat(countPermanents(player2, "Grizzly Bears")).isZero();
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
