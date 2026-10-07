@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(TimeWalk.class)
+@CardUsed({TimeWalk.class})
 class TimeWalkTest extends BaseCardTest {
 
     private void advanceTurn() {
@@ -71,5 +71,46 @@ class TimeWalkTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Time Walk");
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(timeWalk);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two resolutions grant two consecutive extra turns")
+    void twoResolutionsGrantTwoExtraTurns() {
+        cast();
+        cast();
+        int turnBefore = gd.turnNumber;
+
+        advanceTurn();
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.turnNumber).isEqualTo(turnBefore + 1);
+        assertThat(gd.extraTurns).containsExactly(player1.getId());
+
+        advanceTurn();
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.turnNumber).isEqualTo(turnBefore + 2);
+        assertThat(gd.extraTurns).isEmpty();
+
+        advanceTurn();
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.turnNumber).isEqualTo(turnBefore + 3);
+    }
+
+    @Test
+    @DisplayName("Casting during an extra turn grants another extra turn")
+    void castingDuringExtraTurnGrantsAnotherExtraTurn() {
+        cast();
+        advanceTurn();
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        int extraTurnNumber = gd.turnNumber;
+
+        cast();
+        advanceTurn();
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.turnNumber).isEqualTo(extraTurnNumber + 1);
+        assertThat(gd.extraTurns).isEmpty();
+
+        advanceTurn();
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.turnNumber).isEqualTo(extraTurnNumber + 2);
     }
 }
