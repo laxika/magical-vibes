@@ -3,12 +3,11 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SublimeEpiphany.class, GrizzlyBears.class, RodOfRuin.class, Spellbook.class,
+        Mountain.class, Skyscanner.class})
 class SublimeEpiphanyTest extends BaseCardTest {
 
     private void addSublimeEpiphany(Player player) {
@@ -34,7 +35,7 @@ class SublimeEpiphanyTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        castWithSpellTarget(player2, new int[]{0}, bears.getId(), List.of());
+        harness.castModalInstantWithModes(player2, 0, 1, 5, new int[]{0}, bears.getId(), List.of());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -53,7 +54,7 @@ class SublimeEpiphanyTest extends BaseCardTest {
         harness.passPriority(player2);
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
-        castWithSpellTarget(player1, new int[]{1}, rod.getId(), List.of());
+        harness.castModalInstantWithModes(player1, 0, 1, 5, new int[]{1}, rod.getId(), List.of());
         harness.passBothPriorities();
 
         harness.assertLife(player1, lifeBefore);
@@ -90,9 +91,95 @@ class SublimeEpiphanyTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castWithSpellTarget(Player player, int[] modeIndices, java.util.UUID targetId,
-                                     List<java.util.UUID> targetIds) {
-        harness.getGameService().playCard(gd, player, 0,
-                ChooseOneEffect.encodeModeSelection(1, 5, modeIndices), targetId, null, targetIds, List.of());
+    @Test
+    void bounceAndCopySameCreatureUsesLastKnownCopiableValues() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Skyscanner());
+        harness.setLibrary(player1, List.of(new Mountain()));
+        addSublimeEpiphany(player1);
+
+        harness.castModalInstantWithModes(player1, 0, 1, 5, new int[]{2, 3},
+                List.of(creature.getId(), creature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Skyscanner");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()
+                        && permanent.getCard().getName().equals("Skyscanner"))
+                .hasSize(1);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Mountain");
+    }
+
+    @Test
+    void abilityModeCountersTriggeredAbility() {
+        harness.setHand(player2, List.of(new Skyscanner()));
+        harness.setLibrary(player2, List.of(new Mountain()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        addSublimeEpiphany(player1);
+        harness.forceActivePlayer(player2);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        var abilityId = gd.stack.getLast().getTargetableId();
+
+        harness.castModalInstantWithModes(player1, 0, 1, 5, new int[]{1}, abilityId, List.of());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Skyscanner");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void copyModeRejectsOpponentCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Skyscanner());
+        addSublimeEpiphany(player1);
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(player1, 0, 1, 5,
+                new int[]{3}, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void illegalCopyTargetDoesNotPreventDrawForLegalPlayerTarget() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Skyscanner());
+        harness.setLibrary(player1, List.of(new Mountain()));
+        addSublimeEpiphany(player1);
+        addSublimeEpiphany(player2);
+
+        harness.castModalInstantWithModes(player1, 0, 1, 5, new int[]{3, 4},
+                List.of(creature.getId(), player1.getId()));
+        harness.castModalInstantWithModes(player2, 0, 1, 5, new int[]{2},
+                List.of(creature.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Skyscanner");
+        harness.assertInHand(player1, "Mountain");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void counterSpellAndAbilityModesUseSeparateStackTargets() {
+        RodOfRuin rod = new RodOfRuin();
+        harness.addToBattlefield(player2, rod);
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player2, List.of(bears));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        addSublimeEpiphany(player1);
+        harness.forceActivePlayer(player2);
+        harness.castCreature(player2, 0);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        var abilityId = gd.stack.getLast().getTargetableId();
+
+        harness.castModalInstantWithModes(player1, 0, 1, 5, new int[]{0, 1},
+                List.of(bears.getId(), abilityId));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
     }
 }
