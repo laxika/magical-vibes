@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.w.WoodlandMystic;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TinStreetCadet.class, GrizzlyBears.class})
+@CardUsed({TinStreetCadet.class, WoodlandMystic.class, Shock.class})
 class TinStreetCadetTest extends BaseCardTest {
 
     @Test
@@ -22,7 +24,7 @@ class TinStreetCadetTest extends BaseCardTest {
     void becomesBlockedCreatesGoblinToken() {
         Permanent cadet = addCreatureReady(player1, new TinStreetCadet());
         cadet.setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new WoodlandMystic());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -36,8 +38,8 @@ class TinStreetCadetTest extends BaseCardTest {
     void multipleBlockersCreateOneGoblinToken() {
         Permanent cadet = addCreatureReady(player1, new TinStreetCadet());
         cadet.setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new WoodlandMystic());
+        addCreatureReady(player2, new WoodlandMystic());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
@@ -60,6 +62,59 @@ class TinStreetCadetTest extends BaseCardTest {
         assertGoblinTokens(0);
     }
 
+    @Test
+    @DisplayName("Blocking with Tin Street Cadet does not create a Goblin")
+    void blockingDoesNotCreateToken() {
+        Permanent attacker = addCreatureReady(player1, new WoodlandMystic());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new TinStreetCadet());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertGoblinTokens(0);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    @DisplayName("The attacking controller receives the Goblin when player two attacks")
+    void playerTwoReceivesToken() {
+        Permanent cadet = addCreatureReady(player2, new TinStreetCadet());
+        cadet.setAttacking(true);
+        addCreatureReady(player1, new WoodlandMystic());
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertGoblinTokens(0);
+        assertThat(gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList())
+                .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The Goblin is still created if Cadet dies before its trigger resolves")
+    void triggerResolvesAfterCadetDies() {
+        Permanent cadet = addCreatureReady(player1, new TinStreetCadet());
+        cadet.setAttacking(true);
+        addCreatureReady(player2, new WoodlandMystic());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertGoblinTokens(0);
+        harness.castInstant(player1, 0, cadet.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(cadet);
+        harness.passBothPriorities();
+
+        assertGoblinTokens(1);
+    }
+
     private void assertGoblinTokens(int expectedCount) {
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -71,6 +126,8 @@ class TinStreetCadetTest extends BaseCardTest {
             assertThat(token.getCard().getSubtypes()).contains(CardSubtype.GOBLIN);
             assertThat(token.getCard().getPower()).isEqualTo(1);
             assertThat(token.getCard().getToughness()).isEqualTo(1);
+            assertThat(token.isTapped()).isFalse();
+            assertThat(token.isAttacking()).isFalse();
         });
     }
 }
