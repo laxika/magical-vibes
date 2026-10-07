@@ -82,6 +82,54 @@ class StormFrontTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An already tapped flying creature remains a legal target")
+    void canTargetTappedFlyer() {
+        harness.addToBattlefieldAndReturn(player1, new StormFront());
+        Permanent flyer = addCreatureReady(player2, new FightingDrake());
+        flyer.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, flyer.getId());
+        harness.passBothPriorities();
+
+        assertThat(flyer.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("fizzles")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Both mana in the activation cost must be green")
+    void cannotPayWithOnlyOneGreenMana() {
+        harness.addToBattlefieldAndReturn(player1, new StormFront());
+        Permanent flyer = addCreatureReady(player2, new FightingDrake());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, flyer.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(flyer.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability still resolves after Storm Front leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent stormFront = harness.addToBattlefieldAndReturn(player1, new StormFront());
+        Permanent flyer = addCreatureReady(player2, new FightingDrake());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, flyer.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(stormFront);
+        gd.playerGraveyards.get(player1.getId()).add(stormFront.getCard());
+        harness.passBothPriorities();
+
+        assertThat(flyer.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Ability fizzles if the target leaves before resolution")
     void fizzlesIfTargetLeavesBeforeResolution() {
         harness.addToBattlefieldAndReturn(player1, new StormFront());
