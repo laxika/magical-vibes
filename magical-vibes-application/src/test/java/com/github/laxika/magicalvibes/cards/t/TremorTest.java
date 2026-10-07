@@ -2,11 +2,9 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.k.KyrenGlider;
+import com.github.laxika.magicalvibes.cards.f.Flight;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
-import com.github.laxika.magicalvibes.cards.r.RamosianSergeant;
-import com.github.laxika.magicalvibes.cards.w.WildJhovall;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AirElemental.class, HillGiant.class, Mountain.class, RagingGoblin.class, Tremor.class, RamosianSergeant.class, KyrenGlider.class, WildJhovall.class})
+@CardUsed({AirElemental.class, Flight.class, HillGiant.class, Mountain.class, RagingGoblin.class, Tremor.class})
 class TremorTest extends BaseCardTest {
 
     @Test
@@ -54,6 +52,22 @@ class TremorTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Air Elemental");
         assertThat(ownElemental.getMarkedDamage()).isZero();
         assertThat(opposingElemental.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not damage a ground creature granted flying by an Aura")
+    void doesNotDamageCreatureWithGrantedFlying() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        Permanent flight = harness.addToBattlefieldAndReturn(player2, new Flight());
+        flight.setAttachedTo(goblin.getId());
+        harness.addToBattlefield(player1, new RagingGoblin());
+
+        harness.castFromHand(player1, new Tremor(), "{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Raging Goblin");
+        assertThat(goblin.getMarkedDamage()).isZero();
+        harness.assertNotOnBattlefield(player1, "Raging Goblin");
     }
 
     @Test
