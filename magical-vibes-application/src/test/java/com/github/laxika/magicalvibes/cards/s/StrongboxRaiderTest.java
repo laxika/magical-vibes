@@ -5,13 +5,16 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StrongboxRaider.class, Forest.class})
 class StrongboxRaiderTest extends BaseCardTest {
 
     @Test
@@ -23,8 +26,7 @@ class StrongboxRaiderTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(chosen, other));
 
         castStrongboxRaider();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(chosen, other);
         assertThat(gd.interaction.activeInteraction())
@@ -44,12 +46,74 @@ class StrongboxRaiderTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, second));
 
         castStrongboxRaider();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void opponentAttackingDoesNotEnableRaid() {
+        gd.playersDeclaredAttackersThisTurn.add(player2.getId());
+        Card top = new Forest();
+        harness.setLibrary(player1, List.of(top));
+
+        castStrongboxRaider();
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void raidWithEmptyLibraryDoesNotRequestAChoice() {
+        gd.playersDeclaredAttackersThisTurn.add(player1.getId());
+        harness.setLibrary(player1, List.of());
+
+        castStrongboxRaider();
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.exilePlayPermissions).isEmpty();
+    }
+
+    @Test
+    void raidWithOneCardStillRequiresChoosingItAndAllowsPlayingALand() {
+        gd.playersDeclaredAttackersThisTurn.add(player1.getId());
+        Card land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+
+        castStrongboxRaider();
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(land);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
+        harness.castFromExile(player1, land.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anySatisfy(permanent -> assertThat(permanent.getCard().getId()).isEqualTo(land.getId()));
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void unchosenCardCannotBePlayed() {
+        gd.playersDeclaredAttackersThisTurn.add(player1.getId());
+        Card chosen = new Forest();
+        Card other = new Forest();
+        harness.setLibrary(player1, List.of(chosen, other));
+
+        castStrongboxRaider();
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, other.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(chosen, other);
     }
 
     private void castStrongboxRaider() {
