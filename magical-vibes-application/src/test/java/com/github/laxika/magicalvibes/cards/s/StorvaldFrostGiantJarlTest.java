@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.BurnishedHart;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({StorvaldFrostGiantJarl.class, GrizzlyBears.class, Shock.class})
+@CardUsed({StorvaldFrostGiantJarl.class, GrizzlyBears.class, Shock.class,
+        BurnishedHart.class, SwordsToPlowshares.class})
 class StorvaldFrostGiantJarlTest extends BaseCardTest {
 
     private static final String SEVEN_MODE =
@@ -63,11 +65,7 @@ class StorvaldFrostGiantJarlTest extends BaseCardTest {
         addReadyStorvald(player1);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(player1, List.of(0));
 
         harness.handleListChoice(player1, ONE_MODE);
         harness.handleListChoice(player1, ChooseOneEffect.FINISH_MODE_SELECTION);
@@ -100,10 +98,93 @@ class StorvaldFrostGiantJarlTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
+    @Test
+    void modesResolveInPrintedOrderEvenWhenSelectedInReverseOrder() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BurnishedHart());
+        castStorvald();
+
+        harness.handleListChoice(player1, ONE_MODE);
+        harness.handleListChoice(player1, SEVEN_MODE);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    void bothModesHaveIndependentTargetsAndPreserveCounters() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new BurnishedHart());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new BurnishedHart());
+        first.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        second.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        castStorvald();
+
+        harness.handleListChoice(player1, SEVEN_MODE);
+        harness.handleListChoice(player1, ONE_MODE);
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+    }
+
+    @Test
+    void remainingTargetStillChangesWhenTheOtherTargetLeaves() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new BurnishedHart());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new BurnishedHart());
+        castStorvald();
+
+        harness.handleListChoice(player1, SEVEN_MODE);
+        harness.handleListChoice(player1, ONE_MODE);
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+
+        harness.setHand(player1, List.of(new SwordsToPlowshares()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, first.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(first);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(1);
+    }
+
+    @Test
+    void payingThreeAllowsSpellToResolveAgainstStorvaldWithoutAnExtraWardCost() {
+        Permanent storvald = addReadyStorvald(player1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        castShockAt(player2, storvald, 1);
+
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        assertThat(storvald.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Storvald, Frost Giant Jarl");
+    }
+
+    @Test
+    void grantedWardCountersAnOpponentsTriggeredAbility() {
+        addReadyStorvald(player2);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BurnishedHart());
+        castStorvald();
+
+        harness.handleListChoice(player1, ONE_MODE);
+        harness.handleListChoice(player1, ChooseOneEffect.FINISH_MODE_SELECTION);
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyStorvald(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent storvald = harness.addToBattlefieldAndReturn(player, new StorvaldFrostGiantJarl());
-        storvald.setSummoningSick(false);
-        return storvald;
+        return addCreatureReady(player, new StorvaldFrostGiantJarl());
     }
 
     private void castStorvald() {
