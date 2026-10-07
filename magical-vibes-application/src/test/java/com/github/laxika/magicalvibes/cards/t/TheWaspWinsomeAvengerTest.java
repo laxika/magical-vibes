@@ -26,9 +26,7 @@ class TheWaspWinsomeAvengerTest extends BaseCardTest {
         Permanent hero = harness.addToBattlefieldAndReturn(player1, new CaptainAmericaTeamLeader());
 
         castWasp(hero.getId());
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, hero, Keyword.HEXPROOF)).isTrue();
 
@@ -70,6 +68,44 @@ class TheWaspWinsomeAvengerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(defendingCreature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("ETB can grant hexproof to an opposing Hero")
+    void etbCanTargetOpposingHero() {
+        Permanent hero = harness.addToBattlefieldAndReturn(player2, new CaptainAmericaTeamLeader());
+
+        castWasp(hero.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, hero, Keyword.HEXPROOF)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The Wasp can target itself with its ETB ability")
+    void etbCanTargetItself() {
+        Permanent wasp = harness.enterBattlefieldAndReturn(player1, new TheWaspWinsomeAvenger());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
+                .validPermanentIds()).contains(wasp.getId());
+        harness.handlePermanentChosen(player1, wasp.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, wasp, Keyword.HEXPROOF)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Attack trigger resolves even after The Wasp leaves the battlefield")
+    void attackTriggerSurvivesSourceLeaving() {
+        Permanent attacker = addCreatureReady(player1, new TheWaspWinsomeAvenger());
+        Permanent defender = addCreatureReady(player2, new CaptainAmericaTeamLeader());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, defender.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        resolveAllTriggers();
+
+        assertThat(defender.isTapped()).isTrue();
     }
 
     private void castWasp(java.util.UUID targetId) {
