@@ -133,6 +133,81 @@ class TransmogrifyingLicidTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Ending the effect restores the artifact type and leaves the Licid tapped")
+    void endingEffectRestoresArtifactWithoutUntapping() {
+        Permanent licid = addReadyLicid(player1);
+        Permanent host = addCreatureReady(player1, new ElvishBerserker());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.isArtifact(gd, licid)).isTrue();
+        assertThat(gqs.isCreature(gd, licid)).isTrue();
+        assertThat(licid.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, host.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The end payment requires one mana and a failed payment leaves the Aura attached")
+    void cannotEndEffectWithoutMana() {
+        Permanent licid = addReadyLicid(player1);
+        Permanent host = addCreatureReady(player1, new ElvishBerserker());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(licid.getAttachedTo()).isEqualTo(host.getId());
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(2);
+        assertThat(gqs.isArtifact(gd, host)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The Licid goes to its owner's graveyard when the enchanted creature leaves")
+    void hostLeavingPutsLicidInGraveyard() {
+        addReadyLicid(player1);
+        Permanent host = addCreatureReady(player2, new ElvishBerserker());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, host));
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Transmogrifying Licid");
+        harness.assertInGraveyard(player1, "Transmogrifying Licid");
+        harness.assertInHand(player2, "Elvish Berserker");
+    }
+
+    @Test
+    @DisplayName("An artifact creature keeps its artifact type when the Licid effect ends")
+    void endingEffectDoesNotRemoveHostsExistingArtifactType() {
+        Permanent licid = addReadyLicid(player1);
+        Permanent host = addReadyLicid(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(licid.getAttachedTo()).isNull();
+        assertThat(gqs.isArtifact(gd, host)).isTrue();
+        assertThat(gqs.isCreature(gd, host)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(2);
+    }
+
     private Permanent addNonCreaturePermanent(Player player) {
         return harness.addToBattlefieldAndReturn(player, new Spellbook());
     }
