@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -82,10 +81,71 @@ class StaunchCrewmateTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(topCards);
     }
 
+    @Test
+    @DisplayName("Choosing an artifact leaves untouched cards above the bottomed cards")
+    void choosingArtifactPreservesUnlookedCards() {
+        Card artifact = new Ornithopter();
+        List<Card> topCards = List.of(new Island(), artifact, new StaunchCrewmate(), new Island());
+        Card fifth = new Island();
+        Card sixth = new StaunchCrewmate();
+        harness.setLibrary(player1, List.of(topCards.get(0), artifact, topCards.get(2),
+                topCards.get(3), fifth, sixth));
+
+        castAndResolveEtb();
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(artifact);
+        assertThat(gd.playerDecks.get(player1.getId())).startsWith(fifth, sixth);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(2, 5))
+                .containsExactlyInAnyOrder(topCards.get(0), topCards.get(2), topCards.get(3));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A sole eligible card in a short library may still be declined")
+    void mayDeclineSoleEligibleCardInShortLibrary() {
+        Card pirate = new StaunchCrewmate();
+        Card land = new Island();
+        harness.setLibrary(player1, List.of(pirate, land));
+
+        castAndResolveEtb();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(pirate, land);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The only card in the library can be selected if it is a Pirate")
+    void selectsPirateFromOneCardLibrary() {
+        Card pirate = new StaunchCrewmate();
+        harness.setLibrary(player1, List.of(pirate));
+
+        castAndResolveEtb();
+        harness.handleMultipleCardsChosen(player1, List.of(pirate.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(pirate);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library needs no choice and causes no life loss")
+    void emptyLibraryDoesNothing() {
+        harness.setLibrary(player1, List.of());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        castAndResolveEtb();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void setupTopCards(List<Card> cards) {
-        GameData gameData = harness.getGameData();
-        gameData.playerDecks.get(player1.getId()).clear();
-        gameData.playerDecks.get(player1.getId()).addAll(cards);
+        harness.setLibrary(player1, cards);
     }
 
     private void castAndResolveEtb() {
