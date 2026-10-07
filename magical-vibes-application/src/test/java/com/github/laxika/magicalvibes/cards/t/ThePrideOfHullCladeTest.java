@@ -49,8 +49,7 @@ class ThePrideOfHullCladeTest extends BaseCardTest {
         int expectedDraws = wall.getEffectiveToughness();
         assertThat(wall.getPowerModifier()).isEqualTo(1);
 
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(
+        harness.setLibrary(player1, List.of(
                 new Forest(), new Forest(), new Forest(), new Forest(), new Forest(),
                 new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
         int handBefore = gd.playerHands.get(player1.getId()).size();
@@ -95,5 +94,134 @@ class ThePrideOfHullCladeTest extends BaseCardTest {
         UUID targetId = opponentWall.getId();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Opponent creatures do not reduce the casting cost")
+    void opponentToughnessDoesNotReduceCost() {
+        harness.addToBattlefield(player2, new WallOfWonder());
+        harness.setHand(player1, List.of(new ThePrideOfHullClade()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 9);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A reduction above ten still requires the green mana")
+    void excessiveReductionDoesNotRemoveColoredCost() {
+        harness.addToBattlefield(player1, new ThePrideOfHullClade());
+        harness.setHand(player1, List.of(new ThePrideOfHullClade()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can target itself and draw fifteen cards after combat damage")
+    void canGrantAbilityToItself() {
+        Permanent pride = addCreatureReady(player1, new ThePrideOfHullClade());
+        harness.setLibrary(player1, java.util.stream.IntStream.range(0, 20)
+                .mapToObj(i -> new Forest()).toList());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, pride.getId());
+        harness.passBothPriorities();
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 15);
+    }
+
+    @Test
+    @DisplayName("Repeated activations grant separate combat damage draw abilities")
+    void repeatedActivationsEachDrawCards() {
+        addCreatureReady(player1, new ThePrideOfHullClade());
+        Permanent wall = addCreatureReady(player1, new WallOfWonder());
+        harness.setLibrary(player1, java.util.stream.IntStream.range(0, 15)
+                .mapToObj(i -> new Forest()).toList());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, 0, null, wall.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, wall.getId());
+        harness.passBothPriorities();
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(List.of(1));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 10);
+    }
+
+    @Test
+    @DisplayName("Draw amount uses the creature's toughness when the trigger resolves")
+    void drawUsesToughnessAtResolution() {
+        addCreatureReady(player1, new ThePrideOfHullClade());
+        Permanent wall = addCreatureReady(player1, new WallOfWonder());
+        harness.setLibrary(player1, java.util.stream.IntStream.range(0, 10)
+                .mapToObj(i -> new Forest()).toList());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, 0, null, wall.getId());
+        harness.passBothPriorities();
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(List.of(1));
+        resolveCombat();
+        assertThat(gd.stack).hasSize(1);
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("The power bonus and granted draw ability expire at end of turn")
+    void bonusAndDrawAbilityExpireAtEndOfTurn() {
+        addCreatureReady(player1, new ThePrideOfHullClade());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, java.util.stream.IntStream.range(0, 10)
+                .mapToObj(i -> new Forest()).toList());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, bear.getId());
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(List.of(1));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }
 }
