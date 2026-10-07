@@ -55,6 +55,67 @@ class StrongarmTacticsTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(16);
     }
 
+    @Test
+    @DisplayName("Discard choices stay hidden until both players have chosen")
+    void discardsHappenOnlyAfterAllPlayersChoose() {
+        harness.setHand(player1, List.of(new StrongarmTactics(), new WirewoodElf(), new Mountain()));
+        harness.setHand(player2, List.of(new WirewoodElf(), new Mountain()));
+        castStrongarmTactics();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.assertNotInGraveyard(player1, "Wirewood Elf");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+
+        harness.handleCardChosen(player2, 1);
+
+        harness.assertInGraveyard(player1, "Wirewood Elf");
+        harness.assertInGraveyard(player2, "Mountain");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("Each player chooses exactly one card even when a creature is available")
+    void mayChooseNoncreatureWithCreatureInHand() {
+        harness.setHand(player1, List.of(new StrongarmTactics(), new WirewoodElf(), new Mountain()));
+        harness.setHand(player2, List.of(new Mountain(), new WirewoodElf()));
+        castStrongarmTactics();
+
+        harness.handleCardChosen(player1, 1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        harness.handleCardChosen(player2, 1);
+
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertNotInGraveyard(player1, "Wirewood Elf");
+        harness.assertInGraveyard(player2, "Wirewood Elf");
+        harness.assertNotInGraveyard(player2, "Mountain");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(16);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("An empty hand loses life even when the other player discards a creature")
+    void emptyHandDoesNotInheritOtherPlayersCreatureDiscard() {
+        harness.setHand(player1, List.of(new StrongarmTactics(), new WirewoodElf()));
+        harness.setHand(player2, List.of());
+        castStrongarmTactics();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+        harness.assertInGraveyard(player1, "Wirewood Elf");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+    }
+
     private void resolveWithHands(List<com.github.laxika.magicalvibes.model.Card> controllerHand,
                                   List<com.github.laxika.magicalvibes.model.Card> opponentHand) {
         List<com.github.laxika.magicalvibes.model.Card> controllerCards = new ArrayList<>();
