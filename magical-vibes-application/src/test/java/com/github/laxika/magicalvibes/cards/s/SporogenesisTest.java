@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.w.Wildfire;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -21,7 +22,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Sporogenesis.class, Disenchant.class, Forest.class, GorillaWarrior.class, Wildfire.class})
+@CardUsed({Sporogenesis.class, Disenchant.class, Forest.class, GorillaWarrior.class, Wildfire.class, Opalescence.class})
 class SporogenesisTest extends BaseCardTest {
 
     @Test
@@ -112,6 +113,87 @@ class SporogenesisTest extends BaseCardTest {
         assertThat(opposingCreature.getCounterCount(CounterType.FUNGUS)).isZero();
         assertThat(land.getCounterCount(CounterType.FUNGUS)).isEqualTo(3);
         assertThat(findPermanents(player1, "Sporogenesis")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The counter ability does not trigger during an opponent's upkeep")
+    void opponentUpkeepDoesNotPutCounter() {
+        harness.addToBattlefield(player1, new Sporogenesis());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GorillaWarrior());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(creature.getCounterCount(CounterType.FUNGUS)).isZero();
+    }
+
+    @Test
+    @DisplayName("A creature without fungus counters creates no Saprolings when it dies")
+    void deathWithoutFungusCountersCreatesNoTokens() {
+        harness.addToBattlefield(player1, new Sporogenesis());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GorillaWarrior());
+        creature.setCounterCount(CounterType.CHARGE, 2);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player2, new Wildfire(), "{4}{R}{R}");
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(creature.getCard());
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Sporogenesis independently creates tokens for a creature's fungus counters")
+    void multipleCopiesCreateTokensForTheirControllers() {
+        harness.addToBattlefield(player1, new Sporogenesis());
+        harness.addToBattlefield(player2, new Sporogenesis());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GorillaWarrior());
+        creature.setCounterCount(CounterType.FUNGUS, 2);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player2, new Wildfire(), "{4}{R}{R}");
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Saproling")).hasSize(2);
+        assertThat(findPermanents(player2, "Saproling")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Fungus counters are removed when the leaves trigger resolves, preserving other counters")
+    void leavesTriggerRemovesOnlyFungusCountersOnResolution() {
+        Permanent sporogenesis = harness.addToBattlefieldAndReturn(player1, new Sporogenesis());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GorillaWarrior());
+        creature.setCounterCount(CounterType.FUNGUS, 2);
+        creature.setCounterCount(CounterType.CHARGE, 3);
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player2, 0, sporogenesis.getId());
+
+        assertThat(findPermanents(player1, "Sporogenesis")).isEmpty();
+        assertThat(creature.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+        resolveAllTriggers();
+        assertThat(creature.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(creature.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An animated Sporogenesis creates Saprolings for its own fungus counters when it dies")
+    void animatedSporogenesisTriggersForItsOwnDeath() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent sporogenesis = harness.addToBattlefieldAndReturn(player1, new Sporogenesis());
+        sporogenesis.setCounterCount(CounterType.FUNGUS, 2);
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player2, 0, sporogenesis.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sporogenesis.getCard());
+        assertThat(findPermanents(player1, "Saproling")).hasSize(2);
     }
 
     private Card createTokenCreature() {
