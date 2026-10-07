@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.p.PerniciousDeed;
 import com.github.laxika.magicalvibes.cards.u.UrborgElf;
 import com.github.laxika.magicalvibes.cards.v.Vindicate;
 import com.github.laxika.magicalvibes.model.Card;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SqueesEmbrace.class, UrborgElf.class, Vindicate.class})
+@CardUsed({SqueesEmbrace.class, UrborgElf.class, Vindicate.class, PerniciousDeed.class})
 class SqueesEmbraceTest extends BaseCardTest {
 
     @Test
@@ -41,7 +42,7 @@ class SqueesEmbraceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, creature.getId());
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player2.getId()))
@@ -53,7 +54,7 @@ class SqueesEmbraceTest extends BaseCardTest {
     @Test
     @DisplayName("The Aura goes to its owner's graveyard when the enchanted creature dies")
     void auraGoesToOwnerGraveyardWhenCreatureDies() {
-        addCreatureWithAura(player1, player1);
+        Permanent creature = addCreatureWithAura(player1, player1);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -62,11 +63,8 @@ class SqueesEmbraceTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        Permanent creature = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof UrborgElf)
-                .findFirst()
-                .orElseThrow();
-        harness.castSorcery(player2, 0, creature.getId());
+
+        harness.castAndResolveSorcery(player2, 0, creature.getId());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Squee's Embrace");
@@ -86,7 +84,7 @@ class SqueesEmbraceTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player2, 0, otherCreature.getId());
+        harness.castAndResolveSorcery(player2, 0, otherCreature.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -97,16 +95,73 @@ class SqueesEmbraceTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getId().equals(enchantedCreature.getId()));
     }
 
-    private Permanent addCreatureWithAura(Player creatureController, Player auraController) {
-        harness.addToBattlefield(creatureController, new UrborgElf());
-        Permanent creature = gd.playerBattlefields.get(creatureController.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof UrborgElf)
-                .findFirst()
-                .orElseThrow();
+    @Test
+    @DisplayName("Casting the Aura attaches it to an opponent's creature and boosts it")
+    void castAuraOnOpponentCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new UrborgElf());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new SqueesEmbrace()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
-        Permanent aura = new Permanent(new SqueesEmbrace());
+        harness.castEnchantment(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Squee's Embrace").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Destroying the Aura removes its boost and prevents a later death trigger")
+    void destroyedAuraDoesNotReturnCreature() {
+        Permanent creature = addCreatureWithAura(player1, player1);
+        Permanent aura = findPermanent(player1, "Squee's Embrace");
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Vindicate(), new Vindicate()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player2, 0, aura.getId());
+        resolveAllTriggers();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+        harness.assertNotInHand(player1, "Urborg Elf");
+
+        harness.castAndResolveSorcery(player2, 0, creature.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Urborg Elf");
+        harness.assertNotInHand(player1, "Urborg Elf");
+    }
+
+    @Test
+    @DisplayName("Simultaneous destruction of the Aura and creature still returns the creature")
+    void simultaneousDestructionReturnsCreature() {
+        Permanent deed = harness.addToBattlefieldAndReturn(player1, new PerniciousDeed());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SqueesEmbrace());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new UrborgElf());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(auraController.getId()).add(aura);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(deed), 2, null);
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Urborg Elf");
+        harness.assertNotInGraveyard(player1, "Urborg Elf");
+        harness.assertInGraveyard(player1, "Squee's Embrace");
+        harness.assertNotOnBattlefield(player1, "Squee's Embrace");
+    }
+    private Permanent addCreatureWithAura(Player creatureController, Player auraController) {
+        Permanent creature = harness.addToBattlefieldAndReturn(creatureController, new UrborgElf());
+
+        Permanent aura = harness.addToBattlefieldAndReturn(auraController, new SqueesEmbrace());
+        aura.setAttachedTo(creature.getId());
 
         return creature;
     }
