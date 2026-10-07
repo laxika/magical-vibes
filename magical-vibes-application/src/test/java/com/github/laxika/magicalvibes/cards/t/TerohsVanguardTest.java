@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.s.SternJudge;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -75,8 +76,61 @@ class TerohsVanguardTest extends BaseCardTest {
         harness.setGraveyard(player1, graveyardCards(7));
         Permanent vanguard = castVanguard();
 
-        vanguard.resetModifiers();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(vanguard.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flash allows casting during the opponent's upkeep")
+    void canCastDuringOpponentsUpkeep() {
+        harness.setGraveyard(player1, graveyardCards(7));
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        Permanent vanguard = castVanguard();
+
+        assertThat(vanguard.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
+    }
+
+    @Test
+    @DisplayName("Threshold gained while the spell is on the stack grants the entry trigger")
+    void thresholdGainedBeforeEntryTriggers() {
+        harness.setGraveyard(player1, graveyardCards(6));
+        harness.castFromHand(player1, new TerohsVanguard(), "{3}{W}");
+        harness.setGraveyard(player1, graveyardCards(7));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Teroh's Vanguard")
+                .getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
+    }
+
+    @Test
+    @DisplayName("Gaining threshold after entry does not retroactively trigger the ability")
+    void thresholdGainedAfterEntryDoesNotTrigger() {
+        harness.setGraveyard(player1, graveyardCards(6));
+        harness.castFromHand(player1, new TerohsVanguard(), "{3}{W}");
+        harness.passBothPriorities();
+        Permanent vanguard = findPermanent(player1, "Teroh's Vanguard");
+
+        harness.setGraveyard(player1, graveyardCards(7));
+        harness.passBothPriorities();
+
+        assertThat(vanguard.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The trigger protects creatures present at resolution even if Vanguard has left")
+    void triggerProtectsCreaturesAtResolutionAfterSourceLeaves() {
+        harness.setGraveyard(player1, graveyardCards(7));
+        harness.castFromHand(player1, new TerohsVanguard(), "{3}{W}");
+        harness.passBothPriorities();
+        Permanent vanguard = findPermanent(player1, "Teroh's Vanguard");
+        gd.playerBattlefields.get(player1.getId()).remove(vanguard);
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new SternJudge());
+
+        harness.passBothPriorities();
+
+        assertThat(recipient.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
     }
 
     private Permanent castVanguard() {
