@@ -66,7 +66,6 @@ class SylvanSafekeeperTest extends BaseCardTest {
         assertThat(warthog.hasKeyword(Keyword.SHROUD)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(warthog.hasKeyword(Keyword.SHROUD)).isFalse();
@@ -118,7 +117,66 @@ class SylvanSafekeeperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(warthog.hasKeyword(Keyword.SHROUD)).isTrue();
+        harness.addToBattlefield(player1, new KrosanVerge());
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, warthog.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
+    @Test
+    @DisplayName("Safekeeper can protect itself while tapped and summoning sick, paying the cost immediately")
+    void canProtectItselfWithoutTapping() {
+        Permanent safekeeper = harness.addToBattlefieldAndReturn(player1, new SylvanSafekeeper());
+        safekeeper.setTapped(true);
+        safekeeper.setSummoningSick(true);
+        harness.addToBattlefield(player1, new KrosanVerge());
+
+        harness.activateAbility(player1, 0, null, safekeeper.getId());
+
+        harness.assertInGraveyard(player1, "Krosan Verge");
+        harness.assertNotOnBattlefield(player1, "Krosan Verge");
+        assertThat(safekeeper.hasKeyword(Keyword.SHROUD)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(safekeeper.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(safekeeper.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's land cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsLand() {
+        Permanent safekeeper = harness.addToBattlefieldAndReturn(player1, new SylvanSafekeeper());
+        harness.addToBattlefield(player2, new KrosanVerge());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, safekeeper.getId()))
                 .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Krosan Verge");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Granting shroud in response makes an opponent's targeted spell fail to resolve")
+    void shroudInResponseStopsTargetedSpellAndItsDraw() {
+        harness.addToBattlefield(player1, new SylvanSafekeeper());
+        harness.addToBattlefield(player1, new KrosanVerge());
+        Permanent warthog = harness.addToBattlefieldAndReturn(player1, new GiantWarthog());
+        harness.setHand(player2, List.of(new GuidedStrike()));
+        harness.setLibrary(player2, List.of(new GiantWarthog()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player2, 0, warthog.getId());
+        harness.activateAbility(player1, 0, null, warthog.getId());
+        harness.passBothPriorities();
+        assertThat(warthog.hasKeyword(Keyword.SHROUD)).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Guided Strike");
+        harness.assertNotInHand(player2, "Giant Warthog");
+        assertThat(warthog.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
