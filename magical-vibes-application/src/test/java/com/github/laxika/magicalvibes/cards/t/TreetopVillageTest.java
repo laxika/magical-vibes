@@ -1,25 +1,29 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(TreetopVillage.class)
+@CardUsed({TreetopVillage.class, GrizzlyBears.class})
 class TreetopVillageTest extends BaseCardTest {
 
     // ===== Enters the battlefield tapped =====
@@ -191,7 +195,93 @@ class TreetopVillageTest extends BaseCardTest {
         assertThat(gqs.isLand(gd, village)).isTrue();
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Colorless mana cannot pay the green part of the animation cost")
+    void colorlessManaCannotPayGreenCost() {
+        addVillageReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Repeated animation does not add power or toughness")
+    void repeatedAnimationDoesNotStackPowerAndToughness() {
+        Permanent village = addVillageReady(player1);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, village)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, village)).isEqualTo(3);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, village)).containsExactly(CardSubtype.APE);
+        assertThat(gqs.hasKeyword(gd, village, Keyword.TRAMPLE)).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A newly controlled Village can animate but cannot tap for mana as a creature")
+    void newlyControlledVillageCanAnimateButCannotTapAsCreature() {
+        Permanent village = harness.addToBattlefieldAndReturn(player1, new TreetopVillage());
+        village.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, village)).isTrue();
+        assertThat(village.isTapped()).isFalse();
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(village.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness does not prevent an unanimated Village from tapping for mana")
+    void newlyControlledUnanimatedVillageCanTapForMana() {
+        Permanent village = harness.addToBattlefieldAndReturn(player1, new TreetopVillage());
+        village.setSummoningSick(true);
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(village.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Animated Village tramples over a 2/2 blocker for one damage")
+    void animatedVillageDealsTrampleDamage() {
+        Permanent village = addVillageReady(player1);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2,
+                player2.getId(), 1
+        ));
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(village);
+    }
 
     private Permanent addVillageReady(Player player) {
         return addCreatureReady(player, new TreetopVillage());
