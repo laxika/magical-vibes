@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,8 +11,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,8 +25,7 @@ class SpiderManPeterParkerTest extends BaseCardTest {
         Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         castAngelOfMercy();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -50,8 +46,7 @@ class SpiderManPeterParkerTest extends BaseCardTest {
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
 
         castAngelOfMercy();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
@@ -66,8 +61,54 @@ class SpiderManPeterParkerTest extends BaseCardTest {
     }
 
     private void castAngelOfMercy() {
-        harness.setHand(player1, List.of(new AngelOfMercy()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AngelOfMercy(), "{4}{W}");
+    }
+
+    @Test
+    @DisplayName("Spider-Man can target himself and gains one counter for three life")
+    void canTargetSelfForMultiPointLifeGain() {
+        Permanent spiderMan = addCreatureReady(player1, new SpiderManPeterParker());
+        castAngelOfMercy();
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, spiderMan.getId());
+        resolveAllTriggers();
+
+        assertThat(spiderMan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, spiderMan, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent gaining life does not trigger Spider-Man")
+    void opponentLifeGainDoesNotTrigger() {
+        Permanent spiderMan = addCreatureReady(player1, new SpiderManPeterParker());
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new AngelOfMercy(), "{4}{W}");
+        resolveAllTriggers();
+
+        assertThat(spiderMan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, spiderMan, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Separate life gain events each add a counter to an indestructible target")
+    void separateLifeGainsEachAddACounter() {
+        addCreatureReady(player1, new SpiderManPeterParker());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        castAngelOfMercy();
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        castAngelOfMercy();
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 }
