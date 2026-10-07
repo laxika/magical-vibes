@@ -56,8 +56,7 @@ class SoulgorgerOrggTest extends BaseCardTest {
     private void castAndResolveEntry(int startingLife) {
         harness.setLife(player1, startingLife);
         harness.castFromHand(player1, new SoulgorgerOrgg(), "{3}{R}{R}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void removeAndResolveLeave() {
@@ -97,5 +96,38 @@ class SoulgorgerOrggTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    void entryUsesLifeTotalWhenItsTriggerResolves() {
+        harness.setLife(player1, 20);
+        harness.castFromHand(player1, new SoulgorgerOrgg(), "{3}{R}{R}");
+        harness.passBothPriorities();
+        harness.setLife(player1, 9);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 1);
+
+        removeAndResolveLeave();
+
+        harness.assertLife(player1, 9);
+    }
+
+    @Test
+    void eachOrggRemembersOnlyItsOwnLifeLoss() {
+        castAndResolveEntry(20);
+        Permanent first = findPermanent(player1, "Soulgorger Orgg");
+        castAndResolveEntry(8);
+        Permanent second = findPermanents(player1, "Soulgorger Orgg").stream()
+                .filter(permanent -> !permanent.getId().equals(first.getId()))
+                .findFirst().orElseThrow();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, first));
+        resolveLeaveTrigger();
+        harness.assertLife(player1, 20);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, second));
+        resolveLeaveTrigger();
+        harness.assertLife(player1, 27);
     }
 }
