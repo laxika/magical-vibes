@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TerritorialDispute.class, Forest.class})
+@CardUsed({TerritorialDispute.class, Forest.class, Humility.class, Opalescence.class})
 class TerritorialDisputeTest extends BaseCardTest {
 
     @Test
@@ -107,20 +107,13 @@ class TerritorialDisputeTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        var forestIds = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Forest"))
-                .map(permanent -> permanent.getId())
-                .toList();
-        harness.handlePermanentChosen(player1, forestIds.getFirst());
+        harness.handlePermanentChosen(player1, findPermanent(player1, "Forest").getId());
 
         harness.assertOnBattlefield(player1, "Territorial Dispute");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .filteredOn(permanent -> permanent.getCard().getName().equals("Forest"))
-                .hasSize(1);
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(1);
     }
 
     @Test
-    @CardUsed({Humility.class, Opalescence.class})
     @DisplayName("Removing Territorial Dispute's abilities restores land plays")
     void allowsLandPlaysWhenItsAbilitiesAreRemoved() {
         harness.addToBattlefield(player1, new Opalescence());
@@ -155,5 +148,55 @@ class TerritorialDisputeTest extends BaseCardTest {
             assertThat(harness.getGameActionAvailabilityService()
                     .getPlayableCardIndices(gd, player.getId())).isEmpty();
         }
+    }
+
+    @Test
+    @DisplayName("A tapped land can pay the upkeep sacrifice")
+    void canSacrificeTappedLand() {
+        harness.addToBattlefield(player1, new TerritorialDispute());
+        advanceToUpkeep(player1);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setTapped(true);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Territorial Dispute");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("The land-play restriction does not prevent putting a land onto the battlefield")
+    void allowsLandToEnterWithoutBeingPlayed() {
+        harness.addToBattlefield(player1, new TerritorialDispute());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertOnBattlefield(player1, "Territorial Dispute");
+    }
+
+    @Test
+    @DisplayName("Sacrificing Territorial Dispute restores land plays")
+    void allowsLandPlayAfterUpkeepSacrifice() {
+        harness.addToBattlefield(player1, new TerritorialDispute());
+        harness.addToBattlefield(player1, new Forest());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+
+        harness.assertNotOnBattlefield(player1, "Territorial Dispute");
+        harness.assertInGraveyard(player1, "Territorial Dispute");
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(2);
+        harness.assertNotInHand(player1, "Forest");
     }
 }
