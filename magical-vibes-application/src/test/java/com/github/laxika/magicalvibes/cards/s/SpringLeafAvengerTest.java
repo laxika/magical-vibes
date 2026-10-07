@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.CarefulCultivation;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SpringLeafAvenger.class, GrizzlyBears.class, GiantGrowth.class})
+@CardUsed({SpringLeafAvenger.class, GrizzlyBears.class, GiantGrowth.class, CarefulCultivation.class})
 class SpringLeafAvengerTest extends BaseCardTest {
 
     @Test
@@ -74,5 +75,60 @@ class SpringLeafAvengerTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Combat damage can return an enchantment, but only from your graveyard")
+    void returnsEnchantmentFromControllersGraveyard() {
+        CarefulCultivation ownCard = new CarefulCultivation();
+        CarefulCultivation opponentsCard = new CarefulCultivation();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentsCard));
+        addCreatureReady(player1, new SpringLeafAvenger()).setAttacking(true);
+
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
+                .containsExactly(ownCard.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Careful Cultivation");
+        harness.assertInGraveyard(player2, "Careful Cultivation");
+    }
+
+    @Test
+    @DisplayName("A removed graveyard target is not replaced by another permanent card")
+    void removedTargetDoesNotReturnAnotherCard() {
+        SpringLeafAvenger target = new SpringLeafAvenger();
+        CarefulCultivation otherCard = new CarefulCultivation();
+        harness.setGraveyard(player1, List.of(target, otherCard));
+        addCreatureReady(player1, new SpringLeafAvenger()).setAttacking(true);
+
+        resolveCombat();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(otherCard));
+        harness.setExile(player1, List.of(target));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Careful Cultivation");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("With no permanent cards in your graveyard, combat damage still happens without a choice")
+    void noEligibleGraveyardCards() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new SpringLeafAvenger()));
+        addCreatureReady(player1, new SpringLeafAvenger()).setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 14);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Spring-Leaf Avenger");
     }
 }
