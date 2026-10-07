@@ -6,41 +6,18 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({UnknownShores.class})
 class UnknownShoresTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Unknown Shores has two activated abilities")
-    void hasCorrectProperties() {
-        UnknownShores card = new UnknownShores();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-    }
-
-    
-
-    @Test
-    @DisplayName("Second ability costs {1} and taps to add one mana of any color")
-    void secondAbilityProperties() {
-        UnknownShores card = new UnknownShores();
-
-        var ability = card.getActivatedAbilities().get(1);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{1}");
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(AwardAnyColorManaEffect.class);
-    }
-
-    // ===== Tapping for colorless mana =====
 
     @Test
     @DisplayName("Tapping for colorless adds {C} immediately (mana ability)")
@@ -56,7 +33,6 @@ class UnknownShoresTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Tapping for any color mana =====
 
     @Test
     @DisplayName("Activating second ability with {1} cost prompts for color choice")
@@ -101,7 +77,6 @@ class UnknownShoresTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
     }
 
-    // ===== Validation =====
 
     @Test
     @DisplayName("Cannot activate ability when already tapped")
@@ -117,20 +92,75 @@ class UnknownShoresTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate second ability without enough mana")
     void cannotActivateSecondAbilityWithoutMana() {
-        addReadyShores(player1);
+        Permanent shores = addReadyShores(player1);
 
         // No mana in pool — activation should fail
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
+
+        assertThat(shores.isTapped()).isFalse();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helpers =====
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("Filtering produces exactly one mana of any of the five colors")
+    void filtersIntoEachColor(ManaColor color) {
+        Permanent shores = harness.addToBattlefieldAndReturn(player1, new UnknownShores());
+        shores.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(shores.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        harness.handleListChoice(player1, color.name());
+
+        for (ManaColor manaColor : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor))
+                    .isEqualTo(manaColor == color ? 1 : 0);
+        }
+        assertThat(gd.playerManaPools.get(player2.getId()).get(color)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A land can tap for colorless on the turn it enters")
+    void canTapForColorlessWhileSummoningSick() {
+        Permanent shores = harness.addToBattlefieldAndReturn(player1, new UnknownShores());
+        shores.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(shores.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped land cannot filter mana even when its mana cost is available")
+    void cannotFilterWhenTapped() {
+        Permanent shores = addReadyShores(player1);
+        shores.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addReadyShores(Player player) {
-        UnknownShores card = new UnknownShores();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new UnknownShores());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
