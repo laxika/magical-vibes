@@ -40,8 +40,7 @@ class UndeadSprinterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
         addSprinterMana();
 
         harness.castFromGraveyard(player1, 0);
@@ -59,8 +58,7 @@ class UndeadSprinterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, zombie.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, zombie.getId());
         addSprinterMana();
 
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
@@ -77,6 +75,60 @@ class UndeadSprinterTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Card cannot be cast from graveyard");
+    }
+
+    @Test
+    @DisplayName("A non-Zombie death still enables casting when a Zombie also died")
+    void mixedCreatureDeathsEnableGraveyardCast() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+        harness.setGraveyard(player1, List.of(new UndeadSprinter()));
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.castAndResolveInstant(player1, 0, zombie.getId());
+        addSprinterMana();
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Undead Sprinter")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertNotInGraveyard(player1, "Undead Sprinter");
+    }
+
+    @Test
+    @DisplayName("Your own non-Zombie creature dying enables graveyard casting")
+    void ownNonZombieDeathEnablesGraveyardCast() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        UndeadSprinter sprinterCard = new UndeadSprinter();
+        harness.setGraveyard(player1, List.of(sprinterCard));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        addSprinterMana();
+        harness.castFromGraveyard(player1, sprinterCard.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Undead Sprinter")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A non-Zombie death does not add a counter when cast from hand")
+    void handCastAfterNonZombieDeathStillEntersWithoutCounter() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock(), new UndeadSprinter()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        addSprinterMana();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Undead Sprinter")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private void addSprinterMana() {
