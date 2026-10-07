@@ -111,6 +111,52 @@ class SteamclawTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(steamclaw.getCard());
     }
 
+    @Test
+    @DisplayName("Both abilities resolve independently after Steamclaw is sacrificed")
+    void bothAbilitiesResolveAfterSourceIsSacrificed() {
+        Permanent steamclaw = addReadySteamclaw(player1);
+        Card firstTarget = new CoffinPurge();
+        Card secondTarget = new Steamclaw();
+        harness.setGraveyard(player1, List.of(firstTarget));
+        harness.setGraveyard(player2, List.of(secondTarget));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        int steamclawIndex = gd.playerBattlefields.get(player1.getId()).indexOf(steamclaw);
+        harness.activateAbility(player1, steamclawIndex, 0, null, firstTarget.getId(), Zone.GRAVEYARD);
+        harness.activateAbility(player1, steamclawIndex, 1, null, secondTarget.getId(), Zone.GRAVEYARD);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(steamclaw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(steamclaw.getCard(), firstTarget);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(secondTarget);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(firstTarget);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(secondTarget);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(steamclaw.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both abilities require a target before costs can be paid")
+    void bothAbilitiesRejectMissingTarget() {
+        Permanent steamclaw = addReadySteamclaw(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        int steamclawIndex = gd.playerBattlefields.get(player1.getId()).indexOf(steamclaw);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, steamclawIndex, 0, null, null, Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(steamclaw.isTapped()).isFalse();
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, steamclawIndex, 1, null, null, Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(steamclaw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(steamclaw.getCard());
+    }
+
     private Permanent addReadySteamclaw(Player player) {
         Permanent permanent = harness.addToBattlefieldAndReturn(player, new Steamclaw());
         permanent.setSummoningSick(false);
