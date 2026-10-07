@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SunscorchedDivide.class)
+@CardUsed({SunscorchedDivide.class})
 class SunscorchedDivideTest extends BaseCardTest {
 
     @Test
@@ -65,5 +65,38 @@ class SunscorchedDivideTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(divide.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A newly entered Sunscorched Divide can produce mana on the opponent's turn")
+    void newlyEnteredLandCanActivateOnOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        Permanent divide = harness.enterBattlefieldAndReturn(player1, new SunscorchedDivide());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(divide.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each activation requires a new tap even when the first activation produced enough mana")
+    void cannotActivateAgainWithoutUntapping() {
+        Permanent divide = harness.addToBattlefieldAndReturn(player1, new SunscorchedDivide());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(divide.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
