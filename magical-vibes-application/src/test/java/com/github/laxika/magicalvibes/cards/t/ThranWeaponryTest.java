@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.v.VoltaicKey;
 import com.github.laxika.magicalvibes.cards.y.YavimayaWurm;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThranWeaponry.class, YavimayaWurm.class})
+@CardUsed({ThranWeaponry.class, YavimayaWurm.class, VoltaicKey.class})
 class ThranWeaponryTest extends BaseCardTest {
 
     @Test
@@ -117,6 +118,53 @@ class ThranWeaponryTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Thran Weaponry");
     }
 
+    @Test
+    @DisplayName("Echo creates no triggered ability when Thran Weaponry enters")
+    void echoDoesNotTriggerOnEntry() {
+        harness.castFromHand(player1, new ThranWeaponry(), "{4}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Thran Weaponry");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Untapping before resolution prevents the creature boost")
+    void untappingBeforeResolutionPreventsBoost() {
+        Permanent weaponry = addReadyWeaponry();
+        Permanent creature = addReadyCreature(player1);
+        Permanent key = harness.addToBattlefieldAndReturn(player1, new VoltaicKey());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(weaponry), null, null);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(key), null, weaponry.getId());
+        resolveAllTriggers();
+
+        assertThat(weaponry.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("An earlier activation does not boost creatures after untapping and activating again")
+    void untappingAndReactivatingDoesNotReviveEarlierActivation() {
+        Permanent weaponry = addReadyWeaponry();
+        Permanent creature = addReadyCreature(player1);
+        Permanent key = harness.addToBattlefieldAndReturn(player1, new VoltaicKey());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(weaponry), null, null);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(key), null, weaponry.getId());
+        harness.passBothPriorities();
+        assertThat(weaponry.isTapped()).isFalse();
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(weaponry), null, null);
+        resolveAllTriggers();
+
+        assertThat(weaponry.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+    }
+
     private Permanent addReadyWeaponry() {
         Permanent weaponry = harness.addToBattlefieldAndReturn(player1, new ThranWeaponry());
         weaponry.setSummoningSick(false);
@@ -129,8 +177,7 @@ class ThranWeaponryTest extends BaseCardTest {
 
     private void castAndResolveWeaponry() {
         harness.castFromHand(player1, new ThranWeaponry(), "{4}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Thran Weaponry");
     }
 
