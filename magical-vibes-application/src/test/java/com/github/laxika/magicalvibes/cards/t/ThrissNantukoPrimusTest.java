@@ -55,7 +55,6 @@ class ThrissNantukoPrimusTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
@@ -87,5 +86,85 @@ class ThrissNantukoPrimusTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Thriss can target itself even though paying the cost taps it")
+    void abilityCanTargetItself() {
+        Permanent thriss = addCreatureReady(player1, new ThrissNantukoPrimus());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, thriss.getId());
+        harness.passBothPriorities();
+
+        assertThat(thriss.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, thriss)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, thriss)).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("A tapped Thriss cannot activate its ability")
+    void tappedThrissCannotActivate() {
+        Permanent thriss = addCreatureReady(player1, new ThrissNantukoPrimus());
+        thriss.tap();
+        Permanent target = addCreatureReady(player2, new Brawn());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Thriss cannot pay the tap cost while summoning sick")
+    void summoningSickThrissCannotActivate() {
+        Permanent thriss = harness.addToBattlefieldAndReturn(player1, new ThrissNantukoPrimus());
+        thriss.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new Brawn());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(thriss.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability resolves after Thriss leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        Permanent thriss = addCreatureReady(player1, new ThrissNantukoPrimus());
+        Permanent target = addCreatureReady(player2, new Brawn());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(thriss);
+        gd.playerGraveyards.get(player1.getId()).add(thriss.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(8);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability does not boost another creature when its target leaves")
+    void abilityDoesNotResolveWithMissingTarget() {
+        Permanent thriss = addCreatureReady(player1, new ThrissNantukoPrimus());
+        Permanent target = addCreatureReady(player2, new Brawn());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(thriss.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, thriss)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, thriss)).isEqualTo(5);
+        assertThat(gd.stack).isEmpty();
     }
 }
