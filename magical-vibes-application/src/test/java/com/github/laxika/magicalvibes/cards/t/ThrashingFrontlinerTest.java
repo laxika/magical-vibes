@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.i.InvasionOfErgamon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThrashingFrontliner.class})
+@CardUsed({ThrashingFrontliner.class, InvasionOfErgamon.class})
 class ThrashingFrontlinerTest extends BaseCardTest {
 
     @Test
@@ -55,6 +56,38 @@ class ThrashingFrontlinerTest extends BaseCardTest {
 
         assertThat(frontliner.getPowerModifier()).isZero();
         assertThat(frontliner.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void boostResolvesEvenIfAttackedBattleLeavesBattlefield() {
+        Permanent frontliner = addCreatureReady(player1, new ThrashingFrontliner());
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfErgamon());
+        battle.setProtectorPlayerId(player2.getId());
+
+        declareAttackersAt(battle);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(frontliner.getPowerModifier()).isZero();
+        assertThat(frontliner.getToughnessModifier()).isZero();
+
+        gd.playerBattlefields.get(player1.getId()).remove(battle);
+        gd.playerGraveyards.get(player1.getId()).add(battle.getCard());
+        resolveAllTriggers();
+
+        assertThat(frontliner.getPowerModifier()).isEqualTo(1);
+        assertThat(frontliner.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    void getsBoostWhenAttackingOwnBattleProtectedByOpponent() {
+        Permanent frontliner = addCreatureReady(player1, new ThrashingFrontliner());
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfErgamon());
+        battle.setProtectorPlayerId(player2.getId());
+
+        declareAttackersAt(battle);
+        resolveAllTriggers();
+
+        assertThat(frontliner.getPowerModifier()).isEqualTo(1);
+        assertThat(frontliner.getToughnessModifier()).isEqualTo(1);
     }
 
     private Permanent addBattle(Player controller) {
