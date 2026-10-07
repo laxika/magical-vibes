@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ThornglintBridge.class, StoneRain.class})
 class ThornglintBridgeTest extends BaseCardTest {
@@ -30,7 +31,7 @@ class ThornglintBridgeTest extends BaseCardTest {
     @Test
     @DisplayName("Mana ability adds green or white mana")
     void manaAbilityAddsGreenOrWhiteMana() {
-        Permanent bridge = addReadyBridge();
+        Permanent bridge = harness.addToBattlefieldAndReturn(player1, new ThornglintBridge());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handleListChoice(player1, ManaColor.GREEN.name());
@@ -59,10 +60,39 @@ class ThornglintBridgeTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Thornglint Bridge");
     }
 
-    private Permanent addReadyBridge() {
-        Permanent bridge = new Permanent(new ThornglintBridge());
-        bridge.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bridge);
-        return bridge;
+    @Test
+    @DisplayName("Enters tapped when put onto the battlefield without being played")
+    void entersTappedWithoutBeingPlayed() {
+        Permanent bridge = harness.enterBattlefieldAndReturn(player1, new ThornglintBridge());
+
+        assertThat(bridge.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped bridge cannot pay its mana ability's tap cost")
+    void tappedBridgeCannotProduceMana() {
+        harness.setHand(player1, List.of(new ThornglintBridge()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A newly controlled noncreature bridge produces mana immediately after untapping")
+    void newlyControlledBridgeProducesManaWithoutUsingStack() {
+        Permanent bridge = harness.enterBattlefieldAndReturn(player1, new ThornglintBridge());
+        bridge.untap();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.WHITE.name());
+
+        assertThat(bridge.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }
