@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
-import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.cards.o.Obliterate;
 import com.github.laxika.magicalvibes.cards.s.ShortSword;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,18 +21,18 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TianaShipsCaretaker.class, GrizzlyBears.class, HolyStrength.class,
+        Naturalize.class, ShortSword.class, Shock.class, Obliterate.class})
 class TianaShipsCaretakerTest extends BaseCardTest {
 
     /**
      * Places an aura onto the battlefield attached to a target permanent.
      */
     private void placeAuraOnBattlefield(HolyStrength auraCard, UUID ownerPlayerId, UUID targetPermId) {
-        Permanent auraPerm = new Permanent(auraCard);
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(
+                ownerPlayerId.equals(player1.getId()) ? player1 : player2, auraCard);
         auraPerm.setAttachedTo(targetPermId);
-        gd.playerBattlefields.get(ownerPlayerId).add(auraPerm);
     }
-
-    // ===== Aura destroyed directly =====
 
     @Test
     @DisplayName("Destroying an Aura with Tiana on battlefield puts triggered ability on stack")
@@ -69,29 +70,21 @@ class TianaShipsCaretakerTest extends BaseCardTest {
         harness.castInstant(player2, 0, auraPermId);
         harness.passBothPriorities(); // Resolves Naturalize; triggered ability goes on stack
 
-        // Resolve Tiana's triggered ability — prompts may choice
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Holy Strength");
+        harness.assertNotInHand(player1, "Holy Strength");
+        beginNextEndStep();
+        harness.assertInGraveyard(player1, "Holy Strength");
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-
-        // Accept Tiana's trigger
         harness.handleMayAbilityChosen(player1, true);
-        // Resolve the RegisterDelayedReturnCardFromGraveyardToHandEffect on the stack
         harness.passBothPriorities();
-
-        // The delayed return should be registered
-        assertThat(gd.getDelayedActions(DelayedGraveyardToHandReturn.class)).hasSize(1);
-
-        // Advance to end step to trigger the delayed return
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.forceActivePlayer(player1);
-        gs.advanceStep(gd);
 
         // Aura should be back in hand
         harness.assertInHand(player1, "Holy Strength");
         // And no longer in graveyard
         harness.assertNotInGraveyard(player1, "Holy Strength");
-        // Pending list should be cleared
-        assertThat(gd.getDelayedActions(DelayedGraveyardToHandReturn.class)).isEmpty();
     }
 
     @Test
@@ -109,21 +102,17 @@ class TianaShipsCaretakerTest extends BaseCardTest {
         harness.castInstant(player2, 0, auraPermId);
         harness.passBothPriorities(); // Resolves Naturalize
 
-        // Resolve Tiana's triggered ability — prompts may choice
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        beginNextEndStep();
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-
-        // Decline Tiana's trigger
         harness.handleMayAbilityChosen(player1, false);
-
-        // No delayed return should be registered
-        assertThat(gd.getDelayedActions(DelayedGraveyardToHandReturn.class)).isEmpty();
+        harness.assertNotInHand(player1, "Holy Strength");
 
         // Aura stays in graveyard
         harness.assertInGraveyard(player1, "Holy Strength");
     }
-
-    // ===== Orphaned aura (creature dies) =====
 
     @Test
     @DisplayName("Aura goes to graveyard when enchanted creature dies — triggers Tiana")
@@ -133,13 +122,13 @@ class TianaShipsCaretakerTest extends BaseCardTest {
         UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
         placeAuraOnBattlefield(new HolyStrength(), player1.getId(), bearsPermId);
 
-        // Kill the creature with two Shocks (2/2 + Holy Strength = 3/3)
+        // Holy Strength makes the Bears 3/4; two Shocks are lethal.
         harness.setHand(player2, List.of(new Shock(), new Shock()));
         harness.addMana(player2, ManaColor.RED, 2);
         harness.castInstant(player2, 0, bearsPermId);
         harness.passBothPriorities(); // First Shock: 2 damage
 
-        // Cast second Shock (bears at 3 toughness with Holy Strength, 2 damage marked, 1 more needed)
+        // The second Shock brings marked damage to four.
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castInstant(player2, 0, bearsPermId);
         harness.passBothPriorities(); // Second Shock kills bears
@@ -154,8 +143,6 @@ class TianaShipsCaretakerTest extends BaseCardTest {
                         && e.getCard().getName().equals("Tiana, Ship's Caretaker"));
     }
 
-    // ===== Equipment destroyed =====
-
     @Test
     @DisplayName("Destroying an Equipment triggers Tiana's may ability and returns it at end step")
     void destroyEquipmentTriggersMayAndReturnsAtEndStep() {
@@ -169,25 +156,18 @@ class TianaShipsCaretakerTest extends BaseCardTest {
         harness.castInstant(player2, 0, swordPermId);
         harness.passBothPriorities(); // Resolves Naturalize
 
-        // Resolve Tiana's triggered ability — prompts may choice
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        beginNextEndStep();
+        harness.assertInGraveyard(player1, "Short Sword");
+        harness.assertNotInHand(player1, "Short Sword");
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-
-        // Accept and resolve
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(gd.getDelayedActions(DelayedGraveyardToHandReturn.class)).hasSize(1);
-
-        // Advance to end step
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.forceActivePlayer(player1);
-        gs.advanceStep(gd);
-
         harness.assertInHand(player1, "Short Sword");
     }
-
-    // ===== No Tiana = no trigger =====
 
     @Test
     @DisplayName("Without Tiana, destroying an Aura does not put triggered ability on stack")
@@ -206,10 +186,7 @@ class TianaShipsCaretakerTest extends BaseCardTest {
         // No triggered abilities should be on the stack
         assertThat(gd.stack).noneMatch(e ->
                 e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.getDelayedActions(DelayedGraveyardToHandReturn.class)).isEmpty();
     }
-
-    // ===== Card removed from graveyard before end step =====
 
     @Test
     @DisplayName("Card removed from graveyard before end step is not returned to hand")
@@ -224,24 +201,134 @@ class TianaShipsCaretakerTest extends BaseCardTest {
         harness.castInstant(player2, 0, swordPermId);
         harness.passBothPriorities(); // Resolves Naturalize
 
-        // Resolve Tiana's triggered ability — prompts may choice
         harness.passBothPriorities();
-
-        // Accept the may ability
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.getPermanentRemovalService().removeCardFromGraveyardById(gd,
+                gd.playerGraveyards.get(player1.getId()).getFirst().getId());
+        beginNextEndStep();
         harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+        }
+        harness.assertNotInHand(player1, "Short Sword");
+    }
 
-        assertThat(gd.getDelayedActions(DelayedGraveyardToHandReturn.class)).hasSize(1);
-
-        // Manually remove the card from graveyard (simulating exile or other effect)
-        gd.playerGraveyards.get(player1.getId()).clear();
-
-        // Advance to end step
+    private void beginNextEndStep() {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.forceActivePlayer(player1);
         gs.advanceStep(gd);
+    }
 
-        // Card should NOT be in hand (it was removed from graveyard)
+    @Test
+    @DisplayName("Tiana sees Equipment dying simultaneously with her")
+    void simultaneousDeathTriggersTiana() {
+        harness.addToBattlefield(player1, new TianaShipsCaretaker());
+        harness.addToBattlefield(player1, new ShortSword());
+        harness.setHand(player1, List.of(new Obliterate()));
+        harness.addMana(player1, ManaColor.RED, 8);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Tiana, Ship's Caretaker");
+        harness.assertInGraveyard(player1, "Short Sword");
+        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && e.getCard().getName().equals("Tiana, Ship's Caretaker"));
+    }
+
+    @Test
+    @DisplayName("Opponent's Equipment does not trigger Tiana")
+    void opponentsEquipmentDoesNotTrigger() {
+        harness.addToBattlefield(player1, new TianaShipsCaretaker());
+        harness.addToBattlefield(player2, new ShortSword());
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Short Sword"));
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Short Sword");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Optional return is chosen when the delayed end-step trigger resolves")
+    void returnChoiceIsNotMadeBeforeEndStep() {
+        harness.addToBattlefield(player1, new TianaShipsCaretaker());
+        harness.addToBattlefield(player1, new ShortSword());
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Short Sword"));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        beginNextEndStep();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Short Sword");
+        harness.assertNotInHand(player1, "Short Sword");
+    }
+
+    @Test
+    @DisplayName("A new graveyard stay before the initial trigger resolves is not returned")
+    void graveyardReentryBeforeInitialTriggerResolvesIsNotReturned() {
+        harness.addToBattlefield(player1, new TianaShipsCaretaker());
+        ShortSword sword = new ShortSword();
+        harness.addToBattlefield(player1, sword);
+        UUID tianaId = harness.getPermanentId(player1, "Tiana, Ship's Caretaker");
+        harness.setHand(player2, List.of(new Naturalize(), new Shock(), new Shock(), new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 4);
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Short Sword"));
+        harness.passBothPriorities();
+
+        // Remove Tiana in response so the second Equipment death has no new trigger.
+        harness.castInstant(player2, 0, tianaId);
+        harness.passBothPriorities();
+        harness.castInstant(player2, 0, tianaId);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Tiana, Ship's Caretaker");
+
+        // Set up the same card returning to the battlefield while the first trigger waits.
+        harness.getPermanentRemovalService().removeCardFromGraveyardById(gd, sword.getId());
+        harness.addToBattlefield(player1, sword);
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Short Sword"));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        // Accept an early choice if offered, isolating identity tracking from choice timing.
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+        }
+        beginNextEndStep();
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+        }
+        harness.assertInGraveyard(player1, "Short Sword");
+        harness.assertNotInHand(player1, "Short Sword");
+    }
+
+    @Test
+    @DisplayName("Controlled Equipment returns to its owner rather than Tiana's controller")
+    void equipmentReturnsToOwner() {
+        harness.addToBattlefield(player1, new TianaShipsCaretaker());
+        ShortSword sword = new ShortSword();
+        sword.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, sword);
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Short Sword"));
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Short Sword");
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        beginNextEndStep();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.assertInHand(player2, "Short Sword");
         harness.assertNotInHand(player1, "Short Sword");
     }
 }
