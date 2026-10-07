@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -17,7 +19,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SparkElemental.class, GrizzlyBears.class})
+@CardUsed({SparkElemental.class, GrizzlyBears.class, Unsummon.class})
 class SparkElementalTest extends BaseCardTest {
 
     
@@ -59,12 +61,11 @@ class SparkElementalTest extends BaseCardTest {
     void trampleAssignsExcessDamageToDefendingPlayer() {
         harness.setLife(player2, 20);
 
-        Permanent spark = addCreatureReady(player1, new SparkElemental());
-        spark.setAttacking(true);
+        addCreatureReady(player1, new SparkElemental());
 
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
@@ -122,6 +123,83 @@ class SparkElementalTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Spark Elemental");
         harness.assertInGraveyard(player1, "Spark Elemental");
+    }
+
+    @Test
+    @DisplayName("Each copy sacrifices only itself, leaving unrelated creatures alone")
+    void eachCopySacrificesOnlyItself() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SparkElemental());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new SparkElemental());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack).extracting(StackEntry::getSourcePermanentId)
+                .containsExactlyInAnyOrder(first.getId(), second.getId());
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Spark Elemental");
+        harness.assertNotOnBattlefield(player2, "Spark Elemental");
+        harness.assertInGraveyard(player1, "Spark Elemental");
+        harness.assertInGraveyard(player2, "Spark Elemental");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Entering after the end step begins waits until the next end step")
+    void enteringDuringEndStepWaitsUntilNextEndStep() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.enterBattlefieldAndReturn(player1, new SparkElemental());
+
+        assertThat(gd.stack).isEmpty();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
+        harness.assertOnBattlefield(player1, "Spark Elemental");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.assertNotOnBattlefield(player1, "Spark Elemental");
+        harness.assertInGraveyard(player1, "Spark Elemental");
+    }
+
+    @Test
+    @DisplayName("A sacrifice trigger does not affect a new copy after its source is bounced")
+    void bouncedSourceDoesNotSacrificeNewCopy() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new SparkElemental());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.castAndResolveInstant(player1, 0, original.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).contains(original.getCard());
+        Permanent replacement = harness.enterBattlefieldAndReturn(player1, new SparkElemental());
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(replacement);
+        assertThat(gd.playerHands.get(player1.getId())).contains(original.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card instanceof SparkElemental);
     }
 }
 
