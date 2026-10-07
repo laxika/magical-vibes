@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -25,6 +25,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TerramorphicExpanse.class, Plains.class, Forest.class, Island.class, GrizzlyBears.class})
 class TerramorphicExpanseTest extends BaseCardTest {
 
     
@@ -101,9 +102,7 @@ class TerramorphicExpanseTest extends BaseCardTest {
     @DisplayName("Resolving with no basic lands in library does not prompt")
     void noBasicLandsNoPrompt() {
         activateExpanse();
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
         harness.passBothPriorities();
 
@@ -116,7 +115,7 @@ class TerramorphicExpanseTest extends BaseCardTest {
     @DisplayName("Resolving with empty library does not prompt")
     void emptyLibraryNoPrompt() {
         activateExpanse();
-        harness.getGameData().playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         harness.passBothPriorities();
 
@@ -139,14 +138,53 @@ class TerramorphicExpanseTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Terramorphic Expanse");
     }
 
+    @Test
+    @DisplayName("Search excludes nonbasic lands and leaves the opponent's library alone")
+    void searchesOnlyControllersBasicLands() {
+        Plains plains = new Plains();
+        TerramorphicExpanse nonbasicLand = new TerramorphicExpanse();
+        Forest opponentsLand = new Forest();
+        harness.setLibrary(player1, List.of(nonbasicLand, plains));
+        harness.setLibrary(player2, List.of(opponentsLand));
+        activateExpanse();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(plains);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(findPermanent(player1, "Plains").isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonbasicLand);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsLand);
+        harness.assertNotOnBattlefield(player2, "Plains");
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Failing to find preserves the library and still shuffles")
+    void failingToFindStillShuffles() {
+        Plains plains = new Plains();
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(plains, forest));
+        activateExpanse();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(plains, forest);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void activateExpanse() {
         harness.addToBattlefield(player1, new TerramorphicExpanse());
         harness.activateAbility(player1, 0, null, null);
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears()));
     }
 }
