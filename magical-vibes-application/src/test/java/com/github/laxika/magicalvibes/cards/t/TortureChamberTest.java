@@ -155,6 +155,63 @@ class TortureChamberTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Removing counters in response to the end-step trigger prevents its damage")
+    void removingCountersInResponseToEndStepPreventsDamage() {
+        Permanent chamber = addCreatureReady(player1, new TortureChamber());
+        chamber.setCounterCount(CounterType.PAIN, 2);
+        harness.addToBattlefield(player2, new HornedTurtle());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, indexOf(player1, chamber), null,
+                harness.getPermanentId(player2, "Horned Turtle"));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        assertThat(findPermanent(player2, "Horned Turtle").getMarkedDamage()).isEqualTo(2);
+        assertThat(chamber.getCounterCount(CounterType.PAIN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Activated damage uses the counters paid rather than counters present on resolution")
+    void activatedDamageUsesCountersRemovedAsCost() {
+        Permanent chamber = addCreatureReady(player1, new TortureChamber());
+        chamber.setCounterCount(CounterType.PAIN, 2);
+        chamber.setCounterCount(CounterType.CHARGE, 3);
+        harness.addToBattlefield(player2, new HornedTurtle());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, indexOf(player1, chamber), null,
+                harness.getPermanentId(player2, "Horned Turtle"));
+        assertThat(chamber.isTapped()).isTrue();
+        assertThat(chamber.getCounterCount(CounterType.PAIN)).isZero();
+        assertThat(chamber.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        chamber.setCounterCount(CounterType.PAIN, 1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, "Horned Turtle").getMarkedDamage()).isEqualTo(2);
+        assertThat(chamber.getCounterCount(CounterType.PAIN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Activation without mana cannot remove counters or tap the artifact")
+    void activatedAbilityRequiresMana() {
+        Permanent chamber = addCreatureReady(player1, new TortureChamber());
+        chamber.setCounterCount(CounterType.PAIN, 2);
+        harness.addToBattlefield(player2, new HornedTurtle());
+        UUID turtleId = harness.getPermanentId(player2, "Horned Turtle");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, chamber), null, turtleId))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(chamber.isTapped()).isFalse();
+        assertThat(chamber.getCounterCount(CounterType.PAIN)).isEqualTo(2);
+    }
+
     private int indexOf(Player player, Permanent permanent) {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
     }
