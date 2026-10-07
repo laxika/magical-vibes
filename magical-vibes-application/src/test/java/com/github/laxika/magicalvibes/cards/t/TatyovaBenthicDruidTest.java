@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,9 +13,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TatyovaBenthicDruid.class, Forest.class, Island.class})
 class TatyovaBenthicDruidTest extends BaseCardTest {
-
-    // ===== Triggers when controller plays a land =====
 
     @Test
     @DisplayName("Gains 1 life and draws a card when controller plays a land")
@@ -38,8 +38,6 @@ class TatyovaBenthicDruidTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
-    // ===== Does not trigger for opponent's lands =====
-
     @Test
     @DisplayName("Does not trigger when opponent plays a land")
     void doesNotTriggerForOpponentLands() {
@@ -57,8 +55,6 @@ class TatyovaBenthicDruidTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertLife(player1, 20);
     }
-
-    // ===== Two Tatyovas trigger separately =====
 
     @Test
     @DisplayName("Two Tatyovas each trigger separately when controller plays a land")
@@ -82,8 +78,7 @@ class TatyovaBenthicDruidTest extends BaseCardTest {
         // graveyard. Both landfall triggers still resolve — they triggered before one Tatyova left.
         UUID keptTatyova = findPermanent(player1, "Tatyova, Benthic Druid").getId();
         harness.handlePermanentChosen(player1, keptTatyova);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player1, 22);
         // Hand: setHand(1) -> play land(0) -> draw 1 + draw 1 = 2
@@ -92,8 +87,6 @@ class TatyovaBenthicDruidTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Tatyova, Benthic Druid"))
                 .isEqualTo(1);
     }
-
-    // ===== Triggers on each land separately =====
 
     @Test
     @DisplayName("Triggers each time controller plays a land on separate turns")
@@ -127,5 +120,45 @@ class TatyovaBenthicDruidTest extends BaseCardTest {
         harness.assertLife(player1, 22);
         // Hand: setHand(1) -> play land(0) -> draw 1 = 1
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Land entering without being played triggers during an opponent's turn")
+    void triggersForLandEnteringOnOpponentsTurn() {
+        harness.addToBattlefield(player1, new TatyovaBenthicDruid());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        Island drawnCard = new Island();
+        harness.setLibrary(player1, List.of(drawnCard, new Forest()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 21);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Tatyova entering does not trigger its own landfall ability")
+    void doesNotTriggerForItsOwnCreatureEntry() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of());
+
+        harness.enterBattlefieldAndReturn(player1, new TatyovaBenthicDruid());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }
