@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AssassinInitiate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BasimIbnIshaq;
+import com.github.laxika.magicalvibes.cards.m.MentorOfTheMeek;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheRevelationsOfEzio.class, AssassinInitiate.class, GrizzlyBears.class})
+@CardUsed({TheRevelationsOfEzio.class, AssassinInitiate.class, GrizzlyBears.class,
+        BasimIbnIshaq.class, MentorOfTheMeek.class})
 class TheRevelationsOfEzioTest extends BaseCardTest {
 
     @Test
@@ -84,6 +87,100 @@ class TheRevelationsOfEzioTest extends BaseCardTest {
         assertThat(saga).isNotIn(gd.playerBattlefields.get(player1.getId()));
     }
 
+    @Test
+    @DisplayName("Chapter I does not destroy its target if it becomes untapped")
+    void chapterITargetBecomesUntapped() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.tap();
+
+        castSaga();
+        harness.handlePermanentChosen(player1, target.getId());
+        target.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Chapter II counters each attacking Assassin but not an attacking non-Assassin")
+    void chapterIIHandlesMultipleMixedAttackers() {
+        addSagaWithLore(1);
+        Permanent first = addCreatureReady(player1, new AssassinInitiate());
+        Permanent second = addCreatureReady(player1, new AssassinInitiate());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+
+        triggerNextChapter();
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(first),
+                gd.playerBattlefields.get(player1.getId()).indexOf(second),
+                gd.playerBattlefields.get(player1.getId()).indexOf(other)));
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Chapter II does not counter an opponent's attacking Assassin")
+    void chapterIIExcludesOpponentAssassin() {
+        addSagaWithLore(1);
+        Permanent opponentAssassin = addCreatureReady(player2, new AssassinInitiate());
+
+        triggerNextChapter();
+        harness.passBothPriorities();
+
+        declareAttackers(player2, List.of(
+                gd.playerBattlefields.get(player2.getId()).indexOf(opponentAssassin)));
+        resolveAllTriggers();
+
+        assertThat(opponentAssassin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Chapter III cannot target an Assassin in an opponent's graveyard")
+    void chapterIIIExcludesOpponentGraveyard() {
+        addSagaWithLore(2);
+        AssassinInitiate ownCard = new AssassinInitiate();
+        AssassinInitiate opponentCard = new AssassinInitiate();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentCard));
+
+        triggerNextChapter();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).contains(ownCard.getId())
+                .doesNotContain(opponentCard.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Assassin Initiate")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentCard);
+    }
+    @Test
+    @DisplayName("Chapter III's entry counter applies before Mentor of the Meek checks power")
+    void chapterIIICounterAppliesBeforeEntryTriggers() {
+        addSagaWithLore(2);
+        harness.addToBattlefield(player1, new MentorOfTheMeek());
+        BasimIbnIshaq assassinCard = new BasimIbnIshaq();
+        harness.setGraveyard(player1, List.of(assassinCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        triggerNextChapter();
+        harness.handleMultipleCardsChosen(player1, List.of(assassinCard.getId()));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Basim Ibn Ishaq")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
     private void castSaga() {
         harness.setHand(player1, List.of(new TheRevelationsOfEzio()));
         harness.addMana(player1, ManaColor.BLACK, 1);
