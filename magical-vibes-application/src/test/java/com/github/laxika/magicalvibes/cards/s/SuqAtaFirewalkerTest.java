@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.g.GrangerGuildmage;
+import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
+import com.github.laxika.magicalvibes.cards.p.PrismaticLace;
 import com.github.laxika.magicalvibes.cards.r.RecklessEmbermage;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SuqAtaFirewalker.class, Incinerate.class, Boomerang.class,
-        RecklessEmbermage.class, GrangerGuildmage.class})
+        RecklessEmbermage.class, GrangerGuildmage.class, Humble.class, PrismaticLace.class})
 class SuqAtaFirewalkerTest extends BaseCardTest {
 
     @Test
@@ -115,5 +117,62 @@ class SuqAtaFirewalkerTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(firewalker.isTapped()).isTrue();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    void tapAbilityCanTargetItself() {
+        Permanent firewalker = addCreatureReady(player1, new SuqAtaFirewalker());
+
+        harness.activateAbility(player1, 0, null, firewalker.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Suq'Ata Firewalker");
+    }
+
+    @Test
+    void redSpellsCanTargetAfterAbilitiesAreRemoved() {
+        Permanent firewalker = harness.addToBattlefieldAndReturn(player2, new SuqAtaFirewalker());
+        harness.setHand(player1, List.of(new Humble(), new Incinerate()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, firewalker.getId());
+        harness.castAndResolveInstant(player1, 0, firewalker.getId());
+
+        harness.assertInGraveyard(player2, "Suq'Ata Firewalker");
+    }
+
+    @Test
+    void nonredSourceBecomingRedCannotTargetFirewalker() {
+        Permanent firewalker = harness.addToBattlefieldAndReturn(player2, new SuqAtaFirewalker());
+        Permanent guildmage = addCreatureReady(player1, new GrangerGuildmage());
+        harness.setHand(player1, List.of(new PrismaticLace()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, guildmage.getId());
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "DONE");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, firewalker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("red");
+    }
+
+    @Test
+    void redSourceBecomingNonredCanTargetFirewalker() {
+        Permanent firewalker = harness.addToBattlefieldAndReturn(player2, new SuqAtaFirewalker());
+        Permanent embermage = addCreatureReady(player1, new RecklessEmbermage());
+        harness.setHand(player1, List.of(new PrismaticLace()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, embermage.getId());
+        harness.handleListChoice(player1, "BLUE");
+        harness.handleListChoice(player1, "DONE");
+
+        harness.activateAbility(player1, 0, null, firewalker.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Suq'Ata Firewalker");
+        harness.assertOnBattlefield(player1, "Reckless Embermage");
     }
 }
