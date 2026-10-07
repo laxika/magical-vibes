@@ -4,8 +4,6 @@ import com.github.laxika.magicalvibes.cards.b.BeaconOfUnrest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -60,8 +58,7 @@ class SoulhunterRakshasaTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Swamp());
         harness.addToBattlefield(player1, new Swamp());
 
-        harness.castSorcery(player1, 0, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, target.getName());
@@ -72,23 +69,51 @@ class SoulhunterRakshasaTest extends BaseCardTest {
     @Test
     @DisplayName("It cannot be declared as a blocker")
     void cannotBeDeclaredAsBlocker() {
-        Permanent rakshasa = new Permanent(new SoulhunterRakshasa());
-        rakshasa.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(rakshasa);
+        addCreatureReady(player2, new SoulhunterRakshasa());
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid blocker index");
+    }
+
+    @Test
+    @DisplayName("With no Swamps, the hand-cast ability still targets but deals no damage")
+    void noSwampsDealsNoDamage() {
+        harness.setHand(player1, List.of(new SoulhunterRakshasa()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Damage counts your Swamps at resolution and excludes the opponent's Swamps")
+    void swampCountIsEvaluatedAtResolution() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player2, new Swamp());
+        harness.addToBattlefield(player2, new Swamp());
+        harness.setHand(player1, List.of(new SoulhunterRakshasa()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
     }
 }
