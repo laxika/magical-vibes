@@ -79,6 +79,50 @@ class TribalForcemageTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, laterElf, Keyword.TRAMPLE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Casting Tribal Forcemage face up does not trigger its boost")
+    void castingFaceUpDoesNotBoostCreatures() {
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new TimberwatchElf());
+        harness.castFromHand(player1, new TribalForcemage(), "{1}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Tribal Forcemage");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Choosing Wizard boosts Tribal Forcemage but not other Elves")
+    void choosingWizardOnlyBoostsWizards() {
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new TimberwatchElf());
+        Permanent forcemage = castFaceDown();
+        turnFaceUp(forcemage);
+        harness.handleListChoice(player1, CardSubtype.WIZARD.name());
+
+        assertThat(gqs.getEffectivePower(gd, forcemage)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, forcemage)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, forcemage, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature type absent from the battlefield can be chosen")
+    void choosingAbsentTypeResolvesWithoutBoosting() {
+        Permanent forcemage = castFaceDown();
+        turnFaceUp(forcemage);
+        harness.handleListChoice(player1, CardSubtype.DRAGON.name());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, forcemage)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, forcemage)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, forcemage, Keyword.TRAMPLE)).isFalse();
+    }
     private Permanent castFaceDown() {
         harness.setHand(player1, List.of(new TribalForcemage()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
