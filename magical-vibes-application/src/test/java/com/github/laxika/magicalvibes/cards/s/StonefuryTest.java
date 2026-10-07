@@ -75,10 +75,58 @@ class StonefuryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Stonefury deals no damage when its controller has no lands")
+    void dealsNoDamageWithoutLands() {
+        harness.addToBattlefield(player2, new Mountain());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castStonefury(target.getId());
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Stonefury");
+    }
+
+    @Test
+    @DisplayName("Stonefury does not count nonland permanents")
+    void doesNotCountNonlandPermanents() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castStonefury(target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Stonefury can target its controller's creature")
+    void canTargetOwnCreature() {
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castStonefury(target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Stonefury cannot target a noncreature land")
+    void cannotTargetNoncreatureLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.setHand(player1, List.of(new Stonefury()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void castStonefury(UUID targetId) {
         harness.setHand(player1, List.of(new Stonefury()));
         harness.addMana(player1, ManaColor.RED, 5);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 }
