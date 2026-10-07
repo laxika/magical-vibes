@@ -33,8 +33,7 @@ class StaticSnareTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, relic.getId());
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Darksteel Relic");
     }
@@ -52,8 +51,7 @@ class StaticSnareTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Naturalize()));
         harness.addMana(player2, ManaColor.GREEN, 2);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, snare.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, snare.getId());
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
@@ -85,11 +83,65 @@ class StaticSnareTest extends BaseCardTest {
                 .hasMessageContaining("artifact or creature an opponent controls");
     }
 
+    @Test
+    void canBeCastDuringOpponentsCombatWithAttackerDiscount() {
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        prepareCast(3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passPriority(player2);
+
+        harness.castEnchantment(player1, 0, attacker.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Static Snare");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.findExiledCard(attacker.getCard().getId())).isNotNull();
+    }
+
+    @Test
+    void ownAttackersCanReduceCostToOneWhiteMana() {
+        for (int i = 0; i < 5; i++) {
+            Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+            attacker.setAttacking(true);
+        }
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DarksteelRelic());
+        prepareCast(0);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        resolveAllTriggers();
+
+        assertThat(gd.findExiledCard(target.getCard().getId())).isNotNull();
+    }
+
+    @Test
+    void sourceLeavingBeforeEnterTriggerResolvesDoesNotExileTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareCast(4);
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        Permanent snare = findPermanent(player1, "Static Snare");
+        harness.ensurePriority(player2);
+        harness.castAndResolveInstant(player2, 0, snare.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Static Snare");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.findExiledCard(target.getCard().getId())).isNull();
+    }
+
     private void castAndResolve(Permanent target) {
         prepareCast(4);
         harness.castEnchantment(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void prepareCast(int genericMana) {
