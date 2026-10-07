@@ -2,16 +2,15 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PrimordialWurm;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentOnDrawEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,24 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({TeferiHeroOfDominaria.class, PrimordialWurm.class, LlanowarElves.class, Plains.class, Island.class})
 class TeferiHeroOfDominariaTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has three loyalty abilities")
-    void hasThreeLoyaltyAbilities() {
-        TeferiHeroOfDominaria card = new TeferiHeroOfDominaria();
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-    }
-
-    
-
-    
-
-    
-
-    // ===== +1 ability: Draw a card + delayed untap =====
 
     @Test
     @DisplayName("+1 draws a card and registers delayed untap trigger")
@@ -66,13 +49,11 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
     @Test
     @DisplayName("+1 delayed trigger untaps tapped lands at end step")
     void plusOneDelayedTriggerUntapsLandsAtEndStep() {
-        Permanent teferi = addReadyTeferi(player1);
+        addReadyTeferi(player1);
 
         // Add two tapped lands
-        harness.addToBattlefield(player1, new Plains());
-        harness.addToBattlefield(player1, new Island());
-        Permanent plains = findPermanent(player1, "Plains");
-        Permanent island = findPermanent(player1, "Island");
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
         plains.tap();
         island.tap();
 
@@ -111,7 +92,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
     @Test
     @DisplayName("+1 delayed trigger untaps at most 2 lands when more than 2 are tapped")
     void plusOneDelayedTriggerUntapsAtMostTwoLands() {
-        Permanent teferi = addReadyTeferi(player1);
+        addReadyTeferi(player1);
 
         // Add three tapped lands
         harness.addToBattlefield(player1, new Plains());
@@ -150,29 +131,24 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         assertThat(tappedCount).isEqualTo(1);
     }
 
-    // ===== -3 ability: Tuck nonland permanent =====
-
     @Test
     @DisplayName("-3 puts target nonland permanent third from top of owner's library")
     void minusThreePutsNonlandThirdFromTop() {
         Permanent teferi = addReadyTeferi(player1);
 
         // Add a creature on opponent's battlefield
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new PrimordialWurm());
+        UUID wurmId = harness.getPermanentId(player2, "Primordial Wurm");
 
-        // Ensure opponent has at least 3 cards in library so position matters
-        int librarySize = gd.playerDecks.get(player2.getId()).size();
-
-        harness.activateAbility(player1, 0, 1, null, bearsId);
+        harness.activateAbility(player1, 0, 1, null, wurmId);
         harness.passBothPriorities();
 
-        // Bears should be gone from battlefield
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        // Bears should be third from top of opponent's library (index 2)
+        // Wurm should be gone from battlefield
+        harness.assertNotOnBattlefield(player2, "Primordial Wurm");
+        // Wurm should be third from top of opponent's library (index 2)
         List<Card> library = gd.playerDecks.get(player2.getId());
         assertThat(library).hasSizeGreaterThanOrEqualTo(3);
-        assertThat(library.get(2).getName()).isEqualTo("Grizzly Bears");
+        assertThat(library.get(2).getName()).isEqualTo("Primordial Wurm");
         // Loyalty should decrease
         assertThat(teferi.getCounterCount(CounterType.LOYALTY)).isEqualTo(1); // 4 - 3
     }
@@ -180,16 +156,16 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
     @Test
     @DisplayName("-3 can target own nonland permanent")
     void minusThreeCanTargetOwnPermanent() {
-        Permanent teferi = addReadyTeferi(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        addReadyTeferi(player1);
+        harness.addToBattlefield(player1, new PrimordialWurm());
+        UUID wurmId = harness.getPermanentId(player1, "Primordial Wurm");
 
-        harness.activateAbility(player1, 0, 1, null, bearsId);
+        harness.activateAbility(player1, 0, 1, null, wurmId);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Primordial Wurm");
         // Third from top of player1's library
-        assertThat(gd.playerDecks.get(player1.getId()).get(2).getName()).isEqualTo("Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId()).get(2).getName()).isEqualTo("Primordial Wurm");
     }
 
     @Test
@@ -206,11 +182,10 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
     @Test
     @DisplayName("-3 handles small library by placing at bottom when library has fewer than 2 cards")
     void minusThreeHandlesSmallLibrary() {
-        Permanent teferi = addReadyTeferi(player1);
+        addReadyTeferi(player1);
 
         // Clear opponent's library to just 1 card
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player2, List.of(new PrimordialWurm()));
 
         harness.addToBattlefield(player2, new LlanowarElves());
         UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
@@ -223,25 +198,6 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         assertThat(library).hasSize(2); // original card + tucked card
         // The tucked card should be at the end (position clamped)
         assertThat(library.get(1).getName()).isEqualTo("Llanowar Elves");
-    }
-
-    // ===== -8 ability: Emblem =====
-
-    @Test
-    @DisplayName("-8 creates emblem with ExileTargetOpponentPermanentOnDrawEffect")
-    void minusEightCreatesEmblem() {
-        Permanent teferi = addReadyTeferi(player1);
-        teferi.setCounterCount(CounterType.LOYALTY, 8);
-
-        harness.activateAbility(player1, 0, 2, null, null);
-        harness.passBothPriorities();
-
-        assertThat(gd.emblems).hasSize(1);
-        Emblem emblem = gd.emblems.getFirst();
-        assertThat(emblem.controllerId()).isEqualTo(player1.getId());
-        assertThat(emblem.staticEffects()).hasSize(1);
-        assertThat(emblem.staticEffects().getFirst()).isInstanceOf(ExileTargetOpponentPermanentOnDrawEffect.class);
-        assertThat(emblem.sourceCard()).isNotNull();
     }
 
     @Test
@@ -262,16 +218,11 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
     @Test
     @DisplayName("Emblem triggers on controller draw, allowing exile of opponent's permanent")
     void emblemTriggersOnControllerDraw() {
-        addReadyTeferi(player1);
-        // Manually create the emblem
-        Emblem emblem = new Emblem(player1.getId(), List.of(
-                new ExileTargetOpponentPermanentOnDrawEffect()
-        ), new TeferiHeroOfDominaria());
-        gd.emblems.add(emblem);
+        createEmblem();
 
         // Add target on opponent's battlefield
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new PrimordialWurm());
+        UUID wurmId = harness.getPermanentId(player2, "Primordial Wurm");
 
         // Draw a card (triggers the emblem)
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
@@ -279,8 +230,8 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         // Should be awaiting permanent choice for the emblem trigger target
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null).isTrue();
 
-        // Choose the opponent's bears
-        harness.handlePermanentChosen(player1, bearsId);
+        // Choose the opponent's wurm
+        harness.handlePermanentChosen(player1, wurmId);
 
         // Emblem trigger should be on stack
         assertThat(gd.stack).isNotEmpty();
@@ -288,23 +239,19 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         // Resolve the trigger
         harness.passBothPriorities();
 
-        // Opponent's bears should be exiled
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        // Opponent's wurm should be exiled
+        harness.assertNotOnBattlefield(player2, "Primordial Wurm");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+                .anyMatch(c -> c.getName().equals("Primordial Wurm"));
     }
 
     @Test
     @DisplayName("Emblem cannot target controller's own permanents")
     void emblemCannotTargetOwnPermanents() {
-        addReadyTeferi(player1);
-        Emblem emblem = new Emblem(player1.getId(), List.of(
-                new ExileTargetOpponentPermanentOnDrawEffect()
-        ), new TeferiHeroOfDominaria());
-        gd.emblems.add(emblem);
+        createEmblem();
 
         // Only add a permanent on controller's battlefield (no opponent permanents)
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new PrimordialWurm());
 
         // Draw a card
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
@@ -313,8 +260,6 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null).isFalse();
         assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Loyalty ability restrictions =====
 
     @Test
     @DisplayName("Cannot activate -8 with only 4 loyalty")
@@ -339,14 +284,105 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
                 .hasMessageContaining("one loyalty ability");
     }
 
-    // ===== Helpers =====
+    @Test
+    void delayedUntapCanChooseAnOpponentsLand() {
+        addReadyTeferi(player1);
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent opposingLand = harness.addToBattlefieldAndReturn(player2, new Island());
+        ownLand.tap();
+        opposingLand.tap();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(ownLand.getId(), opposingLand.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownLand.getId(), opposingLand.getId()));
+        assertThat(ownLand.isTapped()).isFalse();
+        assertThat(opposingLand.isTapped()).isFalse();
+    }
+
+    @Test
+    void delayedUntapCanChooseNoLandsAndOnlyTriggersOnce() {
+        addReadyTeferi(player1);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
+        land.tap();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+        assertThat(land.isTapped()).isTrue();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+    }
+
+    @Test
+    void minusThreeCanPutTeferiIntoItsOwnLibrary() {
+        Permanent teferi = addReadyTeferi(player1);
+        harness.activateAbility(player1, 0, 1, null, teferi.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Teferi, Hero of Dominaria");
+        assertThat(gd.playerDecks.get(player1.getId()).get(2)).isSameAs(teferi.getCard());
+    }
+
+    @Test
+    void emblemDoesNotTriggerForOpponentDraw() {
+        createEmblem();
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player2, new Island());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
+    @Test
+    void emblemCanExileAnOpponentsLand() {
+        createEmblem();
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Island");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(land.getCard());
+    }
+
+    @Test
+    void emblemTargetBecomesIllegalIfControllerGainsControlOfIt() {
+        createEmblem();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new PrimordialWurm());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.handlePermanentChosen(player1, creature.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        gd.playerBattlefields.get(player1.getId()).add(creature);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Primordial Wurm");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(creature.getCard());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(creature.getCard());
+    }
+
+    private void createEmblem() {
+        Permanent teferi = addReadyTeferi(player1);
+        teferi.setCounterCount(CounterType.LOYALTY, 8);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+    }
 
     private Permanent addReadyTeferi(com.github.laxika.magicalvibes.model.Player player) {
-        TeferiHeroOfDominaria card = new TeferiHeroOfDominaria();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new TeferiHeroOfDominaria());
         perm.setCounterCount(CounterType.LOYALTY, 4);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
