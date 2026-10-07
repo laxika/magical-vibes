@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TakeDown.class, AirElemental.class, GrizzlyBears.class, ShivanDragon.class, SuntailHawk.class})
 class TakeDownTest extends BaseCardTest {
 
     @Test
@@ -25,8 +27,7 @@ class TakeDownTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TakeDown()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0, shivanDragon.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, shivanDragon.getId());
 
         assertThat(shivanDragon.getMarkedDamage()).isEqualTo(4);
         harness.assertOnBattlefield(player2, "Shivan Dragon");
@@ -54,8 +55,7 @@ class TakeDownTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TakeDown()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 1);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1);
 
         assertThat(airElemental.getMarkedDamage()).isEqualTo(1);
         harness.assertNotOnBattlefield(player2, "Suntail Hawk");
@@ -69,11 +69,48 @@ class TakeDownTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TakeDown()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 1);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Take Down");
+    }
+
+    @Test
+    @DisplayName("Targeted mode can kill your own flyer without damaging other flyers")
+    void targetedModeCanKillOwnFlyer() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        Permanent otherFlyer = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new TakeDown()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Air Elemental");
+        harness.assertInGraveyard(player1, "Air Elemental");
+        assertThat(otherFlyer.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Mass mode kills flyers on both sides and leaves ground creatures and players unharmed")
+    void massModeKillsBothPlayersFlyersWithoutDamagingGroundCreaturesOrPlayers() {
+        harness.addToBattlefield(player1, new SuntailHawk());
+        harness.addToBattlefield(player2, new SuntailHawk());
+        Permanent ownGroundCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingGroundCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TakeDown()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+
+        harness.assertInGraveyard(player1, "Suntail Hawk");
+        harness.assertInGraveyard(player2, "Suntail Hawk");
+        harness.assertNotOnBattlefield(player1, "Suntail Hawk");
+        harness.assertNotOnBattlefield(player2, "Suntail Hawk");
+        assertThat(ownGroundCreature.getMarkedDamage()).isZero();
+        assertThat(opposingGroundCreature.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }
