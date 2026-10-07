@@ -61,6 +61,39 @@ class TribalUnityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("X can be zero without boosting matching creatures")
+    void zeroXLeavesMatchingCreaturesUnchanged() {
+        Permanent elf = addCreatureReady(player1, new ElvishWarrior());
+        harness.setHand(player1, List.of(new TribalUnity()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstantForX(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "ELF");
+
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(3);
+        harness.assertInGraveyard(player1, "Tribal Unity");
+    }
+
+    @Test
+    @DisplayName("Matching creatures entering before resolution receive the boost")
+    void boostsMatchingCreatureEnteringBeforeResolution() {
+        harness.setHand(player1, List.of(new TribalUnity()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castInstantForX(player1, 0, 2, List.of());
+        Permanent elf = harness.enterBattlefieldAndReturn(player2, new ElvishWarrior());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WARRIOR");
+
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(5);
+    }
+
+    @Test
     @DisplayName("The boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
         Permanent elf = addCreatureReady(player1, new ElvishWarrior());
@@ -77,8 +110,7 @@ class TribalUnityTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(3);
