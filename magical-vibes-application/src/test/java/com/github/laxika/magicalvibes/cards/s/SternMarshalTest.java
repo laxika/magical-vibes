@@ -109,6 +109,70 @@ class SternMarshalTest extends BaseCardTest {
                 .hasMessageContaining("during your turn");
     }
 
+    @Test
+    void canTargetItself() {
+        setupMarshalOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent marshal = findPermanent(player1, "Stern Marshal");
+
+        harness.activateAbility(player1, 0, null, marshal.getId());
+        harness.passBothPriorities();
+
+        assertThat(marshal.isTapped()).isTrue();
+        assertThat(marshal.getPowerModifier()).isEqualTo(2);
+        assertThat(marshal.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    void cannotActivateWithSummoningSickness() {
+        setupMarshalOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent marshal = findPermanent(player1, "Stern Marshal");
+        marshal.setSummoningSick(true);
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(marshal.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        setupMarshalOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        findPermanent(player1, "Stern Marshal").setTapped(true);
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateInPostcombatMain() {
+        setupMarshalOnMyTurn(TurnStep.POSTCOMBAT_MAIN);
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers are declared");
+    }
+
+    @Test
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        setupMarshalOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent marshal = findPermanent(player1, "Stern Marshal");
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
+
+        harness.activateAbility(player1, 0, null, bear.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(marshal);
+        gd.playerGraveyards.get(player1.getId()).add(marshal.getCard());
+        harness.passBothPriorities();
+
+        assertThat(bear.getPowerModifier()).isEqualTo(2);
+        assertThat(bear.getToughnessModifier()).isEqualTo(2);
+    }
+
     private void setupMarshalOnMyTurn(TurnStep step) {
         addCreatureReady(player1, new SternMarshal());
         harness.addToBattlefield(player1, new GrizzlyBears());
