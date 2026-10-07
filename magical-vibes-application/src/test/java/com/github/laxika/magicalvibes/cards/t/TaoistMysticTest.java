@@ -51,4 +51,23 @@ class TaoistMysticTest extends BaseCardTest {
 
         assertThat(blockerPerm.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Taoist Mystic's restriction does not prevent horsemanship creatures from blocking other attackers")
+    void horsemanshipCreatureCanBlockAnotherAttacker() {
+        Permanent blockerPerm = addCreatureReady(player2, new WeiEliteCompanions());
+        Permanent mystic = addCreatureReady(player1, new TaoistMystic());
+        Permanent otherAttacker = addCreatureReady(player1, new WeiInfantry());
+        mystic.setAttacking(true);
+        otherAttacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(otherAttacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blockerPerm.isBlocking()).isTrue();
+        assertThat(blockerPerm.getBlockingTargets()).containsExactly(attackerIdx);
+    }
 }
