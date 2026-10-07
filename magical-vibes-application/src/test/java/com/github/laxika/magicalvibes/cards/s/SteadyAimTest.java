@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PollenbrightDruid;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SteadyAim.class, GrizzlyBears.class, Forest.class})
+@CardUsed({SteadyAim.class, PollenbrightDruid.class, Forest.class})
 class SteadyAimTest extends BaseCardTest {
 
     @Test
@@ -27,8 +27,8 @@ class SteadyAimTest extends BaseCardTest {
         castSteadyAim(target);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
     }
 
@@ -42,8 +42,8 @@ class SteadyAimTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
     }
 
@@ -60,17 +60,54 @@ class SteadyAimTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private void castSteadyAim(Permanent target) {
+    @Test
+    @DisplayName("An already untapped creature still gets the boost and reach")
+    void boostsUntappedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new PollenbrightDruid());
+        Permanent other = addTappedCreature(player2);
+
+        castSteadyAim(target);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
+        assertThat(other.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.REACH)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Steady Aim does not resolve when its target leaves the battlefield")
+    void removedTargetReceivesNoEffects() {
+        Permanent target = addTappedCreature(player2);
         harness.setHand(player1, List.of(new SteadyAim()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
         harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card instanceof SteadyAim);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
+    }
+
+    private void castSteadyAim(Permanent target) {
+        harness.setHand(player1, List.of(new SteadyAim()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private Permanent addTappedCreature(Player player) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        permanent.setSummoningSick(false);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new PollenbrightDruid());
         permanent.tap();
         return permanent;
     }
