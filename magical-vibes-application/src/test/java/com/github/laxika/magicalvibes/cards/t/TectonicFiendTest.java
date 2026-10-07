@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(TectonicFiend.class)
+@CardUsed({TectonicFiend.class})
 class TectonicFiendTest extends BaseCardTest {
 
     @Test
@@ -66,10 +66,51 @@ class TectonicFiendTest extends BaseCardTest {
         assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
     }
 
+    @Test
+    @DisplayName("Echo does not create an enters-the-battlefield trigger")
+    void enteringDoesNotCreateEchoTrigger() {
+        harness.enterBattlefieldAndReturn(player1, new TectonicFiend());
+
+        harness.assertOnBattlefield(player1, "Tectonic Fiend");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Echo waits through the opponent's upkeep")
+    void echoWaitsForControllersUpkeep() {
+        castAndResolveTectonicFiend();
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Tectonic Fiend");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Tectonic Fiend");
+    }
+
+    @Test
+    @DisplayName("A tapped Tectonic Fiend is not required to attack")
+    void tappedFiendNeedNotAttack() {
+        addCreatureReady(player1, new TectonicFiend()).tap();
+
+        assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Declaring Tectonic Fiend as an attacker satisfies its requirement")
+    void fiendCanAttack() {
+        addCreatureReady(player1, new TectonicFiend());
+
+        assertThatCode(() -> declareAttackers(List.of(0))).doesNotThrowAnyException();
+    }
+
     private void castAndResolveTectonicFiend() {
         harness.castFromHand(player1, new TectonicFiend(), "{4}{R}{R}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void addEchoMana() {
