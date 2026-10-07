@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(ThornOfTheBlackRose.class)
+@CardUsed({ThornOfTheBlackRose.class})
 class ThornOfTheBlackRoseTest extends BaseCardTest {
 
     @Test
@@ -33,6 +34,43 @@ class ThornOfTheBlackRoseTest extends BaseCardTest {
         assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
     }
 
+    @Test
+    @DisplayName("The other player's Thorn makes that player the monarch")
+    void makesOtherControllerMonarch() {
+        gd.monarchPlayerId = player1.getId();
+
+        castThornOfTheBlackRose(player2);
+
+        assertThat(gd.monarchPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Entering while already monarch leaves the designation unchanged")
+    void controllerAlreadyMonarch() {
+        gd.monarchPlayerId = player1.getId();
+
+        castThornOfTheBlackRose(player1);
+
+        assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
+        harness.assertOnBattlefield(player1, "Thorn of the Black Rose");
+    }
+
+    @Test
+    @DisplayName("One combat damage from each Thorn destroys the opposing Thorn")
+    void deathtouchDestroysCreatureWithNonlethalDamage() {
+        addCreatureReady(player1, new ThornOfTheBlackRose());
+        addCreatureReady(player2, new ThornOfTheBlackRose());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertNotOnBattlefield(player1, "Thorn of the Black Rose");
+        harness.assertNotOnBattlefield(player2, "Thorn of the Black Rose");
+        harness.assertInGraveyard(player1, "Thorn of the Black Rose");
+        harness.assertInGraveyard(player2, "Thorn of the Black Rose");
+    }
+
     private void castThornOfTheBlackRose(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -42,7 +80,6 @@ class ThornOfTheBlackRoseTest extends BaseCardTest {
         harness.addMana(player, ManaColor.COLORLESS, 3);
         harness.castCreature(player, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
