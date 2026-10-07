@@ -69,6 +69,50 @@ class ThundersongTrumpeterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The ability can target the Trumpeter itself")
+    void canTargetItself() {
+        Permanent trumpeter = addCreatureReady(player1, new ThundersongTrumpeter());
+
+        harness.activateAbility(player1, 0, null, trumpeter.getId());
+        harness.passBothPriorities();
+        trumpeter.setTapped(false);
+
+        assertThat(als.canAttack(gd, trumpeter, player1.getId())).isFalse();
+        assertThat(bls.canBlock(gd, trumpeter)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Trumpeter cannot pay the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        Permanent trumpeter = harness.addToBattlefieldAndReturn(player1, new ThundersongTrumpeter());
+        Permanent target = addCreatureReady(player2, new Watchwolf());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(trumpeter.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(als.canAttack(gd, target, player2.getId())).isTrue();
+        assertThat(bls.canBlock(gd, target)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability resolves even if its source leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent trumpeter = addCreatureReady(player1, new ThundersongTrumpeter());
+        Permanent target = addCreatureReady(player2, new Watchwolf());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(trumpeter);
+        gd.playerGraveyards.get(player1.getId()).add(trumpeter.getCard());
+        harness.passBothPriorities();
+
+        assertThat(als.canAttack(gd, target, player2.getId())).isFalse();
+        assertThat(bls.canBlock(gd, target)).isFalse();
+    }
+
+    @Test
     @DisplayName("The restrictions expire at end of turn")
     void restrictionsExpireAtEndOfTurn() {
         addCreatureReady(player1, new ThundersongTrumpeter());
