@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
+import com.github.laxika.magicalvibes.cards.g.GuardianOfTheHalls;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -11,13 +12,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UneasyPartings.class, GrizzlyBears.class, Island.class})
+@CardUsed({UneasyPartings.class, GuardianOfTheHalls.class, Island.class, DryadArbor.class})
 class UneasyPartingsTest extends BaseCardTest {
 
     @Test
@@ -25,7 +25,7 @@ class UneasyPartingsTest extends BaseCardTest {
     void ownerPutsTargetOnTop() {
         Permanent target = addTarget(false);
         Card oldTop = new Island();
-        setLibrary(player2, oldTop);
+        harness.setLibrary(player2, List.of(oldTop));
         cast(target, 4);
 
         harness.passBothPriorities();
@@ -33,7 +33,7 @@ class UneasyPartingsTest extends BaseCardTest {
         harness.handleListChoice(player2, "Put it on top");
 
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(target.getCard(), oldTop);
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Guardian of the Halls");
     }
 
     @Test
@@ -41,14 +41,14 @@ class UneasyPartingsTest extends BaseCardTest {
     void ownerPutsTargetOnBottom() {
         Permanent target = addTarget(false);
         Card oldTop = new Island();
-        setLibrary(player2, oldTop);
+        harness.setLibrary(player2, List.of(oldTop));
         cast(target, 4);
 
         harness.passBothPriorities();
         harness.handleListChoice(player2, "Put it on the bottom");
 
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(oldTop, target.getCard());
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Guardian of the Halls");
     }
 
     @Test
@@ -78,7 +78,7 @@ class UneasyPartingsTest extends BaseCardTest {
     @Test
     @DisplayName("Requires the full cost for an attacking token creature")
     void fullCostForAttackingTokenCreature() {
-        GrizzlyBears tokenCard = new GrizzlyBears();
+        GuardianOfTheHalls tokenCard = new GuardianOfTheHalls();
         tokenCard.setToken(true);
         Permanent target = harness.addToBattlefieldAndReturn(player2, tokenCard);
         target.setAttacking(true);
@@ -90,8 +90,97 @@ class UneasyPartingsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void ownerRatherThanControllerChoosesBottomAndReceivesCreature() {
+        GuardianOfTheHalls card = new GuardianOfTheHalls();
+        card.setOwnerId(player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, card);
+        Card oldTop = new Island();
+        harness.setLibrary(player2, List.of(oldTop));
+        cast(target, 3);
+
+        harness.passBothPriorities();
+        assertOwnerChoice(player2);
+        harness.handleListChoice(player2, "Put it on the bottom");
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(oldTop, card);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(card);
+        harness.assertNotOnBattlefield(player1, "Guardian of the Halls");
+    }
+
+    @Test
+    void targetLeavingBeforeResolutionDoesNotPromptOrMoveIt() {
+        Permanent target = addTarget(false);
+        Card oldTop = new Island();
+        harness.setLibrary(player2, List.of(oldTop));
+        cast(target, 3);
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setGraveyard(player2, List.of(target.getCard()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(oldTop);
+        harness.assertInGraveyard(player2, "Guardian of the Halls");
+        harness.assertInGraveyard(player1, "Uneasy Partings");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void discountedSpellStillResolvesWhenTargetStopsAttacking() {
+        Permanent target = addTarget(true);
+        harness.setLibrary(player2, List.of());
+        cast(target, 2);
+        target.setAttacking(false);
+
+        harness.passBothPriorities();
+        assertOwnerChoice(player2);
+        harness.handleListChoice(player2, "Put it on top");
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(target.getCard());
+        harness.assertNotOnBattlefield(player2, "Guardian of the Halls");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void attackingTokenCanBeTargetedAtFullCostAndLeavesBattlefield() {
+        GuardianOfTheHalls tokenCard = new GuardianOfTheHalls();
+        tokenCard.setToken(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, tokenCard);
+        target.setAttacking(true);
+        target.setAttackTarget(player1.getId());
+        Card oldTop = new Island();
+        harness.setLibrary(player2, List.of(oldTop));
+        cast(target, 3);
+
+        harness.passBothPriorities();
+        assertOwnerChoice(player2);
+        harness.handleListChoice(player2, "Put it on the bottom");
+
+        harness.assertNotOnBattlefield(player2, "Guardian of the Halls");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(oldTop);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @CardUsed({DryadArbor.class})
+    void landCreatureIsALegalTarget() {
+        DryadArbor card = new DryadArbor();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, card);
+        Card oldTop = new Island();
+        harness.setLibrary(player2, List.of(oldTop));
+        cast(target, 3);
+
+        harness.passBothPriorities();
+        assertOwnerChoice(player2);
+        harness.handleListChoice(player2, "Put it on top");
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(card, oldTop);
+        harness.assertNotOnBattlefield(player2, "Dryad Arbor");
+    }
+
     private Permanent addTarget(boolean attacking) {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GuardianOfTheHalls());
         target.setAttacking(attacking);
         if (attacking) {
             target.setAttackTarget(player1.getId());
@@ -118,7 +207,4 @@ class UneasyPartingsTest extends BaseCardTest {
         assertThat(choice.options()).containsExactly("Put it on top", "Put it on the bottom");
     }
 
-    private void setLibrary(com.github.laxika.magicalvibes.model.Player player, Card... cards) {
-        gd.playerDecks.put(player.getId(), new ArrayList<>(List.of(cards)));
-    }
 }
