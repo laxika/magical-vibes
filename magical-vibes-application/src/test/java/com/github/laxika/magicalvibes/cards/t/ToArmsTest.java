@@ -15,6 +15,41 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ToArmsTest extends BaseCardTest {
 
     @Test
+    void drawsACardWithoutAnyCreatures() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new GruulSignet());
+        artifact.tap();
+        GhostWarden drawCard = new GhostWarden();
+        harness.setLibrary(player1, List.of(drawCard));
+
+        harness.castFromHand(player1, new ToArms(), "{1}{W}");
+        harness.passBothPriorities();
+
+        assertThat(artifact.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawCard);
+    }
+
+    @Test
+    void untapsAllCreaturesPresentAtResolution() {
+        Permanent firstCreature = harness.addToBattlefieldAndReturn(player1, new GhostWarden());
+        Permanent untappedCreature = harness.addToBattlefieldAndReturn(player1, new GhostWarden());
+        firstCreature.tap();
+        GhostWarden drawCard = new GhostWarden();
+        harness.setLibrary(player1, List.of(drawCard));
+
+        harness.castFromHand(player1, new ToArms(), "{1}{W}");
+        Permanent newCreature = harness.addToBattlefieldAndReturn(player1, new GhostWarden());
+        newCreature.tap();
+        assertThat(firstCreature.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(firstCreature.isTapped()).isFalse();
+        assertThat(newCreature.isTapped()).isFalse();
+        assertThat(untappedCreature.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawCard);
+    }
+
+    @Test
     void untapsOwnCreaturesAndDrawsACard() {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GhostWarden());
         Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new GruulSignet());
