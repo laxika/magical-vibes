@@ -2,11 +2,10 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.j.JeskaWarriorAdept;
 import com.github.laxika.magicalvibes.cards.t.TrainedPronghorn;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GiantWarthog.class, KrosanVerge.class, SuntailHawk.class, TrainedPronghorn.class, UnquestionedAuthority.class})
+@CardUsed({GiantWarthog.class, JeskaWarriorAdept.class, KrosanVerge.class, TrainedPronghorn.class, UnquestionedAuthority.class})
 class UnquestionedAuthorityTest extends BaseCardTest {
 
     @Test
@@ -32,7 +31,7 @@ class UnquestionedAuthorityTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getName().equals("Unquestioned Authority")
@@ -48,10 +47,7 @@ class UnquestionedAuthorityTest extends BaseCardTest {
         enchant(creature);
         Permanent blocker = addCreatureReady(player2, new TrainedPronghorn());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -88,11 +84,10 @@ class UnquestionedAuthorityTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new KrosanVerge());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new KrosanVerge());
         harness.setHand(player1, List.of(new UnquestionedAuthority()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        Permanent land = findPermanent(player1, "Krosan Verge");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -108,25 +103,85 @@ class UnquestionedAuthorityTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature takes no combat damage from a creature")
     void enchantedCreatureTakesNoCombatDamageFromCreature() {
-        Permanent hawk = addCreatureReady(player1, new SuntailHawk());
-        hawk.setAttacking(true);
-        enchantForJudReview(hawk);
+        Permanent creature = addCreatureReady(player1, new TrainedPronghorn());
+        creature.setAttacking(true);
 
         Permanent blocker = addCreatureReady(player2, new GiantWarthog());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
+        enchant(creature);
 
         resolveCombat();
 
-        assertThat(hawk.getMarkedDamage()).isZero();
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
         assertThat(blocker.getMarkedDamage()).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
     }
 
-    private Permanent enchantForJudReview(Permanent creature) {
-        Permanent aura = new Permanent(new UnquestionedAuthority());
-        aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
-        return aura;
+    @Test
+    @DisplayName("Creature abilities cannot target the enchanted creature")
+    void creatureAbilityCannotTargetEnchantedCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new TrainedPronghorn());
+        enchant(creature);
+        addCreatureReady(player1, new JeskaWarriorAdept());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+        assertThat(creature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Gaining protection makes a pending creature ability's target illegal")
+    void protectionMakesPendingCreatureAbilityTargetIllegal() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new TrainedPronghorn());
+        addCreatureReady(player1, new JeskaWarriorAdept());
+        harness.activateAbility(player1, 0, null, creature.getId());
+        enchant(creature);
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An Aura with a vanished target does not enter or draw a card")
+    void vanishedTargetPreventsEntryAndDraw() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new TrainedPronghorn());
+        harness.setHand(player1, List.of(new UnquestionedAuthority()));
+        harness.setLibrary(player1, List.of(new GiantWarthog()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Unquestioned Authority")).isZero();
+        harness.assertNotInHand(player1, "Giant Warthog");
+        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Enchanting an opponent's creature draws for the Aura controller")
+    void enchantingOpponentsCreatureDrawsForAuraController() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new TrainedPronghorn());
+        harness.setHand(player1, List.of(new UnquestionedAuthority()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new GiantWarthog()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Unquestioned Authority").getAttachedTo()).isEqualTo(creature.getId());
+        harness.assertInHand(player1, "Giant Warthog");
+        harness.assertNotInHand(player2, "Giant Warthog");
     }
 }
