@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -62,6 +64,72 @@ class SummonValeforTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void enteringTriggersChapterIAndReturnsOnlyOpponentsGreatestCreature() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
+        Permanent greatest = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent smaller = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        Permanent saga = harness.enterBattlefieldAndReturn(player1, new SummonValefor());
+        harness.passBothPriorities();
+
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature, saga);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(smaller).doesNotContain(greatest);
+        assertThat(gd.playerHands.get(player2.getId())).contains(greatest.getCard());
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {2, 3})
+    void laterChaptersStunAlreadyTappedCreatureAndSacrificeAfterFinalChapter(int startingLore) {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setTapped(true);
+        target.setCounterCount(CounterType.STUN, 1);
+        Permanent saga = addSagaWithLore(startingLore);
+
+        advanceToNextChapter();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(2);
+        if (startingLore == 3) {
+            assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+            assertThat(gd.playerGraveyards.get(player1.getId())).contains(saga.getCard());
+        } else {
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2, 3})
+    void tapAndStunChaptersAllowChoosingNoTarget(int startingLore) {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addSagaWithLore(startingLore);
+
+        advanceToNextChapter();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.getCounterCount(CounterType.STUN)).isZero();
+    }
+
+    @Test
+    void chapterIITargetsControllersOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        addSagaWithLore(1);
+
+        advanceToNextChapter();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(1);
     }
 
     private Permanent addSagaWithLore(int lore) {
