@@ -77,6 +77,49 @@ class ThorinsLastStandTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Creatures entering after the pump resolves do not receive the boost")
+    void pumpDoesNotBoostLaterCreatures() {
+        cast(0, null);
+
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Thorin's Last Stand");
+    }
+
+    @Test
+    @DisplayName("The removal mode can destroy your own artifact")
+    void removalModeCanTargetOwnArtifact() {
+        harness.addToBattlefield(player1, new FountainOfYouth());
+
+        cast(1, harness.getPermanentId(player1, "Fountain of Youth"));
+
+        harness.assertNotOnBattlefield(player1, "Fountain of Youth");
+        harness.assertInGraveyard(player1, "Fountain of Youth");
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The removal mode grants no life when its only target leaves before resolution")
+    void removalModeDoesNotGainLifeWithMissingTarget() {
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        java.util.UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
+        harness.setHand(player1, List.of(new ThorinsLastStand()));
+        addMana();
+        harness.castInstant(player1, 0, 1, targetId);
+
+        gd.playerBattlefields.get(player2.getId()).removeIf(permanent -> permanent.getId().equals(targetId));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Thorin's Last Stand");
+    }
+
     private void cast(int mode, java.util.UUID targetId) {
         harness.setHand(player1, List.of(new ThorinsLastStand()));
         addMana();
