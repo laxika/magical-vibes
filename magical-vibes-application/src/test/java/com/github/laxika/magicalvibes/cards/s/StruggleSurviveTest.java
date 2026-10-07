@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StruggleSurvive.class, Mountain.class, Forest.class, GrizzlyBears.class})
 class StruggleSurviveTest extends BaseCardTest {
 
     @Test
@@ -72,8 +73,8 @@ class StruggleSurviveTest extends BaseCardTest {
     void surviveFlashbackShufflesGraveyardsAndExiles() {
         Card p1GyCard = new Mountain();
         Card p2GyCard = new Forest();
-        setDeck(player1, List.of(new Mountain(), new Forest()));
-        setDeck(player2, List.of(new Mountain(), new Forest()));
+        harness.setLibrary(player1, List.of(new Mountain(), new Forest()));
+        harness.setLibrary(player2, List.of(new Mountain(), new Forest()));
         harness.setGraveyard(player1, List.of(new StruggleSurvive(), p1GyCard));
         harness.setGraveyard(player2, List.of(p2GyCard));
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -95,8 +96,8 @@ class StruggleSurviveTest extends BaseCardTest {
     @Test
     @DisplayName("Survive with empty graveyards still shuffles libraries and exiles")
     void surviveWithEmptyGraveyardsStillShufflesAndExiles() {
-        setDeck(player1, List.of(new Mountain(), new Forest()));
-        setDeck(player2, List.of(new Mountain()));
+        harness.setLibrary(player1, List.of(new Mountain(), new Forest()));
+        harness.setLibrary(player2, List.of(new Mountain()));
         harness.setGraveyard(player1, List.of(new StruggleSurvive()));
         harness.setGraveyard(player2, List.of());
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -124,8 +125,66 @@ class StruggleSurviveTest extends BaseCardTest {
                 .hasMessageContaining("sorcery-speed");
     }
 
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+    @Test
+    @DisplayName("Struggle counts lands at resolution rather than casting")
+    void struggleCountsLandsAtResolution() {
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StruggleSurvive()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.addToBattlefield(player1, new Forest());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Struggle");
+    }
+
+    @Test
+    @DisplayName("Struggle with no lands deals no damage")
+    void struggleWithNoLandsDealsNoDamage() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StruggleSurvive()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Struggle");
+    }
+
+    @Test
+    @DisplayName("Struggle with an illegal target goes to the graveyard and can cast Survive")
+    void struggleWithIllegalTargetStillAllowsAftermath() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Forest());
+        Card creature = new GrizzlyBears();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, creature);
+        Card first = new StruggleSurvive();
+        Card second = new StruggleSurvive();
+        harness.setHand(player1, List.of(first, second));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFlashback(player1, gd.playerGraveyards.get(player1.getId()).indexOf(first));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first);
     }
 }
