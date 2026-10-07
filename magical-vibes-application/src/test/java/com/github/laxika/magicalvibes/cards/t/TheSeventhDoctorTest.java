@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SphereOfResistance;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheSeventhDoctor.class, DarksteelRelic.class, Forest.class, GrizzlyBears.class})
+@CardUsed({TheSeventhDoctor.class, DarksteelRelic.class, Forest.class, GrizzlyBears.class,
+        SphereOfResistance.class})
 class TheSeventhDoctorTest extends BaseCardTest {
 
     @Test
@@ -71,6 +73,76 @@ class TheSeventhDoctorTest extends BaseCardTest {
         harness.handleListChoice(player2, "Greater than 1");
 
         harness.assertInHand(player1, "Forest");
+        assertThat(findPermanents(player1, "Clue")).hasSize(1);
+    }
+
+    @Test
+    void emptyHandStillInvestigates() {
+        Permanent doctor = addCreatureReady(player1, new TheSeventhDoctor());
+        harness.setHand(player1, List.of());
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(doctor)));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Clue")).hasSize(1);
+    }
+
+    @Test
+    void manaValueEqualToArtifactCountIsNotGreater() {
+        harness.addToBattlefield(player1, new DarksteelRelic());
+        harness.addToBattlefield(player1, new DarksteelRelic());
+        addDoctorWithHand(new GrizzlyBears());
+
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, 0);
+        harness.handleListChoice(player2, "2 or less");
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Clue")).hasSize(1);
+    }
+
+    @Test
+    void opposingArtifactsDoNotCountAndSuccessfulCastDoesNotInvestigate() {
+        harness.addToBattlefield(player2, new DarksteelRelic());
+        harness.addToBattlefield(player2, new DarksteelRelic());
+        addDoctorWithHand(new GrizzlyBears());
+
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, 0);
+        harness.handleListChoice(player2, "0 or less");
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+    }
+
+    @Test
+    void zeroManaValueSpellCanBeCastAfterWrongGreaterGuess() {
+        addDoctorWithHand(new DarksteelRelic());
+
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, 0);
+        harness.handleListChoice(player2, "Greater than 0");
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Darksteel Relic");
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+    }
+
+    @Test
+    void unpaidCostIncreasePreventsCastingAndInvestigatesInstead() {
+        harness.addToBattlefield(player2, new SphereOfResistance());
+        addDoctorWithHand(new GrizzlyBears());
+
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, 0);
+        harness.handleListChoice(player2, "0 or less");
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
     }
 
