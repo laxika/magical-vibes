@@ -62,8 +62,7 @@ class TimberwatchElfTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
@@ -78,6 +77,58 @@ class TimberwatchElfTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can target itself and activate with no mana by tapping")
+    void activatesWithoutManaAndCanTargetItself() {
+        Permanent elf = addCreatureReady(player1, new TimberwatchElf());
+
+        harness.activateAbility(player1, 0, null, elf.getId());
+
+        assertThat(elf.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped even with mana available")
+    void cannotActivateWhileTapped() {
+        Permanent elf = addCreatureReady(player1, new TimberwatchElf());
+        elf.setTapped(true);
+        addAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elf.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick even with mana available")
+    void cannotActivateWhileSummoningSick() {
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new TimberwatchElf());
+        addAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elf.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The resolved boost does not change when more Elves enter")
+    void resolvedBoostIsFixed() {
+        addCreatureReady(player1, new TimberwatchElf());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoblinCohort());
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.addToBattlefield(player2, new LlanowarElves());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     private void addAbilityMana() {
