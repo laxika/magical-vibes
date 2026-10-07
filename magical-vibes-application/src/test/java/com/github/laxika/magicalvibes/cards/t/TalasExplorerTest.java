@@ -72,6 +72,25 @@ class TalasExplorerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("ETB looks at the hand as it exists on resolution without moving cards")
+    void etbLooksAtCurrentHandOnResolution() {
+        harness.setHand(player2, List.of(new Lynx()));
+        castTalasExplorer(player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        TalasExplorer drawnCard = new TalasExplorer();
+        harness.setHand(player2, List.of(drawnCard));
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
+                .anyMatch(message -> message.contains("Talas Explorer"))
+                .noneMatch(message -> message.contains("Lynx"));
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnCard);
+    }
+
     private void castTalasExplorer(UUID targetPlayerId) {
         harness.setHand(player1, List.of(new TalasExplorer()));
         harness.addMana(player1, ManaColor.BLUE, 2);
