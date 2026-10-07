@@ -19,6 +19,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SymbioticWurmTest extends BaseCardTest {
 
     @Test
+    @DisplayName("An opponent's Wurm creates tokens only when its death trigger resolves")
+    void opponentsDeathTriggerUsesTheStack() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new SymbioticWurm());
+        harness.setHand(player1, List.of(new CruelRevival()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.forceActivePlayer(player1);
+
+        harness.castAndResolveInstant(player1, 0, List.of(wurm.getId()));
+
+        harness.assertInGraveyard(player2, "Symbiotic Wurm");
+        harness.assertNotOnBattlefield(player1, "Insect");
+        harness.assertNotOnBattlefield(player2, "Insect");
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player2, "Insect")).hasSize(7);
+        harness.assertNotOnBattlefield(player1, "Insect");
+    }
+
+    @Test
     @DisplayName("When Symbiotic Wurm dies, its controller creates seven Insect tokens")
     void deathTriggerCreatesSevenInsectTokens() {
         Permanent wurm = harness.addToBattlefieldAndReturn(player1, new SymbioticWurm());
