@@ -31,4 +31,39 @@ class TuktukRubblefortTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.HASTE)).isFalse();
     }
+
+    @Test
+    @DisplayName("Creatures entering after Rubblefort can attack immediately")
+    void grantsHasteToCreaturesEnteringLater() {
+        harness.enterBattlefieldAndReturn(player1, new TuktukRubblefort());
+        Permanent bears = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(bears.isSummoningSick()).isTrue();
+        assertThat(als.canAttack(gd, bears, player1.getId())).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creatures lose haste immediately when Rubblefort leaves the battlefield")
+    void losesHasteWhenRubblefortLeaves() {
+        Permanent bears = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(als.canAttack(gd, bears, player1.getId())).isFalse();
+
+        Permanent rubblefort = harness.enterBattlefieldAndReturn(player1, new TuktukRubblefort());
+        assertThat(als.canAttack(gd, bears, player1.getId())).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, rubblefort));
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
+        assertThat(als.canAttack(gd, bears, player1.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("Rubblefort's haste does not let it attack despite defender")
+    void hasteDoesNotOverrideDefender() {
+        Permanent rubblefort = harness.enterBattlefieldAndReturn(player1, new TuktukRubblefort());
+
+        assertThat(gqs.hasKeyword(gd, rubblefort, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, rubblefort, player1.getId())).isFalse();
+    }
 }
