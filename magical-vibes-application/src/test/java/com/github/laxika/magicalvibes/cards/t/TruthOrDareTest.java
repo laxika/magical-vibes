@@ -78,11 +78,69 @@ class TruthOrDareTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an opponent");
     }
 
+    @Test
+    @DisplayName("Dare preserves the bottom ten cards in library order and does not reveal the hand")
+    void darePreservesBottomCardsAndHandPrivacy() {
+        List<Card> library = cards(15);
+        List<Card> controllerLibrary = cards(12);
+        harness.setLibrary(player2, library);
+        harness.setLibrary(player1, controllerLibrary);
+        harness.setHand(player2, List.of(new Forest()));
+        castTruthOrDare();
+
+        harness.handleListChoice(player2, DARE);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(library.subList(5, 15));
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrderElementsOf(library.subList(0, 5));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(controllerLibrary);
+        assertThat(player1SeesOpponentHand()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Dare leaves libraries smaller than ten cards unchanged")
+    void dareWithSmallLibrary() {
+        List<Card> library = cards(4);
+        harness.setLibrary(player2, library);
+        castTruthOrDare();
+
+        harness.handleListChoice(player2, DARE);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(library);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Dare can be chosen with an empty library")
+    void dareWithEmptyLibrary() {
+        harness.setLibrary(player2, List.of());
+        castTruthOrDare();
+
+        harness.handleListChoice(player2, DARE);
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Truth reveals future hand contents even when the hand was initially empty and does not mill")
+    void truthWithInitiallyEmptyHand() {
+        List<Card> library = cards(12);
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, library);
+        castTruthOrDare();
+
+        harness.handleListChoice(player2, TRUTH);
+        harness.setHand(player2, List.of(new Forest()));
+
+        assertThat(player1SeesOpponentHand()).isTrue();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(library);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
     private void castTruthOrDare() {
         harness.setHand(player1, List.of(new TruthOrDare()));
         addMana();
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
     private void addMana() {
