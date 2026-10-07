@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.Commandeer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TerritoryForge.class, Forest.class, GrizzlyBears.class, RodOfRuin.class})
+@CardUsed({TerritoryForge.class, Forest.class, GrizzlyBears.class, RodOfRuin.class, Commandeer.class})
 class TerritoryForgeTest extends BaseCardTest {
 
     @Test
@@ -28,9 +29,6 @@ class TerritoryForgeTest extends BaseCardTest {
         assertThat(gd.getCardsExiledByPermanent(forge.getId()))
                 .extracting(card -> card.getName())
                 .containsExactly("Rod of Ruin");
-        var granted = gqs.computeStaticBonus(gd, forge).grantedActivatedAbilities();
-        assertThat(granted).hasSize(1);
-        assertThat(granted.getFirst().getManaCost()).isEqualTo("{3}");
 
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.activateAbility(player1, 0, 0, null, player2.getId());
@@ -53,12 +51,43 @@ class TerritoryForgeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Gains activated abilities of a tracked exiled artifact")
-    void gainsDirectlyTrackedArtifactAbility() {
-        Permanent forge = harness.addToBattlefieldAndReturn(player1, new TerritoryForge());
-        gd.addToExile(player1.getId(), new RodOfRuin(), forge.getId());
+    @DisplayName("Can exile its controller's artifact and use its ability")
+    void exilesOwnArtifactAndUsesAbility() {
+        Permanent rod = harness.addToBattlefieldAndReturn(player1, new RodOfRuin());
+        castForge(rod);
 
-        assertThat(gqs.computeStaticBonus(gd, forge).grantedActivatedAbilities()).hasSize(1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Rod of Ruin");
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Entering without being cast does not exile anything")
+    void enteringWithoutCastDoesNotTrigger() {
+        harness.addToBattlefield(player2, new RodOfRuin());
+
+        Permanent forge = harness.enterBattlefieldAndReturn(player1, new TerritoryForge());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getCardsExiledByPermanent(forge.getId())).isEmpty();
+        harness.assertOnBattlefield(player2, "Rod of Ruin");
+    }
+
+    @Test
+    @DisplayName("Can immediately activate the mana ability of an exiled basic land")
+    void gainsBasicLandManaAbility() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent forge = castForge(forest);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(forge.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -72,6 +101,30 @@ class TerritoryForgeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castArtifact(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("artifact or land");
+    }
+
+    @Test
+    @DisplayName("Does not trigger when another player takes control of the spell")
+    void stolenSpellDoesNotTriggerForNoncaster() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        TerritoryForge forge = new TerritoryForge();
+        harness.setHand(player1, List.of(forge));
+        addForgeMana();
+        harness.castArtifact(player1, 0, forest.getId());
+        harness.passPriority(player1);
+
+        harness.setHand(player2, List.of(new Commandeer()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 5);
+        harness.castInstant(player2, 0, forge.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Territory Forge");
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private Permanent castForge(Permanent target) {
