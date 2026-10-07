@@ -135,6 +135,94 @@ class TrialErrorTest extends BaseCardTest {
                 .hasMessageContaining("multicolored");
     }
 
+    @Test
+    @DisplayName("Trial can target a creature outside combat without returning anything")
+    void trialDoesNothingToNoncombatTarget() {
+        Permanent target = addCreatureReady(player1, new MistralCharger());
+        Permanent other = addCreatureReady(player2, new AzoriusFirstWing());
+        harness.setHand(player1, List.of(new TrialError()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(other);
+        harness.assertInGraveyard(player1, "Trial // Error");
+        harness.assertNotInHand(player1, "Mistral Charger");
+        harness.assertNotInHand(player2, "Azorius First-Wing");
+    }
+
+    @Test
+    @DisplayName("Trial returns a stolen blocker to its owner rather than its controller")
+    void trialReturnsBlockerToOwner() {
+        Permanent attacker = addCreatureReady(player1, new MistralCharger());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new AzoriusFirstWing());
+        gd.stolenCreatures.put(blocker.getId(), player1.getId());
+        connectBlockerToAttacker(blocker, attacker);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new TrialError()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, 0, attacker.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mistral Charger");
+        harness.assertNotOnBattlefield(player2, "Azorius First-Wing");
+        harness.assertInHand(player1, "Azorius First-Wing");
+        harness.assertNotInHand(player2, "Azorius First-Wing");
+    }
+
+    @Test
+    @DisplayName("Trial does not return blockers when its target leaves before resolution")
+    void trialDoesNotResolveAfterTargetLeaves() {
+        Permanent attacker = addCreatureReady(player1, new MistralCharger());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new AzoriusFirstWing());
+        connectBlockerToAttacker(blocker, attacker);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new TrialError(), new TrialError()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, 0, attacker.getId());
+        harness.castInstant(player1, 0, 0, blocker.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Mistral Charger");
+        harness.assertNotOnBattlefield(player1, "Mistral Charger");
+        harness.assertOnBattlefield(player2, "Azorius First-Wing");
+        harness.assertNotInHand(player2, "Azorius First-Wing");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Error can counter its controller's own multicolored instant")
+    void errorCountersOwnTrial() {
+        Permanent target = addCreatureReady(player1, new MistralCharger());
+        TrialError trial = new TrialError();
+        harness.setHand(player1, List.of(trial, new TrialError()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0, 0, target.getId());
+        harness.castInstant(player1, 0, 1, trial.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        harness.assertOnBattlefield(player1, "Mistral Charger");
+    }
+
     private void connectBlockerToAttacker(Permanent blocker, Permanent attacker) {
         blocker.setBlocking(true);
         blocker.addBlockingTargetId(attacker.getId());
