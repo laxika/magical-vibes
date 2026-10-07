@@ -26,8 +26,7 @@ class StaggeringSizeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isEqualTo(3);
@@ -42,8 +41,7 @@ class StaggeringSizeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -66,5 +64,48 @@ class StaggeringSizeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void canBoostOpponentsCreatureWithoutAffectingOtherCreatures() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StaggeringSize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        Permanent target = findPermanent(player2, "Grizzly Bears");
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getPowerModifier()).isEqualTo(3);
+        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        Permanent other = findPermanent(player1, "Grizzly Bears");
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(other.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        harness.assertInGraveyard(player1, "Staggering Size");
+    }
+
+    @Test
+    void multipleCopiesStackTheirBoostsAndExpireTogether() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StaggeringSize(), new StaggeringSize()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        Permanent target = findPermanent(player1, "Grizzly Bears");
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getPowerModifier()).isEqualTo(6);
+        assertThat(target.getToughnessModifier()).isEqualTo(6);
+        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
     }
 }
