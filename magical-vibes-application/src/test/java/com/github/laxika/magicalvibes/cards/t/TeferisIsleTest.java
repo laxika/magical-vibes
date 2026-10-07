@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(TeferisIsle.class)
 class TeferisIsleTest extends BaseCardTest {
@@ -63,5 +64,48 @@ class TeferisIsleTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(isle);
         assertThat(gd.phasedOutPermanents.getOrDefault(player1.getId(), List.of())).doesNotContain(isle);
         assertThat(isle.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot activate the mana ability while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent isle = harness.enterBattlefieldAndReturn(player1, new TeferisIsle());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(isle.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Phasing repeats and the returned Isle produces mana without using the stack")
+    void repeatedPhasingPreservesManaAbility() {
+        Permanent isle = harness.enterBattlefieldAndReturn(player1, new TeferisIsle());
+
+        for (int cycle = 0; cycle < 2; cycle++) {
+            harness.performUntapStep(player1);
+
+            harness.assertNotOnBattlefield(player1, "Teferi's Isle");
+            assertThat(gd.phasedOutPermanents.get(player1.getId())).containsExactly(isle);
+            assertThat(isle.isTapped()).isTrue();
+
+            harness.performUntapStep(player2);
+            harness.assertNotOnBattlefield(player1, "Teferi's Isle");
+
+            harness.performUntapStep(player1);
+
+            assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(isle);
+            assertThat(isle.isTapped()).isFalse();
+            int blueBefore = gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE);
+
+            harness.activateAbility(player1, 0, 0, null, null);
+
+            assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE))
+                    .isEqualTo(blueBefore + 2);
+            assertThat(isle.isTapped()).isTrue();
+            assertThat(gd.stack).isEmpty();
+        }
     }
 }
