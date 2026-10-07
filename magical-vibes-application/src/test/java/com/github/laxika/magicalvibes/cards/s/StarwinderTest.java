@@ -47,12 +47,130 @@ class StarwinderTest extends BaseCardTest {
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(starwinder.getId())).isNotNull();
+    }
+
+    @Test
+    void mayDeclineToDraw() {
+        Permanent attacker = addCreatureReady(player1, new Starwinder());
+        attacker.setAttacking(true);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        resolveCombat();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertLife(player2, 13);
+    }
+
+    @Test
+    void drawsForItsOwnCombatDamage() {
+        Permanent attacker = addCreatureReady(player1, new Starwinder());
+        attacker.setAttacking(true);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertLife(player2, 13);
+    }
+
+    @Test
+    void opposingCreatureDoesNotTriggerDraw() {
+        addCreatureReady(player1, new Starwinder());
+        Permanent attacker = addCreatureReady(player2, new Starwinder());
+        attacker.setAttacking(true);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        resolveCombat(player2);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertLife(player1, 13);
+    }
+
+    @Test
+    void normalCastDoesNotExileAtEndStep() {
+        Starwinder starwinder = new Starwinder();
+        harness.setHand(player1, List.of(starwinder));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Starwinder");
+        assertThat(gd.findExiledCard(starwinder.getId())).isNull();
+    }
+
+    @Test
+    void eachDamagingCreatureOffersItsOwnDrawChoice() {
+        addCreatureReady(player1, new Starwinder());
+        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
+        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void warpedCardCanBeCastOnALaterTurnForItsNormalCost() {
+        Starwinder starwinder = new Starwinder();
+        harness.setHand(player1, List.of(starwinder));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        assertThat(gd.findExiledCard(starwinder.getId())).isNotNull();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castFromExile(player1, starwinder.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Starwinder");
+        assertThat(gd.findExiledCard(starwinder.getId())).isNull();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Starwinder");
     }
 }
