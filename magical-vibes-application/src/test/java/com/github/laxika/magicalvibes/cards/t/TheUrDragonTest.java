@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 
 
@@ -97,8 +98,7 @@ class TheUrDragonTest extends BaseCardTest {
         Card firstDraw = new Forest();
         Card secondDraw = new GrizzlyBears();
         Card thirdDraw = new Forest();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(firstDraw, secondDraw, thirdDraw));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw, thirdDraw));
         harness.setHand(player1, List.of());
 
         declareAttackers(List.of(0, 1, 2));
@@ -118,8 +118,7 @@ class TheUrDragonTest extends BaseCardTest {
         Card libraryCard = new Forest();
         Card secondDraw = new Forest();
         Card permanentToPut = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(libraryCard, secondDraw));
+        harness.setLibrary(player1, List.of(libraryCard, secondDraw));
         harness.setHand(player1, List.of(permanentToPut));
 
         declareAttackers(List.of(0, 1));
@@ -129,6 +128,80 @@ class TheUrDragonTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(libraryCard, secondDraw);
+    }
+
+    @Test
+    void doesNotReduceItsOwnCommandZoneCastingCost() {
+        TheUrDragon commander = new TheUrDragon();
+        addToCommandZone(player1, commander);
+        gd.playerCommanders.put(player1.getId(), List.of(commander));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> gs.castCommander(gd, player1, commander.getId(),
+                () -> harness.castCreature(player1, 0)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerCommandZones.get(player1.getId())).containsExactly(commander);
+    }
+
+    @Test
+    void doesNotReduceNonDragonSpells() {
+        addToCommandZone(player1, new TheUrDragon());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotReduceDragonSpellsWhileInHand() {
+        harness.setHand(player1, List.of(new DragonWhelp(), new TheUrDragon()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void commandZoneDoesNotGrantTheAttackTrigger() {
+        addToCommandZone(player1, new TheUrDragon());
+        addCreatureReady(player1, new DragonWhelp());
+        Card libraryCard = new Forest();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player1, List.of());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+    }
+
+    @Test
+    void mayPutTheNewlyDrawnLandOntoTheBattlefield() {
+        addCreatureReady(player1, new TheUrDragon());
+        Card land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+        harness.setHand(player1, List.of());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(findPermanents(player1, "Forest")).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private void addToCommandZone(Player player, Card card) {
