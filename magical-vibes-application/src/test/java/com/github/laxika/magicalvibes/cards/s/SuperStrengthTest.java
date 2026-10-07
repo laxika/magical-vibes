@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -83,8 +82,7 @@ class SuperStrengthTest extends BaseCardTest {
     @Test
     @DisplayName("Super Strength cannot enchant a noncreature permanent")
     void cannotEnchantNonCreature() {
-        Permanent spellbook = new Permanent(new Spellbook());
-        gd.playerBattlefields.get(player2.getId()).add(spellbook);
+        Permanent spellbook = harness.addToBattlefieldAndReturn(player2, new Spellbook());
 
         harness.setHand(player1, List.of(new SuperStrength()));
         harness.addMana(player1, ManaColor.GREEN, 5);
@@ -93,13 +91,81 @@ class SuperStrengthTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addEnchantedBears() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+    @Test
+    void resolvesOntoOpponentsCreatureAndUsesThatCreaturesControllerForWard() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SuperStrength()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
 
-        Permanent aura = new Permanent(new SuperStrength());
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
+
+        castSpellAt(player1, new Shock(), bears);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Shock");
+        assertThat(gd.stack).isEmpty();
+        assertThat(bears.getMarkedDamage()).isZero();
+
+        castSpellAt(player2, new GiantGrowth(), bears);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(9);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void controllersOwnSpellDoesNotTriggerWard() {
+        Permanent bears = addEnchantedBears();
+        castSpellAt(player1, new GiantGrowth(), bears);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(9);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentCanDeclineWardPaymentDespiteHavingMana() {
+        Permanent bears = addEnchantedBears();
+        castSpellAt(player2, new GiantGrowth(), bears);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Giant Growth");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void paidWardAllowsActivatedAbilityToResolve() {
+        Permanent bears = addEnchantedBears();
+        Permanent icyManipulator = harness.addToBattlefieldAndReturn(player2, new IcyManipulator());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2,
+                gd.playerBattlefields.get(player2.getId()).indexOf(icyManipulator), null, bears.getId());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private Permanent addEnchantedBears() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SuperStrength());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return bears;
     }
 
