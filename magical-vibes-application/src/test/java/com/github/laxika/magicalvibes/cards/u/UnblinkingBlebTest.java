@@ -107,6 +107,60 @@ class UnblinkingBlebTest extends BaseCardTest {
         assertThat(bleb.isFaceDown()).isFalse();
     }
 
+    @Test
+    @DisplayName("A face-down Unblinking Bleb does not trigger for another permanent")
+    void faceDownBlebDoesNotTriggerForAnotherPermanent() {
+        addFaceDownBleb(player1);
+        Permanent cavern = harness.addToBattlefieldAndReturn(player1, new ZoeticCavern());
+        cavern.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(cavern));
+
+        assertThat(cavern.isFaceDown()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Scry 2 uses the only card in a one-card library")
+    void scryWithOneCardInLibrary() {
+        Card onlyCard = new ZoeticCavern();
+        harness.setLibrary(player1, List.of(onlyCard));
+        Permanent bleb = addFaceDownBleb(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(bleb));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(onlyCard);
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Accepting scry with an empty library completes without a card choice")
+    void scryWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        Permanent bleb = addFaceDownBleb(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(bleb));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addFaceDownBleb(com.github.laxika.magicalvibes.model.Player player) {
         Permanent bleb = harness.addToBattlefieldAndReturn(player, new UnblinkingBleb());
         bleb.setFaceDown(2, 2, Set.of(CardType.CREATURE));
