@@ -4,13 +4,14 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.r.RuptureSpire;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SporeBurst.class, Forest.class, Plains.class, Swamp.class, Island.class, Mountain.class, RuptureSpire.class})
 class SporeBurstTest extends BaseCardTest {
 
     private List<Permanent> saprolings(Player player) {
@@ -29,8 +31,7 @@ class SporeBurstTest extends BaseCardTest {
     private void castSporeBurst() {
         harness.setHand(player1, List.of(new SporeBurst()));
         harness.addMana(player1, ManaColor.GREEN, 4); // {3}{G}
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities(); // resolve Spore Burst
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     @Test
@@ -82,7 +83,46 @@ class SporeBurstTest extends BaseCardTest {
         castSporeBurst();
 
         assertThat(saprolings(player1)).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()).stream().map(Card::getName))
-                .contains("Spore Burst");
+        harness.assertInGraveyard(player1, "Spore Burst");
+    }
+
+    @Test
+    @DisplayName("All five basic land types create five tokens")
+    void allFiveBasicLandTypesCreateFiveTokens() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Mountain());
+
+        castSporeBurst();
+
+        assertThat(saprolings(player1)).hasSize(5);
+        assertThat(saprolings(player2)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A land that produces any color but has no basic land type creates no tokens")
+    void landWithoutBasicLandTypeCreatesNoTokens() {
+        harness.addToBattlefield(player1, new RuptureSpire());
+
+        castSporeBurst();
+
+        assertThat(saprolings(player1)).isEmpty();
+        harness.assertInGraveyard(player1, "Spore Burst");
+    }
+
+    @Test
+    @DisplayName("Domain counts lands at resolution")
+    void countsBasicLandTypesAtResolution() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new SporeBurst()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castSorcery(player1, 0, 0);
+
+        harness.addToBattlefield(player1, new Plains());
+        harness.passBothPriorities();
+
+        assertThat(saprolings(player1)).hasSize(2);
     }
 }
