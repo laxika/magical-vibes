@@ -53,4 +53,61 @@ class TroublesomeSpiritTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(land.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Lands are tapped on resolution, including lands added after the trigger")
+    void tapsLandsPresentAtResolution() {
+        harness.addToBattlefield(player1, new TroublesomeSpirit());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new WintermoonMesa());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(land.isTapped()).isFalse();
+        Permanent newLand = harness.addToBattlefieldAndReturn(player1, new WintermoonMesa());
+
+        resolveAllTriggers();
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(newLand.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The trigger still taps lands after Troublesome Spirit leaves the battlefield")
+    void triggerResolvesWithoutSource() {
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new TroublesomeSpirit());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new WintermoonMesa());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(spirit);
+        gd.playerGraveyards.get(player1.getId()).add(spirit.getCard());
+
+        resolveAllTriggers();
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The end-step ability triggers and resolves even with no lands")
+    void triggersWithoutLands() {
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new TroublesomeSpirit());
+        Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new WintermoonMesa());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(spirit.isTapped()).isFalse();
+        assertThat(opponentLand.isTapped()).isFalse();
+    }
 }
