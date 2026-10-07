@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -41,7 +40,7 @@ class TrustworthyScoutTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().reveals())
                 .isTrue();
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId).contains(found.getId());
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -64,5 +63,56 @@ class TrustworthyScoutTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId).contains(source.getId());
+    }
+
+    @Test
+    @DisplayName("A player may fail to find even when a Trustworthy Scout is available")
+    void mayDeclineToFindMatchingScout() {
+        TrustworthyScout source = new TrustworthyScout();
+        TrustworthyScout available = new TrustworthyScout();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(source));
+        harness.setLibrary(player1, List.of(available));
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId).containsExactly(available.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId).contains(source.getId());
+    }
+
+    @Test
+    @DisplayName("Each activation puts only one Scout into its controller's hand")
+    void findsOnlyOneScoutFromControllersLibrary() {
+        TrustworthyScout source = new TrustworthyScout();
+        TrustworthyScout first = new TrustworthyScout();
+        TrustworthyScout second = new TrustworthyScout();
+        TrustworthyScout opponentsScout = new TrustworthyScout();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setGraveyard(player1, List.of(source));
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setLibrary(player2, List.of(opponentsScout));
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .extracting(Card::getId).containsExactly(first.getId(), second.getId());
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId).containsExactly(second.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId).containsExactly(first.getId());
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getId).containsExactly(opponentsScout.getId());
     }
 }
