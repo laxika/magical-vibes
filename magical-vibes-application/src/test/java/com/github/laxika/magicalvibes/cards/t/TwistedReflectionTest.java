@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -65,6 +65,44 @@ class TwistedReflectionTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Both entwined effects expire at the end of the turn")
+    void entwinedEffectsExpire() {
+        Permanent bears = addCreature(new GrizzlyBears());
+        Permanent turtle = addCreature(new HornedTurtle());
+
+        cast(new int[]{0, 1}, List.of(bears.getId(), turtle.getId()), true);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, turtle)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, turtle)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Entwining on one creature puts it in the graveyard if its switched toughness is negative")
+    void entwiningKillsSharedTargetWithNegativeToughness() {
+        Permanent bears = addCreature(new GrizzlyBears());
+
+        cast(new int[]{0, 1}, List.of(bears.getId(), bears.getId()), true);
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A later power reduction applies before an earlier power and toughness switch")
+    void laterPowerReductionReducesSwitchedToughness() {
+        Permanent turtle = addCreature(new HornedTurtle());
+        cast(new int[]{1}, List.of(turtle.getId()), false);
+
+        cast(new int[]{0}, List.of(turtle.getId()), false);
+
+        harness.assertNotOnBattlefield(player2, "Horned Turtle");
+        harness.assertInGraveyard(player2, "Horned Turtle");
     }
 
     @Test
