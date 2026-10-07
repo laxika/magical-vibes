@@ -110,4 +110,72 @@ class StrongholdBiologistTest extends BaseCardTest {
         ).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+
+    @Test
+    @DisplayName("Cannot activate while Stronghold Biologist has summoning sickness")
+    void cannotActivateWhileSummoningSick() {
+        Permanent biologist = addCreatureReady(player1, new StrongholdBiologist());
+        biologist.setSummoningSick(true);
+        harness.setHand(player1, List.of(new AccumulatedKnowledge()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        Mossdog spell = new Mossdog();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, spell, "{G}");
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 0, 0, null, spell.getId())
+        ).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(biologist.isTapped()).isFalse();
+        harness.assertInHand(player1, "Accumulated Knowledge");
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's creature spell")
+    void countersOwnCreatureSpell() {
+        addCreatureReady(player1, new StrongholdBiologist());
+        Mossdog spell = new Mossdog();
+        harness.forceActivePlayer(player1);
+        harness.castFromHand(player1, spell, "{G}");
+        harness.setHand(player1, List.of(new AccumulatedKnowledge()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, spell.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Mossdog");
+        harness.assertInGraveyard(player1, "Accumulated Knowledge");
+        harness.assertNotOnBattlefield(player1, "Mossdog");
+    }
+
+    @Test
+    @DisplayName("Tap and discard costs are paid before the counter ability resolves")
+    void paysCostsBeforeResolutionAndCanDiscardCreature() {
+        Permanent biologist = addCreatureReady(player1, new StrongholdBiologist());
+        harness.setHand(player1, List.of(new Mossdog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        Mossdog spell = new Mossdog();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, spell, "{G}");
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, 0, null, spell.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(biologist.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Mossdog");
+        harness.assertNotInHand(player1, "Mossdog");
+        harness.assertNotInGraveyard(player2, "Mossdog");
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Mossdog");
+    }
 }
