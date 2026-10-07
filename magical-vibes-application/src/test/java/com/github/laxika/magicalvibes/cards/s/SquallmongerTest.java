@@ -87,4 +87,36 @@ class SquallmongerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("An opponent can activate a tapped Squallmonger using colored mana")
+    void opponentCanActivateTappedSourceWithColoredMana() {
+        Permanent squallmonger = harness.addToBattlefieldAndReturn(player1, new Squallmonger());
+        squallmonger.setTapped(true);
+        harness.addToBattlefield(player1, new CloudSprite());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Cloud Sprite");
+        assertThat(squallmonger.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The activating opponent must pay even when the source controller has mana")
+    void opponentCannotUseSourceControllersMana() {
+        harness.addToBattlefield(player1, new Squallmonger());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
+    }
 }
