@@ -91,4 +91,64 @@ class ThunderscapeApprenticeTest extends BaseCardTest {
     private Permanent addReadyApprentice() {
         return addCreatureReady(player1, new ThunderscapeApprentice());
     }
+
+    @Test
+    @DisplayName("The life-loss ability can target its controller")
+    void canTargetController() {
+        addReadyApprentice();
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The boost ability can target the Apprentice itself")
+    void canBoostItself() {
+        Permanent apprentice = addReadyApprentice();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 1, null, apprentice.getId());
+        harness.passBothPriorities();
+
+        assertThat(apprentice.isTapped()).isTrue();
+        assertThat(apprentice.getPowerModifier()).isEqualTo(1);
+        assertThat(apprentice.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents both tap abilities")
+    void summoningSicknessPreventsBothAbilities() {
+        Permanent apprentice = harness.addToBattlefieldAndReturn(player1, new ThunderscapeApprentice());
+        apprentice.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, apprentice.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(apprentice.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Life loss resolves even if the Apprentice leaves the battlefield")
+    void lifeLossResolvesWithoutSource() {
+        Permanent apprentice = addReadyApprentice();
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(apprentice);
+        gd.playerGraveyards.get(player1.getId()).add(apprentice.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
 }
