@@ -49,4 +49,67 @@ class SurgicalMetamorphTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castArtifact(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void decliningToCopyPutsTheZeroToughnessCreatureInTheGraveyard() {
+        harness.addToBattlefield(player1, new Island());
+        harness.setHand(player1, List.of(new SurgicalMetamorph()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Surgical Metamorph");
+        harness.assertInGraveyard(player1, "Surgical Metamorph");
+        harness.assertOnBattlefield(player1, "Island");
+    }
+
+    @Test
+    void emptyBattlefieldLeavesNoCopyAndTheCreatureDies() {
+        harness.setHand(player1, List.of(new SurgicalMetamorph()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Surgical Metamorph");
+        harness.assertInGraveyard(player1, "Surgical Metamorph");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void copyingOwnTappedIslandEntersUntappedAndCanImmediatelyProduceMana() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new Island());
+        original.setTapped(true);
+        harness.setHand(player1, List.of(new SurgicalMetamorph()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, original.getId());
+
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).get(1);
+        assertThat(copy.isTapped()).isFalse();
+        assertThat(copy.getCard().hasType(CardType.LAND)).isTrue();
+        assertThat(copy.getCard().hasType(CardType.ARTIFACT)).isTrue();
+        assertThat(copy.getCard().hasType(CardType.CREATURE)).isFalse();
+        harness.tapPermanent(player1, 1);
+        assertThat(copy.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    void nonStartingPlayerStillNeedsBlueMana() {
+        gd.activePlayerId = player2.getId();
+        harness.setHand(player2, List.of(new SurgicalMetamorph()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castArtifact(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
