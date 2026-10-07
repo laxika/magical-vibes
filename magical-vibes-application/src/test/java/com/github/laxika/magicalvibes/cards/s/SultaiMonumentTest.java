@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -27,12 +27,9 @@ class SultaiMonumentTest extends BaseCardTest {
     @Test
     @DisplayName("The enter-the-battlefield ability searches for a Swamp, Forest, or Island")
     void searchesForASultaiBasicLand() {
-        harness.setHand(player1, List.of(new SultaiMonument()));
         harness.setLibrary(player1, new ArrayList<>(List.of(
                 new Swamp(), new Forest(), new Island(), new Mountain(), new Plains())));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new SultaiMonument(), "{2}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -43,10 +40,8 @@ class SultaiMonumentTest extends BaseCardTest {
                 .containsExactlyInAnyOrder("Swamp", "Forest", "Island");
 
         String chosenName = search.params().cards().getFirst().getName();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .extracting(Card::getName)
-                .contains(chosenName);
+        harness.handleCardChosen(player1, 0);
+        harness.assertInHand(player1, chosenName);
     }
 
     @Test
@@ -91,5 +86,95 @@ class SultaiMonumentTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canFailToFindEvenWhenAnEligibleLandExists() {
+        harness.setLibrary(player1, List.of(new Swamp(), new Forest()));
+        harness.castFromHand(player1, new SultaiMonument(), "{2}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Sultai Monument");
+    }
+
+    @Test
+    void searchCompletesWhenNoEligibleLandExists() {
+        harness.setLibrary(player1, List.of(new Mountain(), new Plains()));
+        harness.castFromHand(player1, new SultaiMonument(), "{2}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Sultai Monument");
+    }
+
+    @Test
+    void sacrificeIsPaidBeforeTokensResolve() {
+        harness.addToBattlefield(player1, new SultaiMonument());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Sultai Monument");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2)
+                .allSatisfy(token -> {
+                    assertThat(token.getCard().isToken()).isTrue();
+                    assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
+                    assertThat(token.isTapped()).isFalse();
+                });
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        harness.addToBattlefield(player1, new SultaiMonument());
+        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Sultai Monument");
+        harness.assertNotInGraveyard(player1, "Sultai Monument");
+    }
+
+    @Test
+    void cannotActivateWithASpellOnTheStack() {
+        harness.addToBattlefield(player1, new SultaiMonument());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new SultaiMonument(), "{2}");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Sultai Monument");
+        harness.assertNotInGraveyard(player1, "Sultai Monument");
+        assertThat(gd.stack).hasSize(1);
     }
 }
