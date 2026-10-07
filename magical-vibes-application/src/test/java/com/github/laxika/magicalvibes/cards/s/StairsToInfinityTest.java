@@ -57,7 +57,7 @@ class StairsToInfinityTest extends BaseCardTest {
 
         when(die.roll()).thenReturn(com.github.laxika.magicalvibes.model.planar.PlanarDieResult.BLANK);
         harness.inMutationScope(() -> planar.roll(gd, player1.getId()));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(before + 1);
     }
@@ -65,10 +65,11 @@ class StairsToInfinityTest extends BaseCardTest {
     @Test
     void chaosRevealsTopPlanarCardAndAcceptingPutsItOnBottom() {
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.planechase.deck).containsExactly(revealed, belowRevealed);
+        assertThat(gameLogContains("The top card of the planar deck is revealed: Panopticon.")).isTrue();
 
         harness.handleMayAbilityChosen(player1, true);
 
@@ -78,7 +79,7 @@ class StairsToInfinityTest extends BaseCardTest {
     @Test
     void chaosLeavesRevealedPlanarCardOnTopWhenDeclined() {
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.planechase.deck).containsExactly(revealed, belowRevealed);
@@ -100,5 +101,82 @@ class StairsToInfinityTest extends BaseCardTest {
         assertThat(gd.cleanupDiscardPending).isFalse();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(8);
+    }
+
+    @Test
+    void planarRollDrawsForTheNewActivePlayerOnly() {
+        harness.forceActivePlayer(player2);
+        Card drawn = new Forest();
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(drawn, new Forest()));
+        int otherHandSize = gd.playerHands.get(player1.getId()).size();
+        when(die.roll()).thenReturn(com.github.laxika.magicalvibes.model.planar.PlanarDieResult.BLANK);
+
+        harness.inMutationScope(() -> planar.roll(gd, player2.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawn);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(otherHandSize);
+    }
+
+    @Test
+    void rollingAnOrdinaryDieDoesNotDrawACard() {
+        int before = gd.playerHands.get(player1.getId()).size();
+        harness.inMutationScope(() -> GameTestEngineContext.get()
+                .getBean(TriggerCollectionService.class)
+                .checkControllerRollsOneOrMoreDiceTriggers(gd, player1.getId(), 1, 6));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(before);
+    }
+
+    @Test
+    void chaosWithAnEmptyPlanarDeckDoesNotOfferAChoice() {
+        gd.planechase.deck.clear();
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.planechase.deck).isEmpty();
+    }
+
+    @Test
+    void chaosCanPutTheOnlyPlanarCardOnTheBottom() {
+        gd.planechase.deck.removeLast();
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.planechase.deck).containsExactly(revealed);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void faceUpPlaneAlsoRemovesMaximumHandSizeForItsController() {
+        harness.setHand(player1, java.util.stream.IntStream.range(0, 8)
+                .mapToObj(i -> (Card) new Forest()).toList());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.cleanupDiscardPending).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(8);
+    }
+
+    @Test
+    void maximumHandSizeReturnsWhenThePlaneIsNoLongerFaceUp() {
+        harness.setHand(player1, java.util.stream.IntStream.range(0, 8)
+                .mapToObj(i -> (Card) new Forest()).toList());
+        gd.planechase.faceUp.clear();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.cleanupDiscardPending).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
     }
 }
