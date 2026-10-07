@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.EnvironmentalSciences;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.o.Opt;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TestOfTalents.class, Forest.class, GrizzlyBears.class, Opt.class, Plains.class})
+@CardUsed({TestOfTalents.class, Forest.class, GrizzlyBears.class, Opt.class, Plains.class, EnvironmentalSciences.class})
 class TestOfTalentsTest extends BaseCardTest {
 
     @Test
@@ -39,8 +40,7 @@ class TestOfTalentsTest extends BaseCardTest {
 
         harness.castInstant(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, castCopy.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, castCopy.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction())
@@ -55,6 +55,64 @@ class TestOfTalentsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .filteredOn(card -> card == drawnCard || card == remainingLibraryCard)
                 .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Counters a sorcery and exiles selected copies from all three zones")
+    void exilesSelectedCopiesFromAllZones() {
+        EnvironmentalSciences castCopy = new EnvironmentalSciences();
+        EnvironmentalSciences handCopy = new EnvironmentalSciences();
+        EnvironmentalSciences graveyardCopy = new EnvironmentalSciences();
+        EnvironmentalSciences libraryCopy = new EnvironmentalSciences();
+        TestOfTalents replacement = new TestOfTalents();
+        TestOfTalents ownCopy = new TestOfTalents();
+
+        harness.setHand(player1, List.of(castCopy, handCopy));
+        harness.setGraveyard(player1, List.of(graveyardCopy));
+        harness.setLibrary(player1, List.of(libraryCopy, replacement));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player2, List.of(ownCopy));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castSorcery(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, castCopy.getId());
+        harness.handleMultipleCardsChosen(player2,
+                List.of(castCopy.getId(), handCopy.getId(), graveyardCopy.getId(), libraryCopy.getId()));
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .containsExactlyInAnyOrder(castCopy, handCopy, graveyardCopy, libraryCopy);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(replacement);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(ownCopy);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Choosing zero cards leaves matching cards in their zones and draws nothing")
+    void canChooseZeroCards() {
+        EnvironmentalSciences castCopy = new EnvironmentalSciences();
+        EnvironmentalSciences handCopy = new EnvironmentalSciences();
+        EnvironmentalSciences libraryCopy = new EnvironmentalSciences();
+        harness.setHand(player1, List.of(castCopy, handCopy));
+        harness.setLibrary(player1, List.of(libraryCopy));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player2, List.of(new TestOfTalents()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castSorcery(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, castCopy.getId());
+        harness.handleMultipleCardsChosen(player2, List.of());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(castCopy);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCopy);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCopy);
+        harness.assertLife(player1, 20);
     }
 
     @Test
