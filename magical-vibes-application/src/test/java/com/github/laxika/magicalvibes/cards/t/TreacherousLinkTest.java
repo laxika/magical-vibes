@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GhituFireEater;
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
+import com.github.laxika.magicalvibes.cards.p.Pariah;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TreacherousLink.class, GiantCockroach.class, GhituFireEater.class, ThranLens.class})
+@CardUsed({TreacherousLink.class, GiantCockroach.class, GhituFireEater.class, ThranLens.class, Pariah.class})
 class TreacherousLinkTest extends BaseCardTest {
 
     @Test
@@ -42,15 +42,7 @@ class TreacherousLinkTest extends BaseCardTest {
         Permanent link = castTreacherousLink(target);
         Permanent attacker = addCreatureReady(player1, new GiantCockroach());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(indexOf(player1, attacker)));
-
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, attacker)));
         gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(indexOf(player2, target), indexOf(player1, attacker))));
         harness.passBothPriorities();
@@ -86,6 +78,42 @@ class TreacherousLinkTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Redirects damage to your own enchanted creature to you")
+    void redirectsDamageToOwnCreature() {
+        Permanent target = addCreatureReady(player1, new GiantCockroach());
+        Permanent fireEater = addCreatureReady(player2, new GhituFireEater());
+        castTreacherousLink(target);
+
+        harness.activateAbility(player2, indexOf(player2, fireEater), null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Pariah redirects damage arriving at the controller through Treacherous Link")
+    void redirectedDamageStillAppliesPariah() {
+        Permanent target = addCreatureReady(player2, new GiantCockroach());
+        Permanent recipient = addCreatureReady(player2, new GiantCockroach());
+        Permanent fireEater = addCreatureReady(player1, new GhituFireEater());
+        castTreacherousLink(target);
+        harness.setHand(player2, List.of(new Pariah()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player2, 0, recipient.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, indexOf(player1, fireEater), null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target).doesNotContain(recipient);
     }
 
     private Permanent castTreacherousLink(Permanent target) {
