@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.cards.r.RaptorCompanion;
+import com.github.laxika.magicalvibes.cards.p.PillarOfOrigins;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,31 +16,19 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TerritorialHammerskull.class, RaptorCompanion.class, PillarOfOrigins.class})
 class TerritorialHammerskullTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    
-
-    @Test
-    @DisplayName("Has a target filter restricting to opponent creatures")
-    void hasTargetFilter() {
-        TerritorialHammerskull card = new TerritorialHammerskull();
-
-        assertThat(card.getSpellTargets()).hasSize(1);
-    }
-
-    // ===== Attack trigger =====
 
     @Nested
     @DisplayName("Attack trigger")
+    @CardUsed({TerritorialHammerskull.class, RaptorCompanion.class, PillarOfOrigins.class})
     class AttackTrigger {
 
         @Test
         @DisplayName("Attacking queues attack trigger for target selection")
         void attackTriggerQueuesForTargetSelection() {
-            Permanent hammerskull = addReadyHammerskull(player1);
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            addCreatureReady(player1, new TerritorialHammerskull());
+            harness.addToBattlefield(player2, new RaptorCompanion());
 
             declareAttackers(List.of(0));
 
@@ -52,9 +43,8 @@ class TerritorialHammerskullTest extends BaseCardTest {
             harness.setLife(player1, 20);
             harness.setLife(player2, 20);
 
-            Permanent hammerskull = addReadyHammerskull(player1);
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
+            addCreatureReady(player1, new TerritorialHammerskull());
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
             assertThat(bears.isTapped()).isFalse();
 
             declareAttackers(List.of(0));
@@ -66,26 +56,28 @@ class TerritorialHammerskullTest extends BaseCardTest {
 
         @Test
         @DisplayName("Does not tap own creatures — only opponent's creatures are valid targets")
+        @CardUsed({TerritorialHammerskull.class, RaptorCompanion.class, PillarOfOrigins.class})
         void cannotTargetOwnCreatures() {
             harness.setLife(player1, 20);
             harness.setLife(player2, 20);
 
-            Permanent hammerskull = addReadyHammerskull(player1);
-            // Add a second creature for player1 (own creature)
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            // Add opponent creature
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            Permanent ownBears = findPermanent(player1, "Grizzly Bears");
-            Permanent opponentBears = gd.playerBattlefields.get(player2.getId()).getFirst();
+            addCreatureReady(player1, new TerritorialHammerskull());
+            Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new RaptorCompanion());
+            Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
+            Permanent artifact = harness.addToBattlefieldAndReturn(player2, new PillarOfOrigins());
+            artifact.setChosenSubtype(CardSubtype.DINOSAUR);
 
             declareAttackers(List.of(0));
-            // Choose the opponent's creature
+            PendingInteraction.PermanentChoice choice =
+                    (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+            assertThat(choice.validPermanentIds()).containsExactly(opponentBears.getId());
             harness.handlePermanentChosen(player1, opponentBears.getId());
             harness.passBothPriorities(); // resolve attack trigger
 
             // Opponent creature is tapped, own creature is not
             assertThat(opponentBears.isTapped()).isTrue();
             assertThat(ownBears.isTapped()).isFalse();
+            assertThat(artifact.isTapped()).isFalse();
         }
 
         @Test
@@ -94,9 +86,8 @@ class TerritorialHammerskullTest extends BaseCardTest {
             harness.setLife(player1, 20);
             harness.setLife(player2, 20);
 
-            Permanent hammerskull = addReadyHammerskull(player1);
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
+            addCreatureReady(player1, new TerritorialHammerskull());
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
             bears.tap();
 
             declareAttackers(List.of(0));
@@ -112,9 +103,8 @@ class TerritorialHammerskullTest extends BaseCardTest {
             harness.setLife(player1, 20);
             harness.setLife(player2, 20);
 
-            Permanent hammerskull = addReadyHammerskull(player1);
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
+            addCreatureReady(player1, new TerritorialHammerskull());
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
 
             declareAttackers(List.of(0));
             harness.handlePermanentChosen(player1, bears.getId());
@@ -122,14 +112,49 @@ class TerritorialHammerskullTest extends BaseCardTest {
             assertThat(gd.stack).isNotEmpty();
             assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Territorial Hammerskull");
         }
+
+        @Test
+        @DisplayName("Attacking without opposing creatures requires no target choice")
+        void noLegalTarget() {
+            addCreatureReady(player1, new TerritorialHammerskull());
+            Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new RaptorCompanion());
+
+            declareAttackers(List.of(0));
+
+            assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+            assertThat(gd.stack).isEmpty();
+            assertThat(ownCreature.isTapped()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Trigger still taps its target after Hammerskull leaves the battlefield")
+        void sourceLeavingDoesNotStopTrigger() {
+            Permanent source = addCreatureReady(player1, new TerritorialHammerskull());
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, target.getId());
+
+            gd.playerBattlefields.get(player1.getId()).remove(source);
+            gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+            harness.passBothPriorities();
+
+            assertThat(target.isTapped()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Target that becomes controlled by the attacker is no longer legal")
+        void targetBecomingFriendlyIsNotTapped() {
+            addCreatureReady(player1, new TerritorialHammerskull());
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, target.getId());
+
+            gd.playerBattlefields.get(player2.getId()).remove(target);
+            gd.playerBattlefields.get(player1.getId()).add(target);
+            harness.passBothPriorities();
+
+            assertThat(target.isTapped()).isFalse();
+        }
     }
 
-    // ===== Helpers =====
-
-    private Permanent addReadyHammerskull(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent perm = new Permanent(new TerritorialHammerskull());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }
