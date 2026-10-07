@@ -94,6 +94,29 @@ class ThunderOfHoovesTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 
+    @Test
+    @DisplayName("Uses the full Beast count even when the damage kills every Beast")
+    void lethalDamageDoesNotReduceTheCountForOtherRecipients() {
+        for (int i = 0; i < 2; i++) {
+            harness.addToBattlefield(player1, new BarkhideMauler());
+            harness.addToBattlefield(player2, new BarkhideMauler());
+        }
+        harness.addToBattlefield(player2, new IronfistCrusher());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        cast();
+
+        harness.assertNotOnBattlefield(player1, "Barkhide Mauler");
+        harness.assertNotOnBattlefield(player2, "Barkhide Mauler");
+        harness.assertInGraveyard(player1, "Barkhide Mauler");
+        harness.assertInGraveyard(player2, "Barkhide Mauler");
+        harness.assertNotOnBattlefield(player2, "Ironfist Crusher");
+        harness.assertInGraveyard(player2, "Ironfist Crusher");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(16);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+    }
+
     private void cast() {
         harness.castFromHand(player1, new ThunderOfHooves(), "{3}{R}");
         harness.passBothPriorities();
