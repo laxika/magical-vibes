@@ -3,9 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -21,18 +19,14 @@ class TriplicateTitanTest extends BaseCardTest {
     @Test
     void deathTriggerCreatesThreeDistinctGolemTokens() {
         harness.addToBattlefield(player1, new TriplicateTitan());
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.stack).hasSize(3);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(findPermanents(player1, "Golem")).isEmpty();
 
         harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
 
         List<Permanent> tokens = findPermanents(player1, "Golem");
         assertThat(tokens).hasSize(3);
@@ -48,5 +42,40 @@ class TriplicateTitanTest extends BaseCardTest {
         assertThat(tokens).anyMatch(token -> token.hasKeyword(Keyword.FLYING));
         assertThat(tokens).anyMatch(token -> token.hasKeyword(Keyword.VIGILANCE));
         assertThat(tokens).anyMatch(token -> token.hasKeyword(Keyword.TRAMPLE));
+    }
+
+    @Test
+    void lethalDamageCreatesTokensForTheDyingTitansController() {
+        Permanent titan = harness.addToBattlefieldAndReturn(player2, new TriplicateTitan());
+        titan.setMarkedDamage(9);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player2, "Triplicate Titan")).isEmpty();
+        assertThat(findPermanents(player2, "Golem")).hasSize(3);
+        assertThat(findPermanents(player1, "Golem")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void simultaneousTitanDeathsProduceOneCompleteTokenGroupPerResolution() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new TriplicateTitan());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new TriplicateTitan());
+        first.setMarkedDamage(9);
+        second.setMarkedDamage(9);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Golem")).hasSize(3);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Golem")).hasSize(6);
+        assertThat(gd.stack).isEmpty();
     }
 }
