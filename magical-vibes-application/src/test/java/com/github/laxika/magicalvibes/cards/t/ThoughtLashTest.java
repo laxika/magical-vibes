@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.k.KrovikanHorror;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -85,7 +87,7 @@ class ThoughtLashTest extends BaseCardTest {
     @DisplayName("An empty library makes the upkeep unpayable — sacrifice with no prompt")
     void emptyLibraryAutoSacrifices() {
         Permanent lash = harness.addToBattlefieldAndReturn(player1, new ThoughtLash());
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -159,10 +161,113 @@ class ThoughtLashTest extends BaseCardTest {
     @Test
     void activatedAbilityCannotBeUsedWithAnEmptyLibrary() {
         harness.addToBattlefield(player1, new ThoughtLash());
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void activationExilesTheTopCardBeforeResolution() {
+        harness.addToBattlefield(player1, new ThoughtLash());
+        Card topCard = new KrovikanHorror();
+        Card nextCard = new ThoughtLash();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        assertThat(gd.exiledCards).extracting(e -> e.card().getId()).contains(topCard.getId());
+        assertThat(gd.stack).isNotEmpty();
+
+        harness.passBothPriorities();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+    }
+
+    @Test
+    void insufficientCardsForUpkeepAreNotPartiallyPaid() {
+        Permanent lash = harness.addToBattlefieldAndReturn(player1, new ThoughtLash());
+        lash.setCounterCount(CounterType.AGE, 1);
+        Card remainingCard = new KrovikanHorror();
+        harness.setLibrary(player1, List.of(remainingCard));
+        List<Card> opponentLibrary = List.copyOf(gd.playerDecks.get(player2.getId()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Thought Lash");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.stack).isNotEmpty();
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).extracting(e -> e.card().getId()).containsExactly(remainingCard.getId());
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(opponentLibrary);
+    }
+
+    @Test
+    void payingUpkeepWithTheLastCardKeepsThoughtLash() {
+        Permanent lash = harness.addToBattlefieldAndReturn(player1, new ThoughtLash());
+        Card lastCard = new KrovikanHorror();
+        harness.setLibrary(player1, List.of(lastCard));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(lash);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).extracting(e -> e.card().getId()).containsExactly(lastCard.getId());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void preventionIsConsumedByTheFirstNoncombatDamage() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new ThoughtLash());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        for (int i = 0; i < 2; i++) {
+            harness.addToBattlefield(player2, new KrovikanHorror());
+            harness.addMana(player2, ManaColor.BLACK, 1);
+            harness.activateAbility(player2, 0, null, player1.getId());
+            harness.passBothPriorities();
+            harness.assertLife(player1, 20 - i);
+        }
+    }
+
+    @Test
+    void unusedPreventionExpiresAtEndOfTurn() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new ThoughtLash());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        attackWithKrovikanHorror();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    void opponentsUpkeepDoesNotTriggerCumulativeUpkeep() {
+        Permanent lash = harness.addToBattlefieldAndReturn(player1, new ThoughtLash());
+        List<Card> library = List.copyOf(gd.playerDecks.get(player1.getId()));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(lash.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library);
     }
 
     private void attackWithKrovikanHorror() {
