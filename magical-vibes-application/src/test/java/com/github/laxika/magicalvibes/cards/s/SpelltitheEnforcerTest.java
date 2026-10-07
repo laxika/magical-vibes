@@ -75,14 +75,18 @@ class SpelltitheEnforcerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An opponent with no permanents is not prompted")
-    void opponentWithoutPermanentsIsNotPrompted() {
+    @DisplayName("An opponent with no permanents may still pay {1}")
+    void opponentWithoutPermanentsMayStillPay() {
         harness.addToBattlefield(player1, new SpelltitheEnforcer());
-        castOptForPlayer2(1);
+        castOptForPlayer2(2);
 
-        resolveAllTriggers();
+        harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
     @Test
@@ -95,10 +99,46 @@ class SpelltitheEnforcerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
-    private void castOptForPlayer2(int manaAmount) {
+    @Test
+    @DisplayName("The tax resolves before an opponent's permanent spell enters the battlefield")
+    void permanentSpellResolvesAfterSacrifice() {
+        harness.addToBattlefield(player1, new SpelltitheEnforcer());
+        harness.addToBattlefield(player2, new SpelltitheEnforcer());
         harness.forceActivePlayer(player2);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new SpelltitheEnforcer(), "{3}{W}{W}");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Spelltithe Enforcer");
+        harness.assertOnBattlefield(player2, "Spelltithe Enforcer");
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each Spelltithe Enforcer requires a separate payment for the same spell")
+    void multipleEnforcersRequireSeparatePayments() {
+        harness.addToBattlefield(player1, new SpelltitheEnforcer());
+        harness.addToBattlefield(player1, new SpelltitheEnforcer());
+        harness.addToBattlefield(player2, new Millstone());
+        castOptForPlayer2(3);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        harness.assertOnBattlefield(player2, "Millstone");
+    }
+
+    private void castOptForPlayer2(int manaAmount) {
         harness.castFromHand(player2, new Opt(), "{U}");
         if (manaAmount > 1) {
             harness.addMana(player2, ManaColor.COLORLESS, manaAmount - 1);
