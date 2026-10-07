@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -21,7 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         GrizzlyBears.class, HolyDay.class})
 class SpiritLinkTest extends BaseCardTest {
 
-    // ===== Unblocked attacker deals damage to player =====
 
     @Test
     @DisplayName("Controller gains life when enchanted creature deals combat damage to player")
@@ -68,7 +68,6 @@ class SpiritLinkTest extends BaseCardTest {
         harness.assertLife(player1, 14);
     }
 
-    // ===== Blocked attacker deals damage to blocker =====
 
     @Test
     @DisplayName("Controller gains life when enchanted creature deals combat damage to blocker")
@@ -91,7 +90,6 @@ class SpiritLinkTest extends BaseCardTest {
         harness.assertLife(player1, 22);
     }
 
-    // ===== Blocker with Spirit Link =====
 
     @Test
     @DisplayName("Controller gains life when enchanted blocker deals combat damage")
@@ -115,7 +113,6 @@ class SpiritLinkTest extends BaseCardTest {
         harness.assertLife(player2, 22);
     }
 
-    // ===== Spirit Link on opponent's creature =====
 
     @Test
     @DisplayName("Aura controller gains life, not creature controller")
@@ -144,7 +141,6 @@ class SpiritLinkTest extends BaseCardTest {
         harness.assertLife(player1, 20);
     }
 
-    // ===== No damage, no life gain =====
 
     @Test
     @DisplayName("No life gained when enchanted creature does not deal damage")
@@ -293,7 +289,6 @@ class SpiritLinkTest extends BaseCardTest {
         harness.assertLife(player1, 22);
     }
 
-    // ===== Logs =====
 
     @Test
     @DisplayName("Spirit Link life gain is logged")
@@ -308,7 +303,6 @@ class SpiritLinkTest extends BaseCardTest {
         assertThat(gameLogContains("Alice gains 2 life.")).isTrue();
     }
 
-    // ===== Targeting restriction =====
 
     @Test
     @DisplayName("Resolving Spirit Link attaches it to target creature")
@@ -341,7 +335,63 @@ class SpiritLinkTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    // ===== Helpers =====
+
+    @Test
+    @DisplayName("Each Spirit Link gains life independently from the same damage event")
+    void multipleSpiritLinksEachGainLife() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setAttacking(true);
+        attachSpiritLink(player1, bears);
+        attachSpiritLink(player1, bears);
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Damage to the Aura controller is followed by triggered life gain")
+    void damageToAuraControllerStillTriggersLifeGain() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setAttacking(true);
+        attachSpiritLink(player2, bears);
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Spirit Link cannot save its controller from lethal damage")
+    void lethalDamageEndsGameBeforeLifeGain() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 2);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setAttacking(true);
+        attachSpiritLink(player2, bears);
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player2, 0);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
 
     private Permanent attachSpiritLink(Player controller, Permanent target) {
         Permanent aura = harness.addToBattlefieldAndReturn(controller, new SpiritLink());
