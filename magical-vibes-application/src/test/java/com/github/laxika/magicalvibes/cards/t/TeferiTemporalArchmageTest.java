@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TeferiTemporalArchmage.class, TeferiTemporalPilgrim.class, GrizzlyBears.class, Forest.class})
 class TeferiTemporalArchmageTest extends BaseCardTest {
@@ -80,11 +82,125 @@ class TeferiTemporalArchmageTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
+    @Test
+    void plusOneWithOneCardPutsItIntoHandWithoutDrawing() {
+        addReadyArchmage(player1, 3);
+        Permanent pilgrim = addReadyPilgrim(player1);
+        Card card = new Forest();
+        harness.setLibrary(player1, List.of(card));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(card);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(pilgrim.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void plusOneWithEmptyLibraryDoesNotLoseTheGame() {
+        Permanent teferi = addReadyArchmage(player1, 3);
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(teferi.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void minusOneMayChooseNoTargets() {
+        Permanent teferi = addReadyArchmage(player1, 3);
+        Permanent land = addTapped(player1, new Forest());
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(teferi.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void minusOneUntapsFourTargetsIncludingItself() {
+        Permanent teferi = addReadyArchmage(player1, 3);
+        teferi.tap();
+        Permanent first = addTapped(player1, new Forest());
+        Permanent second = addTapped(player2, new Forest());
+        Permanent third = addTapped(player2, new Forest());
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 1,
+                List.of(teferi.getId(), first.getId(), second.getId(), third.getId()));
+        harness.passBothPriorities();
+
+        assertThat(List.of(teferi, first, second, third)).allMatch(p -> !p.isTapped());
+    }
+
+    @Test
+    void emblemDoesNotAllowTwoLoyaltyActivationsInOneTurn() {
+        addReadyArchmage(player1, 11);
+        Permanent pilgrim = addReadyPilgrim(player1);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(pilgrim.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+    }
+
+    @Test
+    void emblemAllowsActivationInResponseToAnotherLoyaltyAbility() {
+        addReadyArchmage(player1, 10);
+        addReadyPilgrim(player1);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        Permanent replacement = addReadyArchmage(player1, 5);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(replacement.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
+    }
+
+    @Test
+    void emblemAllowsTheSamePlaneswalkerOnConsecutivePlayersTurns() {
+        addReadyArchmage(player1, 10);
+        Permanent pilgrim = addReadyPilgrim(player1);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(pilgrim.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+
+        harness.performUntapStep(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(pilgrim.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+    }
+
     private Permanent addReadyArchmage(Player player, int loyalty) {
-        Permanent permanent = new Permanent(new TeferiTemporalArchmage());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new TeferiTemporalArchmage());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -92,17 +208,15 @@ class TeferiTemporalArchmageTest extends BaseCardTest {
     }
 
     private Permanent addReadyPilgrim(Player player) {
-        Permanent permanent = new Permanent(new TeferiTemporalPilgrim());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new TeferiTemporalPilgrim());
         permanent.setCounterCount(CounterType.LOYALTY, 1);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
     private Permanent addTapped(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.tap();
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
