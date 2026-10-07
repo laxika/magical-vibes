@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.e.EnduringRenewal;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -65,5 +66,83 @@ class TemporaryTruceTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handleXValueChosen(player1, 3))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("Both players choose their draw counts before either player draws")
+    void drawChoicesPrecedeDraws() {
+        castTemporaryTruce();
+
+        harness.handleXValueChosen(player1, 2);
+        int cardsInHandBeforeOpponentChooses = gd.playerHands.get(player1.getId()).size();
+        harness.handleXValueChosen(player2, 0);
+
+        assertThat(cardsInHandBeforeOpponentChooses).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 24);
+    }
+
+    @Test
+    @DisplayName("Life gain waits until both players have completed the draw instruction")
+    void lifeGainFollowsAllDraws() {
+        castTemporaryTruce();
+
+        harness.handleXValueChosen(player1, 0);
+        int lifeBeforeOpponentChooses = gd.getLife(player1.getId());
+        harness.handleXValueChosen(player2, 2);
+
+        assertThat(lifeBeforeOpponentChooses).isEqualTo(20);
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Both players may decline every draw and each gain four life")
+    void bothDeclineDrawing() {
+        castTemporaryTruce();
+
+        harness.handleXValueChosen(player1, 0);
+        harness.handleXValueChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 24);
+    }
+
+    @Test
+    @DisplayName("Cards drawn earlier in the turn do not reduce the life gained")
+    void earlierDrawsDoNotCount() {
+        castTemporaryTruce();
+        gd.cardsDrawnThisTurn.put(player1.getId(), 3);
+        gd.cardsDrawnThisTurn.put(player2.getId(), 4);
+
+        harness.handleXValueChosen(player1, 1);
+        harness.handleXValueChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 24);
+    }
+
+    @Test
+    @CardUsed({EnduringRenewal.class})
+    @DisplayName("Replaced draws count as zero cards drawn for life gain")
+    void replacedDrawsGainLife() {
+        harness.addToBattlefield(player1, new EnduringRenewal());
+        castTemporaryTruce();
+
+        harness.handleXValueChosen(player1, 2);
+        harness.handleXValueChosen(player2, 2);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof GrizzlyBears).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
     }
 }
