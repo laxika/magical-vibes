@@ -103,6 +103,61 @@ class UndercityShadeTest extends BaseCardTest {
         assertThat(artifactBlocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Undercity Shade can pump while tapped and summoning sick")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent shade = addReadyShade(player1);
+        shade.setSummoningSick(true);
+        shade.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(shade.getPowerModifier()).isEqualTo(1);
+        assertThat(shade.getToughnessModifier()).isEqualTo(1);
+        assertThat(shade.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Stacked activations boost only the Shade that activated them")
+    void stackedActivationsBoostOnlyTheirSource() {
+        Permanent otherShade = addReadyShade(player1);
+        Permanent source = addReadyShade(player1);
+        Permanent opposingShade = addReadyShade(player2);
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(source.getPowerModifier()).isZero();
+        assertThat(source.getToughnessModifier()).isZero();
+        resolveAllTriggers();
+
+        assertThat(source.getPowerModifier()).isEqualTo(2);
+        assertThat(source.getToughnessModifier()).isEqualTo(2);
+        assertThat(otherShade.getPowerModifier()).isZero();
+        assertThat(otherShade.getToughnessModifier()).isZero();
+        assertThat(opposingShade.getPowerModifier()).isZero();
+        assertThat(opposingShade.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Nonblack mana cannot pay Undercity Shade's activation cost")
+    void activationRequiresBlackMana() {
+        Permanent shade = addReadyShade(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(shade.getPowerModifier()).isZero();
+        assertThat(shade.getToughnessModifier()).isZero();
+    }
+
     private Permanent addReadyShade(Player player) {
         Permanent shade = addCreatureReady(player, new UndercityShade());
         harness.forceActivePlayer(player);
