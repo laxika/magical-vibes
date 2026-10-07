@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.b.BristlepackSentry;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheGitrogRavenousRide.class, GrizzlyBears.class, Forest.class})
+@CardUsed({TheGitrogRavenousRide.class, GrizzlyBears.class, Forest.class, BristlepackSentry.class})
 class TheGitrogRavenousRideTest extends BaseCardTest {
 
     @Test
@@ -46,5 +47,47 @@ class TheGitrogRavenousRideTest extends BaseCardTest {
                 .allMatch(Permanent::isTapped);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2)
                 .allMatch(card -> card.getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    void canDeclineSacrificingSaddler() {
+        addCreatureReady(player1, new TheGitrogRavenousRide());
+        Permanent saddler = addCreatureReady(player1, new BristlepackSentry());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        declareAttackers(player1, List.of(0));
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saddler);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    void drawsAndChoosesNewlyDrawnLandsWithinOriginalAbility() {
+        addCreatureReady(player1, new TheGitrogRavenousRide());
+        Permanent saddler = addCreatureReady(player1, new BristlepackSentry());
+        Forest first = new Forest();
+        Forest second = new Forest();
+        Forest third = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(first, second, third));
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        declareAttackers(player1, List.of(0));
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, saddler.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second, third);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(second, third);
+        assertThat(findPermanent(player1, "Forest").isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Bristlepack Sentry");
     }
 }
