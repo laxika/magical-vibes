@@ -57,6 +57,93 @@ class SpawnbedProtectorTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Eldrazi Scion")).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Choosing no graveyard target still creates two Scions")
+    void createsScionsWhenChoosingNoTarget() {
+        SpawnbedProtector eldrazi = new SpawnbedProtector();
+        harness.setGraveyard(player1, List.of(eldrazi));
+        castSpawnbedProtector();
+        advanceToEndStep();
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(eldrazi);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(eldrazi);
+        assertThat(findPermanents(player1, "Eldrazi Scion")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("An illegal sole graveyard target prevents Scion creation")
+    void doesNotCreateScionsWhenTargetLeavesGraveyard() {
+        SpawnbedProtector eldrazi = new SpawnbedProtector();
+        harness.setGraveyard(player1, List.of(eldrazi));
+        castSpawnbedProtector();
+        advanceToEndStep();
+
+        harness.handleMultipleCardsChosen(player1, List.of(eldrazi.getId()));
+        harness.setGraveyard(player1, List.of());
+        gd.addToExile(player1.getId(), eldrazi);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(eldrazi);
+        assertThat(findPermanents(player1, "Eldrazi Scion")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The return and Scion creation resolve together")
+    void returnsCardAndCreatesScionsInOneResolution() {
+        SpawnbedProtector eldrazi = new SpawnbedProtector();
+        harness.setGraveyard(player1, List.of(eldrazi));
+        castSpawnbedProtector();
+        advanceToEndStep();
+
+        harness.handleMultipleCardsChosen(player1, List.of(eldrazi.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(eldrazi);
+        assertThat(findPermanents(player1, "Eldrazi Scion")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The ability does not trigger during an opponent's end step")
+    void doesNotTriggerOnOpponentEndStep() {
+        castSpawnbedProtector();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Eldrazi Scion")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the controller's graveyard supplies targets, and only one card returns")
+    void returnsOnlyOneCardFromControllersGraveyard() {
+        SpawnbedProtector first = new SpawnbedProtector();
+        SpawnbedProtector second = new SpawnbedProtector();
+        SpawnbedProtector opponentsCard = new SpawnbedProtector();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setGraveyard(player2, List.of(opponentsCard));
+        castSpawnbedProtector();
+        advanceToEndStep();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(first.getId(), second.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(first).doesNotContain(second, opponentsCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentsCard);
+        assertThat(findPermanents(player1, "Eldrazi Scion")).hasSize(2);
+    }
+
     private void castSpawnbedProtector() {
         harness.setHand(player1, List.of(new SpawnbedProtector()));
         harness.addMana(player1, ManaColor.COLORLESS, 7);
@@ -68,7 +155,7 @@ class SpawnbedProtectorTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 }
