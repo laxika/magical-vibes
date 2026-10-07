@@ -124,6 +124,138 @@ class SplitTailMikoTest extends BaseCardTest {
         assertThat(target.getDamagePreventionShield()).isZero();
     }
 
+    @Test
+    @DisplayName("Cannot activate without white mana")
+    void cannotActivateWithoutWhiteMana() {
+        Permanent miko = addCreatureReady(player1, new SplitTailMiko());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, miko), null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(miko.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent miko = addCreatureReady(player1, new SplitTailMiko());
+        miko.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, miko), null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent miko = harness.addToBattlefieldAndReturn(player1, new SplitTailMiko());
+        miko.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, miko), null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(miko.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can prevent damage to itself")
+    void canPreventDamageToItself() {
+        Permanent miko = addCreatureReady(player1, new SplitTailMiko());
+        activateMiko(miko, miko.getId());
+        harness.setHand(player1, List.of(new FirstVolley()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveInstant(player1, 0, miko.getId());
+
+        assertThat(miko.getMarkedDamage()).isZero();
+        assertThat(miko.getDamagePreventionShield()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Split-Tail Miko");
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Damage is dealt normally once the prevention shield is consumed")
+    void damageAfterShieldIsConsumedIsNotPrevented() {
+        Permanent miko = addCreatureReady(player1, new SplitTailMiko());
+        Permanent target = addCreatureReady(player2, new GnarledMass());
+        activateMiko(miko, target.getId());
+        harness.setHand(player1, List.of(new FirstVolley(), new FirstVolley(), new FirstVolley()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(target.getDamagePreventionShield()).isZero();
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Prevents noncombat damage to its controller across successive spells")
+    void preventsNextTwoNoncombatDamageToController() {
+        Permanent miko = addCreatureReady(player1, new SplitTailMiko());
+        Permanent target = addCreatureReady(player1, new GnarledMass());
+        activateMiko(miko, player1.getId());
+        harness.setHand(player1, List.of(new FirstVolley(), new FirstVolley(), new FirstVolley()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.assertLife(player1, 20);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.assertLife(player1, 20);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertLife(player1, 19);
+        harness.assertInGraveyard(player1, "Gnarled Mass");
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves even if Miko dies in response")
+    void abilityResolvesAfterSourceDies() {
+        Permanent miko = addCreatureReady(player1, new SplitTailMiko());
+        Permanent target = addCreatureReady(player2, new GnarledMass());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, indexOf(player1, miko), null, target.getId());
+        harness.setHand(player1, List.of(new FirstVolley(), new FirstVolley()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveInstant(player1, 0, miko.getId());
+        harness.assertInGraveyard(player1, "Split-Tail Miko");
+        resolveAllTriggers();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Player prevention shield expires at end of turn")
+    void playerPreventionExpiresAtEndOfTurn() {
+        Permanent miko = addCreatureReady(player1, new SplitTailMiko());
+        Permanent target = addCreatureReady(player1, new GnarledMass());
+        activateMiko(miko, player1.getId());
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new FirstVolley()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertLife(player1, 19);
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
     private void activateMiko(Permanent miko, UUID targetId) {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.activateAbility(player1, indexOf(player1, miko), null, targetId);
