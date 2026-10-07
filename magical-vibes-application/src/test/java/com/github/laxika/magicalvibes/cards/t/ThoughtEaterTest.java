@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -63,6 +64,64 @@ class ThoughtEaterTest extends BaseCardTest {
                 new Forest(), new Forest(), new Forest(),
                 new Forest(), new Forest(), new Mountain(), new Plains(), new Plains()
         )));
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                .isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two Thought Eaters reduce the controller's maximum hand size to one")
+    void multipleReductionsStack() {
+        harness.addToBattlefield(player1, new ThoughtEater());
+        harness.addToBattlefield(player1, new ThoughtEater());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new Mountain()));
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                .isEqualTo(2);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A negative maximum hand size requires discarding the entire hand")
+    void reductionsCannotRequireMoreDiscardsThanCardsInHand() {
+        harness.addToBattlefield(player1, new ThoughtEater());
+        harness.addToBattlefield(player1, new ThoughtEater());
+        harness.addToBattlefield(player1, new ThoughtEater());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new Forest(), new Mountain()));
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                .isEqualTo(2);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @CardUsed({Humility.class})
+    @DisplayName("Humility removes Thought Eater's maximum hand size reduction")
+    void losingAbilitiesRemovesHandSizeReduction() {
+        harness.addToBattlefield(player1, new ThoughtEater());
+        harness.addToBattlefield(player2, new Humility());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Mountain(), new Plains(), new Plains()
+        ));
 
         gs.advanceStep(gd);
 
