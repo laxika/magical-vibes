@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.a.AuraFinesse;
+import com.github.laxika.magicalvibes.cards.e.EumidianTerrabotanist;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.s.SpecimenFreighter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,13 +16,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TractorBeam.class, GrizzlyBears.class})
+@CardUsed({TractorBeam.class, EumidianTerrabotanist.class, SpecimenFreighter.class, Forest.class, AuraFinesse.class})
 class TractorBeamTest extends BaseCardTest {
 
     @Test
     @DisplayName("Taps and gains control of the enchanted creature")
     void tapsAndControlsEnchantedCreature() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new EumidianTerrabotanist());
 
         castAndResolve(creature);
 
@@ -38,7 +36,7 @@ class TractorBeamTest extends BaseCardTest {
     @Test
     @DisplayName("Can enchant, tap, and control a Spacecraft")
     void controlsSpacecraft() {
-        Permanent spacecraft = harness.addToBattlefieldAndReturn(player2, spacecraft());
+        Permanent spacecraft = harness.addToBattlefieldAndReturn(player2, new SpecimenFreighter());
 
         castAndResolve(spacecraft);
 
@@ -49,10 +47,10 @@ class TractorBeamTest extends BaseCardTest {
     @Test
     @DisplayName("The enchanted permanent does not untap during its controller's untap step")
     void enchantedPermanentDoesNotUntap() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new EumidianTerrabotanist());
 
         castAndResolve(creature);
-        advanceToNextTurn(player2);
+        harness.performUntapStep(player1);
 
         assertThat(creature.isTapped()).isTrue();
     }
@@ -60,7 +58,7 @@ class TractorBeamTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot enchant a permanent that is neither a creature nor a Spacecraft")
     void cannotEnchantOtherPermanent() {
-        Permanent land = harness.addToBattlefieldAndReturn(player2, otherPermanent());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
         prepareCast();
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
@@ -81,29 +79,75 @@ class TractorBeamTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+    @Test
+    void controlChangesBeforeTapTriggerResolves() {
+        Permanent creature = addCreatureReady(player2, new EumidianTerrabotanist());
+        prepareCast();
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        assertThat(creature.isTapped()).isFalse();
+
         harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
     }
 
-    private Card spacecraft() {
-        Card card = new Card();
-        card.setName("Test Spacecraft");
-        card.setType(CardType.ARTIFACT);
-        card.setSubtypes(List.of(CardSubtype.SPACECRAFT));
-        return card;
+    @Test
+    void enchantedSpacecraftDoesNotUntap() {
+        Permanent spacecraft = harness.addToBattlefieldAndReturn(player2, new SpecimenFreighter());
+        Permanent otherCreature = addCreatureReady(player1, new EumidianTerrabotanist());
+        otherCreature.setTapped(true);
+        castAndResolve(spacecraft);
+
+        harness.performUntapStep(player1);
+
+        assertThat(spacecraft.isTapped()).isTrue();
+        assertThat(otherCreature.isTapped()).isFalse();
     }
 
-    private Card otherPermanent() {
-        Card card = new Card();
-        card.setName("Test Land");
-        card.setType(CardType.LAND);
-        return card;
+    @Test
+    void removingAuraReturnsControlAndAllowsUntapping() {
+        Permanent creature = addCreatureReady(player2, new EumidianTerrabotanist());
+        castAndResolve(creature);
+        Permanent aura = findPermanent(player1, "Tractor Beam");
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, aura));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        assertThat(creature.isTapped()).isTrue();
+
+        harness.performUntapStep(player2);
+
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @CardUsed({AuraFinesse.class})
+    void tapTriggerUsesCurrentEnchantedPermanentAfterAuraMoves() {
+        Permanent original = addCreatureReady(player2, new EumidianTerrabotanist());
+        Permanent destination = addCreatureReady(player2, new EumidianTerrabotanist());
+        prepareCast();
+        harness.castEnchantment(player1, 0, original.getId());
+        harness.passBothPriorities();
+        Permanent aura = findPermanent(player1, "Tractor Beam");
+
+        harness.setHand(player1, List.of(new AuraFinesse()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, List.of(aura.getId(), destination.getId()));
+
+        assertThat(aura.getAttachedTo()).isEqualTo(destination.getId());
+        assertThat(original.isTapped()).isFalse();
+        assertThat(destination.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(destination.isTapped()).isTrue();
+        assertThat(original.isTapped()).isFalse();
     }
 }
