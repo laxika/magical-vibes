@@ -21,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GrizzlyBears.class, HillGiant.class, Mountain.class, Plains.class, SpittingEarth.class})
+@CardUsed({BearCub.class, GrizzlyBears.class, HillGiant.class, Mountain.class, Plains.class, SpittingEarth.class})
 class SpittingEarthTest extends BaseCardTest {
 
     @Test
@@ -59,12 +59,11 @@ class SpittingEarthTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player1, new Plains());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new SpittingEarth()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castAndResolveSorcery(player1, 0, targetId);
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -167,5 +166,50 @@ class SpittingEarthTest extends BaseCardTest {
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Spitting Earth counts Mountains entering after it is cast")
+    void countsMountainsEnteringBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SpittingEarth()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Spitting Earth");
+    }
+
+    @Test
+    @DisplayName("Spitting Earth counts tapped Mountains")
+    void countsTappedMountains() {
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SpittingEarth()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.tapPermanent(player1, 0);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Spitting Earth cannot target a noncreature land")
+    void cannotTargetNoncreaturePermanent() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.setHand(player1, List.of(new SpittingEarth()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Spitting Earth");
     }
 }
