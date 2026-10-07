@@ -54,6 +54,63 @@ class TolarianSerpentTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
     }
 
+    @Test
+    @DisplayName("The upkeep ability uses the stack and mills the top seven cards")
+    void millsTopCardsOnlyAfterResolution() {
+        harness.addToBattlefield(player1, new TolarianSerpent());
+        List<Card> library = tenSerpents(10);
+        harness.setLibrary(player1, library);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrderElementsOf(library.subList(0, 7));
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyElementsOf(library.subList(7, 10));
+    }
+
+    @Test
+    @DisplayName("Each Serpent independently mills seven cards")
+    void multipleSerpentsTriggerIndependently() {
+        harness.addToBattlefield(player1, new TolarianSerpent());
+        harness.addToBattlefield(player1, new TolarianSerpent());
+        harness.setLibrary(player1, tenSerpents(20));
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(13);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(7);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(6);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(14);
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent the upkeep trigger from resolving")
+    void emptyLibraryStillResolves() {
+        harness.addToBattlefield(player1, new TolarianSerpent());
+        harness.setLibrary(player1, List.of());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
     private List<Card> tenSerpents(int count) {
         List<Card> library = new ArrayList<>();
         for (int i = 0; i < count; i++) {
