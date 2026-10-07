@@ -93,6 +93,29 @@ class SpiritMirrorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The second upkeep trigger creates a token if the first token is destroyed in response")
+    void secondTriggerCreatesTokenAfterFirstTokenIsDestroyed() {
+        addMirror(player1);
+        addMirror(player1);
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        Permanent firstToken = findPermanent(player1, "Reflection");
+
+        harness.activateAbility(player1, 0, null, firstToken.getId());
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Reflection")).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Reflection")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Reflection").getId()).isNotEqualTo(firstToken.getId());
+    }
+
+    @Test
     @DisplayName("{0} ability can destroy an opponent's Reflection")
     void abilityDestroysOpponentsReflection() {
         addMirror(player1);
