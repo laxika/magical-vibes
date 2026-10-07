@@ -192,4 +192,57 @@ class TwoHeadedDragonTest extends BaseCardTest {
         assertThat(firstBlocker.getBlockingTargets()).containsExactly(0);
         assertThat(secondBlocker.getBlockingTargets()).containsExactly(0);
     }
+
+    @Test
+    @DisplayName("Pump can be activated while tapped and summoning sick")
+    void pumpCanBeActivatedWhileTappedAndSummoningSick() {
+        Permanent dragon = harness.addToBattlefieldAndReturn(player1, new TwoHeadedDragon());
+        dragon.setSummoningSick(true);
+        dragon.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(dragon.getPowerModifier()).isEqualTo(2);
+        assertThat(dragon.getToughnessModifier()).isEqualTo(0);
+        assertThat(dragon.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Pump affects only the dragon whose ability was activated")
+    void pumpOnlyBoostsItsSource() {
+        Permanent source = addReadyDragon(player1);
+        Permanent otherDragon = addReadyDragon(player1);
+        Permanent opposingDragon = addReadyDragon(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(source.getPowerModifier()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(2);
+        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(otherDragon.getPowerModifier()).isZero();
+        assertThat(opposingDragon.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Two blockers must both be able to block a flying dragon")
+    void menaceDoesNotAllowAnIneligibleSecondBlocker() {
+        Permanent dragon = addReadyDragon(player1);
+        dragon.setAttacking(true);
+        addCreatureReady(player2, new AirElemental());
+        addCreatureReady(player2, new GrizzlyBears());
+        prepareDeclareBlockers(player1);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)
+        )))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("(flying)");
+    }
 }
