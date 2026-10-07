@@ -95,6 +95,76 @@ class SproutingVinesTest extends BaseCardTest {
         assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
     }
 
+    @Test
+    @DisplayName("May fail to find even when a basic land is available")
+    void mayFailToFindAvailableBasicLand() {
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        castSproutingVines();
+        resolveStormAndSpell();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        harness.assertInGraveyard(player1, "Sprouting Vines");
+    }
+
+    @Test
+    @DisplayName("The first spell of the turn creates no storm copies")
+    void firstSpellCreatesNoCopies() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        castSproutingVines();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).isEmpty();
+        resolveSearchFromTopOfStack();
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Spells cast after Sprouting Vines do not increase its storm count")
+    void laterSpellsDoNotIncreaseStormCount() {
+        gd.recordSpellCast(player2.getId(), new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest(), new Plains()));
+        castSproutingVines();
+        gd.recordSpellCast(player2.getId(), new GrizzlyBears());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        resolveSearchFromTopOfStack();
+        resolveSearchFromTopOfStack();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Sprouting Vines")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Storm searches finish normally after the available basic land is exhausted")
+    void stormCopiesCanExhaustBasicLands() {
+        Card forest = new Forest();
+        Card nonLand = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(forest, nonLand));
+        gd.recordSpellCast(player2.getId(), new GrizzlyBears());
+        castSproutingVines();
+        harness.passBothPriorities();
+        resolveSearchFromTopOfStack();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonLand);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Sprouting Vines");
+    }
+
     private void castSproutingVines() {
         harness.castFromHand(player1, new SproutingVines(), "{2}{G}");
     }
