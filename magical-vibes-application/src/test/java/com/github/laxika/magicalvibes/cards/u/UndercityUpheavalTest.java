@@ -98,6 +98,120 @@ class UndercityUpheavalTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Counters assigned to a target that leaves are not redistributed")
+    void doesNotRedistributeCountersFromMissingTarget() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareCast();
+
+        harness.castSorcery(player1, 0, Map.of(first.getId(), 2, second.getId(), 1));
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        harness.passBothPriorities();
+
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, second, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("No vigilance is granted when every target has left the battlefield")
+    void doesNotGrantVigilanceWhenAllTargetsLeave() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent untargeted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareCast();
+
+        harness.castSorcery(player1, 0, Map.of(target.getId(), 1));
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, untargeted, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A target gained by an opponent receives no counters")
+    void skipsTargetNowControlledByOpponent() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        Permanent stolen = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareCast();
+
+        harness.castSorcery(player1, 0, Map.of(stolen.getId(), 2, remaining.getId(), 1));
+        gd.playerBattlefields.get(player1.getId()).remove(stolen);
+        gd.playerBattlefields.get(player2.getId()).add(stolen);
+        harness.passBothPriorities();
+
+        assertThat(stolen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(remaining.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, remaining, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, stolen, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("No effects happen when an opponent gains control of the sole target")
+    void doesNotResolveWhenSoleTargetChangesController() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        Permanent stolen = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent untargeted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareCast();
+
+        harness.castSorcery(player1, 0, Map.of(stolen.getId(), 1));
+        gd.playerBattlefields.get(player1.getId()).remove(stolen);
+        gd.playerBattlefields.get(player2.getId()).add(stolen);
+        harness.passBothPriorities();
+
+        assertThat(stolen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, untargeted, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not gain vigilance")
+    void vigilanceDoesNotApplyToLaterCreatures() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareCast();
+
+        harness.castSorcery(player1, 0, Map.of());
+        harness.passBothPriorities();
+        Permanent later = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, existing, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, later, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A positive counter total requires a target")
+    void rejectsNoTargetsWhenCountersMustBeDistributed() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        prepareCast();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("All counters must be distributed")
+    void rejectsIncompleteCounterDistribution() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareCast();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of(creature.getId(), 1)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Each target must receive at least one counter")
+    void rejectsZeroCounterAssignment() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareCast();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of(first.getId(), 2, second.getId(), 0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
     private void prepareCast() {
         harness.setHand(player1, List.of(new UndercityUpheaval()));
         harness.addMana(player1, ManaColor.GREEN, 3);
