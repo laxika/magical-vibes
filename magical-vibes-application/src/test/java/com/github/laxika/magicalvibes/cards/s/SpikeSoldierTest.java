@@ -66,7 +66,6 @@ class SpikeSoldierTest extends BaseCardTest {
     @DisplayName("Second ability can be activated while Spike Soldier is summoning sick")
     void canActivateWhileSummoningSick() {
         Permanent spike = harness.enterBattlefieldAndReturn(player1, new SpikeSoldier());
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
         prepareMainPhase(player1);
 
         harness.activateAbility(player1, battlefieldIndex(player1, spike), 1, null, null);
@@ -88,9 +87,7 @@ class SpikeSoldierTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, spike)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, spike)).isEqualTo(4);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectivePower(gd, spike)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, spike)).isEqualTo(2);
@@ -113,9 +110,17 @@ class SpikeSoldierTest extends BaseCardTest {
     @Test
     @DisplayName("Neither ability can be activated without a +1/+1 counter")
     void cannotActivateWithoutCounter() {
-        Permanent spike = addReadySpike(player1, 0);
+        Permanent spike = addReadySpike(player1, 3);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SkyshroudTroopers());
         prepareMainPhase(player1);
+
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, battlefieldIndex(player1, spike), 1, null, null);
+            harness.passBothPriorities();
+        }
+        assertThat(spike.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.getEffectivePower(gd, spike)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, spike)).isEqualTo(6);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(
@@ -126,6 +131,34 @@ class SpikeSoldierTest extends BaseCardTest {
                 player1, battlefieldIndex(player1, spike), 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough counters");
+    }
+
+    @Test
+    @DisplayName("Counter transfer can target Spike Soldier itself and pays its cost immediately")
+    void firstAbilityCanTargetSelf() {
+        Permanent spike = addReadySpike(player1, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        prepareMainPhase(player1);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, spike), 0, null, spike.getId());
+
+        assertThat(spike.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.passBothPriorities();
+        assertThat(spike.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Removing the final counter for a boost kills an unboosted Spike before resolution")
+    void finalCounterBoostCannotSaveSource() {
+        Permanent spike = addReadySpike(player1, 1);
+        prepareMainPhase(player1);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, spike), 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Spike Soldier");
+        harness.assertInGraveyard(player1, "Spike Soldier");
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addReadySpike(Player player, int counters) {
