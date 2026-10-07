@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GoldmeadowStalwart;
+import com.github.laxika.magicalvibes.cards.p.ProtectiveBubble;
 import com.github.laxika.magicalvibes.cards.w.WanderersTwig;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TriclopeanSight.class, GoldmeadowStalwart.class, WanderersTwig.class})
+@CardUsed({TriclopeanSight.class, GoldmeadowStalwart.class, WanderersTwig.class, ProtectiveBubble.class})
 class TriclopeanSightTest extends BaseCardTest {
 
     // ===== ETB untap =====
@@ -128,5 +130,74 @@ class TriclopeanSightTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flash allows casting on the opponent's turn and benefits their enchanted creature")
+    void flashOnOpponentsTurn() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GoldmeadowStalwart());
+        creature.tap();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.setHand(player1, List.of(new TriclopeanSight()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
+
+        resolveAllTriggers();
+
+        assertThat(creature.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Triclopean Sight");
+    }
+
+    @Test
+    @DisplayName("Untap trigger still resolves if enchanted creature gains shroud")
+    void untapTriggerDoesNotTargetEnchantedCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GoldmeadowStalwart());
+        creature.tap();
+        harness.setHand(player1, List.of(new TriclopeanSight()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        assertThat(creature.isTapped()).isTrue();
+
+        Permanent bubble = harness.addToBattlefieldAndReturn(player1, new ProtectiveBubble());
+        bubble.setAttachedTo(creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isTrue();
+
+        resolveAllTriggers();
+
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Untap trigger follows the Aura's current attachment")
+    void untapTriggerFollowsCurrentAttachment() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new GoldmeadowStalwart());
+        Permanent replacement = harness.addToBattlefieldAndReturn(player2, new GoldmeadowStalwart());
+        original.tap();
+        replacement.tap();
+        harness.setHand(player1, List.of(new TriclopeanSight()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castEnchantment(player1, 0, original.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Triclopean Sight");
+        aura.setAttachedTo(replacement.getId());
+        resolveAllTriggers();
+
+        assertThat(original.isTapped()).isTrue();
+        assertThat(replacement.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, replacement)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, replacement, Keyword.VIGILANCE)).isTrue();
     }
 }
