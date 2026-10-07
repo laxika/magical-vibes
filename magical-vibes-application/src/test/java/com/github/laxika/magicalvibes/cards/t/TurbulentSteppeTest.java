@@ -56,6 +56,52 @@ class TurbulentSteppeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Seven lands split across opponents are insufficient")
+    void entersTappedWithSevenLandsAcrossOpponents() {
+        addThirdPlayer();
+        addLands(player2, 4);
+        addLands(thirdPlayer, 3);
+        addLands(player1, 8);
+
+        playTurbulentSteppe();
+
+        assertThat(findSteppe(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tapped opponent lands still satisfy the condition")
+    void tappedOpponentLandsCount() {
+        addLands(player2, 8);
+        gd.playerBattlefields.get(player2.getId()).forEach(Permanent::tap);
+
+        playTurbulentSteppe();
+
+        assertThat(findSteppe(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Opponent lands outside the battlefield do not count")
+    void landsOutsideBattlefieldDoNotCount() {
+        addLands(player2, 7);
+        harness.setHand(player2, List.of(new Forest()));
+        gd.playerGraveyards.get(player2.getId()).add(new Forest());
+
+        playTurbulentSteppe();
+
+        assertThat(findSteppe(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Entry evaluates opponents relative to the entering land's controller")
+    void entryUsesActualController() {
+        addLands(player1, 8);
+
+        Permanent steppe = harness.enterBattlefieldAndReturn(player2, new TurbulentSteppe());
+
+        assertThat(steppe.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("The controller's lands do not satisfy the condition")
     void controllerLandsDoNotCount() {
         addLands(player1, 8);
@@ -68,7 +114,7 @@ class TurbulentSteppeTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for red mana produces one red")
     void tappingForRedProducesMana() {
-        Permanent steppe = addReadySteppe(player1);
+        Permanent steppe = addCreatureReady(player1, new TurbulentSteppe());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -79,7 +125,7 @@ class TurbulentSteppeTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for white mana produces one white")
     void tappingForWhiteProducesMana() {
-        Permanent steppe = addReadySteppe(player1);
+        Permanent steppe = addCreatureReady(player1, new TurbulentSteppe());
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -92,13 +138,6 @@ class TurbulentSteppeTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castCreature(player1, 0);
-    }
-
-    private Permanent addReadySteppe(Player player) {
-        Permanent steppe = new Permanent(new TurbulentSteppe());
-        steppe.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(steppe);
-        return steppe;
     }
 
     private void addLands(Player player, int count) {
