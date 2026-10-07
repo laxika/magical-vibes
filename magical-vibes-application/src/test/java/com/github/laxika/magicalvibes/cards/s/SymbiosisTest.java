@@ -49,7 +49,6 @@ class SymbiosisTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
@@ -108,5 +107,53 @@ class SymbiosisTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(bear.getId(), fluctuator.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Cannot cast without targets")
+    void cannotCastWithoutTargets() {
+        harness.addToBattlefield(player1, new PouncingJaguar());
+        harness.addToBattlefield(player2, new PouncingJaguar());
+        harness.setHand(player1, List.of(new Symbiosis()));
+        giveMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot choose three creatures")
+    void cannotChooseThreeCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new PouncingJaguar());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new PouncingJaguar());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new PouncingJaguar());
+        harness.setHand(player1, List.of(new Symbiosis()));
+        giveMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not resolve when both targets leave the battlefield")
+    void doesNotResolveWhenBothTargetsLeave() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new PouncingJaguar());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new PouncingJaguar());
+        Permanent untargeted = harness.addToBattlefieldAndReturn(player1, new PouncingJaguar());
+        harness.setHand(player1, List.of(new Symbiosis()));
+        giveMana();
+
+        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        gd.playerBattlefields.get(player2.getId()).remove(second);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Symbiosis");
+        assertThat(gqs.getEffectivePower(gd, untargeted)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, untargeted)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
     }
 }
