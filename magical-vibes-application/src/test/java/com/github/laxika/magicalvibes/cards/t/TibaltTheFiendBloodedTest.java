@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.l.LuxiorGiadasGift;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,13 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TibaltTheFiendBlooded.class, TimberlandGuide.class, LuxiorGiadasGift.class})
 class TibaltTheFiendBloodedTest extends BaseCardTest {
 
     @Test
     @DisplayName("+1 draws a card then discards a card at random")
     void plusOneDrawsThenDiscardsAtRandom() {
         Permanent tibalt = addReadyTibalt(player1, 2);
-        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new TimberlandGuide(), new TimberlandGuide()));
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
@@ -37,7 +38,7 @@ class TibaltTheFiendBloodedTest extends BaseCardTest {
     @DisplayName("-4 deals damage equal to target player's hand size to that player")
     void minusFourDealsDamageEqualToHandSize() {
         Permanent tibalt = addReadyTibalt(player1, 4);
-        harness.setHand(player2, List.of(new GrizzlyBears(), new LightningBolt(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new TimberlandGuide(), new TimberlandGuide(), new TimberlandGuide()));
 
         harness.activateAbility(player1, 0, 1, null, player2.getId());
         harness.passBothPriorities();
@@ -64,9 +65,9 @@ class TibaltTheFiendBloodedTest extends BaseCardTest {
     @DisplayName("-6 gains control of every creature, untaps them, and gives them haste")
     void minusSixStealsUntapsAndHastes() {
         addReadyTibalt(player1, 6);
-        Permanent theirs = addCreatureReady(player2, new GrizzlyBears());
+        Permanent theirs = addCreatureReady(player2, new TimberlandGuide());
         theirs.tap();
-        Permanent mine = addCreatureReady(player1, new GrizzlyBears());
+        Permanent mine = addCreatureReady(player1, new TimberlandGuide());
         mine.tap();
 
         harness.activateAbility(player1, 0, 2, null, null);
@@ -84,7 +85,7 @@ class TibaltTheFiendBloodedTest extends BaseCardTest {
     @DisplayName("-6 control gain and haste expire at end of turn")
     void minusSixWearsOff() {
         addReadyTibalt(player1, 6);
-        Permanent theirs = addCreatureReady(player2, new GrizzlyBears());
+        Permanent theirs = addCreatureReady(player2, new TimberlandGuide());
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
@@ -108,11 +109,64 @@ class TibaltTheFiendBloodedTest extends BaseCardTest {
                 .hasMessageContaining("Not enough loyalty");
     }
 
+    @Test
+    void plusOneDiscardsTheDrawnCardWhenHandStartsEmpty() {
+        addReadyTibalt(player1, 2);
+        TimberlandGuide drawn = new TimberlandGuide();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn, new TimberlandGuide()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void minusFourCountsHandAtResolution() {
+        addReadyTibalt(player1, 5);
+        harness.setHand(player2, List.of(new TimberlandGuide()));
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.setHand(player2, List.of(new TimberlandGuide(), new TimberlandGuide(), new TimberlandGuide()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void minusFourCanTargetItsController() {
+        addReadyTibalt(player1, 5);
+        harness.setHand(player1, List.of(new TimberlandGuide(), new TimberlandGuide()));
+
+        harness.activateAbility(player1, 0, 1, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void minusSixGivesHasteToTibaltWhenHeIsACreature() {
+        Permanent tibalt = addReadyTibalt(player1, 7);
+        Permanent luxior = harness.addToBattlefieldAndReturn(player1, new LuxiorGiadasGift());
+        luxior.setAttachedTo(tibalt.getId());
+        tibalt.tap();
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(tibalt.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, tibalt, Keyword.HASTE)).isTrue();
+    }
+
     private Permanent addReadyTibalt(Player player, int loyalty) {
-        Permanent perm = new Permanent(new TibaltTheFiendBlooded());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new TibaltTheFiendBlooded());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
