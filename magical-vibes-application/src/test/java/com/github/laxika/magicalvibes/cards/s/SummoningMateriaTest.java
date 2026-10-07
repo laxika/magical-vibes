@@ -44,8 +44,7 @@ class SummoningMateriaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castFromLibraryTop(player1);
-        harness.passBothPriorities();
+        harness.castAndResolveFromLibraryTop(player1);
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(topCreature);
@@ -77,10 +76,75 @@ class SummoningMateriaTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topLand);
     }
 
+    @Test
+    void unattachedMateriaShowsLibraryTopOnlyToItsControllerEvenOnOpponentsTurn() {
+        addReadyMateria(player1);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.forceActivePlayer(player2);
+        harness.ensurePriority(player2);
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[{")
+                        && message.contains("Grizzly Bears"));
+        assertThat(harness.getConn2().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+    }
+
+    @Test
+    void equipPaysTwoManaAndAttachesToOwnCreature() {
+        Permanent materia = addReadyMateria(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(materia.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    void detachingRemovesCreatureBonusesAndLibraryCastingPermission() {
+        Permanent materia = addReadyMateria(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        materia.setAttachedTo(creature.getId());
+        GrizzlyBears topCreature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCreature));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        materia.setAttachedTo(null);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topCreature);
+    }
+
+    @Test
+    void libraryCreatureStillRequiresItsManaCost() {
+        Permanent materia = addReadyMateria(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        materia.setAttachedTo(creature.getId());
+        GrizzlyBears topCreature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCreature));
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topCreature);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyMateria(Player player) {
-        Permanent materia = new Permanent(new SummoningMateria());
+        Permanent materia = harness.addToBattlefieldAndReturn(player, new SummoningMateria());
         materia.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(materia);
         return materia;
     }
 }
