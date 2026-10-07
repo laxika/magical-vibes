@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 @CardUsed({TangleSpider.class, AirElemental.class})
 class TangleSpiderTest extends BaseCardTest {
 
-
     @Test
     @DisplayName("Can cast Tangle Spider during opponent's turn thanks to flash")
     void canCastDuringOpponentsTurn() {
@@ -45,5 +44,29 @@ class TangleSpiderTest extends BaseCardTest {
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Tangle Spider flashed in after attackers are declared can immediately block a flyer")
+    void canFlashInAndBlockFlyingAttacker() {
+        addCreatureReady(player1, new AirElemental());
+        harness.setHand(player2, List.of(new TangleSpider()));
+        harness.addMana(player2, ManaColor.GREEN, 6);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+        assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Tangle Spider");
+
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player2, "Tangle Spider");
+        harness.assertOnBattlefield(player1, "Air Elemental");
     }
 }
