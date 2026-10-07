@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TerritorialBaloth.class, Forest.class})
 class TerritorialBalothTest extends BaseCardTest {
 
     @Test
@@ -52,6 +54,41 @@ class TerritorialBalothTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        assertThat(baloth.getEffectivePower()).isEqualTo(4);
+        assertThat(baloth.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Landfall uses the stack and triggers for each land entering without being played")
+    void multipleLandEntriesGiveCumulativeBoosts() {
+        Permanent baloth = harness.addToBattlefieldAndReturn(player1, new TerritorialBaloth());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(baloth.getEffectivePower()).isEqualTo(4);
+        assertThat(baloth.getEffectiveToughness()).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        assertThat(baloth.getEffectivePower()).isEqualTo(6);
+        assertThat(baloth.getEffectiveToughness()).isEqualTo(6);
+
+        harness.passBothPriorities();
+
+        assertThat(baloth.getEffectivePower()).isEqualTo(8);
+        assertThat(baloth.getEffectiveToughness()).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("A creature entering does not trigger landfall")
+    void creatureEntryDoesNotTriggerLandfall() {
+        Permanent baloth = harness.addToBattlefieldAndReturn(player1, new TerritorialBaloth());
+
+        harness.enterBattlefieldAndReturn(player1, new TerritorialBaloth());
+
+        assertThat(gd.stack).isEmpty();
         assertThat(baloth.getEffectivePower()).isEqualTo(4);
         assertThat(baloth.getEffectiveToughness()).isEqualTo(4);
     }
