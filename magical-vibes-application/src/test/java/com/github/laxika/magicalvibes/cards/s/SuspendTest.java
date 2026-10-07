@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MishrasFactory;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Suspend.class, GrizzlyBears.class, Forest.class})
+@CardUsed({Suspend.class, GrizzlyBears.class, Forest.class, MishrasFactory.class})
 class SuspendTest extends BaseCardTest {
 
     @Test
@@ -51,6 +52,70 @@ class SuspendTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == targetCard);
+
+        declareAttackers(player1, List.of(0));
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isAttacking()).isTrue();
+    }
+
+    @Test
+    void opponentCreatureUsesItsOwnersUpkeepAndReturnsToItsOwner() {
+        GrizzlyBears targetCard = new GrizzlyBears();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, targetCard);
+        castSuspend(target);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(targetCard.getId(), 2);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(targetCard.getId(), 1);
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void decliningFreeCastLeavesCreatureExiledWithoutFurtherUpkeepTriggers() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castSuspend(target);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getCard().getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(target.getCard());
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void suspendedAnimatedLandIsPlayedAsALandWhenItsLastCounterIsRemoved() {
+        Permanent factory = harness.addToBattlefieldAndReturn(player1, new MishrasFactory());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        castSuspend(factory);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mishra's Factory");
+        harness.assertNotInGraveyard(player1, "Mishra's Factory");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
     @Test
@@ -67,7 +132,6 @@ class SuspendTest extends BaseCardTest {
     private void castSuspend(Permanent target) {
         harness.setHand(player1, List.of(new Suspend()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
