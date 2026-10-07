@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TalasLookout.class, GrizzlyBears.class, Shock.class})
 class TalasLookoutTest extends BaseCardTest {
@@ -59,5 +60,53 @@ class TalasLookoutTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyCard);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(lookout.getCard());
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The death trigger requires putting one of the two cards into hand")
+    void cannotPutBothCardsIntoGraveyard() {
+        Permanent lookout = harness.addToBattlefieldAndReturn(player1, new TalasLookout());
+        Card first = new TalasLookout();
+        Card second = new TalasLookout();
+        Card remaining = new TalasLookout();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of(first, second, remaining));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, lookout));
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(first, lookout.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library makes the death trigger do nothing without causing a loss")
+    void emptyLibraryDoesNotDrawOrPrompt() {
+        Permanent lookout = harness.addToBattlefieldAndReturn(player1, new TalasLookout());
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, lookout));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(lookout.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.RUNNING);
     }
 }
