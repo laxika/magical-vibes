@@ -28,8 +28,7 @@ class SpinningDarknessTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 6);
 
         UUID targetId = harness.getPermanentId(player2, "Striped Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Striped Bears");
         harness.assertLife(player1, 23);
@@ -43,8 +42,7 @@ class SpinningDarknessTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 6);
 
         UUID targetId = harness.getPermanentId(player2, "Steel Golem");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertOnBattlefield(player2, "Steel Golem");
         assertThat(findPermanent(player2, "Steel Golem").getMarkedDamage()).isEqualTo(3);
@@ -124,8 +122,7 @@ class SpinningDarknessTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 6);
 
         UUID targetId = harness.getPermanentId(player2, "Striped Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         assertThat(gd.exiledCards).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -146,5 +143,58 @@ class SpinningDarknessTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The alternate cost exiles the topmost three black cards, leaving older black cards")
+    void alternateCostLeavesOlderBlackCards() {
+        harness.addToBattlefield(player2, new StripedBears());
+        harness.setHand(player1, List.of(new SpinningDarkness()));
+        RazortoothRats oldest = new RazortoothRats();
+        RazortoothRats middle = new RazortoothRats();
+        RazortoothRats newer = new RazortoothRats();
+        RazortoothRats newest = new RazortoothRats();
+        StripedBears nonblack = new StripedBears();
+        harness.setGraveyard(player1, List.of(oldest, middle, nonblack, newer, newest));
+
+        harness.castWithAlternateCost(player1, 0, harness.getPermanentId(player2, "Striped Bears"));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(oldest, nonblack);
+        assertThat(gd.exiledCards).hasSize(3);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @DisplayName("No life is gained if the only target leaves the battlefield before resolution")
+    void missingTargetPreventsLifeGain() {
+        harness.addToBattlefield(player2, new StripedBears());
+        harness.setHand(player1, List.of(new SpinningDarkness()));
+        harness.setHand(player2, List.of(new SpinningDarkness()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.addMana(player2, ManaColor.BLACK, 6);
+        UUID targetId = harness.getPermanentId(player2, "Striped Bears");
+
+        harness.castInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player2, 0, targetId);
+        harness.assertNotOnBattlefield(player2, "Striped Bears");
+        harness.assertLife(player2, 23);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Spinning Darkness");
+    }
+
+    @Test
+    @DisplayName("The caster can target their own nonblack creature")
+    void ownCreatureIsLegalTarget() {
+        harness.addToBattlefield(player1, new StripedBears());
+        harness.setHand(player1, List.of(new SpinningDarkness()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Striped Bears"));
+
+        harness.assertNotOnBattlefield(player1, "Striped Bears");
+        harness.assertLife(player1, 23);
     }
 }
