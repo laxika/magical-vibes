@@ -15,6 +15,40 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TowerDrakeTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Ability can be activated while summoning sick")
+    void abilityCanBeActivatedWhileSummoningSick() {
+        Permanent drake = harness.addToBattlefieldAndReturn(player1, new TowerDrake());
+        drake.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, drake)).isEqualTo(2);
+        assertThat(drake.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Boost affects only its source and waits for resolution")
+    void boostAffectsOnlySourceAfterResolution() {
+        Permanent drake = addCreatureReady(player1, new TowerDrake());
+        Permanent otherDrake = addCreatureReady(player1, new TowerDrake());
+        Permanent opposingDrake = addCreatureReady(player2, new TowerDrake());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.getEffectiveToughness(gd, drake)).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, drake)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherDrake)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingDrake)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Ability grants +0/+1 without tapping")
     void abilityGrantsToughness() {
         Permanent drake = addCreatureReady(player1, new TowerDrake());
