@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GildedLotus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,9 +24,10 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TezzeretTheSeeker.class, Forest.class, GildedLotus.class, GrizzlyBears.class,
+        MindStone.class, RodOfRuin.class, Ornithopter.class})
 class TezzeretTheSeekerTest extends BaseCardTest {
 
-    // ===== +1: Untap up to two target artifacts =====
 
     @Test
     @DisplayName("+1 untaps two target tapped artifacts and gains loyalty")
@@ -56,7 +58,6 @@ class TezzeretTheSeekerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== -X: Search library for an artifact with mana value X or less =====
 
     @Test
     @DisplayName("-X puts an artifact with mana value X or less onto the battlefield")
@@ -73,7 +74,7 @@ class TezzeretTheSeekerTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards().stream().map(Card::getName)).containsExactly("Mind Stone");
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Mind Stone");
         assertThat(tezzeret.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 5 - 2
@@ -93,7 +94,6 @@ class TezzeretTheSeekerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
-    // ===== -5: Artifacts you control become 5/5 artifact creatures =====
 
     @Test
     @DisplayName("-5 makes artifacts you control 5/5 creatures until end of turn")
@@ -145,28 +145,133 @@ class TezzeretTheSeekerTest extends BaseCardTest {
         assertThat(oppStone.isAnimatedUntilEndOfTurn()).isFalse();
     }
 
-    // ===== Helpers =====
+    @Test
+    void plusOneCanChooseNoTargets() {
+        Permanent tezzeret = addReadyTezzeret(player1, 4);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(tezzeret.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    void plusOneCanUntapOneOpponentArtifact() {
+        addReadyTezzeret(player1, 4);
+        Permanent stone = addPermanent(player2, new MindStone());
+        stone.tap();
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(stone.getId()));
+        harness.passBothPriorities();
+
+        assertThat(stone.isTapped()).isFalse();
+    }
+
+    @Test
+    void minusZeroFindsZeroManaArtifactWithoutRemovingLoyalty() {
+        Permanent tezzeret = addReadyTezzeret(player1, 4);
+        setLibrary(new Ornithopter(), new MindStone());
+
+        harness.activateAbility(player1, 0, 1, 0, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        assertThat(tezzeret.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(harness.getGameData().playerDecks.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Mind Stone");
+    }
+
+    @Test
+    void minusXCanFindArtifactBelowXAfterTezzeretDiesFromLoyaltyCost() {
+        addReadyTezzeret(player1, 4);
+        setLibrary(new MindStone());
+
+        harness.activateAbility(player1, 0, 1, 4, null);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Tezzeret the Seeker");
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Mind Stone");
+        assertThat(harness.getGameData().playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void minusXCanFailToFindDespiteMatchingArtifact() {
+        addReadyTezzeret(player1, 4);
+        setLibrary(new MindStone());
+
+        harness.activateAbility(player1, 0, 1, 2, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotOnBattlefield(player1, "Mind Stone");
+        assertThat(harness.getGameData().playerDecks.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Mind Stone");
+        assertThat(harness.getGameData().interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void minusXCannotSpendMoreLoyaltyThanAvailable() {
+        Permanent tezzeret = addReadyTezzeret(player1, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 5, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(tezzeret.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    void plusOneCannotChooseTheSameArtifactTwice() {
+        Permanent tezzeret = addReadyTezzeret(player1, 4);
+        Permanent stone = addPermanent(player1, new MindStone());
+        stone.tap();
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(stone.getId(), stone.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(tezzeret.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(stone.isTapped()).isTrue();
+    }
+
+    @Test
+    void minusFiveAffectsExistingArtifactCreaturesButNotLaterArtifacts() {
+        addReadyTezzeret(player1, 5);
+        Permanent thopter = addPermanent(player1, new Ornithopter());
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        Permanent laterStone = addPermanent(player1, new MindStone());
+
+        assertThat(thopter.getEffectivePower()).isEqualTo(5);
+        assertThat(thopter.getEffectiveToughness()).isEqualTo(5);
+        assertThat(laterStone.isAnimatedUntilEndOfTurn()).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(thopter.getEffectivePower()).isZero();
+        assertThat(thopter.getEffectiveToughness()).isEqualTo(2);
+    }
 
     private Permanent addReadyTezzeret(Player player, int loyalty) {
-        TezzeretTheSeeker card = new TezzeretTheSeeker();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new TezzeretTheSeeker());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
     }
 
     private Permanent addPermanent(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, card);
     }
 
     private void setLibrary(Card... cards) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
     }
 }
