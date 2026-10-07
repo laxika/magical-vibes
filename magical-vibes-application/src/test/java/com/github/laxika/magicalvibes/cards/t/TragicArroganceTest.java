@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.c.Crusade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.h.HithlainRope;
 import com.github.laxika.magicalvibes.cards.i.IronStar;
 import com.github.laxika.magicalvibes.cards.j.Juggernaut;
 import com.github.laxika.magicalvibes.cards.l.LilianaOfTheVeil;
@@ -10,21 +11,23 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TragicArrogance.class, Crusade.class, GrizzlyBears.class, HillGiant.class,
+        HithlainRope.class, IronStar.class, Juggernaut.class, LilianaOfTheVeil.class, LlanowarElves.class,
+        Millstone.class, Plains.class})
 class TragicArroganceTest extends BaseCardTest {
 
     private void cast() {
-        harness.setHand(player1, List.of(new TragicArrogance()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new TragicArrogance(), "{3}{W}{W}");
         harness.passBothPriorities();
     }
 
@@ -101,5 +104,76 @@ class TragicArroganceTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(crusade, liliana, hillGiant);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
         harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+    @Test
+    @DisplayName("An artifact creature and a different creature can both be kept")
+    void artifactCreatureCanBeKeptAlongsideAnotherCreature() {
+        Permanent juggernaut = harness.addToBattlefieldAndReturn(player2, new Juggernaut());
+        Permanent millstone = harness.addToBattlefieldAndReturn(player2, new Millstone());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        cast();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(juggernaut.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(juggernaut, millstone, bears);
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactlyInAnyOrder(juggernaut, bears);
+        harness.assertInGraveyard(player2, "Millstone");
+    }
+
+    @Test
+    @DisplayName("The caster chooses which enchantment the opponent keeps")
+    void choosesOpponentsEnchantment() {
+        Permanent kept = harness.addToBattlefieldAndReturn(player2, new Crusade());
+        Permanent sacrificed = harness.addToBattlefieldAndReturn(player2, new Crusade());
+
+        cast();
+        harness.handleMultiplePermanentsChosen(player1, List.of(kept.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(kept);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(sacrificed.getCard());
+    }
+
+    @Test
+    @DisplayName("Tragic Arrogance resolves with no permanents to choose")
+    void resolvesOnEmptyBattlefields() {
+        cast();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Tragic Arrogance");
+    }
+    @Test
+    @CardUsed({TragicArrogance.class, HithlainRope.class, Millstone.class})
+    @DisplayName("An unchosen artifact that cannot be sacrificed remains on the battlefield")
+    void unchosenArtifactCannotBeSacrificed() {
+        Permanent rope = harness.addToBattlefieldAndReturn(player2, new HithlainRope());
+        Permanent millstone = harness.addToBattlefieldAndReturn(player2, new Millstone());
+
+        cast();
+        harness.handleMultiplePermanentsChosen(player1, List.of(millstone.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactlyInAnyOrder(rope, millstone);
+        harness.assertNotInGraveyard(player2, "Hithlain Rope");
+    }
+
+    @Test
+    @DisplayName("Choosing a creature is mandatory when candidates exist")
+    void cannotDeclineMandatoryCreatureChoice() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+        cast();
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactlyInAnyOrder(bears, giant);
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(bears);
+        harness.assertInGraveyard(player2, "Hill Giant");
     }
 }
