@@ -23,9 +23,10 @@ class SwineRebellionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ThirdLittlePig());
         castSwineRebellion();
 
-        harness.assertOnBattlefield(player1, "First Little Pig");
-        harness.assertOnBattlefield(player1, "Second Little Pig");
-        harness.assertOnBattlefield(player1, "Third Little Pig");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactlyInAnyOrder("First Little Pig", "Second Little Pig", "Third Little Pig",
+                        "First Little Pig", "Second Little Pig", "Third Little Pig");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -63,11 +64,65 @@ class SwineRebellionTest extends BaseCardTest {
                 .isNotNull();
     }
 
+    @Test
+    void threeBoarsWithOnlyTwoNamesUseTheHandBranch() {
+        harness.addToBattlefield(player1, new FirstLittlePig());
+        harness.addToBattlefield(player1, new FirstLittlePig());
+        harness.addToBattlefield(player1, new SecondLittlePig());
+        castSwineRebellion();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SpellbookCardChoice.class))
+                .isNotNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    void opponentsBoarsDoNotCountTowardsTheThreshold() {
+        harness.addToBattlefield(player1, new FirstLittlePig());
+        harness.addToBattlefield(player1, new SecondLittlePig());
+        harness.addToBattlefield(player2, new ThirdLittlePig());
+        castSwineRebellion();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SpellbookCardChoice.class))
+                .isNotNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    void battlefieldChoiceIsRestrictedToTheTwoNewlyConjuredCards() {
+        harness.setHand(player1, List.of(new SwineRebellion(), new ThirdLittlePig()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        PendingInteraction.SpellbookCardChoice spellbookChoice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookCardChoice.class);
+        List<Card> chosenCards = spellbookChoice.cards().stream()
+                .filter(card -> !card.getName().equals("Third Little Pig"))
+                .toList();
+        harness.handleMultipleCardsChosen(player1, chosenCards.stream().map(Card::getId).toList());
+
+        PendingInteraction.RevealedHandChoice battlefieldChoice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        assertThat(battlefieldChoice.validIndices()).hasSize(2);
+        assertThat(battlefieldChoice.validIndices())
+                .allSatisfy(index -> assertThat(gd.playerHands.get(player1.getId()).get(index).getId())
+                        .isIn(chosenCards.stream().map(Card::getId).toList()));
+        int selectedIndex = battlefieldChoice.validIndices().getLast();
+        String selectedName = gd.playerHands.get(player1.getId()).get(selectedIndex).getName();
+        harness.handleCardChosen(player1, selectedIndex);
+
+        harness.assertOnBattlefield(player1, selectedName);
+        harness.assertInHand(player1, "Third Little Pig");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
     private void castSwineRebellion() {
         harness.setHand(player1, List.of(new SwineRebellion()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }
