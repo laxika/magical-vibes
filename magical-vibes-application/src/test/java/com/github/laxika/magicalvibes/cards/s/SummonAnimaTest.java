@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,13 +13,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SummonAnima.class, Forest.class, GrizzlyBears.class})
+@CardUsed({SummonAnima.class, Forest.class, SazhsChocobo.class})
 class SummonAnimaTest extends BaseCardTest {
 
     @Test
     void chaptersIThroughIIIDrawAndLoseLife() {
         Permanent saga = addSagaWithLore(0);
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new SazhsChocobo(), new Forest(), new SazhsChocobo()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
@@ -36,8 +35,8 @@ class SummonAnimaTest extends BaseCardTest {
     @Test
     void chapterIVMakesEachOpponentChooseACreatureAndLoseLife() {
         Permanent saga = addSagaWithLore(3);
-        Permanent firstCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent secondCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent firstCreature = harness.addToBattlefieldAndReturn(player2, new SazhsChocobo());
+        Permanent secondCreature = harness.addToBattlefieldAndReturn(player2, new SazhsChocobo());
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         advanceToNextChapter();
@@ -50,6 +49,55 @@ class SummonAnimaTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(secondCreature)
                 .doesNotContain(firstCreature);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore - 3);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+    }
+
+    @Test
+    void enteringBattlefieldTriggersChapterI() {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        Permanent saga = harness.enterBattlefieldAndReturn(player1, new SummonAnima());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+    }
+
+    @Test
+    void chapterIVStillLosesLifeWhenOpponentHasNoCreature() {
+        Permanent saga = addSagaWithLore(3);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+        int controllerLifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToNextChapter();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore - 3);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(controllerLifeBefore);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(saga.getCard());
+    }
+
+    @Test
+    void chapterIVAutomaticallySacrificesOpponentsOnlyCreature() {
+        Permanent saga = addSagaWithLore(3);
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new SummonAnima());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToNextChapter();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(land).doesNotContain(opposingCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opposingCreature.getCard());
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore - 3);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
     }
