@@ -67,8 +67,7 @@ class TreacherousBlessingTest extends BaseCardTest {
         harness.setHand(player2, List.of(new BurstOfEnergy()));
         harness.addMana(player2, ManaColor.WHITE, 1);
 
-        harness.castInstant(player2, 0, blessing.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, blessing.getId());
 
         harness.assertNotOnBattlefield(player1, "Treacherous Blessing");
         harness.assertInGraveyard(player1, "Treacherous Blessing");
@@ -77,9 +76,7 @@ class TreacherousBlessingTest extends BaseCardTest {
     @Test
     void sacrificesItselfWhenTargetedByAnAbility() {
         Permanent blessing = harness.addToBattlefieldAndReturn(player1, new TreacherousBlessing());
-        harness.addToBattlefield(player2, new Memnarch());
-        Permanent memnarch = findPermanent(player2, "Memnarch");
-        memnarch.setSummoningSick(false);
+        Permanent memnarch = harness.addToBattlefieldAndReturn(player2, new Memnarch());
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
@@ -89,5 +86,40 @@ class TreacherousBlessingTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Treacherous Blessing");
         harness.assertInGraveyard(player1, "Treacherous Blessing");
+    }
+
+    @Test
+    void controllerChoosesOrderWhenTheirSpellTargetsBlessing() {
+        Permanent blessing = harness.addToBattlefieldAndReturn(player1, new TreacherousBlessing());
+        harness.setHand(player1, List.of(new BurstOfEnergy()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, blessing.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.assertOnBattlefield(player1, "Treacherous Blessing");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void drawsThreeCardsEvenIfSacrificedBeforeEnterTriggerResolves() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new TreacherousBlessing()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new BurstOfEnergy()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Treacherous Blessing"));
+        harness.assertInGraveyard(player1, "Treacherous Blessing");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 20);
     }
 }
