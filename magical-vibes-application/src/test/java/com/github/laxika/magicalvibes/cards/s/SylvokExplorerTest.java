@@ -111,4 +111,73 @@ class SylvokExplorerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Tapped opponent lands still contribute colors and mana is added immediately")
+    void tappedOpponentLandStillContributes() {
+        Permanent explorer = addCreatureReady(player1, new SylvokExplorer());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        forest.tap();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(explorer.isTapped()).isTrue();
+        assertThat(forest.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's nonland mana source does not contribute colors")
+    void opponentNonlandManaSourceDoesNotContribute() {
+        addCreatureReady(player1, new SylvokExplorer());
+        harness.addToBattlefield(player1, new Forest());
+        addCreatureReady(player2, new SylvokExplorer());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The color choice excludes colorless mana from opponent lands")
+    void choiceExcludesColorlessMana() {
+        addCreatureReady(player1, new SylvokExplorer());
+        harness.addToBattlefield(player2, new UrzasMine());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Island());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("GREEN", "BLUE");
+
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot choose a color that no opponent land could produce")
+    void rejectsUnavailableColor() {
+        addCreatureReady(player1, new SylvokExplorer());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Island());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "RED"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }
