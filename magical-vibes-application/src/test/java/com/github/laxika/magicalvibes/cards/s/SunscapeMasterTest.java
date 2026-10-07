@@ -132,4 +132,62 @@ class SunscapeMasterTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(source.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("The boost includes creatures entering before the ability resolves")
+    void boostsCreaturesPresentAtResolution() {
+        Permanent source = addCreatureReady(player1, new SunscapeMaster());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(source), 0, null, null);
+
+        Permanent griffin = addCreatureReady(player1, new RazorfootGriffin());
+        harness.passBothPriorities();
+
+        assertThat(griffin.getEffectivePower()).isEqualTo(4);
+        assertThat(griffin.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Second ability can return Sunscape Master itself")
+    void canReturnItselfToHand() {
+        Permanent source = addCreatureReady(player1, new SunscapeMaster());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(source), 1, null, source.getId());
+        assertThat(source.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Sunscape Master");
+        harness.assertInHand(player1, "Sunscape Master");
+    }
+
+    @Test
+    @DisplayName("Both abilities require Sunscape Master to be free of summoning sickness")
+    void cannotActivateEitherAbilityWithSummoningSickness() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new SunscapeMaster());
+        source.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new RazorfootGriffin());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(source), 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(source), 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(source.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }
