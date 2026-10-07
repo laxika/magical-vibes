@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -12,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Stargaze.class, GrizzlyBears.class, Shock.class})
 class StargazeTest extends BaseCardTest {
@@ -22,7 +22,7 @@ class StargazeTest extends BaseCardTest {
         Card graveyardCard0 = new Shock();
         Card handCard1 = new GrizzlyBears();
         Card graveyardCard1 = new Shock();
-        setupTopCards(List.of(handCard0, graveyardCard0, handCard1, graveyardCard1));
+        harness.setLibrary(player1, List.of(handCard0, graveyardCard0, handCard1, graveyardCard1));
 
         harness.setHand(player1, List.of(new Stargaze()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -45,7 +45,7 @@ class StargazeTest extends BaseCardTest {
     @Test
     void withZeroXDoesNotMoveCardsOrLoseLife() {
         Card topCard = new GrizzlyBears();
-        setupTopCards(List.of(topCard));
+        harness.setLibrary(player1, List.of(topCard));
 
         harness.setHand(player1, List.of(new Stargaze()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -60,9 +60,63 @@ class StargazeTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 
-    private void setupTopCards(List<Card> cards) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+    @Test
+    void mustChooseExactlyXCardsWhenAvailable() {
+        Card first = new Stargaze();
+        Card second = new Stargaze();
+        Card third = new Stargaze();
+        Card fourth = new Stargaze();
+        harness.setLibrary(player1, List.of(first, second, third, fourth));
+        harness.setHand(player1, List.of(new Stargaze()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, 2);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(first.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(third, fourth);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void shortLibraryPutsAllAvailableCardsIntoHandAndStillLosesXLife() {
+        Card onlyCard = new Stargaze();
+        harness.setLibrary(player1, List.of(onlyCard));
+        harness.setHand(player1, List.of(new Stargaze()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, 2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void emptyLibraryStillLosesXLifeWithoutDrawing() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new Stargaze()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, 2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }
