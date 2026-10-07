@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.a.AccordersShield;
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
 import com.github.laxika.magicalvibes.cards.e.EngulfingSlagwurm;
+import com.github.laxika.magicalvibes.cards.m.MagebaneArmor;
 import com.github.laxika.magicalvibes.cards.s.StriderHarness;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AccordersShield.class, CopperMyr.class, EngulfingSlagwurm.class,
-        StriderHarness.class, TurnToSlag.class})
+        MagebaneArmor.class, StriderHarness.class, TurnToSlag.class})
 class TurnToSlagTest extends BaseCardTest {
 
     @Test
@@ -43,10 +42,9 @@ class TurnToSlagTest extends BaseCardTest {
     void destroysEquipmentAttachedToTarget() {
         Permanent creature = addCreatureReady(player2, new CopperMyr());
 
-        Permanent equipment = new Permanent(new AccordersShield());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new AccordersShield());
         equipment.setSummoningSick(false);
         equipment.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player2.getId()).add(equipment);
 
         harness.setHand(player1, List.of(new TurnToSlag()));
         harness.addMana(player1, ManaColor.RED, 5);
@@ -65,15 +63,13 @@ class TurnToSlagTest extends BaseCardTest {
     void destroysMultipleEquipment() {
         Permanent creature = addCreatureReady(player2, new EngulfingSlagwurm());
 
-        Permanent equip1 = new Permanent(new AccordersShield());
+        Permanent equip1 = harness.addToBattlefieldAndReturn(player2, new AccordersShield());
         equip1.setSummoningSick(false);
         equip1.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player2.getId()).add(equip1);
 
-        Permanent equip2 = new Permanent(new StriderHarness());
+        Permanent equip2 = harness.addToBattlefieldAndReturn(player2, new StriderHarness());
         equip2.setSummoningSick(false);
         equip2.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player2.getId()).add(equip2);
 
         harness.setHand(player1, List.of(new TurnToSlag()));
         harness.addMana(player1, ManaColor.RED, 5);
@@ -96,10 +92,9 @@ class TurnToSlagTest extends BaseCardTest {
 
         Permanent otherCreature = addCreatureReady(player2, new EngulfingSlagwurm());
 
-        Permanent equipment = new Permanent(new AccordersShield());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new AccordersShield());
         equipment.setSummoningSick(false);
         equipment.setAttachedTo(otherCreature.getId());
-        gd.playerBattlefields.get(player2.getId()).add(equipment);
 
         harness.setHand(player1, List.of(new TurnToSlag()));
         harness.addMana(player1, ManaColor.RED, 5);
@@ -126,7 +121,7 @@ class TurnToSlagTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
         harness.assertInGraveyard(player1, "Turn to Slag");
     }
 
@@ -155,5 +150,41 @@ class TurnToSlagTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Turn to Slag");
+    }
+
+    @Test
+    @DisplayName("Equipment prevents damage before Turn to Slag destroys it")
+    void attachedEquipmentPreventsDamageBeforeBeingDestroyed() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CopperMyr());
+        Permanent armor = harness.addToBattlefieldAndReturn(player2, new MagebaneArmor());
+        armor.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new TurnToSlag()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Copper Myr");
+        assertThat(creature.getMarkedDamage()).isZero();
+        harness.assertNotOnBattlefield(player2, "Magebane Armor");
+        harness.assertInGraveyard(player2, "Magebane Armor");
+    }
+
+    @Test
+    @DisplayName("Equipment is destroyed even when controlled by the other player")
+    void destroysEquipmentControlledByOtherPlayer() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new EngulfingSlagwurm());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new AccordersShield());
+        equipment.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new TurnToSlag()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Engulfing Slagwurm");
+        assertThat(creature.getMarkedDamage()).isEqualTo(5);
+        harness.assertNotOnBattlefield(player1, "Accorder's Shield");
+        harness.assertInGraveyard(player1, "Accorder's Shield");
     }
 }
