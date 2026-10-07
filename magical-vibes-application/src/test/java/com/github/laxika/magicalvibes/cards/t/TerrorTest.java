@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.k.KondaLordOfEiganjo;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Terror.class, GrizzlyBears.class, ScatheZombies.class, Ornithopter.class, Mountain.class,
-        KondaLordOfEiganjo.class})
+        KondaLordOfEiganjo.class, TrollAscetic.class})
 class TerrorTest extends BaseCardTest {
 
     @Test
@@ -174,6 +175,59 @@ class TerrorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        harness.assertInGraveyard(player1, "Terror");
+    }
+
+    @Test
+    @DisplayName("Terror cannot target a green creature that is also black")
+    void cannotTargetMulticoloredCreatureIncludingBlack() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bears.getGrantedColors().add(CardColor.BLACK);
+
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("nonblack creature");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Terror does not destroy a target that becomes black before resolution")
+    void targetBecomingBlackIsIllegalAtResolution() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castInstant(player1, 0, bears.getId());
+        bears.getGrantedColors().add(CardColor.BLACK);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Terror");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Regeneration activated in response cannot save a creature from Terror")
+    void regenerationActivatedInResponseCannotSaveCreature() {
+        Permanent troll = harness.addToBattlefieldAndReturn(player1, new TrollAscetic());
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, troll.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Troll Ascetic");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Troll Ascetic");
+        harness.assertInGraveyard(player1, "Troll Ascetic");
         harness.assertInGraveyard(player1, "Terror");
     }
 }
