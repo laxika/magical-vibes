@@ -19,6 +19,46 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TalruumPiperTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A flyer cannot block another attacker instead of Talruum Piper")
+    void flyerCannotChooseAnUnrelatedAttacker() {
+        addCreatureReady(player1, new TalruumPiper());
+        addCreatureReady(player1, new PantherWarriors());
+        Permanent flyer = addCreatureReady(player2, new DarajaGriffin());
+        Permanent ground = addCreatureReady(player2, new PantherWarriors());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 1), new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 1)));
+
+        assertThat(flyer.isBlocking()).isTrue();
+        assertThat(ground.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A flyer may choose either of two attacking Talruum Pipers")
+    void competingPipersAllowChoosingEitherAttacker() {
+        addCreatureReady(player1, new TalruumPiper());
+        addCreatureReady(player1, new TalruumPiper());
+        Permanent flyer = addCreatureReady(player2, new DarajaGriffin());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(flyer.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Flying creatures must block Talruum Piper; ground creatures are not forced")
     void flyingMustBlockGroundNotForced() {
         Permanent piper = addCreatureReady(player1, new TalruumPiper());
