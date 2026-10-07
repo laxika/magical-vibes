@@ -141,10 +141,48 @@ class TheTabernacleAtPendrellValeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Tundra Wolves"));
+        assertThat(countPermanents(player1, "Tundra Wolves")).isZero();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .filteredOn(card -> card.getName().equals("Tundra Wolves"))
                 .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Paying for one creature does not pay for another creature")
+    void eachCreatureRequiresItsOwnPayment() {
+        addTabernacle(player1);
+        addWolves(player1);
+        addWolves(player1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(countPermanents(player1, "Tundra Wolves")).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Tundra Wolves"))
+                .hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A creature entering after upkeep begins does not get an upkeep trigger")
+    void creatureEnteringAfterUpkeepBeginsIsNotTaxed() {
+        addTabernacle(player1);
+        Permanent original = addWolves(player1);
+
+        advanceToUpkeep(player1);
+        Permanent newcomer = addWolves(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(newcomer)
+                .doesNotContain(original);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
