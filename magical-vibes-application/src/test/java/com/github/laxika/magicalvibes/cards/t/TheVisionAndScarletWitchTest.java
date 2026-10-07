@@ -31,4 +31,52 @@ class TheVisionAndScarletWitchTest extends BaseCardTest {
         assertThat(visionAndScarletWitch.getEffectivePower()).isEqualTo(4);
         assertThat(visionAndScarletWitch.getEffectiveToughness()).isEqualTo(4);
     }
+
+    @Test
+    void castingItselfDoesNotTriggerItsAbility() {
+        harness.setHand(player1, List.of(new TheVisionAndScarletWitch()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement()
+                .satisfies(permanent -> assertThat(permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero());
+    }
+
+    @Test
+    void opponentsSpellDoesNotTriggerItsAbility() {
+        Permanent visionAndScarletWitch = addCreatureReady(player1, new TheVisionAndScarletWitch());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new TheVisionAndScarletWitch()));
+        harness.addMana(player2, ManaColor.RED, 4);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(visionAndScarletWitch.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void castTriggerUsesTheStackAndResolvesBeforeTheSpell() {
+        Permanent visionAndScarletWitch = addCreatureReady(player1, new TheVisionAndScarletWitch());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(visionAndScarletWitch.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(visionAndScarletWitch.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
 }
