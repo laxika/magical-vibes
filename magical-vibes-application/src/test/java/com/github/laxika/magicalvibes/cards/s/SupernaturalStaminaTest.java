@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GoForTheThroat;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SupernaturalStamina.class, GrizzlyBears.class, GoForTheThroat.class,
+        FountainOfYouth.class, Humble.class})
 class SupernaturalStaminaTest extends BaseCardTest {
 
     private void resolveStack() {
@@ -25,8 +29,6 @@ class SupernaturalStaminaTest extends BaseCardTest {
             harness.passBothPriorities();
         }
     }
-
-    // ===== +2/+0 boost =====
 
     @Test
     @DisplayName("Grants the targeted creature +2/+0 until end of turn")
@@ -55,14 +57,11 @@ class SupernaturalStaminaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
         assertThat(target.getToughnessModifier()).isEqualTo(0);
     }
-
-    // ===== Granted death trigger: return tapped under owner's control =====
 
     @Test
     @DisplayName("Returns the creature to the battlefield tapped under its owner's control when it dies this turn")
@@ -104,14 +103,11 @@ class SupernaturalStaminaTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Targeting restrictions =====
-
     @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         addCreature(player1);
-        Permanent artifact = new Permanent(new FountainOfYouth());
-        gd.playerBattlefields.get(player2.getId()).add(artifact);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         harness.setHand(player1, List.of(new SupernaturalStamina()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -120,10 +116,84 @@ class SupernaturalStaminaTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    void abilityRemovalPreventsReturn() {
+        Permanent target = addCreature(player2);
+        harness.setHand(player1, List.of(new SupernaturalStamina(), new Humble(), new GoForTheThroat()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, target.getId());
+        resolveStack();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void stolenCreatureControllerControlsDeathTriggerButOwnerGetsCreature() {
+        Permanent target = addCreature(player1);
+        gd.stolenCreatures.put(target.getId(), player2.getId());
+        harness.setHand(player1, List.of(new SupernaturalStamina(), new GoForTheThroat()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getControllerId()).isEqualTo(player1.getId()));
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gqs.findPermanentById(gd, harness.getPermanentId(player2, "Grizzly Bears")).isTapped()).isTrue();
+    }
+
+    @Test
+    void returnedCreatureDoesNotRetainBoostOrDeathAbility() {
+        Permanent target = addCreature(player2);
+        harness.setHand(player1, List.of(new SupernaturalStamina(), new GoForTheThroat(), new GoForTheThroat()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, target.getId());
+        resolveStack();
+
+        Permanent returned = gqs.findPermanentById(gd, harness.getPermanentId(player2, "Grizzly Bears"));
+        assertThat(returned.getId()).isNotEqualTo(target.getId());
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(2);
+        harness.castInstant(player1, 0, returned.getId());
+        resolveStack();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void deathAbilityExpiresAtCleanup() {
+        Permanent target = addCreature(player2);
+        harness.setHand(player1, List.of(new SupernaturalStamina(), new GoForTheThroat()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castInstant(player1, 0, target.getId());
+        resolveStack();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
     private Permanent addCreature(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
     }
 }
