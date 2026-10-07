@@ -92,6 +92,59 @@ class TrainedPronghornTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A tapped, summoning-sick Pronghorn can prevent multiple damage events")
+    void tappedSummoningSickPronghornPreventsRepeatedDamage() {
+        Permanent pronghorn = harness.addToBattlefieldAndReturn(player1, new TrainedPronghorn());
+        pronghorn.setSummoningSick(true);
+        pronghorn.setTapped(true);
+        harness.setHand(player1, List.of(new EmberShot(), new EmberShot(), new EmberShot()));
+        harness.setLibrary(player1, List.of(new BorderPatrol(), new BorderPatrol()));
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.assertInGraveyard(player1, "Ember Shot");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.passBothPriorities();
+
+        for (int i = 0; i < 2; i++) {
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 6);
+            harness.castAndResolveInstant(player1, 0, pronghorn.getId());
+
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(pronghorn);
+            assertThat(pronghorn.getMarkedDamage()).isZero();
+        }
+    }
+
+    @Test
+    @DisplayName("Prevention protects only the Pronghorn whose ability resolved")
+    void preventionDoesNotProtectAnotherPronghorn() {
+        Permanent protectedPronghorn = addCreatureReady(player1, new TrainedPronghorn());
+        Permanent otherPronghorn = addCreatureReady(player1, new TrainedPronghorn());
+        harness.setHand(player1, List.of(new BorderPatrol(), new EmberShot()));
+        harness.setLibrary(player1, List.of(new BorderPatrol()));
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castAndResolveInstant(player1, 0, otherPronghorn.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(protectedPronghorn)
+                .doesNotContain(otherPronghorn);
+        harness.assertInGraveyard(player1, "Trained Pronghorn");
+    }
+
+    @Test
     @DisplayName("Cannot activate without a card to discard")
     void cannotActivateWithoutCardInHand() {
         addCreatureReady(player1, new TrainedPronghorn());
