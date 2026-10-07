@@ -141,6 +141,91 @@ class SuncrusherTest extends BaseCardTest {
         harness.assertInHand(player2, "Suncrusher");
     }
 
+    @Test
+    @DisplayName("Returning Suncrusher requires a +1/+1 counter")
+    void returnAbilityRequiresCounter() {
+        addReadySuncrusher(player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        prepareTurn();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough counters");
+
+        harness.assertOnBattlefield(player1, "Suncrusher");
+        harness.assertNotInHand(player1, "Suncrusher");
+    }
+
+    @Test
+    @DisplayName("Tapped and summoning-sick Suncrusher can return itself")
+    void returnAbilityDoesNotRequireTappingOrHaste() {
+        Permanent suncrusher = addReadySuncrusher(player1, 1);
+        suncrusher.setSummoningSick(true);
+        suncrusher.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        prepareTurn();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(suncrusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertOnBattlefield(player1, "Suncrusher");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Suncrusher");
+        harness.assertInHand(player1, "Suncrusher");
+    }
+
+    @Test
+    @DisplayName("Summoning-sick Suncrusher cannot activate its destroy ability")
+    void destroyAbilityRequiresNotBeingSummoningSick() {
+        Permanent suncrusher = addReadySuncrusher(player1, 1);
+        suncrusher.setSummoningSick(true);
+        Permanent arachnoid = addCreatureReady(player2, new Arachnoid());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        prepareTurn();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, arachnoid.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(suncrusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(suncrusher.isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Arachnoid");
+    }
+
+    @Test
+    @DisplayName("Suncrusher's destroy ability resolves after it returns to hand")
+    void destroyAbilityResolvesAfterSourceLeaves() {
+        Permanent suncrusher = addReadySuncrusher(player1, 2);
+        Permanent arachnoid = addCreatureReady(player2, new Arachnoid());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        prepareTurn();
+
+        harness.activateAbility(player1, 0, null, arachnoid.getId());
+        assertThat(suncrusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(suncrusher.isTapped()).isTrue();
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(suncrusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Suncrusher");
+        harness.assertOnBattlefield(player2, "Arachnoid");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Arachnoid");
+    }
+
+    @Test
+    @DisplayName("Suncrusher can target itself with its destroy ability")
+    void destroyAbilityCanTargetItself() {
+        Permanent suncrusher = addReadySuncrusher(player1, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        prepareTurn();
+
+        harness.activateAbility(player1, 0, null, suncrusher.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Suncrusher");
+        harness.assertInGraveyard(player1, "Suncrusher");
+    }
+
     private Permanent addReadySuncrusher(Player player, int counters) {
         Permanent suncrusher = addCreatureReady(player, new Suncrusher());
         suncrusher.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
