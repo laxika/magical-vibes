@@ -52,8 +52,7 @@ class TheLordOfPainTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         assertThat(gd.getLife(player1.getId())).isEqualTo(player1LifeBefore - 4);
 
         harness.passPriority(player2);
@@ -68,5 +67,66 @@ class TheLordOfPainTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(player1LifeBefore - 4);
         assertThat(gd.getLife(player2.getId())).isEqualTo(player2LifeBefore - 3);
+    }
+
+    @Test
+    void doesNotTriggerForSecondSpellWhenFirstWasCastBeforeItEntered() {
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.addToBattlefield(player1, new TheLordOfPain());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void castingTheLordOfPainAsFirstSpellDoesNotTriggerItself() {
+        harness.setHand(player1, List.of(new TheLordOfPain(), new Shock()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "The Lord of Pain");
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void firstSpellCountResetsOnTheNextPlayersTurn() {
+        harness.addToBattlefield(player1, new TheLordOfPain());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertLife(player2, 17);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.ensurePriority(player1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPlayerIds()).containsExactly(player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertLife(player2, 14);
     }
 }
