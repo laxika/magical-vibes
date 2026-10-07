@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.b.BenalishLancer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GalinasKnight;
 import com.github.laxika.magicalvibes.cards.s.SparringGolem;
+import com.github.laxika.magicalvibes.cards.s.StrengthOfUnity;
 import com.github.laxika.magicalvibes.cards.u.UrborgSkeleton;
 import com.github.laxika.magicalvibes.cards.v.VodalianSerpent;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TsabosAssassin.class, UrborgSkeleton.class, VodalianSerpent.class, BenalishLancer.class,
-        Forest.class, GalinasKnight.class, SparringGolem.class, AlloyGolem.class})
+        Forest.class, GalinasKnight.class, SparringGolem.class, AlloyGolem.class, StrengthOfUnity.class})
 class TsabosAssassinTest extends BaseCardTest {
 
     @Test
@@ -140,6 +141,69 @@ class TsabosAssassinTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Counts every color of a multicolored permanent separately")
+    void countsEachColorOfMulticoloredPermanents() {
+        addAssassin();
+        Permanent target = addCreatureReady(player2, new BenalishLancer());
+        addCreatureReady(player1, new GalinasKnight());
+        addCreatureReady(player2, new UrborgSkeleton());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Benalish Lancer");
+        harness.assertInGraveyard(player2, "Benalish Lancer");
+    }
+
+    @Test
+    @DisplayName("Colorless lands do not contribute their mana colors to the count")
+    void ignoresManaColorsOfColorlessLands() {
+        addAssassin();
+        Permanent target = addCreatureReady(player2, new UrborgSkeleton());
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player2, new Forest());
+        }
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Urborg Skeleton");
+        harness.assertInGraveyard(player2, "Urborg Skeleton");
+    }
+
+    @Test
+    @DisplayName("Can destroy a target that only becomes eligible before resolution")
+    void destroysTargetThatBecomesEligibleAtResolution() {
+        addAssassin();
+        addCreatureReady(player2, new UrborgSkeleton());
+        Permanent target = addCreatureReady(player2, new BenalishLancer());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        addCreatureReady(player1, new BenalishLancer());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Benalish Lancer");
+        harness.assertInGraveyard(player2, "Benalish Lancer");
+    }
+
+    @Test
+    @DisplayName("Counts colored noncreature permanents across both battlefields")
+    void countsColoredNoncreaturePermanents() {
+        Permanent assassin = addAssassin();
+        Permanent target = addCreatureReady(player2, new BenalishLancer());
+        addCreatureReady(player1, new VodalianSerpent());
+        addCreatureReady(player2, new VodalianSerpent());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new StrengthOfUnity());
+        aura.setAttachedTo(assassin.getId());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Benalish Lancer");
+        harness.assertInGraveyard(player2, "Benalish Lancer");
     }
 
     private Permanent addAssassin() {
