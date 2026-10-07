@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.c.CabalTrainee;
 import com.github.laxika.magicalvibes.cards.l.LavaDart;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.cards.t.ToxicStench;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -116,16 +117,61 @@ class SoulcatchersAerieTest extends BaseCardTest {
     @DisplayName("A Bird token dying also puts a feather counter on the enchantment")
     void putsFeatherCounterWhenBirdTokenDies() {
         Permanent aerie = harness.addToBattlefieldAndReturn(player1, new SoulcatchersAerie());
-        harness.setHand(player1, List.of(new BattleScreech()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new BattleScreech(), "{2}{W}{W}");
         harness.passBothPriorities();
 
         Permanent birdToken = findPermanents(player1, "Bird").getFirst();
         killWithLavaDart(player1, birdToken);
 
         assertThat(aerie.getCounterCount(CounterType.FEATHER)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Uses the dying permanent's battlefield Bird subtype rather than its printed subtype")
+    void triggersForCreatureGrantedBirdSubtype() {
+        Permanent aerie = harness.addToBattlefieldAndReturn(player1, new SoulcatchersAerie());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CabalTrainee());
+        creature.getGrantedSubtypes().add(CardSubtype.BIRD);
+
+        killWithLavaDart(player1, creature);
+
+        harness.assertInGraveyard(player1, "Cabal Trainee");
+        assertThat(aerie.getCounterCount(CounterType.FEATHER)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each Aerie gets its own counter and their bonuses add together")
+    void multipleAeriesTriggerIndependentlyAndTheirBonusesCombine() {
+        Permanent firstAerie = harness.addToBattlefieldAndReturn(player1, new SoulcatchersAerie());
+        Permanent secondAerie = harness.addToBattlefieldAndReturn(player1, new SoulcatchersAerie());
+        Permanent dyingBird = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent survivingBird = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+
+        killWithLavaDart(player1, dyingBird);
+
+        assertThat(firstAerie.getCounterCount(CounterType.FEATHER)).isEqualTo(1);
+        assertThat(secondAerie.getCounterCount(CounterType.FEATHER)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, survivingBird)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, survivingBird)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Only feather counters contribute to the bonus, which updates as counters change")
+    void bonusTracksOnlyCurrentFeatherCounters() {
+        Permanent aerie = harness.addToBattlefieldAndReturn(player1, new SoulcatchersAerie());
+        Permanent bird = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        aerie.setCounterCount(CounterType.CHARGE, 3);
+
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(1);
+
+        aerie.setCounterCount(CounterType.FEATHER, 2);
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(3);
+
+        aerie.setCounterCount(CounterType.FEATHER, 0);
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(1);
     }
 
     private void killWithLavaDart(Player caster, Permanent target) {
