@@ -16,7 +16,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -24,8 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({TimeElemental.class, BenalishHero.class, GrizzlyBears.class, HolyStrength.class,
         Island.class, Seasinger.class, Unsummon.class})
 class TimeElementalTest extends BaseCardTest {
-
-    // ===== Attack / block delayed sacrifice + self damage =====
 
     @Test
     @DisplayName("Attacking sacrifices Time Elemental and deals 5 damage to its controller at end of combat")
@@ -78,8 +75,6 @@ class TimeElementalTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
 
-    // ===== Activated bounce ability =====
-
     @Test
     @DisplayName("Activated ability returns a target permanent that isn't enchanted to its owner's hand")
     void activatedAbilityBouncesTargetPermanent() {
@@ -88,10 +83,9 @@ class TimeElementalTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -189,5 +183,57 @@ class TimeElementalTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(elemental.getCard());
         assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(elemental.getCard());
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
+    }
+
+    @Test
+    @DisplayName("An attached Aura can be returned even though the creature it enchants cannot")
+    void activatedAbilityBouncesAttachedAura() {
+        addCreatureReady(player1, new TimeElemental());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new HolyStrength());
+        aura.setAttachedTo(bears.getId());
+
+        harness.activateAbility(player1, 0, null, aura.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Holy Strength");
+        harness.assertNotOnBattlefield(player2, "Holy Strength");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+    }
+
+    @Test
+    @DisplayName("Time Elemental may return itself to its owner's hand")
+    void activatedAbilityBouncesItself() {
+        Permanent elemental = addCreatureReady(player1, new TimeElemental());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, elemental.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Time Elemental");
+        harness.assertInHand(player1, "Time Elemental");
+        harness.assertNotInGraveyard(player1, "Time Elemental");
+    }
+
+    @Test
+    @DisplayName("Four mana with only one blue mana cannot pay the activated ability's cost")
+    void activatedAbilityRequiresTwoBlueMana() {
+        Permanent elemental = addCreatureReady(player1, new TimeElemental());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, island.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(elemental.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(island);
     }
 }
