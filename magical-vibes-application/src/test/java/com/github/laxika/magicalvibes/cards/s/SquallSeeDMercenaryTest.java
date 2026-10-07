@@ -21,6 +21,75 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SquallSeeDMercenaryTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Squall gains double strike when it attacks alone")
+    void squallAttackingAloneGainsDoubleStrike() {
+        Permanent squall = addCreatureReady(player1, new SquallSeeDMercenary());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
+
+        assertThat(gqs.hasKeyword(gd, squall, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Neither creature gains double strike when two creatures attack")
+    void multipleAttackersDoNotGainDoubleStrike() {
+        Permanent squall = addCreatureReady(player1, new SquallSeeDMercenary());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1));
+            resolveAllTriggers();
+        });
+
+        assertThat(gqs.hasKeyword(gd, squall, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's creature attacking alone does not gain double strike")
+    void opponentsAttackerDoesNotGainDoubleStrike() {
+        addCreatureReady(player1, new SquallSeeDMercenary());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player2, List.of(0));
+            resolveAllTriggers();
+        });
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Combat damage returns a land from your graveyard but cannot target an opponent's card")
+    void combatDamageReturnsLandFromOwnGraveyard() {
+        Card ownLand = new Plains();
+        Card opponentsLand = new Plains();
+        harness.setGraveyard(player1, List.of(ownLand));
+        harness.setGraveyard(player2, List.of(opponentsLand));
+        addCreatureReady(player1, new SquallSeeDMercenary());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(ownLand.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(ownLand.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(ownLand.getId()) && !permanent.isTapped());
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentsLand);
+    }
+
+    @Test
     @DisplayName("A creature attacking alone gains double strike until end of turn")
     void creatureAttackingAloneGainsDoubleStrike() {
         Permanent squall = addCreatureReady(player1, new SquallSeeDMercenary());
