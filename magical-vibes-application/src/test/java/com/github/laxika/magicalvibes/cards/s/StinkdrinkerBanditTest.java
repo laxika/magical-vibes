@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.i.InkDissolver;
+import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
 import com.github.laxika.magicalvibes.cards.l.LatchkeyFaerie;
+import com.github.laxika.magicalvibes.cards.l.Lignify;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StinkdrinkerBandit.class, InkDissolver.class, LatchkeyFaerie.class})
+@CardUsed({StinkdrinkerBandit.class, InkDissolver.class, LatchkeyFaerie.class,
+        AmoeboidChangeling.class, Lignify.class})
 class StinkdrinkerBanditTest extends BaseCardTest {
 
     @Test
@@ -132,6 +135,98 @@ class StinkdrinkerBanditTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castWithProwl(player1, 0, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Multiple Bandits each boost every unblocked Rogue")
+    void multipleBanditsBoostEachUnblockedRogue() {
+        Permanent first = addCreatureReady(player1, new StinkdrinkerBandit());
+        Permanent second = addCreatureReady(player1, new StinkdrinkerBandit());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveAllTriggers();
+
+        assertThat(first.getPowerModifier()).isEqualTo(4);
+        assertThat(first.getToughnessModifier()).isEqualTo(2);
+        assertThat(second.getPowerModifier()).isEqualTo(4);
+        assertThat(second.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Actual Rogue combat damage enables prowl in the second main phase")
+    void rogueCombatDamageEnablesProwl() {
+        addCreatureReady(player1, new LatchkeyFaerie());
+        harness.setHand(player1, List.of(new StinkdrinkerBandit()));
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.assertLife(player2, 17);
+
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castWithProwl(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Stinkdrinker Bandit");
+    }
+
+    @Test
+    @DisplayName("A creature that gains all creature types qualifies as a Rogue")
+    void gainedRogueTypeQualifiesForBoost() {
+        addCreatureReady(player1, new StinkdrinkerBandit());
+        addCreatureReady(player1, new AmoeboidChangeling());
+        Permanent attacker = addCreatureReady(player1, new InkDissolver());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(2));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(2);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A Rogue that loses all creature types does not qualify for the boost")
+    void lostRogueTypeDoesNotQualifyForBoost() {
+        addCreatureReady(player1, new StinkdrinkerBandit());
+        addCreatureReady(player1, new AmoeboidChangeling());
+        Permanent attacker = addCreatureReady(player1, new LatchkeyFaerie());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 1, 1, null, attacker.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(2));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A Bandit that has lost its abilities does not boost an unblocked Rogue")
+    void banditWithoutAbilitiesDoesNotTrigger() {
+        Permanent bandit = addCreatureReady(player1, new StinkdrinkerBandit());
+        Permanent rogue = addCreatureReady(player1, new LatchkeyFaerie());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Lignify()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castEnchantment(player1, 0, bandit.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveAllTriggers();
+
+        assertThat(rogue.getPowerModifier()).isZero();
+        assertThat(rogue.getToughnessModifier()).isZero();
     }
 
     private void recordCombatDamageSubtype(CardSubtype subtype) {
