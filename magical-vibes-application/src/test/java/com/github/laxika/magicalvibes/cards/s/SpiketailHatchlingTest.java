@@ -268,5 +268,52 @@ class SpiketailHatchlingTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("flying");
     }
+
+    @Test
+    @DisplayName("Can sacrifice a tapped Hatchling with summoning sickness")
+    void canActivateWhileTappedAndSummoningSick() {
+        var hatchling = harness.addToBattlefieldAndReturn(player2, new SpiketailHatchling());
+        hatchling.setSummoningSick(true);
+        hatchling.tap();
+
+        SpiketailHatchling targetSpell = new SpiketailHatchling();
+        harness.castFromHand(player1, targetSpell, "{1}{U}");
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, null, targetSpell.getId());
+
+        harness.assertNotOnBattlefield(player2, "Spiketail Hatchling");
+        harness.assertInGraveyard(player2, "Spiketail Hatchling");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Spiketail Hatchling");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can pay with colored mana to save own spell after sacrificing Hatchling")
+    void canPayColoredManaForOwnSpell() {
+        SpiketailHatchling source = new SpiketailHatchling();
+        harness.addToBattlefield(player1, source);
+
+        HillGiant targetSpell = new HillGiant();
+        harness.castFromHand(player1, targetSpell, "{3}{R}");
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, targetSpell.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertInGraveyard(player1, "Spiketail Hatchling");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertNotInGraveyard(player1, "Hill Giant");
+        assertThat(gd.stack).isEmpty();
+    }
 }
 
