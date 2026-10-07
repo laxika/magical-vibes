@@ -54,9 +54,7 @@ class ThalakosDriftersTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, drifters, Keyword.SHADOW)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, drifters, Keyword.SHADOW)).isFalse();
     }
@@ -93,5 +91,41 @@ class ThalakosDriftersTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, drifters, Keyword.SHADOW)).isTrue();
         assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.SHADOW)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Discard is paid before resolution, while shadow is granted on resolution")
+    void discardIsPaidBeforeShadowIsGranted() {
+        Permanent drifters = harness.addToBattlefieldAndReturn(player1, new ThalakosDrifters());
+        harness.setHand(player1, List.of(new RagingGoblin()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Raging Goblin");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, drifters, Keyword.SHADOW)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, drifters, Keyword.SHADOW)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Drifters with summoning sickness can activate its ability")
+    void canActivateWhileTappedWithSummoningSickness() {
+        Permanent drifters = harness.addToBattlefieldAndReturn(player1, new ThalakosDrifters());
+        drifters.setTapped(true);
+        drifters.setSummoningSick(true);
+        harness.setHand(player1, List.of(new ThalakosDrifters()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Thalakos Drifters");
+        assertThat(gqs.hasKeyword(gd, drifters, Keyword.SHADOW)).isTrue();
+        assertThat(drifters.isTapped()).isTrue();
     }
 }
