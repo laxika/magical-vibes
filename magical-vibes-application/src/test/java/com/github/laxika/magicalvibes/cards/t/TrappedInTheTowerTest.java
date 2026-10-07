@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
+import com.github.laxika.magicalvibes.cards.f.Flutterfox;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.ShiningArmor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TrappedInTheTower.class, AirElemental.class, BottleGnomes.class, GrizzlyBears.class})
+@CardUsed({TrappedInTheTower.class, AirElemental.class, BottleGnomes.class, GrizzlyBears.class, Flutterfox.class, ShiningArmor.class})
 class TrappedInTheTowerTest extends BaseCardTest {
 
     @Test
@@ -52,12 +53,7 @@ class TrappedInTheTowerTest extends BaseCardTest {
         aura.setAttachedTo(creature.getId());
         gd.playerBattlefields.get(player2.getId()).add(aura);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -71,9 +67,7 @@ class TrappedInTheTowerTest extends BaseCardTest {
 
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -90,5 +84,58 @@ class TrappedInTheTowerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated");
+    }
+
+    @Test
+    void auraDoesNotResolveWhenTargetGainsFlyingInResponse() {
+        Permanent creature = addCreatureReady(player2, new Flutterfox());
+        harness.setHand(player1, List.of(new TrappedInTheTower()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+
+        harness.setHand(player2, List.of(new ShiningArmor()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castArtifact(player2, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Trapped in the Tower");
+        harness.assertInGraveyard(player1, "Trapped in the Tower");
+        harness.assertOnBattlefield(player2, "Flutterfox");
+        harness.assertOnBattlefield(player2, "Shining Armor");
+    }
+
+    @Test
+    void auraGoesToGraveyardWhenEnchantedCreatureGainsFlying() {
+        Permanent creature = addCreatureReady(player2, new Flutterfox());
+        harness.setHand(player1, List.of(new TrappedInTheTower()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Trapped in the Tower");
+
+        harness.setHand(player2, List.of(new ShiningArmor()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castArtifact(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Trapped in the Tower");
+        harness.assertInGraveyard(player1, "Trapped in the Tower");
+        declareAttackers(player2, List.of(0));
+        assertThat(creature.isAttacking()).isTrue();
+    }
+
+    @Test
+    void enchantingOwnFlutterfoxGrantsFlyingAndImmediatelyRemovesAura() {
+        Permanent creature = addCreatureReady(player1, new Flutterfox());
+        harness.setHand(player1, List.of(new TrappedInTheTower()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Trapped in the Tower");
+        harness.assertInGraveyard(player1, "Trapped in the Tower");
+        declareAttackers(player1, List.of(0));
+        assertThat(creature.isAttacking()).isTrue();
     }
 }
