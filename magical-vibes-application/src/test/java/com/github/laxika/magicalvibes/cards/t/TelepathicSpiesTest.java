@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.a.AetherSting;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AetherSting.class, GrizzlyBears.class, TelepathicSpies.class})
+@CardUsed({GrizzlyBears.class, TelepathicSpies.class})
 class TelepathicSpiesTest extends BaseCardTest {
 
     @Test
@@ -32,7 +31,7 @@ class TelepathicSpiesTest extends BaseCardTest {
     @Test
     @DisplayName("ETB trigger looks at target opponent's hand")
     void etbLooksAtTargetHand() {
-        harness.setHand(player2, List.of(new AetherSting()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
         castTelepathicSpies(player2.getId());
 
         harness.passBothPriorities(); // resolve creature spell
@@ -41,11 +40,11 @@ class TelepathicSpiesTest extends BaseCardTest {
         // Card identity is private: only the controller is told what is in the hand. The public log
         // records that the look happened without naming anything (see CardRevealService#lookAtHand).
         assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
-                .anyMatch(message -> message.contains("Aether Sting"));
+                .anyMatch(message -> message.contains("Grizzly Bears"));
         assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(log -> log.contains("looks at") && log.contains("hand"))
-                .noneMatch(log -> log.contains("Aether Sting"));
+                .noneMatch(log -> log.contains("Grizzly Bears"));
     }
 
     @Test
@@ -58,6 +57,43 @@ class TelepathicSpiesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at") && log.contains("empty"));
+    }
+
+    @Test
+    @DisplayName("The trigger looks at the opponent's hand as it exists on resolution")
+    void looksAtCurrentHandOnResolution() {
+        harness.setHand(player2, List.of(new TelepathicSpies()));
+        castTelepathicSpies(player2.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.clearMessages();
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
+                .anyMatch(message -> message.contains("Grizzly Bears"))
+                .noneMatch(message -> message.contains("Telepathic Spies"));
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The other controller privately looks at their opponent's hand")
+    void otherControllerLooksAtOpponentHand() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new TelepathicSpies()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.castCreature(player2, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND"))
+                .anyMatch(message -> message.contains("Grizzly Bears"));
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     @Test
