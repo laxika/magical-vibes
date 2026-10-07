@@ -15,6 +15,57 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TrenchingSteedTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The land is sacrificed as a cost before the toughness boost resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent steed = addCreatureReady(player1, new TrenchingSteed());
+        harness.addToBattlefield(player1, new RhysticCave());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Rhystic Cave");
+        harness.assertInGraveyard(player1, "Rhystic Cave");
+        assertThat(steed.getToughnessModifier()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(steed.getToughnessModifier()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Steed can sacrifice a tapped land")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent steed = harness.addToBattlefieldAndReturn(player1, new TrenchingSteed());
+        steed.setSummoningSick(true);
+        steed.setTapped(true);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        land.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(steed.getToughnessModifier()).isEqualTo(3);
+        assertThat(steed.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Rhystic Cave");
+    }
+
+    @Test
+    @DisplayName("Only the Steed whose ability was activated gets the bonus")
+    void boostAffectsOnlySourceSteed() {
+        Permanent source = addCreatureReady(player1, new TrenchingSteed());
+        Permanent other = addCreatureReady(player1, new TrenchingSteed());
+        harness.addToBattlefield(player1, new RhysticCave());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isZero();
+        assertThat(source.getToughnessModifier()).isEqualTo(3);
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+    }
+
+    @Test
     @DisplayName("Sacrificing a land gives Trenching Steed +0/+3 until end of turn")
     void sacrificeLandBoostsSelf() {
         Permanent steed = addCreatureReady(player1, new TrenchingSteed());
