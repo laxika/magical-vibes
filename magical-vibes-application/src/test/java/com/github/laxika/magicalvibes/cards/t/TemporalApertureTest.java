@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.Gamble;
 import com.github.laxika.magicalvibes.cards.g.GoblinRaider;
 import com.github.laxika.magicalvibes.cards.h.HeatRay;
+import com.github.laxika.magicalvibes.cards.r.Raze;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TemporalAperture.class, DarkRitual.class, Forest.class, Gamble.class, HeatRay.class, GoblinRaider.class})
+@CardUsed({TemporalAperture.class, DarkRitual.class, Forest.class, Gamble.class, HeatRay.class, GoblinRaider.class, Raze.class})
 class TemporalApertureTest extends BaseCardTest {
 
     private Permanent activate() {
@@ -171,5 +172,90 @@ class TemporalApertureTest extends BaseCardTest {
 
         assertThat(gd.libraryTopCardFreePlayPermissionsUntilEndOfTurn)
                 .doesNotContainKey(player1.getId());
+    }
+
+    @Test
+    @DisplayName("An empty library grants no free-play permission")
+    void emptyLibraryGrantsNoPermission() {
+        harness.setLibrary(player1, List.of());
+
+        Permanent temporalAperture = activate();
+
+        assertThat(temporalAperture.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.libraryTopCardFreePlayPermissionsUntilEndOfTurn)
+                .doesNotContainKey(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Free play does not let a creature be cast during combat")
+    void freePlayRespectsCreatureTiming() {
+        harness.setLibrary(player1, List.of(new GoblinRaider()));
+        activate();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.castAndResolveFromLibraryTop(player1);
+
+        harness.assertOnBattlefield(player1, "Goblin Raider");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The revealed instant can be cast on the opponent's turn")
+    void freeInstantCanBeCastOnOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setLibrary(player1, List.of(new DarkRitual()));
+        activate();
+
+        harness.castAndResolveFromLibraryTop(player1);
+
+        harness.assertInGraveyard(player1, "Dark Ritual");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Free play does not allow an extra land play")
+    void freeLandRespectsLandPlayLimit() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        activate();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gd.landsPlayedThisTurn.put(player1.getId(), 1);
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A revealed Raze can be cast by paying its additional land sacrifice")
+    void freePlayAllowsMandatoryLandSacrifice() {
+        harness.setLibrary(player1, List.of(new Raze()));
+        activate();
+        Permanent sacrificedLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent targetLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.ensurePriority(player1);
+
+        gs.playCardFromLibraryTop(gd, player1, null, targetLand.getId(),
+                List.of(), List.of(sacrificedLand.getId()));
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Raze");
+        harness.assertInGraveyard(player2, "Forest");
     }
 }
