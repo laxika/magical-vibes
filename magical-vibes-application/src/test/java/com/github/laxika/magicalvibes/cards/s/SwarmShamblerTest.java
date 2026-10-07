@@ -86,10 +86,63 @@ class SwarmShamblerTest extends BaseCardTest {
         assertThat(shambler.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Creates an Insect when another controlled creature with a counter is targeted")
+    void createsInsectForAnotherCounteredCreature() {
+        castShambler();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        castOpponentShock(bears);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Does not create an Insect for an opponent's countered creature")
+    void doesNotCreateInsectForOpponentsCreature() {
+        castShambler();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        castOpponentShock(bears);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Removing the counter after targeting does not stop the token trigger")
+    void createsInsectEvenIfCounterIsRemovedBeforeResolution() {
+        castShambler();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        castOpponentShock(bears);
+
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each Swarm Shambler creates a token for the same targeting event")
+    void eachShamblerTriggersForSameTarget() {
+        Permanent shambler = castShambler();
+        castShambler();
+
+        castOpponentShock(shambler);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(2);
+    }
+
     private Permanent castShambler() {
-        harness.setHand(player1, List.of(new SwarmShambler()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SwarmShambler(), "{G}");
         harness.passBothPriorities();
         return findPermanent(player1, "Swarm Shambler");
     }
