@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.Disentomb;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Hushbringer;
 import com.github.laxika.magicalvibes.cards.r.Reminisce;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.r.RiseFromTheGrave;
+import com.github.laxika.magicalvibes.cards.t.TasteOfDeath;
 import com.github.laxika.magicalvibes.cards.t.TomeScour;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +19,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SyrKonradTheGrim.class, GrizzlyBears.class, Shock.class, TomeScour.class, Disentomb.class, Reminisce.class})
+@CardUsed({SyrKonradTheGrim.class, GrizzlyBears.class, Shock.class, TomeScour.class,
+        Disentomb.class, Reminisce.class, Hushbringer.class, RiseFromTheGrave.class, TasteOfDeath.class})
 class SyrKonradTheGrimTest extends BaseCardTest {
 
     @Test
@@ -31,8 +34,7 @@ class SyrKonradTheGrimTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
-        harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearsId);
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
@@ -48,8 +50,7 @@ class SyrKonradTheGrimTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TomeScour()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
@@ -65,8 +66,7 @@ class SyrKonradTheGrimTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Disentomb()));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castSorcery(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
@@ -81,8 +81,7 @@ class SyrKonradTheGrimTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Reminisce()));
         harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -105,5 +104,164 @@ class SyrKonradTheGrimTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(player1Card);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(player2Card);
+    }
+
+    @Test
+    void millingCreaturesFromBothLibrariesTriggersSeparately() {
+        harness.addToBattlefield(player1, new SyrKonradTheGrim());
+        Card ownCard = new SyrKonradTheGrim();
+        Card opposingCard = new SyrKonradTheGrim();
+        harness.setLibrary(player1, List.of(ownCard));
+        harness.setLibrary(player2, List.of(opposingCard));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opposingCard);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void emptyLibraryDoesNotPreventOtherPlayerFromMilling() {
+        harness.addToBattlefield(player1, new SyrKonradTheGrim());
+        Card opposingCard = new SyrKonradTheGrim();
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of(opposingCard));
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opposingCard);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void doesNotTriggerForOpponentCreatureLeavingGraveyard() {
+        harness.addToBattlefield(player1, new SyrKonradTheGrim());
+        harness.setGraveyard(player2, List.of(new SyrKonradTheGrim()));
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Reminisce()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void doesNotTriggerForNoncreatureLeavingOwnGraveyard() {
+        harness.addToBattlefield(player1, new SyrKonradTheGrim());
+        harness.setGraveyard(player1, List.of(new Shock()));
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Reminisce()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card instanceof Shock);
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void triggersForOtherCreaturesDyingSimultaneouslyWithSource() {
+        harness.addToBattlefield(player1, new SyrKonradTheGrim());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new TasteOfDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Syr Konrad, the Grim");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void doesNotTriggerForItsOwnDeath() {
+        harness.addToBattlefield(player1, new SyrKonradTheGrim());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new TasteOfDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertNotOnBattlefield(player1, "Syr Konrad, the Grim");
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void hushbringerSuppressesGraveyardLeaveTriggerCausedByReanimation() {
+        harness.addToBattlefield(player1, new SyrKonradTheGrim());
+        harness.addToBattlefield(player2, new Hushbringer());
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new RiseFromTheGrave()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void hushbringerDoesNotSuppressGraveyardLeaveTriggerForReturnToHand() {
+        harness.addToBattlefield(player1, new SyrKonradTheGrim());
+        harness.addToBattlefield(player2, new Hushbringer());
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Disentomb()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void reanimatingSyrKonradDoesNotTriggerForItsOwnGraveyardDeparture() {
+        Card konrad = new SyrKonradTheGrim();
+        harness.setGraveyard(player1, List.of(konrad));
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new RiseFromTheGrave()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveSorcery(player1, 0, konrad.getId());
+
+        harness.assertOnBattlefield(player1, "Syr Konrad, the Grim");
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
     }
 }
