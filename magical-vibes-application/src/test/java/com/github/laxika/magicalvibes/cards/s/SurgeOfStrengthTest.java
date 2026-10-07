@@ -18,6 +18,41 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SurgeOfStrength.class, FyndhornDruid.class, StormShaman.class, LakeOfTheDead.class})
 class SurgeOfStrengthTest extends BaseCardTest {
+    @Test
+    @DisplayName("The discard is paid before resolution even when it precedes the spell in hand")
+    void paysDiscardBeforeResolution() {
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new FyndhornDruid());
+        harness.setHand(player1, List.of(new StormShaman(), new SurgeOfStrength()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstantWithDiscard(player1, 1, druid.getId(), 0);
+
+        harness.assertInGraveyard(player1, "Storm Shaman");
+        harness.assertNotInHand(player1, "Storm Shaman");
+        harness.assertNotInGraveyard(player1, "Surge of Strength");
+        assertThat(druid.getPowerModifier()).isZero();
+        assertThat(druid.hasKeyword(Keyword.TRAMPLE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(druid.getEffectivePower()).isEqualTo(5);
+        assertThat(druid.getEffectiveToughness()).isEqualTo(2);
+        assertThat(druid.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        harness.assertInGraveyard(player1, "Surge of Strength");
+    }
+
+    @Test
+    @DisplayName("The spell cannot discard itself to pay its additional cost")
+    void cannotDiscardItself() {
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new FyndhornDruid());
+        harness.setHand(player1, List.of(new SurgeOfStrength()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithDiscard(player1, 0, druid.getId(), 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
     @Test
     @DisplayName("Discarding a green card grants trample and +X/+0 equal to the target's mana value")
