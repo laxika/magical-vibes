@@ -24,6 +24,52 @@ class TurbulentWildernessTest extends BaseCardTest {
     private Player thirdPlayer;
 
     @Test
+    @DisplayName("Enters tapped when opponents control no lands")
+    void entersTappedWithNoOpponentLands() {
+        playTurbulentWilderness();
+
+        assertThat(findWilderness(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Enters untapped when opponents control more than eight lands")
+    void entersUntappedWithMoreThanEightOpponentLands() {
+        addLands(player2, 9);
+
+        playTurbulentWilderness();
+
+        assertThat(findWilderness(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Seven lands across opponents are insufficient even with controller lands")
+    void sevenLandsAcrossOpponentsRemainInsufficient() {
+        addThirdPlayer();
+        addLands(player2, 4);
+        addLands(thirdPlayer, 3);
+        addLands(player1, 8);
+
+        playTurbulentWilderness();
+
+        assertThat(findWilderness(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Entering without being played still applies the tapped condition")
+    void enteringWithoutLandPlayAppliesCondition() {
+        addLands(player2, 7);
+
+        Permanent tapped = harness.enterBattlefieldAndReturn(player1, new TurbulentWilderness());
+        assertThat(tapped.isTapped()).isTrue();
+
+        addLands(player2, 1);
+
+        Permanent untapped = harness.enterBattlefieldAndReturn(player1, new TurbulentWilderness());
+        assertThat(untapped.isTapped()).isFalse();
+        assertThat(tapped.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Enters tapped when opponents control fewer than eight lands")
     void entersTappedWithFewerThanEightOpponentLands() {
         addLands(player2, 7);
@@ -91,13 +137,12 @@ class TurbulentWildernessTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TurbulentWilderness()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
     }
 
     private Permanent addReadyWilderness(Player player) {
-        Permanent wilderness = new Permanent(new TurbulentWilderness());
+        Permanent wilderness = harness.addToBattlefieldAndReturn(player, new TurbulentWilderness());
         wilderness.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(wilderness);
         return wilderness;
     }
 
