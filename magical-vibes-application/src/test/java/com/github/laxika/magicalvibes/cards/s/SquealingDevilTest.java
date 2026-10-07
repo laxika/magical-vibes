@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SquealingDevil.class, MistralCharger.class, AzoriusSignet.class})
+@CardUsed({SquealingDevil.class, MistralCharger.class, AzoriusSignet.class, SealOfFire.class})
 class SquealingDevilTest extends BaseCardTest {
 
     @Test
@@ -40,8 +40,7 @@ class SquealingDevilTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Squealing Devil");
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(target.getEffectivePower()).isEqualTo(2);
     }
@@ -116,5 +115,71 @@ class SquealingDevilTest extends BaseCardTest {
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validIds()).contains(target.getId()).doesNotContain(nonCreature.getId());
+    }
+
+    @Test
+    @DisplayName("An illegal boost target does not stop the separate sacrifice ability")
+    void illegalBoostTargetDoesNotPreventSacrifice() {
+        Permanent target = addCreatureReady(player2, new MistralCharger());
+        harness.addToBattlefield(player2, new SealOfFire());
+        harness.setHand(player1, List.of(new SquealingDevil()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.activateAbility(player2, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Mistral Charger");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Squealing Devil");
+        harness.assertInGraveyard(player1, "Squealing Devil");
+    }
+
+    @Test
+    @DisplayName("Black mana spent on casting prevents sacrifice even with no mana left")
+    void blackManaSpentOnCastingPreventsSacrificeWithEmptyPool() {
+        Permanent target = addCreatureReady(player2, new MistralCharger());
+        harness.setHand(player1, List.of(new SquealingDevil()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Squealing Devil");
+        harness.assertNotInGraveyard(player1, "Squealing Devil");
+    }
+
+    @Test
+    @DisplayName("The boost can be paid for and resolve after the Devil leaves the battlefield")
+    void boostResolvesAfterDevilLeavesBattlefield() {
+        Permanent target = addCreatureReady(player2, new MistralCharger());
+        harness.addToBattlefield(player2, new SealOfFire());
+        harness.setHand(player1, List.of(new SquealingDevil()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.activateAbility(player2, 1, null, harness.getPermanentId(player1, "Squealing Devil"));
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Squealing Devil");
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 2);
+
+        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }
