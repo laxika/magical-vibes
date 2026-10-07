@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.b.BruvacTheGrandiloquent;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.p.PetraSphinx;
@@ -16,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TheWaterCrystal.class, Divination.class, GrizzlyBears.class, Millstone.class, PetraSphinx.class})
+@CardUsed({TheWaterCrystal.class, Divination.class, GrizzlyBears.class, Millstone.class, PetraSphinx.class,
+        BruvacTheGrandiloquent.class})
 class TheWaterCrystalTest extends BaseCardTest {
 
     @Test
@@ -109,6 +111,65 @@ class TheWaterCrystalTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(7);
+    }
+
+    @Test
+    void emptyHandDoesNotCauseOpponentToMillFour() {
+        harness.addToBattlefield(player1, new TheWaterCrystal());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player2, cards(10));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(10);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void handSizeIsCountedAtResolution() {
+        harness.addToBattlefield(player1, new TheWaterCrystal());
+        harness.setHand(player1, cards(3));
+        harness.setLibrary(player2, cards(10));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.setHand(player1, cards(1));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(5);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(5);
+    }
+
+    @Test
+    void spellDiscountDoesNotReduceActivatedAbilityCost() {
+        harness.addToBattlefield(player1, new TheWaterCrystal());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed(BruvacTheGrandiloquent.class)
+    void affectedOpponentChoosesOrderOfMillReplacementEffects() {
+        harness.addToBattlefield(player1, new TheWaterCrystal());
+        harness.addToBattlefield(player1, new BruvacTheGrandiloquent());
+        harness.addToBattlefield(player1, new Millstone());
+        harness.setLibrary(player2, cards(20));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 2, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(20);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
     private List<Card> cards(int count) {
