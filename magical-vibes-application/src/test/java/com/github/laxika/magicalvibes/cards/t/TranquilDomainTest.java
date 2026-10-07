@@ -49,6 +49,31 @@ class TranquilDomainTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Destroys non-Aura enchantments while preserving an attached Aura in the same resolution")
+    void destroysOnlyNonAurasOnMixedBattlefield() {
+        Permanent mantis = harness.addToBattlefieldAndReturn(player2, new GiantMantis());
+        harness.addToBattlefield(player1, new CadaverousBloom());
+        harness.addToBattlefield(player2, new CadaverousBloom());
+        harness.setHand(player1, List.of(new ArmorOfThorns()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castEnchantment(player1, 0, mantis.getId());
+        harness.passBothPriorities();
+
+        castTranquilDomain();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactly("Armor of Thorns");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactly("Giant Mantis");
+        harness.assertInGraveyard(player1, "Cadaverous Bloom");
+        harness.assertInGraveyard(player2, "Cadaverous Bloom");
+        harness.assertInGraveyard(player1, "Tranquil Domain");
+        assertThat(findPermanent(player1, "Armor of Thorns").getAttachedTo()).isEqualTo(mantis.getId());
+    }
+
+    @Test
     @DisplayName("Resolves with no enchantments on the battlefield")
     void resolvesWithNoEnchantments() {
         harness.addToBattlefield(player2, new GiantMantis());
