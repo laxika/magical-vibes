@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.d.DwarvenHold;
+import com.github.laxika.magicalvibes.cards.o.OrcishFarmer;
 import com.github.laxika.magicalvibes.cards.r.RiverMerfolk;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TheloniteMonk.class, Thallid.class, RiverMerfolk.class, DwarvenHold.class})
+@CardUsed({TheloniteMonk.class, Thallid.class, RiverMerfolk.class, DwarvenHold.class, OrcishFarmer.class})
 class TheloniteMonkTest extends BaseCardTest {
 
     @Test
@@ -130,6 +131,76 @@ class TheloniteMonkTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(fodder.getCard());
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(nonGreenCreature.getCard());
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Monk cannot activate its tap ability")
+    void cannotActivateWithSummoningSickness() {
+        Permanent monk = harness.addToBattlefieldAndReturn(player1, new TheloniteMonk());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new DwarvenHold());
+        harness.forceActivePlayer(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(monk.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(monk);
+    }
+
+    @Test
+    @DisplayName("An opponent's green creature cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentCreature() {
+        addReadyMonk();
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new Thallid());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new Thallid());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new DwarvenHold());
+        harness.forceActivePlayer(player1);
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(fodder.getCard());
+        assertThat(gqs.effectiveBasicLandTypes(gd, land)).containsExactly(CardSubtype.FOREST);
+    }
+
+    @Test
+    @DisplayName("Becoming a Forest replaces the land's printed mana ability")
+    void replacesPrintedManaAbility() {
+        addReadyMonk();
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new DwarvenHold());
+        harness.forceActivePlayer(player1);
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A later Forest effect overrides an older temporary Swamp effect")
+    void laterForestEffectOverridesOlderSwampEffect() {
+        addReadyMonk();
+        addCreatureReady(player1, new OrcishFarmer());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new DwarvenHold());
+        harness.forceActivePlayer(player1);
+
+        harness.activateAbility(player1, 1, null, land.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.effectiveBasicLandTypes(gd, land)).containsExactly(CardSubtype.SWAMP);
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, land)).containsExactly(CardSubtype.FOREST);
     }
 
     private Permanent addReadyMonk() {
