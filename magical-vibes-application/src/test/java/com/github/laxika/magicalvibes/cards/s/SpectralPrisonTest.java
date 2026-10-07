@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SpectralPrison.class, GrizzlyBears.class, Shock.class, IcyManipulator.class, Naturalize.class,
+        SeedbornMuse.class})
 class SpectralPrisonTest extends BaseCardTest {
 
     @Test
@@ -42,7 +44,7 @@ class SpectralPrisonTest extends BaseCardTest {
 
         attachPrison(player1, creature);
 
-        advanceToNextTurn(player1);
+        harness.performUntapStep(player2);
 
         assertThat(creature.isTapped()).isTrue();
     }
@@ -57,7 +59,7 @@ class SpectralPrisonTest extends BaseCardTest {
 
         attachPrison(player1, enchanted);
 
-        advanceToNextTurn(player1);
+        harness.performUntapStep(player2);
 
         assertThat(enchanted.isTapped()).isTrue();
         assertThat(free.isTapped()).isFalse();
@@ -72,7 +74,7 @@ class SpectralPrisonTest extends BaseCardTest {
         Permanent prison = attachPrison(player1, creature);
         gd.playerBattlefields.get(player1.getId()).remove(prison);
 
-        advanceToNextTurn(player1);
+        harness.performUntapStep(player2);
 
         assertThat(creature.isTapped()).isFalse();
     }
@@ -102,8 +104,7 @@ class SpectralPrisonTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         attachPrison(player1, creature);
 
-        harness.addToBattlefield(player1, new IcyManipulator());
-        Permanent icy = findPermanent(player1, "Icy Manipulator");
+        Permanent icy = harness.addToBattlefieldAndReturn(player1, new IcyManipulator());
         icy.setSummoningSick(false);
 
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -131,21 +132,96 @@ class SpectralPrisonTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Attaching Spectral Prison does not tap an untapped creature")
+    void attachingDoesNotTapCreature() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SpectralPrison()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Spectral Prison");
+    }
+
+    @Test
+    @DisplayName("An opponent's spell sacrifices the Prison before that spell resolves")
+    void opponentsSpellTriggersSacrificeBeforeResolving() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        attachPrison(player1, creature);
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, creature.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Spectral Prison");
+        harness.assertNotOnBattlefield(player1, "Spectral Prison");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A spell targeting another creature does not sacrifice Spectral Prison")
+    void targetingAnotherCreatureDoesNotTriggerSacrifice() {
+        Permanent enchanted = addCreatureReady(player2, new GrizzlyBears());
+        Permanent other = addCreatureReady(player2, new GrizzlyBears());
+        attachPrison(player1, enchanted);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, other.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Spectral Prison");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(enchanted).doesNotContain(other);
+    }
+
+    @Test
+    @DisplayName("Spectral Prison allows Seedborn Muse to untap the host during another player's untap step")
+    void hostUntapsDuringOtherPlayersUntapStep() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        creature.tap();
+        harness.addToBattlefield(player2, new SeedbornMuse());
+        attachPrison(player1, creature);
+
+        harness.performUntapStep(player1);
+
+        assertThat(creature.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Spectral Prison");
+    }
+
+    @Test
+    @DisplayName("Another Aura spell targeting the enchanted creature sacrifices only the old Prison")
+    void auraSpellTriggersSacrifice() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent oldPrison = attachPrison(player1, creature);
+        harness.setHand(player1, List.of(new SpectralPrison()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(oldPrison);
+        harness.assertInGraveyard(player1, "Spectral Prison");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        Permanent newPrison = findPermanent(player1, "Spectral Prison");
+        assertThat(newPrison.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(newPrison.getId()).isNotEqualTo(oldPrison.getId());
+    }
+
     private Permanent attachPrison(Player controller, Permanent creature) {
-        Permanent prison = new Permanent(new SpectralPrison());
+        Permanent prison = harness.addToBattlefieldAndReturn(controller, new SpectralPrison());
         prison.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(prison);
         return prison;
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
 }
