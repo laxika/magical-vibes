@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KioraBehemothBeckoner;
+import com.github.laxika.magicalvibes.cards.p.PollenbrightDruid;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,16 +18,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SparkHarvest.class, GarrukWildspeaker.class, GrizzlyBears.class, Plains.class})
+@CardUsed({SparkHarvest.class, KioraBehemothBeckoner.class, PollenbrightDruid.class, Plains.class})
 class SparkHarvestTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrifices a creature and destroys target creature")
     void sacrificesCreatureAndDestroysTarget() {
-        Permanent sacrifice = new Permanent(new GrizzlyBears());
-        Permanent target = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(sacrifice);
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new PollenbrightDruid());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PollenbrightDruid());
 
         harness.setHand(player1, List.of(new SparkHarvest()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -48,8 +46,7 @@ class SparkHarvestTest extends BaseCardTest {
     @Test
     @DisplayName("Pays {3}{B} instead of sacrificing and destroys target")
     void paysManaInsteadOfSacrificing() {
-        Permanent target = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PollenbrightDruid());
 
         harness.setHand(player1, List.of(new SparkHarvest()));
         harness.addMana(player1, ManaColor.BLACK, 5);
@@ -83,8 +80,7 @@ class SparkHarvestTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot cast without a creature or enough mana for the alternate cost")
     void cannotCastWithoutCreatureOrMana() {
-        Permanent target = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PollenbrightDruid());
 
         harness.setHand(player1, List.of(new SparkHarvest()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -97,10 +93,8 @@ class SparkHarvestTest extends BaseCardTest {
     @Test
     @DisplayName("Rejects a non-creature, non-planeswalker target")
     void rejectsLandTarget() {
-        Permanent sacrifice = new Permanent(new GrizzlyBears());
-        Permanent land = new Permanent(new Plains());
-        gd.playerBattlefields.get(player1.getId()).add(sacrifice);
-        gd.playerBattlefields.get(player2.getId()).add(land);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new PollenbrightDruid());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Plains());
 
         harness.setHand(player1, List.of(new SparkHarvest()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -110,11 +104,116 @@ class SparkHarvestTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Sacrifice is paid before the spell resolves and does not require extra mana")
+    void sacrificeIsPaidDuringCasting() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new PollenbrightDruid());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PollenbrightDruid());
+        harness.setHand(player1, List.of(new SparkHarvest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorceryWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
+
+        harness.assertNotOnBattlefield(player1, "Pollenbright Druid");
+        harness.assertInGraveyard(player1, "Pollenbright Druid");
+        harness.assertOnBattlefield(player2, "Pollenbright Druid");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Pollenbright Druid");
+        harness.assertInGraveyard(player2, "Pollenbright Druid");
+    }
+
+    @Test
+    @DisplayName("May pay mana even when a creature is available to sacrifice")
+    void payingManaKeepsAvailableCreature() {
+        harness.addToBattlefield(player1, new PollenbrightDruid());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PollenbrightDruid());
+        harness.setHand(player1, List.of(new SparkHarvest()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorceryWithSacrifice(player1, 0, target.getId(), null);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Pollenbright Druid");
+        harness.assertNotInGraveyard(player1, "Pollenbright Druid");
+        harness.assertInGraveyard(player2, "Pollenbright Druid");
+    }
+
+    @Test
+    @DisplayName("Mana option requires a second black mana in addition to the base cost")
+    void manaOptionRequiresTwoBlackMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PollenbrightDruid());
+        harness.setHand(player1, List.of(new SparkHarvest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, target.getId(), null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Spark Harvest");
+        harness.assertOnBattlefield(player2, "Pollenbright Druid");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's creature to pay the additional cost")
+    void cannotSacrificeOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PollenbrightDruid());
+        harness.setHand(player1, List.of(new SparkHarvest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, target.getId(), target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Pollenbright Druid");
+        harness.assertInHand(player1, "Spark Harvest");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice a land to pay the creature sacrifice cost")
+    void cannotSacrificeLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PollenbrightDruid());
+        harness.setHand(player1, List.of(new SparkHarvest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, target.getId(), land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Plains");
+        harness.assertOnBattlefield(player2, "Pollenbright Druid");
+        harness.assertInHand(player1, "Spark Harvest");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("May target the same creature sacrificed to pay the cost")
+    void canTargetSacrificedCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new PollenbrightDruid());
+        harness.setHand(player1, List.of(new SparkHarvest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorceryWithSacrifice(player1, 0, creature.getId(), creature.getId());
+
+        harness.assertInGraveyard(player1, "Pollenbright Druid");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Spark Harvest");
+        harness.assertNotOnBattlefield(player1, "Pollenbright Druid");
+    }
+
     private Permanent addReadyPlaneswalker(Player player, int loyalty) {
-        Permanent perm = new Permanent(new GarrukWildspeaker());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new KioraBehemothBeckoner());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
