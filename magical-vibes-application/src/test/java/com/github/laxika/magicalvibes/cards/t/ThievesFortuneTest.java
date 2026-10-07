@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -127,6 +128,97 @@ class ThievesFortuneTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castWithProwl(player1, 0, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A three-card library still requires one choice and permits any order for the rest")
+    void worksWithThreeCardLibrary() {
+        Card first = new ElvishWarrior();
+        Card second = new IndomitableAncients();
+        Card third = new MudbuttonClanger();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        harness.castFromHand(player1, new ThievesFortune(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+        List<Card> reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(
+                List.of(reorder.indexOf(third), reorder.indexOf(first))));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third, first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Thieves' Fortune");
+    }
+
+    @Test
+    @DisplayName("Choosing a card is mandatory and only one of the top four can be chosen")
+    void mustChooseExactlyOneOfTopFour() {
+        Card[] top = stackFourOnTop();
+        harness.castFromHand(player1, new ThievesFortune(), "{2}{U}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(top[0].getId(), top[1].getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(top[4].getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(top[3].getId()));
+        List<Card> reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(
+                List.of(reorder.indexOf(top[2]), reorder.indexOf(top[1]), reorder.indexOf(top[0]))));
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top[3]);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top[4], top[2], top[1], top[0]);
+        harness.assertInGraveyard(player1, "Thieves' Fortune");
+    }
+
+    @Test
+    @DisplayName("Actual changeling combat damage enables prowl even after the source leaves")
+    void changelingCombatDamageEnablesProwlAfterSourceLeaves() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        Permanent changeling = harness.addToBattlefieldAndReturn(player1, new MothdustChangeling());
+        changeling.setSummoningSick(false);
+        changeling.setAttacking(true);
+        changeling.setAttackTarget(player2.getId());
+        harness.resolveCombatDamage();
+        harness.assertLife(player2, 19);
+        gd.playerBattlefields.get(player1.getId()).remove(changeling);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        Card chosen = new ElvishWarrior();
+        harness.setLibrary(player1, List.of(chosen));
+        harness.setHand(player1, List.of(new ThievesFortune()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castWithProwl(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Thieves' Fortune");
+    }
+
+    @Test
+    @DisplayName("Combat damage from a creature without Rogue does not enable prowl")
+    void nonRogueCombatDamageDoesNotEnableProwl() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        warrior.setSummoningSick(false);
+        warrior.setAttacking(true);
+        warrior.setAttackTarget(player2.getId());
+        harness.resolveCombatDamage();
+        harness.assertLife(player2, 18);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.setHand(player1, List.of(new ThievesFortune()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castWithProwl(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     private void setupProwl() {
