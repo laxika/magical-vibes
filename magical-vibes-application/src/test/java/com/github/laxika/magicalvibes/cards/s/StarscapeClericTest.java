@@ -21,8 +21,7 @@ class StarscapeClericTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castKickedCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -40,9 +39,7 @@ class StarscapeClericTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(24);
         assertThat(gd.getLife(player2.getId())).isEqualTo(19);
@@ -53,5 +50,111 @@ class StarscapeClericTest extends BaseCardTest {
         Permanent cleric = addCreatureReady(player2, new StarscapeCleric());
 
         assertThat(bls.canBlock(gd, cleric)).isFalse();
+    }
+
+    @Test
+    void offspringDoesNotCreateTokenWhenUnpaid() {
+        harness.setHand(player1, List.of(new StarscapeCleric()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    void offspringCopiesLifeGainTriggerAndCannotBlockWithoutCreatingMoreTokens() {
+        harness.setHand(player1, List.of(new StarscapeCleric()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castKickedCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst().orElseThrow();
+        assertThat(bls.canBlock(gd, token)).isFalse();
+
+        harness.enterBattlefieldAndReturn(player1, new LoneMissionary());
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(24);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())).hasSize(1);
+    }
+
+    @Test
+    void separateLifeGainEventsEachTriggerOnce() {
+        harness.addToBattlefield(player1, new StarscapeCleric());
+
+        harness.enterBattlefieldAndReturn(player1, new LoneMissionary());
+        resolveAllTriggers();
+        harness.enterBattlefieldAndReturn(player1, new LoneMissionary());
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(28);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void opponentsLifeGainDoesNotTriggerCleric() {
+        harness.addToBattlefield(player1, new StarscapeCleric());
+
+        harness.enterBattlefieldAndReturn(player2, new LoneMissionary());
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(24);
+    }
+
+    @Test
+    void offspringStillCreatesCopyAfterOriginalDies() {
+        harness.setHand(player1, List.of(new StarscapeCleric()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent original = gd.playerBattlefields.get(player1.getId()).getFirst();
+        original.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        Permanent token = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.getEffectivePower()).isEqualTo(1);
+        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+
+        harness.enterBattlefieldAndReturn(player1, new LoneMissionary());
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(24);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    void lifeGainTriggerStillResolvesAfterClericDies() {
+        Permanent cleric = harness.addToBattlefieldAndReturn(player1, new StarscapeCleric());
+        harness.enterBattlefieldAndReturn(player1, new LoneMissionary());
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(24);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+
+        cleric.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(cleric);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(24);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
     }
 }
