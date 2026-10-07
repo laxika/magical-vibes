@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ActOfTreason;
+import com.github.laxika.magicalvibes.cards.j.JinGitaxiasCoreAugur;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SundialOfTheInfinite.class, RuneclawBear.class, ActOfTreason.class, JinGitaxiasCoreAugur.class})
 class SundialOfTheInfiniteTest extends BaseCardTest {
 
     @Test
@@ -41,7 +45,7 @@ class SundialOfTheInfiniteTest extends BaseCardTest {
     void exilesSpellsOnStack() {
         addReadySundial(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player1, new ArrayList<>(List.of(new RuneclawBear())));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
@@ -50,9 +54,9 @@ class SundialOfTheInfiniteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+                .anyMatch(c -> c.getName().equals("Runeclaw Bear"));
+        harness.assertNotOnBattlefield(player1, "Runeclaw Bear");
+        harness.assertNotInGraveyard(player1, "Runeclaw Bear");
     }
 
     @Test
@@ -60,12 +64,7 @@ class SundialOfTheInfiniteTest extends BaseCardTest {
     void resetsEndOfTurnModifiers() {
         addReadySundial(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst()
-                .orElseThrow();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
         bears.setPowerModifier(3);
         bears.setToughnessModifier(3);
 
@@ -110,10 +109,80 @@ class SundialOfTheInfiniteTest extends BaseCardTest {
                 .hasMessageContaining("during your turn");
     }
 
+    @Test
+    @DisplayName("Discard to seven before temporary control ends during cleanup")
+    void discardsBeforeReturningTemporarilyStolenJinGitaxias() {
+        addReadySundial(player1);
+        Permanent jin = harness.addToBattlefieldAndReturn(player2, new JinGitaxiasCoreAugur());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new ActOfTreason()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveSorcery(player1, 0, jin.getId());
+        harness.assertOnBattlefield(player1, "Jin-Gitaxias, Core Augur");
+        harness.setHand(player1, List.of(new RuneclawBear(), new RuneclawBear(),
+                new RuneclawBear(), new RuneclawBear(), new RuneclawBear(),
+                new RuneclawBear(), new RuneclawBear(), new RuneclawBear()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.cleanupDiscardPending).isTrue();
+        harness.assertOnBattlefield(player1, "Jin-Gitaxias, Core Augur");
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        harness.assertOnBattlefield(player2, "Jin-Gitaxias, Core Augur");
+    }
+
+    @Test
+    @DisplayName("Ending the turn requires discarding excess cards")
+    void discardsDownToMaximumHandSize() {
+        addReadySundial(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new RuneclawBear(), new RuneclawBear(),
+                new RuneclawBear(), new RuneclawBear(), new RuneclawBear(),
+                new RuneclawBear(), new RuneclawBear(), new RuneclawBear()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.cleanupDiscardPending).isTrue();
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
+    }
+
+    @Test
+    @DisplayName("A tapped Sundial cannot activate")
+    void cannotActivateWhileTapped() {
+        Permanent sundial = addReadySundial(player1);
+        sundial.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A noncreature Sundial can activate the turn it enters")
+    void canActivateWithoutWaitingATurn() {
+        harness.addToBattlefield(player1, new SundialOfTheInfinite());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        harness.assertOnBattlefield(player1, "Sundial of the Infinite");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadySundial(Player player) {
-        Permanent perm = new Permanent(new SundialOfTheInfinite());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new SundialOfTheInfinite());
     }
 }
