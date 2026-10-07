@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BergStrider;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SurtlandFrostpyre.class, GrizzlyBears.class, BergStrider.class})
 class SurtlandFrostpyreTest extends BaseCardTest {
 
     @Test
@@ -74,6 +77,78 @@ class SurtlandFrostpyreTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ownCreature);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opponentCreature);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(land.getCard());
+    }
+
+    @Test
+    void emptyLibraryDoesNotStopDamageAndSacrificeIsPaidImmediately() {
+        Permanent land = addReadyLand(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of());
+        addActivationMana(player1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(land);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(land.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(creature.getCard());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void oneCardLibraryCanBeBottomedAndLargerCreatureSurvives() {
+        addReadyLand(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BergStrider());
+        SurtlandFrostpyre libraryCard = new SurtlandFrostpyre();
+        harness.setLibrary(player1, List.of(libraryCard));
+        addActivationMana(player1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(libraryCard);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void sacrificeAbilityRequiresAnEmptyStack() {
+        addReadyLand(player1);
+        Permanent secondLand = addReadyLand(player1);
+        addActivationMana(player1);
+        addActivationMana(player1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(secondLand);
+        assertThat(secondLand.isTapped()).isFalse();
+    }
+
+    @Test
+    void sacrificeAbilityCannotBeActivatedDuringCombat() {
+        Permanent land = addReadyLand(player1);
+        addActivationMana(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(land);
+        assertThat(land.isTapped()).isFalse();
     }
 
     private Permanent addReadyLand(Player player) {
