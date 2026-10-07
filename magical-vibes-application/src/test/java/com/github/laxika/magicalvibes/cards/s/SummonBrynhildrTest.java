@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -65,6 +64,73 @@ class SummonBrynhildrTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
     }
 
+    @Test
+    void chapterICardCanBeCastOnTheChapterIITurn() {
+        Shock topCard = new Shock();
+        harness.setLibrary(player1, List.of(topCard, new GrizzlyBears(), new GrizzlyBears()));
+        addSaga(0);
+        advanceToNextChapter();
+        resolveAllTriggers();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castFromExile(player1, topCard.getId(), player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void chapterICardCanBeCastOnTheChapterIIITurnAfterSagaIsSacrificed() {
+        Shock topCard = new Shock();
+        harness.setLibrary(player1, List.of(topCard, new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        addSaga(0);
+        advanceToNextChapter();
+        resolveAllTriggers();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        resolveAllTriggers();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        resolveAllTriggers();
+        harness.assertNotOnBattlefield(player1, "Summon: Brynhildr");
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castFromExile(player1, topCard.getId(), player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void noncreatureSpellDoesNotConsumeTheHasteTrigger() {
+        addSaga(1);
+        advanceToNextChapter();
+        resolveAllTriggers();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        Permanent creature = castCreatureAndResolve();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void grantedHasteExpiresAtEndOfTurn() {
+        addSaga(1);
+        advanceToNextChapter();
+        resolveAllTriggers();
+        Permanent creature = castCreatureAndResolve();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
+    }
+
     private Permanent addSaga(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new SummonBrynhildr());
         saga.setCounterCount(CounterType.LORE, loreCounters);
@@ -73,9 +139,7 @@ class SummonBrynhildrTest extends BaseCardTest {
 
     private Permanent castCreatureAndResolve() {
         GrizzlyBears creature = new GrizzlyBears();
-        harness.setHand(player1, List.of(creature));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, creature, "{1}{G}");
         resolveAllTriggers();
         return gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(creature.getId()))
@@ -86,7 +150,6 @@ class SummonBrynhildrTest extends BaseCardTest {
     private void advanceToNextChapter() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
     }
 }
