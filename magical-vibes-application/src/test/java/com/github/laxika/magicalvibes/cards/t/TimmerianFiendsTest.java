@@ -145,4 +145,65 @@ class TimmerianFiendsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an artifact");
     }
+
+    @Test
+    @DisplayName("Declining to ante changes both cards' owners")
+    void exchangeChangesOwnership() {
+        TimmerianFiends fiends = new TimmerianFiends();
+        fiends.setOwnerId(player1.getId());
+        harness.addToBattlefield(player1, fiends);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        JovensTools tools = new JovensTools();
+        tools.setOwnerId(player2.getId());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, tools);
+        harness.setLibrary(player2, List.of(new JovensTools()));
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player1, "Joven's Tools");
+        harness.assertInGraveyard(player2, "Timmerian Fiends");
+        assertThat(tools.getOwnerId()).isEqualTo(player1.getId());
+        assertThat(fiends.getOwnerId()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("An artifact leaving before resolution prevents the ante choice and exchange")
+    void missingTargetPreventsExchange() {
+        fiendsReady();
+        UUID artifactId = opponentArtifactId();
+        harness.setLibrary(player2, List.of(new JovensTools()));
+
+        harness.activateAbility(player1, 0, null, artifactId);
+        gd.playerBattlefields.get(player2.getId()).removeIf(permanent -> permanent.getId().equals(artifactId));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Timmerian Fiends");
+        harness.assertNotInGraveyard(player2, "Timmerian Fiends");
+    }
+
+    @Test
+    @DisplayName("Anteing removes only the top library card and marks it as anted")
+    void antesOnlyTopCard() {
+        fiendsReady();
+        UUID artifactId = opponentArtifactId();
+        JovensTools top = new JovensTools();
+        TimmerianFiends bottom = new TimmerianFiends();
+        harness.setLibrary(player2, List.of(top, bottom));
+
+        harness.activateAbility(player1, 0, null, artifactId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(bottom);
+        assertThat(gd.antedCardIds).contains(top.getId()).doesNotContain(bottom.getId());
+        harness.assertOnBattlefield(player2, "Joven's Tools");
+        harness.assertInGraveyard(player1, "Timmerian Fiends");
+    }
 }
