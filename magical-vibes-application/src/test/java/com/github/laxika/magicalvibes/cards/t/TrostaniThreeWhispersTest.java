@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -80,8 +82,52 @@ class TrostaniThreeWhispersTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private void addTrostani() {
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1, 2})
+    @DisplayName("Each ability can target Trostani while she is tapped and summoning sick")
+    void canTargetSelfWhileTappedAndSummoningSick(int abilityIndex) {
         Permanent trostani = harness.addToBattlefieldAndReturn(player1, new TrostaniThreeWhispers());
-        trostani.setSummoningSick(false);
+        trostani.setSummoningSick(true);
+        trostani.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, abilityIndex, null, trostani.getId());
+        assertThat(gqs.hasKeyword(gd, trostani, grantedKeyword(abilityIndex))).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, trostani, grantedKeyword(abilityIndex))).isTrue();
+        assertThat(trostani.isTapped()).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1, 2})
+    @DisplayName("Each ability can target an opponent's creature during that opponent's turn")
+    void canTargetOpponentCreatureOnOpponentTurn(int abilityIndex) {
+        addTrostani();
+        Permanent target = addCreatureReady(player2, new TrostaniThreeWhispers());
+        harness.forceActivePlayer(player2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, abilityIndex, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, grantedKeyword(abilityIndex))).isTrue();
+    }
+
+    private Keyword grantedKeyword(int abilityIndex) {
+        return switch (abilityIndex) {
+            case 0 -> Keyword.DEATHTOUCH;
+            case 1 -> Keyword.VIGILANCE;
+            case 2 -> Keyword.DOUBLE_STRIKE;
+            default -> throw new IllegalArgumentException("Unknown ability index");
+        };
+    }
+
+    private void addTrostani() {
+        addCreatureReady(player1, new TrostaniThreeWhispers());
     }
 }
