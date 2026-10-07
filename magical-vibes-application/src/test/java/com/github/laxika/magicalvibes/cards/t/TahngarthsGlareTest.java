@@ -26,8 +26,7 @@ class TahngarthsGlareTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TahngarthsGlare()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         PendingInteraction.LibraryReorder firstReorder =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
@@ -70,8 +69,7 @@ class TahngarthsGlareTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TahngarthsGlare()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         PendingInteraction.LibraryReorder reorder =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
@@ -81,10 +79,74 @@ class TahngarthsGlareTest extends BaseCardTest {
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
 
+        PendingInteraction.LibraryReorder ownLibraryLook =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(ownLibraryLook.playerId()).isEqualTo(player2.getId());
+        assertThat(ownLibraryLook.deckOwnerId()).isEqualTo(player1.getId());
+        assertThat(ownLibraryLook.cards()).containsExactlyElementsOf(ownTopCards);
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.CardOrder(List.of(0)));
+
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(
                 opponentTopCards.get(1), opponentTopCards.get(0));
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(ownTopCards);
+        harness.assertInGraveyard(player1, "Tahngarth's Glare");
+    }
+
+    @Test
+    void opponentStillReordersControllersLibraryWhenOpponentsLibraryIsEmpty() {
+        List<Card> ownTopCards = cards(3);
+        harness.setLibrary(player1, ownTopCards);
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new TahngarthsGlare()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder.playerId()).isEqualTo(player2.getId());
+        assertThat(reorder.deckOwnerId()).isEqualTo(player1.getId());
+        assertThat(reorder.cards()).containsExactlyElementsOf(ownTopCards);
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(
+                ownTopCards.get(2), ownTopCards.get(0), ownTopCards.get(1));
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Tahngarth's Glare");
+    }
+
+    @Test
+    void finishesAfterFirstReorderWhenControllersLibraryIsEmpty() {
+        List<Card> opponentTopCards = cards(3);
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, opponentTopCards);
+        harness.setHand(player1, List.of(new TahngarthsGlare()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(
+                opponentTopCards.get(2), opponentTopCards.get(0), opponentTopCards.get(1));
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Tahngarth's Glare");
+    }
+
+    @Test
+    void resolvesWithoutAnOrderingInteractionWhenBothLibrariesAreEmpty() {
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new TahngarthsGlare()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Tahngarth's Glare");
     }
 
