@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
+import com.github.laxika.magicalvibes.cards.j.JaceCunningCastaway;
+import com.github.laxika.magicalvibes.cards.q.QueensBaySoldier;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -15,9 +19,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({UnfriendlyFire.class, QueensBaySoldier.class, ColossalDreadmaw.class, JaceCunningCastaway.class})
 class UnfriendlyFireTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Unfriendly Fire targeting a player puts it on the stack")
@@ -38,11 +41,11 @@ class UnfriendlyFireTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Unfriendly Fire targeting a creature puts it on the stack")
     void castingTargetingCreaturePutsItOnStack() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new QueensBaySoldier());
         harness.setHand(player1, List.of(new UnfriendlyFire()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Queen's Bay Soldier");
         harness.castInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
@@ -71,25 +74,23 @@ class UnfriendlyFireTest extends BaseCardTest {
         harness.setHand(player1, List.of(new UnfriendlyFire()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        harness.assertLife(player2, 16);
     }
 
     @Test
     @DisplayName("Unfriendly Fire deals 4 damage to target creature, destroying a 2/2")
     void deals4DamageToCreatureDestroysIt() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new QueensBaySoldier());
         harness.setHand(player1, List.of(new UnfriendlyFire()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        UUID targetId = harness.getPermanentId(player2, "Queen's Bay Soldier");
+        harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Queen's Bay Soldier");
+        harness.assertInGraveyard(player2, "Queen's Bay Soldier");
     }
 
     @Test
@@ -98,11 +99,51 @@ class UnfriendlyFireTest extends BaseCardTest {
         harness.setHand(player1, List.of(new UnfriendlyFire()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Unfriendly Fire");
+    }
+
+    @Test
+    @DisplayName("Unfriendly Fire marks four damage on a surviving creature")
+    void marksFourDamageOnSurvivingCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
+        harness.setHand(player1, List.of(new UnfriendlyFire()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player2, "Colossal Dreadmaw");
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Unfriendly Fire can deal lethal damage to a planeswalker")
+    void dealsLethalDamageToPlaneswalker() {
+        Permanent target = harness.enterBattlefieldAndReturn(player2, new JaceCunningCastaway());
+        harness.setHand(player1, List.of(new UnfriendlyFire()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Jace, Cunning Castaway");
+        harness.assertInGraveyard(player2, "Jace, Cunning Castaway");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Unfriendly Fire can target its controller")
+    void canTargetController() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new UnfriendlyFire()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
     }
 }
