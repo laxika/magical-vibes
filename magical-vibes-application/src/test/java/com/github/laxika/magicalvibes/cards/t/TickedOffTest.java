@@ -46,11 +46,39 @@ class TickedOffTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castTickedOff(Permanent target) {
+    @Test
+    void canTargetOpponentsCreatureWithoutAffectingOtherCreatures() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castTickedOff(target);
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    void doesNotGrantDoubleStrikeWhenTargetDiesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new TickedOff()));
         addManaForSpell();
         harness.castSorcery(player1, 0, target.getId());
+
+        target.setMarkedDamage(2);
+        harness.runStateBasedActions();
         harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Ticked Off");
+        assertThat(gqs.hasKeyword(gd, other, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    private void castTickedOff(Permanent target) {
+        harness.setHand(player1, List.of(new TickedOff()));
+        addManaForSpell();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 
     private void addManaForSpell() {
