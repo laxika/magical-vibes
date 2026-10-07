@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.d.DazzlingTheaterPropRoom;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -91,15 +90,76 @@ class StalkedResearcherTest extends BaseCardTest {
         return harness.addToBattlefieldAndReturn(player1, new StalkedResearcher());
     }
 
+    @Test
+    void cannotAttackWithoutAnEerieTrigger() {
+        Permanent researcher = addResearcher();
+
+        assertThatThrownBy(() -> declareResearcherAttack(researcher))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    void creatureEnteringDoesNotEnableAttacking() {
+        Permanent researcher = addResearcher();
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> declareResearcherAttack(researcher))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    void eerieDoesNotBypassSummoningSickness() {
+        Permanent researcher = addResearcher();
+        researcher.setSummoningSick(true);
+        harness.setHand(player1, List.of(new GloriousAnthem()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    void permissionDoesNotApplyToAnotherResearcher() {
+        addResearcher();
+        harness.setHand(player1, List.of(new GloriousAnthem()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent laterResearcher = addResearcher();
+
+        assertThatThrownBy(() -> declareResearcherAttack(laterResearcher))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    void doesNotTriggerWhenAnOpponentFullyUnlocksARoom() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new DazzlingTheaterPropRoom()));
+        harness.addMana(player2, ManaColor.WHITE, 4);
+        harness.castModalSorcery(player2, 0, 0, List.of());
+        harness.passBothPriorities();
+        Permanent researcher = addResearcher();
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.unlockRoomDoor(player2, 0, 1);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareResearcherAttack(researcher))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
     private void declareResearcherAttack(Permanent researcher) {
         harness.addToBattlefield(player2, new GrizzlyBears());
         researcher.setSummoningSick(false);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
-
         int researcherIndex = gd.playerBattlefields.get(player1.getId()).indexOf(researcher);
-        gs.declareAttackers(gd, player1, List.of(researcherIndex));
+        declareAttackers(List.of(researcherIndex));
     }
 }
