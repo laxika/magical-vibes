@@ -78,4 +78,39 @@ class TalismanOfHierarchyTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+
+    @Test
+    @DisplayName("Colored mana damages only the activating controller")
+    void coloredManaDamagesOnlyController() {
+        harness.addToBattlefield(player2, new TalismanOfHierarchy());
+        harness.setLife(player1, 12);
+        harness.setLife(player2, 8);
+
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.handleListChoice(player2, "BLACK");
+
+        harness.assertLife(player1, 12);
+        harness.assertLife(player2, 7);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The colored ability cannot produce red mana")
+    void cannotChooseRedMana() {
+        harness.addToBattlefield(player1, new TalismanOfHierarchy());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "RED"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        harness.assertLife(player1, 19);
+        assertThat(gd.stack).isEmpty();
+    }
 }
