@@ -22,7 +22,7 @@ class SteelcladSpiritTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot attack without an enchantment entering under its controller's control")
     void cannotAttackWithoutEnchantmentTrigger() {
-        Permanent spirit = addSpirit();
+        addSpirit();
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
@@ -70,6 +70,71 @@ class SteelcladSpiritTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThatThrownBy(() -> declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(spirit))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Attack permission begins only when the enchantment-entry trigger resolves")
+    void permissionRequiresTriggerResolution() {
+        Permanent spirit = addSpirit();
+        harness.setHand(player1, List.of(new GloriousAnthem()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castEnchantment(player1, 0);
+        assertThat(als.canAttack(gd, spirit, player1.getId())).isFalse();
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(als.canAttack(gd, spirit, player1.getId())).isFalse();
+
+        harness.passBothPriorities();
+        assertThat(als.canAttack(gd, spirit, player1.getId())).isTrue();
+    }
+
+    @Test
+    @DisplayName("The enchantment trigger does not bypass summoning sickness")
+    void permissionDoesNotBypassSummoningSickness() {
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new SteelcladSpirit());
+        spirit.setSummoningSick(true);
+        castAnthem(player1);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("A non-enchantment creature entering does not grant attack permission")
+    void nonEnchantmentDoesNotTrigger() {
+        Permanent spirit = addSpirit();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(als.canAttack(gd, spirit, player1.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("An enchantment already present does not grant permission to a later Spirit")
+    void enchantmentEnteringBeforeSpiritDoesNotGrantPermission() {
+        castAnthem(player1);
+        Permanent spirit = addSpirit();
+
+        assertThat(als.canAttack(gd, spirit, player1.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("Attack permission does not bypass being tapped")
+    void permissionDoesNotBypassBeingTapped() {
+        Permanent spirit = addSpirit();
+        castAnthem(player1);
+        spirit.setTapped(true);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
