@@ -66,10 +66,7 @@ class TheWesternCloudTest extends BaseCardTest {
         Permanent opponentPlaneswalker = addChandra(player2, 5);
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(creature.getMarkedDamage()).isZero();
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
@@ -77,6 +74,55 @@ class TheWesternCloudTest extends BaseCardTest {
         assertThat(opponentPlaneswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(3);
         assertThat(findPermanents(player1, "Treasure")).allMatch(Permanent::isTapped);
+    }
+
+    @Test
+    void treasureDamageIsDealtDuringTheChaosAbilityResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DevouringStrossus());
+        Permanent planeswalker = addChandra(player2, 5);
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(3);
+        assertThat(creature.getMarkedDamage()).isEqualTo(3);
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void doesNotPreventDamageToPlayers() {
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.castAndResolveInstant(player2, 0, player2.getId());
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void protectionFollowsTheCurrentPlanarController() {
+        Permanent oldControllerCreature = harness.addToBattlefieldAndReturn(player1, new DevouringStrossus());
+        Permanent newControllerCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent oldControllerPlaneswalker = addChandra(player1, 5);
+        Permanent newControllerPlaneswalker = addChandra(player2, 5);
+        gd.planechase.controllerId = player2.getId();
+        harness.setHand(player2, List.of(new Shock(), new Shock(), new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 4);
+
+        harness.castAndResolveInstant(player2, 0, oldControllerCreature.getId());
+        harness.castAndResolveInstant(player2, 0, newControllerCreature.getId());
+        harness.castAndResolveInstant(player2, 0, oldControllerPlaneswalker.getId());
+        harness.castAndResolveInstant(player2, 0, newControllerPlaneswalker.getId());
+
+        assertThat(oldControllerCreature.getMarkedDamage()).isEqualTo(2);
+        assertThat(newControllerCreature.getMarkedDamage()).isZero();
+        assertThat(oldControllerPlaneswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        assertThat(newControllerPlaneswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
     }
 
     private Permanent addChandra(com.github.laxika.magicalvibes.model.Player player, int loyalty) {
