@@ -128,6 +128,67 @@ class ThallidDevourerTest extends BaseCardTest {
         assertThat(devourer.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("A tapped, summoning-sick Devourer pays counters before its token ability resolves")
+    void tokenAbilityPaysCountersImmediatelyWithoutTapRestriction() {
+        Permanent devourer = harness.addToBattlefieldAndReturn(player1, new ThallidDevourer());
+        devourer.setSummoningSick(true);
+        devourer.setTapped(true);
+        devourer.setCounterCount(CounterType.FUNGUS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(devourer.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        harness.passBothPriorities();
+
+        Permanent saproling = findPermanent(player1, "Saproling");
+        assertThat(saproling.getCard().isToken()).isTrue();
+        assertThat(saproling.getCard().getSubtypes()).contains(CardSubtype.SAPROLING);
+        assertThat(gqs.getEffectivePower(gd, saproling)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, saproling)).isEqualTo(1);
+        assertThat(saproling.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid before resolution and repeated boosts accumulate")
+    void sacrificeIsImmediateAndBoostsAccumulate() {
+        Permanent devourer = addDevourer();
+        devourer.setCounterCount(CounterType.FUNGUS, 6);
+
+        for (int activation = 0; activation < 2; activation++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+            harness.activateAbility(player1, 0, 1, null, null);
+
+            assertThat(findPermanents(player1, "Saproling")).isEmpty();
+            assertThat(devourer.getPowerModifier()).isEqualTo(activation);
+            assertThat(devourer.getToughnessModifier()).isEqualTo(2 * activation);
+            harness.passBothPriorities();
+        }
+
+        assertThat(devourer.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(devourer.getPowerModifier()).isEqualTo(2);
+        assertThat(devourer.getToughnessModifier()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("An opponent's Saproling cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsSaproling() {
+        Permanent opponentDevourer = harness.addToBattlefieldAndReturn(player2, new ThallidDevourer());
+        opponentDevourer.setCounterCount(CounterType.FUNGUS, 3);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        Permanent devourer = addDevourer();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(findPermanents(player2, "Saproling")).hasSize(1);
+        assertThat(devourer.getPowerModifier()).isZero();
+        assertThat(devourer.getToughnessModifier()).isZero();
+    }
+
     private Permanent addDevourer() {
         return addCreatureReady(player1, new ThallidDevourer());
     }
