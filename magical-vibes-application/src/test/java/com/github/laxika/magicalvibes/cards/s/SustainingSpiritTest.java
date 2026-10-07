@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -108,5 +109,72 @@ class SustainingSpiritTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         harness.castAndResolveInstant(player2, 0, player1.getId());
+    }
+
+    @Test
+    @CardUsed(PlatinumAngel.class)
+    @DisplayName("Damage does not raise life from below 1")
+    void damageDoesNotRaiseLifeFromBelowOne() {
+        harness.addToBattlefield(player1, new SustainingSpirit());
+        harness.addToBattlefield(player1, new PlatinumAngel());
+        harness.setLife(player1, 1);
+
+        harness.inMutationScope(() -> harness.getLifeSupport()
+                .applyLifeLoss(gd, player1.getId(), 1, "test"));
+        shockPlayer1();
+
+        harness.assertLife(player1, -2);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Damage at 1 life leaves the controller at 1")
+    void damageAtOneLifeDoesNotReduceLife() {
+        harness.addToBattlefield(player1, new SustainingSpirit());
+        harness.setLife(player1, 1);
+
+        shockPlayer1();
+
+        harness.assertLife(player1, 1);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Life loss bypasses Sustaining Spirit")
+    void lifeLossBypassesSpirit() {
+        harness.addToBattlefield(player1, new SustainingSpirit());
+        harness.setLife(player1, 2);
+
+        harness.inMutationScope(() -> harness.getLifeSupport()
+                .applyLifeLoss(gd, player1.getId(), 2, "test"));
+        harness.runStateBasedActions();
+
+        harness.assertLife(player1, 0);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("An opponent's Sustaining Spirit does not protect this player")
+    void onlyProtectsController() {
+        harness.addToBattlefield(player2, new SustainingSpirit());
+        harness.setLife(player1, 2);
+
+        shockPlayer1();
+
+        harness.assertLife(player1, 0);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep does not trigger during the opponent's upkeep")
+    void noUpkeepOnOpponentsTurn() {
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new SustainingSpirit());
+
+        advanceToUpkeep(player2);
+
+        assertThat(spirit.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Sustaining Spirit");
     }
 }
