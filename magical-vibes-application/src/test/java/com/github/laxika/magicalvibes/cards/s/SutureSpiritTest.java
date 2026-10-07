@@ -10,10 +10,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SutureSpirit.class, LoyalGyrfalcon.class, RuggedPrairie.class})
+@CardUsed({SutureSpirit.class, LoyalGyrfalcon.class, RuggedPrairie.class, SoulReap.class})
 class SutureSpiritTest extends BaseCardTest {
 
     @Test
@@ -78,5 +80,54 @@ class SutureSpiritTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(3);
+    }
+
+    @Test
+    void canPayWithMixedHybridMana() {
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new SutureSpirit());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, spirit.getId());
+        harness.passBothPriorities();
+
+        assertThat(spirit.getRegenerationShield()).isEqualTo(1);
+        assertThat(spirit.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    void canActivateRepeatedlyWhileTappedAndSummoningSick() {
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new SutureSpirit());
+        spirit.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 6);
+
+        harness.activateAbility(player1, 0, null, spirit.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, spirit.getId());
+        harness.passBothPriorities();
+
+        assertThat(spirit.getRegenerationShield()).isEqualTo(2);
+        assertThat(spirit.isTapped()).isTrue();
+    }
+
+    @Test
+    void regenerationPreventsDestructionAndConsumesShield() {
+        harness.addToBattlefield(player1, new SutureSpirit());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new LoyalGyrfalcon());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+        assertThat(creature.isTapped()).isFalse();
+
+        harness.setHand(player1, List.of(new SoulReap()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
+
+        harness.assertOnBattlefield(player1, "Loyal Gyrfalcon");
+        harness.assertNotInGraveyard(player1, "Loyal Gyrfalcon");
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getRegenerationShield()).isZero();
     }
 }
