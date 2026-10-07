@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SyrArmontTheRedeemer.class, GrizzlyBears.class, Pacifism.class, Mountain.class})
+@CardUsed({SyrArmontTheRedeemer.class, GrizzlyBears.class, Pacifism.class})
 class SyrArmontTheRedeemerTest extends BaseCardTest {
 
     @Test
@@ -60,12 +59,74 @@ class SyrArmontTheRedeemerTest extends BaseCardTest {
                 .hasMessageContaining("another creature you control");
     }
 
-    private void castSyrArmont(Permanent target) {
+    @Test
+    void multipleAurasDoNotMultiplyTheBonusAndRemovingTheLastAuraEndsIt() {
+        addCreatureReady(player1, new SyrArmontTheRedeemer());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        attachAura(player1, creature);
+        attachAura(player2, creature);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, findPermanent(player1, "Pacifism"));
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, findPermanent(player2, "Pacifism"));
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    void monsterRoleStillResolvesAfterSyrArmontLeavesTheBattlefield() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, java.util.List.of(new SyrArmontTheRedeemer()));
         addMana();
         harness.castCreature(player1, 0, 0, target.getId());
         harness.passBothPriorities();
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd,
+                findPermanent(player1, "Syr Armont, the Redeemer"));
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Monster").getAttachedTo()).isEqualTo(target.getId());
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void doesNotCreateARoleWhenTheTargetLeavesBeforeResolution() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, java.util.List.of(new SyrArmontTheRedeemer()));
+        addMana();
+        harness.castCreature(player1, 0, 0, target.getId());
         harness.passBothPriorities();
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Monster")).isZero();
+        harness.assertOnBattlefield(player1, "Syr Armont, the Redeemer");
+    }
+
+    @Test
+    void newMonsterRoleReplacesAnOlderRoleControlledByTheSamePlayer() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        castSyrArmont(target);
+        Permanent oldRole = findPermanent(player1, "Monster");
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd,
+                findPermanent(player1, "Syr Armont, the Redeemer"));
+        castSyrArmont(target);
+
+        assertThat(countPermanents(player1, "Monster")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Monster").getId()).isNotEqualTo(oldRole.getId());
+        assertThat(findPermanent(player1, "Monster").getAttachedTo()).isEqualTo(target.getId());
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
+
+    private void castSyrArmont(Permanent target) {
+        harness.setHand(player1, java.util.List.of(new SyrArmontTheRedeemer()));
+        addMana();
+        harness.castCreature(player1, 0, 0, target.getId());
+        resolveAllTriggers();
     }
 
     private void addMana() {
