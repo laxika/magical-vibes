@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.f.FangrenHunter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -105,10 +106,92 @@ class SwordOfKaldraTest extends BaseCardTest {
         assertThat(gd.exiledCards).noneMatch(exiled -> exiled.card() == target.getCard());
     }
 
+    @Test
+    @DisplayName("Sword triggers even when another player controls the equipped creature")
+    void equippedCreatureWithDifferentControllerStillTriggers() {
+        Permanent bosh = addCreatureReady(player2, new BoshIronGolem());
+        Permanent sword = addSwordReady(player1);
+        sword.setAttachedTo(bosh.getId());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new CullingScales());
+        Permanent target = addCreatureReady(player1, new FangrenHunter());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player2, 0, 0, null, target.getId());
+        harness.handlePermanentChosen(player2, artifact.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card() == target.getCard());
+    }
+
+    @Test
+    @DisplayName("Lethal damage sends the damaged creature to the graveyard before exile resolves")
+    void lethalDamageDoesNotExileCreatureFromGraveyard() {
+        Permanent bosh = addCreatureReady(player1, new BoshIronGolem());
+        Permanent sword = addSwordReady(player1);
+        sword.setAttachedTo(bosh.getId());
+        Permanent scales = harness.addToBattlefieldAndReturn(player1, new CullingScales());
+        Permanent target = addCreatureReady(player2, new FangrenHunter());
+        target.setMarkedDamage(1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, scales.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
+        assertThat(gd.exiledCards).noneMatch(exiled -> exiled.card() == target.getCard());
+    }
+
+    @Test
+    @DisplayName("Damage to your own creature also triggers exile")
+    void damageToFriendlyCreatureTriggers() {
+        Permanent bosh = addCreatureReady(player1, new BoshIronGolem());
+        Permanent sword = addSwordReady(player1);
+        sword.setAttachedTo(bosh.getId());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new CullingScales());
+        Permanent target = addCreatureReady(player1, new FangrenHunter());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card() == target.getCard());
+    }
+
+    @Test
+    @DisplayName("An already triggered exile ability survives the Sword leaving the battlefield")
+    void exileTriggerSurvivesSwordLeavingBattlefield() {
+        Permanent bosh = addCreatureReady(player1, new BoshIronGolem());
+        Permanent sword = addSwordReady(player1);
+        sword.setAttachedTo(bosh.getId());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new CullingScales());
+        Permanent target = addCreatureReady(player2, new FangrenHunter());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(sword);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card() == target.getCard());
+    }
+
     private Permanent addSwordReady(Player player) {
-        Permanent sword = new Permanent(new SwordOfKaldra());
-        sword.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(sword);
-        return sword;
+        return harness.addToBattlefieldAndReturn(player, new SwordOfKaldra());
     }
 }
