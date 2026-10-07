@@ -45,6 +45,38 @@ class TinStreetHooliganTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can destroy its controller's artifact when green mana was spent")
+    void destroysOwnArtifact() {
+        harness.addToBattlefield(player1, new IzzetSignet());
+        castTinStreetHooligan(true, harness.getPermanentId(player1, "Izzet Signet"));
+
+        harness.assertInGraveyard(player1, "Izzet Signet");
+        harness.assertOnBattlefield(player1, "Tin Street Hooligan");
+    }
+
+    @Test
+    @DisplayName("Enters normally when green mana was spent but no artifact exists")
+    void entersWithoutArtifactsWhenGreenManaWasSpent() {
+        castTinStreetHooligan(true, null);
+
+        harness.assertOnBattlefield(player1, "Tin Street Hooligan");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not trigger when it enters without being cast")
+    void doesNotTriggerWithoutBeingCast() {
+        harness.addToBattlefield(player2, new IzzetSignet());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.enterBattlefieldAndReturn(player1, new TinStreetHooligan());
+
+        harness.assertOnBattlefield(player1, "Tin Street Hooligan");
+        harness.assertOnBattlefield(player2, "Izzet Signet");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Cannot target a nonartifact permanent")
     void cannotTargetNonArtifactPermanent() {
         harness.addToBattlefield(player2, new StreetbreakerWurm());
