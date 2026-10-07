@@ -118,6 +118,82 @@ class TradewindRiderTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Summoning-sick creatures can pay the additional tap cost")
+    void canTapSummoningSickHelpers() {
+        Permanent rider = addReadyRider(player1);
+        Permanent helper1 = harness.addToBattlefieldAndReturn(player1, new HornedTurtle());
+        Permanent helper2 = harness.addToBattlefieldAndReturn(player1, new HornedTurtle());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new Forest());
+        prepareMainPhase();
+
+        harness.activateAbility(player1, indexOf(player1, rider), BOUNCE_ABILITY, null, victim.getId());
+        assertThat(rider.isTapped()).isTrue();
+        assertThat(helper1.isTapped()).isTrue();
+        assertThat(helper2.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInHand(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Chooses exactly two helpers when more than two are available")
+    void choosesWhichHelpersToTap() {
+        Permanent rider = addReadyRider(player1);
+        Permanent unchosen = addReadyCreature(player1);
+        Permanent helper1 = addReadyCreature(player1);
+        Permanent helper2 = addReadyCreature(player1);
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new Forest());
+        prepareMainPhase();
+
+        harness.activateAbility(player1, indexOf(player1, rider), BOUNCE_ABILITY, null, victim.getId());
+        harness.handlePermanentChosen(player1, helper2.getId());
+        harness.handlePermanentChosen(player1, helper1.getId());
+        assertThat(rider.isTapped()).isTrue();
+        assertThat(helper1.isTapped()).isTrue();
+        assertThat(helper2.isTapped()).isTrue();
+        assertThat(unchosen.isTapped()).isFalse();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInHand(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("A creature tapped to pay the cost may also be the target")
+    void canBounceTappedHelper() {
+        Permanent rider = addReadyRider(player1);
+        Permanent helper = addReadyCreature(player1);
+        addReadyCreature(player1);
+        prepareMainPhase();
+
+        harness.activateAbility(player1, indexOf(player1, rider), BOUNCE_ABILITY, null, helper.getId());
+        assertThat(helper.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(helper);
+        harness.assertInHand(player1, "Horned Turtle");
+        assertThat(countPermanents(player1, "Horned Turtle")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate when the Rider is already tapped")
+    void cannotActivateTappedSource() {
+        Permanent rider = addReadyRider(player1);
+        rider.tap();
+        Permanent helper1 = addReadyCreature(player1);
+        Permanent helper2 = addReadyCreature(player1);
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new Forest());
+        prepareMainPhase();
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, indexOf(player1, rider), BOUNCE_ABILITY, null, victim.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(helper1.isTapped()).isFalse();
+        assertThat(helper2.isTapped()).isFalse();
+    }
+
     private void prepareMainPhase() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
