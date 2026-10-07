@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SynchronousSliver.class, PoulticeSliver.class, GiantDustwasp.class})
@@ -59,6 +61,50 @@ class SynchronousSliverTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, source));
+
+        assertThat(gqs.hasKeyword(gd, otherSliver, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Slivers attack without tapping while non-Slivers tap normally")
+    void sliversAttackWithoutTapping() {
+        Permanent source = addCreatureReady(player1, new SynchronousSliver());
+        Permanent otherSliver = addCreatureReady(player1, new PoulticeSliver());
+        Permanent nonSliver = addCreatureReady(player1, new GiantDustwasp());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1, 2));
+
+        assertThat(source.isTapped()).isFalse();
+        assertThat(otherSliver.isTapped()).isFalse();
+        assertThat(nonSliver.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's Sliver attacks without tapping")
+    void opponentSliverAttacksWithoutTapping() {
+        addCreatureReady(player1, new SynchronousSliver());
+        Permanent opponentSliver = addCreatureReady(player2, new PoulticeSliver());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+
+        assertThat(opponentSliver.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Vigilance remains until the last Synchronous Sliver leaves")
+    void vigilanceRemainsWhileAnotherSourceExists() {
+        Permanent firstSource = addCreatureReady(player1, new SynchronousSliver());
+        Permanent secondSource = addCreatureReady(player2, new SynchronousSliver());
+        Permanent otherSliver = addCreatureReady(player1, new PoulticeSliver());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, firstSource));
+
+        assertThat(gqs.hasKeyword(gd, otherSliver, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, secondSource, Keyword.VIGILANCE)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, secondSource));
 
         assertThat(gqs.hasKeyword(gd, otherSliver, Keyword.VIGILANCE)).isFalse();
     }
