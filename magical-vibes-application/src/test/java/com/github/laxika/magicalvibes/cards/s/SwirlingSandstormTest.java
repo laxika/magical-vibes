@@ -56,6 +56,35 @@ class SwirlingSandstormTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
+    @Test
+    @DisplayName("Threshold gained after casting is checked when Swirling Sandstorm resolves")
+    void thresholdGainedBeforeResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new TunnelerWurm());
+        harness.setGraveyard(player1, graveyardWithTunnelerWurms(6));
+        harness.castFromHand(player1, new SwirlingSandstorm(), "{3}{R}");
+
+        harness.setGraveyard(player1, graveyardWithTunnelerWurms(7));
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(5);
+        harness.assertOnBattlefield(player2, "Tunneler Wurm");
+    }
+
+    @Test
+    @DisplayName("Threshold lost after casting prevents damage when Swirling Sandstorm resolves")
+    void thresholdLostBeforeResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new TunnelerWurm());
+        harness.setGraveyard(player1, graveyardWithTunnelerWurms(7));
+        harness.castFromHand(player1, new SwirlingSandstorm(), "{3}{R}");
+
+        harness.setGraveyard(player1, graveyardWithTunnelerWurms(6));
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Tunneler Wurm");
+        harness.assertInGraveyard(player1, "Swirling Sandstorm");
+    }
+
     private List<Card> graveyardWithTunnelerWurms(int count) {
         List<Card> cards = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
