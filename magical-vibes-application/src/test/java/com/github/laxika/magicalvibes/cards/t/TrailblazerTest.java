@@ -27,8 +27,7 @@ class TrailblazerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Trailblazer()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.isCantBeBlocked()).isTrue();
         harness.assertInGraveyard(player1, "Trailblazer");
@@ -42,8 +41,7 @@ class TrailblazerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Trailblazer()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.isCantBeBlocked()).isTrue();
     }
@@ -56,8 +54,7 @@ class TrailblazerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Trailblazer()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.isCantBeBlocked()).isTrue();
 
@@ -77,11 +74,9 @@ class TrailblazerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Trailblazer()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castInstant(player1, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
@@ -97,5 +92,26 @@ class TrailblazerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Casting after blockers are declared does not undo the block")
+    void doesNotUndoAnExistingBlock() {
+        Permanent attacker = addCreatureReady(player1, new BalduvianBears());
+        addCreatureReady(player2, new BalduvianBears());
+        harness.setHand(player1, List.of(new Trailblazer()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.castAndResolveInstant(player1, 0, attacker.getId()));
+
+        resolveCombat(player1);
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Balduvian Bears");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
     }
 }
