@@ -13,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TorchTheWitness.class, GrizzlyBears.class})
+@CardUsed({TorchTheWitness.class, GrizzlyBears.class, TinStreetGossip.class})
 class TorchTheWitnessTest extends BaseCardTest {
 
     @Test
@@ -52,5 +52,66 @@ class TorchTheWitnessTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("X zero deals no damage and does not investigate")
+    void zeroXDoesNotInvestigate() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TinStreetGossip());
+        harness.setHand(player1, List.of(new TorchTheWitness()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Tin Street Gossip");
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A surviving creature takes twice X damage without investigation")
+    void nonlethalDamageDoesNotInvestigate() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TinStreetGossip());
+        harness.setHand(player1, List.of(new TorchTheWitness()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 1, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Tin Street Gossip");
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Damage already marked reduces the amount needed for excess damage")
+    void investigatesConsideringPriorDamage() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TinStreetGossip());
+        harness.setHand(player1, List.of(new TorchTheWitness(), new TorchTheWitness()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 1, target.getId());
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+        harness.castAndResolveSorcery(player1, 0, 2, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Tin Street Gossip");
+        assertThat(findPermanents(player1, "Clue")).hasSize(1);
+        assertThat(findPermanents(player2, "Clue")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not investigate when the only target leaves before resolution")
+    void missingTargetDoesNotInvestigate() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TinStreetGossip());
+        harness.setHand(player1, List.of(new TorchTheWitness()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, 3, target.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
     }
 }
