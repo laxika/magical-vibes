@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -56,11 +57,66 @@ class TheVisionTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
     }
 
+    @Test
+    @DisplayName("Artifact creature spells do not trigger the modal ability")
+    void artifactCreatureSpellsDoNotTrigger() {
+        addCreatureReady(player1, new TheVision());
+        harness.setHand(player1, List.of(new TheVision()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's noncreature spell does not trigger the ability")
+    void opponentNoncreatureSpellsDoNotTrigger() {
+        addCreatureReady(player1, new TheVision());
+        harness.setHand(player2, List.of(new Spellbook()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.ensurePriority(player2);
+
+        harness.castArtifact(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Modes reset each turn and granted keywords expire")
+    void modesResetAndKeywordsExpire() {
+        var vision = addCreatureReady(player1, new TheVision());
+        harness.setHand(player1, List.of(new Spellbook(), new Spellbook(), new Spellbook()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+
+        castArtifactAndChoose(SOLAR_BEAM);
+        castArtifactAndChoose(DENSITY_CONTROL);
+        assertThat(gqs.hasKeyword(gd, vision, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, vision, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.hasKeyword(gd, vision, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, vision, Keyword.INDESTRUCTIBLE)).isFalse();
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        castArtifactAndChoose(SOLAR_BEAM);
+        assertThat(gqs.hasKeyword(gd, vision, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
     private void castArtifactAndChoose(String mode) {
         harness.castArtifact(player1, 0);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
         harness.handleListChoice(player1, mode);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
