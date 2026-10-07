@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.ChildOfNight;
 import com.github.laxika.magicalvibes.cards.f.FireLordSozin;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TheRiseOfSozin.class, FireLordSozin.class, ChildOfNight.class,
-        GrizzlyBears.class, HillGiant.class})
+        GrizzlyBears.class, HillGiant.class, Ornithopter.class})
 class TheRiseOfSozinTest extends BaseCardTest {
 
     @Test
@@ -97,6 +98,86 @@ class TheRiseOfSozinTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Child of Night");
     }
 
+    @Test
+    void chapterIIExilesOnlyFourOfFiveMatchingCards() {
+        List<Card> cards = List.of(new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+        harness.setLibrary(player2, cards);
+        addSaga(1);
+
+        advanceToNextChapter();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Grizzly Bears");
+        harness.handleMultipleCardsChosen(player1,
+                cards.subList(0, 4).stream().map(Card::getId).toList());
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactlyInAnyOrderElementsOf(cards.subList(0, 4));
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(cards.get(4));
+    }
+
+    @Test
+    void chapterIICanExileNoMatchingCards() {
+        Card card = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(card));
+        addSaga(1);
+
+        advanceToNextChapter();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Grizzly Bears");
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(card);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void chapterIIIReturnsAnOpponentsSagaUnderAbilityControllersControl() {
+        Permanent saga = addSaga(2);
+        saga.getCard().setOwnerId(player2.getId());
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Fire Lord Sozin");
+        harness.assertNotOnBattlefield(player2, "Fire Lord Sozin");
+    }
+
+    @Test
+    void fireLordSozinCanPayZeroToReturnZeroManaValueCreatures() {
+        addTransformedSaga();
+        Card ornithopter = new Ornithopter();
+        harness.setGraveyard(player2, List.of(ornithopter));
+
+        declareAttackers(player1, List.of(0));
+        harness.handleXValueChosen(player1, 0);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of(ornithopter.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        harness.assertNotInGraveyard(player2, "Ornithopter");
+    }
+
+    @Test
+    void fireLordSozinCanUseFirebendingManaToReanimate() {
+        addTransformedSaga();
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(bears));
+
+        declareAttackers(player1, List.of(0));
+        harness.handleXValueChosen(player1, 3);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
+
     private Permanent addSaga(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheRiseOfSozin());
         saga.setCounterCount(CounterType.LORE, loreCounters);
@@ -105,11 +186,10 @@ class TheRiseOfSozinTest extends BaseCardTest {
 
     private Permanent addTransformedSaga() {
         TheRiseOfSozin front = new TheRiseOfSozin();
-        Permanent saga = new Permanent(front);
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, front);
         saga.setCard(front.getBackFaceCard());
         saga.setTransformed(true);
         saga.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(saga);
         return saga;
     }
 
