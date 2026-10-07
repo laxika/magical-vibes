@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
+import com.github.laxika.magicalvibes.cards.r.RainOfGore;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed(Subversion.class)
+@CardUsed({Subversion.class, PlatinumEmperion.class, RainOfGore.class})
 class SubversionTest extends BaseCardTest {
 
     @Test
@@ -38,7 +39,6 @@ class SubversionTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(PlatinumEmperion.class)
     void gainsOnlyLifeActuallyLostByOpponents() {
         harness.addToBattlefield(player1, new Subversion());
         harness.addToBattlefield(player2, new PlatinumEmperion());
@@ -50,5 +50,48 @@ class SubversionTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void opponentStillLosesLifeWhenControllerCannotGainLife() {
+        harness.addToBattlefield(player1, new Subversion());
+        harness.addToBattlefield(player1, new PlatinumEmperion());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void multipleCopiesDrainIndependently() {
+        harness.addToBattlefield(player1, new Subversion());
+        harness.addToBattlefield(player1, new Subversion());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void rainOfGoreReplacesControllersLifeGainWithLifeLoss() {
+        harness.addToBattlefield(player1, new Subversion());
+        harness.addToBattlefield(player2, new RainOfGore());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
     }
 }
