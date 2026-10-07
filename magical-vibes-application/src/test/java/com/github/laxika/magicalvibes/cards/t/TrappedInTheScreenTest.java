@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.a.AuraOfSilence;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -16,10 +17,11 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TrappedInTheScreen.class, GrizzlyBears.class, Forest.class, GloriousAnthem.class,
-        LeoninScimitar.class, Naturalize.class})
+        LeoninScimitar.class, Naturalize.class, AuraOfSilence.class})
 class TrappedInTheScreenTest extends BaseCardTest {
 
     @Test
@@ -90,11 +92,82 @@ class TrappedInTheScreenTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player2, 0, source.getId());
+        harness.castAndResolveInstant(player2, 0, source.getId());
+
+        harness.assertInGraveyard(player2, "Naturalize");
+        harness.assertOnBattlefield(player1, "Trapped in the Screen");
+    }
+
+    @Test
+    @DisplayName("Ward can be declined even when its controller can pay")
+    void wardCountersSpellWhenPaymentDeclined() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new TrappedInTheScreen());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player2, 0, source.getId());
+        harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Naturalize");
         harness.assertOnBattlefield(player1, "Trapped in the Screen");
+    }
+
+    @Test
+    @DisplayName("Ward does not trigger for its controller's spell")
+    void controllerCanTargetSourceWithoutPayingWard() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new TrappedInTheScreen());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, source.getId());
+
+        harness.assertInGraveyard(player1, "Naturalize");
+        harness.assertInGraveyard(player1, "Trapped in the Screen");
+        harness.assertNotOnBattlefield(player1, "Trapped in the Screen");
+    }
+
+    @Test
+    @DisplayName("Ward counters an opponent's sacrifice ability when they cannot pay")
+    void wardCountersUnpaidSacrificeAbility() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new TrappedInTheScreen());
+        harness.addToBattlefield(player2, new AuraOfSilence());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.sacrificePermanent(player2, 0, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Aura of Silence");
+        harness.assertOnBattlefield(player1, "Trapped in the Screen");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Nothing is exiled if the source leaves before its enter trigger resolves")
+    void sourceLeavingBeforeEnterTriggerPreventsExile() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareToCast();
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, creature.getId());
+
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Trapped in the Screen"));
+        harness.assertInGraveyard(player1, "Trapped in the Screen");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 
     private void castAndExileTarget(UUID targetId) {
@@ -125,8 +198,7 @@ class TrappedInTheScreenTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         UUID sourceId = harness.getPermanentId(player1, "Trapped in the Screen");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, sourceId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, sourceId);
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
     }
