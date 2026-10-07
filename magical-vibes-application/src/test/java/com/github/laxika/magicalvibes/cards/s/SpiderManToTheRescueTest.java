@@ -73,14 +73,69 @@ class SpiderManToTheRescueTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
+    @Test
+    void alreadyTappedSourceDoesNotGrantProtection() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent spiderMan = castSpiderMan();
+        spiderMan.setTapped(true);
+
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(spiderMan.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void sourceLeavingBeforeTapDoesNotGrantProtection() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent spiderMan = castSpiderMan();
+        gd.playerBattlefields.get(player1.getId()).remove(spiderMan);
+
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void canTapWithoutAnotherEligibleCreature() {
+        Permanent spiderMan = castSpiderMan();
+
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(spiderMan.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, spiderMan, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void reflexiveAbilityResolvesAfterSourceLeaves() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent spiderMan = castSpiderMan();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, target.getId());
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
+        gd.playerBattlefields.get(player1.getId()).remove(spiderMan);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
     private Permanent castSpiderMan() {
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new SpiderManToTheRescue()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         return findPermanent(player1, "Spider-Man, To the Rescue");
     }
 }
