@@ -98,6 +98,55 @@ class TwinstrikeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Deals damage if the controller gains a card before resolution")
+    void losesHellbentBeforeResolution() {
+        Permanent zeppelid = harness.addToBattlefieldAndReturn(player2, new AssaultZeppelid());
+        Permanent ragworm = harness.addToBattlefieldAndReturn(player2, new SimicRagworm());
+        harness.setHand(player1, List.of(new Twinstrike()));
+        giveMana();
+
+        harness.castInstant(player1, 0, List.of(zeppelid.getId(), ragworm.getId()));
+        harness.setHand(player1, List.of(new AzoriusSignet()));
+        harness.passBothPriorities();
+
+        assertThat(zeppelid.getMarkedDamage()).isEqualTo(2);
+        assertThat(ragworm.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Assault Zeppelid");
+        harness.assertOnBattlefield(player2, "Simic Ragworm");
+    }
+
+    @Test
+    @DisplayName("Deals damage to the remaining legal target without hellbent")
+    void damagesRemainingLegalTarget() {
+        Permanent zeppelid = harness.addToBattlefieldAndReturn(player2, new AssaultZeppelid());
+        Permanent ragworm = harness.addToBattlefieldAndReturn(player2, new SimicRagworm());
+        harness.setHand(player1, List.of(new Twinstrike(), new AzoriusSignet()));
+        giveMana();
+
+        harness.castInstant(player1, 0, List.of(zeppelid.getId(), ragworm.getId()));
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, ragworm));
+        harness.passBothPriorities();
+
+        assertThat(zeppelid.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Assault Zeppelid");
+    }
+
+    @Test
+    @DisplayName("Hellbent destroys targets controlled by different players")
+    void destroysTargetsWithDifferentControllers() {
+        Permanent zeppelid = harness.addToBattlefieldAndReturn(player1, new AssaultZeppelid());
+        Permanent ragworm = harness.addToBattlefieldAndReturn(player2, new SimicRagworm());
+        harness.setHand(player1, List.of(new Twinstrike()));
+        harness.setHand(player2, List.of(new AzoriusSignet()));
+        giveMana();
+
+        harness.castAndResolveInstant(player1, 0, List.of(zeppelid.getId(), ragworm.getId()));
+
+        harness.assertInGraveyard(player1, "Assault Zeppelid");
+        harness.assertInGraveyard(player2, "Simic Ragworm");
+    }
     private void giveMana() {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
