@@ -91,4 +91,37 @@ class TorrentOfLavaTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Goblin Elite Infantry");
     }
+
+    @Test
+    @DisplayName("The caster's creature can prevent damage, without protecting another creature")
+    void casterCreaturePreventsOnlyItsOwnDamage() {
+        addCreatureReady(player1, new GoblinEliteInfantry());
+        harness.addToBattlefield(player2, new GoblinEliteInfantry());
+        harness.setHand(player1, List.of(new TorrentOfLava()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castSorcery(player1, 0, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Goblin Elite Infantry");
+        harness.assertNotOnBattlefield(player2, "Goblin Elite Infantry");
+    }
+
+    @Test
+    @DisplayName("The granted ability prevents only one damage")
+    void preventionDoesNotPreventAllDamage() {
+        addCreatureReady(player2, new GoblinEliteInfantry());
+        harness.setHand(player1, List.of(new TorrentOfLava()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castSorcery(player1, 0, 3);
+        harness.passPriority(player1);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Goblin Elite Infantry");
+    }
 }
