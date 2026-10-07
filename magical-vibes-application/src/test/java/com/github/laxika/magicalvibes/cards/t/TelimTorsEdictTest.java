@@ -5,10 +5,8 @@ import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -54,9 +52,7 @@ class TelimTorsEdictTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        advanceToUpkeep(player2);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
@@ -112,5 +108,71 @@ class TelimTorsEdictTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Bay Falcon");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Bay Falcon"));
+    }
+
+    @Test
+    @DisplayName("No delayed draw is registered when the target leaves before resolution")
+    void targetLeavingPreventsDelayedDraw() {
+        harness.addToBattlefield(player1, new BayFalcon());
+        harness.setHand(player1, List.of(new TelimTorsEdict(), new TelimTorsEdict()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        UUID targetId = harness.getPermanentId(player1, "Bay Falcon");
+
+        harness.castInstant(player1, 0, targetId);
+        harness.castInstant(player1, 0, targetId);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Bay Falcon");
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Losing control of an opponent-owned target prevents exile and the delayed draw")
+    void losingControlMakesOpponentOwnedTargetIllegal() {
+        Permanent target = addCreatureReady(player2, new BayFalcon());
+        harness.setHand(player1, List.of(new RayOfCommand()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.setHand(player1, List.of(new TelimTorsEdict()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, target.getId());
+        harness.setHand(player2, List.of(new RayOfCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castInstant(player2, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Bay Falcon");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The delayed draw waits for a later turn and happens only once")
+    void delayedDrawWaitsForNextTurnAndHappensOnlyOnce() {
+        harness.addToBattlefield(player1, new BayFalcon());
+        harness.setHand(player1, List.of(new TelimTorsEdict()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Bay Falcon"));
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
     }
 }
