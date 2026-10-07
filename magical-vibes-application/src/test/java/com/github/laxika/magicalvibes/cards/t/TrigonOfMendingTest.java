@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,47 +14,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({TrigonOfMending.class, Shatter.class})
 class TrigonOfMendingTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    
-
-    @Test
-    @DisplayName("Has two activated abilities")
-    void hasTwoActivatedAbilities() {
-        TrigonOfMending card = new TrigonOfMending();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-    }
-
-    @Test
-    @DisplayName("First ability: {W}{W}, {T} to put a charge counter on self")
-    void firstAbilityStructure() {
-        TrigonOfMending card = new TrigonOfMending();
-
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{W}{W}");
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(PutCountersOnSelfEffect.class);
-    }
-
-    @Test
-    @DisplayName("Second ability: {2}, {T}, remove a charge counter to target player gains 3 life")
-    void secondAbilityStructure() {
-        TrigonOfMending card = new TrigonOfMending();
-
-        var ability = card.getActivatedAbilities().get(1);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{2}");
-        assertThat(ability.getEffects())
-                .hasSize(2)
-                .anyMatch(e -> e instanceof RemoveCounterFromSourceCost rc && rc.count() == 1 && rc.counterType() == CounterType.CHARGE)
-                .anyMatch(e -> e instanceof TargetPlayerGainsLifeEffect tp && tp.amount().equals(new Fixed(3)));
-    }
-
-    // ===== Entering the battlefield with charge counters =====
 
     @Test
     @DisplayName("Enters the battlefield with 3 charge counters")
@@ -71,14 +30,11 @@ class TrigonOfMendingTest extends BaseCardTest {
         assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
-    // ===== First activated ability: put a charge counter =====
 
     @Test
     @DisplayName("First ability adds a charge counter")
     void firstAbilityAddsChargeCounter() {
-        harness.addToBattlefield(player1, new TrigonOfMending());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Mending");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfMending());
         trigon.setCounterCount(CounterType.CHARGE, 1);
 
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -88,14 +44,11 @@ class TrigonOfMendingTest extends BaseCardTest {
         assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
-    // ===== Second activated ability: target player gains 3 life =====
 
     @Test
     @DisplayName("Second ability removes a charge counter and target player gains 3 life")
     void secondAbilityGainsLife() {
-        harness.addToBattlefield(player1, new TrigonOfMending());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Mending");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfMending());
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         int initialLife = gd.playerLifeTotals.get(player1.getId());
@@ -111,9 +64,7 @@ class TrigonOfMendingTest extends BaseCardTest {
     @Test
     @DisplayName("Can target opponent to gain life")
     void canTargetOpponentToGainLife() {
-        harness.addToBattlefield(player1, new TrigonOfMending());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Mending");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfMending());
         trigon.setCounterCount(CounterType.CHARGE, 1);
 
         int initialLife = gd.playerLifeTotals.get(player2.getId());
@@ -129,9 +80,7 @@ class TrigonOfMendingTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate second ability multiple times with enough counters (untapping between)")
     void canActivateMultipleTimes() {
-        harness.addToBattlefield(player1, new TrigonOfMending());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Mending");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfMending());
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         int initialLife = gd.playerLifeTotals.get(player1.getId());
@@ -154,9 +103,7 @@ class TrigonOfMendingTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate second ability with 0 charge counters")
     void cannotActivateWithNoCounters() {
-        harness.addToBattlefield(player1, new TrigonOfMending());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Mending");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfMending());
         trigon.setCounterCount(CounterType.CHARGE, 0);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -167,9 +114,7 @@ class TrigonOfMendingTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate second ability while tapped")
     void cannotActivateWhileTapped() {
-        harness.addToBattlefield(player1, new TrigonOfMending());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Mending");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfMending());
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         // First activation taps it
@@ -182,5 +127,74 @@ class TrigonOfMendingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+    @Test
+    @DisplayName("Recharging requires two white mana")
+    void rechargeRequiresWhiteMana() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfMending());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(trigon.isTapped()).isFalse();
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Recharging an empty trigon taps it immediately and adds a counter on resolution")
+    void rechargeEmptyTrigonUsesStackAndTapCost() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfMending());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(trigon.isTapped()).isTrue();
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Life gain removes the charge counter as a cost before resolution")
+    void lifeGainPaysCounterCostBeforeResolution() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfMending());
+        trigon.setCounterCount(CounterType.CHARGE, 1);
+        int initialLife = gd.playerLifeTotals.get(player1.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, player1.getId());
+
+        assertThat(trigon.isTapped()).isTrue();
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isZero();
+        harness.assertLife(player1, initialLife);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, initialLife + 3);
+    }
+
+    @Test
+    @DisplayName("Life gain resolves even if the trigon is destroyed in response")
+    void lifeGainResolvesAfterSourceIsDestroyed() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfMending());
+        trigon.setCounterCount(CounterType.CHARGE, 1);
+        int initialLife = gd.playerLifeTotals.get(player1.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, null, player1.getId());
+
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, trigon.getId());
+
+        harness.assertNotOnBattlefield(player1, "Trigon of Mending");
+        harness.assertLife(player1, initialLife);
+        harness.passBothPriorities();
+        harness.assertLife(player1, initialLife + 3);
     }
 }
