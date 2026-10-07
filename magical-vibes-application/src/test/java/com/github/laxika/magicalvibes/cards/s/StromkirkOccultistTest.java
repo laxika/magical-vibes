@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.r.RavensCrime;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,14 +19,13 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StromkirkOccultist.class, RavensCrime.class, Mountain.class})
 class StromkirkOccultistTest extends BaseCardTest {
 
     private Permanent addReadyOccultist() {
-        Permanent perm = new Permanent(new StromkirkOccultist());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player1, new StromkirkOccultist());
     }
 
     private Card putSpellOnTop(String name) {
@@ -136,5 +137,70 @@ class StromkirkOccultistTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getId().equals(occultist.getId()));
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The exiled creature can be cast for its normal mana cost")
+    void castsExiledCreatureForNormalCost() {
+        addReadyOccultist().setAttacking(true);
+        StromkirkOccultist top = new StromkirkOccultist();
+        harness.setLibrary(player1, List.of(top));
+        resolveCombatDamageTrigger();
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castFromExile(player1, top.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getId().equals(top.getId()));
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(c -> c.getId().equals(top.getId()));
+    }
+
+    @Test
+    @DisplayName("The combat trigger allows playing an exiled land")
+    void playsExiledLand() {
+        addReadyOccultist().setAttacking(true);
+        Mountain top = new Mountain();
+        harness.setLibrary(player1, List.of(top));
+        resolveCombatDamageTrigger();
+
+        harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN,
+                () -> harness.castFromExile(player1, top.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getId().equals(top.getId()));
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(c -> c.getId().equals(top.getId()));
+    }
+
+    @Test
+    @DisplayName("Combat damage with an empty library does not exile a card")
+    void emptyLibraryDoesNothing() {
+        addReadyOccultist().setAttacking(true);
+        harness.setLibrary(player1, List.of());
+
+        resolveCombatDamageTrigger();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exile permission does not grant free casting or the madness cost")
+    void exilePermissionRequiresNormalCost() {
+        addReadyOccultist().setAttacking(true);
+        StromkirkOccultist top = new StromkirkOccultist();
+        harness.setLibrary(player1, List.of(top));
+        resolveCombatDamageTrigger();
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
     }
 }
