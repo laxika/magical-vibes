@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IvoryMask;
 import com.github.laxika.magicalvibes.cards.s.StealArtifact;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheRack.class, GrizzlyBears.class, StealArtifact.class})
+@CardUsed({TheRack.class, GrizzlyBears.class, StealArtifact.class, IvoryMask.class})
 class TheRackTest extends BaseCardTest {
 
     @Test
@@ -115,5 +116,48 @@ class TheRackTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(player1LifeBefore);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(player2LifeBefore - 3);
+    }
+    @Test
+    @DisplayName("Choosing an opponent as The Rack enters does not create a triggered ability")
+    void choosesOpponentAsItEntersWithoutUsingTheStack() {
+        harness.castFromHand(player1, new TheRack(), "{1}");
+        harness.passBothPriorities();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, player2.getId());
+        }
+
+        harness.assertOnBattlefield(player1, "The Rack");
+        assertThat(gd.stack).isEmpty();
+        harness.setHand(player2, List.of());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("The upkeep ability damages the chosen player even if that player has shroud")
+    void upkeepDamageDoesNotTargetTheChosenPlayer() {
+        harness.addToBattlefield(player1, new TheRack());
+        harness.addToBattlefield(player2, new IvoryMask());
+        harness.setHand(player2, List.of());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Chosen opponent's upkeep with two cards deals 1 damage")
+    void twoCardsDealsOne() {
+        harness.addToBattlefield(player1, new TheRack());
+        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
     }
 }
