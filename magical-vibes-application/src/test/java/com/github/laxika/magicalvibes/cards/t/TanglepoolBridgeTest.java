@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TanglepoolBridge.class, StoneRain.class})
 class TanglepoolBridgeTest extends BaseCardTest {
@@ -59,10 +60,45 @@ class TanglepoolBridgeTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Tanglepool Bridge");
     }
 
+    @Test
+    @DisplayName("Enters tapped when put onto the battlefield without being played")
+    void entersTappedWithoutBeingPlayed() {
+        Permanent bridge = harness.enterBattlefieldAndReturn(player1, new TanglepoolBridge());
+
+        assertThat(bridge.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped bridge cannot pay its mana ability's tap cost")
+    void tappedBridgeCannotProduceMana() {
+        harness.setHand(player1, List.of(new TanglepoolBridge()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A newly controlled noncreature bridge produces mana immediately after untapping")
+    void newlyControlledBridgeProducesManaWithoutUsingStack() {
+        Permanent bridge = harness.enterBattlefieldAndReturn(player1, new TanglepoolBridge());
+        bridge.untap();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.BLUE.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(bridge.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyBridge() {
-        Permanent bridge = new Permanent(new TanglepoolBridge());
+        Permanent bridge = harness.addToBattlefieldAndReturn(player1, new TanglepoolBridge());
         bridge.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bridge);
         return bridge;
     }
 }
