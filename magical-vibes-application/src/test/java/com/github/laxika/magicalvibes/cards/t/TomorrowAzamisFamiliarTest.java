@@ -7,7 +7,10 @@ import com.github.laxika.magicalvibes.cards.b.BileUrchin;
 import com.github.laxika.magicalvibes.cards.f.Frostling;
 import com.github.laxika.magicalvibes.cards.f.FrostOgre;
 import com.github.laxika.magicalvibes.cards.g.GnarledMass;
+import com.github.laxika.magicalvibes.cards.h.Humble;
+import com.github.laxika.magicalvibes.cards.u.UbaMask;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -18,7 +21,8 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({TomorrowAzamisFamiliar.class, BileUrchin.class, Frostling.class, FrostOgre.class, GnarledMass.class})
+@CardUsed({TomorrowAzamisFamiliar.class, BileUrchin.class, Frostling.class, FrostOgre.class,
+        GnarledMass.class, Humble.class, UbaMask.class})
 class TomorrowAzamisFamiliarTest extends BaseCardTest {
 
     private void addTomorrow() {
@@ -173,5 +177,89 @@ class TomorrowAzamisFamiliarTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(top);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The controller can reverse the order of the cards put on the bottom")
+    void canChooseReverseBottomOrder() {
+        Card first = new GnarledMass();
+        Card chosen = new BileUrchin();
+        Card third = new Frostling();
+        Card untouched = new FrostOgre();
+        harness.setLibrary(player1, List.of(first, chosen, third, untouched));
+
+        drawWithTomorrow();
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, third, first);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Putting a looked-at card into hand does not publicly reveal it")
+    void chosenCardStaysPrivate() {
+        Card chosen = new BileUrchin();
+        harness.setLibrary(player1, List.of(new GnarledMass(), chosen, new Frostling()));
+
+        drawWithTomorrow();
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        answerReorderInOrder();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gameLogContains("Bile Urchin")).isFalse();
+    }
+
+    @Test
+    @DisplayName("The only card in the library is also put into hand privately")
+    void singleCardStaysPrivate() {
+        Card chosen = new BileUrchin();
+        harness.setLibrary(player1, List.of(chosen));
+
+        drawWithTomorrow();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gameLogContains("Bile Urchin")).isFalse();
+    }
+
+    @Test
+    @CardUsed(Humble.class)
+    @DisplayName("Tomorrow does not replace draws after losing its abilities")
+    void losingAbilitiesDisablesReplacement() {
+        var tomorrow = harness.addToBattlefieldAndReturn(player1, new TomorrowAzamisFamiliar());
+        harness.setHand(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, tomorrow.getId());
+        Card top = new BileUrchin();
+        Card second = new Frostling();
+        Card third = new GnarledMass();
+        harness.setLibrary(player1, List.of(top, second, third));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, third);
+        assertThat(gd.cardsDrawnThisTurn.get(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(UbaMask.class)
+    @DisplayName("The drawing player chooses between Tomorrow and Uba Mask")
+    void competingReplacementsRequirePlayerChoice() {
+        addTomorrow();
+        harness.addToBattlefield(player2, new UbaMask());
+        Card first = new BileUrchin();
+        Card second = new Frostling();
+        Card third = new GnarledMass();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second, third);
     }
 }
