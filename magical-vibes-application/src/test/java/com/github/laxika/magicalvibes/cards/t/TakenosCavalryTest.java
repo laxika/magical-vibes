@@ -87,6 +87,67 @@ class TakenosCavalryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target a friendly attacking Spirit and pays the tap cost")
+    void canDamageFriendlyAttackingSpirit() {
+        Permanent cavalry = addCreatureReady(player1, new TakenosCavalry());
+        Permanent spirit = addCreatureReady(player1, new KamiOfFalseHope());
+        spirit.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.activateAbility(player1, 0, 0, spirit.getId());
+
+        assertThat(cavalry.isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertThat(spirit.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(spirit);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spirit.getCard());
+    }
+
+    @Test
+    @DisplayName("A tapped Cavalry cannot activate its damage ability")
+    void cannotActivateWhileTapped() {
+        Permanent cavalry = addCreatureReady(player1, new TakenosCavalry());
+        cavalry.setTapped(true);
+        Permanent spirit = addCreatureReady(player2, new KamiOfFalseHope());
+        spirit.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, spirit.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Cavalry cannot activate its damage ability")
+    void cannotActivateWithSummoningSickness() {
+        Permanent cavalry = addCreatureReady(player1, new TakenosCavalry());
+        cavalry.setSummoningSick(true);
+        Permanent spirit = addCreatureReady(player2, new KamiOfFalseHope());
+        spirit.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, spirit.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+    }
+
+    @Test
+    @DisplayName("Ability fizzles if its Spirit target stops blocking before resolution")
+    void abilityFizzlesWhenTargetStopsBlocking() {
+        addCreatureReady(player1, new TakenosCavalry());
+        Permanent spirit = addCreatureReady(player2, new KamiOfFalseHope());
+        spirit.setBlocking(true);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        harness.activateAbility(player1, 0, 0, spirit.getId());
+        spirit.setBlocking(false);
+        harness.passBothPriorities();
+
+        assertThat(spirit.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(spirit);
+    }
+
+    @Test
     @DisplayName("Bushido 1 gives +1/+1 when it becomes blocked")
     void bushidoOnBecomingBlocked() {
         Permanent attacker = addCreatureReady(player1, new TakenosCavalry());
@@ -112,6 +173,21 @@ class TakenosCavalryTest extends BaseCardTest {
 
         assertThat(blocker.getPowerModifier()).isEqualTo(1);
         assertThat(blocker.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Bushido triggers once when Cavalry becomes blocked by two creatures")
+    void bushidoTriggersOnceForMultipleBlockers() {
+        Permanent attacker = addCreatureReady(player1, new TakenosCavalry());
+        addCreatureReady(player2, new KamiOfFalseHope());
+        addCreatureReady(player2, new KamiOfFalseHope());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
     }
 
     @Test
