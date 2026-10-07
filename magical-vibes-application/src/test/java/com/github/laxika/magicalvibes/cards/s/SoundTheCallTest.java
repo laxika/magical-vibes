@@ -56,6 +56,39 @@ class SoundTheCallTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("The resolved spell itself boosts its single Wolf, which shrinks when all matching cards leave")
+    void countsResolvedSpellAndReturnsToBaseSizeWithEmptyGraveyards() {
+        castSoundTheCall();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        Permanent wolf = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(wolf.getCard().isToken()).isTrue();
+        harness.assertInGraveyard(player1, "Sound the Call");
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);
+
+        harness.setGraveyard(player1, List.of());
+
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A later cast boosts both the earlier Wolf and the newly created Wolf")
+    void successiveCastsUpdateEveryWolf() {
+        castSoundTheCall();
+        Permanent firstWolf = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+        castSoundTheCall();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2).contains(firstWolf);
+        for (Permanent wolf : gd.playerBattlefields.get(player1.getId())) {
+            assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(3);
+        }
+    }
+
     private void castSoundTheCall() {
         harness.castFromHand(player1, new SoundTheCall(), "{2}{G}");
         harness.passBothPriorities();
