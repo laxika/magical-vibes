@@ -48,6 +48,35 @@ class SpiralingEmbersTest extends BaseCardTest {
         harness.assertLife(player2, 20);
     }
 
+    @Test
+    void usesReducedHandSizeAtResolution() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(
+                new SpiralingEmbers(), new SpiralingEmbers(), new SpiralingEmbers()));
+        addMana(player1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.setHand(player1, List.of(new SpiralingEmbers()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void canTargetControllerAndIgnoresOpponentHandSize() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new SpiralingEmbers(), new SpiralingEmbers()));
+        harness.setHand(player2, List.of(
+                new SpiralingEmbers(), new SpiralingEmbers(), new SpiralingEmbers()));
+        addMana(player1);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
     private void addMana(com.github.laxika.magicalvibes.model.Player player) {
         harness.addMana(player, ManaColor.RED, 4);
     }
