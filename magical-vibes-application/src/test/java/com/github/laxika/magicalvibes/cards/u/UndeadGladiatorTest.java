@@ -115,4 +115,85 @@ class UndeadGladiatorTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Undead Gladiator");
         harness.assertInHand(player1, "Swamp");
     }
+
+    @Test
+    void paysDiscardCostBeforeReturnResolves() {
+        UndeadGladiator gladiator = new UndeadGladiator();
+        Swamp discardedCard = new Swamp();
+        harness.setGraveyard(player1, List.of(gladiator));
+        harness.setHand(player1, List.of(discardedCard));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(gladiator, discardedCard);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(gladiator);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discardedCard);
+    }
+
+    @Test
+    void canCycleReturnAndCycleAgainDuringSameUpkeep() {
+        UndeadGladiator gladiator = new UndeadGladiator();
+        Swamp firstDraw = new Swamp();
+        Swamp secondDraw = new Swamp();
+        harness.setHand(player1, List.of(gladiator));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(gladiator);
+
+        harness.passBothPriorities();
+        harness.activateGraveyardAbility(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondDraw);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(gladiator, firstDraw);
+    }
+
+    @Test
+    void earlierReturnAbilityDoesNotReturnCardThatLeftAndReenteredGraveyard() {
+        UndeadGladiator gladiator = new UndeadGladiator();
+        Swamp firstDiscard = new Swamp();
+        Swamp secondDiscard = new Swamp();
+        Swamp drawnCard = new Swamp();
+        harness.setGraveyard(player1, List.of(gladiator));
+        harness.setHand(player1, List.of(firstDiscard, secondDiscard));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(gladiator);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(gladiator, firstDiscard, secondDiscard);
+    }
 }
