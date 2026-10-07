@@ -172,8 +172,7 @@ class TwitchTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         prepareTwitch();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -187,8 +186,7 @@ class TwitchTest extends BaseCardTest {
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
         prepareTwitch();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -197,6 +195,56 @@ class TwitchTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Can decline untapping a tapped target and still draw")
+    void canDeclineUntappingAndStillDraw() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.tap();
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+        prepareTwitch();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
+        harness.assertInGraveyard(player1, "Twitch");
+    }
+
+    @Test
+    @DisplayName("Can untap a target that became tapped after casting")
+    void untapsTargetTappedAfterCasting() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        prepareTwitch();
+
+        harness.castInstant(player1, 0, target.getId());
+        target.tap();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Twitch");
+    }
+
+    @Test
+    @DisplayName("Can tap a target that became untapped after casting")
+    void tapsTargetUntappedAfterCasting() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.tap();
+        prepareTwitch();
+
+        harness.castInstant(player1, 0, target.getId());
+        target.untap();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Twitch");
     }
 
     // ===== After resolution =====
@@ -292,7 +340,9 @@ class TwitchTest extends BaseCardTest {
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new Pacifism());
+        Permanent aura = harness.addToBattlefieldAndReturn(player, new Pacifism());
+        aura.setAttachedTo(findPermanent(player1, "Grizzly Bears").getId());
+        return aura;
     }
 
     private void prepareTwitch() {
