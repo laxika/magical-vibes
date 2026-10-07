@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SwoopingProtector.class, Shock.class})
+@CardUsed({SwoopingProtector.class, Shock.class, Murder.class})
 class SwoopingProtectorTest extends BaseCardTest {
 
     @Test
@@ -48,19 +49,65 @@ class SwoopingProtectorTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, protector.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, protector.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(protector);
         assertThat(protector.getCounterCount(CounterType.SHIELD)).isZero();
         assertThat(protector.getMarkedDamage()).isZero();
     }
 
+    @Test
+    @DisplayName("Entering without being cast still supplies a shield counter immediately")
+    void entersWithoutCastingWithShieldCounter() {
+        Permanent protector = harness.enterBattlefieldAndReturn(player1, new SwoopingProtector());
+
+        assertThat(protector.getCounterCount(CounterType.SHIELD)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Swooping Protector");
+    }
+
+    @Test
+    @DisplayName("A second damage event kills it after its shield counter is consumed")
+    void secondDamageEventKillsProtector() {
+        Permanent protector = castProtector();
+
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, protector.getId());
+
+        harness.assertOnBattlefield(player1, "Swooping Protector");
+        assertThat(protector.getCounterCount(CounterType.SHIELD)).isZero();
+        assertThat(protector.getMarkedDamage()).isZero();
+
+        harness.castAndResolveInstant(player1, 0, protector.getId());
+
+        harness.assertNotOnBattlefield(player1, "Swooping Protector");
+        harness.assertInGraveyard(player1, "Swooping Protector");
+    }
+
+    @Test
+    @DisplayName("A shield counter replaces one destruction but not a second")
+    void shieldCounterReplacesOnlyFirstDestruction() {
+        Permanent protector = castProtector();
+
+        harness.setHand(player2, List.of(new Murder(), new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 4);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0, protector.getId());
+
+        harness.assertOnBattlefield(player1, "Swooping Protector");
+        harness.assertNotInGraveyard(player1, "Swooping Protector");
+        assertThat(protector.getCounterCount(CounterType.SHIELD)).isZero();
+        assertThat(protector.isTapped()).isFalse();
+
+        harness.castAndResolveInstant(player2, 0, protector.getId());
+
+        harness.assertNotOnBattlefield(player1, "Swooping Protector");
+        harness.assertInGraveyard(player1, "Swooping Protector");
+    }
+
     private Permanent castProtector() {
-        harness.setHand(player1, List.of(new SwoopingProtector()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SwoopingProtector(), "{3}{W}");
         harness.passBothPriorities();
         return findPermanent(player1, "Swooping Protector");
     }
