@@ -15,8 +15,45 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Strafe.class, AncientSpider.class, MoggJailer.class, CloudCover.class})
+@CardUsed({Strafe.class, AncientSpider.class, MoggJailer.class, CloudCover.class, ShivanWurm.class, StormscapeFamiliar.class})
 class StrafeTest extends BaseCardTest {
+    @Test
+    @DisplayName("Lethal damage sends a nonred creature to its owner's graveyard")
+    void killsNonredCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new StormscapeFamiliar());
+        harness.setHand(player1, List.of(new Strafe()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Stormscape Familiar");
+        harness.assertInGraveyard(player2, "Stormscape Familiar");
+        harness.assertInGraveyard(player1, "Strafe");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature that is red and another color")
+    void cannotTargetMulticoloredRedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ShivanWurm());
+        harness.setHand(player1, List.of(new Strafe()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a nonred creature");
+    }
+
+    @Test
+    @DisplayName("Cannot target a player")
+    void cannotTargetPlayer() {
+        harness.setHand(player1, List.of(new Strafe()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
     @Test
     @DisplayName("Deals 3 damage to a nonred creature")
