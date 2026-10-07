@@ -102,6 +102,41 @@ class StingingLicidTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Ending the Aura effect is immediate and does not use the stack")
+    void endingEffectIsImmediateSpecialAction() {
+        Permanent licid = addReadyLicid(player1);
+        Permanent host = addCreatureReady(player2, new FightingDrake());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.activateAbility(player1, 0, null, host.getId());
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(licid.getAttachedTo()).isNull();
+        assertThat(gqs.isCreature(gd, licid)).isTrue();
+        assertThat(licid.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Attaching to an already tapped creature does not trigger damage")
+    void attachingToAlreadyTappedCreatureDoesNotDealDamage() {
+        Permanent licid = addReadyLicid(player1);
+        Permanent host = addCreatureReady(player2, new FightingDrake());
+        host.setTapped(true);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, host.getId());
+        resolveAllTriggers();
+
+        assertThat(licid.getAttachedTo()).isEqualTo(host.getId());
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private int indexOf(Player player, Permanent permanent) {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
     }
