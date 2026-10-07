@@ -56,6 +56,32 @@ class StitchedAssistantTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Stitched Assistant");
     }
 
+    @Test
+    @DisplayName("Exploiting itself still scries and draws the card kept on top")
+    void exploitingItselfStillScriesAndDraws() {
+        Card island = new Island();
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(island, forest));
+        castStitchedAssistant();
+        Permanent assistant = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof StitchedAssistant)
+                .findFirst().orElseThrow();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, assistant.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Stitched Assistant");
+        harness.assertInGraveyard(player1, "Stitched Assistant");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(island);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
     private void castStitchedAssistant() {
         harness.setHand(player1, List.of(new StitchedAssistant()));
         harness.addMana(player1, ManaColor.BLUE, 1);
