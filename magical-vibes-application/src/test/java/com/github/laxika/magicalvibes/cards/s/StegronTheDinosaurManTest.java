@@ -74,4 +74,49 @@ class StegronTheDinosaurManTest extends BaseCardTest {
         harness.assertInHand(player1, "Stegron the Dinosaur Man");
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Dinosaur Formula discards as a cost and can be activated on an opponent's turn")
+    void dinosaurFormulaCanBeActivatedOnOpponentsTurn() {
+        harness.setHand(player1, List.of(new StegronTheDinosaurMan()));
+        Permanent stegron = harness.addToBattlefieldAndReturn(player1, new StegronTheDinosaurMan());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, stegron.getId());
+
+        harness.assertNotInHand(player1, "Stegron the Dinosaur Man");
+        harness.assertInGraveyard(player1, "Stegron the Dinosaur Man");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, stegron)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, stegron)).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, stegron)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, stegron)).isEqualTo(5);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, stegron))
+                .containsExactlyInAnyOrder(CardSubtype.DINOSAUR, CardSubtype.VILLAIN);
+    }
+
+    @Test
+    @DisplayName("Dinosaur Formula requires red mana and does not discard when its cost cannot be paid")
+    void dinosaurFormulaRejectsInsufficientColoredMana() {
+        harness.setHand(player1, List.of(new StegronTheDinosaurMan()));
+        Permanent stegron = harness.addToBattlefieldAndReturn(player1, new StegronTheDinosaurMan());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, stegron.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Stegron the Dinosaur Man");
+        harness.assertNotInGraveyard(player1, "Stegron the Dinosaur Man");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, stegron)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, stegron)).isEqualTo(4);
+    }
 }
