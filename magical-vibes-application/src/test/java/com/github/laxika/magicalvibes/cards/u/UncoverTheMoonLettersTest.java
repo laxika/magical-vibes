@@ -33,9 +33,7 @@ class UncoverTheMoonLettersTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
@@ -64,12 +62,77 @@ class UncoverTheMoonLettersTest extends BaseCardTest {
 
         harness.castInstant(player1, 0);
         harness.handleMayAbilityChosen(player1, false);
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({UncoverTheMoonLetters.class})
+    @DisplayName("A second Moon-Letters draws four cards before it enters the battlefield")
+    void enchantmentSpellDrawsFourBeforeResolving() {
+        harness.addToBattlefield(player1, new UncoverTheMoonLetters());
+        harness.setHand(player1, List.of(new UncoverTheMoonLetters()));
+        harness.setLibrary(player1, List.of(new UncoverTheMoonLetters(), new UncoverTheMoonLetters(),
+                new UncoverTheMoonLetters(), new UncoverTheMoonLetters(), new UncoverTheMoonLetters()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castEnchantment(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("With only one card after drawing, discard that card and finish resolving")
+    void discardsAsManyAsPossible() {
+        harness.addToBattlefield(player1, new UncoverTheMoonLetters());
+        harness.setHand(player1, List.of(new DarkRitual()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's noncreature spell does not trigger Moon-Letters")
+    void doesNotTriggerForOpponentsSpell() {
+        harness.addToBattlefield(player1, new UncoverTheMoonLetters());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new DarkRitual()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player2, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
