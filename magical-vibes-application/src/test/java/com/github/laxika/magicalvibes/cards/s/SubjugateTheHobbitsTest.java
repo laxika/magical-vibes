@@ -4,16 +4,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.r.ReclamationSage;
+import com.github.laxika.magicalvibes.cards.s.SamLoyalAttendant;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({SubjugateTheHobbits.class, ElvishWarrior.class, ShivanDragon.class, Mountain.class})
+@CardUsed({SubjugateTheHobbits.class, ElvishWarrior.class, ShivanDragon.class, Mountain.class,
+        SamLoyalAttendant.class, ReclamationSage.class, SelflessSquire.class})
 class SubjugateTheHobbitsTest extends BaseCardTest {
 
     @Test
@@ -34,7 +36,7 @@ class SubjugateTheHobbitsTest extends BaseCardTest {
     @Test
     @DisplayName("Does not gain control of a commander even when it has mana value 3 or less")
     void leavesCommanderUnderItsCurrentControl() {
-        ElvishWarrior commanderCard = new ElvishWarrior();
+        SamLoyalAttendant commanderCard = new SamLoyalAttendant();
         gd.makeCommander(player2.getId(), commanderCard);
         Permanent commander = harness.addToBattlefieldAndReturn(player2, commanderCard);
 
@@ -44,10 +46,71 @@ class SubjugateTheHobbitsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(commander);
     }
 
+    @Test
+    @DisplayName("Gains control of every eligible creature, including mana value three")
+    void gainsControlOfMultipleCreaturesAtManaValueBoundary() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new ReclamationSage());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new ReclamationSage());
+        Permanent smaller = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+        first.setTapped(true);
+
+        castSubjugateTheHobbits();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first, second, smaller);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(first, second, smaller);
+        assertThat(first.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not gain control of creatures with mana value four")
+    void excludesCreatureJustAboveManaValueBoundary() {
+        Permanent squire = harness.addToBattlefieldAndReturn(player2, new SelflessSquire());
+
+        castSubjugateTheHobbits();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(squire);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(squire);
+    }
+
+    @Test
+    @DisplayName("Gains control of legendary creatures that are not commanders")
+    void gainsControlOfNoncommanderLegendaryCreature() {
+        Permanent sam = harness.addToBattlefieldAndReturn(player2, new SamLoyalAttendant());
+
+        castSubjugateTheHobbits();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(sam);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(sam);
+    }
+
+    @Test
+    @DisplayName("Control persists into the next turn")
+    void controlDoesNotExpireAtEndOfTurn() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+
+        castSubjugateTheHobbits();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    @DisplayName("Resolves without eligible creatures")
+    void resolvesWithoutEligibleCreatures() {
+        Permanent dragon = harness.addToBattlefieldAndReturn(player2, new ShivanDragon());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        castSubjugateTheHobbits();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(dragon, land);
+        harness.assertInGraveyard(player1, "Subjugate the Hobbits");
+    }
+
     private void castSubjugateTheHobbits() {
-        harness.setHand(player1, List.of(new SubjugateTheHobbits()));
-        harness.addMana(player1, ManaColor.BLUE, 7);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new SubjugateTheHobbits(), "{5}{U}{U}");
         harness.passBothPriorities();
     }
 }
