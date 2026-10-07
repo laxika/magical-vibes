@@ -69,11 +69,49 @@ class SuqAtaLancerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Flanking weakens every non-flanking blocker independently")
+    void flankingAffectsEachNonFlankingBlocker() {
+        Permanent lancer = addCreatureReady(player1, new SuqAtaLancer());
+        lancer.setAttacking(true);
+        Permanent firstBlocker = addCreatureReady(player2, new GhostShip());
+        Permanent secondBlocker = addCreatureReady(player2, new GhostShip());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(firstBlocker.getEffectivePower()).isEqualTo(1);
+        assertThat(firstBlocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(secondBlocker.getEffectivePower()).isEqualTo(1);
+        assertThat(secondBlocker.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A blocker with flanking does not exempt other blockers from flanking")
+    void flankingChecksEachBlockersOwnAbility() {
+        Permanent lancer = addCreatureReady(player1, new SuqAtaLancer());
+        lancer.setAttacking(true);
+        Permanent flankingBlocker = addCreatureReady(player2, new SuqAtaLancer());
+        Permanent otherBlocker = addCreatureReady(player2, new GhostShip());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(flankingBlocker.getEffectivePower()).isEqualTo(2);
+        assertThat(flankingBlocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(otherBlocker.getEffectivePower()).isEqualTo(1);
+        assertThat(otherBlocker.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Haste lets Suq'Ata Lancer attack the turn it enters")
     void hasteLetsItAttackWhileSummoningSick() {
         harness.setLife(player2, 20);
 
-        Permanent lancer = harness.addToBattlefieldAndReturn(player1, new SuqAtaLancer());
+        harness.addToBattlefieldAndReturn(player1, new SuqAtaLancer());
 
         declareAttackers(List.of(0));
 
