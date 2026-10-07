@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiantHerdgorger;
+import com.github.laxika.magicalvibes.cards.o.OchreJelly;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TashasHideousLaughter.class, Forest.class, GrizzlyBears.class})
+@CardUsed({TashasHideousLaughter.class, Forest.class, GrizzlyBears.class, HillGiantHerdgorger.class, OchreJelly.class})
 class TashasHideousLaughterTest extends BaseCardTest {
 
     @Test
@@ -33,8 +35,7 @@ class TashasHideousLaughterTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new TashasHideousLaughter()));
         harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(Card::getId)
@@ -55,10 +56,60 @@ class TashasHideousLaughterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TashasHideousLaughter()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(land, spell);
+    }
+
+    @Test
+    @DisplayName("Includes the card that takes total mana value above twenty")
+    void exilesCardThatExceedsThreshold() {
+        List<Card> exiledCards = List.of(new HillGiantHerdgorger(), new HillGiantHerdgorger(),
+                new HillGiantHerdgorger(), new HillGiantHerdgorger());
+        Card remainingCard = new Forest();
+        List<Card> library = new ArrayList<>(exiledCards);
+        library.add(remainingCard);
+        harness.setLibrary(player2, library);
+        harness.setHand(player1, List.of(new TashasHideousLaughter()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactlyElementsOf(exiledCards);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remainingCard);
+    }
+
+    @Test
+    @DisplayName("X contributes zero to the mana value of cards exiled from the library")
+    void countsXAsZeroOutsideStack() {
+        List<Card> exiledCards = List.of(new HillGiantHerdgorger(), new HillGiantHerdgorger(),
+                new HillGiantHerdgorger(), new OchreJelly(), new OchreJelly());
+        Card remainingCard = new Forest();
+        List<Card> library = new ArrayList<>(exiledCards);
+        library.add(remainingCard);
+        harness.setLibrary(player2, library);
+        harness.setHand(player1, List.of(new TashasHideousLaughter()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactlyElementsOf(exiledCards);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remainingCard);
+    }
+
+    @Test
+    @DisplayName("An empty opponent library does not prevent the spell from resolving")
+    void resolvesWithEmptyOpponentLibrary() {
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new TashasHideousLaughter()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Tasha's Hideous Laughter");
+        assertThat(gd.stack).isEmpty();
     }
 }
