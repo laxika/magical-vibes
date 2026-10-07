@@ -32,8 +32,7 @@ class UnbreakableRemnantTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castFromGraveyard(player1, 0, List.of(1, 2));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent escaped = findPermanent(player1, "Unbreakable Remnant");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -43,8 +42,7 @@ class UnbreakableRemnantTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Unbreakable Remnant"))
                 .allSatisfy(permanent -> {
@@ -56,12 +54,8 @@ class UnbreakableRemnantTest extends BaseCardTest {
     @Test
     @DisplayName("Normal casts do not get the graveyard-cast perpetual boost")
     void normalCastDoesNotTriggerBoost() {
-        harness.setHand(player1, List.of(new UnbreakableRemnant()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new UnbreakableRemnant(), "{W}");
+        resolveAllTriggers();
 
         Permanent remnant = findPermanent(player1, "Unbreakable Remnant");
         assertThat(gqs.getEffectivePower(gd, remnant)).isEqualTo(2);
@@ -78,5 +72,73 @@ class UnbreakableRemnantTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0, List.of(1)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("exactly 2");
+    }
+
+    @Test
+    @DisplayName("The cast trigger boosts owned copies across zones and under another player's control")
+    void boostsOwnedCopiesAcrossZonesBeforeSpellResolves() {
+        UnbreakableRemnant escapedCard = new UnbreakableRemnant();
+        escapedCard.setOwnerId(player1.getId());
+        UnbreakableRemnant libraryCard = new UnbreakableRemnant();
+        UnbreakableRemnant graveyardCard = new UnbreakableRemnant();
+        UnbreakableRemnant exiledCard = new UnbreakableRemnant();
+        UnbreakableRemnant stolenCard = new UnbreakableRemnant();
+        stolenCard.setOwnerId(player1.getId());
+        UnbreakableRemnant opposingCard = new UnbreakableRemnant();
+        opposingCard.setOwnerId(player2.getId());
+        Permanent stolen = harness.addToBattlefieldAndReturn(player2, stolenCard);
+        Permanent opposing = harness.addToBattlefieldAndReturn(player1, opposingCard);
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setGraveyard(player1, List.of(escapedCard, exiledCard,
+                new UnbreakableRemnant(), graveyardCard));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castFromGraveyard(player1, 0, List.of(1, 2));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        for (Card card : List.of(escapedCard, libraryCard, graveyardCard, exiledCard)) {
+            assertThat(gqs.getEffectiveCardPower(gd, card)).isEqualTo(3);
+            assertThat(gqs.getEffectiveCardToughness(gd, card)).isEqualTo(2);
+        }
+        assertThat(gqs.getEffectivePower(gd, stolen)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, stolen)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(1);
+
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Unbreakable Remnant"))
+                .anySatisfy(permanent -> {
+                    assertThat(permanent.getCard().getId()).isEqualTo(escapedCard.getId());
+                    assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(3);
+                    assertThat(gqs.getEffectiveToughness(gd, permanent)).isEqualTo(2);
+                });
+    }
+
+    @Test
+    @DisplayName("Successive graveyard casts accumulate perpetual boosts")
+    void successiveEscapesAccumulateBoosts() {
+        UnbreakableRemnant first = new UnbreakableRemnant();
+        UnbreakableRemnant second = new UnbreakableRemnant();
+        first.setOwnerId(player1.getId());
+        second.setOwnerId(player1.getId());
+        harness.setGraveyard(player1, List.of(first, new UnbreakableRemnant(),
+                new UnbreakableRemnant(), second, new UnbreakableRemnant(),
+                new UnbreakableRemnant()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFromGraveyard(player1, 0, List.of(1, 2));
+        resolveAllTriggers();
+        harness.castFromGraveyard(player1, 0, List.of(1, 2));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Unbreakable Remnant"))
+                .hasSize(2)
+                .allSatisfy(permanent -> {
+                    assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(4);
+                    assertThat(gqs.getEffectiveToughness(gd, permanent)).isEqualTo(3);
+                });
     }
 }
