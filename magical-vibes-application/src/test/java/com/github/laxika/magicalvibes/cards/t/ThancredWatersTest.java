@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.a.ActOfTreason;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.y.YshtolaNightsBlessed;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +23,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThancredWaters.class, Shock.class, GrizzlyBears.class, DoomBlade.class})
+@CardUsed({ThancredWaters.class, Shock.class, GrizzlyBears.class, DoomBlade.class,
+        YshtolaNightsBlessed.class, ActOfTreason.class, RayOfCommand.class})
 class ThancredWatersTest extends BaseCardTest {
 
     @Test
@@ -84,6 +88,123 @@ class ThancredWatersTest extends BaseCardTest {
                 .hasMessageContaining("legendary permanent you control");
     }
 
+    @Test
+    void protectionPersistsAcrossTurns() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new YshtolaNightsBlessed());
+        castThancred(target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    void protectionNeverStartsIfThancredLeavesBeforeTriggerResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new YshtolaNightsBlessed());
+        castThancred(target.getId());
+        harness.passBothPriorities();
+
+        destroyThancred();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    void losingAndRegainingThancredBeforeTriggerResolvesPreventsProtection() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new YshtolaNightsBlessed());
+        castThancred(target.getId());
+        harness.passBothPriorities();
+        UUID thancredId = harness.getPermanentId(player1, "Thancred Waters");
+
+        harness.setHand(player2, List.of(new RayOfCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castAndResolveInstant(player2, 0, thancredId);
+        harness.assertOnBattlefield(player2, "Thancred Waters");
+
+        harness.setHand(player1, List.of(new RayOfCommand()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castAndResolveInstant(player1, 0, thancredId);
+        harness.assertOnBattlefield(player1, "Thancred Waters");
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    void losingAndRegainingThancredDoesNotRestartProtection() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new YshtolaNightsBlessed());
+        castThancred(target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        UUID thancredId = harness.getPermanentId(player1, "Thancred Waters");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new ActOfTreason()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castAndResolveSorcery(player2, 0, thancredId);
+
+        harness.assertOnBattlefield(player2, "Thancred Waters");
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Thancred Waters");
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    void changingProtectedPermanentsControllerDoesNotEndProtection() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new YshtolaNightsBlessed());
+        castThancred(target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new ActOfTreason()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castAndResolveSorcery(player2, 0, target.getId());
+
+        harness.assertOnBattlefield(player2, "Y'shtola, Night's Blessed");
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    void opponentsNoncreatureSpellDoesNotProtectThancred() {
+        Permanent thancred = harness.addToBattlefieldAndReturn(player1, new ThancredWaters());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, thancred.getId());
+
+        assertThat(gqs.hasKeyword(gd, thancred, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    void flashAllowsCastingDuringOpponentsTurnWithoutLegalGuardTarget() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new ThancredWaters()));
+        addThancredMana();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Thancred Waters");
+        Permanent thancred = gqs.findPermanentById(gd,
+                harness.getPermanentId(player1, "Thancred Waters"));
+        assertThat(gqs.hasKeyword(gd, thancred, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
     private void castThancred(UUID targetId) {
         harness.setHand(player1, List.of(new ThancredWaters()));
         addThancredMana();
@@ -96,16 +217,12 @@ class ThancredWatersTest extends BaseCardTest {
     }
 
     private void destroyThancred() {
-        Permanent thancred = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof ThancredWaters)
-                .findFirst()
-                .orElseThrow();
+        UUID thancredId = harness.getPermanentId(player1, "Thancred Waters");
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new DoomBlade()));
         harness.addMana(player2, ManaColor.BLACK, 2);
-        harness.castInstant(player2, 0, thancred.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, thancredId);
     }
 }
