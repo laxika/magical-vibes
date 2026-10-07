@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.l.LavaAxe;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SuddenSubstitution.class, GrizzlyBears.class, LavaAxe.class})
+@CardUsed({SuddenSubstitution.class, GrizzlyBears.class, LavaAxe.class, HowlingMine.class})
 class SuddenSubstitutionTest extends BaseCardTest {
 
     @Test
@@ -30,8 +31,7 @@ class SuddenSubstitutionTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player1.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, List.of(lavaAxe.getId(), creature.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, List.of(lavaAxe.getId(), creature.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
@@ -58,8 +58,7 @@ class SuddenSubstitutionTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player1.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, List.of(lavaAxe.getId(), creature.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, List.of(lavaAxe.getId(), creature.getId()));
 
         harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();
@@ -67,6 +66,100 @@ class SuddenSubstitutionTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertLife(player1, 15);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void sameControllerStillMayChooseNewTargetsWithoutAnExchange() {
+        LavaAxe lavaAxe = new LavaAxe();
+        harness.setHand(player1, List.of(lavaAxe));
+        harness.addMana(player1, ManaColor.RED, 5);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new SuddenSubstitution()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, List.of(lavaAxe.getId(), creature.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    void creatureLeavingBeforeResolutionStillAllowsSpellControllerToRetarget() {
+        LavaAxe lavaAxe = new LavaAxe();
+        harness.setHand(player1, List.of(lavaAxe));
+        harness.addMana(player1, ManaColor.RED, 5);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new SuddenSubstitution()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, List.of(lavaAxe.getId(), creature.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    void splitSecondPreventsCastingAnotherSpellInResponse() {
+        LavaAxe lavaAxe = new LavaAxe();
+        harness.setHand(player1, List.of(lavaAxe, new SuddenSubstitution()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new SuddenSubstitution()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, List.of(lavaAxe.getId(), creature.getId()));
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.castInstant(
+                player1, 0, List.of(lavaAxe.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void exchangedPermanentSpellEntersUnderItsNewControllersControl() {
+        HowlingMine mine = new HowlingMine();
+        harness.setHand(player1, List.of(mine));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new SuddenSubstitution()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castArtifact(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, List.of(mine.getId(), creature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Howling Mine");
+        harness.assertNotOnBattlefield(player1, "Howling Mine");
     }
 
     @Test
