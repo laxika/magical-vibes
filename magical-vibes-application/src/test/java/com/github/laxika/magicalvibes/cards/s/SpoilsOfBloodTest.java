@@ -13,15 +13,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(SpoilsOfBlood.class)
+@CardUsed({SpoilsOfBlood.class})
 class SpoilsOfBloodTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Creates no token when no creatures died this turn")
-    void createsNoTokenWithoutCreatureDeaths() {
+    @DisplayName("Creates a zero-toughness Horror that dies when no creatures died this turn")
+    void zeroToughnessHorrorDiesWithoutPriorCreatureDeaths() {
         castSpoilsOfBlood();
 
         assertThat(findPermanents(player1, "Horror")).isEmpty();
+        assertThat(gd.creatureDeathCountThisTurn.getOrDefault(player1.getId(), 0)).isEqualTo(1);
     }
 
     @Test
@@ -42,10 +43,46 @@ class SpoilsOfBloodTest extends BaseCardTest {
         assertThat(horror.getEffectiveToughness()).isEqualTo(5);
     }
 
+    @Test
+    @DisplayName("Counts an opposing token that dies after casting but before resolution")
+    void countsTokenDeathInResponse() {
+        harness.setHand(player1, List.of(new SpoilsOfBlood()));
+        harness.setHand(player2, List.of(new SpoilsOfBlood()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.castInstant(player1, 0);
+        harness.castAndResolveInstant(player2, 0);
+
+        assertThat(findPermanents(player2, "Horror")).isEmpty();
+        assertThat(gd.creatureDeathCountThisTurn.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        List<Permanent> horrors = findPermanents(player1, "Horror");
+        assertThat(horrors).hasSize(1);
+        assertThat(horrors.getFirst().getEffectivePower()).isEqualTo(1);
+        assertThat(horrors.getFirst().getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Token size remains fixed when the creature death count changes")
+    void tokenSizeRemainsFixed() {
+        gd.creatureDeathCountThisTurn.put(player1.getId(), 2);
+        castSpoilsOfBlood();
+        Permanent horror = findPermanent(player1, "Horror");
+
+        gd.creatureDeathCountThisTurn.put(player1.getId(), 4);
+        assertThat(horror.getEffectivePower()).isEqualTo(2);
+        assertThat(horror.getEffectiveToughness()).isEqualTo(2);
+
+        gd.creatureDeathCountThisTurn.clear();
+        assertThat(horror.getEffectivePower()).isEqualTo(2);
+        assertThat(horror.getEffectiveToughness()).isEqualTo(2);
+    }
+
     private void castSpoilsOfBlood() {
         harness.setHand(player1, List.of(new SpoilsOfBlood()));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 }
