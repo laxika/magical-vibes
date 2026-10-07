@@ -38,6 +38,7 @@ class TearsOfRageTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .doesNotContain(attackerOne, attackerTwo)
@@ -58,8 +59,89 @@ class TearsOfRageTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+    }
+
+    @Test
+    @DisplayName("Creates one delayed trigger that sacrifices all affected attackers together")
+    void sacrificesAttackersWithOneDelayedTrigger() {
+        Permanent first = addCreatureReady(player1, new LeoninShikari());
+        Permanent second = addCreatureReady(player1, new LeoninShikari());
+        harness.setHand(player1, List.of(new TearsOfRage()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        declareAttackers(List.of(0, 1));
+        harness.castAndResolveInstant(player1, 0);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first, second);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(first, second);
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an affected attacker now controlled by an opponent")
+    void doesNotSacrificeAttackerAfterControlChanges() {
+        Permanent attacker = addCreatureReady(player1, new LeoninShikari());
+        harness.setHand(player1, List.of(new TearsOfRage()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        declareAttackers(List.of(0));
+        harness.castAndResolveInstant(player1, 0);
+        attacker.setAttacking(false);
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        gd.playerBattlefields.get(player2.getId()).add(attacker);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+    }
+
+    @Test
+    @DisplayName("Counts attackers at resolution rather than when the spell was cast")
+    void countsRemainingAttackersAtResolution() {
+        Permanent remaining = addCreatureReady(player1, new LeoninShikari());
+        Permanent removedFromCombat = addCreatureReady(player1, new LeoninShikari());
+        harness.setHand(player1, List.of(new TearsOfRage()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        declareAttackers(List.of(0, 1));
+        harness.castInstant(player1, 0);
+        removedFromCombat.setAttacking(false);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, remaining)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, removedFromCombat)).isEqualTo(2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(removedFromCombat).doesNotContain(remaining);
+    }
+
+    @Test
+    @DisplayName("Casting during the opponent's attack does not boost or sacrifice their creatures")
+    void doesNotAffectOpposingAttackers() {
+        Permanent ownCreature = addCreatureReady(player1, new LeoninShikari());
+        Permanent opposingAttacker = addCreatureReady(player2, new LeoninShikari());
+        harness.setHand(player1, List.of(new TearsOfRage()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        declareAttackers(player2, List.of(0));
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingAttacker)).isEqualTo(2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingAttacker);
     }
 
     @Test
