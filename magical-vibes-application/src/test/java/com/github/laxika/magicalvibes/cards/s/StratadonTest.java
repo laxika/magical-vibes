@@ -40,10 +40,7 @@ class StratadonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player1, new Mountain());
-        harness.setHand(player1, List.of(new Stratadon()));
-        harness.addMana(player1, ManaColor.COLORLESS, 7);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Stratadon(), "{7}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
@@ -70,10 +67,7 @@ class StratadonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Swamp());
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player1, new Forest());
-        harness.setHand(player1, List.of(new Stratadon()));
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Stratadon(), "{5}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
@@ -89,6 +83,20 @@ class StratadonTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Tapped lands still contribute their basic land types")
+    void tappedLandsStillReduceCost() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        forest.setTapped(true);
+        island.setTapped(true);
+
+        harness.castFromHand(player1, new Stratadon(), "{8}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
