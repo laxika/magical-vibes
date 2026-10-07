@@ -23,8 +23,7 @@ class TheNotaryHobbitsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> hobbits = findPermanents(player1, "The Notary Hobbits");
         assertThat(hobbits).hasSize(3);
@@ -33,6 +32,7 @@ class TheNotaryHobbitsTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .map(permanent -> permanent.getCard().getSupertypes()))
                 .allMatch(supertypes -> !supertypes.contains(CardSupertype.LEGENDARY));
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -43,8 +43,7 @@ class TheNotaryHobbitsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent notary = findPermanents(player1, "The Notary Hobbits").stream()
                 .filter(permanent -> !permanent.getCard().isToken())
@@ -55,5 +54,30 @@ class TheNotaryHobbitsTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(notary), null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Token copies retain the mana ability and do not count opposing Halflings")
+    void tokenCopiesProduceManaOnlyForControlledHalflings() {
+        harness.addToBattlefield(player2, new TheNotaryHobbits());
+        harness.setHand(player1, List.of(new TheNotaryHobbits()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        List<Permanent> tokens = findPermanents(player1, "The Notary Hobbits").stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .toList();
+        assertThat(tokens).hasSize(2);
+        for (Permanent token : tokens) {
+            token.setSummoningSick(false);
+            harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(token), null, null);
+            assertThat(token.isTapped()).isTrue();
+            assertThat(gd.stack).isEmpty();
+        }
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(6);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 }
