@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.EagerConstruct;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,22 +13,17 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TrustyCompanion.class, EagerConstruct.class})
 class TrustyCompanionTest extends BaseCardTest {
 
     @Test
     @DisplayName("Trusty Companion can't attack alone")
     void cantAttackAlone() {
-        Permanent companion = new Permanent(new TrustyCompanion());
-        companion.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(companion);
+        addCreatureReady(player1, new TrustyCompanion());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't attack alone");
     }
 
     @Test
@@ -36,20 +31,10 @@ class TrustyCompanionTest extends BaseCardTest {
     void canAttackWithAnother() {
         harness.setLife(player2, 20);
 
-        Permanent companion = new Permanent(new TrustyCompanion());
-        companion.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(companion);
+        addCreatureReady(player1, new TrustyCompanion());
+        addCreatureReady(player1, new EagerConstruct());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0, 1));
+        declareAttackers(List.of(0, 1));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
@@ -57,22 +42,51 @@ class TrustyCompanionTest extends BaseCardTest {
     @Test
     @DisplayName("Trusty Companion may block alone")
     void canBlockAlone() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new EagerConstruct());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent companion = new Permanent(new TrustyCompanion());
-        companion.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(companion);
+        Permanent companion = addCreatureReady(player2, new TrustyCompanion());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(companion.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Another creature must actually attack alongside Trusty Companion")
+    void undeclaredCreatureDoesNotAllowAttackingAlone() {
+        addCreatureReady(player1, new TrustyCompanion());
+        addCreatureReady(player1, new EagerConstruct());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't attack alone");
+    }
+
+    @Test
+    @DisplayName("Two Trusty Companions can attack together")
+    void twoCompanionsCanAttackTogether() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new TrustyCompanion());
+        addCreatureReady(player1, new TrustyCompanion());
+
+        declareAttackers(List.of(0, 1));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
+    }
+
+    @Test
+    @DisplayName("Attacking with Trusty Companion does not tap it")
+    void vigilanceKeepsCompanionUntapped() {
+        Permanent companion = addCreatureReady(player1, new TrustyCompanion());
+        Permanent construct = addCreatureReady(player1, new EagerConstruct());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+
+        assertThat(companion.isAttacking()).isTrue();
+        assertThat(companion.isTapped()).isFalse();
+        assertThat(construct.isTapped()).isTrue();
     }
 }
