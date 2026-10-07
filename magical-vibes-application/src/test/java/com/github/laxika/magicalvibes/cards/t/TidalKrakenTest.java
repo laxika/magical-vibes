@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CardType;
 
-@CardUsed({TidalKraken.class, GrizzlyBears.class})
+@CardUsed({TidalKraken.class, GrizzlyBears.class, AirElemental.class})
 class TidalKrakenTest extends BaseCardTest {
 
     @Test
@@ -28,6 +29,30 @@ class TidalKrakenTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Tidal Kraken cannot be blocked by a flying creature")
+    void cannotBeBlockedByFlyingCreature() {
+        addCreatureReady(player2, new AirElemental());
+        addCreatureReady(player1, new TidalKraken());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Tidal Kraken can block an attacking creature")
+    void canBlockAttackingCreature() {
+        Permanent blocker = addCreatureReady(player2, new TidalKraken());
+        addCreatureReady(player1, new GrizzlyBears());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test
