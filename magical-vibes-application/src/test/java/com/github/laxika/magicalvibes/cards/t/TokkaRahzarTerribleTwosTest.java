@@ -21,11 +21,7 @@ class TokkaRahzarTerribleTwosTest extends BaseCardTest {
     void damagesCasterWhenSpellCostsLessThanManaValue() {
         harness.addToBattlefield(player1, new TokkaRahzarTerribleTwos());
         harness.addToBattlefield(player1, new GoblinElectromancer());
-        harness.setHand(player1, List.of(new Divination()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Divination(), "{1}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
@@ -35,11 +31,7 @@ class TokkaRahzarTerribleTwosTest extends BaseCardTest {
     @DisplayName("Does not deal damage when a spell's mana spent equals its mana value")
     void doesNotDamageWhenManaSpentEqualsManaValue() {
         harness.addToBattlefield(player1, new TokkaRahzarTerribleTwos());
-        harness.setHand(player1, List.of(new Divination()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Divination(), "{2}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -50,16 +42,51 @@ class TokkaRahzarTerribleTwosTest extends BaseCardTest {
     void damagesOpponentCastingReducedSpell() {
         harness.addToBattlefield(player1, new TokkaRahzarTerribleTwos());
         harness.addToBattlefield(player2, new GoblinElectromancer());
-        harness.setHand(player2, List.of(new Divination()));
-        harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player2);
-
-        harness.castSorcery(player2, 0, 0);
+        harness.castFromHand(player2, new Divination(), "{1}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Still damages the caster after the discounted spell is countered")
+    void damagesCasterAfterSpellIsCountered() {
+        harness.addToBattlefield(player1, new TokkaRahzarTerribleTwos());
+        harness.addToBattlefield(player1, new GoblinElectromancer());
+        Divination divination = new Divination();
+        harness.castFromHand(player1, divination, "{1}{U}");
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, divination.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Divination");
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Multiple cost reductions cause only one damage trigger per spell")
+    void multipleReductionsCauseOneTrigger() {
+        harness.addToBattlefield(player1, new TokkaRahzarTerribleTwos());
+        harness.addToBattlefield(player1, new GoblinElectromancer());
+        harness.addToBattlefield(player1, new GoblinElectromancer());
+
+        harness.castFromHand(player1, new Divination(), "{U}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Divination");
+        harness.assertLife(player1, 17);
     }
 
     @Test
