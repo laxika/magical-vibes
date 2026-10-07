@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -58,13 +57,48 @@ class SplatterGoblinTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Death trigger has no effect when only friendly creatures remain")
+    void noLegalTargetDoesNotShrinkFriendlyCreature() {
+        Permanent splatterGoblin = harness.addToBattlefieldAndReturn(player1, new SplatterGoblin());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        destroySplatterGoblin(splatterGoblin);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Splatter Goblin");
+        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Death trigger does not affect another creature if its target dies in response")
+    void targetDiesBeforeTriggerResolves() {
+        Permanent splatterGoblin = harness.addToBattlefieldAndReturn(player1, new SplatterGoblin());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        destroySplatterGoblin(splatterGoblin);
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(otherCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(otherCreature.getEffectiveToughness()).isEqualTo(2);
+    }
+
     private void destroySplatterGoblin(Permanent splatterGoblin) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, splatterGoblin.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, splatterGoblin.getId());
     }
 }
