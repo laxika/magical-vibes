@@ -145,4 +145,68 @@ class TwigwalkerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, remainingTarget)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, remainingTarget)).isEqualTo(4);
     }
+
+    @Test
+    @DisplayName("Can target itself before being sacrificed and still boost the other creature")
+    void canTargetItselfBeforeSacrifice() {
+        Permanent twigwalker = harness.addToBattlefieldAndReturn(player1, new Twigwalker());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WoodlandDruid());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(twigwalker.getId(), target.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Twigwalker");
+        harness.assertInGraveyard(player1, "Twigwalker");
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick because the cost has no tap symbol")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent twigwalker = harness.addToBattlefieldAndReturn(player1, new Twigwalker());
+        twigwalker.tap();
+        twigwalker.setSummoningSick(true);
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player1, new WoodlandDruid());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new WoodlandDruid());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(firstTarget.getId(), secondTarget.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Twigwalker");
+        assertThat(gqs.getEffectivePower(gd, firstTarget)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, firstTarget)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, secondTarget)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, secondTarget)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("One green mana alone cannot pay the activation cost and does not sacrifice Twigwalker")
+    void requiresGenericManaAsWellAsGreen() {
+        harness.addToBattlefield(player1, new Twigwalker());
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player1, new WoodlandDruid());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new WoodlandDruid());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(firstTarget.getId(), secondTarget.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Twigwalker");
+        harness.assertNotInGraveyard(player1, "Twigwalker");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, firstTarget)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, firstTarget)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondTarget)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, secondTarget)).isEqualTo(2);
+    }
 }
