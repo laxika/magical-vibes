@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.a.AncientKavu;
 import com.github.laxika.magicalvibes.cards.d.Desert;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.Humble;
+import com.github.laxika.magicalvibes.cards.r.Repulse;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TravelersCloak.class, AncientKavu.class, Forest.class, Swamp.class, Desert.class})
+@CardUsed({TravelersCloak.class, AncientKavu.class, Forest.class, Swamp.class, Desert.class, Humble.class, Repulse.class})
 class TravelersCloakTest extends BaseCardTest {
 
     @Test
@@ -100,11 +102,97 @@ class TravelersCloakTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Enchanting an opponent's creature draws for the Aura controller")
+    void enchantingOpponentsCreatureDrawsForAuraController() {
+        Permanent creature = addCreatureReady(player2, new AncientKavu());
+        harness.setHand(player1, List.of(new TravelersCloak()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "SWAMP");
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Traveler's Cloak").getAttachedTo()).isEqualTo(creature.getId());
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A matching land controlled only by the attacker does not prevent blocking")
+    void attackersMatchingLandDoesNotPreventBlocking() {
+        Permanent attacker = addCreatureReady(player1, new AncientKavu());
+        attacker.setAttacking(true);
+        attachCloak(attacker, CardSubtype.SWAMP);
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent blocker = addCreatureReady(player2, new AncientKavu());
+
+        prepareDeclareBlockers();
+        declareBlock(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Traveler's Cloak does not draw if its target leaves before resolution")
+    void illegalTargetDoesNotDraw() {
+        Permanent creature = addCreatureReady(player1, new AncientKavu());
+        harness.setHand(player1, List.of(new TravelersCloak()));
+        harness.setHand(player2, List.of(new Repulse()));
+        harness.setLibrary(player1, List.of(new Swamp()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Ancient Kavu");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Traveler's Cloak");
+        harness.assertNotOnBattlefield(player1, "Traveler's Cloak");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A later Humble removes the landwalk granted by Traveler's Cloak")
+    void laterAbilityLossRemovesGrantedLandwalk() {
+        Permanent attacker = addCreatureReady(player1, new AncientKavu());
+        Permanent blocker = addCreatureReady(player2, new AncientKavu());
+        harness.addToBattlefield(player2, new Swamp());
+        harness.setHand(player1, List.of(new TravelersCloak()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "SWAMP");
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+        declareBlock(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
     private void attachCloak(Permanent creature, CardSubtype chosenSubtype) {
-        Permanent cloak = new Permanent(new TravelersCloak());
+        Permanent cloak = harness.addToBattlefieldAndReturn(player1, new TravelersCloak());
         cloak.setAttachedTo(creature.getId());
         cloak.setChosenSubtype(chosenSubtype);
-        gd.playerBattlefields.get(player1.getId()).add(cloak);
     }
 
     private void declareBlock(Permanent blocker, Permanent attacker) {
