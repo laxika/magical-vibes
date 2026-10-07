@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.l.LeoninSkyhunter;
+import com.github.laxika.magicalvibes.cards.s.SeatOfTheSynod;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Thoughtcast.class, AlphaMyr.class, LeoninSkyhunter.class})
+@CardUsed({Thoughtcast.class, AlphaMyr.class, LeoninSkyhunter.class, SeatOfTheSynod.class})
 class ThoughtcastTest extends BaseCardTest {
 
     @Test
@@ -74,5 +75,59 @@ class ThoughtcastTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromHand(player1, new Thoughtcast(), "{U}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Excess artifacts do not remove Thoughtcast's blue mana requirement")
+    void affinityCannotReduceColoredCost() {
+        for (int i = 0; i < 6; i++) {
+            harness.addToBattlefield(player1, new AlphaMyr());
+        }
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new Thoughtcast(), "{1}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Excess artifacts still let Thoughtcast be cast for one blue mana")
+    void affinityReductionStopsAtZeroGenericCost() {
+        for (int i = 0; i < 6; i++) {
+            harness.addToBattlefield(player1, new AlphaMyr());
+        }
+
+        harness.castFromHand(player1, new Thoughtcast(), "{U}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Affinity counts artifact lands as well as artifact creatures")
+    void affinityCountsArtifactLands() {
+        harness.addToBattlefield(player1, new SeatOfTheSynod());
+        harness.addToBattlefield(player1, new AlphaMyr());
+
+        harness.castFromHand(player1, new Thoughtcast(), "{2}{U}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Without artifacts Thoughtcast costs full mana and draws exactly two cards")
+    void drawsExactlyTwoWithoutArtifacts() {
+        AlphaMyr first = new AlphaMyr();
+        LeoninSkyhunter second = new LeoninSkyhunter();
+        AlphaMyr third = new AlphaMyr();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        harness.castFromHand(player1, new Thoughtcast(), "{4}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertInGraveyard(player1, "Thoughtcast");
     }
 }
