@@ -11,37 +11,33 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TorchFiend.class, LeoninScimitar.class, GrizzlyBears.class, GloriousAnthem.class, Island.class})
 class TorchFiendTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Torch Fiend has {R}, Sacrifice this creature: destroy target artifact activated ability")
-    void hasCorrectAbility() {
-        TorchFiend card = new TorchFiend();
+    @DisplayName("Tapped Torch Fiend can sacrifice itself to destroy an artifact")
+    void tappedFiendCanActivate() {
+        Permanent fiend = addReadyFiend(player1);
+        fiend.setTapped(true);
+        Permanent target = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
 
-        assertThat(card.getActivatedAbilities()).hasSize(1);
+        harness.activateAbility(player1, 0, null, target.getId());
 
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{R}");
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(ability.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentIsArtifactPredicate(),
-                "Target must be an artifact"
-        ));
+        harness.assertInGraveyard(player1, "Torch Fiend");
+        harness.assertOnBattlefield(player2, "Leonin Scimitar");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -177,32 +173,18 @@ class TorchFiendTest extends BaseCardTest {
     }
 
     private Permanent addReadyFiend(Player player) {
-        TorchFiend card = new TorchFiend();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new TorchFiend());
     }
 
     private Permanent addReadyArtifact(Player player) {
-        LeoninScimitar card = new LeoninScimitar();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new LeoninScimitar());
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        GloriousAnthem card = new GloriousAnthem();
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new GloriousAnthem());
     }
 
     private Permanent addReadyLand(Player player) {
-        Island card = new Island();
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Island());
     }
 }
