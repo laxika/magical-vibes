@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RipTheSeams;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,12 +12,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThreadbindCliqueRipTheSeams.class, RipTheSeams.class, GrizzlyBears.class})
+@CardUsed({ThreadbindCliqueRipTheSeams.class, RipTheSeams.class})
 class ThreadbindCliqueRipTheSeamsTest extends BaseCardTest {
 
     @Test
     void adventureDestroysTappedCreatureAndExilesTheCard() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ThreadbindCliqueRipTheSeams());
         target.tap();
         ThreadbindCliqueRipTheSeams card = new ThreadbindCliqueRipTheSeams();
         harness.setHand(player1, List.of(card));
@@ -35,7 +34,7 @@ class ThreadbindCliqueRipTheSeamsTest extends BaseCardTest {
 
     @Test
     void adventureRejectsUntappedCreature() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ThreadbindCliqueRipTheSeams());
         harness.setHand(player1, List.of(new ThreadbindCliqueRipTheSeams()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -46,7 +45,7 @@ class ThreadbindCliqueRipTheSeamsTest extends BaseCardTest {
 
     @Test
     void creatureFaceCanBeCastFromExileAfterAdventure() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ThreadbindCliqueRipTheSeams());
         target.tap();
         ThreadbindCliqueRipTheSeams card = new ThreadbindCliqueRipTheSeams();
         harness.setHand(player1, List.of(card));
@@ -63,5 +62,71 @@ class ThreadbindCliqueRipTheSeamsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == card);
+    }
+
+    @Test
+    void untappedTargetMakesAdventureGoToGraveyardWithoutCastPermission() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ThreadbindCliqueRipTheSeams());
+        target.tap();
+        ThreadbindCliqueRipTheSeams card = new ThreadbindCliqueRipTheSeams();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAdventure(player1, 0, target.getId());
+        target.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    void departedTargetMakesAdventureGoToGraveyardWithoutCastPermission() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ThreadbindCliqueRipTheSeams());
+        target.tap();
+        ThreadbindCliqueRipTheSeams card = new ThreadbindCliqueRipTheSeams();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAdventure(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    void adventureCanDestroyControllersOwnTappedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ThreadbindCliqueRipTheSeams());
+        target.tap();
+        ThreadbindCliqueRipTheSeams card = new ThreadbindCliqueRipTheSeams();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAdventure(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(target.getCard());
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+    }
+
+    @Test
+    void creatureCanBeCastDirectlyFromHandWithoutAnAdventureTarget() {
+        ThreadbindCliqueRipTheSeams card = new ThreadbindCliqueRipTheSeams();
+
+        harness.castFromHand(player1, card, "{3}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == card);
+        assertThat(gd.findExiledCard(card.getId())).isNull();
     }
 }
