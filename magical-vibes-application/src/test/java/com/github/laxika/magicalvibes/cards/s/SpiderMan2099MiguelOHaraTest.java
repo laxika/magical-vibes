@@ -23,7 +23,7 @@ class SpiderMan2099MiguelOHaraTest extends BaseCardTest {
 
         castSpiderMan(target);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInHand(player2, "Grizzly Bears");
@@ -43,6 +43,68 @@ class SpiderMan2099MiguelOHaraTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB can choose no targets even when a creature is available")
+    void entersWithoutReturningCreature() {
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SpiderMan2099MiguelOHara()));
+        addManaForSpiderMan();
+
+        harness.castCreature(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Spider-Man 2099, Miguel O'Hara");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB can return a creature controlled by its controller")
+    void returnsOwnCreature() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+
+        castSpiderMan(target);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Spider-Man's own combat damage draws a card")
+    void drawsForItsOwnCombatDamage() {
+        Permanent attacker = addCreatureReady(player1, new SpiderMan2099MiguelOHara());
+        attacker.setAttacking(true);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Opponent's combat damage does not draw a card")
+    void doesNotDrawForOpponentsCombatDamage() {
+        harness.addToBattlefield(player1, new SpiderMan2099MiguelOHara());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
     private void castSpiderMan(Permanent target) {
