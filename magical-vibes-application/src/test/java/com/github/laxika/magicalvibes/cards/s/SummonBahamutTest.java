@@ -37,9 +37,8 @@ class SummonBahamutTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, fountainPermanent.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(p -> p.getCard().getName())
-                .doesNotContain("Fountain of Youth")
-                .contains("Forest");
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        harness.assertOnBattlefield(player2, "Forest");
     }
 
     @Test
@@ -72,6 +71,82 @@ class SummonBahamutTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
     }
 
+    @Test
+    void enteringTriggersChapterIAndCanDestroyItself() {
+        harness.castFromHand(player1, new SummonBahamut(), "{9}");
+        harness.passBothPriorities();
+        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof SummonBahamut)
+                .findFirst().orElseThrow();
+
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+        harness.handlePermanentChosen(player1, saga.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Summon: Bahamut");
+        harness.assertInGraveyard(player1, "Summon: Bahamut");
+    }
+
+    @Test
+    void chapterIIDestroysAControlledCreature() {
+        Permanent saga = addSagaWithLore(1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        advanceToNextChapter();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga).doesNotContain(creature);
+    }
+
+    @Test
+    void bothDestructionChaptersCanChooseNoTarget() {
+        Permanent saga = addSagaWithLore(0);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        for (int chapter = 1; chapter <= 2; chapter++) {
+            advanceToNextChapter();
+            harness.handlePermanentChosen(player1, player1.getId());
+            harness.passBothPriorities();
+
+            assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(chapter);
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+            assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        }
+    }
+
+    @Test
+    void chapterIVWithOnlyLandsDealsNoDamage() {
+        addSagaWithLore(3);
+        harness.addToBattlefield(player1, new Forest());
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore);
+        harness.assertInGraveyard(player1, "Summon: Bahamut");
+    }
+
+    @Test
+    void chapterIVCountsOtherBahamutAndPermanentsPresentAtResolution() {
+        Permanent saga = addSagaWithLore(3);
+        Permanent otherSaga = harness.addToBattlefieldAndReturn(player1, new SummonBahamut());
+        otherSaga.setCounterCount(CounterType.LORE, 2);
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToNextChapter();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore - 11);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(otherSaga).doesNotContain(saga);
+    }
+
     private Permanent addSagaWithLore(int lore) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new SummonBahamut());
         saga.setCounterCount(CounterType.LORE, lore);
@@ -90,7 +165,6 @@ class SummonBahamutTest extends BaseCardTest {
     private void advanceToNextChapter() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
     }
 }
