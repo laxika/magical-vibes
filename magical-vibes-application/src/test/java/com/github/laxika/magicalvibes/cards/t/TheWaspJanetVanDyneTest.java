@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -69,10 +70,84 @@ class TheWaspJanetVanDyneTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
+    @Test
+    @DisplayName("ETB deals exactly 4 damage to a creature that survives")
+    void etbDealsExactlyFourDamage() {
+        Permanent target = addTappedCreature(player2);
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        castWasp(target.getId());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The Wasp can enter when there are no legal targets")
+    void entersWithNoLegalTargets() {
+        addCreature(player2);
+        addTappedCreature(player1);
+        harness.castFromHand(player1, new TheWaspJanetVanDyne(), "{2}{W}");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "The Wasp, Janet Van Dyne");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("ETB does not damage a target that comes under its controller's control")
+    void etbFizzlesWhenTargetChangesController() {
+        Permanent target = addTappedCreature(player2);
+        castWasp(target.getId());
+
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Entering without being cast still triggers the damage ability")
+    void enteringWithoutCastingDealsDamage() {
+        Permanent target = addTappedCreature(player2);
+        harness.enterBattlefieldAndReturn(player1, new TheWaspJanetVanDyne());
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("ETB damage resolves after The Wasp leaves the battlefield")
+    void etbResolvesWithoutItsSource() {
+        Permanent target = addTappedCreature(player2);
+        castWasp(target.getId());
+
+        harness.passBothPriorities();
+        UUID sourceId = harness.getPermanentId(player1, "The Wasp, Janet Van Dyne");
+        gd.playerBattlefields.get(player1.getId()).removeIf(permanent -> permanent.getId().equals(sourceId));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
     private Permanent addCreature(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
