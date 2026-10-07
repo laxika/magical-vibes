@@ -32,13 +32,14 @@ class TellingTimeTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Telling Time puts it on the stack")
     void castingPutsOnStack() {
-        harness.castFromHand(player1, new TellingTime(), "{1}{U}");
+        TellingTime spell = new TellingTime();
+        harness.castFromHand(player1, spell, "{1}{U}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Telling Time");
+        assertThat(entry.getCard()).isSameAs(spell);
         assertThat(entry.getControllerId()).isEqualTo(player1.getId());
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
@@ -285,6 +286,52 @@ class TellingTimeTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("puts one card into their hand") && log.contains("on top of their library")
                         && !log.contains("bottom"));
+    }
+
+    @Test
+    @DisplayName("Cards below the top three keep their order")
+    void preservesUnexaminedLibraryOrder() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        Card third = new GrizzlyBears();
+        Card fourth = new GrizzlyBears();
+        Card fifth = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, fifth));
+
+        castAndResolveTellingTime();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.HandTopBottom(2, 1));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(third);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, fourth, fifth, first);
+        harness.assertInGraveyard(player1, "Telling Time");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The non-active caster chooses cards from their own library")
+    void nonActiveCasterUsesOwnLibrary() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        Card third = new GrizzlyBears();
+        List<Card> activePlayerLibrary = List.copyOf(gd.playerDecks.get(player1.getId()));
+        List<Card> activePlayerHand = List.copyOf(gd.playerHands.get(player1.getId()));
+        harness.setLibrary(player2, List.of(first, second, third));
+
+        harness.castFromHand(player2, new TellingTime(), "{1}{U}");
+        harness.passBothPriorities();
+
+        PendingInteraction.HandTopBottomChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.HandTopBottomChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.cards()).containsExactly(first, second, third);
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.HandTopBottom(0, 2));
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(first);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(third, second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(activePlayerLibrary);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(activePlayerHand);
+        harness.assertInGraveyard(player2, "Telling Time");
+        assertThat(gd.stack).isEmpty();
     }
 }
 
