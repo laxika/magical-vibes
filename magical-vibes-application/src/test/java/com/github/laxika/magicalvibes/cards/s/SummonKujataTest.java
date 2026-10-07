@@ -74,11 +74,63 @@ class SummonKujataTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
-        harness.handleCardChosen(player1, 0);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> harness.handleCardChosen(player1, 0));
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId())).contains(retained, firstDraw, secondDraw);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void chapterIIIDrawsWithoutDamageOrReflexiveTriggerWhenHandIsEmpty() {
+        GrizzlyBears firstDraw = new GrizzlyBears();
+        GrizzlyBears secondDraw = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        addSagaWithLore(2);
+
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            triggerChapter();
+            harness.passBothPriorities();
+        });
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Summon: Kujata");
+    }
+
+    @Test
+    void chapterICanChooseNoTargetsEvenWhenCreaturesAreAvailable() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent saga = addSagaWithLore(0);
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(saga.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void chapterIICanChooseOnlyOneTarget() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addSagaWithLore(1);
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(first.isCantBlockThisTurn()).isTrue();
+        assertThat(second.isCantBlockThisTurn()).isFalse();
     }
 
     private Permanent addSagaWithLore(int loreCounters) {
@@ -90,7 +142,6 @@ class SummonKujataTest extends BaseCardTest {
     private void triggerChapter() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
     }
 }
