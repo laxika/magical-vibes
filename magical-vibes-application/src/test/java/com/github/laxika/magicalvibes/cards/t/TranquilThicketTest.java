@@ -67,4 +67,50 @@ class TranquilThicketTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(thicket);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
+
+    @Test
+    @DisplayName("Cycling pays and discards immediately but draws only on resolution")
+    void cyclingPaysCostsBeforeDrawing() {
+        TranquilThicket thicket = new TranquilThicket();
+        GlorySeeker draw = new GlorySeeker();
+        harness.setHand(player1, List.of(thicket));
+        harness.setLibrary(player1, List.of(draw));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(thicket);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Enters tapped when put onto the battlefield without being played")
+    void entersTappedWithoutBeingPlayed() {
+        Permanent land = harness.enterBattlefieldAndReturn(player1, new TranquilThicket());
+
+        assertThat(land.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Tranquil Thicket");
+    }
+
+    @Test
+    @DisplayName("Cannot produce mana while tapped after being played")
+    void cannotTapForManaAfterBeingPlayed() {
+        harness.setHand(player1, List.of(new TranquilThicket()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 }
