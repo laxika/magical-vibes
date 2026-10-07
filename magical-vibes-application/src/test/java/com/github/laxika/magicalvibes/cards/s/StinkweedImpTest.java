@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({StinkweedImp.class, CourierHawk.class, Forest.class})
+@CardUsed({StinkweedImp.class, CourierHawk.class, Forest.class, SnappingDrake.class})
 class StinkweedImpTest extends BaseCardTest {
 
     @Test
@@ -125,5 +125,61 @@ class StinkweedImpTest extends BaseCardTest {
 
     private void resolveDraw() {
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+    }
+
+    @Test
+    @DisplayName("Blocking Imp destroys the attacker it damages")
+    void blockingImpDestroysAttacker() {
+        Permanent attacker = addCreatureReady(player1, new CourierHawk());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new StinkweedImp());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Courier Hawk");
+        harness.assertInGraveyard(player1, "Courier Hawk");
+        harness.assertOnBattlefield(player2, "Stinkweed Imp");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Imp's destruction trigger survives its death in the same combat")
+    void destroysDamagedCreatureAfterImpDies() {
+        Permanent imp = addCreatureReady(player1, new StinkweedImp());
+        imp.setAttacking(true);
+        addCreatureReady(player2, new SnappingDrake());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Stinkweed Imp");
+        harness.assertInGraveyard(player1, "Stinkweed Imp");
+        harness.assertNotOnBattlefield(player2, "Snapping Drake");
+        harness.assertInGraveyard(player2, "Snapping Drake");
+    }
+
+    @Test
+    @DisplayName("Dredge mills only five cards and leaves the next card in the library")
+    void dredgeLeavesRemainingLibraryCards() {
+        StinkweedImp imp = new StinkweedImp();
+        List<Card> milled = List.of(new Forest(), new Forest(), new Forest(), new Forest(), new Forest());
+        Card remaining = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(imp));
+        harness.setLibrary(player1, List.of(milled.get(0), milled.get(1), milled.get(2),
+                milled.get(3), milled.get(4), remaining));
+
+        resolveDraw();
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(imp);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(milled);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isZero();
     }
 }
