@@ -2,24 +2,28 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.UnquenchableThirst;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TormentOfHailfire.class, Forest.class, GrizzlyBears.class, UnquenchableThirst.class, TajuruPreserver.class})
 class TormentOfHailfireTest extends BaseCardTest {
 
     private static final String LOSE_LIFE = "Lose 3 life";
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting stores the paid X on the stack entry")
@@ -51,8 +55,6 @@ class TormentOfHailfireTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
-    // ===== No real choice: auto lose life =====
-
     @Test
     @DisplayName("An opponent with no hand and no nonland permanent just loses life, once per iteration")
     void losesLifeEachIterationWhenNoOtherOption() {
@@ -70,8 +72,6 @@ class TormentOfHailfireTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Forest");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
-
-    // ===== Each choice branch =====
 
     @Test
     @DisplayName("Opponent may choose to lose life even with a permanent and a card")
@@ -105,7 +105,7 @@ class TormentOfHailfireTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 1);
         harness.passBothPriorities();
 
-        UUID bearsId = nonlandPermanentId(player2.getId(), "Grizzly Bears");
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.handleListChoice(player2, ChoiceContext.TormentPenaltyChoice.SACRIFICE);
         harness.handlePermanentChosen(player2, bearsId);
 
@@ -133,8 +133,6 @@ class TormentOfHailfireTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Forest");
     }
 
-    // ===== Repetition =====
-
     @Test
     @DisplayName("The whole process repeats X times, prompting the opponent each iteration")
     void processRepeatsXTimes() {
@@ -159,8 +157,6 @@ class TormentOfHailfireTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
-    // ===== Illegal choice =====
-
     @Test
     @DisplayName("Choosing an option that isn't offered is rejected")
     void unofferedOptionRejected() {
@@ -177,8 +173,6 @@ class TormentOfHailfireTest extends BaseCardTest {
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
-    // ===== Disposition =====
-
     @Test
     @DisplayName("Torment of Hailfire goes to its owner's graveyard after resolving")
     void goesToGraveyardAfterResolving() {
@@ -194,11 +188,104 @@ class TormentOfHailfireTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Torment of Hailfire");
     }
 
-    private UUID nonlandPermanentId(UUID playerId, String cardName) {
-        return gd.playerBattlefields.get(playerId).stream()
-                .filter(p -> p.getCard().getName().equals(cardName))
-                .map(com.github.laxika.magicalvibes.model.Permanent::getId)
-                .findFirst()
-                .orElseThrow();
+    @Test
+    @DisplayName("Each iteration can use a different penalty and exhausted alternatives cause life loss")
+    void mixedPenaltiesThenLifeLoss() {
+        harness.setHand(player2, List.of(new Forest()));
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TormentOfHailfire()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castSorcery(player1, 0, 3);
+        harness.passBothPriorities();
+        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.handleListChoice(player2, ChoiceContext.TormentPenaltyChoice.SACRIFICE);
+        harness.handlePermanentChosen(player2, creatureId);
+        harness.handleListChoice(player2, ChoiceContext.TormentPenaltyChoice.DISCARD);
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Torment of Hailfire");
+    }
+
+    @Test
+    @DisplayName("An Aura whose creature was sacrificed remains available in the next iteration")
+    void canSacrificeUnattachedAuraOnNextIteration() {
+        var creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        var aura = harness.addToBattlefieldAndReturn(player2, new UnquenchableThirst());
+        aura.setAttachedTo(creature.getId());
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new TormentOfHailfire()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorcery(player1, 0, 2);
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, ChoiceContext.TormentPenaltyChoice.SACRIFICE);
+        harness.handlePermanentChosen(player2, creature.getId());
+        harness.assertOnBattlefield(player2, "Unquenchable Thirst");
+        harness.handleListChoice(player2, ChoiceContext.TormentPenaltyChoice.SACRIFICE);
+        harness.handlePermanentChosen(player2, aura.getId());
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Unquenchable Thirst");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("All opponents choose before any penalty is applied in a multiplayer iteration")
+    void multiplayerPenaltiesWaitUntilAllOpponentsChoose() {
+        Player player3 = new Player(UUID.randomUUID(), "Charlie");
+        UUID id = player3.getId();
+        gd.playerIds.add(id);
+        gd.orderedPlayerIds.add(id);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(id, "Charlie");
+        gd.playerDecks.put(id, new ArrayList<>());
+        gd.playerHands.put(id, new ArrayList<>());
+        gd.playerBattlefields.put(id, new ArrayList<>());
+        gd.playerGraveyards.put(id, new ArrayList<>());
+        gd.playerCommandZones.put(id, new ArrayList<>());
+        gd.playerManaPools.put(id, new ManaPool());
+        harness.setLife(player3, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new Forest()));
+        harness.setHand(player3, List.of(new Forest()));
+        harness.setHand(player1, List.of(new TormentOfHailfire()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0, 1);
+        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.handleListChoice(player2, LOSE_LIFE);
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player3, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleListChoice(player3, LOSE_LIFE);
+        harness.assertLife(player2, 17);
+        harness.assertLife(player3, 17);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("An opponent protected from sacrifice must discard or lose life")
+    void sacrificeProhibitionLeavesOnlyLifeLossWhenHandIsEmpty() {
+        harness.addToBattlefield(player2, new TajuruPreserver());
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new TormentOfHailfire()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0, 1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        harness.assertOnBattlefield(player2, "Tajuru Preserver");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Torment of Hailfire");
     }
 }
