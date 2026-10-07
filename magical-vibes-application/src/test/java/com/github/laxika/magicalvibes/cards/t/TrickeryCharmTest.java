@@ -151,6 +151,44 @@ class TrickeryCharmTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("The first mode can give an opponent's creature flying")
+    void givesOpponentsCreatureFlying() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+
+        castCharm(player1, 0, creature.getId());
+
+        assertThat(creature.hasKeyword(Keyword.FLYING)).isTrue();
+        harness.assertInGraveyard(player1, "Trickery Charm");
+    }
+
+    @Test
+    @DisplayName("The caster chooses the type for an opponent's creature")
+    void casterChoosesOpponentsCreatureType() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+
+        castCharm(player1, 1, creature.getId());
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature)).containsExactly(CardSubtype.GOBLIN);
+        harness.assertInGraveyard(player1, "Trickery Charm");
+    }
+
+    @Test
+    @DisplayName("The third mode resolves with an empty library and leaves the opponent's library alone")
+    void emptyLibraryNeedsNoReorder() {
+        harness.setLibrary(player1, List.of());
+        List<Card> opponentLibrary = List.of(new Island(), new ElvishWarrior());
+        harness.setLibrary(player2, opponentLibrary);
+
+        castCharm(player1, 2, null);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(opponentLibrary);
+        harness.assertInGraveyard(player1, "Trickery Charm");
+    }
+
     private void castCharm(Player caster, int mode, java.util.UUID targetId) {
         harness.setHand(caster, List.of(new TrickeryCharm()));
         harness.addMana(caster, ManaColor.BLUE, 1);
