@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GoForBlood;
+import com.github.laxika.magicalvibes.cards.h.HumbleNaturalist;
 import com.github.laxika.magicalvibes.cards.l.LeylineOfPunishment;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -16,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({StormwildCapridor.class, GrizzlyBears.class, LeylineOfPunishment.class, Shock.class})
+@CardUsed({StormwildCapridor.class, GrizzlyBears.class, LeylineOfPunishment.class, Shock.class,
+        GoForBlood.class, HumbleNaturalist.class})
 class StormwildCapridorTest extends BaseCardTest {
 
     @Test
@@ -26,8 +29,7 @@ class StormwildCapridorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, capridor.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, capridor.getId());
 
         assertThat(capridor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(capridor.getMarkedDamage()).isZero();
@@ -43,8 +45,7 @@ class StormwildCapridorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, other.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, other.getId());
 
         assertThat(capridor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -80,10 +81,61 @@ class StormwildCapridorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, capridor.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, capridor.getId());
 
         assertThat(capridor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(capridor.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Fight damage is prevented without increasing the damage dealt in that fight")
+    void preventsFightDamageAsFirstCreature() {
+        Permanent capridor = harness.addToBattlefieldAndReturn(player1, new StormwildCapridor());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new HumbleNaturalist());
+        harness.setHand(player1, List.of(new GoForBlood()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(capridor.getId(), opponent.getId()));
+
+        assertThat(capridor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(capridor.getMarkedDamage()).isZero();
+        assertThat(opponent.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Stormwild Capridor");
+        harness.assertOnBattlefield(player2, "Humble Naturalist");
+    }
+
+    @Test
+    @DisplayName("Counters from preventing fight damage do not increase outgoing damage as the second creature")
+    void preventsFightDamageAsSecondCreature() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new HumbleNaturalist());
+        Permanent capridor = harness.addToBattlefieldAndReturn(player2, new StormwildCapridor());
+        harness.setHand(player1, List.of(new GoForBlood()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(ownCreature.getId(), capridor.getId()));
+
+        assertThat(capridor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(capridor.getMarkedDamage()).isZero();
+        assertThat(ownCreature.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Humble Naturalist");
+        harness.assertOnBattlefield(player2, "Stormwild Capridor");
+    }
+
+    @Test
+    @DisplayName("Prevents spell damage during combat and accumulates counters from separate events")
+    void preventsOwnSpellDamageDuringCombat() {
+        Permanent capridor = harness.addToBattlefieldAndReturn(player1, new StormwildCapridor());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, capridor.getId());
+        assertThat(capridor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.castAndResolveInstant(player1, 0, capridor.getId());
+
+        assertThat(capridor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(capridor.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Stormwild Capridor");
     }
 }
