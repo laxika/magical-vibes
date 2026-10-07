@@ -85,8 +85,7 @@ class SunfireBalmTest extends BaseCardTest {
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
     }
@@ -131,5 +130,49 @@ class SunfireBalmTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
         harness.assertInGraveyard(player1, "Sunfire Balm");
         harness.assertInHand(player1, "Glory Seeker");
+    }
+
+    @Test
+    @DisplayName("Cycling prevention resolves before the separate card draw")
+    void cyclingPreventionResolvesBeforeDraw() {
+        harness.setHand(player1, List.of(new SunfireBalm()));
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, player2.getId());
+        harness.assertInGraveyard(player1, "Sunfire Balm");
+        harness.assertNotInHand(player1, "Glory Seeker");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        harness.assertNotInHand(player1, "Glory Seeker");
+
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Glory Seeker");
+    }
+
+    @Test
+    @DisplayName("Losing the cycling prevention target does not stop the card draw")
+    void cyclingStillDrawsWhenPreventionTargetLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
+        harness.setHand(player1, List.of(new SunfireBalm()));
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.activateHandAbility(player1, 0, creature.getId());
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.assertNotOnBattlefield(player2, "Glory Seeker");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Glory Seeker");
+        harness.assertInGraveyard(player1, "Sunfire Balm");
     }
 }
