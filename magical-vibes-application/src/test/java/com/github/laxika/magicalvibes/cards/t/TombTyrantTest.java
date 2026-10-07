@@ -80,17 +80,110 @@ class TombTyrantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handlePermanentChosen(player1, fodder.getId());
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getId().equals(fodder.getId()));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(findPermanent(player1, "Tomb Tyrant").isTapped()).isTrue();
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).filteredOn(
-                permanent -> permanent.getCard().getName().equals("Walking Corpse")).hasSize(1);
+        assertThat(countPermanents(player1, "Walking Corpse")).isEqualTo(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).filteredOn(
                 card -> card.getName().equals("Walking Corpse")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A Zombie sacrificed for the cost cannot supply the third graveyard card")
+    void requiresThreeZombiesBeforePayingSacrificeCost() {
+        addCreatureReady(player1, new TombTyrant());
+        harness.setGraveyard(player1, List.of(new TombTyrant(), new TombTyrant()));
+        addManaForAbility();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Zombie creature cards in your graveyard");
+        harness.assertOnBattlefield(player1, "Tomb Tyrant");
+    }
+
+    @Test
+    @DisplayName("Tomb Tyrant can sacrifice itself and return itself after the other Zombies leave")
+    void canSacrificeAndReturnItself() {
+        TombTyrant card = new TombTyrant();
+        Permanent tyrant = addCreatureReady(player1, card);
+        harness.setGraveyard(player1, List.of(new TombTyrant(), new TombTyrant(), new TombTyrant()));
+        addManaForAbility();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, tyrant.getId());
+        harness.assertNotOnBattlefield(player1, "Tomb Tyrant");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+
+        harness.setGraveyard(player1, List.of(card));
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player1, "Tomb Tyrant");
+        assertThat(returned.getCard().getId()).isEqualTo(card.getId());
+        assertThat(returned.getId()).isNotEqualTo(tyrant.getId());
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(returned.isSummoningSick()).isTrue();
+        harness.assertNotInGraveyard(player1, "Tomb Tyrant");
+    }
+
+    @Test
+    @DisplayName("The ability resolves harmlessly if no Zombies remain in your graveyard")
+    void doesNothingWhenGraveyardIsEmptyAtResolution() {
+        Permanent tyrant = addCreatureReady(player1, new TombTyrant());
+        harness.setGraveyard(player1, List.of(new TombTyrant(), new TombTyrant(), new TombTyrant()));
+        harness.setGraveyard(player2, List.of(new TombTyrant()));
+        addManaForAbility();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, tyrant.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Tomb Tyrant");
+        harness.assertNotOnBattlefield(player2, "Tomb Tyrant");
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability may be activated during your end step")
+    void canActivateDuringYourEndStep() {
+        Permanent tyrant = addCreatureReady(player1, new TombTyrant());
+        harness.setGraveyard(player1, List.of(new TombTyrant(), new TombTyrant(), new TombTyrant()));
+        addManaForAbility();
+        harness.forceStep(TurnStep.END_STEP);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, tyrant.getId());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Tomb Tyrant")).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Multiple Tomb Tyrants boost each other and stop boosting when sacrificed")
+    void anthemStacksAndEndsWhenSourceLeaves() {
+        Permanent first = addCreatureReady(player1, new TombTyrant());
+        Permanent second = addCreatureReady(player1, new TombTyrant());
+        harness.setGraveyard(player1, List.of(new TombTyrant(), new TombTyrant(), new TombTyrant()));
+        addManaForAbility();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, first.getId());
+
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Tomb Tyrant")).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
     }
 
     private void addManaForAbility() {
