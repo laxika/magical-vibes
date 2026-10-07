@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -78,6 +79,44 @@ class SylvanParadiseTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(karakas.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can target more than ninety-nine creatures")
+    void canTargetOneHundredCreatures() {
+        List<Permanent> creatures = IntStream.range(0, 100)
+                .mapToObj(i -> harness.addToBattlefieldAndReturn(player2, new VampireBats()))
+                .toList();
+
+        cast(creatures.stream().map(Permanent::getId).toList());
+
+        for (Permanent creature : creatures) {
+            assertThat(gqs.getEffectiveColors(gd, creature)).containsExactly(CardColor.GREEN);
+        }
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same creature twice")
+    void cannotChooseDuplicateTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new VampireBats());
+        harness.setHand(player1, List.of(new SylvanParadise()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not change creatures entering after resolution")
+    void doesNotAffectLaterCreatures() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new VampireBats());
+
+        cast(List.of(target.getId()));
+        Permanent newcomer = harness.addToBattlefieldAndReturn(player2, new VampireBats());
+
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.GREEN);
+        assertThat(gqs.getEffectiveColors(gd, newcomer)).containsExactly(CardColor.BLACK);
     }
 
     private void cast(List<java.util.UUID> targetIds) {
