@@ -86,4 +86,70 @@ class SpawningPitTest extends BaseCardTest {
         assertThat(pit.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
         harness.assertNotOnBattlefield(player1, "Spawn");
     }
+
+    @Test
+    @DisplayName("The creature is sacrificed as a cost before the charge counter is added")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent pit = harness.addToBattlefieldAndReturn(player1, new SpawningPit());
+        harness.addToBattlefield(player1, new CrazedGoblin());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Crazed Goblin");
+        harness.assertNotOnBattlefield(player1, "Crazed Goblin");
+        assertThat(pit.getCounterCount(CounterType.CHARGE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(pit.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsCreature() {
+        Permanent pit = harness.addToBattlefieldAndReturn(player1, new SpawningPit());
+        harness.addToBattlefield(player2, new CrazedGoblin());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Crazed Goblin");
+        assertThat(pit.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped Pit removes exactly two counters as a cost before creating a Spawn")
+    void tappedPitPaysCountersBeforeResolution() {
+        Permanent pit = harness.addToBattlefieldAndReturn(player1, new SpawningPit());
+        pit.setTapped(true);
+        pit.setCounterCount(CounterType.CHARGE, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(pit.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Spawn");
+
+        harness.passBothPriorities();
+
+        assertThat(pit.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Spawn");
+        assertThat(findPermanent(player1, "Spawn").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A created Spawn can be sacrificed back to Spawning Pit")
+    void canSacrificeCreatedSpawn() {
+        Permanent pit = harness.addToBattlefieldAndReturn(player1, new SpawningPit());
+        pit.setCounterCount(CounterType.CHARGE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Spawn");
+        assertThat(pit.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
 }
