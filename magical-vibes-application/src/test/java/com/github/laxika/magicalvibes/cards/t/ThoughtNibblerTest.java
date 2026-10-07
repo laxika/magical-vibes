@@ -85,4 +85,51 @@ class ThoughtNibblerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
     }
+
+    @Test
+    @DisplayName("Two Thought Nibblers reduce their controller's maximum hand size to three")
+    void reductionsFromMultipleCopiesAccumulate() {
+        harness.addToBattlefield(player1, new ThoughtNibbler());
+        harness.addToBattlefield(player1, new ThoughtNibbler());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new Forest(), new Mountain(), new Plains(), new Forest()));
+
+        harness.passUntil(player1, TurnStep.CLEANUP);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                .isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A negative maximum hand size requires discarding the entire hand")
+    void negativeMaximumHandSizeIsClampedToZeroForDiscarding() {
+        for (int copy = 0; copy < 4; copy++) {
+            harness.addToBattlefield(player1, new ThoughtNibbler());
+        }
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new Forest(), new Mountain()));
+
+        harness.passUntil(player1, TurnStep.CLEANUP);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                .isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Thought Nibbler in the graveyard does not reduce maximum hand size")
+    void graveyardCopyDoesNotReduceMaximumHandSize() {
+        harness.setGraveyard(player1, List.of(new ThoughtNibbler()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(
+                new Forest(), new Forest(), new Mountain(), new Plains(), new Forest(), new Plains()
+        ));
+
+        harness.passUntil(player1, TurnStep.CLEANUP);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(6);
+    }
 }
