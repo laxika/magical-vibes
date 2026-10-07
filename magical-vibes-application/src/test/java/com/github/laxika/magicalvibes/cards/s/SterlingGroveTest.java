@@ -70,6 +70,54 @@ class SterlingGroveTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Two Sterling Groves protect each other")
+    void twoGrovesProtectEachOther() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SterlingGrove());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SterlingGrove());
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.SHROUD)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sacrificing a protected Grove immediately removes its shroud grant")
+    void sacrificeImmediatelyRemovesShroudGrant() {
+        harness.addToBattlefield(player1, new SterlingGrove());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player1, new SterlingGrove());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new DuelingGrounds());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLibrary(player1, List.of(new Plains()));
+
+        assertThat(gqs.hasKeyword(gd, remaining, Keyword.SHROUD)).isTrue();
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.hasKeyword(gd, remaining, Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.SHROUD)).isTrue();
+        harness.assertInGraveyard(player1, "Sterling Grove");
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("May fail to find even when an enchantment is available")
+    void mayFailToFindAvailableEnchantment() {
+        harness.addToBattlefield(player1, new SterlingGrove());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        List<Card> library = List.of(new DuelingGrounds(), new LlanowarElite(), new Plains());
+        harness.setLibrary(player1, library);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(library);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+        assertThat(gameLogContains("reveals")).isFalse();
+    }
+
+    @Test
     @DisplayName("Shuffles without a prompt when the library has no enchantment")
     void noEnchantmentInLibrary() {
         harness.addToBattlefield(player1, new SterlingGrove());
