@@ -41,4 +41,43 @@ class TreeMonkeyTest extends BaseCardTest {
                 gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Tree Monkey can also block a creature without flying")
+    void canBlockNonFlyingCreature() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent treeMonkey = addCreatureReady(player2, new TreeMonkey());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(treeMonkey.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Reach does not prevent a creature without flying from blocking Tree Monkey")
+    void canBeBlockedByNonFlyingCreature() {
+        addCreatureReady(player1, new TreeMonkey());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(bears.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Tree Monkey cannot block a creature with flying")
+    void tappedTreeMonkeyCannotBlockFlyingCreature() {
+        addCreatureReady(player1, new AirElemental());
+        Permanent treeMonkey = addCreatureReady(player2, new TreeMonkey());
+        treeMonkey.tap();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(
+                gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(treeMonkey.isBlocking()).isFalse();
+    }
 }
