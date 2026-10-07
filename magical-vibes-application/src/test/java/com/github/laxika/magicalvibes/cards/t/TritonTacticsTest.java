@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TritonTactics.class, GrizzlyBears.class, GiantSpider.class, Mountain.class})
 class TritonTacticsTest extends BaseCardTest {
 
     @Test
@@ -150,11 +152,117 @@ class TritonTacticsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void canResolveWithNoTargets() {
+        Permanent creature = addTappedCreature(player2);
+
+        castTritonTactics(List.of());
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getToughnessModifier()).isZero();
+        harness.assertInGraveyard(player1, "Triton Tactics");
+    }
+
+    @Test
+    void remembersBlocksWhenCastAfterBlockersAreDeclared() {
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        castTritonTactics(List.of(blocker.getId()));
+        advanceThroughEndOfCombat();
+
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
+    @Test
+    void delayedTapWaitsForItsTriggerToResolve() {
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
+        Permanent attacker = addCreatureReady(player1, new GiantSpider());
+        attacker.setAttacking(true);
+        castTritonTactics(List.of(blocker.getId()));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(attacker.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(attacker.isTapped()).isTrue();
+    }
+
+    @Test
+    void castingDuringEndOfCombatDoesNotTapInThatSameStep() {
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.clearPriorityPassed();
+
+        castTritonTactics(List.of(blocker.getId()));
+        harness.passBothPriorities();
+
+        assertThat(attacker.isTapped()).isFalse();
+        assertThat(attacker.getSkipUntapCount()).isZero();
+    }
+
+    @Test
+    void delayedTapExpiresIfThereIsNoMoreCombatThisTurn() {
+        Permanent blocker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        castTritonTactics(List.of(blocker.getId()));
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        attacker.setAttacking(true);
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        advanceThroughEndOfCombat();
+
+        assertThat(attacker.isTapped()).isFalse();
+        assertThat(attacker.getSkipUntapCount()).isZero();
+    }
+
+    @Test
+    void locksFromTwoCombatsOnlyPreventTheSameNextUntapStep() {
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        castTritonTactics(List.of(blocker.getId()));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        advanceThroughEndOfCombat();
+        resolveAllTriggers();
+
+        attacker.untap();
+        attacker.setAttacking(true);
+        castTritonTactics(List.of(blocker.getId()));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        advanceThroughEndOfCombat();
+        resolveAllTriggers();
+
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
     private void castTritonTactics(List<UUID> targets) {
         harness.setHand(player1, List.of(new TritonTactics()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, targets);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targets);
     }
 
     private Permanent addTappedCreature(Player player) {
