@@ -99,4 +99,38 @@ class SteadfastnessTest extends BaseCardTest {
         assertThat(laterCreature.getPowerModifier()).isZero();
         assertThat(laterCreature.getToughnessModifier()).isZero();
     }
+
+    @Test
+    @DisplayName("Boosts creatures entering before resolution")
+    void boostsCreaturesEnteringBeforeResolution() {
+        harness.castFromHand(player1, new Steadfastness(), "{1}{W}");
+
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Multiple copies add their boosts until cleanup")
+    void multipleCopiesAddTheirBoostsUntilCleanup() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.castFromHand(player1, new Steadfastness(), "{1}{W}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new Steadfastness(), "{1}{W}");
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(8);
+
+        harness.forceStep(TurnStep.END_STEP);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(8);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+    }
 }
