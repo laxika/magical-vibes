@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.OxiddaDaredevil;
+import com.github.laxika.magicalvibes.cards.w.WallOfTanglecord;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +23,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TwistedImage.class, GrizzlyBears.class, FountainOfYouth.class,
+        OxiddaDaredevil.class, WallOfTanglecord.class})
 class TwistedImageTest extends BaseCardTest {
 
     
@@ -46,13 +51,12 @@ class TwistedImageTest extends BaseCardTest {
     @DisplayName("Resolving Twisted Image switches power and toughness and draws a card")
     void switchesPowerToughnessAndDraws() {
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.getGameData().playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new TwistedImage()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         // Grizzly Bears is 2/2 — after switch it should still be 2/2
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
@@ -77,8 +81,7 @@ class TwistedImageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         // After switch: the finished 3/2 swaps to 2/3 (CR 613.4d)
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
@@ -96,8 +99,7 @@ class TwistedImageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         // Move to cleanup
         harness.forceStep(TurnStep.END_STEP);
@@ -151,11 +153,75 @@ class TwistedImageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Twisted Image");
+    }
+
+    @Test
+    @DisplayName("Two switches restore an opposing creature and each spell draws for its caster")
+    void twoSwitchesRestoreOpposingCreature() {
+        harness.addToBattlefield(player2, new OxiddaDaredevil());
+        Permanent creature = findPermanent(player2, "Oxidda Daredevil");
+        harness.setLibrary(player1, List.of(new OxiddaDaredevil(), new OxiddaDaredevil()));
+        harness.setHand(player1, List.of(new TwistedImage(), new TwistedImage()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Switching a zero-power creature kills it and still draws a card")
+    void zeroPowerCreatureDiesAndCasterDraws() {
+        harness.addToBattlefield(player2, new WallOfTanglecord());
+        UUID targetId = harness.getPermanentId(player2, "Wall of Tanglecord");
+        harness.setLibrary(player1, List.of(new OxiddaDaredevil()));
+        harness.setHand(player1, List.of(new TwistedImage()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "Wall of Tanglecord");
+        harness.assertInGraveyard(player2, "Wall of Tanglecord");
+        harness.assertInHand(player1, "Oxidda Daredevil");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An asymmetric creature returns to its original values after cleanup")
+    void asymmetricCreatureReturnsToOriginalValuesAfterCleanup() {
+        harness.addToBattlefield(player1, new OxiddaDaredevil());
+        Permanent creature = findPermanent(player1, "Oxidda Daredevil");
+        harness.setLibrary(player1, List.of(new OxiddaDaredevil(), new OxiddaDaredevil()));
+        harness.setHand(player1, List.of(new TwistedImage()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }
 }
