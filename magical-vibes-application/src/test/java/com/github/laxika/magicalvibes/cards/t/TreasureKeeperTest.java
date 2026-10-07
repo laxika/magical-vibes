@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -18,6 +18,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TreasureKeeper.class, CounselOfTheSoratami.class, Forest.class, GrizzlyBears.class,
+        HillGiant.class, Plains.class, WrathOfGod.class})
 class TreasureKeeperTest extends BaseCardTest {
 
     @Test
@@ -47,7 +49,7 @@ class TreasureKeeperTest extends BaseCardTest {
         int blueBefore = gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE);
 
         resolveDeathTrigger();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.stack).anyMatch(entry -> entry.getCard() == hit
                 && entry.getEntryType() == StackEntryType.SORCERY_SPELL);
@@ -68,6 +70,79 @@ class TreasureKeeperTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(land, tooExpensive);
     }
 
+    @Test
+    @DisplayName("Declining bottoms every revealed card without disturbing the unrevealed library")
+    void decliningBottomsAllRevealedCards() {
+        Plains land = new Plains();
+        HillGiant expensive = new HillGiant();
+        CounselOfTheSoratami hit = new CounselOfTheSoratami();
+        GrizzlyBears unrevealed = new GrizzlyBears();
+        setUpDeathTrigger(new TreasureKeeper(), List.of(land, expensive, hit, unrevealed));
+
+        resolveDeathTrigger();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(unrevealed);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 4))
+                .containsExactlyInAnyOrder(land, expensive, hit);
+    }
+
+    @Test
+    @DisplayName("A revealed creature is cast and resolves normally while skipped cards are bottomed")
+    void castsCreatureAndBottomsSkippedCards() {
+        Plains land = new Plains();
+        GrizzlyBears hit = new GrizzlyBears();
+        Forest unrevealed = new Forest();
+        setUpDeathTrigger(new TreasureKeeper(), List.of(land, hit, unrevealed));
+
+        resolveDeathTrigger();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unrevealed, land);
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == hit
+                && entry.getEntryType() == StackEntryType.CREATURE_SPELL);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An empty library produces no choice and no spell")
+    void emptyLibraryDoesNothing() {
+        setUpDeathTrigger(new TreasureKeeper(), List.of());
+
+        resolveDeathTrigger();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Skipped cards are publicly revealed as well as the qualifying card")
+    void publiclyRevealsSkippedCards() {
+        setUpDeathTrigger(new TreasureKeeper(),
+                List.of(new Plains(), new HillGiant(), new GrizzlyBears()));
+
+        resolveDeathTrigger();
+
+        assertThat(gameLogContains("Plains")).isTrue();
+        assertThat(gameLogContains("Hill Giant")).isTrue();
+        assertThat(gameLogContains("Grizzly Bears")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Every card is publicly revealed when no qualifying card is found")
+    void publiclyRevealsCardsWithoutMatch() {
+        setUpDeathTrigger(new TreasureKeeper(), List.of(new Forest(), new HillGiant()));
+
+        resolveDeathTrigger();
+
+        assertThat(gameLogContains("Forest")).isTrue();
+        assertThat(gameLogContains("Hill Giant")).isTrue();
+    }
+
     private void setUpDeathTrigger(TreasureKeeper keeper, List<Card> library) {
         harness.addToBattlefield(player1, keeper);
         harness.setLibrary(player1, library);
@@ -77,7 +152,6 @@ class TreasureKeeperTest extends BaseCardTest {
     }
 
     private void resolveDeathTrigger() {
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
