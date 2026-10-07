@@ -57,17 +57,38 @@ class SpireGardenTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Can produce mana immediately after entering untapped and pays its tap cost")
+    void producesManaOnTurnItEnters() {
+        addThirdPlayer();
+        playSpireGarden();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(findPermanent(player1, "Spire Garden").isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entry replacement also applies when the land is put onto the battlefield")
+    void entersTappedWhenPutOntoBattlefield() {
+        Permanent permanent = harness.enterBattlefieldAndReturn(player2, new SpireGarden());
+
+        assertThat(permanent.isTapped()).isTrue();
+    }
+
     private void playSpireGarden() {
         harness.setHand(player1, List.of(new SpireGarden()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
     }
 
     private Permanent addReadySpireGarden() {
-        Permanent permanent = new Permanent(new SpireGarden());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, new SpireGarden());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
         return permanent;
     }
 
