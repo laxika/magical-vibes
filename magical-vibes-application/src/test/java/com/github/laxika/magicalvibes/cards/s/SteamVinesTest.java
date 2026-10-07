@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.Annex;
 import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,15 +17,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SteamVines.class, DuskImp.class, Mountain.class})
+@CardUsed({SteamVines.class, DuskImp.class, Mountain.class, Annex.class})
 class SteamVinesTest extends BaseCardTest {
 
     @Test
     @DisplayName("Cannot cast Steam Vines targeting a non-land permanent")
     void cannotTargetNonLand() {
         harness.addToBattlefield(player1, new Mountain());
-        harness.addToBattlefield(player1, new DuskImp());
-        Permanent creature = findPermanent(player1, "Dusk Imp");
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DuskImp());
         harness.setHand(player1, List.of(new SteamVines()));
         harness.addMana(player1, ManaColor.RED, 3);
         harness.forceActivePlayer(player1);
@@ -93,15 +93,12 @@ class SteamVinesTest extends BaseCardTest {
     }
 
     private Permanent addLand(Player player) {
-        harness.addToBattlefield(player, new Mountain());
-        List<Permanent> battlefield = gd.playerBattlefields.get(player.getId());
-        return battlefield.get(battlefield.size() - 1);
+        return harness.addToBattlefieldAndReturn(player, new Mountain());
     }
 
     private Permanent attachAura(Player auraController, Permanent host) {
-        Permanent aura = new Permanent(new SteamVines());
+        Permanent aura = harness.addToBattlefieldAndReturn(auraController, new SteamVines());
         aura.setAttachedTo(host.getId());
-        gd.playerBattlefields.get(auraController.getId()).add(aura);
         return aura;
     }
 
@@ -121,5 +118,109 @@ class SteamVinesTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(tappedLand);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Steam Vines"));
+    }
+
+    @Test
+    @DisplayName("Casting Steam Vines attaches it to the targeted land")
+    void resolvesAttachedToTargetLand() {
+        Permanent land = addLand(player2);
+        harness.setHand(player1, List.of(new SteamVines()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castEnchantment(player1, 0, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Steam Vines").getAttachedTo()).isEqualTo(land.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Steam Vines triggers again when its new land becomes tapped")
+    void triggersAfterMovingToAnotherLand() {
+        Permanent firstLand = addLand(player1);
+        Permanent secondLand = addLand(player2);
+        Permanent aura = attachAura(player1, firstLand);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.tapPermanent(player1, 0);
+        resolveAllTriggers();
+        assertThat(aura.getAttachedTo()).isEqualTo(secondLand.getId());
+
+        harness.tapPermanent(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstLand, aura);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(secondLand);
+        harness.assertInGraveyard(player1, "Steam Vines");
+    }
+
+    @Test
+    @DisplayName("Regeneration does not prevent damage or require choosing a different land")
+    void regeneratedLandCanKeepAura() {
+        Permanent land = addLand(player1);
+        Permanent aura = attachAura(player1, land);
+        land.setRegenerationShield(1);
+        harness.setLife(player1, 20);
+
+        harness.tapPermanent(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(land, aura);
+        assertThat(land.getRegenerationShield()).isZero();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(aura.getAttachedTo()).isEqualTo(land.getId());
+    }
+
+    @Test
+    @DisplayName("Damage uses the land's controller immediately before destruction")
+    void damagesControllerAtResolutionAfterControlChanges() {
+        addLand(player1);
+        Permanent land = tapLandThenEndAnnexControl();
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(land);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("The land's controller at resolution chooses the next land")
+    void controllerAtResolutionChoosesAttachmentAfterControlChanges() {
+        Permanent nextLand = addLand(player1);
+        addLand(player2);
+        tapLandThenEndAnnexControl();
+
+        resolveAllTriggers();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        harness.handlePermanentChosen(player2, nextLand.getId());
+        harness.passBothPriorities();
+        assertThat(findPermanent(player1, "Steam Vines").getAttachedTo()).isEqualTo(nextLand.getId());
+    }
+
+    private Permanent tapLandThenEndAnnexControl() {
+        Permanent land = addLand(player2);
+        Permanent annex = harness.addToBattlefieldAndReturn(player1, new Annex());
+        annex.setAttachedTo(land.getId());
+        attachAura(player1, land);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(land);
+
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(land));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, annex));
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
+        return land;
     }
 }
