@@ -29,8 +29,7 @@ class SoullessRevivalTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         harness.assertInHand(player1, "Wandering Ones");
         harness.assertNotInGraveyard(player1, "Wandering Ones");
@@ -81,5 +80,40 @@ class SoullessRevivalTest extends BaseCardTest {
         harness.assertInHand(player1, "Soulless Revival");
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(creature.getId()));
+    }
+
+    @Test
+    @DisplayName("Does not return another creature when the target leaves the graveyard")
+    void doesNotChooseReplacementForMissingTarget() {
+        Card target = new WanderingOnes();
+        Card other = new WanderingOnes();
+        harness.setGraveyard(player1, List.of(target, other));
+        harness.setHand(player1, List.of(new SoullessRevival()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.setGraveyard(player1, List.of(other));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Wandering Ones");
+        harness.assertInGraveyard(player1, "Wandering Ones");
+        harness.assertInGraveyard(player1, "Soulless Revival");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Splicing requires paying the splice cost in addition to the host spell's cost")
+    void cannotSpliceWithoutAdditionalMana() {
+        Card creature = new WanderingOnes();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new HideousLaughter(), new SoullessRevival()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castWithSplice(player1, 0, creature.getId(), List.of(1)))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Soulless Revival");
+        harness.assertInGraveyard(player1, "Wandering Ones");
     }
 }
