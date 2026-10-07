@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,8 +17,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(TouchOfDeath.class)
+@CardUsed({TouchOfDeath.class, JaceBeleren.class, ScatheZombies.class})
 class TouchOfDeathTest extends BaseCardTest {
 
     private void cast() {
@@ -66,13 +66,8 @@ class TouchOfDeathTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 1 damage to a targeted planeswalker")
     void dealsDamageToTargetPlaneswalker() {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        card.setLoyalty(2);
-        Permanent planeswalker = new Permanent(card);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
         planeswalker.setCounterCount(CounterType.LOYALTY, 2);
-        gd.playerBattlefields.get(player2.getId()).add(planeswalker);
 
         int targetLifeBefore = gd.getLife(player2.getId());
         castWithTarget(planeswalker.getId());
@@ -93,9 +88,9 @@ class TouchOfDeathTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
@@ -103,10 +98,51 @@ class TouchOfDeathTest extends BaseCardTest {
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
 
+    @Test
+    @DisplayName("An illegal sole target prevents life gain and the delayed draw")
+    void removedPlaneswalkerTargetStopsAllEffects() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        int lifeBefore = gd.getLife(player1.getId());
+        harness.setHand(player1, List.of(new TouchOfDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castSorcery(player1, 0, planeswalker.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(planeswalker);
+        harness.setGraveyard(player2, List.of(planeswalker.getCard()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof TouchOfDeath);
+    }
+
+    @Test
+    @DisplayName("Targeting yourself at one life finishes resolution before checking for defeat")
+    void selfTargetAtOneLifeSurvives() {
+        harness.setLife(player1, 1);
+
+        castWithTarget(player1.getId());
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(1);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Creatures are not legal targets")
+    void cannotTargetCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ScatheZombies());
+        harness.setHand(player1, List.of(new TouchOfDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void castWithTarget(UUID targetId) {
         harness.setHand(player1, List.of(new TouchOfDeath()));
         harness.addMana(player1, ManaColor.BLACK, 3); // {2}{B}
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
     }
 }
