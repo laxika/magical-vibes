@@ -1,17 +1,20 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.i.InventorsApprentice;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SpirebluffCanal.class, Mountain.class, InventorsApprentice.class})
 class SpirebluffCanalTest extends BaseCardTest {
 
     @Test
@@ -23,7 +26,7 @@ class SpirebluffCanalTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(findCanal(player1).isTapped()).isFalse();
     }
@@ -38,7 +41,7 @@ class SpirebluffCanalTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(findCanal(player1).isTapped()).isTrue();
     }
@@ -53,7 +56,7 @@ class SpirebluffCanalTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(findCanal(player1).isTapped()).isFalse();
     }
@@ -78,15 +81,29 @@ class SpirebluffCanalTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
+    @Test
+    void nonlandPermanentsDoNotCount() {
+        addBasicLand(player1);
+        addBasicLand(player1);
+        harness.addToBattlefield(player1, new InventorsApprentice());
+        harness.addToBattlefield(player1, new InventorsApprentice());
+        harness.setHand(player1, List.of(new SpirebluffCanal()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+
+        assertThat(findCanal(player1).isTapped()).isFalse();
+    }
+
     private Permanent addCanalReady(Player player) {
-        Permanent permanent = new Permanent(new SpirebluffCanal());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new SpirebluffCanal());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
     private void addBasicLand(Player player) {
-        gd.playerBattlefields.get(player.getId()).add(new Permanent(new Mountain()));
+        harness.addToBattlefield(player, new Mountain());
     }
 
     private Permanent findCanal(Player player) {
