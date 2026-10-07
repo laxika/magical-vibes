@@ -83,4 +83,57 @@ class StreetWraithTest extends BaseCardTest {
         harness.assertLife(player1, 1);
         harness.assertInHand(player1, "Street Wraith");
     }
+
+    @Test
+    @DisplayName("Cycling pays life and discards immediately, but draws only on resolution")
+    void cyclingCostsArePaidBeforeDrawResolves() {
+        harness.setHand(player1, List.of(new StreetWraith()));
+        harness.setLibrary(player1, List.of(new FomoriNomad()));
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player1, "Street Wraith");
+        harness.assertNotInHand(player1, "Street Wraith");
+        harness.assertNotInHand(player1, "Fomori Nomad");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertInHand(player1, "Fomori Nomad");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cycling can be activated during the opponent's turn without mana")
+    void cyclingDuringOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of(new StreetWraith()));
+        harness.setLibrary(player1, List.of(new FomoriNomad()));
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player1, "Street Wraith");
+        harness.assertInHand(player1, "Fomori Nomad");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A Swamp controlled only by the attacker does not prevent blocking")
+    void attackersSwampDoesNotEnableSwampwalk() {
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent blocker = addCreatureReady(player2, new FomoriNomad());
+        Permanent attacker = addCreatureReady(player1, new StreetWraith());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 }
