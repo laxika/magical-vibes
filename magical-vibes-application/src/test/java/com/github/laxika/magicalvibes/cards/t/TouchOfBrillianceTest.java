@@ -36,6 +36,30 @@ class TouchOfBrillianceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Drawing exactly the remaining two cards does not lose the game")
+    void drawingExactlyTheRemainingLibraryDoesNotLoseTheGame() {
+        TouchOfBrilliance firstCard = new TouchOfBrilliance();
+        TouchOfBrilliance secondCard = new TouchOfBrilliance();
+        harness.setLibrary(player1, List.of(firstCard, secondCard));
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
+        int opponentLibrarySize = gd.playerDecks.get(player2.getId()).size();
+
+        harness.castFromHand(player1, new TouchOfBrilliance(), "{3}{U}");
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstCard, secondCard);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstCard, secondCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(opponentLibrarySize);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.winnerPlayerId).isNull();
+    }
+
+    @Test
     @DisplayName("Drawing two cards with only one card left loses to the empty library")
     void drawingPastTheEndOfTheLibraryLosesTheGame() {
         TouchOfBrilliance onlyLibraryCard = new TouchOfBrilliance();
