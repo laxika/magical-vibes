@@ -25,8 +25,7 @@ class ThievesToolsTest extends BaseCardTest {
     @DisplayName("Creates a Treasure token when it enters the battlefield")
     void createsTreasureOnEnter() {
         harness.castFromHand(player1, new ThievesTools(), "{1}{B}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).filteredOn(
                 permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.TREASURE)
@@ -77,10 +76,83 @@ class ThievesToolsTest extends BaseCardTest {
                 .doesNotThrowAnyException();
     }
 
+    @Test
+    @DisplayName("An equipped creature at exactly 3 power cannot be blocked")
+    void exactlyThreePowerCantBeBlocked() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setPowerModifier(1);
+        Permanent tools = addToolsReady(player1);
+        tools.setAttachedTo(attacker.getId());
+        addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Increasing equipped creature's power above 3 allows blocking")
+    void powerIncreaseAllowsBlocking() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent tools = addToolsReady(player1);
+        tools.setAttachedTo(attacker.getId());
+        assertThat(harness.getGameQueryService().hasCantBeBlocked(gd, attacker)).isTrue();
+        attacker.setPowerModifier(2);
+        addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Reducing equipped creature's power to 3 prevents blocking")
+    void powerDecreasePreventsBlocking() {
+        Permanent attacker = addCreatureReady(player1, new CrawWurm());
+        Permanent tools = addToolsReady(player1);
+        tools.setAttachedTo(attacker.getId());
+        assertThat(harness.getGameQueryService().hasCantBeBlocked(gd, attacker)).isFalse();
+        attacker.setPowerModifier(-3);
+        addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Unequipped Tools do not prevent blocking a low-power creature")
+    void unequippedCreatureCanBeBlocked() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addToolsReady(player1);
+        addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void cannotEquipOpponentsCreature() {
+        Permanent tools = addToolsReady(player1);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(tools.getAttachedTo()).isNull();
+    }
+
     private Permanent addToolsReady(Player player) {
-        Permanent tools = new Permanent(new ThievesTools());
+        Permanent tools = harness.addToBattlefieldAndReturn(player, new ThievesTools());
         tools.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(tools);
         return tools;
     }
 }
