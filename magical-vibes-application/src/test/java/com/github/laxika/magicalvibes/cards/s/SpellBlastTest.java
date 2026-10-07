@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.Disintegrate;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.w.Willbender;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -20,8 +20,64 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpellBlast.class, Disintegrate.class, GrizzlyBears.class, LlanowarElves.class, Ornithopter.class})
+@CardUsed({SpellBlast.class, Disintegrate.class, GrizzlyBears.class, LlanowarElves.class, Ornithopter.class, Willbender.class})
 class SpellBlastTest extends BaseCardTest {
+    @Test
+    @DisplayName("Counters a face-down spell with X zero regardless of its printed mana cost")
+    void countersFaceDownSpellWithZeroX() {
+        Willbender willbender = new Willbender();
+        harness.setHand(player1, List.of(willbender));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.setHand(player2, List.of(new SpellBlast()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 0, willbender.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Willbender");
+        harness.assertNotOnBattlefield(player1, "Willbender");
+        harness.assertInGraveyard(player2, "Spell Blast");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target a face-down spell using its underlying card's mana value")
+    void cannotUsePrintedManaValueForFaceDownSpell() {
+        Willbender willbender = new Willbender();
+        harness.setHand(player1, List.of(willbender));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.setHand(player2, List.of(new SpellBlast()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, 2, willbender.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Counters an X spell on resolution using its chosen X")
+    void countersXSpellOnResolution() {
+        Disintegrate disintegrate = new Disintegrate();
+        harness.setHand(player1, List.of(disintegrate));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.setHand(player2, List.of(new SpellBlast()));
+        harness.addMana(player2, ManaColor.BLUE, 5);
+
+        harness.castSorcery(player1, 0, 3, player2.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 4, disintegrate.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Disintegrate");
+        harness.assertInGraveyard(player2, "Spell Blast");
+        assertThat(gd.stack).isEmpty();
+    }
+
     @Test
     @DisplayName("Can target a spell whose mana value equals X")
     void canTargetSpellWithManaValueEqualToX() {
