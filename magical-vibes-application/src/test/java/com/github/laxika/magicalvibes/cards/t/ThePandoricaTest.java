@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThePandorica.class, GrizzlyBears.class, Disenchant.class, Island.class})
+@CardUsed({ThePandorica.class, GrizzlyBears.class, Disenchant.class, Island.class, Twiddle.class})
 class ThePandoricaTest extends BaseCardTest {
 
     @Test
@@ -78,9 +78,8 @@ class ThePandoricaTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Disenchant()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, pandorica.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, pandorica.getId());
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }
@@ -95,6 +94,117 @@ class ThePandoricaTest extends BaseCardTest {
         assertThatThrownBy(() -> activate(pandorica, island))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be another nonland permanent");
+    }
+
+    @Test
+    @DisplayName("Cannot target The Pandorica itself")
+    void cannotTargetItself() {
+        Permanent pandorica = harness.addToBattlefieldAndReturn(player1, new ThePandorica());
+        addActivationMana();
+
+        assertThatThrownBy(() -> activate(pandorica, pandorica))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be another nonland permanent");
+    }
+
+    @Test
+    @DisplayName("Can phase out another artifact")
+    void canPhaseOutArtifact() {
+        Permanent pandorica = harness.addToBattlefieldAndReturn(player1, new ThePandorica());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ThePandorica());
+        addActivationMana();
+
+        activate(pandorica, target);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Cannot activate during combat")
+    void cannotActivateDuringCombat() {
+        Permanent pandorica = harness.addToBattlefieldAndReturn(player1, new ThePandorica());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addActivationMana();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(pandorica.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can phase out a creature its controller controls")
+    void canPhaseOutOwnCreature() {
+        Permanent pandorica = harness.addToBattlefieldAndReturn(player1, new ThePandorica());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        addActivationMana();
+
+        activate(pandorica, target);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Cannot activate during the opponent's main phase")
+    void cannotActivateDuringOpponentsTurn() {
+        Permanent pandorica = harness.addToBattlefieldAndReturn(player1, new ThePandorica());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addActivationMana();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(pandorica.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Untapping before resolution still creates a delayed trigger for the next untap")
+    void untappingBeforeResolutionStillReturnsTargetOnLaterUntap() {
+        Permanent pandorica = harness.addToBattlefieldAndReturn(player1, new ThePandorica());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addActivationMana();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        twiddle(pandorica);
+        resolveAllTriggers();
+        assertThat(pandorica.isTapped()).isFalse();
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(target);
+
+        twiddle(pandorica);
+        assertThat(pandorica.isTapped()).isTrue();
+        twiddle(pandorica);
+        resolveAllTriggers();
+
+        assertThat(pandorica.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("Untapping without a resolved activation creates no phase-in trigger")
+    void untappingWithoutActivationCreatesNoTrigger() {
+        Permanent pandorica = harness.addToBattlefieldAndReturn(player1, new ThePandorica());
+        pandorica.tap();
+
+        twiddle(pandorica);
+
+        assertThat(pandorica.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void twiddle(Permanent target) {
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.castAndResolveInstant(player1, 0, target.getId());
+            harness.handleMayAbilityChosen(player1, true);
+        });
     }
 
     private void activate(Permanent pandorica, Permanent target) {
