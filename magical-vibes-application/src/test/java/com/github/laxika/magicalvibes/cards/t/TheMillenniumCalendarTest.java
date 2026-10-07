@@ -73,4 +73,114 @@ class TheMillenniumCalendarTest extends BaseCardTest {
                 .getBean(UntapStepService.class)
                 .finishUntapStep(gd, untappingPlayer.getId()));
     }
+
+    @Test
+    void doesNotTriggerWhenNoPermanentBecomesUntapped() {
+        Permanent calendar = harness.addToBattlefieldAndReturn(player1, new TheMillenniumCalendar());
+
+        runUntapStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(calendar.getCounterCount(CounterType.TIME)).isZero();
+    }
+
+    @Test
+    void doesNotCountOpponentsUntapStep() {
+        Permanent calendar = harness.addToBattlefieldAndReturn(player1, new TheMillenniumCalendar());
+        Permanent opposingCalendar = harness.addToBattlefieldAndReturn(player2, new TheMillenniumCalendar());
+        calendar.tap();
+        opposingCalendar.tap();
+
+        runUntapStep(player2);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(calendar.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(calendar.isTapped()).isTrue();
+        assertThat(opposingCalendar.getCounterCount(CounterType.TIME)).isEqualTo(1);
+    }
+
+    @Test
+    void doublingUsesCounterCountAtResolutionAndLeavesOtherCountersAlone() {
+        Permanent calendar = harness.addToBattlefieldAndReturn(player1, new TheMillenniumCalendar());
+        calendar.setCounterCount(CounterType.TIME, 3);
+        calendar.setCounterCount(CounterType.CHARGE, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        calendar.setCounterCount(CounterType.TIME, 5);
+        harness.passBothPriorities();
+
+        assertThat(calendar.getCounterCount(CounterType.TIME)).isEqualTo(10);
+        assertThat(calendar.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+    }
+
+    @Test
+    void doublingZeroCountersDoesNotAddAny() {
+        Permanent calendar = harness.addToBattlefieldAndReturn(player1, new TheMillenniumCalendar());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(calendar.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(calendar.isTapped()).isTrue();
+    }
+
+    @Test
+    void doesNotTriggerBelowThresholdOrDuplicatePendingStateTrigger() {
+        Permanent calendar = harness.addToBattlefieldAndReturn(player1, new TheMillenniumCalendar());
+        calendar.setCounterCount(CounterType.TIME, 999);
+        harness.runStateBasedActions();
+        assertThat(gd.stack).isEmpty();
+
+        calendar.setCounterCount(CounterType.TIME, 1001);
+        harness.runStateBasedActions();
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void stateTriggerStillResolvesAfterCountersFallBelowThreshold() {
+        Permanent calendar = harness.addToBattlefieldAndReturn(player1, new TheMillenniumCalendar());
+        calendar.setCounterCount(CounterType.TIME, 1000);
+        harness.setLife(player2, 2000);
+        harness.runStateBasedActions();
+        calendar.setCounterCount(CounterType.TIME, 0);
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "The Millennium Calendar");
+        harness.assertNotOnBattlefield(player1, "The Millennium Calendar");
+        harness.assertLife(player2, 1000);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void doublingToThresholdQueuesSacrificeAndLifeLoss() {
+        Permanent calendar = harness.addToBattlefieldAndReturn(player1, new TheMillenniumCalendar());
+        calendar.setCounterCount(CounterType.TIME, 500);
+        harness.setLife(player2, 2000);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(calendar.getCounterCount(CounterType.TIME)).isEqualTo(1000);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "The Millennium Calendar");
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "The Millennium Calendar");
+        harness.assertNotOnBattlefield(player1, "The Millennium Calendar");
+        harness.assertLife(player2, 1000);
+        harness.assertLife(player1, 20);
+    }
 }
