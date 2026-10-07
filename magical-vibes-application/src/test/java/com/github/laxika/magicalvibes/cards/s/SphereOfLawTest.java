@@ -90,4 +90,65 @@ class SphereOfLawTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }
+
+    @Test
+    @DisplayName("Multiple copies each prevent 2 damage")
+    void multipleCopiesStack() {
+        harness.addToBattlefield(player1, new SphereOfLaw());
+        harness.addToBattlefield(player1, new SphereOfLaw());
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new ScorchingMissile()));
+        harness.addMana(player2, ManaColor.RED, 4);
+        harness.forceActivePlayer(player2);
+
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Prevention applies again when the same card deals damage through flashback")
+    void preventsEachDamageEventFromSameCard() {
+        harness.addToBattlefield(player1, new SphereOfLaw());
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new ScorchingMissile()));
+        harness.addMana(player2, ManaColor.RED, 14);
+        harness.forceActivePlayer(player2);
+
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+
+        harness.castAndResolveFlashback(player2, 0, player1.getId());
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("Does not protect its controller's creatures")
+    void doesNotPreventDamageToCreatures() {
+        harness.addToBattlefield(player1, new SphereOfLaw());
+        var creature = harness.addToBattlefieldAndReturn(player1, new PardicFirecat());
+        harness.setHand(player2, List.of(new Firebolt(), new Firebolt()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.forceActivePlayer(player2);
+
+        harness.castAndResolveSorcery(player2, 0, creature.getId());
+        harness.assertOnBattlefield(player1, "Pardic Firecat");
+        harness.castAndResolveSorcery(player2, 0, creature.getId());
+
+        harness.assertNotOnBattlefield(player1, "Pardic Firecat");
+    }
+
+    @Test
+    @DisplayName("Prevents red damage from its controller's own spell")
+    void preventsDamageFromOwnSource() {
+        harness.addToBattlefield(player1, new SphereOfLaw());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new ScorchingMissile()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
 }
