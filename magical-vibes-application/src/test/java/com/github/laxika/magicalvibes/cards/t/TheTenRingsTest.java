@@ -59,6 +59,80 @@ class TheTenRingsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    void doesNotTriggerDuringOpponentsEndStep() {
+        harness.addToBattlefield(player1, new TheTenRings());
+        harness.setHand(player1, cards(6));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(6);
+    }
+
+    @Test
+    void checksHandSizeAgainOnResolution() {
+        harness.addToBattlefield(player1, new TheTenRings());
+        harness.setHand(player1, cards(6));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+        assertThat(gd.stack).hasSize(1);
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+        harness.setHand(player1, cards(10));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(10);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
+    }
+
+    @Test
+    void calculatesDifferenceUsingHandSizeOnResolution() {
+        harness.addToBattlefield(player1, new TheTenRings());
+        harness.setHand(player1, cards(6));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+        assertThat(gd.stack).hasSize(1);
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+        harness.setHand(player1, cards(8));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(10);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 2);
+    }
+
+    @Test
+    void drawsTenCardsFromEmptyHand() {
+        harness.addToBattlefield(player1, new TheTenRings());
+        harness.setHand(player1, cards(0));
+        harness.setLibrary(player1, cards(12));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        gs.advanceStep(gd);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(10);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void doesNotIncreaseOpponentsMaximumHandSize() {
+        harness.addToBattlefield(player1, new TheTenRings());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player2, cards(11));
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                .isEqualTo(4);
+    }
     private List<com.github.laxika.magicalvibes.model.Card> cards(int count) {
         List<com.github.laxika.magicalvibes.model.Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
