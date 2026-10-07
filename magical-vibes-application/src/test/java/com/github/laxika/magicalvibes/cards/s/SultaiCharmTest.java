@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,6 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SultaiCharm.class, AbzanGuide.class, Forest.class, Island.class,
+        GloriousAnthem.class, GrizzlyBears.class, Ornithopter.class})
 class SultaiCharmTest extends BaseCardTest {
 
     @Test
@@ -72,6 +75,53 @@ class SultaiCharmTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Sultai Charm");
+    }
+
+    @Test
+    void cannotTargetColorlessCreatureWithCreatureMode() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        harness.setHand(player1, List.of(new SultaiCharm()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotTargetOrdinaryCreatureWithArtifactOrEnchantmentMode() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SultaiCharm()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canDestroyControllersOwnMonocoloredCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        cast(0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void canDiscardAnExistingCardAfterDrawing() {
+        harness.setHand(player1, List.of(new SultaiCharm(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest(), new Island()));
+        addMana();
+
+        harness.castInstant(player1, 0, 2, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Forest");
+        harness.assertInHand(player1, "Island");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 
     private void cast(int mode, java.util.UUID targetId) {
