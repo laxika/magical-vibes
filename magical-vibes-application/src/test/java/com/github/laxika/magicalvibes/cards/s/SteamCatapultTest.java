@@ -121,6 +121,58 @@ class SteamCatapultTest extends BaseCardTest {
                 .hasMessageContaining("during your turn");
     }
 
+    @Test
+    @DisplayName("Can destroy a tapped creature controlled by its controller")
+    void canDestroyOwnTappedCreature() {
+        setupCatapultOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent target = addTappedTrooper(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Alaborn Trooper");
+        harness.assertInGraveyard(player1, "Alaborn Trooper");
+    }
+
+    @Test
+    @DisplayName("Can activate during upkeep")
+    void canActivateDuringUpkeep() {
+        setupCatapultOnMyTurn(TurnStep.UPKEEP);
+        Permanent target = addTappedTrooper(player2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Alaborn Trooper");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent catapult = setupCatapultOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        catapult.setSummoningSick(true);
+        Permanent target = addTappedTrooper(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(catapult.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while already tapped")
+    void cannotActivateWhileAlreadyTapped() {
+        Permanent catapult = setupCatapultOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        catapult.tap();
+        Permanent target = addTappedTrooper(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent setupCatapultOnMyTurn(TurnStep step) {
         Permanent catapult = addCreatureReady(player1, new SteamCatapult());
         harness.forceActivePlayer(player1);
