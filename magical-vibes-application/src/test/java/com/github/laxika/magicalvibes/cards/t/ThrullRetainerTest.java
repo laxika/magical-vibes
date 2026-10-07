@@ -157,4 +157,53 @@ class ThrullRetainerTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("The Aura controller can regenerate an opponent's enchanted creature")
+    void regeneratesOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ThrullRetainer());
+        aura.setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.addToBattlefield(player1, new Pestilence());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Thrull Retainer");
+        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A regeneration shield does not tap the creature or clear damage until destruction")
+    void regenerationWaitsForDestruction() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ThrullRetainer());
+        aura.setAttachedTo(creature.getId());
+        harness.addToBattlefield(player1, new Pestilence());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 2, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, null, null);
+
+        harness.assertInGraveyard(player1, "Thrull Retainer");
+        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+        assertThat(creature.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+        assertThat(creature.isTapped()).isFalse();
+    }
+
 }
