@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.d.DazzlingDenial;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheInfamousCruelclaw.class, CounselOfTheSoratami.class, Forest.class, GrizzlyBears.class})
+@CardUsed({TheInfamousCruelclaw.class, CounselOfTheSoratami.class, DazzlingDenial.class,
+        Forest.class, GrizzlyBears.class})
 class TheInfamousCruelclawTest extends BaseCardTest {
 
     @Test
@@ -76,14 +78,85 @@ class TheInfamousCruelclawTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(land, spell);
     }
 
+    @Test
+    @DisplayName("The exiled creature is cast during the original trigger's resolution")
+    void castsDuringOriginalResolution() {
+        TheInfamousCruelclaw spell = new TheInfamousCruelclaw();
+        Forest discarded = new Forest();
+        harness.setLibrary(player1, List.of(spell));
+        harness.setHand(player1, List.of(discarded));
+
+        attackWithCruelclaw();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(spell.getId());
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("An uncastable counterspell does not consume the discard cost")
+    void noLegalTargetsDoesNotDiscard() {
+        DazzlingDenial spell = new DazzlingDenial();
+        Forest discarded = new Forest();
+        harness.setLibrary(player1, List.of(spell));
+        harness.setHand(player1, List.of(discarded));
+
+        attackWithCruelclaw();
+
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+        if (gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class) != null) {
+            harness.handleCardChosen(player1, 0);
+        }
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(spell);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A library containing only lands is entirely exiled without offering a cast")
+    void allLandLibraryIsExiled() {
+        Forest first = new Forest();
+        Forest second = new Forest();
+        Forest handCard = new Forest();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(handCard));
+
+        attackWithCruelclaw();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library does not offer a cast or discard")
+    void emptyLibraryDoesNothing() {
+        Forest handCard = new Forest();
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(handCard));
+
+        attackWithCruelclaw();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void attackWithCruelclaw() {
         Permanent cruelclaw = addCreatureReady(player1, new TheInfamousCruelclaw());
         cruelclaw.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
     }
