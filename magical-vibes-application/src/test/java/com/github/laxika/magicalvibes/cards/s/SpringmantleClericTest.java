@@ -74,8 +74,19 @@ class SpringmantleClericTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Springmantle Cleric"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Springmantle Cleric");
+    }
+
+    @Test
+    @DisplayName("Entering without being cast adds no counters even with colored mana available")
+    void enteringWithoutCastingAddsNoCounters() {
+        for (ManaColor color : List.of(ManaColor.WHITE, ManaColor.BLUE, ManaColor.BLACK,
+                ManaColor.RED, ManaColor.GREEN)) {
+            harness.addMana(player1, color, 1);
+        }
+
+        Permanent cleric = harness.enterBattlefieldAndReturn(player1, new SpringmantleCleric());
+
+        assertThat(cleric.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
