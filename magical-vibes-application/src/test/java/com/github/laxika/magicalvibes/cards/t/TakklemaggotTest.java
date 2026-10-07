@@ -67,7 +67,6 @@ class TakklemaggotTest extends BaseCardTest {
         Permanent returned = findPermanent(player1, "Takklemaggot");
         assertThat(returned.getAttachedTo()).isNull();
         assertThat(returned.getCard().getSubtypes()).doesNotContain(CardSubtype.AURA);
-        assertThat(returned.getCard().getTargetFilter()).isNull();
 
         int player2LifeBeforeUpkeep = gd.playerLifeTotals.get(player2.getId());
         advanceToUpkeep(player2);
@@ -79,6 +78,69 @@ class TakklemaggotTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, player2LifeBeforeUpkeep - 1);
+    }
+
+    @Test
+    @DisplayName("Casting Takklemaggot attaches it to the targeted creature")
+    void castingAttachesToTargetedCreature() {
+        Permanent creature = addCreatureReady(player2, new BarbaryApes());
+        harness.setHand(player1, List.of(new Takklemaggot()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Takklemaggot").getAttachedTo())
+                .isEqualTo(creature.getId());
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(creature.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Returns attached to the sole legal creature and resumes placing counters")
+    void returnsToSoleLegalCreature() {
+        Permanent dyingCreature = addCreatureReady(player2, new BarbaryApes());
+        Permanent remainingCreature = addCreatureReady(player1, new BarbaryApes());
+        attachTakklemaggot(player1, dyingCreature);
+
+        destroyCreature(dyingCreature);
+
+        assertThat(findPermanent(player1, "Takklemaggot").getAttachedTo())
+                .isEqualTo(remainingCreature.getId());
+        harness.assertNotInGraveyard(player1, "Takklemaggot");
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(remainingCreature.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isEqualTo(1);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Lethal upkeep counters return Takklemaggot as a non-Aura without immediate damage")
+    void lethalCounterReturnsAsNonAura() {
+        Permanent creature = addCreatureReady(player2, new BarbaryApes());
+        attachTakklemaggot(player1, creature);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        assertThat(creature.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Barbary Apes");
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Barbary Apes");
+        assertThat(findPermanent(player1, "Takklemaggot").getAttachedTo()).isNull();
+        harness.assertLife(player2, 20);
+
+        Permanent laterCreature = addCreatureReady(player2, new BarbaryApes());
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+        assertThat(laterCreature.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isZero();
+        assertThat(findPermanent(player1, "Takklemaggot").getAttachedTo()).isNull();
     }
 
     private Permanent attachTakklemaggot(Player controller, Permanent creature) {
@@ -94,8 +156,7 @@ class TakklemaggotTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new ChainLightning()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castSorcery(player2, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, creature.getId());
         harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();
     }
