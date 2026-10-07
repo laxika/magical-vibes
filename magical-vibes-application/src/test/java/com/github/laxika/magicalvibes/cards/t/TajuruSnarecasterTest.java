@@ -21,8 +21,7 @@ class TajuruSnarecasterTest extends BaseCardTest {
         addCreatureReady(player1, new SuntailHawk());
         Permanent snarecaster = addCreatureReady(player2, new TajuruSnarecaster());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(snarecaster.isBlocking()).isTrue();
@@ -33,11 +32,32 @@ class TajuruSnarecasterTest extends BaseCardTest {
         addCreatureReady(player1, new SuntailHawk());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void reachAllowsBlockingNonflyingCreature() {
+        addCreatureReady(player1, new TajuruSnarecaster());
+        Permanent snarecaster = addCreatureReady(player2, new TajuruSnarecaster());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(snarecaster.isBlocking()).isTrue();
+    }
+
+    @Test
+    void reachDoesNotPreventNonflyingCreatureFromBlockingSnarecaster() {
+        addCreatureReady(player1, new TajuruSnarecaster());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(bears.isBlocking()).isTrue();
     }
 }
