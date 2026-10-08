@@ -1,16 +1,17 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BeaconBehemoth;
+import com.github.laxika.magicalvibes.cards.c.CanyonMinotaur;
+import com.github.laxika.magicalvibes.cards.c.CylianSunsinger;
+import com.github.laxika.magicalvibes.cards.f.FieryFall;
+import com.github.laxika.magicalvibes.cards.g.GoblinOutlander;
+import com.github.laxika.magicalvibes.cards.m.ManiacalRage;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,47 +20,20 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VedalkenOutlander.class, CanyonMinotaur.class, CylianSunsinger.class,
+        BeaconBehemoth.class, FieryFall.class, Unsummon.class, GoblinOutlander.class,
+        VolcanicFallout.class, ManiacalRage.class})
 class VedalkenOutlanderTest extends BaseCardTest {
-
-    private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
-
-    private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
-    }
-
-    // ===== Protection - blocking =====
 
     @Test
     @DisplayName("Red creature cannot block Vedalken Outlander")
     void redCreatureCannotBlock() {
-        Permanent attacker = new Permanent(new VedalkenOutlander());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new VedalkenOutlander());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreature("Goblin Raider", 2, 1, CardColor.RED));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new CanyonMinotaur());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -69,46 +43,29 @@ class VedalkenOutlanderTest extends BaseCardTest {
     @Test
     @DisplayName("Green creature can block Vedalken Outlander")
     void greenCreatureCanBlock() {
-        Permanent attacker = new Permanent(new VedalkenOutlander());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new VedalkenOutlander());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new CylianSunsinger());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
     }
 
-    // ===== Protection - combat damage =====
-
     @Test
     @DisplayName("Vedalken Outlander takes no combat damage from red creature")
     void takesNoDamageFromRed() {
-        Permanent attacker = new Permanent(createCreature("Fire Elemental", 3, 3, CardColor.RED));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new CanyonMinotaur());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new VedalkenOutlander());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new VedalkenOutlander());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat();
 
         // Red creature's 3 damage to the Outlander is prevented (protection from red)
         harness.assertOnBattlefield(player2, "Vedalken Outlander");
@@ -117,44 +74,31 @@ class VedalkenOutlanderTest extends BaseCardTest {
     @Test
     @DisplayName("Vedalken Outlander takes normal combat damage from green creature")
     void takesNormalDamageFromGreen() {
-        Permanent attacker = new Permanent(createCreature("Big Green", 3, 3, CardColor.GREEN));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new BeaconBehemoth());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new VedalkenOutlander());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new VedalkenOutlander());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        // 3 damage from green (no protection) kills the 2/2 Outlander
+        // 5 damage from green (no protection) kills the Outlander
         harness.assertNotOnBattlefield(player2, "Vedalken Outlander");
         harness.assertInGraveyard(player2, "Vedalken Outlander");
     }
 
-    // ===== Protection - targeting =====
-
     @Test
     @DisplayName("Cannot be targeted by red instant")
     void cannotBeTargetedByRedInstant() {
-        Permanent outlander = new Permanent(new VedalkenOutlander());
-        outlander.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(outlander);
+        Permanent outlander = addCreatureReady(player2, new VedalkenOutlander());
 
         // Add valid target so spell is playable
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        addCreatureReady(player2, new CylianSunsinger());
 
-        harness.setHand(player1, List.of(createTargetedInstant("Lightning Bolt", CardColor.RED, "{R}")));
+        harness.setHand(player1, List.of(new FieryFall()));
         harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, outlander.getId(), null))
                 .isInstanceOf(IllegalStateException.class)
@@ -164,16 +108,88 @@ class VedalkenOutlanderTest extends BaseCardTest {
     @Test
     @DisplayName("Can be targeted by blue instant")
     void canBeTargetedByBlueInstant() {
-        Permanent outlander = new Permanent(new VedalkenOutlander());
-        outlander.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(outlander);
+        Permanent outlander = addCreatureReady(player1, new VedalkenOutlander());
 
-        harness.setHand(player1, List.of(createTargetedInstant("Blue Bolt", CardColor.BLUE, "{U}")));
+        harness.setHand(player1, List.of(new Unsummon()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         gs.playCard(gd, player1, 0, 0, outlander.getId(), null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Blue Bolt");
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Unsummon");
+    }
+
+    @Test
+    @DisplayName("Multicolored red creature cannot block Vedalken Outlander")
+    void multicoloredRedCreatureCannotBlock() {
+        Permanent attacker = addCreatureReady(player1, new VedalkenOutlander());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new GoblinOutlander());
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Protection prevents untargeted red spell damage")
+    void preventsUntargetedRedDamage() {
+        addCreatureReady(player1, new VedalkenOutlander());
+        addCreatureReady(player2, new CylianSunsinger());
+        harness.setHand(player1, List.of(new VolcanicFallout()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Vedalken Outlander");
+        harness.assertInGraveyard(player2, "Cylian Sunsinger");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Cannot be enchanted by a red Aura even from its controller")
+    void cannotBeTargetedByOwnRedAura() {
+        Permanent outlander = addCreatureReady(player1, new VedalkenOutlander());
+        addCreatureReady(player1, new CylianSunsinger());
+        harness.setHand(player1, List.of(new ManiacalRage()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, outlander.getId(), null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Protection does not prevent a blue spell from returning Outlander to hand")
+    void blueSpellResolvesNormally() {
+        Permanent outlander = addCreatureReady(player2, new VedalkenOutlander());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, outlander.getId());
+
+        harness.assertNotOnBattlefield(player2, "Vedalken Outlander");
+        harness.assertInHand(player2, "Vedalken Outlander");
+    }
+
+    @Test
+    @DisplayName("An attached red Aura is put into its owner's graveyard")
+    void attachedRedAuraIsRemoved() {
+        Permanent outlander = addCreatureReady(player1, new VedalkenOutlander());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new ManiacalRage());
+        aura.setAttachedTo(outlander.getId());
+        harness.setHand(player1, List.of(new VolcanicFallout()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertNotOnBattlefield(player2, "Maniacal Rage");
+        harness.assertInGraveyard(player2, "Maniacal Rage");
+        harness.assertOnBattlefield(player1, "Vedalken Outlander");
     }
 }
