@@ -25,8 +25,7 @@ class XerexStrobeKnightTest extends BaseCardTest {
         Permanent knight = addReadyKnight(player1);
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -42,8 +41,7 @@ class XerexStrobeKnightTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         for (int i = 0; i < 2; i++) {
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            harness.castAndResolveInstant(player1, 0, player2.getId());
         }
 
         harness.activateAbility(player1, 0, null, null);
@@ -60,6 +58,77 @@ class XerexStrobeKnightTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, token, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without casting any spells")
+    void cannotActivateWithoutSpells() {
+        Permanent knight = addReadyKnight(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("two or more spells");
+        assertThat(knight.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The second spell counts before it resolves and activation pays the tap cost")
+    void secondSpellCountsBeforeResolution() {
+        Permanent knight = addReadyKnight(player1);
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castInstant(player1, 0, player2.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(knight.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList()).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("An opponent's spells do not satisfy the activation restriction")
+    void opponentSpellsDoNotCount() {
+        Permanent knight = addReadyKnight(player1);
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("two or more spells");
+        assertThat(knight.isTapped()).isFalse();
+    }
+
+    @Test
+    @CardUsed({XerexStrobeKnight.class})
+    @DisplayName("Creature spells count, but a newly cast Knight cannot pay a tap cost")
+    void creatureSpellsCountButSummoningSicknessPreventsActivation() {
+        addReadyKnight(player1);
+        harness.setHand(player1, List.of(new XerexStrobeKnight(), new XerexStrobeKnight()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList()).hasSize(1);
     }
 
     private Permanent addReadyKnight(Player player) {
