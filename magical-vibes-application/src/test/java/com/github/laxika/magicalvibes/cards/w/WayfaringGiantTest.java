@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.ShivanOasis;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WayfaringGiant.class, Forest.class, Island.class, Plains.class, Swamp.class, Mountain.class})
+@CardUsed({WayfaringGiant.class, Forest.class, Island.class, Plains.class, Swamp.class, Mountain.class, ShivanOasis.class})
 class WayfaringGiantTest extends BaseCardTest {
 
     @Test
@@ -68,5 +69,21 @@ class WayfaringGiantTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Lands without basic land types do not contribute to Domain")
+    void ignoresManaColorsOfNonbasicLands() {
+        Permanent giant = addCreatureReady(player1, new WayfaringGiant());
+        harness.enterBattlefieldAndReturn(player1, new ShivanOasis());
+
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
+
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setTapped(true);
+
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(4);
     }
 }
