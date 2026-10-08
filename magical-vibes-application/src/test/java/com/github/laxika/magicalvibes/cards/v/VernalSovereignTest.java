@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VernalSovereign.class, GrizzlyBears.class})
+@CardUsed({VernalSovereign.class})
 class VernalSovereignTest extends BaseCardTest {
 
     @Test
@@ -30,6 +30,7 @@ class VernalSovereignTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({GrizzlyBears.class})
     @DisplayName("Elemental P/T updates as creatures enter and ignores opponent creatures")
     void tokenPowerToughnessTracksControlledCreatures() {
         castAndResolveSovereign();
@@ -45,9 +46,8 @@ class VernalSovereignTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking creates a creature-count Elemental token")
     void attackCreatesCreatureCountElemental() {
-        Permanent sovereign = new Permanent(new VernalSovereign());
+        Permanent sovereign = harness.addToBattlefieldAndReturn(player1, new VernalSovereign());
         sovereign.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(sovereign);
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -55,6 +55,55 @@ class VernalSovereignTest extends BaseCardTest {
         Permanent token = findElementalToken();
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Elemental survives without its source and counts itself")
+    void tokenCountsItselfAfterSourceLeaves() {
+        castAndResolveSovereign();
+        Permanent token = findElementalToken();
+        gd.playerBattlefields.get(player1.getId()).removeIf(permanent -> !permanent.getCard().isToken());
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(token);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Elemental counts its current controller's creatures")
+    void tokenCountsNewControllersCreatures() {
+        castAndResolveSovereign();
+        Permanent token = findElementalToken();
+        gd.playerBattlefields.get(player1.getId()).remove(token);
+        gd.playerBattlefields.get(player2.getId()).add(token);
+        harness.addToBattlefield(player2, new VernalSovereign());
+        harness.addToBattlefield(player2, new VernalSovereign());
+
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Attack creates a second Elemental and both count each other")
+    void attackUpdatesExistingAndNewTokens() {
+        castAndResolveSovereign();
+        Permanent sovereign = gd.playerBattlefields.get(player1.getId()).getFirst();
+        sovereign.setSummoningSick(false);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .toList();
+        assertThat(tokens).hasSize(2);
+        for (Permanent token : tokens) {
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
+            assertThat(token.isTapped()).isFalse();
+            assertThat(token.isAttacking()).isFalse();
+        }
     }
 
     private void castAndResolveSovereign() {
