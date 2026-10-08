@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(WeaselbackRedcap.class)
+@CardUsed({WeaselbackRedcap.class})
 class WeaselbackRedcapTest extends BaseCardTest {
 
     @Test
@@ -56,10 +56,42 @@ class WeaselbackRedcapTest extends BaseCardTest {
     }
 
     private Permanent addReadyRedcap(Player player) {
-        Permanent permanent = new Permanent(new WeaselbackRedcap());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new WeaselbackRedcap());
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent redcap = harness.addToBattlefieldAndReturn(player1, new WeaselbackRedcap());
+        redcap.setSummoningSick(true);
+        redcap.setTapped(true);
+        addAbilityMana(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(redcap.getPowerModifier()).isEqualTo(2);
+        assertThat(redcap.getToughnessModifier()).isZero();
+        assertThat(redcap.isTapped()).isTrue();
+    }
+
+    @Test
+    void boostsOnlyItsSourceAndOnlyOnResolution() {
+        Permanent redcap = addReadyRedcap(player1);
+        Permanent anotherRedcap = addReadyRedcap(player1);
+        Permanent opposingRedcap = addReadyRedcap(player2);
+        addAbilityMana(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(redcap.getPowerModifier()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(redcap.getPowerModifier()).isEqualTo(2);
+        assertThat(redcap.getToughnessModifier()).isZero();
+        assertThat(anotherRedcap.getPowerModifier()).isZero();
+        assertThat(opposingRedcap.getPowerModifier()).isZero();
     }
 
     private void addAbilityMana(Player player) {
