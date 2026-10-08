@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiantHerdgorger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({YouHearSomethingOnWatch.class, GrizzlyBears.class})
+@CardUsed({YouHearSomethingOnWatch.class, GrizzlyBears.class, HillGiantHerdgorger.class})
 class YouHearSomethingOnWatchTest extends BaseCardTest {
 
     @Test
@@ -41,7 +42,6 @@ class YouHearSomethingOnWatchTest extends BaseCardTest {
 
         cast(0, List.of());
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
@@ -83,11 +83,72 @@ class YouHearSomethingOnWatchTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Player controller, Player defender, Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(controller, card);
         permanent.setSummoningSick(false);
         permanent.setAttacking(true);
         permanent.setAttackTarget(defender.getId());
-        gd.playerBattlefields.get(controller.getId()).add(permanent);
         return permanent;
+    }
+
+    @Test
+    @DisplayName("Set Off Traps deals exactly five damage without boosting creatures")
+    void dealsExactlyFiveDamage() {
+        Permanent attacker = addAttacker(player2, player1, new HillGiantHerdgorger());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new HillGiantHerdgorger());
+
+        cast(1, List.of(attacker.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+        assertThat(attacker.getMarkedDamage()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Set Off Traps can target your own attacking creature")
+    void canDamageOwnAttacker() {
+        Permanent attacker = addAttacker(player1, player2, new HillGiantHerdgorger());
+
+        cast(1, List.of(attacker.getId()));
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Set Off Traps does not damage a creature that stops attacking before resolution")
+    void rechecksAttackingRestrictionAtResolution() {
+        Permanent attacker = addAttacker(player2, player1, new HillGiantHerdgorger());
+        prepareSpell();
+        harness.castModalInstant(player1, 0, 1, List.of(attacker.getId()));
+
+        attacker.setAttacking(false);
+        attacker.setAttackTarget(null);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "You Hear Something on Watch");
+    }
+
+    @Test
+    @DisplayName("Rouse the Party does not boost creatures entering after resolution")
+    void excludesCreaturesEnteringLater() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new HillGiantHerdgorger());
+
+        cast(0, List.of());
+        Permanent later = harness.enterBattlefieldAndReturn(player1, new HillGiantHerdgorger());
+
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Rouse the Party resolves with no creatures or targets")
+    void canRouseEmptyBattlefield() {
+        cast(0, List.of());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "You Hear Something on Watch");
     }
 }
