@@ -40,7 +40,8 @@ class SongbirdsBlessingTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting puts the revealed Aura onto the battlefield")
     void acceptsBattlefieldPlacement() {
-        addBlessingAndAttacker();
+        Permanent attacker = addBlessingAndAttacker();
+        addCreatureReady(player2, new GrizzlyBears());
         Card plains = new Plains();
         Card aura = new HolyStrength();
         harness.setLibrary(player1, List.of(plains, aura));
@@ -49,7 +50,12 @@ class SongbirdsBlessingTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertInGraveyard(player1, "Holy Strength");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, attacker.getId());
+
+        harness.assertOnBattlefield(player1, "Holy Strength");
+        harness.assertNotInGraveyard(player1, "Holy Strength");
+        assertThat(findPermanent(player1, "Holy Strength").getAttachedTo()).isEqualTo(attacker.getId());
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
                 .containsExactly("Plains");
     }
@@ -69,9 +75,82 @@ class SongbirdsBlessingTest extends BaseCardTest {
                 .containsExactlyInAnyOrder("Plains", "Grizzly Bears");
     }
 
-    private void addBlessingAndAttacker() {
+    @Test
+    @DisplayName("Revealing stops at the first Aura and leaves unrevealed cards above the bottomed cards")
+    void stopsAtFirstAuraAndBottomsOnlyRevealedCards() {
+        addBlessingAndAttacker();
+        Card firstAura = new HolyStrength();
+        Card secondAura = new HolyStrength();
+        Card unrevealed = new GrizzlyBears();
+        Card firstRevealed = new Plains();
+        Card secondRevealed = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(firstRevealed, secondRevealed, firstAura, secondAura, unrevealed));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(firstAura).doesNotContain(secondAura);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(0, 2)).containsExactly(secondAura, unrevealed);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(2, 4))
+                .containsExactlyInAnyOrder(firstRevealed, secondRevealed);
+    }
+
+    @Test
+    @DisplayName("An empty library produces no optional placement choice")
+    void emptyLibraryProducesNoChoice() {
+        addBlessingAndAttacker();
+        harness.setLibrary(player1, List.of());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    @Test
+    @DisplayName("An unenchanted creature attacking does not trigger the Blessing")
+    void unrelatedAttackerDoesNotTrigger() {
+        addBlessingAndAttacker();
+        addCreatureReady(player1, new GrizzlyBears());
+        Card aura = new HolyStrength();
+        harness.setLibrary(player1, List.of(aura));
+
+        declareAttackers(List.of(2));
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(aura);
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    @Test
+    @DisplayName("The Blessing's controller reveals their library when an opponent's enchanted creature attacks")
+    void opponentAttackerUsesAuraControllersLibrary() {
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blessing = harness.addToBattlefieldAndReturn(player1, new SongbirdsBlessing());
+        blessing.setAttachedTo(attacker.getId());
+        Card aura = new HolyStrength();
+        Card opponentCard = new Plains();
+        harness.setLibrary(player1, List.of(aura));
+        harness.setLibrary(player2, List.of(opponentCard));
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(((PendingInteraction.MayAbilityChoice) gd.interaction.activeInteraction()).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(aura);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);
+    }
+
+    private Permanent addBlessingAndAttacker() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent blessing = harness.addToBattlefieldAndReturn(player1, new SongbirdsBlessing());
         blessing.setAttachedTo(attacker.getId());
+        return attacker;
     }
 }
