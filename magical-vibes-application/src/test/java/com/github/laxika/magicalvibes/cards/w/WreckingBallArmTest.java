@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.CaptainSisay;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -112,8 +113,72 @@ class WreckingBallArmTest extends BaseCardTest {
     }
 
     private Permanent addArmReady(Player player) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, new WreckingBallArm());
-        permanent.setSummoningSick(false);
-        return permanent;
+        return addCreatureReady(player, new WreckingBallArm());
+    }
+
+    @Test
+    void countersApplyOnTopOfSevenSevenBaseStats() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent arm = addArmReady(player1);
+        arm.setAttachedTo(creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(9);
+    }
+
+    @Test
+    void blockerWithPowerRaisedAboveTwoCanBlock() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent arm = addArmReady(player1);
+        arm.setAttachedTo(attacker.getId());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        declareAttackersAndPrepareBlockers(List.of(attackerIndex));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void reequippingRestoresOldCreaturesStatsAndBlocking() {
+        Permanent arm = addArmReady(player1);
+        Permanent oldCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent newCreature = addCreatureReady(player1, new HillGiant());
+        arm.setAttachedTo(oldCreature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.activateAbility(player1, 0, 1, null, newCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(arm.getAttachedTo()).isEqualTo(newCreature.getId());
+        assertThat(gqs.getEffectivePower(gd, oldCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, oldCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, newCreature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, newCreature)).isEqualTo(7);
+
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(oldCreature);
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        declareAttackersAndPrepareBlockers(List.of(attackerIndex));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void neitherEquipAbilityCanTargetAnOpponentsLegendaryCreature() {
+        addArmReady(player1);
+        Permanent creature = addCreatureReady(player2, new CaptainSisay());
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(7);
     }
 }
