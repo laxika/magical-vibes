@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.v.VenerableKnight;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -25,8 +27,7 @@ class WorthyKnightTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Human")).isEqualTo(1);
         Permanent token = findPermanent(player1, "Human");
@@ -60,6 +61,78 @@ class WorthyKnightTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
+        assertThat(countPermanents(player1, "Human")).isZero();
+    }
+
+    @Test
+    @DisplayName("The Human token resolves before the Knight spell")
+    void tokenResolvesBeforeKnightSpell() {
+        harness.addToBattlefield(player1, new WorthyKnight());
+        harness.setHand(player1, List.of(new VenerableKnight()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(countPermanents(player1, "Human")).isZero();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Human")).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Venerable Knight");
+        assertThat(gd.stack).hasSize(1);
+        Permanent token = findPermanent(player1, "Human");
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.getCard().getColors()).containsExactly(CardColor.WHITE);
+        assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.HUMAN);
+        assertThat(token.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Venerable Knight");
+        assertThat(countPermanents(player1, "Human")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Worthy Knight does not trigger on its own cast")
+    void doesNotTriggerOnItsOwnCast() {
+        harness.setHand(player1, List.of(new WorthyKnight()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Worthy Knight");
+        assertThat(countPermanents(player1, "Human")).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Worthy Knight triggers for each Knight spell")
+    void eachWorthyKnightTriggersForEachKnightSpell() {
+        harness.addToBattlefield(player1, new WorthyKnight());
+        harness.addToBattlefield(player1, new WorthyKnight());
+        harness.setHand(player1, List.of(new VenerableKnight(), new VenerableKnight()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Human")).isEqualTo(2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Human")).isEqualTo(4);
+        assertThat(countPermanents(player2, "Human")).isZero();
+    }
+
+    @Test
+    @DisplayName("A Knight entering without being cast does not trigger Worthy Knight")
+    void enteringWithoutCastingDoesNotTrigger() {
+        harness.addToBattlefield(player1, new WorthyKnight());
+
+        harness.enterBattlefieldAndReturn(player1, new VenerableKnight());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Venerable Knight");
         assertThat(countPermanents(player1, "Human")).isZero();
     }
 }
