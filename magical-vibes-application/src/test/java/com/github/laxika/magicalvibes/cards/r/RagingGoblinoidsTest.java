@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.e.ElectrosBolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +15,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RagingGoblinoids.class})
+@CardUsed({RagingGoblinoids.class, ElectrosBolt.class})
 class RagingGoblinoidsTest extends BaseCardTest {
 
     @Test
@@ -110,6 +111,64 @@ class RagingGoblinoidsTest extends BaseCardTest {
         gs.declareAttackers(gd, player1, List.of(0));
 
         harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Mayhem cannot cast a different copy that was not discarded")
+    void mayhemRequiresThisSpecificCardToHaveBeenDiscarded() {
+        RagingGoblinoids discarded = new RagingGoblinoids();
+        RagingGoblinoids other = new RagingGoblinoids();
+        harness.setGraveyard(player1, List.of(discarded, other));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(discarded.getId())));
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded, other);
+
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getOriginalCard() == discarded);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+    }
+
+    @Test
+    @DisplayName("Mayhem cannot replace its red mana requirement with generic mana")
+    void mayhemRequiresRedMana() {
+        RagingGoblinoids card = new RagingGoblinoids();
+        harness.setGraveyard(player1, List.of(card));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(card.getId())));
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Raging Goblinoids");
+    }
+
+    @Test
+    @DisplayName("A creature that dies after being cast with mayhem cannot use the earlier discard again")
+    void mayhemCannotRecastAfterDyingInTheSameTurn() {
+        prepareDiscardedCard();
+        harness.castAndResolveFlashback(player1, 0, null);
+        harness.setHand(player1, List.of(new ElectrosBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0,
+                harness.getPermanentId(player1, "Raging Goblinoids"));
+
+        harness.assertNotOnBattlefield(player1, "Raging Goblinoids");
+        harness.assertInGraveyard(player1, "Raging Goblinoids");
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Raging Goblinoids");
     }
 
     private void prepareDiscardedCard() {
