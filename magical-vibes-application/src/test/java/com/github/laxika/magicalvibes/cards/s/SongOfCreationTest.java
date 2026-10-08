@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SongOfCreation.class, Forest.class, Opt.class})
 class SongOfCreationTest extends BaseCardTest {
@@ -56,10 +57,102 @@ class SongOfCreationTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Forest");
     }
+    @Test
+    void thirdLandPlayIsRefusedAndPlayingLandsDoesNotDraw() {
+        harness.addToBattlefield(player1, new SongOfCreation());
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void additionalLandPermissionsFromMultipleCopiesAddTogether() {
+        harness.addToBattlefield(player1, new SongOfCreation());
+        harness.addToBattlefield(player1, new SongOfCreation());
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.playLand(player1, 0);
+        harness.playLand(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void controllerCastingDuringOpponentsTurnStillDrawsTwo() {
+        harness.addToBattlefield(player1, new SongOfCreation());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Opt()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void opponentsSpellDoesNotTriggerDraw() {
+        harness.addToBattlefield(player1, new SongOfCreation());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player2, List.of(new Opt()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void opponentsEndStepDoesNotDiscardControllersHand() {
+        harness.addToBattlefield(player1, new SongOfCreation());
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void discardAffectsEntireCurrentHandAndOnlyController() {
+        harness.addToBattlefield(player1, new SongOfCreation());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of(new Forest()));
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
 }
