@@ -38,6 +38,96 @@ class VitalityHunterTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, opposingBear, Keyword.LIFELINK)).isTrue();
     }
 
+
+    @Test
+    @DisplayName("Monstrosity zero still makes the hunter monstrous")
+    void zeroXBecomesMonstrousWithoutCounters() {
+        Permanent hunter = addReadyHunter();
+        addMonstrosityMana(0);
+
+        harness.activateAbility(player1, 0, 0, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(hunter.isMonstrous()).isTrue();
+        assertThat(hunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(hunter.getCounterCount(CounterType.LIFELINK)).isZero();
+    }
+
+    @Test
+    @DisplayName("The controller may choose no lifelink targets for positive X")
+    void mayDeclineAllTargets() {
+        Permanent hunter = addReadyHunter();
+        addMonstrosityMana(2);
+
+        harness.activateAbility(player1, 0, 2, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(hunter.isMonstrous()).isTrue();
+        assertThat(hunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(hunter.getCounterCount(CounterType.LIFELINK)).isZero();
+    }
+
+    @Test
+    @DisplayName("The hunter may target itself and choose fewer than X creatures")
+    void mayTargetItselfAndStopBeforeX() {
+        Permanent hunter = addReadyHunter();
+        addMonstrosityMana(2);
+
+        harness.activateAbility(player1, 0, 2, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, hunter.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(hunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(hunter.getCounterCount(CounterType.LIFELINK)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An already monstrous hunter may activate monstrosity again without effect")
+    void mayActivateAgainAfterBecomingMonstrous() {
+        Permanent hunter = addReadyHunter();
+        addMonstrosityMana(1);
+        harness.activateAbility(player1, 0, 1, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, hunter.getId());
+        harness.passBothPriorities();
+        addMonstrosityMana(2);
+
+        harness.activateAbility(player1, 0, 2, null);
+        harness.passBothPriorities();
+
+        assertThat(hunter.isMonstrous()).isTrue();
+        assertThat(hunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(hunter.getCounterCount(CounterType.LIFELINK)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Monstrosity X permits more than ninety-nine lifelink targets")
+    void mayChooseOneHundredTargetsWhenXIsOneHundred() {
+        Permanent hunter = addReadyHunter();
+        java.util.List<Permanent> targets = new java.util.ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            targets.add(harness.addToBattlefieldAndReturn(player2, new VitalityHunter()));
+        }
+        addMonstrosityMana(100);
+
+        harness.activateAbility(player1, 0, 100, null);
+        harness.passBothPriorities();
+        for (Permanent target : targets) {
+            harness.handlePermanentChosen(player1, target.getId());
+        }
+        harness.passBothPriorities();
+
+        assertThat(hunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(100);
+        assertThat(targets).allSatisfy(target ->
+                assertThat(target.getCounterCount(CounterType.LIFELINK)).isEqualTo(1));
+    }
+
     private Permanent addReadyHunter() {
         Permanent hunter = harness.addToBattlefieldAndReturn(player1, new VitalityHunter());
         hunter.setSummoningSick(false);
