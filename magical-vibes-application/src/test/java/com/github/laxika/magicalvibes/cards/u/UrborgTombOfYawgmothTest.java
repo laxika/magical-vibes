@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishMystic;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.m.MagicalHack;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,9 +11,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UrborgTombOfYawgmoth.class, Forest.class, ElvishMystic.class})
+@CardUsed({UrborgTombOfYawgmoth.class, Forest.class, ElvishMystic.class, MagicalHack.class})
 class UrborgTombOfYawgmothTest extends BaseCardTest {
 
     @Test
@@ -89,5 +92,53 @@ class UrborgTombOfYawgmothTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, urborg));
 
         assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
+    }
+
+    @Test
+    @DisplayName("Lands already on the battlefield gain the Swamp mana ability when Urborg enters")
+    void existingLandsGainBlackMana() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
+
+        harness.addToBattlefield(player1, new UrborgTombOfYawgmoth());
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest))
+                .containsExactlyInAnyOrder(CardSubtype.FOREST, CardSubtype.SWAMP);
+        harness.activateAbility(player2, 0, 0, null, null);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's Urborg continues granting Swamp after the first Urborg leaves")
+    void secondUrborgKeepsGrantActive() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new UrborgTombOfYawgmoth());
+        harness.addToBattlefield(player2, new UrborgTombOfYawgmoth());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, first));
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest))
+                .containsExactlyInAnyOrder(CardSubtype.FOREST, CardSubtype.SWAMP);
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Changing Swamp to Forest in Urborg's text changes its intrinsic mana ability to green")
+    @CardUsed({UrborgTombOfYawgmoth.class, MagicalHack.class})
+    void changedLandTypeChangesUrborgMana() {
+        Permanent urborg = harness.addToBattlefieldAndReturn(player1, new UrborgTombOfYawgmoth());
+        harness.setHand(player1, List.of(new MagicalHack()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, urborg.getId());
+        harness.handleListChoice(player1, "SWAMP");
+        harness.handleListChoice(player1, "FOREST");
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, urborg)).containsExactly(CardSubtype.FOREST);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 }
