@@ -1,17 +1,24 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
+import com.github.laxika.magicalvibes.cards.d.DarkTemper;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SedraxisAlchemist;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VagrantPlowbeasts.class, AvatarOfMight.class, GrizzlyBears.class,
+        DarkTemper.class, SedraxisAlchemist.class})
 class VagrantPlowbeastsTest extends BaseCardTest {
 
     @Test
@@ -75,5 +82,75 @@ class VagrantPlowbeastsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, avatar.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Exactly five effective power is enough, even when the source is tapped and summoning sick")
+    void canRegenerateSelfAtPowerFive() {
+        Permanent plowbeasts = harness.addToBattlefieldAndReturn(player1, new VagrantPlowbeasts());
+        plowbeasts.setPowerModifier(-1);
+        plowbeasts.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, plowbeasts.getId());
+        harness.passBothPriorities();
+
+        assertThat(plowbeasts.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Target becoming smaller than five power before resolution receives no shield")
+    void targetPowerIsCheckedAgainOnResolution() {
+        Permanent plowbeasts = harness.addToBattlefieldAndReturn(player1, new VagrantPlowbeasts());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, plowbeasts.getId());
+        plowbeasts.setPowerModifier(-2);
+
+        harness.passBothPriorities();
+
+        assertThat(plowbeasts.getRegenerationShield()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Multiple activations grant separate shields without tapping the source")
+    void canActivateRepeatedly() {
+        Permanent plowbeasts = harness.addToBattlefieldAndReturn(player1, new VagrantPlowbeasts());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, plowbeasts.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, plowbeasts.getId());
+        harness.passBothPriorities();
+
+        assertThat(plowbeasts.getRegenerationShield()).isEqualTo(2);
+        assertThat(plowbeasts.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Regeneration prevents destruction, taps the creature, and removes marked damage")
+    void shieldPreventsDestruction() {
+        Permanent plowbeasts = harness.addToBattlefieldAndReturn(player1, new VagrantPlowbeasts());
+        plowbeasts.setMarkedDamage(2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, plowbeasts.getId());
+        harness.passBothPriorities();
+        assertThat(plowbeasts.isTapped()).isFalse();
+        assertThat(plowbeasts.getMarkedDamage()).isEqualTo(2);
+
+        harness.addToBattlefield(player2, new SedraxisAlchemist());
+        harness.setHand(player2, List.of(new DarkTemper(), new DarkTemper()));
+        harness.addMana(player2, ManaColor.RED, 6);
+        harness.castAndResolveInstant(player2, 0, plowbeasts.getId());
+
+        harness.assertOnBattlefield(player1, "Vagrant Plowbeasts");
+        assertThat(plowbeasts.getRegenerationShield()).isZero();
+        assertThat(plowbeasts.isTapped()).isTrue();
+        assertThat(plowbeasts.getMarkedDamage()).isZero();
+
+        harness.castAndResolveInstant(player2, 0, plowbeasts.getId());
+
+        harness.assertNotOnBattlefield(player1, "Vagrant Plowbeasts");
+        harness.assertInGraveyard(player1, "Vagrant Plowbeasts");
     }
 }
