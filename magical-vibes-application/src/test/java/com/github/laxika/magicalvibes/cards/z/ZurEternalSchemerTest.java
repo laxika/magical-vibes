@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.w.WeaverOfHarmony;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -85,5 +86,78 @@ class ZurEternalSchemerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         assertThatThrownBy(() -> harness.activateAbility(player1, sourceIndex, null, pacifism.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canAnimateAnExistingEnchantmentCreatureWithoutLosingItsAbilities() {
+        Permanent zur = harness.addToBattlefieldAndReturn(player1, new ZurEternalSchemer());
+        Permanent weaver = harness.addToBattlefieldAndReturn(player1, new WeaverOfHarmony());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(zur),
+                null, weaver.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(weaver);
+        assertThat(gqs.getEffectivePower(gd, weaver)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, weaver)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, weaver, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, weaver, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, weaver, Keyword.HEXPROOF)).isTrue();
+
+        Permanent insight = harness.addToBattlefieldAndReturn(player1, new Insight());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(zur),
+                null, insight.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(insight);
+        assertThat(gqs.isEnchantment(gd, insight)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, insight)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, insight)).isEqualTo(4);
+    }
+
+    @Test
+    void animationResolvesAfterZurLeavesWithoutGrantingItsKeywords() {
+        Permanent zur = harness.addToBattlefieldAndReturn(player1, new ZurEternalSchemer());
+        Permanent insight = harness.addToBattlefieldAndReturn(player1, new Insight());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(zur),
+                null, insight.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(zur);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(insight);
+        assertThat(gqs.isCreature(gd, insight)).isTrue();
+        assertThat(gqs.isEnchantment(gd, insight)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, insight)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, insight)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, insight, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, insight, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, insight, Keyword.HEXPROOF)).isFalse();
+    }
+
+    @Test
+    void animationSurvivesTurnCleanup() {
+        Permanent zur = harness.addToBattlefieldAndReturn(player1, new ZurEternalSchemer());
+        Permanent insight = harness.addToBattlefieldAndReturn(player1, new Insight());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(zur),
+                null, insight.getId());
+        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(insight);
+        assertThat(gqs.isCreature(gd, insight)).isTrue();
+        assertThat(gqs.isEnchantment(gd, insight)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, insight)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, insight)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, insight, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, insight, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, insight, Keyword.HEXPROOF)).isTrue();
     }
 }
