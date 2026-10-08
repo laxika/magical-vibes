@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.d.DragToTheUnderworld;
 import com.github.laxika.magicalvibes.cards.f.FinalDeath;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NyxbornColossus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,13 +17,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RageScarredBerserker.class, GrizzlyBears.class, FinalDeath.class, DragToTheUnderworld.class})
+@CardUsed({RageScarredBerserker.class, NyxbornColossus.class, FinalDeath.class, DragToTheUnderworld.class})
 class RageScarredBerserkerTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB gives target creature you control +1/+0 and indestructible")
     void etbBoostsTargetCreatureYouControlAndGrantsIndestructible() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new NyxbornColossus());
 
         castResolve(target);
 
@@ -35,7 +35,7 @@ class RageScarredBerserkerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an opponent's creature")
     void cannotTargetOpponentsCreature() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new NyxbornColossus());
         harness.setHand(player1, List.of(new RageScarredBerserker()));
         addManaForBerserker();
 
@@ -47,7 +47,7 @@ class RageScarredBerserkerTest extends BaseCardTest {
     @Test
     @DisplayName("Boost and indestructible wear off at end of turn")
     void effectsWearOffAtEndOfTurn() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new NyxbornColossus());
 
         castResolve(target);
         harness.forceStep(TurnStep.END_STEP);
@@ -85,9 +85,7 @@ class RageScarredBerserkerTest extends BaseCardTest {
         addManaForBerserker();
         harness.castCreature(player1, 0, target.getId());
         harness.passBothPriorities();
-        Permanent source = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> !permanent.getId().equals(target.getId()))
-                .findFirst().orElseThrow();
+        Permanent source = findPermanents(player1, "Rage-Scarred Berserker").get(1);
 
         exileInResponse(source);
         resolveAllTriggers();
@@ -140,6 +138,27 @@ class RageScarredBerserkerTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target.getCard());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Multiple ETB boosts stack on only the chosen creature")
+    void multipleTriggersBoostOnlyTheChosenCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new NyxbornColossus());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new NyxbornColossus());
+
+        castResolve(target);
+        castResolve(target);
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        for (Permanent source : findPermanents(player1, "Rage-Scarred Berserker")) {
+            assertThat(source.getPowerModifier()).isZero();
+            assertThat(source.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        }
         assertThat(gd.stack).isEmpty();
     }
 
