@@ -109,4 +109,54 @@ class ZephyrNetTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Enchanted creature cannot attack but can still block")
+    void defenderPreventsAttackingButNotBlocking() {
+        Permanent creature = addCreatureReady(player1, new TurtleshellChangeling());
+        Permanent net = harness.addToBattlefieldAndReturn(player1, new ZephyrNet());
+        net.setAttachedTo(creature.getId());
+
+        assertThat(als.canAttack(gd, creature, player1.getId())).isFalse();
+        assertThat(bls.canBlock(gd, creature)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(net);
+
+        assertThat(als.canAttack(gd, creature, player1.getId())).isTrue();
+    }
+
+    @Test
+    @DisplayName("Granted flying lets the creature block a flyer")
+    void flyingAllowsBlockingFlyingCreature() {
+        Permanent attacker = addCreatureReady(player1, new TurtleshellChangeling());
+        Permanent attackerNet = harness.addToBattlefieldAndReturn(player1, new ZephyrNet());
+        attackerNet.setAttachedTo(attacker.getId());
+        Permanent blocker = addCreatureReady(player2, new TurtleshellChangeling());
+
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+
+        Permanent blockerNet = harness.addToBattlefieldAndReturn(player2, new ZephyrNet());
+        blockerNet.setAttachedTo(blocker.getId());
+
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+    }
+
+    @Test
+    @DisplayName("Zephyr Net goes to the graveyard if its target leaves before resolution")
+    void targetLeavingBeforeResolution() {
+        Permanent target = addCreatureReady(player2, new TurtleshellChangeling());
+        harness.setHand(player1, List.of(new ZephyrNet()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Zephyr Net");
+        harness.assertInGraveyard(player1, "Zephyr Net");
+    }
 }
