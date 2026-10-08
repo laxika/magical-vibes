@@ -1,16 +1,19 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.k.KothOfTheHammer;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VulshokReplica.class, KothOfTheHammer.class})
 class VulshokReplicaTest extends BaseCardTest {
 
     @Test
@@ -24,7 +27,7 @@ class VulshokReplicaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player2, 17);
     }
 
     @Test
@@ -37,6 +40,8 @@ class VulshokReplicaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
 
         harness.assertNotOnBattlefield(player1, "Vulshok Replica");
+        harness.assertInGraveyard(player1, "Vulshok Replica");
+        harness.assertLife(player2, 20);
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }
@@ -45,13 +50,11 @@ class VulshokReplicaTest extends BaseCardTest {
     @DisplayName("Cannot target a creature with the ability")
     void cannotTargetCreature() {
         harness.addToBattlefield(player1, new VulshokReplica());
-        harness.addToBattlefield(player2, new LlanowarElves());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new VulshokReplica());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        Permanent elves = findPermanent(player2, "Llanowar Elves");
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elves.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a player or planeswalker");
     }
@@ -76,7 +79,58 @@ class VulshokReplicaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        harness.assertLife(player1, 17);
+    }
+
+
+    @Test
+    @DisplayName("Damage removes loyalty from a planeswalker without damaging its controller")
+    void dealsDamageToPlaneswalker() {
+        harness.addToBattlefield(player1, new VulshokReplica());
+        Permanent koth = harness.addToBattlefieldAndReturn(player2, new KothOfTheHammer());
+        koth.setCounterCount(CounterType.LOYALTY, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, koth.getId());
+        harness.passBothPriorities();
+
+        assertThat(koth.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Koth of the Hammer");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A planeswalker with three loyalty dies from the damage")
+    void lethalDamageToPlaneswalker() {
+        harness.addToBattlefield(player1, new VulshokReplica());
+        Permanent koth = harness.addToBattlefieldAndReturn(player2, new KothOfTheHammer());
+        koth.setCounterCount(CounterType.LOYALTY, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, koth.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Koth of the Hammer");
+        harness.assertInGraveyard(player2, "Koth of the Hammer");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A tapped creature with summoning sickness can activate the sacrifice ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent replica = harness.addToBattlefieldAndReturn(player1, new VulshokReplica());
+        replica.tap();
+        replica.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        harness.assertInGraveyard(player1, "Vulshok Replica");
     }
 
 }
