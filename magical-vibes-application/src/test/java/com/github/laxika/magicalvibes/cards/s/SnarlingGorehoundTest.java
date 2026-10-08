@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SnarlingGorehound.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({SnarlingGorehound.class, GrizzlyBears.class, HillGiant.class, GloriousAnthem.class})
 class SnarlingGorehoundTest extends BaseCardTest {
 
     @Test
@@ -23,10 +23,7 @@ class SnarlingGorehoundTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SnarlingGorehound());
         Card topCard = new HillGiant();
         harness.setLibrary(player1, List.of(topCard));
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -39,16 +36,11 @@ class SnarlingGorehoundTest extends BaseCardTest {
     void doesNotTriggerForLargeCreature() {
         harness.addToBattlefield(player1, new SnarlingGorehound());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.setHand(player1, List.of(new HillGiant()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HillGiant(), "{3}{R}");
         harness.passBothPriorities();
 
-        GameData gameData = harness.getGameData();
-        assertThat(gameData.stack).isEmpty();
-        assertThat(gameData.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -57,24 +49,86 @@ class SnarlingGorehoundTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SnarlingGorehound());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        GameData gameData = harness.getGameData();
-        assertThat(gameData.stack).isEmpty();
-        assertThat(gameData.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
     @DisplayName("Does not trigger for itself entering the battlefield")
     void doesNotTriggerForItself() {
-        harness.setHand(player1, List.of(new SnarlingGorehound()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SnarlingGorehound(), "{B}");
         harness.passBothPriorities();
 
-        GameData gameData = harness.getGameData();
-        assertThat(gameData.stack).isEmpty();
-        assertThat(gameData.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("May leave the surveilled card on top of the library")
+    void mayKeepTopCard() {
+        harness.addToBattlefield(player1, new SnarlingGorehound());
+        Card topCard = new SnarlingGorehound();
+        harness.setLibrary(player1, List.of(topCard));
+
+        harness.castFromHand(player1, new SnarlingGorehound(), "{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Surveil resolves with an empty library")
+    void resolvesWithEmptyLibrary() {
+        harness.addToBattlefield(player1, new SnarlingGorehound());
+        harness.setLibrary(player1, List.of());
+
+        harness.castFromHand(player1, new SnarlingGorehound(), "{B}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not trigger when a continuous boost makes entering power greater than 2")
+    void checksEffectiveEnteringPower() {
+        harness.addToBattlefield(player1, new SnarlingGorehound());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.setLibrary(player1, List.of(new SnarlingGorehound()));
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A power increase after entry does not prevent surveil")
+    void powerIncreaseAfterEntryDoesNotPreventSurveil() {
+        harness.addToBattlefield(player1, new SnarlingGorehound());
+        Card topCard = new SnarlingGorehound();
+        harness.setLibrary(player1, List.of(topCard));
+
+        harness.castFromHand(player1, new SnarlingGorehound(), "{B}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        Permanent entering = gd.playerBattlefields.get(player1.getId()).getLast();
+        entering.setPowerModifier(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard);
     }
 }
+
+
