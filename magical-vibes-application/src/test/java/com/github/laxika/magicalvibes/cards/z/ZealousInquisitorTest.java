@@ -110,9 +110,7 @@ class ZealousInquisitorTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, inquisitor), null, destination.getId());
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         harness.setHand(player2, List.of(new SparkSpray()));
         harness.addMana(player2, ManaColor.RED, 1);
@@ -204,6 +202,124 @@ class ZealousInquisitorTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, inquisitor.getId());
 
         assertThat(inquisitor.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A single activation is consumed by the first point of damage")
+    void shieldIsConsumedAfterOneDamage() {
+        Permanent inquisitor = addCreatureReady(player1, new ZealousInquisitor());
+        Permanent destination = addCreatureReady(player2, new AvenLiberator());
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, indexOf(player1, inquisitor), null, destination.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new SparkSpray(), new SparkSpray()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, inquisitor.getId());
+        harness.castAndResolveInstant(player2, 0, inquisitor.getId());
+
+        assertThat(inquisitor.getMarkedDamage()).isEqualTo(1);
+        assertThat(destination.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Damage is not redirected when the destination leaves after the ability resolves")
+    void destinationLeavesAfterResolution() {
+        Permanent inquisitor = addCreatureReady(player1, new ZealousInquisitor());
+        Permanent destination = addCreatureReady(player2, new AvenLiberator());
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, indexOf(player1, inquisitor), null, destination.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player2.getId()).remove(destination);
+
+        harness.setHand(player2, List.of(new SparkSpray()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, inquisitor.getId());
+
+        assertThat(inquisitor.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Redirected combat damage can be redirected by another Inquisitor")
+    void combatDamageCanBeRedirectedAgain() {
+        Permanent firstInquisitor = addCreatureReady(player1, new ZealousInquisitor());
+        Permanent secondInquisitor = addCreatureReady(player1, new ZealousInquisitor());
+        Permanent destination = addCreatureReady(player1, new AvenLiberator());
+        Permanent attacker = addCreatureReady(player2, new RiptideSurvivor());
+
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.activateAbility(player1, indexOf(player1, secondInquisitor), null, destination.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, firstInquisitor), null, secondInquisitor.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(player2, List.of(indexOf(player2, attacker)));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                indexOf(player1, firstInquisitor), indexOf(player2, attacker))));
+        resolveCombat(player2);
+
+        assertThat(firstInquisitor.getMarkedDamage()).isEqualTo(1);
+        assertThat(secondInquisitor.getMarkedDamage()).isZero();
+        assertThat(destination.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Protection from the spell's color prevents redirected spell damage")
+    void protectionPreventsRedirectedSpellDamage() {
+        Permanent inquisitor = addCreatureReady(player1, new ZealousInquisitor());
+        Permanent destination = addCreatureReady(player2, new AvenLiberator());
+
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new AvenLiberator()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player2, 0);
+        harness.passBothPriorities();
+        Permanent faceDownLiberator = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(Permanent::isFaceDown).findFirst().orElseThrow();
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, indexOf(player1, inquisitor), null, destination.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.turnFaceUp(player2, indexOf(player2, faceDownLiberator));
+        harness.handlePermanentChosen(player2, destination.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "RED");
+        assertThat(gqs.hasProtectionFrom(gd, destination, CardColor.RED)).isTrue();
+
+        harness.setHand(player2, List.of(new SparkSpray()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, inquisitor.getId());
+
+        assertThat(inquisitor.getMarkedDamage()).isZero();
+        assertThat(destination.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("The Inquisitor's controller chooses between competing redirection shields")
+    void controllerChoosesBetweenRedirectionShields() {
+        Permanent inquisitor = addCreatureReady(player1, new ZealousInquisitor());
+        Permanent firstDestination = addCreatureReady(player2, new AvenLiberator());
+        Permanent secondDestination = addCreatureReady(player2, new AvenLiberator());
+
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.activateAbility(player1, indexOf(player1, inquisitor), null, firstDestination.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, inquisitor), null, secondDestination.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new SparkSpray()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, inquisitor.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(inquisitor.getMarkedDamage()).isZero();
+        assertThat(firstDestination.getMarkedDamage()).isZero();
+        assertThat(secondDestination.getMarkedDamage()).isZero();
     }
 
     private int indexOf(Player player, Permanent perm) {
