@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.r.RedtoothVanguard;
+import com.github.laxika.magicalvibes.cards.t.ToughCookie;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WelcomeToSweettooth.class, GrizzlyBears.class})
+@CardUsed({WelcomeToSweettooth.class, RedtoothVanguard.class, ToughCookie.class})
 class WelcomeToSweettoothTest extends BaseCardTest {
 
     @Test
@@ -51,26 +50,128 @@ class WelcomeToSweettoothTest extends BaseCardTest {
         harness.addToBattlefield(player1, new WelcomeToSweettooth());
         Permanent saga = findPermanent(player1, "Welcome to Sweettooth");
         saga.setCounterCount(CounterType.LORE, 2);
-        harness.addToBattlefield(player1, createFoodToken());
-        harness.addToBattlefield(player1, createFoodToken());
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent firstCookie = harness.enterBattlefieldAndReturn(player1, new ToughCookie());
+        resolveAllTriggers();
+        Permanent secondCookie = harness.enterBattlefieldAndReturn(player1, new ToughCookie());
+        resolveAllTriggers();
+        Permanent creature = addCreatureReady(player1, new RedtoothVanguard());
+
+        advanceToNextChapter();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
+                .validPermanentIds()).containsExactlyInAnyOrder(
+                        firstCookie.getId(), secondCookie.getId(), creature.getId());
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+    }
+
+    @Test
+    void allChaptersGrowTheCreatedHumanThenSacrificeTheSaga() {
+        castAndResolveSaga();
+        Permanent saga = findPermanent(player1, "Welcome to Sweettooth");
+        Permanent human = findPermanent(player1, "Human");
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+
+        advanceToNextChapter();
+        resolveAllTriggers();
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
+        assertThat(countPermanents(player1, "Food")).isOne();
+
+        advanceToNextChapter();
+        harness.handlePermanentChosen(player1, human.getId());
+        resolveAllTriggers();
+
+        assertThat(human.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(countPermanents(player1, "Human")).isOne();
+        assertThat(countPermanents(player1, "Food")).isOne();
+        assertThat(countPermanents(player1, "Welcome to Sweettooth")).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(saga.getCard());
+    }
+
+    @Test
+    void chapterIIProducesFoodThatCanBeSacrificedForLife() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new WelcomeToSweettooth());
+        saga.setCounterCount(CounterType.LORE, 1);
+        harness.setLife(player1, 20);
+
+        advanceToNextChapter();
+        resolveAllTriggers();
+
+        Permanent food = findPermanent(player1, "Food");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(food), null, null);
+
+        assertThat(findPermanents(player1, "Food")).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        resolveAllTriggers();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(23);
+    }
+
+    @Test
+    void chapterIIIWithNoFoodsAddsOneCounterAndExcludesOpposingCreatures() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new WelcomeToSweettooth());
+        saga.setCounterCount(CounterType.LORE, 2);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RedtoothVanguard());
+        Permanent opposingFood = harness.addToBattlefieldAndReturn(player2, new ToughCookie());
 
         advanceToNextChapter();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
                 .validPermanentIds()).containsExactly(creature.getId());
         harness.handlePermanentChosen(player1, creature.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opposingFood.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanents(player1, "Welcome to Sweettooth")).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(saga.getCard());
+    }
+
+    @Test
+    void chapterIIICountsFoodsWhenItResolvesAfterFoodIsSacrificed() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new WelcomeToSweettooth());
+        saga.setCounterCount(CounterType.LORE, 1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RedtoothVanguard());
+        advanceToNextChapter();
+        resolveAllTriggers();
+        Permanent food = findPermanent(player1, "Food");
+
+        advanceToNextChapter();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handlePermanentChosen(player1, creature.getId());
+
+        assertThat(findPermanents(player1, "Welcome to Sweettooth")).hasSize(1);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(food), null, null);
+        resolveAllTriggers();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Welcome to Sweettooth")).isEmpty();
+    }
+
+    @Test
+    void chapterIIIMustChooseATargetWhenALegalCreatureExists() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new WelcomeToSweettooth());
+        saga.setCounterCount(CounterType.LORE, 2);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RedtoothVanguard());
+
+        advanceToNextChapter();
+
+        PendingInteraction.PermanentChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPlayerIds()).isEmpty();
+        harness.handlePermanentChosen(player1, creature.getId());
+        resolveAllTriggers();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     private void castAndResolveSaga() {
         harness.setHand(player1, List.of(new WelcomeToSweettooth()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void advanceToNextChapter() {
@@ -78,14 +179,5 @@ class WelcomeToSweettoothTest extends BaseCardTest {
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-    }
-
-    private Card createFoodToken() {
-        Card food = new Card();
-        food.setToken(true);
-        food.setName("Food");
-        food.setType(CardType.ARTIFACT);
-        food.setSubtypes(List.of(CardSubtype.FOOD));
-        return food;
     }
 }
