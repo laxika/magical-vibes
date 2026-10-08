@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.c.ContactOtherPlane;
+import com.github.laxika.magicalvibes.cards.n.NeverwinterHydra;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.w.WarstormSurge;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VrondissRageOfAncients.class, Shock.class, ContactOtherPlane.class})
+@CardUsed({VrondissRageOfAncients.class, Shock.class, ContactOtherPlane.class, NeverwinterHydra.class, WarstormSurge.class})
 class VrondissRageOfAncientsTest extends BaseCardTest {
 
     private RollD20EffectHandler rollD20EffectHandler;
@@ -44,8 +46,7 @@ class VrondissRageOfAncientsTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, vrondiss.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, vrondiss.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -63,8 +64,7 @@ class VrondissRageOfAncientsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -78,8 +78,7 @@ class VrondissRageOfAncientsTest extends BaseCardTest {
         Permanent vrondiss = harness.addToBattlefieldAndReturn(player1, new VrondissRageOfAncients());
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, vrondiss.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, vrondiss.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -93,6 +92,160 @@ class VrondissRageOfAncientsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Dragon Spirit");
     }
 
+    @Test
+    void mayDeclineCreatingDragonSpirit() {
+        Permanent vrondiss = harness.addToBattlefieldAndReturn(player1, new VrondissRageOfAncients());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, vrondiss.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(vrondiss.getMarkedDamage()).isEqualTo(2);
+        assertThat(findPermanents(player1, "Dragon Spirit")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void mayDeclineSelfDamageAfterRolling() {
+        Permanent vrondiss = harness.addToBattlefieldAndReturn(player1, new VrondissRageOfAncients());
+        harness.setLibrary(player1, List.of(new VrondissRageOfAncients(), new VrondissRageOfAncients()));
+        harness.setHand(player1, List.of(new ContactOtherPlane()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(vrondiss.getMarkedDamage()).isZero();
+        assertThat(findPermanents(player1, "Dragon Spirit")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentsDieRollDoesNotTriggerVrondiss() {
+        Permanent vrondiss = harness.addToBattlefieldAndReturn(player1, new VrondissRageOfAncients());
+        harness.setLibrary(player2, List.of(new VrondissRageOfAncients(), new VrondissRageOfAncients()));
+        harness.setHand(player2, List.of(new ContactOtherPlane()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player2, 0);
+
+        assertThat(vrondiss.getMarkedDamage()).isZero();
+        assertThat(findPermanents(player1, "Dragon Spirit")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void selfDamageFromDieRollCreatesDragonSpiritThatDealsFiveCombatDamage() {
+        Permanent vrondiss = harness.addToBattlefieldAndReturn(player1, new VrondissRageOfAncients());
+        harness.setLibrary(player1, List.of(new VrondissRageOfAncients(), new VrondissRageOfAncients()));
+        harness.setHand(player1, List.of(new ContactOtherPlane()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(vrondiss.getMarkedDamage()).isEqualTo(1);
+        assertThat(findPermanents(player1, "Dragon Spirit")).hasSize(1);
+        Permanent dragonSpirit = findPermanent(player1, "Dragon Spirit");
+        dragonSpirit.setSummoningSick(false);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(dragonSpirit)));
+        resolveCombat();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
+        harness.assertNotOnBattlefield(player1, "Dragon Spirit");
+        harness.assertOnBattlefield(player1, "Vrondiss, Rage of Ancients");
+    }
+
+    @Test
+    void lethalDamageStillAllowsCreatingDragonSpirit() {
+        Permanent vrondiss = harness.addToBattlefieldAndReturn(player1, new VrondissRageOfAncients());
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, vrondiss.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.castAndResolveInstant(player2, 0, vrondiss.getId());
+
+        harness.assertInGraveyard(player1, "Vrondiss, Rage of Ancients");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Vrondiss, Rage of Ancients");
+        assertThat(findPermanents(player1, "Dragon Spirit")).hasSize(1);
+    }
+
+    @Test
+    void dragonSpiritIsNotSacrificedWhenItReceivesDamage() {
+        Permanent vrondiss = harness.addToBattlefieldAndReturn(player1, new VrondissRageOfAncients());
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, vrondiss.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        Permanent dragonSpirit = findPermanent(player1, "Dragon Spirit");
+        harness.castAndResolveInstant(player2, 0, dragonSpirit.getId());
+
+        assertThat(dragonSpirit.getMarkedDamage()).isEqualTo(2);
+        assertThat(findPermanents(player1, "Dragon Spirit")).containsExactly(dragonSpirit);
+        assertThat(gd.stack).isEmpty();
+    }
+    @Test
+    void rollingSeveralDiceTriggersSelfDamageOnlyOnce() {
+        Permanent vrondiss = harness.addToBattlefieldAndReturn(player1, new VrondissRageOfAncients());
+        harness.setHand(player1, List.of(new NeverwinterHydra()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castCreature(player1, 0, 3);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(vrondiss.getMarkedDamage()).isEqualTo(1);
+        assertThat(findPermanents(player1, "Dragon Spirit")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void dragonSpiritSacrificesAfterDealingNoncombatDamage() {
+        Permanent vrondiss = harness.addToBattlefieldAndReturn(player1, new VrondissRageOfAncients());
+        harness.addToBattlefield(player1, new WarstormSurge());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player2, 0, vrondiss.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Dragon Spirit");
+        harness.assertOnBattlefield(player1, "Vrondiss, Rage of Ancients");
+    }
     private static final class FixedD20RollService extends D20RollService {
 
         private final int result;
