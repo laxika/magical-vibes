@@ -71,6 +71,43 @@ class WateryGraveTest extends BaseCardTest {
         assertThat(grave.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Watery Grave can enter untapped by paying from 3 life")
+    void payingLifeAtLowLifeTotal() {
+        playWateryGrave(3);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 1);
+        assertThat(findGrave(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Watery Grave offers its controller the payment when put onto the battlefield")
+    void enteringWithoutLandPlayAllowsPayment() {
+        harness.setLife(player2, 20);
+        Permanent grave = harness.enterBattlefieldAndReturn(player2, new WateryGrave());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+        assertThat(grave.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Watery Grave enters tapped if payment is declined when put onto the battlefield")
+    void enteringWithoutLandPlayCanDeclinePayment() {
+        harness.setLife(player2, 20);
+        Permanent grave = harness.enterBattlefieldAndReturn(player2, new WateryGrave());
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertLife(player2, 20);
+        assertThat(grave.isTapped()).isTrue();
+    }
+
     private void playWateryGrave(int life) {
         harness.setLife(player1, life);
         harness.setHand(player1, List.of(new WateryGrave()));
