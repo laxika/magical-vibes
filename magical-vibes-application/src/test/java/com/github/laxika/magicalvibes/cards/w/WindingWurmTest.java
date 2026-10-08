@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(WindingWurm.class)
+@CardUsed({WindingWurm.class})
 class WindingWurmTest extends BaseCardTest {
 
     @Test
@@ -77,6 +77,16 @@ class WindingWurmTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Winding Wurm");
     }
 
+    @Test
+    @DisplayName("Entering the battlefield does not put an echo ability on the stack")
+    void enteringDoesNotCreateAnEchoTrigger() {
+        harness.castFromHand(player1, new WindingWurm(), "{4}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Winding Wurm");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
     private void castAndResolveWindingWurm() {
         harness.castFromHand(player1, new WindingWurm(), "{4}{G}");
         harness.passBothPriorities();
