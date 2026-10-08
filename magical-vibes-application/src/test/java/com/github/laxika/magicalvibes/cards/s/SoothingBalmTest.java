@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed(SoothingBalm.class)
+@CardUsed({SoothingBalm.class})
 class SoothingBalmTest extends BaseCardTest {
 
     @Test
@@ -35,5 +35,26 @@ class SoothingBalmTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player1.getId());
 
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Life gain occurs only on resolution and can exceed the starting life total")
+    void gainsLifeAboveTwentyOnlyOnResolution() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 23);
+        harness.setHand(player1, List.of(new SoothingBalm()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 23);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 28);
+        harness.assertInGraveyard(player1, "Soothing Balm");
     }
 }
