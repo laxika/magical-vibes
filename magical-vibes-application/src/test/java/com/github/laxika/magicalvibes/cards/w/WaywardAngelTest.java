@@ -46,10 +46,17 @@ class WaywardAngelTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Has flying and vigilance")
-    void hasPrintedKeywords() {
+    @DisplayName("Gaining and losing threshold preserves flying and vigilance")
+    void thresholdPreservesFlyingAndVigilance() {
         Permanent angel = harness.addToBattlefieldAndReturn(player1, new WaywardAngel());
 
+        fillGraveyard(player1, 7);
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.VIGILANCE)).isTrue();
+
+        fillGraveyard(player1, 6);
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, angel, Keyword.VIGILANCE)).isTrue();
     }
@@ -156,6 +163,64 @@ class WaywardAngelTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Wayward Angel");
         harness.assertNotOnBattlefield(player1, "Tireless Tribe");
         harness.assertInGraveyard(player1, "Tireless Tribe");
+    }
+
+    @Test
+    @DisplayName("Must sacrifice Wayward Angel when it is the only creature controlled")
+    void sacrificesItselfWhenOnlyCreature() {
+        fillGraveyard(player1, 7);
+        harness.addToBattlefield(player1, new WaywardAngel());
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player2, new TirelessTribe());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Wayward Angel");
+        harness.assertInGraveyard(player1, "Wayward Angel");
+        harness.assertOnBattlefield(player1, "Plains");
+        harness.assertOnBattlefield(player2, "Tireless Tribe");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("May choose Wayward Angel itself while other creatures are controlled")
+    void mayChooseToSacrificeItself() {
+        fillGraveyard(player1, 7);
+        Permanent angel = harness.addToBattlefieldAndReturn(player1, new WaywardAngel());
+        Permanent tribe = harness.addToBattlefieldAndReturn(player1, new TirelessTribe());
+        Permanent opposingTribe = harness.addToBattlefieldAndReturn(player2, new TirelessTribe());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(angel.getId(), tribe.getId());
+        assertThat(choice.validIds()).doesNotContain(opposingTribe.getId());
+        harness.handlePermanentChosen(player1, angel.getId());
+
+        harness.assertNotOnBattlefield(player1, "Wayward Angel");
+        harness.assertInGraveyard(player1, "Wayward Angel");
+        harness.assertOnBattlefield(player1, "Tireless Tribe");
+        harness.assertOnBattlefield(player2, "Tireless Tribe");
+    }
+
+    @Test
+    @DisplayName("Reaching threshold after upkeep begins does not create a sacrifice trigger")
+    void reachingThresholdDuringUpkeepDoesNotTrigger() {
+        fillGraveyard(player1, 6);
+        Permanent angel = harness.addToBattlefieldAndReturn(player1, new WaywardAngel());
+        Permanent tribe = harness.addToBattlefieldAndReturn(player1, new TirelessTribe());
+
+        advanceToUpkeep(player1);
+        fillGraveyard(player1, 7);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(7);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(angel, tribe);
     }
 
     private void fillGraveyard(Player player, int count) {
