@@ -153,6 +153,64 @@ class WordsOfWarTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("The drawing player chooses between pending replacements with different targets")
+    void drawingPlayerChoosesWhichReplacementApplies() {
+        harness.addToBattlefield(player1, new WordsOfWar());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new WretchedAnurid()));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WretchedAnurid());
+        harness.setLife(player2, 20);
+
+        activateWordsOfWar(player2.getId());
+        activateWordsOfWar(target.getId());
+        draw(player1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A resolved replacement still deals damage after its source leaves the battlefield")
+    void replacementSurvivesSourceLeavingBattlefield() {
+        harness.addToBattlefield(player1, new WordsOfWar());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new WretchedAnurid()));
+        harness.setLife(player2, 20);
+
+        activateWordsOfWar(player2.getId());
+        harness.inMutationScope(() -> gd.playerBattlefields.get(player1.getId()).clear());
+        draw(player1);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A target leaving after resolution does not restore the replaced draw")
+    void resolvedReplacementStillReplacesDrawWhenTargetLeaves() {
+        harness.addToBattlefield(player1, new WordsOfWar());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new WretchedAnurid(), new WretchedAnurid()));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WretchedAnurid());
+
+        activateWordsOfWar(target.getId());
+        harness.inMutationScope(() -> gd.playerBattlefields.get(player2.getId()).clear());
+        draw(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+
+        draw(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
     private void activateWordsOfWar(java.util.UUID targetId) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
