@@ -3,6 +3,9 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -91,14 +94,70 @@ class WantedGriffinTest extends BaseCardTest {
                 .hasMessageContaining("sorcery speed");
     }
 
+    @Test
+    @DisplayName("The death trigger creates an untapped red 1/1 Mercenary creature token")
+    void mercenaryHasCorrectCreatedCharacteristics() {
+        Permanent griffin = harness.addToBattlefieldAndReturn(player1, new WantedGriffin());
+        destroyWithShock(griffin);
+
+        Permanent mercenary = findPermanents(player1, "Mercenary").getFirst();
+        assertThat(mercenary.getCard().isToken()).isTrue();
+        assertThat(mercenary.getCard().getType()).isEqualTo(CardType.CREATURE);
+        assertThat(mercenary.getCard().getColor()).isEqualTo(CardColor.RED);
+        assertThat(mercenary.getCard().getSubtypes()).containsExactly(CardSubtype.MERCENARY);
+        assertThat(gqs.getEffectivePower(gd, mercenary)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, mercenary)).isEqualTo(1);
+        assertThat(mercenary.isTapped()).isFalse();
+        assertThat(findPermanents(player2, "Mercenary")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A newly created Mercenary cannot pay its tap cost")
+    void mercenaryCannotActivateWithSummoningSickness() {
+        Permanent griffin = harness.addToBattlefieldAndReturn(player1, new WantedGriffin());
+        destroyWithShock(griffin);
+        Permanent mercenary = findPermanents(player1, "Mercenary").getFirst();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(mercenary);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, index, 0, null, mercenary.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(mercenary.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A Mercenary can boost itself, and the boost expires at end of turn")
+    void mercenaryCanBoostItselfUntilEndOfTurn() {
+        Permanent griffin = harness.addToBattlefieldAndReturn(player1, new WantedGriffin());
+        destroyWithShock(griffin);
+        Permanent mercenary = findPermanents(player1, "Mercenary").getFirst();
+        mercenary.setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(mercenary);
+
+        harness.activateAbility(player1, index, 0, null, mercenary.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, mercenary)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mercenary)).isEqualTo(1);
+        assertThat(mercenary.isTapped()).isTrue();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gqs.getEffectivePower(gd, mercenary)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, mercenary)).isEqualTo(1);
+    }
+
     private void destroyWithShock(Permanent griffin) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, griffin.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, griffin.getId());
         harness.passBothPriorities();
     }
 }
