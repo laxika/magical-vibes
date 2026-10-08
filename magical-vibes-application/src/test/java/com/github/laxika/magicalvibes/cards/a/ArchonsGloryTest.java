@@ -36,6 +36,40 @@ class ArchonsGloryTest extends BaseCardTest {
     }
 
     @Test
+    void canDeclineBargainWhenAnEligibleArtifactIsAvailable() {
+        harness.addToBattlefield(player1, new CandyTrail());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BesottedKnight());
+
+        castArchonsGlory(target.getId());
+
+        harness.assertOnBattlefield(player1, "Candy Trail");
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(target.hasKeyword(Keyword.LIFELINK)).isFalse();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void cannotBargainWithoutChoosingASacrifice() {
+        harness.addToBattlefield(player1, new CandyTrail());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BesottedKnight());
+        harness.setHand(player1, List.of(new ArchonsGlory()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castKickedInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Archon's Glory");
+        harness.assertOnBattlefield(player1, "Candy Trail");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void withBargainSacrificesArtifactAndGrantsFlyingAndLifelink() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new CandyTrail());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BesottedKnight());
