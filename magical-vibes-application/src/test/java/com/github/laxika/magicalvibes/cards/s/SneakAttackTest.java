@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.g.Guma;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SneakAttack.class, Guma.class, Mountain.class})
+@CardUsed({SneakAttack.class, Guma.class, Mountain.class, Disenchant.class})
 class SneakAttackTest extends BaseCardTest {
 
     @Test
@@ -51,8 +52,8 @@ class SneakAttackTest extends BaseCardTest {
         assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
         harness.assertOnBattlefield(player1, "Guma");
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Guma");
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Guma");
@@ -72,8 +73,7 @@ class SneakAttackTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.addToBattlefield(player1, new Guma());
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Guma")).isEqualTo(1);
@@ -92,5 +92,71 @@ class SneakAttackTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Guma");
         harness.assertNotOnBattlefield(player1, "Guma");
+    }
+
+    @Test
+    @DisplayName("Activation during an end step preserves haste through cleanup and waits for the next end step")
+    void activationDuringEndStepWaitsForNextEndStep() {
+        harness.addToBattlefield(player1, new SneakAttack());
+        harness.setHand(player1, List.of(new Guma()));
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.assertOnBattlefield(player1, "Guma");
+        assertThat(findPermanent(player1, "Guma").hasKeyword(Keyword.HASTE)).isTrue();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Guma");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Guma");
+        harness.assertInGraveyard(player1, "Guma");
+    }
+
+    @Test
+    @DisplayName("Accepting with no creature in hand completes without a card choice")
+    void noCreatureInHandCompletesWithoutChoice() {
+        harness.addToBattlefield(player1, new SneakAttack());
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Removing Sneak Attack in response does not stop its ability or delayed sacrifice")
+    void abilityAndSacrificeSurviveSourceRemoval() {
+        harness.addToBattlefield(player1, new SneakAttack());
+        harness.setHand(player1, List.of(new Guma()));
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Sneak Attack"));
+        harness.assertNotOnBattlefield(player1, "Sneak Attack");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Guma");
+        assertThat(findPermanent(player1, "Guma").hasKeyword(Keyword.HASTE)).isTrue();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Guma");
+        harness.assertInGraveyard(player1, "Guma");
     }
 }
