@@ -86,6 +86,57 @@ class SokkaBoldBoomerangerTest extends BaseCardTest {
     }
 
     @Test
+    void canChooseZeroWithoutDiscardingOrDrawing() {
+        Card kept = new Forest();
+        Card undrawn = new Forest();
+        harness.setLibrary(player1, List.of(undrawn));
+        harness.setHand(player1, List.of(new SokkaBoldBoomeranger(), kept));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void enteringWithEmptyHandDoesNotDraw() {
+        Card undrawn = new Forest();
+        harness.setLibrary(player1, List.of(undrawn));
+        harness.setHand(player1, List.of(new SokkaBoldBoomeranger()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentsArtifactSpellDoesNotPutCountersOnSokka() {
+        Permanent sokka = harness.addToBattlefieldAndReturn(player1, new SokkaBoldBoomeranger());
+        harness.setHand(player2, List.of(new Spellbook()));
+        harness.forceActivePlayer(player2);
+        harness.ensurePriority(player2);
+
+        harness.castArtifact(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(sokka.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertOnBattlefield(player2, "Spellbook");
+    }
+
+    @Test
     void unrelatedSpellsDoNotPutCountersOnSokka() {
         harness.addToBattlefield(player1, new SokkaBoldBoomeranger());
         harness.setHand(player1, List.of(new GrizzlyBears()));
