@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.b.BanishingLight;
 import com.github.laxika.magicalvibes.cards.c.CharcoalDiamond;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.s.SoulWarden;
+import com.github.laxika.magicalvibes.cards.t.ThreefoldThunderhulk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -20,7 +22,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AbuelosAwakening.class, BanishingLight.class, CharcoalDiamond.class, HolyDay.class, Pacifism.class})
+@CardUsed({AbuelosAwakening.class, BanishingLight.class, CharcoalDiamond.class, HolyDay.class, Pacifism.class,
+        SoulWarden.class, ThreefoldThunderhulk.class})
 class AbuelosAwakeningTest extends BaseCardTest {
 
     @Test
@@ -34,7 +37,7 @@ class AbuelosAwakeningTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2, artifact.getId());
         harness.passBothPriorities();
 
-        Permanent returned = findPermanent(artifact);
+        Permanent returned = findPermanent(player1, artifact.getName());
         assertThat(gqs.isCreature(gd, returned)).isTrue();
         assertThat(gqs.effectiveCreatureSubtypes(gd, returned)).contains(CardSubtype.SPIRIT);
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(3);
@@ -54,7 +57,7 @@ class AbuelosAwakeningTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0, enchantment.getId());
         harness.passBothPriorities();
 
-        Permanent returned = findPermanent(enchantment);
+        Permanent returned = findPermanent(player1, enchantment.getName());
         assertThat(gqs.isCreature(gd, returned)).isTrue();
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(1);
@@ -82,10 +85,39 @@ class AbuelosAwakeningTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3 + xValue);
     }
 
-    private Permanent findPermanent(Card card) {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(card.getId()))
-                .findFirst()
-                .orElseThrow();
+    @Test
+    @DisplayName("The returned noncreature artifact enters as a creature")
+    void returnedArtifactTriggersCreatureEntryAbilities() {
+        harness.addToBattlefield(player1, new SoulWarden());
+        harness.setLife(player1, 20);
+        Card artifact = new CharcoalDiamond();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.setHand(player1, List.of(new AbuelosAwakening()));
+        addMana(0);
+
+        harness.castSorcery(player1, 0, 0, artifact.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 21);
+        assertThat(findPermanent(player1, artifact.getName()).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Adds X counters to intrinsic entry counters and sets base power to one")
+    void retainsIntrinsicEntryCountersAndCreatureSubtype() {
+        Card artifact = new ThreefoldThunderhulk();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.setHand(player1, List.of(new AbuelosAwakening()));
+        addMana(2);
+
+        harness.castSorcery(player1, 0, 2, artifact.getId());
+        resolveAllTriggers();
+
+        Permanent returned = findPermanent(player1, artifact.getName());
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(6);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, returned)).contains(CardSubtype.GNOME, CardSubtype.SPIRIT);
+        assertThat(countPermanents(player1, "Gnome")).isEqualTo(6);
     }
 }
