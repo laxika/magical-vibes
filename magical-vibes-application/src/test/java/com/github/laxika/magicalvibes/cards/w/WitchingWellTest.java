@@ -25,8 +25,7 @@ class WitchingWellTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
                 .containsExactly(library.get(0), library.get(1));
@@ -55,6 +54,74 @@ class WitchingWellTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstCard, secondCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+    @Test
+    void scryCanKeepBothCardsInReverseOrder() {
+        List<Card> library = List.of(new WitchingWell(), new WitchingWell(), new WitchingWell());
+        harness.setLibrary(player1, library);
+        harness.setHand(player1, List.of(new WitchingWell()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(library.get(1), library.get(0), library.get(2));
+    }
+
+    @Test
+    void scryCanPutBothCardsOnBottomInChosenOrder() {
+        List<Card> library = List.of(new WitchingWell(), new WitchingWell(), new WitchingWell());
+        harness.setLibrary(player1, library);
+        harness.setHand(player1, List.of(new WitchingWell()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(library.get(2), library.get(1), library.get(0));
+    }
+
+    @Test
+    void scryUsesOnlyAvailableCardInShortLibrary() {
+        WitchingWell libraryCard = new WitchingWell();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player1, List.of(new WitchingWell()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(libraryCard);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+    }
+
+    @Test
+    void tappedWellCanBeSacrificedDuringOpponentsTurn() {
+        Permanent well = harness.addToBattlefieldAndReturn(player1, new WitchingWell());
+        well.setTapped(true);
+        List<Card> library = List.of(new WitchingWell(), new WitchingWell());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, library);
+        harness.forceActivePlayer(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(well);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(well.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(library);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 }
