@@ -34,8 +34,7 @@ class VoidslimeTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.castFromHand(player2, firstWing, "{W}{U}");
         harness.passPriority(player2);
-        harness.castInstant(player1, 0, firstWing.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, firstWing.getId());
 
         harness.assertInGraveyard(player2, "Azorius First-Wing");
         harness.assertNotOnBattlefield(player2, "Azorius First-Wing");
@@ -57,8 +56,7 @@ class VoidslimeTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passPriority(player2);
 
-        harness.castInstant(player1, 0, ragworm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, ragworm.getId());
 
         assertThat(ragwormPermanent.isTapped()).isTrue();
         assertThat(harness.getGameData().stack).isEmpty();
@@ -81,12 +79,42 @@ class VoidslimeTest extends BaseCardTest {
                 .orElseThrow();
         harness.passPriority(player2);
 
-        harness.castInstant(player1, 0, trigger.getCard().getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, trigger.getCard().getId());
 
         harness.assertOnBattlefield(player2, "Coiling Oracle");
         assertThat(harness.getGameData().stack).noneMatch(entry ->
                 entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
+    }
+
+    @Test
+    @DisplayName("Counters only the chosen ability when two abilities share a source")
+    void countersOnlyChosenAbilityFromSameSource() {
+        Permanent ragworm = harness.addToBattlefieldAndReturn(player2, new SimicRagworm());
+        ragworm.tap();
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.setHand(player1, List.of(new Voidslime()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, null, null);
+        StackEntry firstAbility = harness.getGameData().stack.getLast();
+        harness.activateAbility(player2, 0, null, null);
+        StackEntry secondAbility = harness.getGameData().stack.getLast();
+        harness.passPriority(player2);
+
+        harness.castAndResolveInstant(player1, 0, firstAbility.getTargetableId());
+
+        assertThat(harness.getGameData().stack).containsExactly(secondAbility);
+        assertThat(ragworm.isTapped()).isTrue();
+        harness.assertOnBattlefield(player2, "Simic Ragworm");
+        harness.assertNotInGraveyard(player2, "Simic Ragworm");
+        harness.assertInGraveyard(player1, "Voidslime");
+
+        harness.passBothPriorities();
+
+        assertThat(ragworm.isTapped()).isFalse();
+        assertThat(harness.getGameData().stack).isEmpty();
     }
 
     @Test
