@@ -133,14 +133,63 @@ class SlowMotionTest extends BaseCardTest {
         harness.assertNotInHand(player2, "Slow Motion");
     }
 
+    @Test
+    @DisplayName("The upkeep player cannot sacrifice a creature they no longer control")
+    void doesNotSacrificeAfterCreatureChangesController() {
+        Permanent creature = addCreature(player2);
+        attachSlowMotion(player1, creature);
+
+        advanceToUpkeep(player2);
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        gd.playerBattlefields.get(player1.getId()).add(creature);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        harness.assertNotInGraveyard(player2, "Giant Cockroach");
+    }
+
+    @Test
+    @DisplayName("The upkeep trigger still sacrifices the creature after Slow Motion leaves")
+    void upkeepTriggerSurvivesAuraLeavingBattlefield() {
+        Permanent creature = addCreature(player2);
+        Permanent aura = attachSlowMotion(player1, creature);
+
+        advanceToUpkeep(player2);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Slow Motion");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Giant Cockroach");
+    }
+
+    @Test
+    @DisplayName("The return trigger leaves other copies of Slow Motion in the graveyard")
+    void returnsOnlyTheAuraThatDied() {
+        SlowMotion otherCopy = new SlowMotion();
+        harness.setGraveyard(player1, List.of(otherCopy));
+        Permanent creature = addCreature(player1);
+        Permanent aura = attachSlowMotion(player1, creature);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(aura.getCard()).doesNotContain(otherCopy);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherCopy);
+    }
+
     private Permanent addCreature(Player player) {
         return harness.addToBattlefieldAndReturn(player, new GiantCockroach());
     }
 
     private Permanent attachSlowMotion(Player controller, Permanent creature) {
-        Permanent aura = new Permanent(new SlowMotion());
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new SlowMotion());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
         return aura;
     }
 
