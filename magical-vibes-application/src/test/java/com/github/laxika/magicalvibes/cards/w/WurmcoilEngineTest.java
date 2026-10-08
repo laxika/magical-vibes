@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.s.SliceInTwain;
+import com.github.laxika.magicalvibes.cards.r.RevokeExistence;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WurmcoilEngine.class, SliceInTwain.class, RevokeExistence.class})
 class WurmcoilEngineTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Wurmcoil Engine puts it on the battlefield")
@@ -27,36 +28,32 @@ class WurmcoilEngineTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Wurmcoil Engine");
     }
-
-    // ===== Death trigger =====
 
     @Test
     @DisplayName("When Wurmcoil Engine dies, two Phyrexian Wurm tokens are created")
     void deathTriggerCreatesTwoTokens() {
         harness.addToBattlefield(player1, new WurmcoilEngine());
 
-        // Use Wrath of God to kill Wurmcoil Engine
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
+        // Destroy Wurmcoil Engine with Slice in Twain
+        harness.setHand(player1, List.of(new SliceInTwain()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
-        harness.passBothPriorities(); // Resolve Wrath — Wurmcoil Engine dies
-
-        GameData gd = harness.getGameData();
+        harness.setLibrary(player1, List.of(new WurmcoilEngine()));
+        harness.castInstant(player1, 0, findPermanent(player1, "Wurmcoil Engine").getId());
+        harness.passBothPriorities(); // Resolve Slice in Twain — Wurmcoil Engine dies
 
         // Wurmcoil Engine should be in the graveyard
         harness.assertInGraveyard(player1, "Wurmcoil Engine");
 
-        // Two death triggers should be on the stack
-        assertThat(gd.stack).hasSize(2);
+        // Both tokens are created by a single triggered ability.
+        assertThat(gd.stack).hasSize(1);
+        assertThat(findPermanents(player1, "Phyrexian Wurm")).isEmpty();
 
-        // Resolve both death triggers
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
 
         // Two Phyrexian Wurm tokens should be on the battlefield
         List<Permanent> tokens = findPermanents(player1, "Phyrexian Wurm");
@@ -68,15 +65,16 @@ class WurmcoilEngineTest extends BaseCardTest {
     void tokensHaveCorrectProperties() {
         harness.addToBattlefield(player1, new WurmcoilEngine());
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.setHand(player1, List.of(new SliceInTwain()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
-        harness.passBothPriorities(); // Resolve Wrath
-        harness.passBothPriorities(); // Resolve first death trigger
-        harness.passBothPriorities(); // Resolve second death trigger
+        harness.setLibrary(player1, List.of(new WurmcoilEngine()));
+        harness.castInstant(player1, 0, findPermanent(player1, "Wurmcoil Engine").getId());
+        harness.passBothPriorities(); // Resolve Slice in Twain
+        resolveAllTriggers();
 
         List<Permanent> tokens = findPermanents(player1, "Phyrexian Wurm");
+        assertThat(tokens).hasSize(2);
 
         for (Permanent token : tokens) {
             assertThat(token.getCard().getPower()).isEqualTo(3);
@@ -95,13 +93,13 @@ class WurmcoilEngineTest extends BaseCardTest {
     void tokensHaveCorrectKeywords() {
         harness.addToBattlefield(player1, new WurmcoilEngine());
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.setHand(player1, List.of(new SliceInTwain()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
-        harness.passBothPriorities(); // Resolve Wrath
-        harness.passBothPriorities(); // Resolve first death trigger
-        harness.passBothPriorities(); // Resolve second death trigger
+        harness.setLibrary(player1, List.of(new WurmcoilEngine()));
+        harness.castInstant(player1, 0, findPermanent(player1, "Wurmcoil Engine").getId());
+        harness.passBothPriorities(); // Resolve Slice in Twain
+        resolveAllTriggers();
 
         List<Permanent> tokens = findPermanents(player1, "Phyrexian Wurm");
         assertThat(tokens).hasSize(2);
@@ -120,5 +118,33 @@ class WurmcoilEngineTest extends BaseCardTest {
                 .filter(p -> p.getCard().getKeywords().contains(Keyword.LIFELINK))
                 .findFirst().orElseThrow();
         assertThat(lifelinkToken.getCard().getKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+    }
+
+    @Test
+    @DisplayName("Exiling Wurmcoil Engine does not create death tokens")
+    void exileDoesNotTrigger() {
+        Permanent engine = harness.addToBattlefieldAndReturn(player1, new WurmcoilEngine());
+        harness.setHand(player1, List.of(new RevokeExistence()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castSorcery(player1, 0, engine.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(engine.getCard().getId())).isNotNull();
+        harness.assertNotInGraveyard(player1, "Wurmcoil Engine");
+    }
+
+    @Test
+    @DisplayName("Wurmcoil Engine gains life from unblocked combat damage")
+    void unblockedCombatGainsLife() {
+        addCreatureReady(player1, new WurmcoilEngine());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(26);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
 }
