@@ -86,6 +86,64 @@ class XiraArienTest extends BaseCardTest {
         assertThat(xira.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Cannot activate with summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        Permanent xira = harness.addToBattlefieldAndReturn(player1, new XiraArien());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(xira.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Draw happens on resolution, after mana and tap costs are paid")
+    void drawWaitsForResolution() {
+        Permanent xira = addReadyXira(player1);
+        AvoidFate topCard = new AvoidFate();
+        AvoidFate nextCard = new AvoidFate();
+        harness.setLibrary(player2, List.of(topCard, nextCard));
+        addActivationMana();
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(xira.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard, nextCard);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 1).contains(topCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(nextCard);
+    }
+
+    @Test
+    @DisplayName("Can activate during the opponent's turn")
+    void canActivateDuringOpponentsTurn() {
+        addReadyXira(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setLibrary(player1, List.of(new AvoidFate()));
+        addActivationMana();
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        harness.assertInHand(player1, "Avoid Fate");
+    }
+
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
