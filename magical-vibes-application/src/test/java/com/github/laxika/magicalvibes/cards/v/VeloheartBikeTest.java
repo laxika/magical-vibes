@@ -1,19 +1,21 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BeastriderVanguard;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VeloheartBike.class, BeastriderVanguard.class})
 class VeloheartBikeTest extends BaseCardTest {
 
     @Test
@@ -34,7 +36,7 @@ class VeloheartBikeTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping the Bike prompts for a color and adds one mana")
     void tapsForAnyColorMana() {
-        Permanent bike = addBikeReady(player1);
+        Permanent bike = addCreatureReady(player1, new VeloheartBike());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -49,8 +51,8 @@ class VeloheartBikeTest extends BaseCardTest {
     @Test
     @DisplayName("Crew 2 animates the Bike and taps the crew")
     void crewAnimatesBikeAndTapsCrew() {
-        Permanent bike = addBikeReady(player1);
-        Permanent crew = addCreatureReady(player1);
+        Permanent bike = addCreatureReady(player1, new VeloheartBike());
+        Permanent crew = addCreatureReady(player1, new BeastriderVanguard());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
@@ -65,17 +67,67 @@ class VeloheartBikeTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, bike)).isFalse();
     }
 
-    private Permanent addBikeReady(Player player) {
-        Permanent permanent = new Permanent(new VeloheartBike());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("An uncrewed Bike can produce mana on the turn it enters")
+    void newlyEnteredUncrewedBikeCanProduceMana() {
+        Permanent bike = harness.addToBattlefieldAndReturn(player1, new VeloheartBike());
+        bike.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(bike.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 
-    private Permanent addCreatureReady(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Summoning-sick creatures can crew, but a newly entered crewed Bike cannot tap for mana")
+    void summoningSicknessAllowsCrewButPreventsAnimatedBikeMana() {
+        Permanent bike = harness.addToBattlefieldAndReturn(player1, new VeloheartBike());
+        bike.setSummoningSick(true);
+        Permanent crew = harness.addToBattlefieldAndReturn(player1, new BeastriderVanguard());
+        crew.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(crew.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, bike)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, bike)).isTrue();
+        assertThat(bike.isTapped()).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(bike.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Bike can be crewed and stays tapped")
+    void tappedBikeCanBeCrewed() {
+        Permanent bike = addCreatureReady(player1, new VeloheartBike());
+        Permanent crew = addCreatureReady(player1, new BeastriderVanguard());
+        bike.tap();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, bike)).isTrue();
+        assertThat(bike.isTapped()).isTrue();
+        assertThat(crew.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tapped creatures cannot pay the crew cost")
+    void tappedCreatureCannotCrew() {
+        Permanent bike = addCreatureReady(player1, new VeloheartBike());
+        Permanent crew = addCreatureReady(player1, new BeastriderVanguard());
+        crew.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gqs.isCreature(gd, bike)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
