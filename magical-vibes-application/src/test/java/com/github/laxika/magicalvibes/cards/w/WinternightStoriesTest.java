@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.c.CraterhoofBehemoth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,8 +16,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WinternightStories.class, GrizzlyBears.class, Island.class})
+@CardUsed({WinternightStories.class, GrizzlyBears.class, Island.class, CraterhoofBehemoth.class})
 class WinternightStoriesTest extends BaseCardTest {
 
     @Test
@@ -128,13 +130,59 @@ class WinternightStoriesTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
     }
 
-    private void castStories(List<Card> library) {
-        harness.setLibrary(player1, library);
-        harness.setHand(player1, List.of(new WinternightStories()));
+    @Test
+    void canDiscardACreatureThatWasInHandBeforeDrawing() {
+        Card creature = new CraterhoofBehemoth();
+        harness.setHand(player1, List.of(new WinternightStories(), creature));
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, gd.playerHands.get(player1.getId()).indexOf(creature));
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3).allMatch(Island.class::isInstance);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
+    }
+
+    @Test
+    void harmonizePowerGreaterThanGenericCostStillRequiresBlueMana() {
+        Card spell = new WinternightStories();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CraterhoofBehemoth());
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFlashbackWithTapCost(player1, 0, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
+    }
+
+    @Test
+    void harmonizePowerGreaterThanGenericCostCanBePaidWithOnlyBlueMana() {
+        Card spell = new WinternightStories();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CraterhoofBehemoth());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
+        harness.setGraveyard(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castFlashbackWithTapCost(player1, 0, List.of(creature.getId()));
+        assertThat(creature.isTapped()).isTrue();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+    }
+
+    private void castStories(List<Card> library) {
+        harness.setLibrary(player1, library);
+        harness.castFromHand(player1, new WinternightStories(), "{2}{U}");
         harness.passBothPriorities();
     }
 }
