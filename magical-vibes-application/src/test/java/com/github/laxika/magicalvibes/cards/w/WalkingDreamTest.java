@@ -68,4 +68,39 @@ class WalkingDreamTest extends BaseCardTest {
 
         assertThat(dream.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Walking Dream does not count its controller's creatures")
+    void ignoresControllersCreatures() {
+        Permanent dream = addCreatureReady(player1, new WalkingDream());
+        addCreatureReady(player1, new SpinedWurm());
+        addCreatureReady(player1, new SpinedWurm());
+        dream.tap();
+
+        harness.performUntapStep(player1);
+
+        assertThat(dream.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Walking Dream reevaluates the opponent's creature count at each untap step")
+    void reevaluatesOpponentCreatureCount() {
+        Permanent dream = addCreatureReady(player1, new WalkingDream());
+        Permanent firstWurm = addCreatureReady(player2, new SpinedWurm());
+        Permanent secondWurm = addCreatureReady(player2, new SpinedWurm());
+        firstWurm.tap();
+        secondWurm.tap();
+        dream.tap();
+
+        harness.performUntapStep(player1);
+
+        assertThat(dream.isTapped()).isTrue();
+
+        gd.playerBattlefields.get(player2.getId()).remove(secondWurm);
+        gd.playerGraveyards.get(player2.getId()).add(secondWurm.getCard());
+
+        harness.performUntapStep(player1);
+
+        assertThat(dream.isTapped()).isFalse();
+    }
 }
