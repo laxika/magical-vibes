@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.TalasScout;
+import com.github.laxika.magicalvibes.cards.z.ZanarkandAncientMetropolis;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -87,6 +88,93 @@ class VaanStreetThiefTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(topCard.getId())).isNull();
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty damaged player's library still creates a Treasure")
+    void emptyLibraryCreatesTreasure() {
+        addCreatureReady(player1, new VaanStreetThief()).setAttacking(true);
+        harness.setLibrary(player2, List.of());
+
+        resolveCombatAndTrigger();
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Accepting without enough mana leaves the card exiled and creates a Treasure")
+    void cannotPayCreatesTreasure() {
+        Permanent vaan = addCreatureReady(player1, new VaanStreetThief());
+        vaan.setAttacking(true);
+        Card topCard = new Divination();
+        topCard.setOwnerId(player2.getId());
+        harness.setLibrary(player2, List.of(topCard));
+
+        resolveCombatAndTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        assertThat(vaan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Casting an owned spell does not put counters on Scouts")
+    void ownedSpellDoesNotBoost() {
+        Permanent vaan = addCreatureReady(player1, new VaanStreetThief());
+        Permanent scout = addCreatureReady(player1, new TalasScout());
+        Card spell = new Divination();
+        spell.setOwnerId(player1.getId());
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(vaan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(scout.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("An unowned spell boosts only matching permanents controlled by its caster")
+    void unownedSpellBoostsOnlyControlledMatchingPermanents() {
+        Permanent vaan = addCreatureReady(player1, new VaanStreetThief());
+        Permanent scout = addCreatureReady(player1, new TalasScout());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingScout = addCreatureReady(player2, new TalasScout());
+        Card spell = new Divination();
+        spell.setOwnerId(player2.getId());
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(vaan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(scout.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opposingScout.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @CardUsed({ZanarkandAncientMetropolis.class})
+    @DisplayName("An exiled land with an Adventure offers its nonland Adventure for casting")
+    void landAdventureCanBeCast() {
+        addCreatureReady(player1, new VaanStreetThief()).setAttacking(true);
+        Card topCard = new ZanarkandAncientMetropolis();
+        topCard.setOwnerId(player2.getId());
+        harness.setLibrary(player2, List.of(topCard));
+
+        resolveCombat();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }
 
     private Permanent addAttackingScout() {
