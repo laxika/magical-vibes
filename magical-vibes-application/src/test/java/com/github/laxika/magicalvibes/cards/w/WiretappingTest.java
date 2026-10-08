@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Wiretapping.class, GrizzlyBears.class, AirElemental.class})
+@CardUsed({Wiretapping.class, GrizzlyBears.class, AirElemental.class, Island.class, IslandSanctuary.class})
 class WiretappingTest extends BaseCardTest {
 
     @Test
@@ -37,7 +38,7 @@ class WiretappingTest extends BaseCardTest {
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         Permanent wiretapping = findPermanent(player1, "Wiretapping");
         ExiledCardEntry exiled = gd.findExiledCard(chosen.getId());
@@ -116,9 +117,101 @@ class WiretappingTest extends BaseCardTest {
         assertThat(gd.findExiledCard(imprinted.getId())).isNotNull();
     }
 
-    private Permanent addWiretappingWithImprint(Card imprinted) {
+    @Test
+    @DisplayName("The extra draw can bring the hand to exactly nine cards")
+    void offersFreePlayAtExactlyNineAfterExtraDraw() {
+        Card imprinted = new GrizzlyBears();
+        addWiretappingWithImprint(imprinted);
+        harness.setHand(player1, cards(7));
+        harness.setLibrary(player1, List.of(new AirElemental(), new AirElemental()));
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(9);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Still draws an extra card when there is no exiled card")
+    void drawsWithoutImprint() {
         harness.addToBattlefield(player1, new Wiretapping());
-        Permanent wiretapping = findPermanent(player1, "Wiretapping");
+        harness.setHand(player1, cards(7));
+        harness.setLibrary(player1, List.of(new AirElemental(), new AirElemental()));
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(9);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Replacing the draw-step draw does not trigger Wiretapping")
+    void replacedDrawDoesNotTrigger() {
+        addWiretappingWithImprint(new GrizzlyBears());
+        harness.addToBattlefield(player1, new IslandSanctuary());
+        harness.setHand(player1, cards(8));
+        harness.setLibrary(player1, List.of(new AirElemental(), new AirElemental()));
+
+        advanceToDraw(player1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(8);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A land exiled by Wiretapping uses the normal land allowance")
+    void cannotPlayTwoExiledLandsWithOneLandAllowance() {
+        Card firstLand = new Island();
+        Card secondLand = new Island();
+        addWiretappingWithImprint(firstLand);
+        addWiretappingWithImprint(secondLand);
+        harness.setHand(player1, cards(8));
+        harness.setLibrary(player1, List.of(new AirElemental(), new AirElemental(), new AirElemental()));
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard() instanceof Island).hasSize(1);
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
+        assertThat(List.of(firstLand, secondLand).stream()
+                .filter(card -> gd.findExiledCard(card.getId()) != null).count()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Hideaway exiles the only card in a short library")
+    void hideawayWithOneCardInLibrary() {
+        Card chosen = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(chosen));
+        harness.setHand(player1, List.of(new Wiretapping()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(chosen.getId()).faceDown()).isTrue();
+        assertThat(gd.getImprintedCard(findPermanent(player1, "Wiretapping").getCard())).isSameAs(chosen);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    private Permanent addWiretappingWithImprint(Card imprinted) {
+        Permanent wiretapping = harness.addToBattlefieldAndReturn(player1, new Wiretapping());
         gd.setImprintedCard(wiretapping.getCard(), imprinted);
         gd.addToExile(player1.getId(), imprinted);
         return wiretapping;
@@ -136,7 +229,6 @@ class WiretappingTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2;
         harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 }
