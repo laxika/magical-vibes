@@ -29,7 +29,7 @@ class WallOfWaterTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Activating ability puts BoostSelf on the stack with self as target")
+    @DisplayName("Activating ability puts an ability on the stack with Wall of Water as its source")
     void activatingAbilityPutsOnStack() {
         Permanent wall = addCreatureReady(player1, new WallOfWater());
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -40,7 +40,7 @@ class WallOfWaterTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getTargetId()).isEqualTo(wall.getId());
+        assertThat(entry.getSourcePermanentId()).isEqualTo(wall.getId());
     }
 
     @Test
@@ -90,6 +90,57 @@ class WallOfWaterTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfWater());
+        wall.setSummoningSick(true);
+        wall.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wall.getEffectivePower()).isEqualTo(1);
+        assertThat(wall.getEffectiveToughness()).isEqualTo(5);
+        assertThat(wall.isTapped()).isTrue();
+    }
+
+    @Test
+    void stackedActivationsBoostOnlyTheirSourceOnResolution() {
+        Permanent wall = addCreatureReady(player1, new WallOfWater());
+        Permanent otherWall = addCreatureReady(player1, new WallOfWater());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(wall.getEffectivePower()).isZero();
+
+        harness.passBothPriorities();
+        assertThat(wall.getEffectivePower()).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(wall.getEffectivePower()).isEqualTo(2);
+        assertThat(wall.getEffectiveToughness()).isEqualTo(5);
+        assertThat(otherWall.getEffectivePower()).isZero();
+        assertThat(otherWall.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    void cannotPayBlueCostWithOtherMana() {
+        Permanent wall = addCreatureReady(player1, new WallOfWater());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(wall.getEffectivePower()).isZero();
     }
 
 }
