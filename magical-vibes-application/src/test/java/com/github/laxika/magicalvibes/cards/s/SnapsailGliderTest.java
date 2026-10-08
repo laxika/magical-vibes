@@ -71,8 +71,8 @@ class SnapsailGliderTest extends BaseCardTest {
     @DisplayName("Still has flying with more than three artifacts, including tapped artifacts")
     void hasFlyingWithFourArtifactsIncludingTappedArtifacts() {
         Permanent glider = harness.addToBattlefieldAndReturn(player1, new SnapsailGlider());
-        harness.addToBattlefieldAndReturn(player1, new AccordersShield()).setTapped(true);
-        harness.addToBattlefieldAndReturn(player1, new AccordersShield()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new AccordersShield()).tap();
+        harness.addToBattlefieldAndReturn(player1, new AccordersShield()).tap();
         harness.addToBattlefield(player1, new AccordersShield());
 
         assertThat(gqs.hasKeyword(gd, glider, Keyword.FLYING)).isTrue();

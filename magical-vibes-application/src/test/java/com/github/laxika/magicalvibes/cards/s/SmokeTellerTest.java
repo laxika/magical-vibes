@@ -51,7 +51,7 @@ class SmokeTellerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent teller = harness.addToBattlefieldAndReturn(player1, new SmokeTeller());
         teller.setSummoningSick(true);
-        teller.setTapped(true);
+        teller.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new MasterOfPearls());
         target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
         harness.addMana(player1, ManaColor.COLORLESS, 1);

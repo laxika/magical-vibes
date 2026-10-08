@@ -183,7 +183,7 @@ class SoulDivinerTest extends BaseCardTest {
     @DisplayName("A tapped Soul Diviner cannot activate again")
     void rejectsTappedSource() {
         Permanent diviner = addReadyDiviner();
-        diviner.setTapped(true);
+        diviner.tap();
         diviner.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         assertThatThrownBy(this::activateDiviner).isInstanceOf(IllegalStateException.class);

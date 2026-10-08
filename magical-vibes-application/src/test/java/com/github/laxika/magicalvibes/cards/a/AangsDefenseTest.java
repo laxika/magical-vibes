@@ -92,7 +92,7 @@ class AangsDefenseTest extends BaseCardTest {
     @DisplayName("A tapped blocking creature remains a legal target")
     void canTargetTappedBlocker() {
         Permanent blocker = addBlockingCreature(player1);
-        blocker.setTapped(true);
+        blocker.tap();
         setupDefense();
         harness.setLibrary(player1, List.of(new Forest()));
 

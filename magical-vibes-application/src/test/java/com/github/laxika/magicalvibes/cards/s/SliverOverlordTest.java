@@ -100,7 +100,7 @@ class SliverOverlordTest extends BaseCardTest {
     void searchesWhileTappedAndSummoningSick() {
         Permanent overlord = harness.addToBattlefieldAndReturn(player1, new SliverOverlord());
         overlord.setSummoningSick(true);
-        overlord.setTapped(true);
+        overlord.tap();
         MetallicSliver sliver = new MetallicSliver();
         harness.setLibrary(player1, List.of(sliver));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -135,7 +135,7 @@ class SliverOverlordTest extends BaseCardTest {
     void gainsControlWhileTappedAndSummoningSick() {
         Permanent overlord = harness.addToBattlefieldAndReturn(player1, new SliverOverlord());
         overlord.setSummoningSick(true);
-        overlord.setTapped(true);
+        overlord.tap();
         Permanent sliver = addCreatureReady(player2, new MetallicSliver());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

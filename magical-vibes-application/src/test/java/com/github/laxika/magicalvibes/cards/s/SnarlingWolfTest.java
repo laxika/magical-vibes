@@ -106,7 +106,7 @@ class SnarlingWolfTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickOnOpponentsTurn() {
         Permanent wolf = harness.addToBattlefieldAndReturn(player1, new SnarlingWolf());
         wolf.setSummoningSick(true);
-        wolf.setTapped(true);
+        wolf.tap();
         harness.forceActivePlayer(player2);
         addMana(player1, 1);
 

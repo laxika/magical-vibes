@@ -102,7 +102,7 @@ class SnarlingUndorakTest extends BaseCardTest {
     @DisplayName("Repeated activations can boost itself while tapped and summoning sick")
     void canBoostItselfRepeatedlyWhileTappedAndSummoningSick() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new SnarlingUndorak());
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 

@@ -131,7 +131,7 @@ class SorceressQueenTest extends BaseCardTest {
     @DisplayName("A tapped Sorceress Queen cannot activate again")
     void cannotActivateWhileTapped() {
         Permanent queen = addCreatureReady(player1, new SorceressQueen());
-        queen.setTapped(true);
+        queen.tap();
         Permanent bear = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bear.getId()))

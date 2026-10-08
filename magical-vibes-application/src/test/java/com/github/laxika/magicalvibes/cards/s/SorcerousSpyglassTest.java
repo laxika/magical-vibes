@@ -206,7 +206,7 @@ class SorcerousSpyglassTest extends BaseCardTest {
     void namedCardTriggeredAbilityStillUntaps() {
         addReadySpyglass(player1, "Lightning-Rig Crew");
         Permanent crew = addCreatureReady(player1, new LightningRigCrew());
-        crew.setTapped(true);
+        crew.tap();
         harness.setHand(player1, List.of(new LightningRigCrew()));
         harness.addMana(player1, ManaColor.RED, 3);
 

@@ -89,7 +89,7 @@ class SomberwaldDryadTest extends BaseCardTest {
     @DisplayName("A tapped Forest still prevents blocking Somberwald Dryad")
     void tappedForestStillEnablesForestwalk() {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        forest.setTapped(true);
+        forest.tap();
         Permanent blocker = addCreatureReady(player2, new SomberwaldDryad());
         Permanent attacker = addCreatureReady(player1, new SomberwaldDryad());
         attacker.setAttacking(true);

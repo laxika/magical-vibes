@@ -137,10 +137,10 @@ class SoratamiMirrorMageTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick, returning tapped lands")
     void canActivateWithTappedSourceAndTappedLands() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new SoratamiMirrorMage());
-        source.setTapped(true);
+        source.tap();
         source.setSummoningSick(true);
         for (int i = 0; i < 3; i++) {
-            harness.addToBattlefieldAndReturn(player1, new Island()).setTapped(true);
+            harness.addToBattlefieldAndReturn(player1, new Island()).tap();
         }
         Permanent target = harness.addToBattlefieldAndReturn(player2, new WanderingOnes());
         harness.setHand(player1, List.of());

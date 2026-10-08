@@ -110,7 +110,7 @@ class GridlockTest extends BaseCardTest {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent tappedArtifact = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
         Permanent unchosenCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        tappedArtifact.setTapped(true);
+        tappedArtifact.tap();
         harness.setHand(player1, List.of(new Gridlock()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 

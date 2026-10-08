@@ -175,8 +175,8 @@ class SoldeviSageTest extends BaseCardTest {
     @Test
     void canSacrificeTappedLands() {
         addCreatureReady(player1, new SoldeviSage());
-        harness.addToBattlefieldAndReturn(player1, new Forest()).setTapped(true);
-        harness.addToBattlefieldAndReturn(player1, new Island()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
+        harness.addToBattlefieldAndReturn(player1, new Island()).tap();
         harness.setHand(player1, List.of());
         seedLibrary();
 

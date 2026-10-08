@@ -131,7 +131,7 @@ class SoldierReplicaTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent replica = harness.addToBattlefieldAndReturn(player1, new SoldierReplica());
         replica.setSummoningSick(true);
-        replica.setTapped(true);
+        replica.tap();
         Permanent target = addCreatureReady(player2, new FangrenHunter());
         target.setAttacking(true);
         addActivationMana();

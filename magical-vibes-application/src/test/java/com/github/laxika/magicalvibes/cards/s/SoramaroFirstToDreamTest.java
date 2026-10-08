@@ -117,9 +117,9 @@ class SoramaroFirstToDreamTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent soramaro = addSoramaro();
         soramaro.setSummoningSick(true);
-        soramaro.setTapped(true);
+        soramaro.tap();
         harness.addToBattlefield(player1, new OboroPalaceInTheClouds());
-        findPermanent(player1, "Oboro, Palace in the Clouds").setTapped(true);
+        findPermanent(player1, "Oboro, Palace in the Clouds").tap();
         harness.setHand(player1, List.of(new OboroPalaceInTheClouds()));
         OboroPalaceInTheClouds drawnCard = new OboroPalaceInTheClouds();
         harness.setLibrary(player1, List.of(drawnCard));

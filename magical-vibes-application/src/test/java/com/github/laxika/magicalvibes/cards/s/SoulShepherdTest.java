@@ -120,7 +120,7 @@ class SoulShepherdTest extends BaseCardTest {
     @DisplayName("A tapped Soul Shepherd can activate repeatedly, paying a creature for each activation")
     void tappedShepherdCanActivateRepeatedly() {
         var shepherd = harness.addToBattlefieldAndReturn(player1, new SoulShepherd());
-        shepherd.setTapped(true);
+        shepherd.tap();
         shepherd.setSummoningSick(true);
         harness.setGraveyard(player1, List.of(new BenalishKnight(), new SerratedBiskelion()));
         harness.addMana(player1, ManaColor.WHITE, 2);

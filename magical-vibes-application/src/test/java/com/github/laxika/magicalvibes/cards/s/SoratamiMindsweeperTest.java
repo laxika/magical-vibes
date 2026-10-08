@@ -135,8 +135,8 @@ class SoratamiMindsweeperTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Mindsweeper can return a tapped land and mill a one-card library")
     void tappedSourceAndLandCanMillShortLibrary() {
-        harness.addToBattlefieldAndReturn(player1, new SoratamiMindsweeper()).setTapped(true);
-        harness.addToBattlefieldAndReturn(player1, new TendoIceBridge()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new SoratamiMindsweeper()).tap();
+        harness.addToBattlefieldAndReturn(player1, new TendoIceBridge()).tap();
         harness.setLibrary(player2, List.of(new GnarledMass()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

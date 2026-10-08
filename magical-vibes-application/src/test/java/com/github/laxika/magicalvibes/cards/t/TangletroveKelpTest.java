@@ -208,7 +208,7 @@ class TangletroveKelpTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(drawn));
 
         advanceToCombatAndResolve(player1);
-        kelp.setTapped(true);
+        kelp.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();

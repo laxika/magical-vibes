@@ -91,7 +91,7 @@ class MerfolkWindrobberTest extends BaseCardTest {
         Card drawnCard = new MerfolkWindrobber();
         harness.setLibrary(player1, List.of(drawnCard));
         Permanent windrobber = harness.addToBattlefieldAndReturn(player1, new MerfolkWindrobber());
-        windrobber.setTapped(true);
+        windrobber.tap();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, null, null);

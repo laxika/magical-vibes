@@ -101,7 +101,7 @@ class RagingKronchTest extends BaseCardTest {
     void cantAttackAloneWithTappedCompanion() {
         addCreatureReady(player1, new RagingKronch());
         Permanent companion = addCreatureReady(player1, new ViviensGrizzly());
-        companion.setTapped(true);
+        companion.tap();
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);

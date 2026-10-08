@@ -235,9 +235,9 @@ class SoratamiSavantTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent savant = harness.addToBattlefieldAndReturn(player1, new SoratamiSavant());
         savant.setSummoningSick(true);
-        savant.setTapped(true);
+        savant.tap();
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
-        island.setTapped(true);
+        island.tap();
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.forceActivePlayer(player2);
         DevotedRetainer retainer = new DevotedRetainer();

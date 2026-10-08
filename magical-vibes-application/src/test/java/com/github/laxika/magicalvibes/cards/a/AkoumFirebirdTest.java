@@ -96,7 +96,7 @@ class AkoumFirebirdTest extends BaseCardTest {
 
     @Test
     void tappedFirebirdIsNotRequiredToAttack() {
-        addCreatureReady(player1, new AkoumFirebird()).setTapped(true);
+        addCreatureReady(player1, new AkoumFirebird()).tap();
 
         declareAttackers(List.of());
     }

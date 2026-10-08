@@ -103,7 +103,7 @@ class SorcererOfTheFangTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent sorcerer = addReadySorcerer(player1);
-        sorcerer.setTapped(true);
+        sorcerer.tap();
         addActivationMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))

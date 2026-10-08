@@ -172,12 +172,12 @@ class SoratamiMirrorGuardTest extends BaseCardTest {
     @DisplayName("A tapped land controlled by the activator returns to its actual owner")
     void returnsBorrowedTappedLandToOwner() {
         Permanent guard = harness.addToBattlefieldAndReturn(player1, new SoratamiMirrorGuard());
-        guard.setTapped(true);
+        guard.tap();
         guard.setSummoningSick(true);
         Island borrowedIsland = new Island();
         borrowedIsland.setOwnerId(player2.getId());
         Permanent land = harness.addToBattlefieldAndReturn(player1, borrowedIsland);
-        land.setTapped(true);
+        land.tap();
         Permanent hound = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());

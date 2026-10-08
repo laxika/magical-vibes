@@ -195,7 +195,7 @@ class SoulGuideLanternTest extends BaseCardTest {
 
     @Test
     void tappedLanternCannotActivateEitherAbility() {
-        harness.addToBattlefieldAndReturn(player1, new SoulGuideLantern()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new SoulGuideLantern()).tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

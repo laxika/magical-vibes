@@ -68,7 +68,7 @@ class SoulOfZendikarTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         Permanent soul = harness.addToBattlefieldAndReturn(player1, new SoulOfZendikar());
-        soul.setTapped(true);
+        soul.tap();
         soul.setSummoningSick(true);
         harness.addMana(player1, ManaColor.GREEN, 4);
         harness.addMana(player1, ManaColor.COLORLESS, 6);

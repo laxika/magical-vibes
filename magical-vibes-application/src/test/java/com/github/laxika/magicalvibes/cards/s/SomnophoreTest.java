@@ -109,7 +109,7 @@ class SomnophoreTest extends BaseCardTest {
         Permanent somnophore = addCreatureReady(player1, new Somnophore());
         somnophore.setAttacking(true);
         Permanent target = addCreatureReady(player2, new CoralMerfolk());
-        target.setTapped(true);
+        target.tap();
 
         resolveCombat();
         harness.handlePermanentChosen(player1, target.getId());

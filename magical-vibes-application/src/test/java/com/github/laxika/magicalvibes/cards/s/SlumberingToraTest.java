@@ -102,7 +102,7 @@ class SlumberingToraTest extends BaseCardTest {
     @DisplayName("A tapped Slumbering Tora can animate without untapping")
     void tappedToraCanAnimate() {
         Permanent tora = addReadyTora(player1);
-        tora.setTapped(true);
+        tora.tap();
         harness.setHand(player1, List.of(new RibbonsOfTheReikai()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

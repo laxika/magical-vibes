@@ -218,7 +218,7 @@ class SongOfBloodTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(attacker.getPowerModifier()).isEqualTo(1);
 
-        attacker.setTapped(false);
+        attacker.untap();
         attacker.setAttacking(false);
         declareAttackers(List.of(0));
         resolveAllTriggers();

@@ -141,7 +141,7 @@ class TaniwhaTest extends BaseCardTest {
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
 
         advanceToUpkeepWithTaniwhaPhasedIn();
-        island.setTapped(true);
+        island.tap();
         harness.passBothPriorities();
 
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(island);

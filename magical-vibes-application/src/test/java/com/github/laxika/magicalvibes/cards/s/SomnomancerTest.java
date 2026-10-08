@@ -86,7 +86,7 @@ class SomnomancerTest extends BaseCardTest {
     @DisplayName("An already tapped creature is a legal target")
     void canTargetTappedCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
         castSomnomancer();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, target.getId());

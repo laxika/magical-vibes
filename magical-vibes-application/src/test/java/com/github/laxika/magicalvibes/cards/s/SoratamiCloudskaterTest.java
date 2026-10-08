@@ -122,10 +122,10 @@ class SoratamiCloudskaterTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick, returning a tapped land")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent cloudskater = harness.addToBattlefieldAndReturn(player1, new SoratamiCloudskater());
-        cloudskater.setTapped(true);
+        cloudskater.tap();
         cloudskater.setSummoningSick(true);
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
-        island.setTapped(true);
+        island.tap();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);

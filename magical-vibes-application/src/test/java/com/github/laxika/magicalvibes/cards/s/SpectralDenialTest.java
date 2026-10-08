@@ -234,7 +234,7 @@ class SpectralDenialTest extends BaseCardTest {
     @DisplayName("Tapped creatures with power four still reduce the casting cost")
     void tappedCreatureStillGrantsDiscount() {
         var creature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        creature.setTapped(true);
+        creature.tap();
 
         GrizzlyBears bears = new GrizzlyBears();
         harness.castFromHand(player1, bears, "{1}{G}");

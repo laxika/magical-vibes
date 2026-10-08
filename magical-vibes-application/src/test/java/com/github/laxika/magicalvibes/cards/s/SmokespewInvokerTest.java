@@ -146,7 +146,7 @@ class SmokespewInvokerTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent invoker = harness.addToBattlefieldAndReturn(player1, new SmokespewInvoker());
-        invoker.setTapped(true);
+        invoker.tap();
         invoker.setSummoningSick(true);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GloweringRogon());
         addActivationMana();

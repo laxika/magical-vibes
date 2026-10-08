@@ -125,7 +125,7 @@ class SoltariEmissaryTest extends BaseCardTest {
     @DisplayName("A tapped Soltari Emissary can gain shadow")
     void tappedEmissaryCanGainShadow() {
         Permanent emissary = addEmissaryReady(player1);
-        emissary.setTapped(true);
+        emissary.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);

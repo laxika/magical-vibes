@@ -118,7 +118,7 @@ class CadaverousKnightTest extends BaseCardTest {
     void regenerationDoesNotRequireTappingOrHaste() {
         Permanent knight = harness.addToBattlefieldAndReturn(player1, new CadaverousKnight());
         knight.setSummoningSick(true);
-        knight.setTapped(true);
+        knight.tap();
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

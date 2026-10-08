@@ -61,7 +61,7 @@ class KeenBuccaneerTest extends BaseCardTest {
     void exhaustWhileTappedAndSummoningSick() {
         Permanent buccaneer = harness.addToBattlefieldAndReturn(player1, new KeenBuccaneer());
         buccaneer.setSummoningSick(true);
-        buccaneer.setTapped(true);
+        buccaneer.tap();
         Forest drawnCard = new Forest();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(drawnCard));

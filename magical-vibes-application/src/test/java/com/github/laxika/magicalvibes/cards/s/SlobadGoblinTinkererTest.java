@@ -92,7 +92,7 @@ class SlobadGoblinTinkererTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent slobad = harness.addToBattlefieldAndReturn(player1, new SlobadGoblinTinkerer());
         slobad.setSummoningSick(true);
-        slobad.setTapped(true);
+        slobad.tap();
         harness.addToBattlefield(player1, new AngelsFeather());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AngelsFeather());
 

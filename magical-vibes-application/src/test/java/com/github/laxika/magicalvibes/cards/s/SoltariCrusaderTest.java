@@ -97,7 +97,7 @@ class SoltariCrusaderTest extends BaseCardTest {
     void abilityWorksWhileTappedAndSummoningSick() {
         Permanent crusader = harness.addToBattlefieldAndReturn(player1, new SoltariCrusader());
         crusader.setSummoningSick(true);
-        crusader.setTapped(true);
+        crusader.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 

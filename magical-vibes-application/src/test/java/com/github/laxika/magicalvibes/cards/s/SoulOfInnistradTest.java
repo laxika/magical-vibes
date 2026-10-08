@@ -138,7 +138,7 @@ class SoulOfInnistradTest extends BaseCardTest {
     void battlefieldAbilityAllowsZeroTargetsWithoutTapping() {
         Permanent soul = harness.addToBattlefieldAndReturn(player1, new SoulOfInnistrad());
         soul.setSummoningSick(true);
-        soul.setTapped(true);
+        soul.tap();
         harness.setGraveyard(player1, List.of());
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

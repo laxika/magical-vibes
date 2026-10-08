@@ -202,7 +202,7 @@ class SoulOfShandalarTest extends BaseCardTest {
     void battlefieldAbilityDoesNotRequireTapOrSurvivingSource() {
         Permanent soul = harness.addToBattlefieldAndReturn(player1, new SoulOfShandalar());
         soul.setSummoningSick(true);
-        soul.setTapped(true);
+        soul.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 5);

@@ -82,8 +82,8 @@ class GraazUnstoppableJuggernautTest extends BaseCardTest {
 
     @Test
     void defenderAndTappedCreaturesAreNotRequiredToAttack() {
-        addCreatureReady(player1, new GraazUnstoppableJuggernaut()).setTapped(true);
-        addCreatureReady(player1, new GrizzlyBears()).setTapped(true);
+        addCreatureReady(player1, new GraazUnstoppableJuggernaut()).tap();
+        addCreatureReady(player1, new GrizzlyBears()).tap();
         Permanent wall = addCreatureReady(player1, new WallOfWood());
 
         declareAttackers(List.of());

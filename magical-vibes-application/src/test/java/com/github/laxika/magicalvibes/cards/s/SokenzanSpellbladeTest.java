@@ -166,7 +166,7 @@ class SokenzanSpellbladeTest extends BaseCardTest {
     void activatedAbilityDoesNotRequireTappingOrHaste() {
         Permanent spellblade = harness.addToBattlefieldAndReturn(player1, new SokenzanSpellblade());
         spellblade.setSummoningSick(true);
-        spellblade.setTapped(true);
+        spellblade.tap();
         harness.setHand(player1, List.of(new SakuraTribeScout()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

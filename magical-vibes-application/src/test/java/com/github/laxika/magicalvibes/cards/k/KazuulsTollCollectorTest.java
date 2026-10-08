@@ -96,7 +96,7 @@ class KazuulsTollCollectorTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent collector = harness.addToBattlefieldAndReturn(player1, new KazuulsTollCollector());
         collector.setSummoningSick(true);
-        collector.setTapped(true);
+        collector.tap();
         Permanent equipment = addEquipment(player1);
         prepareSorcerySpeedActivation(player1);
 

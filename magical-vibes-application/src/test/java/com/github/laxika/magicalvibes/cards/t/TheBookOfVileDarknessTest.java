@@ -298,7 +298,7 @@ class TheBookOfVileDarknessTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TheBookOfVileDarkness());
         harness.addToBattlefield(player1, new EyeOfVecna());
         harness.addToBattlefield(player1, new HandOfVecna());
-        findPermanent(player1, "The Book of Vile Darkness").setTapped(true);
+        findPermanent(player1, "The Book of Vile Darkness").tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

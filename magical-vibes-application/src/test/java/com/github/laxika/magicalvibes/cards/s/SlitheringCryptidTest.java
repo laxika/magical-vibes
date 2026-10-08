@@ -77,7 +77,7 @@ class SlitheringCryptidTest extends BaseCardTest {
     @Test
     void cannotActivateTappedToken() {
         Permanent mutagen = createMutagen();
-        mutagen.setTapped(true);
+        mutagen.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> activateMutagen(mutagen, findPermanent(player1, "Slithering Cryptid")))

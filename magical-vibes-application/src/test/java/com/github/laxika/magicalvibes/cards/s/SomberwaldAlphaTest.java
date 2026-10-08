@@ -152,7 +152,7 @@ class SomberwaldAlphaTest extends BaseCardTest {
     void tappedSummoningSickAlphaCanGrantItselfTrample() {
         Permanent alpha = harness.addToBattlefieldAndReturn(player1, new SomberwaldAlpha());
         alpha.setSummoningSick(true);
-        alpha.setTapped(true);
+        alpha.tap();
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, alpha.getId());

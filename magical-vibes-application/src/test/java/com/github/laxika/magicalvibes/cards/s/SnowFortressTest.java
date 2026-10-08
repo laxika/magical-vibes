@@ -110,7 +110,7 @@ class SnowFortressTest extends BaseCardTest {
     @DisplayName("Repeated pumps stack and expire at end of turn even while tapped and summoning sick")
     void repeatedPumpsExpire() {
         Permanent fortress = harness.addToBattlefieldAndReturn(player1, new SnowFortress());
-        fortress.setTapped(true);
+        fortress.tap();
         fortress.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 

@@ -166,7 +166,7 @@ class SorrowsPathTest extends BaseCardTest {
         setupCombat(attackerA, attackerB);
         assignBlocker(blockerA, attackerA);
         assignBlocker(blockerB, attackerB);
-        blockerA.setTapped(true);
+        blockerA.tap();
 
         activatePath(path, blockerA, blockerB);
         resolveAllTriggers();
@@ -202,7 +202,7 @@ class SorrowsPathTest extends BaseCardTest {
     @Test
     void untappingPathDoesNotTriggerDamage() {
         Permanent path = harness.addToBattlefieldAndReturn(player1, new SorrowsPath());
-        path.setTapped(true);
+        path.tap();
         Permanent creature = addCreatureReady(player1, new Lurker());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

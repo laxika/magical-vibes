@@ -93,7 +93,7 @@ class SlitheringShadeTest extends BaseCardTest {
     void canPumpWhileTappedAndSummoningSick() {
         harness.setHand(player1, List.of(new SlitheringShade()));
         Permanent shade = addCreatureReady(player1, new SlitheringShade());
-        shade.setTapped(true);
+        shade.tap();
         shade.setSummoningSick(true);
         harness.addMana(player1, ManaColor.BLACK, 1);
 

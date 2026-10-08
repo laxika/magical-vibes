@@ -55,7 +55,7 @@ class SphinxOfMagosiTest extends BaseCardTest {
     void abilityWorksWhileTappedAndSummoningSick() {
         Permanent sphinx = harness.addToBattlefieldAndReturn(player1, new SphinxOfMagosi());
         sphinx.setSummoningSick(true);
-        sphinx.setTapped(true);
+        sphinx.tap();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Island()));
         harness.addMana(player1, ManaColor.BLUE, 3);

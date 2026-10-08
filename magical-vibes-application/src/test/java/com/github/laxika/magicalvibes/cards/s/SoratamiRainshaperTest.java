@@ -161,9 +161,9 @@ class SoratamiRainshaperTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and return a tapped land")
     void canActivateWithTappedSourceAndLand() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new SoratamiRainshaper());
-        source.setTapped(true);
+        source.tap();
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Island());
-        land.setTapped(true);
+        land.tap();
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbility(player1, battlefieldIndex(player1, "Soratami Rainshaper"), 0, source.getId());

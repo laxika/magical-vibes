@@ -50,7 +50,7 @@ class SongbirdSonicScreamerTest extends BaseCardTest {
     void tappedSummoningSickSongbirdPaysDiscardBeforeFlyingResolves() {
         Permanent songbird = harness.addToBattlefieldAndReturn(player1, new SongbirdSonicScreamer());
         songbird.setSummoningSick(true);
-        songbird.setTapped(true);
+        songbird.tap();
         harness.setHand(player1, List.of(new SongbirdSonicScreamer()));
 
         harness.activateAbility(player1, 0, null, null);

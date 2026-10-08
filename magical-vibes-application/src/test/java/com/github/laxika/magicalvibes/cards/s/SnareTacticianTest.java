@@ -136,7 +136,7 @@ class SnareTacticianTest extends BaseCardTest {
     void canTargetAlreadyTappedCreature() {
         harness.addToBattlefield(player1, new SnareTactician());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SnareTactician());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new FlourishingFox()));
         harness.setLibrary(player1, List.of(new SnareTactician()));
         harness.addMana(player1, ManaColor.WHITE, 1);

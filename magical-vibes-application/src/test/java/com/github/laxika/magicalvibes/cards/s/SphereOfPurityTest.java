@@ -103,7 +103,7 @@ class SphereOfPurityTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, null, player1.getId());
         harness.passBothPriorities();
-        shard.setTapped(false);
+        shard.untap();
         harness.activateAbility(player2, 0, null, player1.getId());
         harness.passBothPriorities();
 
@@ -121,7 +121,7 @@ class SphereOfPurityTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, player1.getId());
         harness.passBothPriorities();
-        shard.setTapped(false);
+        shard.untap();
         harness.activateAbility(player1, 1, null, player2.getId());
         harness.passBothPriorities();
 

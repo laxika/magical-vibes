@@ -123,7 +123,7 @@ class SoldeviSteamBeastTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        beast.setTapped(true);
+        beast.tap();
         beast.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new KjeldoranEscort());
         blocker.setBlocking(true);

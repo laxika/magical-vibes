@@ -121,7 +121,7 @@ class SnowmeltStagTest extends BaseCardTest {
     void tappedSummoningSickCreatureCanActivateAbility() {
         Permanent stag = harness.addToBattlefieldAndReturn(player1, new SnowmeltStag());
         stag.setSummoningSick(true);
-        stag.setTapped(true);
+        stag.tap();
         addAbilityMana(player1);
 
         harness.activateAbility(player1, 0, 0, null, null);

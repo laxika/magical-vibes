@@ -102,7 +102,7 @@ class SnowDayTest extends BaseCardTest {
     @DisplayName("An already tapped friendly creature skips only its controller's next untap")
     void alreadyTappedFriendlyCreatureSkipsNextUntapOnly() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        creature.setTapped(true);
+        creature.tap();
         harness.setLibrary(player1, List.of(new Forest(), new Island()));
         harness.setHand(player1, List.of(new SnowDay()));
         harness.addMana(player1, ManaColor.BLUE, 2);

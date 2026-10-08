@@ -115,7 +115,7 @@ class SludgeCrawlerTest extends BaseCardTest {
     void tappedSummoningSickCrawlerCanActivate() {
         Permanent crawler = harness.addToBattlefieldAndReturn(player1, new SludgeCrawler());
         crawler.setSummoningSick(true);
-        crawler.setTapped(true);
+        crawler.tap();
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, null);

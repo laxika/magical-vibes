@@ -130,7 +130,7 @@ class SoldierOfFortuneTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
-        assertThat(gameLogContains(player2.getName() + " shuffles their library.")).isTrue();
+        assertThat(gameLogContains(player2.getUsername() + " shuffles their library.")).isTrue();
     }
 
     @Test
@@ -148,7 +148,7 @@ class SoldierOfFortuneTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownCard);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);
         assertThat(gd.stack).isEmpty();
-        assertThat(gameLogContains(player2.getName() + " shuffles their library.")).isTrue();
-        assertThat(gameLogContains(player1.getName() + " shuffles their library.")).isFalse();
+        assertThat(gameLogContains(player2.getUsername() + " shuffles their library.")).isTrue();
+        assertThat(gameLogContains(player1.getUsername() + " shuffles their library.")).isFalse();
     }
 }

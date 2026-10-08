@@ -110,7 +110,7 @@ class SmirkingSpelljackerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.findExiledCard(spell.getId())).isNotNull();
-        source.setTapped(false);
+        source.untap();
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

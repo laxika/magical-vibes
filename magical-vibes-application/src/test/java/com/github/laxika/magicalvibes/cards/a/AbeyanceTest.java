@@ -181,7 +181,7 @@ class AbeyanceTest extends BaseCardTest {
     @DisplayName("An instant already on the stack still resolves after Abeyance")
     void doesNotCounterAnExistingSpell() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new BenalishInfantry());
-        creature.setTapped(true);
+        creature.tap();
         harness.castFromHand(player2, new Vitalize(), "{G}");
         harness.setHand(player1, List.of(new Abeyance()));
         harness.addMana(player1, ManaColor.WHITE, 2);

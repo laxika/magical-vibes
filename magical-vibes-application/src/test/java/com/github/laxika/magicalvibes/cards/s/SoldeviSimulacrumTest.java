@@ -116,7 +116,7 @@ class SoldeviSimulacrumTest extends BaseCardTest {
     void repeatedActivationsWhileTappedAndSummoningSick() {
         Permanent simulacrum = harness.addToBattlefieldAndReturn(player1, new SoldeviSimulacrum());
         simulacrum.setSummoningSick(true);
-        simulacrum.setTapped(true);
+        simulacrum.tap();
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, 0, null, null);

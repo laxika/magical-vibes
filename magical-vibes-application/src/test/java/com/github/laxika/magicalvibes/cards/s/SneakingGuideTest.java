@@ -147,7 +147,7 @@ class SneakingGuideTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent guide = addCreatureReady(player1, new SneakingGuide());
-        guide.setTapped(true);
+        guide.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, guide.getId()))

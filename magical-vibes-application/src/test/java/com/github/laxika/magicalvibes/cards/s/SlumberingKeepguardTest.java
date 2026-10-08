@@ -128,7 +128,7 @@ class SlumberingKeepguardTest extends BaseCardTest {
     @DisplayName("Repeated activations work while tapped and summoning sick and keep their resolved bonus")
     void repeatedActivationsStackAndDoNotRecountAfterResolution() {
         Permanent keepguard = harness.addToBattlefieldAndReturn(player1, new SlumberingKeepguard());
-        keepguard.setTapped(true);
+        keepguard.tap();
         keepguard.setSummoningSick(true);
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new AuraOfSilence());
         harness.addMana(player1, ManaColor.WHITE, 2);

@@ -187,7 +187,7 @@ class DeepfathomEchoTest extends BaseCardTest {
         echo.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
         giant.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        giant.setTapped(true);
+        giant.tap();
         harness.setLibrary(player1, List.of(new Forest()));
 
         advanceToCombat(player1);

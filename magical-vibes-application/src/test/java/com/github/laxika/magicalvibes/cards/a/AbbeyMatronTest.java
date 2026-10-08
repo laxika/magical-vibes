@@ -88,7 +88,7 @@ class AbbeyMatronTest extends BaseCardTest {
     @Test
     void abilityCannotBeActivatedWhileTapped() {
         Permanent matron = addCreatureReady(player1, new AbbeyMatron());
-        matron.setTapped(true);
+        matron.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

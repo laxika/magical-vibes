@@ -56,7 +56,7 @@ class SonicAssaultTest extends BaseCardTest {
     @DisplayName("An already tapped creature still causes damage to its controller")
     void alreadyTappedOwnCreatureStillDamagesController() {
         Permanent target = addCreatureReady(player1, new VernadiShieldmate());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new SonicAssault()));
         addMana();
 

@@ -250,7 +250,7 @@ class AltarOfDementiaTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AltarOfDementia());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        bears.setTapped(true);
+        bears.tap();
         trimDeck(player2, 10);
         UUID altarId = harness.getPermanentId(player1, "Altar of Dementia");
         harness.setHand(player2, List.of(new Disenchant()));
