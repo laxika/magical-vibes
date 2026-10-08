@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.k.KamiOfOldStone;
 import com.github.laxika.magicalvibes.cards.l.LanternKami;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -38,6 +39,9 @@ class VenerableKumoTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
         harness.assertInHand(player1, "Lantern Kami");
         harness.assertNotInGraveyard(player1, "Lantern Kami");
     }
@@ -58,6 +62,7 @@ class VenerableKumoTest extends BaseCardTest {
 
         var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
+        assertThat(choice.minCount()).isEqualTo(1);
         assertThat(choice.validCardIds()).containsExactlyInAnyOrder(cheapSpirit.getId(), boundarySpirit.getId());
         assertThat(choice.validCardIds()).doesNotContain(expensiveSpirit.getId(), nonSpirit.getId(), opponentSpirit.getId());
     }
@@ -73,8 +78,11 @@ class VenerableKumoTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Lantern Kami");
         harness.assertNotInHand(player1, "Lantern Kami");
@@ -89,5 +97,34 @@ class VenerableKumoTest extends BaseCardTest {
         killKumoWithHideousLaughter();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Reach allows Venerable Kumo to block a flying creature")
+    void blocksFlyingCreature() {
+        addCreatureReady(player1, new LanternKami());
+        var kumo = addCreatureReady(player2, new VenerableKumo());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(kumo.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Soulshift returns a Spirit at the mana value four boundary")
+    void returnsSpiritAtManaValueLimit() {
+        harness.addToBattlefield(player1, new VenerableKumo());
+        Card spirit = new KamiOfOldStone();
+        harness.setGraveyard(player1, List.of(spirit));
+
+        killKumoWithHideousLaughter();
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Kami of Old Stone");
+        harness.assertNotInGraveyard(player1, "Kami of Old Stone");
     }
 }
