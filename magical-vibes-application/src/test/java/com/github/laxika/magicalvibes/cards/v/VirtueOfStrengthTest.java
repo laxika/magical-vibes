@@ -90,8 +90,7 @@ class VirtueOfStrengthTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VirtueOfStrength());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent glimmerpost = harness.addToBattlefieldAndReturn(player1, new Glimmerpost());
-        Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
-        elves.setSummoningSick(false);
+        Permanent elves = addCreatureReady(player1, new LlanowarElves());
 
         harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(forest));
         harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(glimmerpost));
@@ -99,5 +98,58 @@ class VirtueOfStrengthTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(4);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    void adventureCannotTargetAnOpponentsGraveyard() {
+        Card land = new Forest();
+        harness.setGraveyard(player2, List.of(land));
+        harness.setHand(player1, List.of(new VirtueOfStrength()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castAdventure(player1, 0, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void adventureWithMissingTargetGoesToGraveyardWithoutExilePermission() {
+        Card land = new Forest();
+        VirtueOfStrength card = new VirtueOfStrength();
+        harness.setGraveyard(player1, List.of(land));
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAdventure(player1, 0, land.getId());
+        gd.playerGraveyards.get(player1.getId()).remove(land);
+        gd.addToExile(player1.getId(), land);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(land);
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    void twoCopiesProduceNineTimesTheBasicLandMana() {
+        harness.addToBattlefield(player1, new VirtueOfStrength());
+        harness.addToBattlefield(player1, new VirtueOfStrength());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(forest));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(9);
+    }
+
+    @Test
+    void enchantmentDoesNotMultiplyOpponentsBasicLandMana() {
+        harness.addToBattlefield(player1, new VirtueOfStrength());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        harness.passPriority(player1);
+        harness.tapPermanent(player2, gd.playerBattlefields.get(player2.getId()).indexOf(forest));
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
     }
 }
