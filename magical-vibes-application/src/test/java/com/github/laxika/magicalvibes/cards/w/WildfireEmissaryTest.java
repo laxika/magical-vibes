@@ -146,12 +146,58 @@ class WildfireEmissaryTest extends BaseCardTest {
         Permanent emissary = addCreatureReady(player2, new WildfireEmissary());
         Permanent whiteCreature = addCreatureReady(player1, new SpectralGuardian());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player1);
 
         assertThat(emissary.getMarkedDamage()).isZero();
         assertThat(whiteCreature.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A newly entered Emissary can pump using generic and red mana")
+    void summoningSickEmissaryCanPumpWithMixedMana() {
+        Permanent emissary = harness.addToBattlefieldAndReturn(player1, new WildfireEmissary());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(emissary.getPowerModifier()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(emissary.getPowerModifier()).isEqualTo(1);
+        assertThat(emissary.getToughnessModifier()).isZero();
+        assertThat(emissary.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The pump affects only the Emissary that activated it")
+    void pumpOnlyAffectsItsSource() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new WildfireEmissary());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new WildfireEmissary());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getPowerModifier()).isZero();
+        assertThat(second.getPowerModifier()).isEqualTo(1);
+        assertThat(second.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Nonwhite creatures can block and damage Wildfire Emissary")
+    void nonWhiteCreatureCanBlockAndDealDamage() {
+        Permanent attacker = addCreatureReady(player1, new WildfireEmissary());
+        Permanent blocker = addCreatureReady(player2, new WildfireEmissary());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player1);
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        assertThat(blocker.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player2, 20);
     }
 }
