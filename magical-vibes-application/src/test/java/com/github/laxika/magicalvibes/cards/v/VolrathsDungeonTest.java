@@ -45,7 +45,7 @@ class VolrathsDungeonTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Discarding a card lets the controller put a target player's hand card on top of their library")
+    @DisplayName("Discarding a card makes the target player choose a hand card to put on top of their library")
     void discardsAndTucksTargetHandCard() {
         harness.addToBattlefield(player1, new VolrathsDungeon());
         Card discardedCard = new RagingGoblin();
@@ -117,6 +117,104 @@ class VolrathsDungeonTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Paying life requires at least five life and does not destroy the Dungeon as a cost")
+    void insufficientLifeCannotPayDestroyCost() {
+        harness.addToBattlefield(player1, new VolrathsDungeon());
+        harness.setLife(player2, 4);
+        prepareMainPhase(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player2, 4);
+        harness.assertOnBattlefield(player1, "Volrath's Dungeon");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The controller may pay life during upkeep and destruction waits for resolution")
+    void controllerCanDestroyDungeonOutsideMainPhase() {
+        harness.addToBattlefield(player1, new VolrathsDungeon());
+        harness.setLife(player1, 20);
+        prepareMainPhase(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 15);
+        harness.assertOnBattlefield(player1, "Volrath's Dungeon");
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Volrath's Dungeon");
+        harness.assertInGraveyard(player1, "Volrath's Dungeon");
+    }
+
+    @Test
+    @DisplayName("The controller may target themselves after discarding a different card")
+    void discardAbilityCanTargetController() {
+        harness.addToBattlefield(player1, new VolrathsDungeon());
+        Card discardedCard = new RagingGoblin();
+        Card chosenCard = new RagingGoblin();
+        Card oldTop = new RagingGoblin();
+        harness.setHand(player1, List.of(discardedCard, chosenCard));
+        harness.setLibrary(player1, List.of(oldTop));
+        prepareMainPhase(player1);
+
+        harness.activateAbility(player1, 0, 1, null, player1.getId());
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedCard);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(chosenCard.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).startsWith(chosenCard, oldTop);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty controller hand cannot pay the discard cost")
+    void discardAbilityRequiresCardToDiscard() {
+        harness.addToBattlefield(player1, new VolrathsDungeon());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new RagingGoblin()));
+        prepareMainPhase(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player2, "Raging Goblin");
+    }
+
+    @Test
+    @DisplayName("Destroying the Dungeon in response does not stop its discard ability")
+    void discardAbilityResolvesAfterSourceIsDestroyed() {
+        harness.addToBattlefield(player1, new VolrathsDungeon());
+        harness.setLife(player1, 20);
+        Card discardedCard = new RagingGoblin();
+        Card chosenCard = new RagingGoblin();
+        Card oldTop = new RagingGoblin();
+        harness.setHand(player1, List.of(discardedCard));
+        harness.setHand(player2, List.of(chosenCard));
+        harness.setLibrary(player2, List.of(oldTop));
+        prepareMainPhase(player1);
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Volrath's Dungeon");
+        harness.assertLife(player1, 15);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player2, List.of(chosenCard.getId()));
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).startsWith(chosenCard, oldTop);
+        harness.assertInGraveyard(player1, "Raging Goblin");
     }
 
     private void prepareMainPhase(com.github.laxika.magicalvibes.model.Player activePlayer) {
