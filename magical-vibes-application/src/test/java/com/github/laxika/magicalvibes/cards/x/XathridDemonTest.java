@@ -3,28 +3,26 @@ package com.github.laxika.magicalvibes.cards.x;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
+import com.github.laxika.magicalvibes.cards.c.Cloudshift;
+import com.github.laxika.magicalvibes.cards.a.AlexiosDeimosOfKosmos;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({XathridDemon.class, RuneclawBear.class, GiantSpider.class, GiantGrowth.class,
+        Cloudshift.class, AlexiosDeimosOfKosmos.class})
 class XathridDemonTest extends BaseCardTest {
-
-    private Permanent addCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    // ===== No other creatures — tap and lose 7 life =====
 
     @Test
     @DisplayName("Taps and controller loses 7 life when no other creatures are present")
@@ -62,26 +60,24 @@ class XathridDemonTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
     }
 
-    // ===== One other creature — auto-sacrifice, opponent loses life =====
-
     @Test
     @DisplayName("Auto-sacrifices the only other creature")
     void autoSacrificesOnlyOtherCreature() {
         harness.addToBattlefield(player1, new XathridDemon());
-        addCreature(player1, new GrizzlyBears()); // 2/2
+        addCreatureReady(player1, new RuneclawBear()); // 2/2
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Runeclaw Bear");
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
     }
 
     @Test
     @DisplayName("Opponent loses life equal to sacrificed creature's power (auto-sacrifice)")
     void opponentLosesLifeEqualToPowerAutoSacrifice() {
         harness.addToBattlefield(player1, new XathridDemon());
-        addCreature(player1, new GrizzlyBears()); // 2/2
+        addCreatureReady(player1, new RuneclawBear()); // 2/2
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         advanceToUpkeep(player1);
@@ -94,7 +90,7 @@ class XathridDemonTest extends BaseCardTest {
     @DisplayName("Controller does not lose life when sacrifice succeeds")
     void controllerDoesNotLoseLifeOnSuccessfulSacrifice() {
         harness.addToBattlefield(player1, new XathridDemon());
-        addCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new RuneclawBear());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         advanceToUpkeep(player1);
@@ -107,7 +103,7 @@ class XathridDemonTest extends BaseCardTest {
     @DisplayName("Xathrid Demon is not tapped when sacrifice succeeds")
     void demonNotTappedOnSuccessfulSacrifice() {
         harness.addToBattlefield(player1, new XathridDemon());
-        addCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new RuneclawBear());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
@@ -120,7 +116,7 @@ class XathridDemonTest extends BaseCardTest {
     @DisplayName("Xathrid Demon remains on the battlefield after sacrificing another creature")
     void demonRemainsAfterSacrifice() {
         harness.addToBattlefield(player1, new XathridDemon());
-        addCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new RuneclawBear());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
@@ -132,7 +128,7 @@ class XathridDemonTest extends BaseCardTest {
     @DisplayName("Opponent loses life equal to bigger creature's power")
     void opponentLosesLifeEqualToBiggerCreaturePower() {
         harness.addToBattlefield(player1, new XathridDemon());
-        addCreature(player1, new GiantSpider()); // 2/4
+        addCreatureReady(player1, new GiantSpider()); // 2/4
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         advanceToUpkeep(player1);
@@ -141,14 +137,12 @@ class XathridDemonTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore - 2);
     }
 
-    // ===== Multiple other creatures — player chooses =====
-
     @Test
     @DisplayName("Prompts player to choose when multiple other creatures are present")
     void promptsChoiceWithMultipleCreatures() {
         harness.addToBattlefield(player1, new XathridDemon());
-        Permanent bears = addCreature(player1, new GrizzlyBears());
-        Permanent spider = addCreature(player1, new GiantSpider());
+        Permanent bears = addCreatureReady(player1, new RuneclawBear());
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
@@ -164,8 +158,8 @@ class XathridDemonTest extends BaseCardTest {
     @DisplayName("Xathrid Demon itself is not in the valid sacrifice choices")
     void demonNotInValidChoices() {
         harness.addToBattlefield(player1, new XathridDemon());
-        addCreature(player1, new GrizzlyBears());
-        addCreature(player1, new GiantSpider());
+        addCreatureReady(player1, new RuneclawBear());
+        addCreatureReady(player1, new GiantSpider());
 
         Permanent demonPerm = findPermanent(player1, "Xathrid Demon");
 
@@ -179,8 +173,8 @@ class XathridDemonTest extends BaseCardTest {
     @DisplayName("Player chooses creature to sacrifice, opponent loses life equal to its power")
     void playerChoosesCreatureOpponentLosesLife() {
         harness.addToBattlefield(player1, new XathridDemon());
-        Permanent bears = addCreature(player1, new GrizzlyBears()); // 2/2
-        addCreature(player1, new GiantSpider()); // 2/4
+        Permanent bears = addCreatureReady(player1, new RuneclawBear()); // 2/2
+        addCreatureReady(player1, new GiantSpider()); // 2/4
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         advanceToUpkeep(player1);
@@ -188,14 +182,12 @@ class XathridDemonTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, bears.getId());
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Runeclaw Bear");
         harness.assertOnBattlefield(player1, "Giant Spider");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        // Opponent loses life equal to Grizzly Bears' power (2)
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
+        // Opponent loses life equal to Runeclaw Bear' power (2)
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore - 2);
     }
-
-    // ===== Does not trigger during opponent's upkeep =====
 
     @Test
     @DisplayName("Does not trigger during opponent's upkeep")
@@ -210,13 +202,11 @@ class XathridDemonTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
-    // ===== Edge cases =====
-
     @Test
     @DisplayName("Opponent's creatures are not valid sacrifice targets")
     void opponentCreaturesNotValidTargets() {
         harness.addToBattlefield(player1, new XathridDemon());
-        addCreature(player2, new GrizzlyBears());
+        addCreatureReady(player2, new RuneclawBear());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
@@ -226,7 +216,7 @@ class XathridDemonTest extends BaseCardTest {
         // Controller loses 7 life and demon is tapped (no OTHER creatures controller owns)
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 7);
         // Opponent's creature is untouched, opponent doesn't lose life from sacrifice
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Runeclaw Bear");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
     }
 
@@ -255,5 +245,92 @@ class XathridDemonTest extends BaseCardTest {
 
         // Life loss is NOT damage, so it is NOT prevented
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 7);
+    }
+
+    @Test
+    void sacrificeUsesPowerIncludingTemporaryBoost() {
+        harness.addToBattlefield(player1, new XathridDemon());
+        Permanent bears = addCreatureReady(player1, new RuneclawBear());
+        advanceToUpkeep(player1);
+
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void chosenSacrificeUsesPowerIncludingTemporaryBoost() {
+        harness.addToBattlefield(player1, new XathridDemon());
+        Permanent bears = addCreatureReady(player1, new RuneclawBear());
+        addCreatureReady(player1, new GiantSpider());
+        advanceToUpkeep(player1);
+
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
+        harness.assertOnBattlefield(player1, "Giant Spider");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        assertThat(gd.playersWhoSacrificedPermanentsThisTurn).contains(player1.getId());
+    }
+
+    @Test
+    void returnedDemonCanBeSacrificedToItsOriginalTrigger() {
+        Permanent demon = harness.addToBattlefieldAndReturn(player1, new XathridDemon());
+        advanceToUpkeep(player1);
+
+        harness.setHand(player1, List.of(new Cloudshift()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, demon.getId());
+        harness.passBothPriorities();
+        Permanent returnedDemon = findPermanent(player1, "Xathrid Demon");
+        assertThat(returnedDemon.getId()).isNotEqualTo(demon.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Xathrid Demon");
+        harness.assertInGraveyard(player1, "Xathrid Demon");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
+    }
+
+    @Test
+    void unsacrificableCreatureDoesNotAvoidPenalty() {
+        harness.addToBattlefield(player1, new XathridDemon());
+        advanceToUpkeep(player1);
+        // Set up a creature that arrived after the upkeep triggers were collected.
+        harness.addToBattlefield(player1, new AlexiosDeimosOfKosmos());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Alexios, Deimos of Kosmos");
+        assertThat(findPermanent(player1, "Xathrid Demon").isTapped()).isTrue();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(13);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void unsacrificableCreatureIsExcludedFromSacrificeChoices() {
+        harness.addToBattlefield(player1, new XathridDemon());
+        Permanent bears = addCreatureReady(player1, new RuneclawBear());
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
+        advanceToUpkeep(player1);
+        harness.addToBattlefield(player1, new AlexiosDeimosOfKosmos());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactlyInAnyOrder(bears.getId(), spider.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.assertOnBattlefield(player1, "Alexios, Deimos of Kosmos");
+        harness.assertOnBattlefield(player1, "Giant Spider");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 }
