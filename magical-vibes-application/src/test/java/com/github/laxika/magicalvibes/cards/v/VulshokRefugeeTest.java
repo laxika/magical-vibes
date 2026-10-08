@@ -1,16 +1,16 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.cards.d.Dismember;
+import com.github.laxika.magicalvibes.cards.f.Firebreathing;
+import com.github.laxika.magicalvibes.cards.m.MeliraSylvokOutcast;
+import com.github.laxika.magicalvibes.cards.s.SlashPanther;
+import com.github.laxika.magicalvibes.cards.w.Whipflare;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,30 +19,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VulshokRefugee.class, SlashPanther.class, MeliraSylvokOutcast.class,
+        VoltCharge.class, VaporSnag.class, Whipflare.class, Dismember.class, Firebreathing.class})
 class VulshokRefugeeTest extends BaseCardTest {
-
-    private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
-
-    private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
-    }
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Vulshok Refugee puts it on the stack")
@@ -54,7 +33,7 @@ class VulshokRefugeeTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Vulshok Refugee");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(VulshokRefugee.class);
     }
 
     @Test
@@ -70,24 +49,15 @@ class VulshokRefugeeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Vulshok Refugee");
     }
 
-    // ===== Protection - blocking =====
-
     @Test
     @DisplayName("Red creature cannot block Vulshok Refugee")
     void redCreatureCannotBlock() {
-        Permanent attacker = new Permanent(new VulshokRefugee());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new VulshokRefugee());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreature("Goblin Raider", 2, 2, CardColor.RED));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new SlashPanther());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -97,96 +67,62 @@ class VulshokRefugeeTest extends BaseCardTest {
     @Test
     @DisplayName("Non-red creature can block Vulshok Refugee")
     void nonRedCreatureCanBlock() {
-        Permanent attacker = new Permanent(new VulshokRefugee());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new VulshokRefugee());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new MeliraSylvokOutcast());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
     }
 
-    // ===== Protection - combat damage =====
-
     @Test
     @DisplayName("Vulshok Refugee takes no combat damage from red creature")
     void takesNoDamageFromRed() {
-        Permanent attacker = new Permanent(createCreature("Fire Elemental", 3, 3, CardColor.RED));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new SlashPanther());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new VulshokRefugee());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new VulshokRefugee());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        // Fire Elemental's 3 damage to Refugee is prevented (protection from red)
-        // Refugee's 3 damage kills Fire Elemental
         harness.assertOnBattlefield(player2, "Vulshok Refugee");
-        harness.assertInGraveyard(player1, "Fire Elemental");
+        harness.assertInGraveyard(player1, "Slash Panther");
     }
 
     @Test
     @DisplayName("Vulshok Refugee takes normal combat damage from non-red creature")
     void takesNormalDamageFromNonRed() {
-        Permanent attacker = new Permanent(createCreature("Craw Wurm", 6, 4, CardColor.GREEN));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new MeliraSylvokOutcast());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new VulshokRefugee());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new VulshokRefugee());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        // Craw Wurm deals 6 damage to Refugee (toughness 2) — dies
         harness.assertNotOnBattlefield(player2, "Vulshok Refugee");
         harness.assertInGraveyard(player2, "Vulshok Refugee");
     }
 
-    // ===== Protection - targeting =====
-
     @Test
     @DisplayName("Cannot be targeted by red instant")
     void cannotBeTargetedByRedInstant() {
-        Permanent refugee = new Permanent(new VulshokRefugee());
-        refugee.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(refugee);
+        Permanent refugee = addCreatureReady(player2, new VulshokRefugee());
 
         // Add valid target so spell is playable
-        Permanent bears = new Permanent(createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        harness.addToBattlefield(player2, new MeliraSylvokOutcast());
 
-        harness.setHand(player1, List.of(createTargetedInstant("Lightning Bolt", CardColor.RED, "{R}")));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new VoltCharge()));
+        harness.addMana(player1, ManaColor.RED, 3);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, refugee.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, refugee.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from red");
     }
@@ -194,16 +130,59 @@ class VulshokRefugeeTest extends BaseCardTest {
     @Test
     @DisplayName("Can be targeted by non-red instant")
     void canBeTargetedByNonRedInstant() {
-        Permanent refugee = new Permanent(new VulshokRefugee());
-        refugee.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(refugee);
+        Permanent refugee = addCreatureReady(player1, new VulshokRefugee());
 
-        harness.setHand(player1, List.of(createTargetedInstant("Unsummon", CardColor.BLUE, "{U}")));
+        harness.setHand(player1, List.of(new VaporSnag()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        gs.playCard(gd, player1, 0, 0, refugee.getId(), null);
+        harness.castInstant(player1, 0, refugee.getId());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Unsummon");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(VaporSnag.class);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Vulshok Refugee");
+        harness.assertInHand(player1, "Vulshok Refugee");
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Protection prevents untargeted red damage")
+    void preventsUntargetedRedDamage() {
+        harness.addToBattlefield(player1, new VulshokRefugee());
+        harness.addToBattlefield(player2, new MeliraSylvokOutcast());
+        harness.setHand(player1, List.of(new Whipflare()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Vulshok Refugee");
+        harness.assertInGraveyard(player2, "Melira, Sylvok Outcast");
+    }
+
+    @Test
+    @DisplayName("Protection from red does not prevent non-red toughness reduction")
+    void nonRedToughnessReductionKillsRefugee() {
+        Permanent refugee = harness.addToBattlefieldAndReturn(player2, new VulshokRefugee());
+        harness.setHand(player1, List.of(new Dismember()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, refugee.getId());
+
+        harness.assertNotOnBattlefield(player2, "Vulshok Refugee");
+        harness.assertInGraveyard(player2, "Vulshok Refugee");
+    }
+
+    @Test
+    @DisplayName("A red Aura cannot target Refugee even when its controller casts it")
+    void controllerCannotEnchantWithRedAura() {
+        Permanent refugee = harness.addToBattlefieldAndReturn(player1, new VulshokRefugee());
+        harness.addToBattlefield(player1, new MeliraSylvokOutcast());
+        harness.setHand(player1, List.of(new Firebreathing()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, refugee.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
     }
 }
