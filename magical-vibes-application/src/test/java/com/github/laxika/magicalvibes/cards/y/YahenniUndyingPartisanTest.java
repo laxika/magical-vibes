@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({YahenniUndyingPartisan.class, CruelEdict.class, GrizzlyBears.class})
 class YahenniUndyingPartisanTest extends BaseCardTest {
 
     @Test
@@ -38,7 +40,7 @@ class YahenniUndyingPartisanTest extends BaseCardTest {
     @DisplayName("Yahenni does not trigger when its controller's creature dies")
     void doesNotTriggerOnOwnCreatureDeath() {
         Permanent yahenni = addYahenniReady(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -47,7 +49,9 @@ class YahenniUndyingPartisanTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.castSorcery(player2, 0, player1.getId());
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
 
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.stack).isEmpty();
         assertThat(yahenni.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -91,10 +95,45 @@ class YahenniUndyingPartisanTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, yahenni, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Sacrifice is paid immediately, but indestructible waits for resolution")
+    void sacrificeIsPaidBeforeIndestructibleResolves() {
+        Permanent yahenni = harness.addToBattlefieldAndReturn(player1, new YahenniUndyingPartisan());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gqs.hasKeyword(gd, yahenni, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(yahenni.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, yahenni, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Yahenni can sacrifice another creature while already indestructible")
+    void canActivateAgainWhileIndestructible() {
+        Permanent yahenni = addYahenniReady(player1);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Grizzly Bears"))
+                .hasSize(2);
+        assertThat(gqs.hasKeyword(gd, yahenni, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(yahenni.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private Permanent addYahenniReady(Player player) {
-        Permanent permanent = new Permanent(new YahenniUndyingPartisan());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new YahenniUndyingPartisan());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
