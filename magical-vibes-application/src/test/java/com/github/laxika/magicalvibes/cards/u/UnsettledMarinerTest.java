@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.cards.c.ConeOfFlame;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UnsettledMariner.class, GrizzlyBears.class, Shock.class, ZuranSpellcaster.class})
+@CardUsed({UnsettledMariner.class, GrizzlyBears.class, Shock.class, ZuranSpellcaster.class,
+        TurnToFrog.class, ConeOfFlame.class})
 class UnsettledMarinerTest extends BaseCardTest {
 
     @Test
@@ -24,8 +27,7 @@ class UnsettledMarinerTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         harness.assertInGraveyard(player2, "Shock");
@@ -39,8 +41,7 @@ class UnsettledMarinerTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Shock");
@@ -67,8 +68,7 @@ class UnsettledMarinerTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 2);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 
@@ -83,10 +83,96 @@ class UnsettledMarinerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         harness.assertInGraveyard(player1, "Shock");
+    }
+
+    @Test
+    void protectsItselfFromOpponentSpell() {
+        Permanent mariner = harness.addToBattlefieldAndReturn(player1, new UnsettledMariner());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, mariner.getId());
+
+        harness.assertOnBattlefield(player1, "Unsettled Mariner");
+        harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    void opponentMayDeclinePaymentDespiteHavingMana() {
+        harness.addToBattlefield(player1, new UnsettledMariner());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    void eachMarinerRequiresSeparatePayment() {
+        harness.addToBattlefield(player1, new UnsettledMariner());
+        harness.addToBattlefield(player1, new UnsettledMariner());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    void targetingControllerAndPermanentRequiresTwoPayments() {
+        Permanent mariner = harness.addToBattlefieldAndReturn(player1, new UnsettledMariner());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new ConeOfFlame()));
+        harness.addMana(player2, ManaColor.RED, 6);
+
+        harness.castAndResolveSorcery(player2, 0,
+                List.of(mariner.getId(), player1.getId(), player2.getId()));
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(mariner.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Cone of Flame");
+    }
+
+    @Test
+    void countersOpponentAbilityTargetingPermanent() {
+        Permanent mariner = harness.addToBattlefieldAndReturn(player1, new UnsettledMariner());
+        Permanent spellcaster = addCreatureReady(player2, new ZuranSpellcaster());
+
+        harness.activateAbility(player2,
+                gd.playerBattlefields.get(player2.getId()).indexOf(spellcaster), null, mariner.getId());
+        harness.passBothPriorities();
+
+        assertThat(mariner.getMarkedDamage()).isZero();
+        assertThat(spellcaster.isTapped()).isTrue();
+    }
+
+    @Test
+    void doesNotTriggerAfterLosingItsAbilities() {
+        Permanent mariner = harness.addToBattlefieldAndReturn(player1, new UnsettledMariner());
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, mariner.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player2, "Shock");
     }
 }
