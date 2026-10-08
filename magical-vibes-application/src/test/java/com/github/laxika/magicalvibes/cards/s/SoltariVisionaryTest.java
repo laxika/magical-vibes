@@ -18,13 +18,37 @@ import static org.assertj.core.api.Assertions.assertThat;
         GreaterAuramancy.class})
 class SoltariVisionaryTest extends BaseCardTest {
 
-    private void resolveUntilInputOrEmpty() {
-        for (int i = 0; i < 12; i++) {
-            if (gd.interaction.isAwaitingInput() || gd.stack.isEmpty()) {
-                return;
-            }
-            harness.passBothPriorities();
-        }
+    @Test
+    void abilityStillDestroysTargetAfterVisionaryLeavesBattlefield() {
+        Permanent visionary = addCreatureReady(player1, new SoltariVisionary());
+        visionary.setAttacking(true);
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new Convalescence());
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, enchantment.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(visionary);
+        gd.playerGraveyards.get(player1.getId()).add(visionary.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Convalescence");
+        harness.assertInGraveyard(player2, "Convalescence");
+    }
+
+    @Test
+    void targetThatGainsShroudBeforeResolutionIsNotDestroyed() {
+        Permanent visionary = addCreatureReady(player1, new SoltariVisionary());
+        visionary.setAttacking(true);
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new Convalescence());
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, enchantment.getId());
+        harness.addToBattlefield(player2, new GreaterAuramancy());
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Convalescence");
+        harness.assertNotInGraveyard(player2, "Convalescence");
     }
 
     @Test
@@ -33,7 +57,7 @@ class SoltariVisionaryTest extends BaseCardTest {
         visionary.setAttacking(true);
         Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new Convalescence());
         resolveCombat();
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, enchantment.getId());
         gd.playerBattlefields.get(player2.getId()).remove(enchantment);
         gd.playerBattlefields.get(player1.getId()).add(enchantment);
@@ -51,7 +75,7 @@ class SoltariVisionaryTest extends BaseCardTest {
         Permanent convalescence = harness.addToBattlefieldAndReturn(player2, new Convalescence());
 
         resolveCombat();
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -66,7 +90,7 @@ class SoltariVisionaryTest extends BaseCardTest {
         Permanent convalescence = harness.addToBattlefieldAndReturn(player2, new Convalescence());
 
         resolveCombat();
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, convalescence.getId());
         harness.passBothPriorities();
 
@@ -84,7 +108,7 @@ class SoltariVisionaryTest extends BaseCardTest {
         Permanent enemyEnchantment = harness.addToBattlefieldAndReturn(player2, new Convalescence());
 
         resolveCombat();
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsOnly(enemyEnchantment.getId())
@@ -99,7 +123,7 @@ class SoltariVisionaryTest extends BaseCardTest {
         addCreatureReady(player2, new ShieldMate());
 
         resolveCombat();
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -111,11 +135,11 @@ class SoltariVisionaryTest extends BaseCardTest {
         Permanent convalescence = harness.addToBattlefieldAndReturn(player2, new Convalescence());
 
         harness.castFromHand(player1, new SoltariVisionary(), "{1}{W}{W}");
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, player2.getId());
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -134,7 +158,7 @@ class SoltariVisionaryTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, protectedEnchantment, Keyword.SHROUD)).isTrue();
 
         resolveCombat();
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsOnly(auramancy.getId());
