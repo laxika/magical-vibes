@@ -20,6 +20,57 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SoratamiSeerTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Pays the land return cost immediately and can use tapped lands and a tapped Seer")
+    void paysCostBeforeDiscardingHand() {
+        Permanent seer = harness.addToBattlefieldAndReturn(player1, new SoratamiSeer());
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        seer.tap();
+        firstLand.tap();
+        secondLand.tap();
+        WanderingOnes originalHandCard = new WanderingOnes();
+        harness.setHand(player1, List.of(originalHandCard));
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactlyInAnyOrder(originalHandCard, firstLand.getCard(), secondLand.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(seer);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(originalHandCard, firstLand.getCard(), secondLand.getCard());
+    }
+
+    @Test
+    @DisplayName("Draws no cards when the hand is empty at resolution")
+    void emptyHandDrawsNothing() {
+        Island firstLand = new Island();
+        Island secondLand = new Island();
+        firstLand.setOwnerId(player2.getId());
+        secondLand.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, new SoratamiSeer());
+        harness.addToBattlefield(player1, firstLand);
+        harness.addToBattlefield(player1, secondLand);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new WanderingOnes()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).contains(firstLand, secondLand);
+    }
+
+    @Test
     @DisplayName("Returns two lands, then discards the hand and draws that many cards")
     void bouncesTwoLandsThenRefillsHand() {
         harness.setLibrary(player1, List.of(new Island(), new Island(), new Island(), new Island()));
