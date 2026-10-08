@@ -68,4 +68,70 @@ class SoulSpikeTest extends BaseCardTest {
                 player1, 0, player2.getId(), List.of(1, 2)))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Can target its controller, dealing damage before gaining life")
+    void canTargetController() {
+        harness.setHand(player1, List.of(new SoulSpike()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Soul Spike");
+    }
+
+    @Test
+    @DisplayName("Does not gain life when the only target has left the battlefield")
+    void doesNotGainLifeWhenTargetLeavesBattlefield() {
+        harness.addToBattlefield(player2, new BorealGriffin());
+        harness.setHand(player1, List.of(new SoulSpike(), new SoulSpike()));
+        harness.addMana(player1, ManaColor.BLACK, 14);
+        UUID targetId = harness.getPermanentId(player2, "Boreal Griffin");
+
+        harness.castInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Boreal Griffin");
+        harness.assertLife(player1, 24);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof SoulSpike).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Alternate cost cannot exile the spell being cast")
+    void cannotExileItselfForAlternateCost() {
+        harness.setHand(player1, List.of(new SoulSpike(), new ChillToTheBone()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(
+                player1, 0, player2.getId(), List.of(0, 1)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Alternate cost cannot exile the same card twice")
+    void cannotExileSameCardTwice() {
+        harness.setHand(player1, List.of(new SoulSpike(), new ChillToTheBone()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(
+                player1, 0, player2.getId(), List.of(1, 1)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Alternate cost uses original hand indices when the spell is between payment cards")
+    void alternateCostWorksWithSpellBetweenPaymentCards() {
+        harness.setHand(player1, List.of(new ChillToTheBone(), new SoulSpike(), new GutlessGhoul()));
+
+        harness.castInstantWithAlternateExileFromHand(player1, 1, player2.getId(), List.of(2, 0));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        harness.assertLife(player1, 24);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getName())
+                .containsExactlyInAnyOrder("Chill to the Bone", "Gutless Ghoul");
+        harness.assertInGraveyard(player1, "Soul Spike");
+    }
 }
