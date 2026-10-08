@@ -83,4 +83,56 @@ class WalkingArchiveTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
+
+    @Test
+    @DisplayName("Casting Walking Archive gives it its counter before any upkeep")
+    void castArchiveEntersWithCounter() {
+        harness.castFromHand(player1, new WalkingArchive(), "{3}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst()
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Walking Archive also draws cards during its controller's upkeep")
+    void controllerDrawsDuringOwnUpkeep() {
+        Permanent archive = harness.enterBattlefieldAndReturn(player1, new WalkingArchive());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new WalkingArchive()));
+
+        advanceToUpkeep(player1);
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
+
+        assertThat(archive.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Counters added in response to upkeep increase the number of cards drawn")
+    void upkeepUsesCountersAtResolution() {
+        Permanent archive = harness.enterBattlefieldAndReturn(player1, new WalkingArchive());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new WalkingArchive(), new WalkingArchive()));
+
+        advanceToUpkeep(player2);
+        archive.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
+
+        assertThat(archive.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(archive.isTapped()).isTrue();
+    }
+
 }
