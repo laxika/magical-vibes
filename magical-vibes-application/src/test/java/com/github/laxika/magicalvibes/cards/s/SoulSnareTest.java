@@ -69,6 +69,105 @@ class SoulSnareTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
+    @Test
+    @DisplayName("Sacrifices Soul Snare as a cost before exiling the attacker")
+    void sacrificesSourceBeforeResolution() {
+        Permanent snare = addSnare();
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        declareAttack(player2, attacker, null);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(snare), null, attacker.getId());
+
+        harness.assertNotOnBattlefield(player1, "Soul Snare");
+        harness.assertInGraveyard(player1, "Soul Snare");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("Does not exile a target that stops attacking before resolution")
+    void targetMustStillBeAttackingAtResolution() {
+        Permanent snare = addSnare();
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        declareAttack(player2, attacker, null);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(snare), null, attacker.getId());
+
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Soul Snare");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot exile its controller's creature attacking the opponent")
+    void cannotTargetCreatureAttackingOpponent() {
+        Permanent snare = addSnare();
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        declareAttack(player1, attacker, null);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(snare), null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Soul Snare");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without paying white mana")
+    void cannotActivateWithoutWhiteMana() {
+        Permanent snare = addSnare();
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        declareAttack(player2, attacker, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(snare), null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Soul Snare");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not exile an attacker after the attacked planeswalker leaves the battlefield")
+    void targetIsIllegalAfterAttackedPlaneswalkerLeaves() {
+        Permanent snare = addSnare();
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        declareAttack(player2, attacker, planeswalker);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(snare), null, attacker.getId());
+
+        planeswalker.setCounterCount(CounterType.LOYALTY, 0);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player1, "Jace Beleren");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Soul Snare");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addSnare() {
         return harness.addToBattlefieldAndReturn(player1, new SoulSnare());
     }
@@ -85,13 +184,17 @@ class SoulSnareTest extends BaseCardTest {
 
     private void declareAttack(Player attackerPlayer, Permanent attacker, Permanent attackTarget) {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
-            harness.forceActivePlayer(attackerPlayer);
-            harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-            harness.clearPriorityPassed();
-            harness.beginAttackerDeclarationInput();
             int attackerIndex = gd.playerBattlefields.get(attackerPlayer.getId()).indexOf(attacker);
-            gs.declareAttackers(gd, attackerPlayer, List.of(attackerIndex),
-                    attackTarget == null ? null : Map.of(attackerIndex, attackTarget.getId()));
+            if (attackTarget == null) {
+                declareAttackers(attackerPlayer, List.of(attackerIndex));
+            } else {
+                harness.forceActivePlayer(attackerPlayer);
+                harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+                harness.clearPriorityPassed();
+                harness.beginAttackerDeclarationInput();
+                gs.declareAttackers(gd, attackerPlayer, List.of(attackerIndex),
+                        Map.of(attackerIndex, attackTarget.getId()));
+            }
         });
     }
 }
