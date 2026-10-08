@@ -88,4 +88,63 @@ class VedalkenAethermageTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Vedalken Aethermage");
         harness.assertInHand(player1, "Vedalken Aethermage");
     }
+
+    @Test
+    void canEnterWithoutAnySliver() {
+        harness.setHand(player1, List.of(new VedalkenAethermage()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Vedalken Aethermage");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void etbReturnsYourOwnSliver() {
+        harness.addToBattlefield(player1, new LymphSliver());
+        UUID targetId = harness.getPermanentId(player1, "Lymph Sliver");
+        harness.setHand(player1, List.of(new VedalkenAethermage()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0, targetId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Lymph Sliver");
+        harness.assertNotOnBattlefield(player1, "Lymph Sliver");
+    }
+
+    @Test
+    void wizardcyclingDiscardsAsCostAndMayFailToFind() {
+        harness.setHand(player1, List.of(new VedalkenAethermage()));
+        harness.setLibrary(player1, List.of(new VedalkenAethermage(), new WhipSpineDrake()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Vedalken Aethermage");
+        harness.assertNotInHand(player1, "Vedalken Aethermage");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotInHand(player1, "Vedalken Aethermage");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void wizardcyclingCannotBeActivatedWithOnlyTwoMana() {
+        harness.setHand(player1, List.of(new VedalkenAethermage()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Vedalken Aethermage");
+        harness.assertNotInGraveyard(player1, "Vedalken Aethermage");
+        assertThat(gd.stack).isEmpty();
+    }
 }
