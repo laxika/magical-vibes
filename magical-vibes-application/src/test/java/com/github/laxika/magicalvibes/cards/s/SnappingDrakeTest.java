@@ -53,4 +53,16 @@ class SnappingDrakeTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Snapping Drake can block a creature without flying")
+    void flyingCreatureCanBlockGroundAttacker() {
+        addCreatureReady(player1, new BorosRecruit());
+        Permanent blocker = addCreatureReady(player2, new SnappingDrake());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 }
