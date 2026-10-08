@@ -22,13 +22,12 @@ class YuanShaoTheIndecisiveTest extends BaseCardTest {
     void otherCreatureCannotBeBlockedByTwoCreatures() {
         addCreatureReady(player1, new YuanShaoTheIndecisive());
 
-        Permanent attacker = addCreatureReady(player1, new ShuEliteCompanions());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new ShuEliteCompanions());
 
         addCreatureReady(player2, new ShuEliteCompanions());
         addCreatureReady(player2, new ShuEliteCompanions());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 1),
@@ -43,12 +42,11 @@ class YuanShaoTheIndecisiveTest extends BaseCardTest {
     void canBeBlockedByOneCreature() {
         addCreatureReady(player1, new YuanShaoTheIndecisive());
 
-        Permanent attacker = addCreatureReady(player1, new ShuEliteCompanions());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new ShuEliteCompanions());
 
         Permanent blocker = addCreatureReady(player2, new ShuEliteCompanions());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
@@ -58,13 +56,12 @@ class YuanShaoTheIndecisiveTest extends BaseCardTest {
     @Test
     @DisplayName("Yuan Shao itself can't be blocked by two creatures")
     void yuanShaoItselfCannotBeBlockedByTwoCreatures() {
-        Permanent yuanShao = addCreatureReady(player1, new YuanShaoTheIndecisive());
-        yuanShao.setAttacking(true);
+        addCreatureReady(player1, new YuanShaoTheIndecisive());
 
         addCreatureReady(player2, new ShuEliteCompanions());
         addCreatureReady(player2, new ShuEliteCompanions());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -81,10 +78,9 @@ class YuanShaoTheIndecisiveTest extends BaseCardTest {
         Permanent blockerOne = addCreatureReady(player1, new ShuEliteCompanions());
         Permanent blockerTwo = addCreatureReady(player1, new ShuEliteCompanions());
 
-        Permanent attacker = addCreatureReady(player2, new ShuEliteCompanions());
-        attacker.setAttacking(true);
+        addCreatureReady(player2, new ShuEliteCompanions());
 
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
 
         gs.declareBlockers(gd, player1, List.of(
                 new BlockerAssignment(1, 0),
@@ -106,5 +102,38 @@ class YuanShaoTheIndecisiveTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("(horsemanship)");
+    }
+
+    @Test
+    @DisplayName("Yuan Shao can be blocked by one creature with horsemanship")
+    void canBeBlockedByOneCreatureWithHorsemanship() {
+        addCreatureReady(player1, new YuanShaoTheIndecisive());
+        Permanent blocker = addCreatureReady(player2, new ShuEliteCompanions());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The team blocking restriction ends when Yuan Shao leaves the battlefield")
+    void restrictionEndsWhenYuanShaoLeavesBattlefield() {
+        Permanent yuanShao = addCreatureReady(player1, new YuanShaoTheIndecisive());
+        addCreatureReady(player1, new ShuEliteCompanions());
+        Permanent blockerOne = addCreatureReady(player2, new ShuEliteCompanions());
+        Permanent blockerTwo = addCreatureReady(player2, new ShuEliteCompanions());
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gd.playerBattlefields.get(player1.getId()).remove(yuanShao);
+        gd.playerGraveyards.get(player1.getId()).add(yuanShao.getCard());
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)
+        ));
+
+        assertThat(blockerOne.isBlocking()).isTrue();
+        assertThat(blockerTwo.isBlocking()).isTrue();
     }
 }
