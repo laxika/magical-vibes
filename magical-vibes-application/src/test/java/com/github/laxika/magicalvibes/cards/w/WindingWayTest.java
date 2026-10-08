@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -57,12 +56,81 @@ class WindingWayTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    void leavesCardsBelowTheTopFourUntouched() {
+        Card creature = new GrizzlyBears();
+        Card land = new Forest();
+        Card instant = new Shock();
+        Card secondLand = new Island();
+        Card fifth = new GrizzlyBears();
+        Card sixth = new Forest();
+
+        cast(List.of(creature, land, instant, secondLand, fifth, sixth));
+        harness.handleListChoice(player1, CardType.CREATURE.name());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(land, instant, secondLand);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fifth, sixth);
+    }
+
+    @Test
+    void revealsAllAvailableCardsWhenLibraryHasFewerThanFour() {
+        Card creature = new GrizzlyBears();
+        Card land = new Forest();
+
+        cast(List.of(creature, land));
+        harness.handleListChoice(player1, CardType.LAND.name());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void putsEveryRevealedCardIntoGraveyardWhenNoneMatch() {
+        Card land = new Forest();
+        Card instant = new Shock();
+        Card secondLand = new Island();
+        Card secondInstant = new Shock();
+
+        cast(List.of(land, instant, secondLand, secondInstant));
+        harness.handleListChoice(player1, CardType.CREATURE.name());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(land, instant, secondLand, secondInstant);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void putsAllMatchingCardsIntoHand() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        Card third = new GrizzlyBears();
+        Card fourth = new GrizzlyBears();
+
+        cast(List.of(first, second, third, fourth));
+        harness.handleListChoice(player1, CardType.CREATURE.name());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second, third, fourth);
+        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card instanceof GrizzlyBears);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void resolvesWithAnEmptyLibraryWithoutDrawing() {
+        cast(List.of());
+        harness.handleListChoice(player1, CardType.LAND.name());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void cast(List<Card> library) {
         harness.setLibrary(player1, library);
-        harness.setHand(player1, List.of(new WindingWay()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0);
+        harness.castFromHand(player1, new WindingWay(), "{1}{G}");
         harness.passBothPriorities();
     }
 }
