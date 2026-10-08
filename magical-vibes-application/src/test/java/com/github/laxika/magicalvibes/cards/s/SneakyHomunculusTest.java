@@ -98,4 +98,59 @@ class SneakyHomunculusTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("cannot block");
     }
+    @Test
+    @DisplayName("Sneaky Homunculus can block a creature whose power decreased to 1")
+    void canBlockAttackerAfterItsPowerDecreases() {
+        Permanent homunculus = addCreatureReady(player2, new SneakyHomunculus());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(homunculus.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sneaky Homunculus can be blocked by a creature whose power decreased to 1")
+    void canBeBlockedAfterBlockersPowerDecreases() {
+        addCreatureReady(player1, new SneakyHomunculus());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Increasing Sneaky Homunculus's own power does not relax its blocking restriction")
+    void increasedOwnPowerDoesNotAllowBlockingPowerTwo() {
+        Permanent homunculus = addCreatureReady(player2, new SneakyHomunculus());
+        homunculus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can only block creatures with power 1 or less");
+    }
+
+    @Test
+    @DisplayName("Increasing Sneaky Homunculus's own power does not relax its evasion restriction")
+    void increasedOwnPowerDoesNotAllowPowerTwoBlockers() {
+        Permanent homunculus = addCreatureReady(player1, new SneakyHomunculus());
+        homunculus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cannot block");
+    }
 }
