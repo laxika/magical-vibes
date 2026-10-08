@@ -46,7 +46,7 @@ class TyphoonTest extends BaseCardTest {
     @Test
     @DisplayName("Counts tapped Islands as well as untapped Islands")
     void countsTappedIslands() {
-        harness.addToBattlefieldAndReturn(player2, new Island()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player2, new Island()).tap();
         harness.addToBattlefield(player2, new Island());
         castTyphoon();
 

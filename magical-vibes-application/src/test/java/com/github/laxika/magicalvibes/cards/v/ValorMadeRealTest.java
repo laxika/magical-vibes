@@ -111,7 +111,7 @@ class ValorMadeRealTest extends BaseCardTest {
     @DisplayName("Unlimited blocking does not let a tapped creature block")
     void tappedCreatureStillCannotBlock() {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        blocker.setTapped(true);
+        blocker.tap();
         addAttacker();
 
         castValorMadeReal(blocker);

@@ -127,7 +127,7 @@ class SylvanSafekeeperTest extends BaseCardTest {
     @DisplayName("Safekeeper can protect itself while tapped and summoning sick, paying the cost immediately")
     void canProtectItselfWithoutTapping() {
         Permanent safekeeper = harness.addToBattlefieldAndReturn(player1, new SylvanSafekeeper());
-        safekeeper.setTapped(true);
+        safekeeper.tap();
         safekeeper.setSummoningSick(true);
         harness.addToBattlefield(player1, new KrosanVerge());
 

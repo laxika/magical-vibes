@@ -54,7 +54,7 @@ class VerdantAutomatonTest extends BaseCardTest {
     void abilityCanBeActivatedWhileTappedAndSummoningSick() {
         Permanent automaton = harness.addToBattlefieldAndReturn(player1, new VerdantAutomaton());
         automaton.setSummoningSick(true);
-        automaton.setTapped(true);
+        automaton.tap();
         addAbilityMana(player1);
 
         harness.activateAbility(player1, 0, 0, null, null);

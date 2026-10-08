@@ -78,7 +78,7 @@ class ThopterFoundryTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Spellbook());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.setLife(player1, 20);
-        findPermanent(player1, "Thopter Foundry").setTapped(true);
+        findPermanent(player1, "Thopter Foundry").tap();
         UUID spellbookId = findPermanent(player1, "Spellbook").getId();
 
         harness.activateAbility(player1, 0, null, null);

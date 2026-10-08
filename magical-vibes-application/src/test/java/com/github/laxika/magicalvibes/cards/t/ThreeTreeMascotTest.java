@@ -53,7 +53,7 @@ class ThreeTreeMascotTest extends BaseCardTest {
     void tappedSummoningSickMascotProducesAnyColorWithoutUsingStack(String color) {
         Permanent mascot = harness.addToBattlefieldAndReturn(player1, new ThreeTreeMascot());
         mascot.setSummoningSick(true);
-        mascot.setTapped(true);
+        mascot.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);

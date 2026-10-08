@@ -146,7 +146,7 @@ class WizardMentorTest extends BaseCardTest {
     @DisplayName("Cannot activate while already tapped")
     void cannotActivateWhileTapped() {
         Permanent mentor = addCreatureReady(player1, new WizardMentor());
-        mentor.setTapped(true);
+        mentor.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, mentor.getId()))
                 .isInstanceOf(IllegalStateException.class);

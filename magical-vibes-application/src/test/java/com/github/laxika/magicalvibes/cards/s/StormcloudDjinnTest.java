@@ -138,7 +138,7 @@ class StormcloudDjinnTest extends BaseCardTest {
     @DisplayName("The ability can be activated while the Djinn is tapped and summoning sick")
     void abilityDoesNotRequireTappingOrHaste() {
         Permanent djinn = harness.addToBattlefieldAndReturn(player1, new StormcloudDjinn());
-        djinn.setTapped(true);
+        djinn.tap();
         harness.addMana(player1, ManaColor.RED, 2);
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 

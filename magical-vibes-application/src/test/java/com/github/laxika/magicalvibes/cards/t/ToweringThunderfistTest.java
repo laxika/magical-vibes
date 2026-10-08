@@ -88,7 +88,7 @@ class ToweringThunderfistTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent thunderfist = harness.addToBattlefieldAndReturn(player1, new ToweringThunderfist());
         thunderfist.setSummoningSick(true);
-        thunderfist.setTapped(true);
+        thunderfist.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);

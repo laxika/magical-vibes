@@ -51,7 +51,7 @@ class WarrenElderTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent elder = addCreatureReady(player1, new WarrenElder());
         elder.setSummoningSick(true);
-        elder.setTapped(true);
+        elder.tap();
         addManaForAbility();
 
         harness.activateAbility(player1, 0, null, null);

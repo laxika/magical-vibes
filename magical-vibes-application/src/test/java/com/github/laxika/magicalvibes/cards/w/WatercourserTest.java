@@ -68,7 +68,7 @@ class WatercourserTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent courser = harness.addToBattlefieldAndReturn(player1, new Watercourser());
         courser.setSummoningSick(true);
-        courser.setTapped(true);
+        courser.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);

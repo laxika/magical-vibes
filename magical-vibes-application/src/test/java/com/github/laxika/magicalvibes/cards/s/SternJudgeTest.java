@@ -66,7 +66,7 @@ class SternJudgeTest extends BaseCardTest {
     void opponentCanActivateAndTappedSwampsCount() {
         addCreatureReady(player2, new SternJudge());
         Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
-        swamp.setTapped(true);
+        swamp.tap();
         harness.addToBattlefield(player2, new Swamp());
         harness.addToBattlefield(player1, new Mountain());
 

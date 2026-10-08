@@ -76,7 +76,7 @@ class SunbirdStandardTest extends BaseCardTest {
     @Test
     void craftCanUseOneGraveyardCardAndReturnsUntappedWithHaste() {
         Permanent standard = harness.addToBattlefieldAndReturn(player1, new SunbirdStandard());
-        standard.setTapped(true);
+        standard.tap();
         WaterwindScout material = new WaterwindScout();
         harness.setGraveyard(player1, List.of(material));
         harness.addMana(player1, ManaColor.COLORLESS, 5);

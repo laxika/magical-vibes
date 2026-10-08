@@ -122,7 +122,7 @@ class SteelswarmOperatorTest extends BaseCardTest {
     @Test
     void bothAbilitiesRequireAnUntappedSource() {
         Permanent operator = addCreatureReady(player1, new SteelswarmOperator());
-        operator.setTapped(true);
+        operator.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

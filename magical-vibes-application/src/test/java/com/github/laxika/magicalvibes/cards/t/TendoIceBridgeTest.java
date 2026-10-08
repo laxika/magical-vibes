@@ -110,7 +110,7 @@ class TendoIceBridgeTest extends BaseCardTest {
         bridge.setCounterCount(CounterType.CHARGE, 1);
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, "BLUE");
-        bridge.setTapped(false);
+        bridge.untap();
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -124,7 +124,7 @@ class TendoIceBridgeTest extends BaseCardTest {
     void cannotUseTappedBridgeAndDoesNotSpendCounterOnFailedActivation() {
         Permanent bridge = addReadyBridge(player1);
         bridge.setCounterCount(CounterType.CHARGE, 1);
-        bridge.setTapped(true);
+        bridge.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

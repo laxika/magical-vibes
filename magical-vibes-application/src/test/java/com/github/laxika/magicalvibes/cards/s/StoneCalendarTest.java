@@ -120,7 +120,7 @@ class StoneCalendarTest extends BaseCardTest {
 
     @Test
     void reductionStillAppliesWhileCalendarIsTapped() {
-        harness.addToBattlefieldAndReturn(player1, new StoneCalendar()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new StoneCalendar()).tap();
         harness.setHand(player1, List.of(new BogImp()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 

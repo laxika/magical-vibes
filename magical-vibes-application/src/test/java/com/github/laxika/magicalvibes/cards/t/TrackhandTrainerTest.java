@@ -67,7 +67,7 @@ class TrackhandTrainerTest extends BaseCardTest {
     void bothAbilitiesCanBeActivatedWhileTappedAndSummoningSick() {
         Permanent trainer = harness.addToBattlefieldAndReturn(player1, new TrackhandTrainer());
         trainer.setSummoningSick(true);
-        trainer.setTapped(true);
+        trainer.tap();
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.BLUE, 3);

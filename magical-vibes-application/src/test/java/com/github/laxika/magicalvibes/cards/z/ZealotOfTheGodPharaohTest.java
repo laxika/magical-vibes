@@ -107,7 +107,7 @@ class ZealotOfTheGodPharaohTest extends BaseCardTest {
     @Test
     void canActivateRepeatedlyWhileTappedAndSummoningSick() {
         Permanent zealot = harness.addToBattlefieldAndReturn(player1, new ZealotOfTheGodPharaoh());
-        zealot.setTapped(true);
+        zealot.tap();
         zealot.setSummoningSick(true);
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 8);

@@ -115,7 +115,7 @@ class WallOfGlareTest extends BaseCardTest {
     @DisplayName("A tapped Wall of Glare cannot block")
     void cannotBlockWhileTapped() {
         Permanent wall = addCreatureReady(player2, new WallOfGlare());
-        wall.setTapped(true);
+        wall.tap();
         addCreatureReady(player1, new ElvishLookout()).setAttacking(true);
         prepareDeclareBlockers();
 

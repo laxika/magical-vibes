@@ -162,7 +162,7 @@ class SpinalParasiteTest extends BaseCardTest {
         Permanent parasite = addReadyParasite();
         parasite.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
         parasite.setSummoningSick(true);
-        parasite.setTapped(true);
+        parasite.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new StaffOfDomination());
         target.setCounterCount(CounterType.CHARGE, 1);
 

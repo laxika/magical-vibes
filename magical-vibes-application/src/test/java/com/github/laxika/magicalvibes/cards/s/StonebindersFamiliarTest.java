@@ -70,7 +70,7 @@ class StonebindersFamiliarTest extends BaseCardTest {
         Permanent second = gd.playerBattlefields.get(player1.getId()).get(1);
         harness.addToBattlefield(player1, new StonebindersFamiliar());
         Permanent target = gd.playerBattlefields.get(player1.getId()).get(2);
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player2, List.of(new Expel()));
         harness.addMana(player2, ManaColor.WHITE, 3);
 
@@ -92,8 +92,8 @@ class StonebindersFamiliarTest extends BaseCardTest {
         Permanent firstTarget = gd.playerBattlefields.get(player2.getId()).getFirst();
         harness.addToBattlefield(player2, new StonebindersFamiliar());
         Permanent secondTarget = gd.playerBattlefields.get(player2.getId()).get(1);
-        firstTarget.setTapped(true);
-        secondTarget.setTapped(true);
+        firstTarget.tap();
+        secondTarget.tap();
         harness.setHand(player1, List.of(new Expel(), new Expel()));
         harness.addMana(player1, ManaColor.WHITE, 6);
 

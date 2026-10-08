@@ -132,7 +132,7 @@ class UnlikelyAllianceTest extends BaseCardTest {
     void boostsTappedCreature() {
         harness.addToBattlefield(player1, new UnlikelyAlliance());
         Permanent escort = addCreatureReady(player1, new KjeldoranEscort());
-        escort.setTapped(true);
+        escort.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

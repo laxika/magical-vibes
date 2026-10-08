@@ -83,7 +83,7 @@ class ThornThrashViashinoTest extends BaseCardTest {
     @Test
     void trampleAbilityCanBeActivatedRepeatedlyWhileTapped() {
         Permanent viashino = harness.addToBattlefieldAndReturn(player1, new ThornThrashViashino());
-        viashino.setTapped(true);
+        viashino.tap();
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

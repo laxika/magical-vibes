@@ -77,7 +77,7 @@ class WaterWurmTest extends BaseCardTest {
     void tappedOpponentIslandGrantsBoost() {
         harness.addToBattlefield(player1, new WaterWurm());
         Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
-        island.setTapped(true);
+        island.tap();
 
         assertStats(1, 2);
     }

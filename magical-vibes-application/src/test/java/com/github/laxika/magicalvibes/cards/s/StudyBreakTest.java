@@ -174,7 +174,7 @@ class StudyBreakTest extends BaseCardTest {
     @DisplayName("An already tapped creature remains a legal target and Learn still happens")
     void canTargetTappedCreature() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new StoneriseSpirit());
-        creature.setTapped(true);
+        creature.tap();
         Card lesson = new EnvironmentalSciences();
         gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(lesson)));
 

@@ -87,7 +87,7 @@ class TruckTossTest extends BaseCardTest {
     @DisplayName("A tapped, uncrewed Vehicle still reduces the cost")
     void tappedVehicleReducesCost() {
         Permanent vehicle = harness.addToBattlefieldAndReturn(player1, new DependableQuinjet());
-        vehicle.setTapped(true);
+        vehicle.tap();
         harness.setHand(player1, List.of(new TruckToss()));
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -100,8 +100,8 @@ class TruckTossTest extends BaseCardTest {
     @Test
     @DisplayName("Multiple Vehicles do not reduce the colored mana requirement")
     void multipleVehiclesStillRequireTwoRedMana() {
-        harness.addToBattlefieldAndReturn(player1, new DependableQuinjet()).setTapped(true);
-        harness.addToBattlefieldAndReturn(player1, new DependableQuinjet()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new DependableQuinjet()).tap();
+        harness.addToBattlefieldAndReturn(player1, new DependableQuinjet()).tap();
         harness.setHand(player1, List.of(new TruckToss()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

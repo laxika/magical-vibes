@@ -129,7 +129,7 @@ class SunkenFieldTest extends BaseCardTest {
     @DisplayName("A tapped enchanted land cannot activate the granted ability")
     void tappedLandCannotActivateAbility() {
         Permanent land = addEnchantedLand();
-        land.setTapped(true);
+        land.tap();
         WellOfDiscovery spell = new WellOfDiscovery();
         harness.forceActivePlayer(player2);
         harness.castFromHand(player2, spell, "{6}");

@@ -1,4 +1,4 @@
-﻿package com.github.laxika.magicalvibes.cards.y;
+package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.f.Forest;

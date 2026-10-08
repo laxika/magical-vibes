@@ -101,7 +101,7 @@ class WearyPrisonerTest extends BaseCardTest {
         gd.dayNight = DayNight.NIGHT;
         Permanent prisoner = harness.enterBattlefieldAndReturn(player1, new WearyPrisoner());
         prisoner.setSummoningSick(false);
-        prisoner.setTapped(true);
+        prisoner.tap();
 
         declareAttackers(List.of());
 

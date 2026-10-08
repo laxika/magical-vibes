@@ -104,7 +104,7 @@ class UnravelingMummyTest extends BaseCardTest {
     void canTargetItselfWhileTappedAndAttacking(int abilityIndex) {
         Permanent mummy = addMummy();
         mummy.setAttacking(true);
-        mummy.setTapped(true);
+        mummy.tap();
         if (abilityIndex == 0) addWhiteMana();
         else addBlackMana();
 

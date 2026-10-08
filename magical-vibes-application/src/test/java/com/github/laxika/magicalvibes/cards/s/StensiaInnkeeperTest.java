@@ -69,7 +69,7 @@ class StensiaInnkeeperTest extends BaseCardTest {
     @Test
     void alreadyTappedLandStillSkipsNextUntap() {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        forest.setTapped(true);
+        forest.tap();
         harness.setHand(player1, List.of(new StensiaInnkeeper()));
         harness.addMana(player1, ManaColor.RED, 4);
 

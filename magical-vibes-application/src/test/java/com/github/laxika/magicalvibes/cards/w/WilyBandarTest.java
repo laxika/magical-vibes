@@ -52,7 +52,7 @@ class WilyBandarTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent bandar = harness.addToBattlefieldAndReturn(player1, new WilyBandar());
         bandar.setSummoningSick(true);
-        bandar.setTapped(true);
+        bandar.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

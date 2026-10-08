@@ -141,7 +141,7 @@ class StingmoggieTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickTargetingOwnLand() {
         Permanent moggie = harness.enterBattlefieldAndReturn(player1, new Stingmoggie());
         moggie.setSummoningSick(true);
-        moggie.setTapped(true);
+        moggie.tap();
         harness.addToBattlefield(player1, new MurmuringBosk());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

@@ -124,7 +124,7 @@ class SunhomeEnforcerTest extends BaseCardTest {
     void tappedSummoningSickEnforcerCanActivate() {
         Permanent enforcer = harness.addToBattlefieldAndReturn(player1, new SunhomeEnforcer());
         enforcer.setSummoningSick(true);
-        enforcer.setTapped(true);
+        enforcer.tap();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

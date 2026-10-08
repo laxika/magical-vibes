@@ -159,7 +159,7 @@ class WeaverOfLiesTest extends BaseCardTest {
     @Test
     void affectedCreatureCanTurnFaceUpAgainWithoutChangingItsIdentityOrTappedStatus() {
         Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfDeceit());
-        wall.setTapped(true);
+        wall.tap();
 
         harness.setHand(player1, List.of(new WeaverOfLies()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);

@@ -80,7 +80,7 @@ class TaintedIsleTest extends BaseCardTest {
     @DisplayName("A tapped Swamp still enables colored mana")
     void tappedSwampEnablesColoredMana() {
         Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
-        swamp.setTapped(true);
+        swamp.tap();
         Permanent isle = addReadyIsle(player1);
 
         harness.activateAbility(player1, 1, 1, null, null);
@@ -97,7 +97,7 @@ class TaintedIsleTest extends BaseCardTest {
     void tappedIsleCannotActivateEitherAbility() {
         harness.addToBattlefield(player1, new Swamp());
         Permanent isle = addReadyIsle(player1);
-        isle.setTapped(true);
+        isle.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

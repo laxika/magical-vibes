@@ -30,7 +30,7 @@ class VampireOpportunistTest extends BaseCardTest {
     @Test
     void canActivateWhileTapped() {
         Permanent opportunist = addCreatureReady(player1, new VampireOpportunist());
-        opportunist.setTapped(true);
+        opportunist.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 6);
         harness.addMana(player1, ManaColor.BLACK, 1);
 

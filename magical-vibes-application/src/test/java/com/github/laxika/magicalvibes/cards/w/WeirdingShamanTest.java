@@ -99,7 +99,7 @@ class WeirdingShamanTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent shaman = harness.addToBattlefieldAndReturn(player1, new WeirdingShaman());
         shaman.setSummoningSick(true);
-        shaman.setTapped(true);
+        shaman.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.BLACK, 1);
 

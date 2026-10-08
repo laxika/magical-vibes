@@ -45,7 +45,7 @@ class TolarianAcademyTest extends BaseCardTest {
     void countsOnlyArtifactsOnBattlefieldRegardlessOfTappedState() {
         harness.addToBattlefield(player1, new TolarianAcademy());
         Permanent key = harness.addToBattlefieldAndReturn(player1, new VoltaicKey());
-        key.setTapped(true);
+        key.tap();
         harness.setHand(player1, List.of(new VoltaicKey()));
         harness.setGraveyard(player1, List.of(new VoltaicKey()));
         harness.setExile(player1, List.of(new VoltaicKey()));

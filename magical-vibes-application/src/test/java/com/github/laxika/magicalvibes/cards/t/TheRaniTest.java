@@ -157,7 +157,7 @@ class TheRaniTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
-        findPermanent(player1, "The Rani").setTapped(true);
+        findPermanent(player1, "The Rani").tap();
 
         declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(creature)));
         resolveCombat(player2);

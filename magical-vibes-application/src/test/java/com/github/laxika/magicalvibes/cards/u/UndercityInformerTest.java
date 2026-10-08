@@ -138,7 +138,7 @@ class UndercityInformerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickOnOpponentsTurn() {
         Permanent informer = harness.addToBattlefieldAndReturn(player1, new UndercityInformer());
         informer.setSummoningSick(true);
-        informer.setTapped(true);
+        informer.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.BLACK, 1);

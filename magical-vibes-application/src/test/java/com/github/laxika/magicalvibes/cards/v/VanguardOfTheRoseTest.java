@@ -94,7 +94,7 @@ class VanguardOfTheRoseTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent vanguard = harness.addToBattlefieldAndReturn(player1, new VanguardOfTheRose());
         vanguard.setSummoningSick(true);
-        vanguard.setTapped(true);
+        vanguard.tap();
         Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new Spellbook());
         addMana();
 

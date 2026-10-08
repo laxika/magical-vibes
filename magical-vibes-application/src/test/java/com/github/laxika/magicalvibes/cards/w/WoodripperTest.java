@@ -133,7 +133,7 @@ class WoodripperTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent woodripper = harness.enterBattlefieldAndReturn(player1, new Woodripper());
         woodripper.setSummoningSick(true);
-        woodripper.setTapped(true);
+        woodripper.tap();
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new BelbesArmor());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

@@ -60,7 +60,7 @@ class SquirmingMassTest extends BaseCardTest {
     @DisplayName("Fear does not allow a tapped artifact creature to block")
     void tappedArtifactCreatureCannotBlock() {
         Permanent blocker = prepareBlocker(new BrassSecretary());
-        blocker.setTapped(true);
+        blocker.tap();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);

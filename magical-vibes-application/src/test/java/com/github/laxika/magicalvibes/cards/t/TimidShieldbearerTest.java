@@ -78,7 +78,7 @@ class TimidShieldbearerTest extends BaseCardTest {
     @DisplayName("Tapped summoning-sick Shieldbearer can activate repeatedly and boosts stack")
     void tappedSummoningSickSourceCanActivateRepeatedly() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new TimidShieldbearer());
-        source.setTapped(true);
+        source.tap();
         source.setSummoningSick(true);
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 8);

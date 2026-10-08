@@ -112,7 +112,7 @@ class WoodwraithStranglerTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and accumulate multiple shields")
     void canActivateRepeatedlyWhileTapped() {
         Permanent strangler = harness.addToBattlefieldAndReturn(player1, new WoodwraithStrangler());
-        strangler.setTapped(true);
+        strangler.tap();
         harness.setGraveyard(player1, List.of(new Watchwolf(), new Watchwolf()));
 
         harness.activateAbility(player1, 0, null, null);

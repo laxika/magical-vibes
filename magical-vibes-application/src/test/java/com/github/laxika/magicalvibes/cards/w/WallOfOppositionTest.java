@@ -74,7 +74,7 @@ class WallOfOppositionTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfOpposition());
         wall.setSummoningSick(true);
-        wall.setTapped(true);
+        wall.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);

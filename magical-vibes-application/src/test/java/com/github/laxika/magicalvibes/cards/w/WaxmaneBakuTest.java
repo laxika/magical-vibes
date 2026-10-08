@@ -174,7 +174,7 @@ class WaxmaneBakuTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Baku can activate repeatedly and spend fewer than all counters")
     void tappedBakuCanActivateRepeatedly() {
         Permanent baku = addBaku();
-        baku.setTapped(true);
+        baku.tap();
         baku.setSummoningSick(true);
         baku.setCounterCount(CounterType.KI, 3);
         Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());

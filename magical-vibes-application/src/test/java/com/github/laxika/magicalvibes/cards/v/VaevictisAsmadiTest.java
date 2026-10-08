@@ -106,7 +106,7 @@ class VaevictisAsmadiTest extends BaseCardTest {
     @DisplayName("Pump abilities can be activated repeatedly while tapped and summoning sick")
     void canPumpRepeatedlyWhileTappedAndSummoningSick() {
         Permanent dragon = addDragon();
-        dragon.setTapped(true);
+        dragon.tap();
         dragon.setSummoningSick(true);
         harness.addMana(player1, ManaColor.GREEN, 2);
 

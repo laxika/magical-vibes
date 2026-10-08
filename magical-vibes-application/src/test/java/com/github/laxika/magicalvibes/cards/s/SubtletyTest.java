@@ -132,7 +132,7 @@ class SubtletyTest extends BaseCardTest {
         Subtlety blueCard = new Subtlety();
         harness.setHand(player1, List.of(new Subtlety(), blueCard));
 
-        harness.castInstantWithAlternateExileFromHand(player1, 0, null, 1);
+        harness.castInstantWithAlternateExileFromHand(player1, 0, (java.util.UUID) null, 1);
         harness.passBothPriorities();
         PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         if (order != null && order.context() instanceof ChoiceContext.SpellCastTriggerOrder) {
@@ -151,7 +151,7 @@ class SubtletyTest extends BaseCardTest {
     void cannotExileIslandForEvoke() {
         harness.setHand(player1, List.of(new Subtlety(), new Island()));
 
-        assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(player1, 0, null, 1))
+        assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(player1, 0, (java.util.UUID) null, 1))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
@@ -164,7 +164,7 @@ class SubtletyTest extends BaseCardTest {
     void cannotExileItselfForEvoke() {
         harness.setHand(player1, List.of(new Subtlety()));
 
-        assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(player1, 0, null, 0))
+        assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(player1, 0, (java.util.UUID) null, 0))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();

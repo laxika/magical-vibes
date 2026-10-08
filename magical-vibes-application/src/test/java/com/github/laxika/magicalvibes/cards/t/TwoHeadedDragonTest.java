@@ -198,7 +198,7 @@ class TwoHeadedDragonTest extends BaseCardTest {
     void pumpCanBeActivatedWhileTappedAndSummoningSick() {
         Permanent dragon = harness.addToBattlefieldAndReturn(player1, new TwoHeadedDragon());
         dragon.setSummoningSick(true);
-        dragon.setTapped(true);
+        dragon.tap();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

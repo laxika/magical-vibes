@@ -144,7 +144,7 @@ class StrongholdAssassinTest extends BaseCardTest {
     @DisplayName("A tapped Assassin cannot activate the ability")
     void cannotActivateWhileTapped() {
         Permanent assassin = setup();
-        assassin.setTapped(true);
+        assassin.tap();
         Permanent target = addCreatureReady(player2, new SkyshroudTroopers());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(assassin), 0, null, target.getId()))

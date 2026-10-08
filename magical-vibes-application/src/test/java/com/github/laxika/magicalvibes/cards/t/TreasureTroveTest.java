@@ -117,7 +117,7 @@ class TreasureTroveTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerLibraries.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(trove.isTapped()).isFalse();
 
@@ -146,7 +146,7 @@ class TreasureTroveTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.playerLibraries.get(player2.getId())).containsExactly(opponentsCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsCard);
     }
 
     @Test
@@ -162,7 +162,7 @@ class TreasureTroveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(lastCard);
-        assertThat(gd.playerLibraries.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 

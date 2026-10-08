@@ -102,7 +102,7 @@ class VoldarenStingerTest extends BaseCardTest {
     void activationNeedsNeitherTappingNorHaste() {
         Permanent stinger = addStinger();
         stinger.setSummoningSick(true);
-        stinger.setTapped(true);
+        stinger.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.RED, 1);
 

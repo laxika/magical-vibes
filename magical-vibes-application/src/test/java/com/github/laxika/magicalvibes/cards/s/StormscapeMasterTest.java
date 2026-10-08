@@ -83,7 +83,7 @@ class StormscapeMasterTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         source.setSummoningSick(false);
-        source.setTapped(true);
+        source.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, source.getId()))
                 .isInstanceOf(IllegalStateException.class);

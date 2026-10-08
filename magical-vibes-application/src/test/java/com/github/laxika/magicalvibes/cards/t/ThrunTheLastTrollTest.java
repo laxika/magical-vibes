@@ -180,7 +180,7 @@ class ThrunTheLastTrollTest extends BaseCardTest {
     void regeneratesWhileTappedAndSummoningSick() {
         Permanent thrun = harness.addToBattlefieldAndReturn(player1, new ThrunTheLastTroll());
         thrun.setSummoningSick(true);
-        thrun.setTapped(true);
+        thrun.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

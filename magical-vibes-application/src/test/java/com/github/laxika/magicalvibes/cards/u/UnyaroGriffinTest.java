@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GoblinEliteInfantry;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.s.StoneRain;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -126,7 +126,7 @@ class UnyaroGriffinTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Griffin can counter its controller's red spell")
     void tappedSummoningSickGriffinCanCounterOwnSpell() {
         var griffin = harness.addToBattlefieldAndReturn(player1, new UnyaroGriffin());
-        griffin.setTapped(true);
+        griffin.tap();
         griffin.setSummoningSick(true);
         Incinerate incinerate = new Incinerate();
         harness.setHand(player1, List.of(incinerate));

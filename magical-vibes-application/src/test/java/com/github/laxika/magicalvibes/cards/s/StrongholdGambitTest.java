@@ -133,7 +133,7 @@ class StrongholdGambitTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Rathi Fiend");
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId()))
-                .extracting(card -> card.getClass()).containsExactly(GrizzlyBears.class, SerraAngel.class);
+                .<Class<?>>extracting(Object::getClass).containsExactly(GrizzlyBears.class, SerraAngel.class);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         harness.passBothPriorities();
         harness.assertLife(player1, 17);

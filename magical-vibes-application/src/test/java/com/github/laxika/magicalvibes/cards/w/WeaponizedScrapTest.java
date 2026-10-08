@@ -67,7 +67,7 @@ class WeaponizedScrapTest extends BaseCardTest {
     @Test
     void preservesTappedStateCountersAndDamageButIgnoresCoveredAbilities() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
-        artifact.setTapped(true);
+        artifact.tap();
         artifact.setMarkedDamage(1);
         artifact.getCounters().put(CounterType.PLUS_ONE_PLUS_ONE, 2);
 

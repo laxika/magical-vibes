@@ -77,7 +77,7 @@ class SpiderManToTheRescueTest extends BaseCardTest {
     void alreadyTappedSourceDoesNotGrantProtection() {
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         Permanent spiderMan = castSpiderMan();
-        spiderMan.setTapped(true);
+        spiderMan.tap();
 
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();

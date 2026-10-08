@@ -209,7 +209,7 @@ class TheEnigmaJewelTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyMana(ManaColor.BLUE))
                 .isEqualTo(1);
-        locus.setTapped(false);
+        locus.untap();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once each turn");
@@ -259,7 +259,7 @@ class TheEnigmaJewelTest extends BaseCardTest {
         Permanent locus = craftWithSirens();
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        locus.setTapped(false);
+        locus.untap();
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(locus.isTapped()).isTrue();

@@ -118,7 +118,7 @@ class VaporousDjinnTest extends BaseCardTest {
         Permanent djinn = addDjinn();
 
         advanceToUpkeep(player1);
-        djinn.setTapped(true);
+        djinn.tap();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         assertThat(djinn.isTapped()).isTrue();

@@ -170,7 +170,7 @@ class TrapDiggerTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(forest.getCounterCount(CounterType.TRAP)).isEqualTo(2);
 
-        trapDigger.setTapped(false);
+        trapDigger.untap();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -190,10 +190,10 @@ class TrapDiggerTest extends BaseCardTest {
     @Test
     void canSacrificeTrappedLandWhileTappedAndSummoningSick() {
         Permanent trapDigger = harness.addToBattlefieldAndReturn(player1, new TrapDigger());
-        trapDigger.setTapped(true);
+        trapDigger.tap();
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         forest.setCounterCount(CounterType.TRAP, 2);
-        forest.setTapped(true);
+        forest.tap();
         Permanent attacker = addCreatureReady(player2, new GiantSpider());
         attacker.setAttacking(true);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);

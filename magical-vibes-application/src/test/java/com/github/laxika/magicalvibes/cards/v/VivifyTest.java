@@ -82,7 +82,7 @@ class VivifyTest extends BaseCardTest {
     void preservesCountersAndTappedState() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         forest.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        forest.setTapped(true);
+        forest.tap();
         harness.setLibrary(player1, List.of(new Werebear()));
 
         castVivify(forest);

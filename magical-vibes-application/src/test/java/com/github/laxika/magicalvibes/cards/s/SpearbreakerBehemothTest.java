@@ -81,7 +81,7 @@ class SpearbreakerBehemothTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickForOpponent() {
         Permanent behemoth = harness.addToBattlefieldAndReturn(player1, new SpearbreakerBehemoth());
         behemoth.setSummoningSick(true);
-        behemoth.setTapped(true);
+        behemoth.tap();
         Permanent avatar = addReady(player2, new AvatarOfMight());
         harness.addMana(player1, ManaColor.GREEN, 1);
 

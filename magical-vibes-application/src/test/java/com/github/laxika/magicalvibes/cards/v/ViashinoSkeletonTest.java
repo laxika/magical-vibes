@@ -143,7 +143,7 @@ class ViashinoSkeletonTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent skeleton = harness.addToBattlefieldAndReturn(player1, new ViashinoSkeleton());
         skeleton.setSummoningSick(true);
-        skeleton.setTapped(true);
+        skeleton.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setHand(player1, List.of(new CylianElf()));

@@ -132,7 +132,7 @@ class TooEvilToStayDeadTest extends BaseCardTest {
     @Test
     void cannotTapAlreadyTappedCreatureForTeamwork() {
         Permanent teammate = addCreatureReady(player1, new CrawWurm());
-        teammate.setTapped(true);
+        teammate.tap();
 
         assertThatThrownBy(() -> cast(new GrizzlyBears(), List.of(teammate.getId())))
                 .isInstanceOf(IllegalStateException.class);

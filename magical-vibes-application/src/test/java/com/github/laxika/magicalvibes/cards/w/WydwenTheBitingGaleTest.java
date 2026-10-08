@@ -46,7 +46,7 @@ class WydwenTheBitingGaleTest extends BaseCardTest {
     @Test
     @DisplayName("Life is paid on activation, before Wydwen returns")
     void lifeIsPaidBeforeResolution() {
-        harness.addToBattlefieldAndReturn(player1, new WydwenTheBitingGale()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new WydwenTheBitingGale()).tap();
         harness.setLife(player1, 20);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);

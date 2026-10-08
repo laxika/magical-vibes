@@ -170,7 +170,7 @@ class ViridianClawTest extends BaseCardTest {
     void tappedEquipmentCanEquip() {
         Permanent claw = harness.addToBattlefieldAndReturn(player1, new ViridianClaw());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new LeoninSkyhunter());
-        claw.setTapped(true);
+        claw.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, creature.getId());

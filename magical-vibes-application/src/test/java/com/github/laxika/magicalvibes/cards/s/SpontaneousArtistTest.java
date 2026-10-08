@@ -89,7 +89,7 @@ class SpontaneousArtistTest extends BaseCardTest {
     void tappedSummoningSickArtistCanGiveItselfHaste() {
         Permanent artist = harness.addToBattlefieldAndReturn(player1, new SpontaneousArtist());
         artist.setSummoningSick(true);
-        artist.setTapped(true);
+        artist.tap();
         gd.playerEnergyCounters.put(player1.getId(), 2);
 
         harness.activateAbility(player1, 0, null, artist.getId());

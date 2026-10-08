@@ -89,7 +89,7 @@ class VampireHexmageTest extends BaseCardTest {
         Permanent hexmage = addCreatureReady(player1, new VampireHexmage());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new VampireHexmage());
         target.setCounterCount(CounterType.CHARGE, 2);
-        hexmage.setTapped(true);
+        hexmage.tap();
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();

@@ -100,7 +100,7 @@ class VinebredBrawlerTest extends BaseCardTest {
         Permanent brawler = addCreatureReady(player1, new VinebredBrawler());
         brawler.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        blocker.setTapped(true);
+        blocker.tap();
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());

@@ -1,4 +1,4 @@
-﻿package com.github.laxika.magicalvibes.cards.t;
+package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.b.BeastWithin;
 import com.github.laxika.magicalvibes.cards.e.EnchantedEvening;

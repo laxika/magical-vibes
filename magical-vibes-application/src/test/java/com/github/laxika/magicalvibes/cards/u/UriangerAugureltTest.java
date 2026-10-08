@@ -179,7 +179,7 @@ class UriangerAugureltTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
         resolveAllTriggers();
-        urianger.setTapped(false);
+        urianger.untap();
         harness.activateAbility(player1, 0, 0, null, null);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);

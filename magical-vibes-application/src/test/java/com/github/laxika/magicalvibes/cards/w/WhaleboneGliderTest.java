@@ -128,7 +128,7 @@ class WhaleboneGliderTest extends BaseCardTest {
     @DisplayName("Cannot activate while the Glider is tapped")
     void cannotActivateWhileTapped() {
         Permanent glider = addCreatureReady(player1, new WhaleboneGlider());
-        glider.setTapped(true);
+        glider.tap();
         Permanent target = addCreatureReady(player1, new BalduvianBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

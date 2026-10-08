@@ -88,7 +88,7 @@ class StallionOfAshmouthTest extends BaseCardTest {
     void repeatedActivationsStackWithoutTappingTheStallion() {
         setDelirium();
         Permanent stallion = harness.addToBattlefieldAndReturn(player1, new StallionOfAshmouth());
-        stallion.setTapped(true);
+        stallion.tap();
         prepareActivation();
         addActivationMana();
         addActivationMana();

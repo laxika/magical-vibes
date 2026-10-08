@@ -125,7 +125,7 @@ class ThunderingSpinebackTest extends BaseCardTest {
     @DisplayName("Activated ability does not require tap")
     void activatedAbilityDoesNotRequireTap() {
         Permanent spineback = harness.addToBattlefieldAndReturn(player1, new ThunderingSpineback());
-        spineback.setTapped(true);
+        spineback.tap();
         spineback.setSummoningSick(true);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);

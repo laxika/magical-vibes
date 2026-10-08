@@ -88,7 +88,7 @@ class UndercityScroungerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, index, null, null))
                 .isInstanceOf(IllegalStateException.class);
-        scrounger.setTapped(false);
+        scrounger.untap();
         harness.activateAbility(player1, index, null, null);
         harness.passBothPriorities();
 

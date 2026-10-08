@@ -58,7 +58,7 @@ class TendrilOfTheMycotyrantTest extends BaseCardTest {
     @Test
     void canActivateWhileSummoningSickAndTapped() {
         Permanent tendril = harness.addToBattlefieldAndReturn(player1, new TendrilOfTheMycotyrant());
-        tendril.setTapped(true);
+        tendril.tap();
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addMana(player1, ManaColor.GREEN, 7);
 

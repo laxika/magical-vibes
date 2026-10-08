@@ -73,7 +73,7 @@ class WormholeSerpentTest extends BaseCardTest {
     void tappedSummoningSickSerpentCanTargetItself() {
         Permanent serpent = harness.addToBattlefieldAndReturn(player1, new WormholeSerpent());
         serpent.setSummoningSick(true);
-        serpent.setTapped(true);
+        serpent.tap();
         addAbilityMana();
 
         harness.activateAbility(player1, 0, 0, null, serpent.getId());

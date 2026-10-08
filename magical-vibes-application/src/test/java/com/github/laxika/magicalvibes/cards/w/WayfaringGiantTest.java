@@ -81,7 +81,7 @@ class WayfaringGiantTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
 
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
 
         assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(4);

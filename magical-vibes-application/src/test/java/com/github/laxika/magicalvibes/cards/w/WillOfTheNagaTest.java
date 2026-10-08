@@ -76,7 +76,7 @@ class WillOfTheNagaTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureSkipsOnlyItsControllersNextUntap() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new ArashinCleric());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new WillOfTheNaga()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);

@@ -135,7 +135,7 @@ class UnholyGrottoTest extends BaseCardTest {
     @DisplayName("A tapped Grotto cannot activate its Zombie-return ability")
     void cannotActivateWhileTapped() {
         Permanent grotto = addReadyGrotto();
-        grotto.setTapped(true);
+        grotto.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
         Card zombie = new EntrailsFeaster();
         harness.setGraveyard(player1, List.of(zombie));

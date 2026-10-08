@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.Afflict;
 import com.github.laxika.magicalvibes.cards.c.CephalidScout;
 import com.github.laxika.magicalvibes.cards.c.CentaurGarden;
 import com.github.laxika.magicalvibes.cards.f.FledglingImp;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;

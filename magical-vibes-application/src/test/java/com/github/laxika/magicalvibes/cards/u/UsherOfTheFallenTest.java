@@ -121,7 +121,7 @@ class UsherOfTheFallenTest extends BaseCardTest {
     void tappedUsherCanBoast() {
         Permanent usher = addCreatureReady(player1, new UsherOfTheFallen());
         usher.setAttackedThisTurn(true);
-        usher.setTapped(true);
+        usher.tap();
         addBoastMana();
 
         harness.activateAbility(player1, 0, null, null);

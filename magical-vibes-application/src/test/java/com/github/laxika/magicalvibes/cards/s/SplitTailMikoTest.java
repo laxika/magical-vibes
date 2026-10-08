@@ -140,7 +140,7 @@ class SplitTailMikoTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent miko = addCreatureReady(player1, new SplitTailMiko());
-        miko.setTapped(true);
+        miko.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, miko), null, player1.getId()))

@@ -97,7 +97,7 @@ class SplatterTechniqueTest extends BaseCardTest {
             assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
             assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-            assertThat(gd.playerLibraries.get(player1.getId())).hasSize(1);
+            assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         }
     }
 }

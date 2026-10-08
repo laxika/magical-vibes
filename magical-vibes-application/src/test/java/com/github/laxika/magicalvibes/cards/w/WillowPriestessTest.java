@@ -185,7 +185,7 @@ class WillowPriestessTest extends BaseCardTest {
     @DisplayName("A tapped Priestess cannot activate its tap ability again")
     void tappedPriestessCannotActivateTapAbility() {
         Permanent priestess = addCreatureReady(player1, new WillowPriestess());
-        priestess.setTapped(true);
+        priestess.tap();
         harness.setHand(player1, List.of(new WillowFaerie()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
@@ -198,7 +198,7 @@ class WillowPriestessTest extends BaseCardTest {
     void protectionAbilityNeedsNeitherUntappedSourceNorHaste() {
         harness.addToBattlefield(player1, new WillowPriestess());
         Permanent priestess = findPermanent(player1, "Willow Priestess");
-        priestess.setTapped(true);
+        priestess.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

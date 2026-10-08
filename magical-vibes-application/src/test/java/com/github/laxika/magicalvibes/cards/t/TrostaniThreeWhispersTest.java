@@ -88,7 +88,7 @@ class TrostaniThreeWhispersTest extends BaseCardTest {
     void canTargetSelfWhileTappedAndSummoningSick(int abilityIndex) {
         Permanent trostani = harness.addToBattlefieldAndReturn(player1, new TrostaniThreeWhispers());
         trostani.setSummoningSick(true);
-        trostani.setTapped(true);
+        trostani.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

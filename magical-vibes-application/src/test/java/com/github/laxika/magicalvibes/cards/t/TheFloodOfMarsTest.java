@@ -142,7 +142,7 @@ class TheFloodOfMarsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, copied.getId());
         harness.passBothPriorities();
         copied.setCounterCount(CounterType.FLOOD, 0);
-        source.setTapped(true);
+        source.tap();
 
         declareAttackers(List.of(1));
         harness.handlePermanentChosen(player1, target.getId());

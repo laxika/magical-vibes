@@ -110,7 +110,7 @@ class VigilantMartyrTest extends BaseCardTest {
     void regenerationDoesNotRequireTappingOrHaste() {
         Permanent martyr = harness.addToBattlefieldAndReturn(player1, new VigilantMartyr());
         martyr.setSummoningSick(true);
-        martyr.setTapped(true);
+        martyr.tap();
         Permanent griffin = addCreatureReady(player1, new EkunduGriffin());
 
         harness.activateAbility(player1, 0, null, griffin.getId());
@@ -150,7 +150,7 @@ class VigilantMartyrTest extends BaseCardTest {
     @DisplayName("A tapped Martyr cannot pay the counter ability's tap cost")
     void tappedMartyrCannotCounterSpell() {
         Permanent martyr = addCreatureReady(player1, new VigilantMartyr());
-        martyr.setTapped(true);
+        martyr.tap();
         assertCounterActivationRejected();
     }
 

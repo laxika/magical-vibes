@@ -85,7 +85,7 @@ class ThreeTreeCityTest extends BaseCardTest {
     void producesEachColorImmediatelyIncludingTappedCreatures(ManaColor color) {
         Permanent city = addCity(CardSubtype.RABBIT);
         Permanent rabbit = harness.addToBattlefieldAndReturn(player1, new PawpatchRecruit());
-        rabbit.setTapped(true);
+        rabbit.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 1, null, null);

@@ -106,7 +106,7 @@ class VectisDominatorTest extends BaseCardTest {
     void tappedTargetStillOffersLifePayment() {
         addCreatureReady(player1, new VectisDominator());
         Permanent target = addCreatureReady(player2, new VectisDominator());
-        target.setTapped(true);
+        target.tap();
         harness.setLife(player2, 20);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -143,7 +143,7 @@ class VectisDominatorTest extends BaseCardTest {
     @Test
     void tappedSourceCannotActivate() {
         Permanent source = addCreatureReady(player1, new VectisDominator());
-        source.setTapped(true);
+        source.tap();
         Permanent target = addCreatureReady(player2, new VectisDominator());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))

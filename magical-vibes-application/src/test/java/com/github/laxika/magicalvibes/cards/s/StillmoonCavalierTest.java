@@ -180,7 +180,7 @@ class StillmoonCavalierTest extends BaseCardTest {
     void abilitiesWorkWhileTappedAndSummoningSickWithoutTargetingSelf() {
         Permanent cavalier = harness.addToBattlefieldAndReturn(player1, new StillmoonCavalier());
         cavalier.setSummoningSick(true);
-        cavalier.setTapped(true);
+        cavalier.tap();
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, 0, null, null);

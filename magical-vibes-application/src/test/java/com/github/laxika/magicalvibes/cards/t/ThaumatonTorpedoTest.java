@@ -82,7 +82,7 @@ class ThaumatonTorpedoTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped even with sufficient mana")
     void cannotActivateWhileTapped() {
         Permanent torpedo = harness.addToBattlefieldAndReturn(player1, new ThaumatonTorpedo());
-        torpedo.setTapped(true);
+        torpedo.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ThaumatonTorpedo());
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 

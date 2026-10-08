@@ -64,7 +64,7 @@ class StreamHopperTest extends BaseCardTest {
         Permanent hopper = addCreatureReady(player1, new StreamHopper());
         Permanent otherHopper = addCreatureReady(player1, new StreamHopper());
         Permanent opposingHopper = addCreatureReady(player2, new StreamHopper());
-        hopper.setTapped(true);
+        hopper.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

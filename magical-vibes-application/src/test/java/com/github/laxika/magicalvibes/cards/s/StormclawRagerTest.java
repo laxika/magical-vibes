@@ -108,7 +108,7 @@ class StormclawRagerTest extends BaseCardTest {
     void tappedSummoningSickRagerCanActivate() {
         Permanent rager = harness.addToBattlefieldAndReturn(player1, new StormclawRager());
         rager.setSummoningSick(true);
-        rager.setTapped(true);
+        rager.tap();
         Permanent creature = addCreatureReady(player1, new ShivanBranchBurner());
         addCreatureReady(player1, new ShivanBranchBurner());
         prepareForSorcerySpeed();
@@ -149,7 +149,7 @@ class StormclawRagerTest extends BaseCardTest {
     @Test
     void stillDrawsWhenRagerIsDestroyedInResponse() {
         Permanent rager = addReadyRager();
-        rager.setTapped(true);
+        rager.tap();
         Permanent creature = addCreatureReady(player1, new ShivanBranchBurner());
         addCreatureReady(player1, new ShivanBranchBurner());
         prepareForSorcerySpeed();

@@ -75,7 +75,7 @@ class StormGodsOracleTest extends BaseCardTest {
     void repeatedActivationsCanCauseZeroToughnessDeath() {
         Permanent oracle = harness.addToBattlefieldAndReturn(player1, new StormGodsOracle());
         oracle.setSummoningSick(true);
-        oracle.setTapped(true);
+        oracle.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.setLife(player2, 20);
 

@@ -79,7 +79,7 @@ class ZodiacSnakeTest extends BaseCardTest {
     @DisplayName("A tapped defending Swamp still prevents Zodiac Snake from being blocked")
     void cannotBeBlockedWhenDefendingSwampIsTapped() {
         harness.addToBattlefield(player2, new Swamp());
-        findPermanent(player2, "Swamp").setTapped(true);
+        findPermanent(player2, "Swamp").tap();
 
         Permanent blockerPerm = addCreatureReady(player2, new ShuFootSoldiers());
         Permanent atkPerm = addCreatureReady(player1, new ZodiacSnake());

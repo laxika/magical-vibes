@@ -73,7 +73,7 @@ class VantressTransmuterTest extends BaseCardTest {
     @Test
     void adventureCreatesRoleOnAlreadyTappedCreatureYouControl() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new VantressTransmuter());
-        target.setTapped(true);
+        target.tap();
         VantressTransmuter card = new VantressTransmuter();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.BLUE, 1);

@@ -89,7 +89,7 @@ class VagrantPlowbeastsTest extends BaseCardTest {
     void canRegenerateSelfAtPowerFive() {
         Permanent plowbeasts = harness.addToBattlefieldAndReturn(player1, new VagrantPlowbeasts());
         plowbeasts.setPowerModifier(-1);
-        plowbeasts.setTapped(true);
+        plowbeasts.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, plowbeasts.getId());

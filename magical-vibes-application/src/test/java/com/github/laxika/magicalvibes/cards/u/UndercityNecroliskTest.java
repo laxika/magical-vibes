@@ -65,7 +65,7 @@ class UndercityNecroliskTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickAndPaysSacrificeBeforeResolution() {
         Permanent necrolisk = harness.addToBattlefieldAndReturn(player1, new UndercityNecrolisk());
         necrolisk.setSummoningSick(true);
-        necrolisk.setTapped(true);
+        necrolisk.tap();
         harness.addToBattlefield(player1, new BartizanBats());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

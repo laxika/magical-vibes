@@ -130,7 +130,7 @@ class SwoopingPteranodonTest extends BaseCardTest {
     void untapsStolenCreatureAndReturnsItWithKeywordsExpiredAfterLandDamage() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
-        target.setTapped(true);
+        target.tap();
 
         harness.castFromHand(player1, new SwoopingPteranodon(), "{3}{R}{W}");
         harness.passBothPriorities();

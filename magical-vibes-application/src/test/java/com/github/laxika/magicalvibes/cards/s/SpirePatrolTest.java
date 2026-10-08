@@ -69,7 +69,7 @@ class SpirePatrolTest extends BaseCardTest {
         void alreadyTappedCreatureStillSkipsNextUntap() {
             harness.addToBattlefield(player2, new AegisAutomaton());
             Permanent target = findPermanent(player2, "Aegis Automaton");
-            target.setTapped(true);
+            target.tap();
             castSpirePatrol(player2);
             resolveAllTriggers();
 

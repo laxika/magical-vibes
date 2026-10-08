@@ -72,7 +72,7 @@ class TreeshakerChimeraTest extends BaseCardTest {
         Permanent chimera = addCreatureReady(player1, new TreeshakerChimera());
         chimera.setAttacking(true);
         Permanent tapped = addCreatureReady(player2, new GrizzlyBears());
-        tapped.setTapped(true);
+        tapped.tap();
         Permanent newlyEntered = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         newlyEntered.setSummoningSick(true);
 

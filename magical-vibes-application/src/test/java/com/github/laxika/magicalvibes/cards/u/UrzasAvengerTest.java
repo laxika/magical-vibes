@@ -154,7 +154,7 @@ class UrzasAvengerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent avenger = harness.addToBattlefieldAndReturn(player1, new UrzasAvenger());
         avenger.setSummoningSick(true);
-        avenger.setTapped(true);
+        avenger.tap();
         int power = gqs.getEffectivePower(gd, avenger);
         int toughness = gqs.getEffectiveToughness(gd, avenger);
 

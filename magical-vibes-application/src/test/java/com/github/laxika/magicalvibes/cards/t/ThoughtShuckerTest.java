@@ -127,8 +127,8 @@ class ThoughtShuckerTest extends BaseCardTest {
         harness.setGraveyard(player1, graveyardCards(7));
         Permanent first = harness.addToBattlefieldAndReturn(player1, new ThoughtShucker());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new ThoughtShucker());
-        first.setTapped(true);
-        second.setTapped(true);
+        first.tap();
+        second.tap();
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

@@ -68,7 +68,7 @@ class StaffOfZegonTest extends BaseCardTest {
     void requiresUntappedStaff() {
         addStaffAndTarget();
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        findPermanent(player1, "Staff of Zegon").setTapped(true);
+        findPermanent(player1, "Staff of Zegon").tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);

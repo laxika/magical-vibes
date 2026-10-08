@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BoggartBirthRite;
 import com.github.laxika.magicalvibes.cards.b.BoggartHarbinger;
 import com.github.laxika.magicalvibes.cards.c.CaterwaulingBoggart;
 import com.github.laxika.magicalvibes.cards.l.LeafGilder;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;

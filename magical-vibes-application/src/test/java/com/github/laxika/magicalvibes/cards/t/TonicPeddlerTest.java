@@ -82,7 +82,7 @@ class TonicPeddlerTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent peddler = addCreatureReady(player1, new TonicPeddler());
-        peddler.setTapped(true);
+        peddler.tap();
         harness.setHand(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 

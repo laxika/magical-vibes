@@ -133,7 +133,7 @@ class SunderingArchaicTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SunderingArchaic());
         Permanent archaic = findPermanent(player1, "Sundering Archaic");
         archaic.setSummoningSick(true);
-        archaic.setTapped(true);
+        archaic.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         Card tucked = new GrizzlyBears();
         Card top = new HillGiant();

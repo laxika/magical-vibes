@@ -63,7 +63,7 @@ class TavernSwindlerTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Swindler cannot activate or pay life again")
     void tappedSwindlerCannotActivate() {
-        addCreatureReady(player1, new TavernSwindler()).setTapped(true);
+        addCreatureReady(player1, new TavernSwindler()).tap();
         harness.setLife(player1, 20);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

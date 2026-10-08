@@ -88,7 +88,7 @@ class VoraciousVarmintTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickUsingColoredMana() {
         Permanent varmint = harness.addToBattlefieldAndReturn(player1, new VoraciousVarmint());
         varmint.setSummoningSick(true);
-        varmint.setTapped(true);
+        varmint.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         Permanent target = addArtifact(player2);
 

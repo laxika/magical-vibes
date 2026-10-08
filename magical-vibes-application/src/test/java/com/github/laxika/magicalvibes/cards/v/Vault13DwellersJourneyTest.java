@@ -1,4 +1,4 @@
-﻿package com.github.laxika.magicalvibes.cards.v;
+package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.a.AlmostPerfect;
 import com.github.laxika.magicalvibes.cards.i.InfestingRadroach;

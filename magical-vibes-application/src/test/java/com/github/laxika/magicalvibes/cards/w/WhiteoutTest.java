@@ -114,7 +114,7 @@ class WhiteoutTest extends BaseCardTest {
     @DisplayName("A tapped snow land can pay the graveyard ability during an opponent's turn")
     void tappedSnowLandPaysDuringOpponentsTurn() {
         Permanent snow = snowLand(player1);
-        snow.setTapped(true);
+        snow.tap();
         Whiteout whiteout = new Whiteout();
         harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(whiteout));

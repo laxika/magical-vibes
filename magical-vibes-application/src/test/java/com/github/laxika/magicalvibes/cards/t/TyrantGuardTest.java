@@ -139,7 +139,7 @@ class TyrantGuardTest extends BaseCardTest {
     @Test
     void shieldwallUsesCountersAtResolutionAndOnlyProtectsOwnCreatures() {
         Permanent guard = harness.addToBattlefieldAndReturn(player1, new TyrantGuard());
-        guard.setTapped(true);
+        guard.tap();
         Permanent gainingCounter = addCreatureReady(player1, new GenestealerPatriarch());
         Permanent losingCounter = addCreatureReady(player1, new GenestealerPatriarch());
         losingCounter.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);

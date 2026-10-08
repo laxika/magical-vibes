@@ -183,7 +183,7 @@ class TravelingMinisterTest extends BaseCardTest {
     @DisplayName("Cannot pay the tap cost while already tapped")
     void cannotActivateWhileTapped() {
         setupOnMyTurn(TurnStep.PRECOMBAT_MAIN);
-        findPermanent(player1, "Traveling Minister").setTapped(true);
+        findPermanent(player1, "Traveling Minister").tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null,
                 harness.getPermanentId(player1, "Unholy Officiant")))

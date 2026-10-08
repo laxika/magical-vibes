@@ -168,7 +168,7 @@ class TowerAboveTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         addCreatureReady(player2, new GrizzlyBears());
-        blocker.setTapped(true);
+        blocker.tap();
         grantTowerAbove(attacker);
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {

@@ -125,7 +125,7 @@ class VividCragTest extends BaseCardTest {
     void tappedCragCannotActivateEitherAbility() {
         Permanent crag = addReadyCrag(player1);
         crag.setCounterCount(CounterType.CHARGE, 2);
-        crag.setTapped(true);
+        crag.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

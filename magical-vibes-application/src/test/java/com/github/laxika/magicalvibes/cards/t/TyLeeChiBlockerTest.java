@@ -160,7 +160,7 @@ class TyLeeChiBlockerTest extends BaseCardTest {
     void canEnterDuringOpponentsTurnThroughFlash() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.BEGIN_COMBAT);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.clearPriorityPassed();
 
         castTyLee(bears.getId());

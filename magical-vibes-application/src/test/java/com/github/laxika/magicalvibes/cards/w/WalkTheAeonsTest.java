@@ -110,9 +110,9 @@ class WalkTheAeonsTest extends BaseCardTest {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new Island());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new Island());
         Permanent third = harness.addToBattlefieldAndReturn(player1, new Island());
-        first.setTapped(true);
-        second.setTapped(true);
-        third.setTapped(true);
+        first.tap();
+        second.tap();
+        third.tap();
         prepareCast();
 
         harness.castSorceryWithSacrificesAndBuyback(player1, 0, player1.getId(),

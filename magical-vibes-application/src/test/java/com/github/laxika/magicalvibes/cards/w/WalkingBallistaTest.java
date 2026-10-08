@@ -139,7 +139,7 @@ class WalkingBallistaTest extends BaseCardTest {
     void abilitiesDoNotRequireTapOrHaste() {
         Permanent ballista = addReadyBallista(player1, 2);
         ballista.setSummoningSick(true);
-        ballista.setTapped(true);
+        ballista.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.setLife(player2, 20);
 

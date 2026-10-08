@@ -182,7 +182,7 @@ class SpikeWeaverTest extends BaseCardTest {
     void abilitiesWorkWhileTappedAndSummoningSick() {
         Permanent weaver = addReadyWeaver(player1);
         weaver.setSummoningSick(true);
-        weaver.setTapped(true);
+        weaver.tap();
         Permanent target = addReadyWeaver(player2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         prepareMainPhase(player1);

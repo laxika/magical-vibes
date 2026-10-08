@@ -139,7 +139,7 @@ class SpearOfHeliodTest extends BaseCardTest {
         Permanent sorcerer = addCreatureReady(player2, new ProdigalSorcerer());
         harness.activateAbility(player2, indexOf(player2, sorcerer), null, player1.getId());
         harness.passBothPriorities();
-        spear.setTapped(true);
+        spear.tap();
 
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

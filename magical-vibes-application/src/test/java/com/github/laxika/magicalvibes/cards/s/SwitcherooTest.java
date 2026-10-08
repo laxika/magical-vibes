@@ -144,8 +144,8 @@ class SwitcherooTest extends BaseCardTest {
         prepare();
         Permanent own = harness.addToBattlefieldAndReturn(player1, new CanyonMinotaur());
         Permanent opponents = harness.addToBattlefieldAndReturn(player2, new ElvishVisionary());
-        own.setTapped(true);
-        opponents.setTapped(true);
+        own.tap();
+        opponents.tap();
         own.setSummoningSick(false);
         opponents.setSummoningSick(false);
 

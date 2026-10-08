@@ -203,7 +203,7 @@ class ThrullSurgeonTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick because the cost has no tap symbol")
     void canActivateWhileTappedAndSummoningSick() {
         var surgeon = harness.addToBattlefieldAndReturn(player1, new ThrullSurgeon());
-        surgeon.setTapped(true);
+        surgeon.tap();
         surgeon.setSummoningSick(true);
         addActivationMana(player1);
         harness.setHand(player2, List.of(new GrizzlyBears()));

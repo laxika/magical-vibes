@@ -64,7 +64,7 @@ class StranglerootGeistTest extends BaseCardTest {
     @DisplayName("Undying returns a creature that dies from zero toughness as a new untapped permanent")
     void undyingReturnsAfterToughnessReduction() {
         Permanent geist = harness.addToBattlefieldAndReturn(player1, new StranglerootGeist());
-        geist.setTapped(true);
+        geist.tap();
         harness.setHand(player2, List.of(new TragicSlip()));
         harness.addMana(player2, ManaColor.BLACK, 1);
 

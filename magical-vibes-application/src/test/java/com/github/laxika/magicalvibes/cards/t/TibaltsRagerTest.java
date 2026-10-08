@@ -109,7 +109,7 @@ class TibaltsRagerTest extends BaseCardTest {
     void multipleActivationsStackWhileSummoningSickAndTapped() {
         Permanent rager = harness.addToBattlefieldAndReturn(player1, new TibaltsRager());
         rager.setSummoningSick(true);
-        rager.setTapped(true);
+        rager.tap();
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

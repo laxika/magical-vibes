@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.FlametongueYearling;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -139,7 +139,7 @@ class SwordOfHearthAndHomeTest extends BaseCardTest {
         sword.setAttachedTo(attacker.getId());
         Permanent stolen = addCreatureReady(player2, new GrizzlyBears());
         gd.stolenCreatures.put(stolen.getId(), player1.getId());
-        stolen.setTapped(true);
+        stolen.tap();
         harness.setLibrary(player1, List.of(new Forest()));
 
         declareAttackers(List.of(0));

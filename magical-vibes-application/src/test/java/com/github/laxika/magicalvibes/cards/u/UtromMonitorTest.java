@@ -63,7 +63,7 @@ class UtromMonitorTest extends BaseCardTest {
     @Test
     void artifactCreaturesAndTappedArtifactsCountForAffinity() {
         for (int i = 0; i < 2; i++) {
-            harness.addToBattlefieldAndReturn(player1, new UtromMonitor()).setTapped(true);
+            harness.addToBattlefieldAndReturn(player1, new UtromMonitor()).tap();
         }
         harness.setHand(player1, List.of(new UtromMonitor()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);

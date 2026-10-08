@@ -48,7 +48,7 @@ class YavimayaAncientsTest extends BaseCardTest {
     @DisplayName("Can activate while tapped during an opponent's turn")
     void canActivateWhileTappedOnOpponentsTurn() {
         Permanent ancients = addAncients();
-        ancients.setTapped(true);
+        ancients.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.GREEN, 1);

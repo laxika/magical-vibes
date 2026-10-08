@@ -74,7 +74,7 @@ class TelJiladExileTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent exile = addTelJiladExileReady(player1);
         exile.setSummoningSick(true);
-        exile.setTapped(true);
+        exile.tap();
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, null);

@@ -58,7 +58,7 @@ class SpareSuppliesTest extends BaseCardTest {
     @DisplayName("Tapped Spare Supplies cannot activate its ability")
     void cannotActivateWhileTapped() {
         Permanent supplies = harness.addToBattlefieldAndReturn(player1, new SpareSupplies());
-        supplies.setTapped(true);
+        supplies.tap();
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

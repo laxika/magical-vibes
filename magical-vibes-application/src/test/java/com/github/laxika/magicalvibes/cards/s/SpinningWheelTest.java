@@ -122,7 +122,7 @@ class SpinningWheelTest extends BaseCardTest {
     void creatureTapAbilityCanTargetAnAlreadyTappedCreature() {
         harness.addToBattlefield(player1, new SpinningWheel());
         Permanent target = addCreatureReady(player2, new GarenbrigSquire());
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.activateAbility(player1, 0, 1, null, target.getId());

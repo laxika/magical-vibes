@@ -146,7 +146,7 @@ class SultaiMonumentTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         harness.addToBattlefield(player1, new SultaiMonument());
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

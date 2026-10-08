@@ -54,7 +54,7 @@ class TakeIntoCustodyTest extends BaseCardTest {
     @DisplayName("An already tapped creature still misses its next untap")
     void alreadyTappedCreatureSkipsNextUntap() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new DruidOfTheCowl());
-        creature.setTapped(true);
+        creature.tap();
         castTakeIntoCustody(creature);
 
         harness.performUntapStep(player2);
@@ -68,7 +68,7 @@ class TakeIntoCustodyTest extends BaseCardTest {
     void canTargetOwnCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new DruidOfTheCowl());
         Permanent other = harness.addToBattlefieldAndReturn(player1, new DruidOfTheCowl());
-        other.setTapped(true);
+        other.tap();
         castTakeIntoCustody(target);
 
         assertThat(target.isTapped()).isTrue();
@@ -95,7 +95,7 @@ class TakeIntoCustodyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.isTapped()).isFalse();
-        creature.setTapped(true);
+        creature.tap();
         harness.performUntapStep(player2);
         assertThat(creature.isTapped()).isFalse();
     }

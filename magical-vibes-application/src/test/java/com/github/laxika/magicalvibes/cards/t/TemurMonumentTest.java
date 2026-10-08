@@ -146,7 +146,7 @@ class TemurMonumentTest extends BaseCardTest {
     @DisplayName("A tapped monument cannot pay the tap cost")
     void tappedMonumentCannotActivate() {
         prepareTokenAbility();
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

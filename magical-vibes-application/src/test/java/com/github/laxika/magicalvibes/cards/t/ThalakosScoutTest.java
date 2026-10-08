@@ -139,7 +139,7 @@ class ThalakosScoutTest extends BaseCardTest {
     void tappedSummoningSickScoutCanReturnItself() {
         Permanent scout = harness.addToBattlefieldAndReturn(player1, new ThalakosScout());
         scout.setSummoningSick(true);
-        scout.setTapped(true);
+        scout.tap();
         harness.setHand(player1, List.of(new ThalakosDrifters()));
 
         harness.activateAbility(player1, 0, null, null);

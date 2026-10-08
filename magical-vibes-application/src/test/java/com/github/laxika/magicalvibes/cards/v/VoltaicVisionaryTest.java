@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.b.BelligerentGuest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.SureStrike;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -98,7 +98,7 @@ class VoltaicVisionaryTest extends BaseCardTest {
     @Test
     void emptyLibraryStillDealsDamageWithoutTransforming() {
         Permanent visionary = activateWithTopCard(new Mountain());
-        visionary.setTapped(false);
+        visionary.untap();
         harness.setLibrary(player1, List.of());
         prepareMainPhase(player1);
 
@@ -152,7 +152,7 @@ class VoltaicVisionaryTest extends BaseCardTest {
         Permanent visionary = activateWithTopCard(topCard);
         harness.castFromExile(player1, topCard.getId());
         resolveAllTriggers();
-        visionary.setTapped(false);
+        visionary.untap();
         addCreatureReady(player2, new BelligerentGuest());
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));
@@ -170,7 +170,7 @@ class VoltaicVisionaryTest extends BaseCardTest {
         prepareMainPhase(player1);
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
-        visionary.setTapped(false);
+        visionary.untap();
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
         harness.addMana(player1, ManaColor.RED, 4);

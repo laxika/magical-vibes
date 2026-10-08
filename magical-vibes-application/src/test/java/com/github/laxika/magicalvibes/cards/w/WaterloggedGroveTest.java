@@ -94,7 +94,7 @@ class WaterloggedGroveTest extends BaseCardTest {
     @DisplayName("A tapped Waterlogged Grove cannot activate its mana ability")
     void tappedLandCannotProduceMana() {
         Permanent grove = harness.addToBattlefieldAndReturn(player1, new WaterloggedGrove());
-        grove.setTapped(true);
+        grove.tap();
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
@@ -110,7 +110,7 @@ class WaterloggedGroveTest extends BaseCardTest {
     @DisplayName("A tapped Waterlogged Grove cannot be sacrificed for its draw ability")
     void tappedLandCannotActivateDrawAbility() {
         Permanent grove = harness.addToBattlefieldAndReturn(player1, new WaterloggedGrove());
-        grove.setTapped(true);
+        grove.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))

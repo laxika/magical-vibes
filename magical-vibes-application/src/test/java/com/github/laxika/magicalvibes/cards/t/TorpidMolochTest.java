@@ -105,9 +105,9 @@ class TorpidMolochTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickAndSacrificeTappedLands() {
         Permanent moloch = harness.addToBattlefieldAndReturn(player1, new TorpidMoloch());
         moloch.setSummoningSick(true);
-        moloch.setTapped(true);
+        moloch.tap();
         for (int i = 0; i < 3; i++) {
-            harness.addToBattlefieldAndReturn(player1, new Mountain()).setTapped(true);
+            harness.addToBattlefieldAndReturn(player1, new Mountain()).tap();
         }
 
         harness.activateAbility(player1, 0, null, null);

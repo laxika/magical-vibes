@@ -146,7 +146,7 @@ class TheChainVeilTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         for (int i = 0; i < 2; i++) {
-            veil.setTapped(false);
+            veil.untap();
             harness.addMana(player1, ManaColor.COLORLESS, 4);
             harness.activateAbility(player1, 0, 0, null, null);
             harness.passBothPriorities();

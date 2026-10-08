@@ -166,7 +166,7 @@ class ValleymakerTest extends BaseCardTest {
     @Test
     void tappedValleymakerCannotActivateEitherAbility() {
         Permanent source = addCreatureReady(player1, new Valleymaker());
-        source.setTapped(true);
+        source.tap();
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player1, new Forest());
         harness.forceActivePlayer(player1);
@@ -186,7 +186,7 @@ class ValleymakerTest extends BaseCardTest {
     void forestAbilityCanSacrificeTappedForestAndResolvesWithoutUsingStack() {
         Permanent source = addCreatureReady(player1, new Valleymaker());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
@@ -207,7 +207,7 @@ class ValleymakerTest extends BaseCardTest {
         Permanent source = addCreatureReady(player1, new Valleymaker());
         Permanent firstMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         Permanent secondMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
-        secondMountain.setTapped(true);
+        secondMountain.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 

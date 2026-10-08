@@ -112,7 +112,7 @@ class VastwoodAnimistTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent animist = addReadyAnimist(player1);
         Permanent forest = addForest(player1);
-        animist.setTapped(true);
+        animist.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);

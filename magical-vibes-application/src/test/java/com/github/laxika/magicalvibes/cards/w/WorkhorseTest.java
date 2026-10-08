@@ -89,7 +89,7 @@ class WorkhorseTest extends BaseCardTest {
     @DisplayName("A tapped Workhorse can remove a counter without untapping")
     void canActivateWhileTapped() {
         Permanent workhorse = harness.enterBattlefieldAndReturn(player1, new Workhorse());
-        workhorse.setTapped(true);
+        workhorse.tap();
 
         harness.activateAbility(player1, 0, null, null);
 

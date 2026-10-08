@@ -92,7 +92,7 @@ class SuspiciousBookcaseTest extends BaseCardTest {
     @DisplayName("Cannot activate a tapped bookcase")
     void cannotActivateWhileTapped() {
         Permanent bookcase = addCreatureReady(player1, new SuspiciousBookcase());
-        bookcase.setTapped(true);
+        bookcase.tap();
         Permanent target = addCreatureReady(player1, new GreenwoodSentinel());
         addActivationMana();
 

@@ -136,7 +136,7 @@ class SwordDancerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent swordDancer = harness.addToBattlefieldAndReturn(player1, new SwordDancer());
         swordDancer.setSummoningSick(true);
-        swordDancer.setTapped(true);
+        swordDancer.tap();
         Permanent attacker = addAttackingCreature(player2);
         harness.addMana(player1, ManaColor.WHITE, 2);
 

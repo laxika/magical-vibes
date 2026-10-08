@@ -98,9 +98,9 @@ class TriangleOfWarTest extends BaseCardTest {
         Permanent triangle = harness.addToBattlefieldAndReturn(player1, new TriangleOfWar());
         Permanent mine = harness.addToBattlefieldAndReturn(player1, new PantherWarriors());
         Permanent theirs = harness.addToBattlefieldAndReturn(player2, new Warthog());
-        triangle.setTapped(true);
-        mine.setTapped(true);
-        theirs.setTapped(true);
+        triangle.tap();
+        mine.tap();
+        theirs.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(mine.getId(), theirs.getId()));

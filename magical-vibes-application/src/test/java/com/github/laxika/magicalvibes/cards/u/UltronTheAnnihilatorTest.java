@@ -100,7 +100,7 @@ class UltronTheAnnihilatorTest extends BaseCardTest {
         resolveAllTriggers();
         ultron.setMarkedDamage(4);
 
-        harness.checkStateBasedActions();
+        harness.runStateBasedActions();
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Ultron the Annihilator");
@@ -115,7 +115,7 @@ class UltronTheAnnihilatorTest extends BaseCardTest {
         ultron.setMarkedDamage(4);
         robot.setMarkedDamage(2);
 
-        harness.checkStateBasedActions();
+        harness.runStateBasedActions();
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Ultron the Annihilator");

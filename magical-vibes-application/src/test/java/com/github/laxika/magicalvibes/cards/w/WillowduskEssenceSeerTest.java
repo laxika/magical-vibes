@@ -162,7 +162,7 @@ class WillowduskEssenceSeerTest extends BaseCardTest {
         prepareMainPhase(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, battlefieldIndex(willowdusk), null, target.getId());
-        willowdusk.setTapped(false);
+        willowdusk.untap();
 
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, battlefieldIndex(willowdusk), null, target.getId()))

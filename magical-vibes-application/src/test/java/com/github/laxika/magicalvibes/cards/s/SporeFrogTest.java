@@ -84,7 +84,7 @@ class SporeFrogTest extends BaseCardTest {
     void sacrificeIsPaidBeforeResolutionWithoutTapOrManaCost() {
         var frog = harness.addToBattlefieldAndReturn(player1, new SporeFrog());
         frog.setSummoningSick(true);
-        frog.setTapped(true);
+        frog.tap();
 
         harness.activateAbility(player1, 0, null, null);
 

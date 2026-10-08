@@ -129,7 +129,7 @@ class TrophyHunterTest extends BaseCardTest {
     @DisplayName("A tapped Trophy Hunter can damage its controller's flying creature")
     void tappedHunterCanDamageOwnCreature() {
         Permanent hunter = addCreatureReady(player1, new TrophyHunter());
-        hunter.setTapped(true);
+        hunter.tap();
         Permanent target = addCreatureReady(player1, new DrakeFamiliar());
 
         activateHunter(target);

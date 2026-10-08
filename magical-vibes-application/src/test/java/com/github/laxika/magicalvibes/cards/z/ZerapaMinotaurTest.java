@@ -74,7 +74,7 @@ class ZerapaMinotaurTest extends BaseCardTest {
     void abilityRemovesFirstStrikeOnlyFromItsSource() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new ZerapaMinotaur());
         Permanent other = harness.addToBattlefieldAndReturn(player1, new ZerapaMinotaur());
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player2, 0, null, null);

@@ -162,7 +162,7 @@ class SparkshaperVisionaryTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        teferi.setTapped(true);
+        teferi.tap();
         harness.activateAbilityWithMultiTargets(player1, 1, 1, List.of(teferi.getId()));
         harness.passBothPriorities();
 

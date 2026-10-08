@@ -175,7 +175,7 @@ class TelekineticBondsTest extends BaseCardTest {
         assertThat(target.isTapped()).isTrue();
         assertThat(target.getCounterCount(CounterType.STUN)).isZero();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLibraries.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
     }
 
     @Test
@@ -190,7 +190,7 @@ class TelekineticBondsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bonds.isTapped()).isFalse();
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 

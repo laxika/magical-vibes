@@ -111,7 +111,7 @@ class VarchildsCrusaderTest extends BaseCardTest {
     @DisplayName("The zero-cost ability can be activated while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent crusader = addCreatureReady(player1, new VarchildsCrusader());
-        crusader.setTapped(true);
+        crusader.tap();
         crusader.setSummoningSick(true);
 
         harness.activateAbility(player1, 0, null, null);

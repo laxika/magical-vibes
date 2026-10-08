@@ -74,7 +74,7 @@ class SpirespineTest extends BaseCardTest {
     @DisplayName("A tapped Spirespine is not required to block")
     void tappedCreatureDoesNotHaveToBlock() {
         Permanent spirespine = addCreatureReady(player2, new Spirespine());
-        spirespine.setTapped(true);
+        spirespine.tap();
         Permanent attacker = addCreatureReady(player1, new GoldenHind());
         attacker.setAttacking(true);
         attacker.setAttackTarget(player2.getId());

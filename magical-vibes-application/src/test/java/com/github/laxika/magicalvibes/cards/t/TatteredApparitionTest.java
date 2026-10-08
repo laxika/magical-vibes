@@ -72,7 +72,7 @@ class TatteredApparitionTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Apparition can activate its ability")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent apparition = addApparition();
-        apparition.setTapped(true);
+        apparition.tap();
         apparition.setSummoningSick(true);
         harness.addMana(player1, ManaColor.BLACK, 2);
 

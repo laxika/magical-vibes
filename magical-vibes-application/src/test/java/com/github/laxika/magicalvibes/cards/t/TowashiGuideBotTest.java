@@ -121,7 +121,7 @@ class TowashiGuideBotTest extends BaseCardTest {
         for (int i = 1; i < creatureCount; i++) {
             Permanent creature = addCreatureReady(player1, new BearerOfMemory());
             creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-            creature.setTapped(true);
+            creature.tap();
         }
         Forest drawnCard = new Forest();
         harness.setHand(player1, List.of());

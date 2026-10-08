@@ -73,7 +73,7 @@ class VoidStalkerTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent stalker = harness.addToBattlefieldAndReturn(player1, new VoidStalker());
         stalker.setSummoningSick(false);
-        stalker.setTapped(true);
+        stalker.tap();
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, stalker.getId()))

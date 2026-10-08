@@ -155,7 +155,7 @@ class SquirrelWranglerTest extends BaseCardTest {
     void tappedSummoningSickWranglerCanActivateBothAbilities() {
         Permanent wrangler = harness.addToBattlefieldAndReturn(player1, new SquirrelWrangler());
         wrangler.setSummoningSick(true);
-        wrangler.setTapped(true);
+        wrangler.tap();
         harness.addToBattlefield(player1, new RhysticCave());
         addManaForAbility();
 

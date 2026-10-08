@@ -78,7 +78,7 @@ class UnyieldingKrumarTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent krumar = harness.addToBattlefieldAndReturn(player1, new UnyieldingKrumar());
         krumar.setSummoningSick(true);
-        krumar.setTapped(true);
+        krumar.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

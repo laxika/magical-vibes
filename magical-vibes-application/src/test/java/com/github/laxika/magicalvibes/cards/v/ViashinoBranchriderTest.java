@@ -97,7 +97,7 @@ class ViashinoBranchriderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent branchrider = battlefieldBranchrider();
-        branchrider.setTapped(true);
+        branchrider.tap();
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 

@@ -96,7 +96,7 @@ class TheThingBenGrimmTest extends BaseCardTest {
         Permanent theThing = harness.addToBattlefieldAndReturn(player1, new TheThingBenGrimm());
         Permanent hero = addCreatureReady(player2, new AgentOfAtlas());
         hero.setAttacking(true);
-        theThing.setTapped(true);
+        theThing.tap();
 
         resolveCombat(player2);
         resolveAllTriggers();
@@ -112,7 +112,7 @@ class TheThingBenGrimmTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HumanTorchJohnnyStorm());
         harness.setLibrary(player1, List.of(new AgentOfAtlas()));
 
-        draw(player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();

@@ -121,7 +121,7 @@ class TroyanGutsyExplorerTest extends BaseCardTest {
     void restrictedManaCannotPayForActivatedAbility() {
         addReadyTroyan(player1);
         harness.activateAbility(player1, 0, 0, null, null);
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(false);
+        gd.playerBattlefields.get(player1.getId()).getFirst().untap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);

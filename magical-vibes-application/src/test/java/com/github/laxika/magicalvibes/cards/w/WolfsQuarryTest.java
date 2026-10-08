@@ -88,7 +88,7 @@ class WolfsQuarryTest extends BaseCardTest {
     void tappedFoodCannotBeActivated() {
         castAndKillBoar();
         Permanent food = findPermanent(player1, "Food");
-        food.setTapped(true);
+        food.tap();
         int foodIndex = gd.playerBattlefields.get(player1.getId()).indexOf(food);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

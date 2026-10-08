@@ -83,7 +83,7 @@ class WordOfBindingTest extends BaseCardTest {
     void canTargetOwnCreatureAndAlreadyTappedCreature() {
         Permanent own = harness.addToBattlefieldAndReturn(player1, new Squire());
         Permanent opposing = harness.addToBattlefieldAndReturn(player2, new Squire());
-        opposing.setTapped(true);
+        opposing.tap();
         Permanent unchosen = harness.addToBattlefieldAndReturn(player2, new Squire());
         harness.setHand(player1, List.of(new WordOfBinding()));
         harness.addMana(player1, ManaColor.BLACK, 4);

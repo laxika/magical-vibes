@@ -153,7 +153,7 @@ class ZelyonSwordTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, creature.getId());
         harness.inMutationScope(() -> {
             sword.untap();
-            sword.setTapped(true);
+            sword.tap();
         });
         harness.passBothPriorities();
 

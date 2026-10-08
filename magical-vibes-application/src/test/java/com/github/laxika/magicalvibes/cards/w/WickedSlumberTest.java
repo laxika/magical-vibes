@@ -118,7 +118,7 @@ class WickedSlumberTest extends BaseCardTest {
     @DisplayName("Already tapped creatures still receive both stun counters")
     void putsCountersOnAlreadyTappedCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
 
         cast(List.of(target.getId()));
 

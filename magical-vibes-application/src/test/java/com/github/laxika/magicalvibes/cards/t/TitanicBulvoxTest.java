@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +20,7 @@ class TitanicBulvoxTest extends BaseCardTest {
     void losesTrampleWhileFaceDown() {
         Permanent bulvox = harness.addToBattlefieldAndReturn(player1, new TitanicBulvox());
 
-        bulvox.setFaceDown(true);
+        bulvox.setFaceDown(2, 2, java.util.Set.of(CardType.CREATURE));
         assertThat(gqs.hasKeyword(gd, bulvox, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -48,7 +49,7 @@ class TitanicBulvoxTest extends BaseCardTest {
     @Test
     void cannotTurnFaceUpWithoutThreeGreenMana() {
         Permanent bulvox = harness.addToBattlefieldAndReturn(player1, new TitanicBulvox());
-        bulvox.setFaceDown(true);
+        bulvox.setFaceDown(2, 2, java.util.Set.of(CardType.CREATURE));
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.addMana(player1, ManaColor.GREEN, 2);
 

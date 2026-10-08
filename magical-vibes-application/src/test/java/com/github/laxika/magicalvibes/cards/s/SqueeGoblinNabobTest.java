@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -119,7 +120,7 @@ class SqueeGoblinNabobTest extends BaseCardTest {
 
         var returned = gd.playerHands.get(player1.getId()).getFirst();
         var remaining = gd.playerGraveyards.get(player1.getId()).getFirst();
-        assertThat(List.of(first, second)).contains(returned, remaining);
+        assertThat(List.<Card>of(first, second)).contains(returned, remaining);
         assertThat(returned).isNotSameAs(remaining);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);

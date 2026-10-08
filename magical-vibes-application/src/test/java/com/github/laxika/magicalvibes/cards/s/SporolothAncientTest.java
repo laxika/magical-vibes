@@ -130,7 +130,7 @@ class SporolothAncientTest extends BaseCardTest {
         ancient.setCounterCount(CounterType.FUNGUS, 3);
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new FomoriNomad());
         creature.setSummoningSick(true);
-        creature.setTapped(true);
+        creature.tap();
         creature.setCounterCount(CounterType.FUNGUS, 3);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

@@ -49,7 +49,7 @@ class ValleyDasherTest extends BaseCardTest {
     @DisplayName("A tapped Valley Dasher is not required to attack")
     void tappedDasherDoesNotHaveToAttack() {
         Permanent dasher = addCreatureReady(player1, new ValleyDasher());
-        dasher.setTapped(true);
+        dasher.tap();
         harness.setLife(player2, 20);
 
         declareAttackers(List.of());
@@ -80,7 +80,7 @@ class ValleyDasherTest extends BaseCardTest {
         harness.setLife(player2, 20);
         declareAttackers(List.of(0));
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
-        dasher.setTapped(false);
+        dasher.untap();
 
         assertThatThrownBy(() -> declareAttackers(List.of()))
                 .isInstanceOf(IllegalStateException.class)

@@ -201,7 +201,7 @@ class YunaHopeOfSpiraTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Insight");
         harness.assertNotInGraveyard(player1, "Insight");
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(insight);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(insight);
     }
 
     @Test

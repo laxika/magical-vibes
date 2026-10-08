@@ -94,7 +94,7 @@ class TombTrawlerTest extends BaseCardTest {
     @DisplayName("Can activate repeatedly while tapped and summoning sick")
     void activatesRepeatedlyWhileTappedAndSummoningSick() {
         Permanent trawler = harness.addToBattlefieldAndReturn(player1, new TombTrawler());
-        trawler.setTapped(true);
+        trawler.tap();
         trawler.setSummoningSick(true);
         Card land = new Forest();
         Card creature = new TombTrawler();

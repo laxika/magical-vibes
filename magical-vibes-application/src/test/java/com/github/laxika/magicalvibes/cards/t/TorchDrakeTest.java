@@ -100,7 +100,7 @@ class TorchDrakeTest extends BaseCardTest {
     @DisplayName("Torch Drake can activate while tapped and remains tapped")
     void canActivateWhileTapped() {
         Permanent drake = addCreatureReady(player1, new TorchDrake());
-        drake.setTapped(true);
+        drake.tap();
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, null);

@@ -84,7 +84,7 @@ class VolcanoImpTest extends BaseCardTest {
     @DisplayName("A tapped Volcano Imp can activate its ability")
     void canActivateWhileTapped() {
         Permanent imp = addCreatureReady(player1, new VolcanoImp());
-        imp.setTapped(true);
+        imp.tap();
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);

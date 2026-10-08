@@ -112,7 +112,7 @@ class SporesowerThallidTest extends BaseCardTest {
     void paysCountersImmediatelyAndCanActivateWhileTappedAndSummoningSick() {
         Permanent sporesower = harness.addToBattlefieldAndReturn(player1, new SporesowerThallid());
         sporesower.setCounterCount(CounterType.FUNGUS, 5);
-        sporesower.setTapped(true);
+        sporesower.tap();
         sporesower.setSummoningSick(true);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

@@ -96,7 +96,7 @@ class StewardOfSolidarityTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         Permanent steward = harness.addToBattlefieldAndReturn(player1, new StewardOfSolidarity());
         steward.setSummoningSick(false);
-        steward.setTapped(true);
+        steward.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -112,7 +112,7 @@ class StewardOfSolidarityTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        steward.setTapped(false);
+        steward.untap();
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 

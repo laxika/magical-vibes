@@ -59,7 +59,7 @@ class WindScarredCragTest extends BaseCardTest {
     @DisplayName("A tapped Crag cannot pay its mana ability's tap cost")
     void cannotActivateWhileTapped() {
         Permanent crag = harness.addToBattlefieldAndReturn(player1, new WindScarredCrag());
-        crag.setTapped(true);
+        crag.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

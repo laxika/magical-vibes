@@ -92,7 +92,7 @@ class SquallmongerTest extends BaseCardTest {
     @DisplayName("An opponent can activate a tapped Squallmonger using colored mana")
     void opponentCanActivateTappedSourceWithColoredMana() {
         Permanent squallmonger = harness.addToBattlefieldAndReturn(player1, new Squallmonger());
-        squallmonger.setTapped(true);
+        squallmonger.tap();
         harness.addToBattlefield(player1, new CloudSprite());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);

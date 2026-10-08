@@ -98,7 +98,7 @@ class TrainingCompoundTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, "RED");
         gd.playerBattlefields.get(player1.getId()).remove(forest);
-        compound.setTapped(false);
+        compound.untap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)

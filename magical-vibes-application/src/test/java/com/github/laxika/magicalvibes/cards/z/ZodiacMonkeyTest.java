@@ -21,7 +21,7 @@ class ZodiacMonkeyTest extends BaseCardTest {
     @DisplayName("A tapped Forest still prevents Zodiac Monkey from being blocked")
     void cannotBeBlockedWhenDefendersForestIsTapped() {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        forest.setTapped(true);
+        forest.tap();
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent attacker = addCreatureReady(player1, new ZodiacMonkey());
         declareAttackersAndPrepareBlockers(List.of(

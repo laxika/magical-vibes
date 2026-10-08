@@ -176,7 +176,7 @@ class WildAesthirTest extends BaseCardTest {
     void tappedSummoningSickCreatureCanActivate() {
         Permanent aesthir = harness.addToBattlefieldAndReturn(player1, new WildAesthir());
         aesthir.setSummoningSick(true);
-        aesthir.setTapped(true);
+        aesthir.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, null);

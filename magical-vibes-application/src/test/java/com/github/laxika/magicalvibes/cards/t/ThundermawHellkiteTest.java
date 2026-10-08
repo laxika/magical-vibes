@@ -74,7 +74,7 @@ class ThundermawHellkiteTest extends BaseCardTest {
     @DisplayName("The trigger damages every opposing flier, including ones already tapped")
     void damagesTappedAndUntappedFliers() {
         Permanent tappedFlier = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        tappedFlier.setTapped(true);
+        tappedFlier.tap();
         Permanent untappedFlier = harness.addToBattlefieldAndReturn(player2, new AirElemental());
 
         castHellkite();

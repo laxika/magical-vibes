@@ -41,7 +41,7 @@ class ZodiacPigTest extends BaseCardTest {
     @DisplayName("Zodiac Pig cannot be blocked when defending player's Swamp is tapped")
     void cannotBeBlockedWhenDefenderControlsTappedSwamp() {
         Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
-        swamp.setTapped(true);
+        swamp.tap();
 
         Permanent blockerPerm = addCreatureReady(player2, new ShuFootSoldiers());
         Permanent atkPerm = addCreatureReady(player1, new ZodiacPig());

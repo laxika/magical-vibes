@@ -123,7 +123,7 @@ class VerityCircleTest extends BaseCardTest {
 
         assertThat(creature.isTapped()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -142,7 +142,7 @@ class VerityCircleTest extends BaseCardTest {
 
         assertThat(creature.isTapped()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
-        assertThat(gd.playerLibraries.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 

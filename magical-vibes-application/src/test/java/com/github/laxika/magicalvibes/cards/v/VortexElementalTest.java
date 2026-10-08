@@ -173,7 +173,7 @@ class VortexElementalTest extends BaseCardTest {
     void tappedTargetCannotBlock() {
         addCreatureReady(player1, new VortexElemental());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
 
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.BLUE, 2);

@@ -144,7 +144,7 @@ class UrborgMindsuckerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         var mindsucker = harness.addToBattlefieldAndReturn(player1, new UrborgMindsucker());
         mindsucker.setSummoningSick(true);
-        mindsucker.setTapped(true);
+        mindsucker.tap();
         harness.setHand(player1, List.of(new BullElephant()));
         harness.setHand(player2, List.of(new KingCheetah()));
         readyForSorcerySpeed();

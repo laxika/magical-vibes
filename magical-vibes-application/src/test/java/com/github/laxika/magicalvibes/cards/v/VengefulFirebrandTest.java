@@ -161,7 +161,7 @@ class VengefulFirebrandTest extends BaseCardTest {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new VengefulFirebrand());
         Permanent other = harness.addToBattlefieldAndReturn(player1, new VengefulFirebrand());
         source.setSummoningSick(true);
-        source.setTapped(true);
+        source.tap();
         int sourcePower = gqs.getEffectivePower(gd, source);
         int otherPower = gqs.getEffectivePower(gd, other);
         harness.addMana(player1, ManaColor.RED, 1);

@@ -119,7 +119,7 @@ class ZombieMusherTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Zombie Musher can activate regeneration repeatedly")
     void tappedSummoningSickMusherCanRegenerateRepeatedly() {
         Permanent musher = harness.addToBattlefieldAndReturn(player1, new ZombieMusher());
-        musher.setTapped(true);
+        musher.tap();
         gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, null);

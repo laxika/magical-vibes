@@ -135,7 +135,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         // Combat damage: 4 (2 base + 2 sword) + 5 (hand size damage) = 9
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(11);
@@ -155,7 +155,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         // Only combat damage: 4 (2 base + 2 sword)
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
@@ -178,7 +178,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         // Controller gains 3 life
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
@@ -199,7 +199,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         // No life gained
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -223,7 +223,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         // Combat damage: 4 (2 base + 2 sword) + 4 (hand size damage) = 8 total to opponent
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
@@ -252,7 +252,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         // No hand-size damage dealt
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -302,7 +302,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         // Only the animated Sword's three combat damage is dealt.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -322,7 +322,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         // The Sword is not an equipped creature.
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -344,7 +344,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         // Only the animated Sword's three combat damage is dealt.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -366,7 +366,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(3);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -386,7 +386,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
@@ -410,7 +410,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PithDriller(), new PithDriller(), new PithDriller()));
         harness.setHand(player2, List.of(new PithDriller(), new PithDriller()));
         gd.playerBattlefields.get(player1.getId()).remove(sword);
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
@@ -430,7 +430,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);

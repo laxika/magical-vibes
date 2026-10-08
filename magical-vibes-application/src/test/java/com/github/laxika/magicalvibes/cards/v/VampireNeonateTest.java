@@ -65,7 +65,7 @@ class VampireNeonateTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent neonate = addCreatureReady(player1, new VampireNeonate());
-        neonate.setTapped(true);
+        neonate.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

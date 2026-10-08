@@ -123,7 +123,7 @@ class WarpingWurmTest extends BaseCardTest {
     @DisplayName("A tapped Wurm phases in before untapping and receives its counter only on trigger resolution")
     void phasesInBeforeUntappingAndCounterResolution() {
         Permanent wurm = phasedOutWurm();
-        wurm.setTapped(true);
+        wurm.tap();
 
         advanceTurn();
         advanceTurn();

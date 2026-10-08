@@ -139,7 +139,7 @@ class SpincrusherTest extends BaseCardTest {
     void abilityDoesNotRequireTappingOrHaste() {
         Permanent spincrusher = harness.addToBattlefieldAndReturn(player1, new Spincrusher());
         spincrusher.setSummoningSick(true);
-        spincrusher.setTapped(true);
+        spincrusher.tap();
         spincrusher.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);

@@ -69,7 +69,7 @@ class TempestOwlTest extends BaseCardTest {
     void kickedEtbCanChooseTwoTargetsIncludingAnAlreadyTappedPermanent() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        second.setTapped(true);
+        second.tap();
         Permanent unchosen = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
 
         castKicked(List.of(first.getId(), second.getId()));

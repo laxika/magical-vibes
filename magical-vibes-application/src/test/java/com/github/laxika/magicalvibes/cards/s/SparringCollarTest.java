@@ -124,7 +124,7 @@ class SparringCollarTest extends BaseCardTest {
     @DisplayName("Red ability moves a tapped, summoning-sick Collar and transfers first strike")
     void redAbilityMovesTappedCollar() {
         Permanent collar = harness.addToBattlefieldAndReturn(player1, new SparringCollar());
-        collar.setTapped(true);
+        collar.tap();
         collar.setSummoningSick(true);
         Permanent firstCreature = addCreatureReady(player1, new DrossCrocodile());
         Permanent secondCreature = addCreatureReady(player1, new DrossCrocodile());

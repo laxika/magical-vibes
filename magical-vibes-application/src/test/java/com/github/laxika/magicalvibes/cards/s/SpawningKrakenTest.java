@@ -97,7 +97,7 @@ class SpawningKrakenTest extends BaseCardTest {
     @Test
     @DisplayName("Only the controller of the damaging Kraken creates a token")
     void opposingKrakenDoesNotTriggerYourKraken() {
-        addCreatureReady(player1, new SpawningKraken()).setTapped(true);
+        addCreatureReady(player1, new SpawningKraken()).tap();
         addCreatureReady(player2, new SpawningKraken());
 
         declareAttackers(player2, List.of(0));

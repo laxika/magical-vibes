@@ -71,7 +71,7 @@ class ToweringViewpointTest extends BaseCardTest {
     @Test
     void canTargetItselfWhileTappedAndSummoningSick() {
         Permanent viewpoint = harness.addToBattlefieldAndReturn(player1, new ToweringViewpoint());
-        viewpoint.setTapped(true);
+        viewpoint.tap();
         viewpoint.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

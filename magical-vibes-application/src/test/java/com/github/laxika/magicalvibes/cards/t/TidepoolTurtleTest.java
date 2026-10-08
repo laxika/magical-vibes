@@ -119,7 +119,7 @@ class TidepoolTurtleTest extends BaseCardTest {
     void tappedSummoningSickTurtleCanActivateRepeatedly() {
         Permanent turtle = harness.addToBattlefieldAndReturn(player1, new TidepoolTurtle());
         turtle.setSummoningSick(true);
-        turtle.setTapped(true);
+        turtle.tap();
         harness.addMana(player1, ManaColor.BLUE, 6);
 
         harness.activateAbility(player1, 0, null, null);

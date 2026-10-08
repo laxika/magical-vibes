@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HeroInTraining;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.PyromancersSwath;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -35,7 +36,7 @@ class ThingSwingTest extends BaseCardTest {
     void nonHeroDealsTwiceItsPowerWithoutTakingDamageInReturn() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        target.setPlusOnePlusOneCounters(2);
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.setHand(player1, List.of(new ThingSwing()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -53,13 +54,13 @@ class ThingSwingTest extends BaseCardTest {
     void usesTheCreaturesPowerAtResolution() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        target.setPlusOnePlusOneCounters(10);
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 10);
         harness.setHand(player1, List.of(new ThingSwing()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
 
-        source.setPlusOnePlusOneCounters(2);
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(8);
@@ -87,7 +88,7 @@ class ThingSwingTest extends BaseCardTest {
     void instantDamageBonusesDoNotApplyToTheCreatureDealingDamage() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        target.setPlusOnePlusOneCounters(2);
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.addToBattlefield(player1, new PyromancersSwath());
         harness.setHand(player1, List.of(new ThingSwing()));
         harness.addMana(player1, ManaColor.GREEN, 1);

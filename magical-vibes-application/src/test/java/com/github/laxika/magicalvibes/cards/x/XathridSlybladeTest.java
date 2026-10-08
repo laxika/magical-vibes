@@ -57,7 +57,7 @@ class XathridSlybladeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new XathridSlyblade());
         Permanent slyblade = findPermanent(player1, "Xathrid Slyblade");
         slyblade.setSummoningSick(true);
-        slyblade.setTapped(true);
+        slyblade.tap();
 
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

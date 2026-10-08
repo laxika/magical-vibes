@@ -73,7 +73,7 @@ class TinderWallTest extends BaseCardTest {
     void tappedSummoningSickWallProducesManaWithoutUsingStack() {
         Permanent wall = addCreatureReady(player1, new TinderWall());
         wall.setSummoningSick(true);
-        wall.setTapped(true);
+        wall.tap();
 
         harness.activateAbility(player1, 0, 0, null, null);
 

@@ -42,7 +42,7 @@ class VerminGorgerTest extends BaseCardTest {
     @DisplayName("Cannot activate while Vermin Gorger is tapped")
     void cannotActivateWhileTapped() {
         Permanent source = addCreatureReady(player1, new VerminGorger());
-        source.setTapped(true);
+        source.tap();
         harness.addToBattlefield(player1, new VerminGorger());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

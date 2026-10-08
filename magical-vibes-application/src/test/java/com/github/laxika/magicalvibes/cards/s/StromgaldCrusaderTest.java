@@ -178,7 +178,7 @@ class StromgaldCrusaderTest extends BaseCardTest {
     void abilitiesWorkWhileTappedAndSummoningSick() {
         Permanent crusader = harness.addToBattlefieldAndReturn(player1, new StromgaldCrusader());
         crusader.setSummoningSick(true);
-        crusader.setTapped(true);
+        crusader.tap();
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.activateAbility(player1, 0, 0, null, null);

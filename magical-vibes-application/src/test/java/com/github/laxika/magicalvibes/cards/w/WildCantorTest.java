@@ -78,7 +78,7 @@ class WildCantorTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Wild Cantor can still be sacrificed for mana")
     void canActivateWhileTapped() {
-        harness.addToBattlefieldAndReturn(player1, new WildCantor()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new WildCantor()).tap();
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, "WHITE");

@@ -75,7 +75,7 @@ class WhiptongueFrogTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent frog = harness.addToBattlefieldAndReturn(player1, new WhiptongueFrog());
         frog.setSummoningSick(true);
-        frog.setTapped(true);
+        frog.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);

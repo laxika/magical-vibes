@@ -77,7 +77,7 @@ class TunnelerWurmTest extends BaseCardTest {
     @Test
     void canActivateRepeatedlyWhileTappedAndSummoningSick() {
         Permanent wurm = harness.addToBattlefieldAndReturn(player1, new TunnelerWurm());
-        wurm.setTapped(true);
+        wurm.tap();
         wurm.setSummoningSick(true);
         harness.setHand(player1, List.of(new TunnelerWurm(), new TunnelerWurm()));
 

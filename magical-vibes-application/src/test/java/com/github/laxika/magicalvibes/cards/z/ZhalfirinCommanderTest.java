@@ -81,7 +81,7 @@ class ZhalfirinCommanderTest extends BaseCardTest {
     void boostsItselfWhileTappedAndSummoningSick() {
         Permanent commander = harness.addToBattlefieldAndReturn(player1, new ZhalfirinCommander());
         commander.setSummoningSick(true);
-        commander.setTapped(true);
+        commander.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

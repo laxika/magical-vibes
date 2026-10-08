@@ -81,7 +81,7 @@ class SowerOfChaosTest extends BaseCardTest {
         Permanent unaffected = harness.addToBattlefieldAndReturn(player2, new BearCub());
         readySower();
         Permanent sower = findPermanent(player1, "Sower of Chaos");
-        sower.setTapped(true);
+        sower.tap();
         sower.setSummoningSick(true);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

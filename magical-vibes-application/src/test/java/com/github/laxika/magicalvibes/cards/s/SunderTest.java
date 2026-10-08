@@ -35,12 +35,12 @@ class SunderTest extends BaseCardTest {
     @DisplayName("Returns tapped and untapped lands present at resolution, including lands added after casting")
     void returnsLandsPresentAtResolution() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
         harness.setHand(player2, List.of());
         harness.castFromHand(player1, new Sunder(), "{3}{U}{U}");
         harness.addToBattlefield(player1, new Island());
         Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
-        island.setTapped(true);
+        island.tap();
         harness.addToBattlefield(player2, new Forest());
 
         harness.passBothPriorities();

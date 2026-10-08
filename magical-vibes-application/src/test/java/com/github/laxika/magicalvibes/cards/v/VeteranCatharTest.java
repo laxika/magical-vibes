@@ -65,7 +65,7 @@ class VeteranCatharTest extends BaseCardTest {
     void canTargetItselfWhileTappedAndSummoningSick() {
         Permanent cathar = harness.addToBattlefieldAndReturn(player1, new VeteranCathar());
         cathar.setSummoningSick(true);
-        cathar.setTapped(true);
+        cathar.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.WHITE, 1);
 

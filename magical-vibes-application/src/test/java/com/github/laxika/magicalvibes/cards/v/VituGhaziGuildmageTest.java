@@ -72,7 +72,7 @@ class VituGhaziGuildmageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
         Permanent original = creatureTokensNamed(player1, "Centaur").getFirst();
-        original.setTapped(true);
+        original.tap();
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
@@ -108,7 +108,7 @@ class VituGhaziGuildmageTest extends BaseCardTest {
     void abilitiesDoNotRequireTappingOrHaste() {
         Permanent guildmage = harness.addToBattlefieldAndReturn(player1, new VituGhaziGuildmage());
         guildmage.setSummoningSick(true);
-        guildmage.setTapped(true);
+        guildmage.tap();
         addMana(6, 2, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);

@@ -91,7 +91,7 @@ class StensiaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
-        pyromancer.setTapped(false);
+        pyromancer.untap();
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
 
@@ -109,7 +109,7 @@ class StensiaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
         gd.planechase.faceUp.add(new PlanarObject(new Stensia(), gd.nextTimestamp()));
-        pyromancer.setTapped(false);
+        pyromancer.untap();
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
@@ -185,7 +185,7 @@ class StensiaTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
-        pyromancer.setTapped(false);
+        pyromancer.untap();
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();

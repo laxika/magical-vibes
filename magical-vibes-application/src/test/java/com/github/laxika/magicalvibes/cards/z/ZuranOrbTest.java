@@ -111,9 +111,9 @@ class ZuranOrbTest extends BaseCardTest {
         Permanent orb = harness.addToBattlefieldAndReturn(player1, new ZuranOrb());
         Permanent first = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new Forest());
-        orb.setTapped(true);
-        first.setTapped(true);
-        second.setTapped(true);
+        orb.tap();
+        first.tap();
+        second.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setLife(player1, 20);

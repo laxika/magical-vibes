@@ -102,7 +102,7 @@ class StonewiseFortifierTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, null, fortifier.getId());
         harness.passBothPriorities();
-        sorcerer.setTapped(false);
+        sorcerer.untap();
         harness.activateAbility(player2, 0, null, fortifier.getId());
         harness.passBothPriorities();
 
@@ -133,7 +133,7 @@ class StonewiseFortifierTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent fortifier = harness.addToBattlefieldAndReturn(player1, new StonewiseFortifier());
         fortifier.setSummoningSick(true);
-        fortifier.setTapped(true);
+        fortifier.tap();
         Permanent sorcerer = addCreatureReady(player1, new ProdigalSorcerer());
         activateFortifier(fortifier, sorcerer);
 

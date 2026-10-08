@@ -105,7 +105,7 @@ class TowerOfChampionsTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent tower = harness.addToBattlefieldAndReturn(player1, new TowerOfChampions());
         Permanent target = addCreatureReady(player1, new AlphaMyr());
-        tower.setTapped(true);
+        tower.tap();
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 8);
 

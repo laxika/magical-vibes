@@ -84,7 +84,7 @@ class WallOfBloodTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfBlood());
         wall.setSummoningSick(true);
-        wall.setTapped(true);
+        wall.tap();
         harness.setLife(player1, 20);
 
         harness.activateAbility(player1, 0, null, null);

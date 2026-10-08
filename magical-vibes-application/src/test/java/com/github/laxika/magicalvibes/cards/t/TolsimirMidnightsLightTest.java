@@ -103,7 +103,7 @@ class TolsimirMidnightsLightTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
-        blocker.setTapped(true);
+        blocker.tap();
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
@@ -124,7 +124,7 @@ class TolsimirMidnightsLightTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        wolf.setTapped(false);
+        wolf.untap();
         gd.playerBattlefields.get(player1.getId()).getFirst().setAttackedThisCombat(false);
 
 

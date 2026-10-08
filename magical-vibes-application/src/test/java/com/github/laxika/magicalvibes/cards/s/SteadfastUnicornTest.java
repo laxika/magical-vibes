@@ -75,7 +75,7 @@ class SteadfastUnicornTest extends BaseCardTest {
     void canActivateRepeatedlyDuringOwnEndStep() {
         Permanent unicorn = harness.addToBattlefieldAndReturn(player1, new SteadfastUnicorn());
         unicorn.setSummoningSick(true);
-        unicorn.setTapped(true);
+        unicorn.tap();
         prepareAbility();
         addMana();
         harness.forceStep(TurnStep.END_STEP);

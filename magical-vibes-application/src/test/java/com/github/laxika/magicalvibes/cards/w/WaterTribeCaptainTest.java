@@ -43,7 +43,7 @@ class WaterTribeCaptainTest extends BaseCardTest {
     @DisplayName("A tapped, newly entered captain can activate repeatedly and the boosts stack")
     void repeatedActivationsStackWithoutTapCost() {
         Permanent captain = harness.addToBattlefieldAndReturn(player1, new WaterTribeCaptain());
-        captain.setTapped(true);
+        captain.tap();
         harness.addMana(player1, ManaColor.WHITE, 10);
 
         harness.activateAbility(player1, 0, null, null);

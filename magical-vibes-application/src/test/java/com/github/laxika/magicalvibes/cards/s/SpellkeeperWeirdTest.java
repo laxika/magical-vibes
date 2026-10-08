@@ -104,7 +104,7 @@ class SpellkeeperWeirdTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Card instant = new HolyDay();
         Permanent spellkeeper = addReadySpellkeeper();
-        spellkeeper.setTapped(true);
+        spellkeeper.tap();
         harness.setGraveyard(player1, List.of(instant));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

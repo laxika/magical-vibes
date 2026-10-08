@@ -90,7 +90,7 @@ class TorchCourierTest extends BaseCardTest {
     @Test
     void canActivateWhileTapped() {
         Permanent courier = harness.addToBattlefieldAndReturn(player1, new TorchCourier());
-        courier.setTapped(true);
+        courier.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new DouserOfLights());
 
         harness.activateAbility(player1, 0, null, target.getId());

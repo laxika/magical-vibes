@@ -170,7 +170,7 @@ class TriskelionTest extends BaseCardTest {
         harness.castFromHand(player1, new Triskelion(), "{6}");
         harness.passBothPriorities();
         Permanent triskelion = findTriskelion(player1);
-        triskelion.setTapped(true);
+        triskelion.tap();
         harness.setLife(player2, 20);
 
         harness.activateAbility(player1, 0, null, player2.getId());

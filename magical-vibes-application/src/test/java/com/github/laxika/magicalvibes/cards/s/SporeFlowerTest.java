@@ -121,7 +121,7 @@ class SporeFlowerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent flower = addFlower();
         flower.setSummoningSick(true);
-        flower.setTapped(true);
+        flower.tap();
         flower.setCounterCount(CounterType.FUNGUS, 3);
 
         harness.activateAbility(player1, 0, null, null);

@@ -96,7 +96,7 @@ class StarCrownedStagTest extends BaseCardTest {
     void canTargetTappedCreature() {
         addCreatureReady(player1, new StarCrownedStag());
         Permanent victim = addCreatureReady(player2, new GreenwoodSentinel());
-        victim.setTapped(true);
+        victim.tap();
 
         declareAttackers(List.of(0));
 

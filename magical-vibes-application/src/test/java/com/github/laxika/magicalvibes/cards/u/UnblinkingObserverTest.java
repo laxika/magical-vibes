@@ -71,7 +71,7 @@ class UnblinkingObserverTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.playerHand.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerManaPools.get(player1.getId())
                 .getDisturbOrInstantSorceryOnlyColored(ManaColor.BLUE)).isEqualTo(1);
     }

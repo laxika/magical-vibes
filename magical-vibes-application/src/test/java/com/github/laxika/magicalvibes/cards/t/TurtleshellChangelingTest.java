@@ -18,7 +18,7 @@ class TurtleshellChangelingTest extends BaseCardTest {
     @DisplayName("A tapped creature can activate the switch ability")
     void canActivateWhileTapped() {
         Permanent changeling = harness.addToBattlefieldAndReturn(player1, new TurtleshellChangeling());
-        changeling.setTapped(true);
+        changeling.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

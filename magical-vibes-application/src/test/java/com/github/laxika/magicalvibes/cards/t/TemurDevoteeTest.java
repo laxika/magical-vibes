@@ -59,7 +59,7 @@ class TemurDevoteeTest extends BaseCardTest {
     void manaAbilityWorksWhileTappedAndSummoningSick() {
         harness.addToBattlefield(player1, new TemurDevotee());
         var devotee = findPermanent(player1, "Temur Devotee");
-        devotee.setTapped(true);
+        devotee.tap();
         devotee.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

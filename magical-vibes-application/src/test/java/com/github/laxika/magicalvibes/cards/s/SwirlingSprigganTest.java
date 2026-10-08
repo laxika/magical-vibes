@@ -92,7 +92,7 @@ class SwirlingSprigganTest extends BaseCardTest {
     @Test
     void blueManaPaysForAbilityOfTappedSummoningSickSource() {
         Permanent spriggan = harness.addToBattlefieldAndReturn(player1, new SwirlingSpriggan());
-        spriggan.setTapped(true);
+        spriggan.tap();
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         activate(player1, spriggan, spriggan);

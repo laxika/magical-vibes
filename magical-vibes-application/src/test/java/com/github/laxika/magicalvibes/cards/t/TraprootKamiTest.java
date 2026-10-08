@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.ShimmeringGlasskite;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -85,7 +86,7 @@ class TraprootKamiTest extends BaseCardTest {
     void countersModifyCharacteristicPowerAndToughness() {
         harness.addToBattlefield(player1, new Forest());
         Permanent kami = addCreatureReady(player1, new TraprootKami());
-        kami.setPlusOnePlusOneCounters(2);
+        kami.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         assertThat(gqs.getEffectivePower(gd, kami)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, kami)).isEqualTo(3);

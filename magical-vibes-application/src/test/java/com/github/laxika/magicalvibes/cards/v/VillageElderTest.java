@@ -120,7 +120,7 @@ class VillageElderTest extends BaseCardTest {
     void canRegenerateItselfWithTappedForest() {
         Permanent elder = addElderReady(player1);
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, elder.getId());

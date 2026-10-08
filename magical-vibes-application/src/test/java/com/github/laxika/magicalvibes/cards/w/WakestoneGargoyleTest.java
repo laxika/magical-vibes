@@ -95,7 +95,7 @@ class WakestoneGargoyleTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Gargoyle can activate the ability")
     void tappedSummoningSickSourceCanActivateAbility() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new WakestoneGargoyle());
-        source.setTapped(true);
+        source.tap();
         Permanent defender = addCreatureReady(player1, new WakestoneGargoyle());
 
         activateAbility();
@@ -109,7 +109,7 @@ class WakestoneGargoyleTest extends BaseCardTest {
     @DisplayName("The ability does not allow a tapped defender to attack")
     void abilityDoesNotBypassTappedRestriction() {
         Permanent gargoyle = addCreatureReady(player1, new WakestoneGargoyle());
-        gargoyle.setTapped(true);
+        gargoyle.tap();
         activateAbility();
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))

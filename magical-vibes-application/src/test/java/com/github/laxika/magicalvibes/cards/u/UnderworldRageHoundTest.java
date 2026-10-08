@@ -156,7 +156,7 @@ class UnderworldRageHoundTest extends BaseCardTest {
     @Test
     void tappedCreatureIsNotRequiredToAttack() {
         Permanent rageHound = addCreatureReady(player1, new UnderworldRageHound());
-        rageHound.setTapped(true);
+        rageHound.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();

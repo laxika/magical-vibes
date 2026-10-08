@@ -199,7 +199,7 @@ class UlvenwaldMysticsTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         assertThat(mystics.isTransformed()).isTrue();
-        mystics.setTapped(true);
+        mystics.tap();
         mystics.setMarkedDamage(2);
         harness.addMana(player1, ManaColor.GREEN, 2);
 

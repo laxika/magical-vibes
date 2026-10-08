@@ -203,8 +203,8 @@ class UyoSilentProphetTest extends BaseCardTest {
         harness.addToBattlefield(player1, first);
         harness.addToBattlefield(player1, second);
         harness.addToBattlefield(player1, third);
-        gd.playerBattlefields.get(player1.getId()).get(1).setTapped(true);
-        gd.playerBattlefields.get(player1.getId()).get(2).setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).get(1).tap();
+        gd.playerBattlefields.get(player1.getId()).get(2).tap();
         UUID firstPermanentId = gd.playerBattlefields.get(player1.getId()).get(1).getId();
         UUID secondPermanentId = gd.playerBattlefields.get(player1.getId()).get(2).getId();
         CounselOfTheSoratami counsel = new CounselOfTheSoratami();

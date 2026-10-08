@@ -151,7 +151,7 @@ class SpicyOatmealPizzaTest extends BaseCardTest {
     @DisplayName("A tapped Food cannot activate its tap ability")
     void tappedFoodCannotBeSacrificedForLife() {
         Permanent food = harness.addToBattlefieldAndReturn(player1, new SpicyOatmealPizza());
-        food.setTapped(true);
+        food.tap();
         harness.setLife(player1, 20);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

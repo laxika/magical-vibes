@@ -84,7 +84,7 @@ class SuddenStormTest extends BaseCardTest {
     @Test
     void locksAlreadyTappedCreatureForOnlyItsControllersNextUntap() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        creature.setTapped(true);
+        creature.tap();
 
         castAndResolve(List.of(creature.getId()));
 

@@ -173,7 +173,7 @@ class TangleclawWerewolfTest extends BaseCardTest {
         Permanent werewolf = addReadyWerewolf(player1);
         transform(werewolf);
         werewolf.setAttacking(true);
-        addReadyWerewolf(player2).setTapped(true);
+        addReadyWerewolf(player2).tap();
         prepareDeclareBlockers();
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))

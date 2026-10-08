@@ -220,7 +220,7 @@ class ThorinCompanysLeaderTest extends BaseCardTest {
     void tappedSummoningSickThorinCanActivateWithColoredMana() {
         Permanent thorin = harness.addToBattlefieldAndReturn(player1, new ThorinCompanysLeader());
         thorin.setSummoningSick(true);
-        thorin.setTapped(true);
+        thorin.tap();
         harness.addMana(player1, ManaColor.RED, 5);
         harness.addMana(player1, ManaColor.GREEN, 5);
 

@@ -126,7 +126,7 @@ class WarlockClassTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(chosen);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(remaining);
-        assertThat(gd.playerLibraries.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     @Test

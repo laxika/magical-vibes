@@ -115,7 +115,7 @@ class WalkingDesecrationTest extends BaseCardTest {
     void tappedCreatureIsNotRequiredToAttack() {
         addCreatureReady(player1, new WalkingDesecration());
         Permanent human = addCreatureReady(player1, new DaruLancer());
-        human.setTapped(true);
+        human.tap();
 
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.activateAbility(player1, 0, null, null);

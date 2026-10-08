@@ -102,7 +102,7 @@ class ZodiacRoosterTest extends BaseCardTest {
     @DisplayName("Zodiac Rooster cannot be blocked when the defending player's only Plains is tapped")
     void cannotBeBlockedWhenDefendersPlainsIsTapped() {
         Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
-        plains.setTapped(true);
+        plains.tap();
         Permanent blocker = addCreatureReady(player2, new ShuFootSoldiers());
         Permanent attacker = addCreatureReady(player1, new ZodiacRooster());
         attacker.setAttacking(true);

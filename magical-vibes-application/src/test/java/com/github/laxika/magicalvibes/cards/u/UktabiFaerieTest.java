@@ -99,7 +99,7 @@ class UktabiFaerieTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick")
     void activatesWhileTappedAndSummoningSick() {
         var faerie = harness.addToBattlefieldAndReturn(player1, new UktabiFaerie());
-        faerie.setTapped(true);
+        faerie.tap();
         faerie.setSummoningSick(true);
         harness.addToBattlefield(player2, new HorribleHordes());
         harness.addMana(player1, ManaColor.GREEN, 1);

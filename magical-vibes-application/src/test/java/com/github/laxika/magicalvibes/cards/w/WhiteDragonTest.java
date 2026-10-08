@@ -61,7 +61,7 @@ class WhiteDragonTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureStillSkipsItsNextUntapStep() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ZombieOgre());
-        target.setTapped(true);
+        target.tap();
 
         castWhiteDragon(target.getId());
         harness.passBothPriorities();

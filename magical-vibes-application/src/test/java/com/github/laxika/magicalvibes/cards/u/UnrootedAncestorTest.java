@@ -88,7 +88,7 @@ class UnrootedAncestorTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent ancestor = harness.addToBattlefieldAndReturn(player1, new UnrootedAncestor());
         ancestor.setSummoningSick(true);
-        ancestor.setTapped(true);
+        ancestor.tap();
         addCreatureReady(player1, new GurmagNightwatch());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

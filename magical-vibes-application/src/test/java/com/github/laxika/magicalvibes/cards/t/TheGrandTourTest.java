@@ -59,7 +59,7 @@ class TheGrandTourTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         target.setMarkedDamage(1);
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new TheGrandTour()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 

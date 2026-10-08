@@ -113,7 +113,7 @@ class WaterwindScoutTest extends BaseCardTest {
     void tappedMapCannotBeActivated() {
         Permanent map = createMap();
         Permanent scout = findPermanent(player1, "Waterwind Scout");
-        map.setTapped(true);
+        map.tap();
 
         assertThatThrownBy(() -> activateMap(map, scout)).isInstanceOf(IllegalStateException.class);
         assertThat(findPermanents(player1, "Map")).containsExactly(map);

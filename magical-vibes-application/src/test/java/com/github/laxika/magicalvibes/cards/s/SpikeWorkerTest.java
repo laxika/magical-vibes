@@ -126,7 +126,7 @@ class SpikeWorkerTest extends BaseCardTest {
     @DisplayName("Can activate during an opponent's turn while tapped and summoning sick")
     void activatesDuringOpponentsTurnWithoutTapCost() {
         Permanent worker = addWorker(player1);
-        worker.setTapped(true);
+        worker.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new SkyshroudArcher());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player2);

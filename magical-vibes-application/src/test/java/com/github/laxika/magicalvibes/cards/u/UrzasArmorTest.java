@@ -113,7 +113,7 @@ class UrzasArmorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player1, 20);
 
-        rod.setTapped(false);
+        rod.untap();
         harness.activateAbility(player2, 0, null, player1.getId());
         harness.passBothPriorities();
 
@@ -124,7 +124,7 @@ class UrzasArmorTest extends BaseCardTest {
     @DisplayName("A tapped Armor still prevents damage from its controller's own source")
     void tappedArmorPreventsSelfInflictedDamage() {
         var armor = harness.addToBattlefieldAndReturn(player1, new UrzasArmor());
-        armor.setTapped(true);
+        armor.tap();
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);

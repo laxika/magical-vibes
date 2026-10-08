@@ -98,7 +98,7 @@ class VoteOutTest extends BaseCardTest {
     @DisplayName("A tapped creature cannot convoke")
     void tappedCreatureCannotConvoke() {
         Permanent convoker = harness.addToBattlefieldAndReturn(player1, new BladeOfTheSwarm());
-        convoker.setTapped(true);
+        convoker.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BladeOfTheSwarm());
         harness.setHand(player1, List.of(new VoteOut()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);

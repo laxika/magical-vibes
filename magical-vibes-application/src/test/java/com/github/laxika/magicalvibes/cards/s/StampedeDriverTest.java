@@ -116,7 +116,7 @@ class StampedeDriverTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent driver = addCreatureReady(player1, new StampedeDriver());
-        driver.setTapped(true);
+        driver.tap();
         harness.setHand(player1, List.of(new Mossdog()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 

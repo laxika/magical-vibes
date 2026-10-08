@@ -246,7 +246,7 @@ class WolfbittenCaptiveTest extends BaseCardTest {
     @DisplayName("Pump can be activated while tapped and summoning sick")
     void pumpDoesNotRequireUntappedOrReadyCreature() {
         Permanent captive = harness.addToBattlefieldAndReturn(player1, new WolfbittenCaptive());
-        captive.setTapped(true);
+        captive.tap();
         captive.setSummoningSick(true);
         harness.addMana(player1, ManaColor.GREEN, 2);
 

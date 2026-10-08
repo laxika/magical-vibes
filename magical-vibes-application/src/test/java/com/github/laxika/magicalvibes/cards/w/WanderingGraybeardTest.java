@@ -173,8 +173,8 @@ class WanderingGraybeardTest extends BaseCardTest {
         harness.clearMessages();
         harness.passBothPriorities();
 
-        assertThat(conn1.getMessagesContaining("Elvish Warrior")).isNotEmpty();
-        assertThat(conn2.getMessagesContaining("Elvish Warrior")).isEmpty();
+        assertThat(harness.getConn1().getMessagesContaining("Elvish Warrior")).isNotEmpty();
+        assertThat(harness.getConn2().getMessagesContaining("Elvish Warrior")).isEmpty();
     }
 
 }

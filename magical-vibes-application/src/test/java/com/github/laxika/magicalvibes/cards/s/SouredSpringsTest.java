@@ -63,7 +63,7 @@ class SouredSpringsTest extends BaseCardTest {
     @Test
     void tappedLandCannotProduceMana() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new SouredSprings());
-        land.setTapped(true);
+        land.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

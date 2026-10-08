@@ -145,7 +145,7 @@ class SphinxOfTheChimesTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addToBattlefield(player1, new SphinxOfTheChimes());
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
         gd.playerBattlefields.get(player1.getId()).getFirst().setSummoningSick(true);
         harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.setLibrary(player1, List.of(new Mountain(), new Mountain(), new Mountain(), new Mountain()));

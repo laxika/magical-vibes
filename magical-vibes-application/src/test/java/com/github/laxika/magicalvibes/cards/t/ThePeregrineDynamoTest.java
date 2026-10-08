@@ -165,7 +165,7 @@ class ThePeregrineDynamoTest extends BaseCardTest {
         UUID copiedDynamoId = gd.stack.stream()
                 .filter(StackEntry::isCopy)
                 .findFirst().orElseThrow().getTargetableId();
-        dynamo.setTapped(false);
+        dynamo.untap();
         harness.ensurePriority(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, copiedDynamoId))

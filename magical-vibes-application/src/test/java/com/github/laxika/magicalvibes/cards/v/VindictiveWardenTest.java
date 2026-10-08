@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -80,7 +80,7 @@ class VindictiveWardenTest extends BaseCardTest {
     void activatedAbilityWorksRepeatedlyWhileTappedAndSummoningSick() {
         Permanent warden = addReadyWarden();
         warden.setSummoningSick(true);
-        warden.setTapped(true);
+        warden.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 6);
         int controllerLife = gd.playerLifeTotals.get(player1.getId());
         int opponentLife = gd.playerLifeTotals.get(player2.getId());

@@ -169,7 +169,7 @@ class VampireHoundsTest extends BaseCardTest {
         int baseToughness = gqs.getEffectiveToughness(gd, hounds);
         int otherPower = gqs.getEffectivePower(gd, otherHounds);
         int otherToughness = gqs.getEffectiveToughness(gd, otherHounds);
-        hounds.setTapped(true);
+        hounds.tap();
         hounds.setSummoningSick(true);
         harness.setHand(player1, List.of(new VampireHounds()));
         harness.forceActivePlayer(player2);

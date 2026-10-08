@@ -136,7 +136,7 @@ class VarinaLichQueenTest extends BaseCardTest {
     @DisplayName("A newly entered tapped Varina can activate and pays the exile cost before resolution")
     void tappedVarinaPaysExileCostImmediately() {
         harness.addToBattlefield(player1, new VarinaLichQueen());
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
         Forest forest = new Forest();
         Island island = new Island();
         harness.setGraveyard(player1, List.of(forest, island));

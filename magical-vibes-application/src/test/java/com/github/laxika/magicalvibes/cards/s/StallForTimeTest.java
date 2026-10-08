@@ -94,7 +94,7 @@ class StallForTimeTest extends BaseCardTest {
     void kickedSpellStunsBothCreaturesIncludingAnAlreadyTappedCreature() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        second.setTapped(true);
+        second.tap();
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new StallForTime()));
         harness.addMana(player1, ManaColor.WHITE, 1);

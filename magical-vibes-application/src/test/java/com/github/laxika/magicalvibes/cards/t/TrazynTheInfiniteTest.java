@@ -115,7 +115,7 @@ class TrazynTheInfiniteTest extends BaseCardTest {
         Permanent trazyn = addReadyTrazyn();
         harness.setGraveyard(player1, List.of(new SolRing()));
         harness.activateAbility(player1, 0, null, null);
-        trazyn.setTapped(false);
+        trazyn.untap();
         harness.setGraveyard(player1, List.of());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

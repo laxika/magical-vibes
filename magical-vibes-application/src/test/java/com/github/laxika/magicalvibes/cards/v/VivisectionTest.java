@@ -110,7 +110,7 @@ class VivisectionTest extends BaseCardTest {
     @DisplayName("A tapped creature can be sacrificed and cards are drawn only on resolution")
     void tappedCreaturePaysCostBeforeCardsAreDrawn() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new PlagueMyr());
-        sacrifice.setTapped(true);
+        sacrifice.tap();
         Permanent survivor = harness.addToBattlefieldAndReturn(player1, new PlagueMyr());
         harness.setHand(player1, List.of(new Vivisection()));
         harness.setLibrary(player1, List.of(new CopperCarapace(), new PlagueMyr(), new Vivisection()));

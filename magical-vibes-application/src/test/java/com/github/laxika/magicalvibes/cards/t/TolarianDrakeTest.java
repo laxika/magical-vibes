@@ -59,7 +59,7 @@ class TolarianDrakeTest extends BaseCardTest {
     @DisplayName("Phasing precedes untapping and preserves counters on the same permanent")
     void phasingPreservesCountersAndUntapsOnlyAfterPhasingIn() {
         Permanent drake = harness.addToBattlefieldAndReturn(player1, new TolarianDrake());
-        drake.setTapped(true);
+        drake.tap();
         drake.getCounters().put(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         harness.performUntapStep(player1);

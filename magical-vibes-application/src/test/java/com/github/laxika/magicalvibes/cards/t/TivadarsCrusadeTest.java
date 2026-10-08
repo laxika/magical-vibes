@@ -77,7 +77,7 @@ class TivadarsCrusadeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player2, "Goblin Hero");
-        assertThat(gd.playerLibraries.get(player2.getId())).containsExactly(libraryGoblin);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryGoblin);
         harness.assertNotOnBattlefield(player2, "Goblin Hero");
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
         harness.assertInGraveyard(player2, "Goblin Hero");

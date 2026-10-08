@@ -146,7 +146,7 @@ class TrostaniSelesnyasVoiceTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, List.of());
         Permanent centaur = findPermanent(player1, "Centaur");
         harness.castAndResolveInstant(player1, 0, centaur.getId());
-        centaur.setTapped(true);
+        centaur.tap();
         Permanent trostani = addCreatureReady(player1, new TrostaniSelesnyasVoice());
 
         harness.activateAbility(player1, 1, 0, null, null);

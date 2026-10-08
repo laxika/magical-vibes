@@ -83,7 +83,7 @@ class StrongholdDisciplineTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player2, new Mountain());
-        harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).tap();
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         harness.castFromHand(player1, new StrongholdDiscipline(), "{2}{B}{B}");

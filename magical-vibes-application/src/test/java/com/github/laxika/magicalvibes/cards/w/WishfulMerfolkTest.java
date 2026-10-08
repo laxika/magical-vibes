@@ -70,7 +70,7 @@ class WishfulMerfolkTest extends BaseCardTest {
     @Test
     void abilityCanBeActivatedRepeatedlyWhileTappedAndSummoningSick() {
         Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new WishfulMerfolk());
-        merfolk.setTapped(true);
+        merfolk.tap();
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.activateAbility(player1, 0, null, null);

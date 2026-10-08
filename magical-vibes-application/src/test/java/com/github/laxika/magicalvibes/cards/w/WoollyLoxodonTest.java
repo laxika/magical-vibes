@@ -79,7 +79,7 @@ class WoollyLoxodonTest extends BaseCardTest {
         Permanent loxodon = findPermanent(player1, "Woolly Loxodon");
         assertThat(gqs.getEffectivePower(gd, loxodon)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, loxodon)).isEqualTo(2);
-        loxodon.setTapped(true);
+        loxodon.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
         harness.addMana(player1, ManaColor.GREEN, 1);

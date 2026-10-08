@@ -128,7 +128,7 @@ class SunderingGrowthTest extends BaseCardTest {
     void choosesTokenDuringResolution() {
         createCentaur();
         Permanent centaur = gd.playerBattlefields.get(player1.getId()).getFirst();
-        centaur.setTapped(true);
+        centaur.tap();
         centaur.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.addToBattlefield(player1, soldierToken());
         harness.addToBattlefield(player2, soldierToken());

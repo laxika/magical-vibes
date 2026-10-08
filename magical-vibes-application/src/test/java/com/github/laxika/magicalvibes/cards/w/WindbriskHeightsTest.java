@@ -224,7 +224,7 @@ class WindbriskHeightsTest extends BaseCardTest {
         assertThat(gd.findExiledCard(spell.getId())).isNotNull();
 
         harness.addToBattlefield(player2, new BlindSpotGiant());
-        heights.setTapped(false);
+        heights.untap();
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

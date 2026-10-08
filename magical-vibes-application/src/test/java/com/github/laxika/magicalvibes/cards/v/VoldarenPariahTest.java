@@ -161,7 +161,7 @@ class VoldarenPariahTest extends BaseCardTest {
     void tappedSummoningSickPariahPaysSacrificeCostBeforeTransformResolves() {
         Permanent pariah = harness.addToBattlefieldAndReturn(player1, new VoldarenPariah());
         pariah.setSummoningSick(true);
-        pariah.setTapped(true);
+        pariah.tap();
         Permanent first = addCreatureReady(player1, new FalkenrathReaver());
         Permanent second = addCreatureReady(player1, new FalkenrathReaver());
         Permanent third = addCreatureReady(player1, new FalkenrathReaver());

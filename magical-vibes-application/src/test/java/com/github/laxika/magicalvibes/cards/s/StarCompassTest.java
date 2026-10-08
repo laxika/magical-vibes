@@ -110,7 +110,7 @@ class StarCompassTest extends BaseCardTest {
     void tappedBasicLandStillContributes() {
         harness.addToBattlefield(player1, new StarCompass());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
 
         harness.activateAbility(player1, 0, null, null);
 

@@ -205,7 +205,7 @@ class SylvanAwakeningTest extends BaseCardTest {
     @DisplayName("Lands entering after resolution are not animated, and tapped lands remain tapped")
     void affectsOnlyLandsPresentAtResolutionWithoutUntapping() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

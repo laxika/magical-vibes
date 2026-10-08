@@ -86,7 +86,7 @@ class WallOfResurgenceTest extends BaseCardTest {
     @Test
     void tappedLandCanBeAnimatedWithoutUntappingIt() {
         Permanent land = addLand();
-        land.setTapped(true);
+        land.tap();
 
         castWall();
         harness.handlePermanentChosen(player1, land.getId());

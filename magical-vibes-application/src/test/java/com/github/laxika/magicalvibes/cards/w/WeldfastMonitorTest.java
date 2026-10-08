@@ -38,7 +38,7 @@ class WeldfastMonitorTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent monitor = harness.addToBattlefieldAndReturn(player1, new WeldfastMonitor());
         monitor.setSummoningSick(true);
-        monitor.setTapped(true);
+        monitor.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

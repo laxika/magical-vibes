@@ -131,7 +131,7 @@ class VividCreekTest extends BaseCardTest {
     void cannotActivateWhileTapped(ManaColor color) {
         Permanent creek = addReadyCreek(player1);
         creek.setCounterCount(CounterType.CHARGE, 2);
-        creek.setTapped(true);
+        creek.tap();
         int abilityIndex = color == ManaColor.BLUE ? 0 : 1;
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, null))

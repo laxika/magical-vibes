@@ -108,7 +108,7 @@ class TitanOfEternalFireTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 19);
-        human.setTapped(false);
+        human.untap();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no activated ability");

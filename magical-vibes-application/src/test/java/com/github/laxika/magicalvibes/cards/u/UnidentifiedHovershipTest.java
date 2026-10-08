@@ -112,7 +112,7 @@ class UnidentifiedHovershipTest extends BaseCardTest {
     void cannotCrewWithoutAnUntappedCreature() {
         harness.addToBattlefield(player1, new UnidentifiedHovership());
         Permanent crew = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        crew.setTapped(true);
+        crew.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

@@ -148,7 +148,7 @@ class TriassicEggTest extends BaseCardTest {
     @DisplayName("The counter ability cannot be activated while the Egg is tapped")
     void counterAbilityRequiresUntappedEgg() {
         Permanent egg = harness.addToBattlefieldAndReturn(player1, new TriassicEgg());
-        egg.setTapped(true);
+        egg.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
@@ -162,7 +162,7 @@ class TriassicEggTest extends BaseCardTest {
     void handModeAcceptsTappedEggWithExtraCounters() {
         Permanent egg = harness.addToBattlefieldAndReturn(player1, new TriassicEgg());
         egg.setCounterCount(CounterType.HATCHLING, 3);
-        egg.setTapped(true);
+        egg.tap();
         harness.setHand(player1, List.of(new BarbaryApes()));
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -181,7 +181,7 @@ class TriassicEggTest extends BaseCardTest {
     void graveyardModeAcceptsTappedEggWithExtraCounters() {
         Permanent egg = harness.addToBattlefieldAndReturn(player1, new TriassicEgg());
         egg.setCounterCount(CounterType.HATCHLING, 3);
-        egg.setTapped(true);
+        egg.tap();
         Card creature = new BarbaryApes();
         harness.setGraveyard(player1, List.of(creature));
 

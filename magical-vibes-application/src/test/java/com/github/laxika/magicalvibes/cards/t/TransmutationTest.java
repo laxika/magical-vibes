@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.h.HornOfDeafening;
 import com.github.laxika.magicalvibes.cards.w.WallOfHeat;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -99,7 +100,7 @@ class TransmutationTest extends BaseCardTest {
     @DisplayName("Transmutation switches values including counters and retains later counter changes")
     void switchesCounterModifiedValues() {
         Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfHeat());
-        wall.setPlusOnePlusOneCounters(1);
+        wall.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.setHand(player1, List.of(new Transmutation()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -108,7 +109,7 @@ class TransmutationTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(3);
 
-        wall.setPlusOnePlusOneCounters(2);
+        wall.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(8);
         assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(4);
 

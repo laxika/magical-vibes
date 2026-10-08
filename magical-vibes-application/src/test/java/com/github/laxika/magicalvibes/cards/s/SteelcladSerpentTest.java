@@ -50,7 +50,7 @@ class SteelcladSerpentTest extends BaseCardTest {
     @DisplayName("A tapped artifact still allows the Serpent to attack")
     void canAttackWithTappedArtifact() {
         addCreatureReady(player1, new SteelcladSerpent());
-        harness.addToBattlefieldAndReturn(player1, new ObeliskOfEsper()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new ObeliskOfEsper()).tap();
 
         declareAttackers(player1, List.of(0));
 

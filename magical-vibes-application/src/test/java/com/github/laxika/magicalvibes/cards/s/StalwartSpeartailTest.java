@@ -101,7 +101,7 @@ class StalwartSpeartailTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         resolveAllTriggers();
-        source.setTapped(false);
+        source.untap();
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         resolveAllTriggers();

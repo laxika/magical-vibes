@@ -100,7 +100,7 @@ class StonefareCrocodileTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent crocodile = addCreatureReady(player1, new StonefareCrocodile());
         crocodile.setSummoningSick(true);
-        crocodile.setTapped(true);
+        crocodile.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

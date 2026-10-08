@@ -78,7 +78,7 @@ class VortexRunnerTest extends BaseCardTest {
         assertThat(gqs.hasCantBeBlocked(gd, runner)).isFalse();
 
         addLands(player1, 1);
-        findPermanents(player1, "Forest").forEach(land -> land.setTapped(true));
+        findPermanents(player1, "Forest").forEach(land -> land.tap());
 
         assertThat(gqs.getEffectivePower(gd, runner)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, runner)).isEqualTo(3);

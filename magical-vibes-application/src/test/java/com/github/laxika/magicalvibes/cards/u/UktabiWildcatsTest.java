@@ -174,7 +174,7 @@ class UktabiWildcatsTest extends BaseCardTest {
     void canRegenerateWhileTappedAndSummoningSick() {
         Permanent wildcats = harness.addToBattlefieldAndReturn(player1, new UktabiWildcats());
         wildcats.setSummoningSick(true);
-        wildcats.setTapped(true);
+        wildcats.tap();
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
         harness.addMana(player1, ManaColor.GREEN, 1);

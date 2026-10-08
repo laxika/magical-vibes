@@ -103,7 +103,7 @@ class TaxiDriverTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent driver = addReadyTaxiDriver();
-        driver.setTapped(true);
+        driver.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, driver.getId()))

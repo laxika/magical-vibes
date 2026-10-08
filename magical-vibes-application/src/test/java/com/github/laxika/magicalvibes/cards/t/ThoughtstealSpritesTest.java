@@ -146,7 +146,7 @@ class ThoughtstealSpritesTest extends BaseCardTest {
         assertThat(duplicate.getKeywords()).doesNotContain(Keyword.DOUBLE_TEAM);
         assertThat(gqs.hasKeyword(gd, sprites, Keyword.DOUBLE_TEAM)).isFalse();
 
-        sprites.setTapped(false);
+        sprites.untap();
         addCreatureReady(player1, duplicate);
         harness.setHand(player1, List.of());
         declareAttackers(List.of(0, 1));

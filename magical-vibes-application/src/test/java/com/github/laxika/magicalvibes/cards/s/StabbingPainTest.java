@@ -102,7 +102,7 @@ class StabbingPainTest extends BaseCardTest {
     @DisplayName("Already-tapped creature still gets -1/-1, including your own creature")
     void debuffsOwnAlreadyTappedCreature() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setTapped(true);
+        bears.tap();
         harness.setHand(player1, List.of(new StabbingPain()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 

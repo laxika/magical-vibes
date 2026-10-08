@@ -106,7 +106,7 @@ class SunbladeElfTest extends BaseCardTest {
     @DisplayName("A summoning-sick tapped Elf can activate repeatedly and its boosts stack")
     void repeatedActivationsStackWithStaticBoost() {
         Permanent elf = harness.addToBattlefieldAndReturn(player1, new SunbladeElf());
-        elf.setTapped(true);
+        elf.tap();
         harness.addToBattlefield(player1, new Plains());
         harness.addMana(player1, ManaColor.WHITE, 10);
 

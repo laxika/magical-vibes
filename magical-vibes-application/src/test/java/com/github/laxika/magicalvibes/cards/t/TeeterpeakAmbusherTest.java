@@ -71,7 +71,7 @@ class TeeterpeakAmbusherTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent ambusher = harness.addToBattlefieldAndReturn(player1, new TeeterpeakAmbusher());
         ambusher.setSummoningSick(true);
-        ambusher.setTapped(true);
+        ambusher.tap();
         addAbilityMana();
 
         harness.activateAbility(player1, 0, null, null);

@@ -167,7 +167,7 @@ class WightOfTheReliquaryTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent wight = addReadyWight(player1);
-        wight.setTapped(true);
+        wight.tap();
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

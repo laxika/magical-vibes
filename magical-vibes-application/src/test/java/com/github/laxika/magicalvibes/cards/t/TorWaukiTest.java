@@ -144,7 +144,7 @@ class TorWaukiTest extends BaseCardTest {
     @DisplayName("Cannot pay the tap cost while already tapped")
     void cannotActivateWhileTapped() {
         Permanent torWauki = addReadyTorWauki(player1);
-        torWauki.setTapped(true);
+        torWauki.tap();
         Permanent attacker = addCombatCreature(player2, true, false);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))

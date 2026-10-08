@@ -104,7 +104,7 @@ class YurikoTheTigersShadowTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));
-        gs.declareBlockers(gd, player1, java.util.Map.of());
+        gs.declareBlockers(gd, player1, List.of());
         resolveCombat(player2);
         resolveAllTriggers();
 

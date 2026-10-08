@@ -53,7 +53,7 @@ class ValakutInvokerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ValakutInvoker());
         Permanent invoker = findPermanent(player1, "Valakut Invoker");
         invoker.setSummoningSick(true);
-        invoker.setTapped(true);
+        invoker.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 8);
 
         harness.activateAbility(player1, 0, null, player2.getId());

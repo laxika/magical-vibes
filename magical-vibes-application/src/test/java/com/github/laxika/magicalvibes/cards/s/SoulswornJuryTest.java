@@ -91,7 +91,7 @@ class SoulswornJuryTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         var jury = harness.addToBattlefieldAndReturn(player1, new SoulswornJury());
         jury.setSummoningSick(true);
-        jury.setTapped(true);
+        jury.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 

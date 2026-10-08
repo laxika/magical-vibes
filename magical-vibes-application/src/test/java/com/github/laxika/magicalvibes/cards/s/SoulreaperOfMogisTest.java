@@ -85,7 +85,7 @@ class SoulreaperOfMogisTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent soulreaper = harness.addToBattlefieldAndReturn(player1, new SoulreaperOfMogis());
         soulreaper.setSummoningSick(true);
-        soulreaper.setTapped(true);
+        soulreaper.tap();
         addAbilityMana(player1);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));

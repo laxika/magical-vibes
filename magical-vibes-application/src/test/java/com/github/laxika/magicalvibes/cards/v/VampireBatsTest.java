@@ -183,7 +183,7 @@ class VampireBatsTest extends BaseCardTest {
     @DisplayName("Ability can be activated twice during the opponent's turn while tapped")
     void canActivateDuringOpponentsTurnWhileTapped() {
         Permanent bats = addReadyVampireBats(player1);
-        bats.setTapped(true);
+        bats.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLACK, 3);

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.p.PsionicSliver;
 import com.github.laxika.magicalvibes.cards.p.PentarchWard;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -137,7 +138,7 @@ class WeatheredBodyguardsTest extends BaseCardTest {
     @DisplayName("Face-down Bodyguards do not redirect combat damage")
     void faceDownBodyguardsDoNotRedirectDamage() {
         Permanent bodyguards = harness.addToBattlefieldAndReturn(player2, new WeatheredBodyguards());
-        bodyguards.setFaceDown(true);
+        bodyguards.setFaceDown(2, 2, java.util.Set.of(CardType.CREATURE));
         addUnblockedAttacker(player1);
 
         resolveCombat();
@@ -150,7 +151,7 @@ class WeatheredBodyguardsTest extends BaseCardTest {
     @DisplayName("Turning Bodyguards face up before damage enables redirection immediately")
     void turningFaceUpEnablesRedirection() {
         Permanent bodyguards = harness.addToBattlefieldAndReturn(player2, new WeatheredBodyguards());
-        bodyguards.setFaceDown(true);
+        bodyguards.setFaceDown(2, 2, java.util.Set.of(CardType.CREATURE));
         addUnblockedAttacker(player1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.addMana(player2, ManaColor.WHITE, 1);

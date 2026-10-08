@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.x;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -126,7 +126,7 @@ class XathridGorgonTest extends BaseCardTest {
         assertThat(gqs.isArtifact(gd, gorgon)).isTrue();
         assertThat(gqs.getEffectiveColors(gd, gorgon)).isEmpty();
 
-        gorgon.setTapped(false);
+        gorgon.untap();
         harness.addMana(player1, ManaColor.BLACK, 3);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, gorgon.getId()))
                 .isInstanceOf(IllegalStateException.class);

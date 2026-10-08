@@ -141,7 +141,7 @@ class TheLongReachOfNightTest extends BaseCardTest {
     @DisplayName("Chapter III creates a new summoning-sick permanent without lore counters")
     void transformationCreatesNewPermanent() {
         Permanent saga = addSagaWithLore(2);
-        saga.setTapped(true);
+        saga.tap();
 
         advanceToNextChapter();
 

@@ -98,7 +98,7 @@ class TidusBlitzballStarTest extends BaseCardTest {
     void attackTriggerCanTargetAlreadyTappedCreature() {
         addCreatureReady(player1, new TidusBlitzballStar());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, target.getId());

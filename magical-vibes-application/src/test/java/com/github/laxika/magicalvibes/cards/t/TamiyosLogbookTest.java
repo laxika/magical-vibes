@@ -70,7 +70,7 @@ class TamiyosLogbookTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TamiyosLogbook());
         for (int i = 0; i < 6; i++) {
             Permanent artifact = harness.addToBattlefieldAndReturn(player1, new TamiyosLogbook());
-            artifact.setTapped(true);
+            artifact.tap();
         }
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
@@ -119,7 +119,7 @@ class TamiyosLogbookTest extends BaseCardTest {
     @Test
     void tappedLogbookCannotActivate() {
         Permanent logbook = harness.addToBattlefieldAndReturn(player1, new TamiyosLogbook());
-        logbook.setTapped(true);
+        logbook.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.addMana(player1, ManaColor.BLUE, 1);
 

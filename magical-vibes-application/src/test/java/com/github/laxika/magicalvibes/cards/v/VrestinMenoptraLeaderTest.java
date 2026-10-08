@@ -128,7 +128,7 @@ class VrestinMenoptraLeaderTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
 
         gd.playerBattlefields.get(player1.getId()).add(lateAttacker);
-        lateAttacker.setTapped(true);
+        lateAttacker.tap();
         lateAttacker.setAttacking(true);
         lateAttacker.setAttackTarget(player2.getId());
         resolveAllTriggers();

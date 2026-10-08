@@ -80,7 +80,7 @@ class XanthicStatueTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Statue can activate repeatedly without untapping")
     void tappedStatueCanActivateRepeatedly() {
         Permanent statue = harness.addToBattlefieldAndReturn(player1, new XanthicStatue());
-        statue.setTapped(true);
+        statue.tap();
         statue.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 10);
 

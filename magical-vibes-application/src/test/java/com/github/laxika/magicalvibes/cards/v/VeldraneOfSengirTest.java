@@ -177,7 +177,7 @@ class VeldraneOfSengirTest extends BaseCardTest {
     void tappedSummoningSickCreatureCanActivate() {
         Permanent veldrane = harness.addToBattlefieldAndReturn(player1, new VeldraneOfSengir());
         veldrane.setSummoningSick(true);
-        veldrane.setTapped(true);
+        veldrane.tap();
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

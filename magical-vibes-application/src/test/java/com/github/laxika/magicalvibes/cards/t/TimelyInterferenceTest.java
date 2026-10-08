@@ -122,7 +122,7 @@ class TimelyInterferenceTest extends BaseCardTest {
     void tappedTargetNeedNotBlock() {
         Permanent attacker = addCreatureReady(player1);
         Permanent target = addCreatureReady(player2);
-        target.setTapped(true);
+        target.tap();
         castKicked(target);
 
         attacker.setAttacking(true);

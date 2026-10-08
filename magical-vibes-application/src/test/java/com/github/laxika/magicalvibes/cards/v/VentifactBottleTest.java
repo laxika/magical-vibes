@@ -146,7 +146,7 @@ class VentifactBottleTest extends BaseCardTest {
     @DisplayName("An already tapped bottle still removes charge counters and produces mana")
     void tappedBottleStillProducesMana() {
         Permanent bottle = addBottle(player1);
-        bottle.setTapped(true);
+        bottle.tap();
         bottle.setCounterCount(CounterType.CHARGE, 2);
 
         advanceToPrecombatMain(player1);

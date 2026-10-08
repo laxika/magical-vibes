@@ -100,7 +100,7 @@ class ViashinoLashclawTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent lashclaw = addCreatureReady(player1, new ViashinoLashclaw());
-        lashclaw.setTapped(true);
+        lashclaw.tap();
         harness.setHand(player1, List.of(new ViashinoLashclaw()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

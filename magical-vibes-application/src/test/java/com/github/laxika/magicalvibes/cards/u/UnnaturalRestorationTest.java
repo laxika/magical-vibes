@@ -1,4 +1,4 @@
-﻿package com.github.laxika.magicalvibes.cards.u;
+package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.c.CopperLonglegs;
 import com.github.laxika.magicalvibes.cards.i.InfectiousBite;

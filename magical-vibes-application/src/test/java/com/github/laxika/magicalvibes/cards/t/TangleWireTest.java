@@ -162,7 +162,7 @@ class TangleWireTest extends BaseCardTest {
         Permanent untappedDog = harness.enterBattlefieldAndReturn(player2, new Mossdog());
 
         advanceToUpkeep(player2);
-        tappedDog.setTapped(true);
+        tappedDog.tap();
         resolveAllTriggers();
 
         assertThat(tappedDog.isTapped()).isTrue();

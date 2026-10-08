@@ -149,7 +149,7 @@ class TeferisCurseTest extends BaseCardTest {
     @DisplayName("A tapped enchanted artifact phases out before untapping and untaps when it phases in")
     void tappedArtifactUntapsOnlyWhenItPhasesIn() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new CharcoalDiamond());
-        artifact.setTapped(true);
+        artifact.tap();
         Permanent curse = attachCurse(artifact);
 
         harness.performUntapStep(player1);

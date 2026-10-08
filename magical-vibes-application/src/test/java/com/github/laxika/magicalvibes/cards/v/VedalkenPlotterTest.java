@@ -127,7 +127,7 @@ class VedalkenPlotterTest extends BaseCardTest {
         addMana();
         Permanent own = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new Island());
-        own.setTapped(true);
+        own.tap();
 
         harness.castCreature(player1, 0, List.of(own.getId(), opponent.getId()));
         harness.passBothPriorities();

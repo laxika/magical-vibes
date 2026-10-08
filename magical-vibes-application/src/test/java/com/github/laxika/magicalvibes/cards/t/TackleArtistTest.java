@@ -97,7 +97,7 @@ class TackleArtistTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(artist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(player1.getLife()).isEqualTo(18);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
     }
 
     @Test
@@ -114,9 +114,9 @@ class TackleArtistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(artist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(player2.getLife()).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
         resolveAllTriggers();
-        assertThat(player2.getLife()).isEqualTo(18);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
     }
 
     @Test

@@ -71,7 +71,7 @@ class SteadfastCatharTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
         assertThat(gqs.getEffectiveToughness(gd, cathar)).isEqualTo(3);
 
-        cathar.setTapped(false);
+        cathar.untap();
         cathar.setAttacking(false);
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();

@@ -123,7 +123,7 @@ class UndiscoveredParadiseTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, "BLACK");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
-        land.setTapped(false);
+        land.untap();
 
         advanceTurn();
         advanceTurn();

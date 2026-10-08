@@ -76,7 +76,7 @@ class StoneworkPackbeastTest extends BaseCardTest {
     @Test
     void canActivateRepeatedlyWhileTappedAndSummoningSick() {
         Permanent packbeast = harness.addToBattlefieldAndReturn(player1, new StoneworkPackbeast());
-        packbeast.setTapped(true);
+        packbeast.tap();
         packbeast.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 

@@ -64,7 +64,7 @@ class TyvarTheBellicoseTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(elf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
-        elf.setTapped(false);
+        elf.untap();
         harness.tapPermanent(player1, 1);
         resolveAllTriggers();
 
@@ -85,7 +85,7 @@ class TyvarTheBellicoseTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castAndResolveInstant(player1, 0, tyvar.getId());
 
-        elf.setTapped(false);
+        elf.untap();
         harness.tapPermanent(player1, 0);
         resolveAllTriggers();
 
@@ -150,7 +150,7 @@ class TyvarTheBellicoseTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castAndResolveInstant(player1, 0, joiner.getId());
-        joiner.setTapped(false);
+        joiner.untap();
         harness.activateAbility(player1, 1, 0, null, null);
         resolveAllTriggers();
 
@@ -185,7 +185,7 @@ class TyvarTheBellicoseTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        elf.setTapped(false);
+        elf.untap();
         harness.tapPermanent(player1, 1);
         resolveAllTriggers();
 

@@ -106,7 +106,7 @@ class VividMarshTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
 
-        marsh.setTapped(false);
+        marsh.untap();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
         harness.activateAbility(player1, 0, 0, null, null);

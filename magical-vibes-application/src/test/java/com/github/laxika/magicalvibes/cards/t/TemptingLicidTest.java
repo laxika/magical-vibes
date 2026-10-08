@@ -202,7 +202,7 @@ class TemptingLicidTest extends BaseCardTest {
         addCreatureReady(player1, new TemptingLicid());
         Permanent tappedBlocker = addCreatureReady(player2, new SpinedWurm());
         Permanent ableBlocker = addCreatureReady(player2, new SpinedWurm());
-        tappedBlocker.setTapped(true);
+        tappedBlocker.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 1, null, host.getId());

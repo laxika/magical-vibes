@@ -81,7 +81,7 @@ class ZodiacDogTest extends BaseCardTest {
     @DisplayName("A tapped Mountain still makes Zodiac Dog unblockable")
     void cannotBeBlockedWhenDefendersMountainIsTapped() {
         harness.addToBattlefield(player2, new Mountain());
-        findPermanent(player2, "Mountain").setTapped(true);
+        findPermanent(player2, "Mountain").tap();
         Permanent blocker = addCreatureReady(player2, new ShuFootSoldiers());
         Permanent attacker = addCreatureReady(player1, new ZodiacDog());
         attacker.setAttacking(true);

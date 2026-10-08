@@ -26,7 +26,7 @@ class TorchFiendTest extends BaseCardTest {
     @DisplayName("Tapped Torch Fiend can sacrifice itself to destroy an artifact")
     void tappedFiendCanActivate() {
         Permanent fiend = addReadyFiend(player1);
-        fiend.setTapped(true);
+        fiend.tap();
         Permanent target = addReadyArtifact(player2);
         harness.addMana(player1, ManaColor.RED, 1);
 

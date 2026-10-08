@@ -135,7 +135,7 @@ class TwilightDroverTest extends BaseCardTest {
     void abilityDoesNotRequireTappingOrHasteAndPaysCounterBeforeResolution() {
         Permanent drover = harness.addToBattlefieldAndReturn(player1, new TwilightDrover());
         drover.setSummoningSick(true);
-        drover.setTapped(true);
+        drover.tap();
         drover.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.WHITE, 1);

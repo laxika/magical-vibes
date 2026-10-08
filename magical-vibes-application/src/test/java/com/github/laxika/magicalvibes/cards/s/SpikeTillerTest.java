@@ -133,7 +133,7 @@ class SpikeTillerTest extends BaseCardTest {
     @DisplayName("Spike Tiller can transfer a counter to itself without tapping")
     void canTargetItselfWhileTappedAndSummoningSick() {
         Permanent tiller = castTiller();
-        tiller.setTapped(true);
+        tiller.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 0, null, tiller.getId());

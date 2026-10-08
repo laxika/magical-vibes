@@ -196,7 +196,7 @@ class SpinEngineTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Spin Engine can activate its ability")
     void tappedSummoningSickSourceCanActivate() {
         Permanent engine = harness.addToBattlefieldAndReturn(player1, new SpinEngine());
-        engine.setTapped(true);
+        engine.tap();
         Permanent target = addCreatureReady(player2, new SpinEngine());
         harness.addMana(player1, ManaColor.RED, 1);
 

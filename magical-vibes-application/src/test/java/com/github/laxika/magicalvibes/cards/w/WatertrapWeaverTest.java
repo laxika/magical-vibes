@@ -112,7 +112,7 @@ class WatertrapWeaverTest extends BaseCardTest {
     @DisplayName("An already tapped creature still skips its next untap step")
     void alreadyTappedTargetStillGetsLocked() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new DeeprootChampion());
-        target.setTapped(true);
+        target.tap();
         castWeaver(player2, "Deeproot Champion");
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -165,7 +165,7 @@ class WatertrapWeaverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
-        target.setTapped(true);
+        target.tap();
         harness.performUntapStep(player1);
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.stack).isEmpty();

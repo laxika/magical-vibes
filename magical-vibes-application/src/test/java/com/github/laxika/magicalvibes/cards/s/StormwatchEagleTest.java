@@ -86,7 +86,7 @@ class StormwatchEagleTest extends BaseCardTest {
     void sacrificesTappedLandAsActivationCost() {
         harness.addToBattlefield(player1, new StormwatchEagle());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new WintermoonMesa());
-        land.setTapped(true);
+        land.tap();
 
         harness.activateAbility(player1, 0, 0, null, null);
 

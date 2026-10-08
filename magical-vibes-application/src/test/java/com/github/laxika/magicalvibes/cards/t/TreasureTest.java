@@ -57,7 +57,7 @@ class TreasureTest extends BaseCardTest {
     void tappedTreasureCannotBeSacrificedForMana() {
         Treasure treasure = new Treasure();
         treasure.setToken(true);
-        harness.addToBattlefieldAndReturn(player1, treasure).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, treasure).tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

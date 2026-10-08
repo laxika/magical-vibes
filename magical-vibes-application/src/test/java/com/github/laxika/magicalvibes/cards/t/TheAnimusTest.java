@@ -126,7 +126,7 @@ class TheAnimusTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TheAnimus());
         Permanent copier = addCreatureReady(player1, new EzioBrashNovice());
         Permanent victim = addCreatureReady(player2, new RoyalAssassin());
-        victim.setTapped(true);
+        victim.tap();
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(copier.getId(), exiled.getId()));
         harness.passBothPriorities();
@@ -173,7 +173,7 @@ class TheAnimusTest extends BaseCardTest {
         Permanent copier = addCreatureReady(player1, new EzioBrashNovice());
         addCreatureReady(player1, new RoyalAssassin());
         Permanent victim = addCreatureReady(player2, new RoyalAssassin());
-        victim.setTapped(true);
+        victim.tap();
         harness.activateAbility(player1, 2, 0, victim.getId());
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0,
@@ -190,7 +190,7 @@ class TheAnimusTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TheAnimus());
         Permanent copier = addCreatureReady(player1, new EzioBrashNovice());
         copier.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        copier.setTapped(true);
+        copier.tap();
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(copier.getId(), exiled.getId()));
         harness.passBothPriorities();

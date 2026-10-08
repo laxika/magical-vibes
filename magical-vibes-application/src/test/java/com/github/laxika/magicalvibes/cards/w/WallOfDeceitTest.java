@@ -74,7 +74,7 @@ class WallOfDeceitTest extends BaseCardTest {
     @Test
     void faceDownAbilityUsesTheStackAndDoesNotRequireTapping() {
         Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfDeceit());
-        wall.setTapped(true);
+        wall.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 0, null, null);

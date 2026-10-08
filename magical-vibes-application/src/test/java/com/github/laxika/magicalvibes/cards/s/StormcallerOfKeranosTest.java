@@ -113,7 +113,7 @@ class StormcallerOfKeranosTest extends BaseCardTest {
     @DisplayName("A tapped Stormcaller can activate repeatedly and each ability scries separately")
     void tappedStormcallerCanActivateRepeatedly() {
         Permanent stormcaller = harness.addToBattlefieldAndReturn(player1, new StormcallerOfKeranos());
-        stormcaller.setTapped(true);
+        stormcaller.tap();
         Card first = new StormcallerOfKeranos();
         Card second = new StormcallerOfKeranos();
         harness.setLibrary(player1, List.of(first, second));

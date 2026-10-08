@@ -45,7 +45,7 @@ class ToadstoolAdmirerTest extends BaseCardTest {
     @Test
     void activatedAbilityCanBeUsedWhileTapped() {
         Permanent admirer = harness.addToBattlefieldAndReturn(player1, new ToadstoolAdmirer());
-        admirer.setTapped(true);
+        admirer.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.GREEN, 1);
 

@@ -116,7 +116,7 @@ class ThermalNavigatorTest extends BaseCardTest {
     @DisplayName("A tapped summoning-sick Navigator can activate, but gains flying only on resolution")
     void tappedSummoningSickSourceCanActivate() {
         Permanent navigator = harness.addToBattlefieldAndReturn(player1, new ThermalNavigator());
-        navigator.setTapped(true);
+        navigator.tap();
         navigator.setSummoningSick(true);
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AvariceTotem());
 

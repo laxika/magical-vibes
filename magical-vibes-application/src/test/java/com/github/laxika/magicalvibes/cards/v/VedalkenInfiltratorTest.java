@@ -98,7 +98,7 @@ class VedalkenInfiltratorTest extends BaseCardTest {
     void tappedArtifactsCountWithoutReceivingBoost() {
         Permanent infiltrator = harness.addToBattlefieldAndReturn(player1, new VedalkenInfiltrator());
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new OrnithopterOfParadise());
-        artifact.setTapped(true);
+        artifact.tap();
         harness.addToBattlefield(player1, new OrnithopterOfParadise());
         harness.addToBattlefield(player1, new OrnithopterOfParadise());
 

@@ -52,7 +52,7 @@ class UlvenwaldOddityTest extends BaseCardTest {
     @Test
     void canTransformWhileTappedAndSummoningSick() {
         Permanent oddity = harness.addToBattlefieldAndReturn(player1, new UlvenwaldOddity());
-        oddity.setTapped(true);
+        oddity.tap();
         oddity.setSummoningSick(true);
         addTransformMana();
 

@@ -103,7 +103,7 @@ class WishclawTalismanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceActivePlayer(player2);
-        talisman.setTapped(false);
+        talisman.untap();
         harness.setLibrary(player2, List.of(new WishclawTalisman()));
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.activateAbility(player2, 0, null, null);

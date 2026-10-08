@@ -167,7 +167,7 @@ class StriderHarnessTest extends BaseCardTest {
     void tappedEquipmentCanEquip() {
         Permanent equipment = addHarnessReady(player1);
         equipment.setSummoningSick(true);
-        equipment.setTapped(true);
+        equipment.tap();
         Permanent creature = addCreatureReady(player1, new CarapaceForger());
         harness.addMana(player1, ManaColor.WHITE, 1);
 

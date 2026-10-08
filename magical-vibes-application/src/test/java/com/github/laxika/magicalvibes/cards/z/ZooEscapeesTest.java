@@ -107,7 +107,7 @@ class ZooEscapeesTest extends BaseCardTest {
         Permanent mutagen = findPermanent(player1, "Mutagen");
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        mutagen.setTapped(true);
+        mutagen.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1,
                 gd.playerBattlefields.get(player1.getId()).indexOf(mutagen), 0, null, creature.getId()))

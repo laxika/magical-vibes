@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,7 +34,7 @@ class SteadfastPaladinTest extends BaseCardTest {
         harness.addToBattlefield(player2, new SteadfastPaladin());
 
         declareAttackersAndPrepareBlockers(List.of(0));
-        gs.declareBlockers(gd, player2, Map.of(0, 0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
         harness.assertLife(player1, 22);
@@ -54,7 +54,7 @@ class SteadfastPaladinTest extends BaseCardTest {
         harness.addToBattlefield(player2, new SteadfastPaladin());
 
         declareAttackersAndPrepareBlockers(List.of(0, 1));
-        gs.declareBlockers(gd, player2, Map.of(0, 0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
         harness.assertLife(player1, 24);

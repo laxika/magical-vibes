@@ -137,7 +137,7 @@ class SproutSwarmTest extends BaseCardTest {
     @DisplayName("A tapped creature cannot help convoke Sprout Swarm")
     void tappedCreatureCannotConvoke() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new LlanowarAugur());
-        creature.setTapped(true);
+        creature.tap();
         SproutSwarm spell = new SproutSwarm();
         harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.COLORLESS, 1);

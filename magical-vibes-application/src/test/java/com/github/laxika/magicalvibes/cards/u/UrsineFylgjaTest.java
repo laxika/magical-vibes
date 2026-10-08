@@ -135,7 +135,7 @@ class UrsineFylgjaTest extends BaseCardTest {
     @DisplayName("Healing counter is paid immediately, but prevention waits for resolution")
     void counterIsPaidBeforePreventionResolves() {
         Permanent creature = castUrsineFylgja();
-        creature.setTapped(true);
+        creature.tap();
 
         harness.activateAbility(player1, indexOf(creature), 0, null, null);
 

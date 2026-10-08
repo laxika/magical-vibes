@@ -89,7 +89,7 @@ class WhispererOfTheWildsTest extends BaseCardTest {
     void bothAbilitiesRequireAnUntappedSource(int abilityIndex) {
         Permanent whisperer = addCreatureReady(player1, new WhispererOfTheWilds());
         whisperer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
-        whisperer.setTapped(true);
+        whisperer.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, null))
                 .isInstanceOf(IllegalStateException.class)

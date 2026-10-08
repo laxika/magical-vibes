@@ -122,7 +122,7 @@ class SparkhunterMasticoreTest extends BaseCardTest {
     @Test
     void damageAbilityCanBeUsedRepeatedlyWhileTappedAndSummoningSick() {
         Permanent sparkhunter = harness.addToBattlefieldAndReturn(player1, new SparkhunterMasticore());
-        sparkhunter.setTapped(true);
+        sparkhunter.tap();
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
         planeswalker.setCounterCount(CounterType.LOYALTY, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

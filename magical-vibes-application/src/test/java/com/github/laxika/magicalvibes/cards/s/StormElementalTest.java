@@ -188,7 +188,7 @@ class StormElementalTest extends BaseCardTest {
     void abilitiesDoNotRequireTappingOrHaste() {
         Permanent elemental = addCreatureReady(player1, new StormElemental());
         elemental.setSummoningSick(true);
-        elemental.setTapped(true);
+        elemental.tap();
         Permanent flyer = addCreatureReady(player2, new WindSpirit());
         harness.setLibrary(player1, List.of(new Island(), new SnowCoveredIsland()));
         harness.addMana(player1, ManaColor.BLUE, 2);

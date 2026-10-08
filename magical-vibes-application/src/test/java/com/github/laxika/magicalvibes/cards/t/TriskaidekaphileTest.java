@@ -153,7 +153,7 @@ class TriskaidekaphileTest extends BaseCardTest {
     @DisplayName("The draw ability can be activated repeatedly while tapped")
     void drawAbilityCanBeActivatedRepeatedlyWhileTapped() {
         harness.addToBattlefield(player1, new Triskaidekaphile());
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, cards(3));
         harness.addMana(player1, ManaColor.BLUE, 2);

@@ -97,7 +97,7 @@ class TripNooseTest extends BaseCardTest {
     void canTargetAlreadyTappedCreature() {
         addReadyNoose(player1);
         Permanent target = addCreatureReady(player2, new SafeholdElite());
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -111,7 +111,7 @@ class TripNooseTest extends BaseCardTest {
     @Test
     void cannotActivateTappedNoose() {
         Permanent noose = addReadyNoose(player1);
-        noose.setTapped(true);
+        noose.tap();
         Permanent target = addCreatureReady(player2, new SafeholdElite());
         harness.addMana(player1, ManaColor.WHITE, 2);
 

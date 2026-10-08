@@ -138,10 +138,12 @@ class TormentorsTridentTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, replacement)).isEqualTo(2);
 
         beginDeclareAttackers();
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(original.getId())))
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1,
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(original))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
-        gs.declareAttackers(gd, player1, List.of(replacement.getId()));
+        gs.declareAttackers(gd, player1,
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(replacement)));
 
         assertThat(original.isAttacking()).isFalse();
         assertThat(replacement.isAttacking()).isTrue();

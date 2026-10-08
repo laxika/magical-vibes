@@ -199,7 +199,7 @@ class VonaButcherOfMaganTest extends BaseCardTest {
         Permanent vona = addCreatureReady(player1, new VonaButcherOfMagan());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
         harness.setLife(player1, 20);
-        vona.setTapped(true);
+        vona.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);

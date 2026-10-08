@@ -121,7 +121,7 @@ class ThornscapeApprenticeTest extends BaseCardTest {
     void whiteAbilityCanTargetTappedCreature() {
         Permanent apprentice = addReadyApprentice();
         Permanent target = addCreatureReady(player2, new ThornscapeMaster());
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, 1, null, target.getId());

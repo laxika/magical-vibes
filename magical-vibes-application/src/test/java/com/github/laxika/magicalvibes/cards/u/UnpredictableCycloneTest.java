@@ -142,7 +142,7 @@ class UnpredictableCycloneTest extends BaseCardTest {
     void unpayableAdditionalCostReturnsSpellToLibrary() {
         Permanent cyclone = harness.addToBattlefieldAndReturn(player1, new UnpredictableCyclone());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ImposingVantasaur());
-        target.setTapped(true);
+        target.tap();
         Card spell = new SwallowWhole();
         harness.setHand(player1, List.of(new GoForBlood()));
         harness.setLibrary(player1, List.of(spell));

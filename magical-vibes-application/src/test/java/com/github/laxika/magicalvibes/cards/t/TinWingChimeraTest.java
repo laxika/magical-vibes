@@ -99,7 +99,7 @@ class TinWingChimeraTest extends BaseCardTest {
     void sacrificeIsPaidBeforeResolutionWithoutTapRestrictions() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new TinWingChimera());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new BrassTalonChimera());
-        source.setTapped(true);
+        source.tap();
         source.setSummoningSick(true);
 
         harness.activateAbility(player1, 0, null, target.getId());

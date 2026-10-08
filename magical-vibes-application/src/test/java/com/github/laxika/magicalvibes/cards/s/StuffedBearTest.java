@@ -76,7 +76,7 @@ class StuffedBearTest extends BaseCardTest {
     void tappedBearCanActivateRepeatedly() {
         Permanent bear = addStuffedBear();
         bear.setSummoningSick(true);
-        bear.setTapped(true);
+        bear.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, 0, null, null);

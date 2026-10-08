@@ -68,7 +68,7 @@ class WarTorchGoblinTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Goblin can activate its ability")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent source = addCreatureReady(player1, new WarTorchGoblin());
-        source.setTapped(true);
+        source.tap();
         source.setSummoningSick(true);
         addCreatureReady(player1, new WarTorchGoblin());
         Permanent blocker = addCreatureReady(player2, new WarTorchGoblin());

@@ -117,7 +117,7 @@ class SpiritShackleTest extends BaseCardTest {
     @DisplayName("Enchanting an already tapped creature does not put a counter on it")
     void enchantingTappedCreatureDoesNotTrigger() {
         Permanent creature = addCreatureReady(player2, new DurkwoodBoars());
-        creature.setTapped(true);
+        creature.tap();
 
         harness.setHand(player1, List.of(new SpiritShackle()));
         harness.addMana(player1, ManaColor.BLACK, 2);

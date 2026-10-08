@@ -122,7 +122,7 @@ class WitnessOfTomorrowsTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent witness = addReadyWitness();
         witness.setSummoningSick(true);
-        witness.setTapped(true);
+        witness.tap();
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.activateAbility(player1, 0, null, null);

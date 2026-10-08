@@ -57,7 +57,7 @@ class StabilizerTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Stabilizer still prevents cycling")
     void tappedStabilizerPreventsCycling() {
-        harness.addToBattlefieldAndReturn(player1, new Stabilizer()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Stabilizer()).tap();
         harness.setHand(player1, List.of(new SparkSpray()));
         harness.addMana(player1, ManaColor.RED, 1);
 

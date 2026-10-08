@@ -154,7 +154,7 @@ class SpeakerOfTheHeavensTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent speaker = addCreatureReady(player1, new SpeakerOfTheHeavens());
-        speaker.setTapped(true);
+        speaker.tap();
         harness.setLife(player1, gd.startingLife() + 7);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

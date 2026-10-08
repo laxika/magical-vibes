@@ -80,7 +80,7 @@ class TheDrossPitsTest extends BaseCardTest {
     @Test
     void tappedLandCannotActivateEitherAbility() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new TheDrossPits());
-        land.setTapped(true);
+        land.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 

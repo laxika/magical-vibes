@@ -159,7 +159,7 @@ class SpittingDrakeTest extends BaseCardTest {
     @DisplayName("Tapped Spitting Drake can activate its non-tap ability")
     void canActivateWhileTapped() {
         Permanent drake = addCreatureReady(player1, new SpittingDrake());
-        drake.setTapped(true);
+        drake.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

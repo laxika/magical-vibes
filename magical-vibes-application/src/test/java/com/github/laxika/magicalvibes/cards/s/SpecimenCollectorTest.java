@@ -90,7 +90,7 @@ class SpecimenCollectorTest extends BaseCardTest {
     void deathCanCopyCrabWithoutCopyingTappedState() {
         castSpecimenCollector();
         Permanent crab = findPermanent(player1, "Crab");
-        crab.setTapped(true);
+        crab.tap();
         killCollector();
         harness.handlePermanentChosen(player1, crab.getId());
         resolveAllTriggers();

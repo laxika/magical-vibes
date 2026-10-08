@@ -156,7 +156,7 @@ class TerritorialDisputeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TerritorialDispute());
         advanceToUpkeep(player1);
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

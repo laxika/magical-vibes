@@ -128,7 +128,7 @@ class ViridianLongbowTest extends BaseCardTest {
     @Test
     void tappedCreatureCannotActivateGrantedTapAbility() {
         Permanent creature = addCreatureReady(player1, new AlphaMyr());
-        creature.setTapped(true);
+        creature.tap();
         Permanent longbow = harness.addToBattlefieldAndReturn(player1, new ViridianLongbow());
         longbow.setAttachedTo(creature.getId());
 

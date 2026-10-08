@@ -26,7 +26,7 @@ class WarlordsAxeTest extends BaseCardTest {
     @DisplayName("A tapped Axe can equip on the turn it enters the battlefield")
     void tappedNewEquipmentCanEquip() {
         Permanent axe = harness.addToBattlefieldAndReturn(player1, new WarlordsAxe());
-        axe.setTapped(true);
+        axe.tap();
         Permanent creature = addCreatureReady(player1, new RuneclawBear());
         harness.addMana(player1, ManaColor.WHITE, 4);
 

@@ -91,7 +91,7 @@ class WireflyHiveTest extends BaseCardTest {
     @DisplayName("Cannot activate an already tapped Hive")
     void cannotActivateWhileTapped() {
         Permanent hive = harness.addToBattlefieldAndReturn(player1, new WireflyHive());
-        hive.setTapped(true);
+        hive.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

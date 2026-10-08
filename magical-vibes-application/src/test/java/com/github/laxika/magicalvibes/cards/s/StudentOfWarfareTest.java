@@ -108,7 +108,7 @@ class StudentOfWarfareTest extends BaseCardTest {
     void tappedSummoningSickStudentCanLevelBeyondSevenInSecondMainPhase() {
         Permanent student = harness.addToBattlefieldAndReturn(player1, new StudentOfWarfare());
         student.setSummoningSick(true);
-        student.setTapped(true);
+        student.tap();
         student.setCounterCount(CounterType.LEVEL, 7);
         prepareForLeveling(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

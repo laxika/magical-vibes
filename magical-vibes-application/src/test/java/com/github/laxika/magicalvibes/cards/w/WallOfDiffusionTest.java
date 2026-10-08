@@ -67,7 +67,7 @@ class WallOfDiffusionTest extends BaseCardTest {
     @DisplayName("A tapped Wall of Diffusion cannot block a shadow attacker")
     void tappedWallCannotBlockShadow() {
         Permanent wall = addCreatureReady(player2, new WallOfDiffusion());
-        wall.setTapped(true);
+        wall.tap();
         addCreatureReady(player1, new DauthiSlayer());
         declareAttackersAndPrepareBlockers(List.of(0));
 

@@ -62,7 +62,7 @@ class SparkReaperTest extends BaseCardTest {
     void canSacrificeTappedSummoningSickSourceAndResolveAfterItLeaves() {
         Permanent reaper = harness.addToBattlefieldAndReturn(player1, new SparkReaper());
         reaper.setSummoningSick(true);
-        reaper.setTapped(true);
+        reaper.tap();
         harness.addToBattlefield(player1, new PrimordialWurm());
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);

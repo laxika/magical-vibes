@@ -75,7 +75,7 @@ class ThrashingWumpusTest extends BaseCardTest {
     @DisplayName("can activate while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent wumpus = harness.addToBattlefieldAndReturn(player1, new ThrashingWumpus());
-        wumpus.setTapped(true);
+        wumpus.tap();
         wumpus.setSummoningSick(true);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);

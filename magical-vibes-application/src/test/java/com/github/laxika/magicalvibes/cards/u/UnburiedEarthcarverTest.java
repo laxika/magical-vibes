@@ -64,7 +64,7 @@ class UnburiedEarthcarverTest extends BaseCardTest {
     @DisplayName("The ability can be activated while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent earthcarver = harness.addToBattlefieldAndReturn(player1, new UnburiedEarthcarver());
-        earthcarver.setTapped(true);
+        earthcarver.tap();
         harness.addToBattlefield(player1, new UnburiedEarthcarver());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

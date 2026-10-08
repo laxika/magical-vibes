@@ -299,7 +299,7 @@ class TilonallisSkinshifterTest extends BaseCardTest {
         assertThat(skinshifter.getCard().getName()).isEqualTo("Merfolk Branchwalker");
         assertThat(gqs.getEffectivePower(gd, skinshifter)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, skinshifter)).isEqualTo(1);
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
     }

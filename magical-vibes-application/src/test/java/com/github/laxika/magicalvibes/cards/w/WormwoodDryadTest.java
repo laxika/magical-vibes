@@ -66,7 +66,7 @@ class WormwoodDryadTest extends BaseCardTest {
     void abilityCanBeActivatedWhileSummoningSickAndTapped(int abilityIndex, ManaColor color, Keyword keyword) {
         Permanent dryad = harness.addToBattlefieldAndReturn(player1, new WormwoodDryad());
         dryad.setSummoningSick(true);
-        dryad.setTapped(true);
+        dryad.tap();
         harness.addMana(player1, color, 1);
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 

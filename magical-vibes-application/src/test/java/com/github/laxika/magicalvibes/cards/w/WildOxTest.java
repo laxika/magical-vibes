@@ -21,7 +21,7 @@ class WildOxTest extends BaseCardTest {
     @DisplayName("A tapped defending Swamp still makes Wild Ox unblockable")
     void cannotBeBlockedWhenDefendingSwampIsTapped() {
         harness.addToBattlefield(player2, new Swamp());
-        findPermanent(player2, "Swamp").setTapped(true);
+        findPermanent(player2, "Swamp").tap();
         Permanent blockerPerm = addCreatureReady(player2, new BearCub());
         Permanent atkPerm = addCreatureReady(player1, new WildOx());
         atkPerm.setAttacking(true);

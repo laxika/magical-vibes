@@ -36,7 +36,7 @@ class ViashinoSandswimmerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent sandswimmer = harness.addToBattlefieldAndReturn(player1, new ViashinoSandswimmer());
         sandswimmer.setSummoningSick(true);
-        sandswimmer.setTapped(true);
+        sandswimmer.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

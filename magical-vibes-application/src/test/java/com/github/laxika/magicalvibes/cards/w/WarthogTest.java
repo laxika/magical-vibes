@@ -77,7 +77,7 @@ class WarthogTest extends BaseCardTest {
     @DisplayName("A tapped Swamp still makes Warthog unblockable")
     void cannotBeBlockedWhenDefendersSwampIsTapped() {
         harness.addToBattlefield(player2, new Swamp());
-        findPermanent(player2, "Swamp").setTapped(true);
+        findPermanent(player2, "Swamp").tap();
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
         Permanent atkPerm = addCreatureReady(player1, new Warthog());
         atkPerm.setAttacking(true);

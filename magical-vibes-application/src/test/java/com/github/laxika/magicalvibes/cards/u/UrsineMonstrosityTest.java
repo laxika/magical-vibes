@@ -127,7 +127,7 @@ class UrsineMonstrosityTest extends BaseCardTest {
     @DisplayName("A tapped creature still gets the bonus but need not attack")
     void tappedCreatureIsNotForcedToAttack() {
         Permanent ursine = addCreatureReady(player1, new UrsineMonstrosity());
-        ursine.setTapped(true);
+        ursine.tap();
         harness.setLibrary(player1, List.of(new Forest()));
 
         advanceToBeginningOfCombat(player1);

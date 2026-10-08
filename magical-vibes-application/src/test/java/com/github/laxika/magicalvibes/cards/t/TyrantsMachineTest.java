@@ -80,7 +80,7 @@ class TyrantsMachineTest extends BaseCardTest {
     void canTargetTappedCreature() {
         Permanent machine = harness.addToBattlefieldAndReturn(player1, new TyrantsMachine());
         Permanent target = addCreatureReady(player2, new RuneclawBear());
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, target.getId());

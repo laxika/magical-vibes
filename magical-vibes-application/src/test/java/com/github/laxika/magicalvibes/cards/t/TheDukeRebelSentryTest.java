@@ -135,7 +135,7 @@ class TheDukeRebelSentryTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent duke = addDuke();
-        duke.setTapped(true);
+        duke.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new FrogSquirrels());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))

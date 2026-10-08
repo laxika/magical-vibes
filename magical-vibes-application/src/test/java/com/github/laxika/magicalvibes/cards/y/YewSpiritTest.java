@@ -111,7 +111,7 @@ class YewSpiritTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent spirit = harness.addToBattlefieldAndReturn(player1, new YewSpirit());
         spirit.setSummoningSick(true);
-        spirit.setTapped(true);
+        spirit.tap();
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.activateAbility(player1, 0, null, null);

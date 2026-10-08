@@ -133,7 +133,7 @@ class TerastodonTest extends BaseCardTest {
     void animatedTargetIsNotDestroyed() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new TectonicEdge());
         Permanent wildwood = harness.addToBattlefieldAndReturn(player2, new StirringWildwood());
-        wildwood.setTapped(false);
+        wildwood.untap();
         prepareCast();
         harness.castCreature(player1, 0, List.of(land.getId(), wildwood.getId()));
         harness.passBothPriorities();

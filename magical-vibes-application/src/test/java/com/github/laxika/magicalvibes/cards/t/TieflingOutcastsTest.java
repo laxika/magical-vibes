@@ -100,7 +100,7 @@ class TieflingOutcastsTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
 
-        outcasts.setTapped(false);
+        outcasts.untap();
         declareAttackers(List.of(0));
         resolveAllTriggers();
 

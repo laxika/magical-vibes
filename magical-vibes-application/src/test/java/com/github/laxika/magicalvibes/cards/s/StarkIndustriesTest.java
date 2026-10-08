@@ -93,7 +93,7 @@ class StarkIndustriesTest extends BaseCardTest {
     @DisplayName("A tapped land cannot activate its mana ability")
     void tappedLandCannotProduceMana() {
         Permanent land = addReadyLand(player1);
-        land.setTapped(true);
+        land.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

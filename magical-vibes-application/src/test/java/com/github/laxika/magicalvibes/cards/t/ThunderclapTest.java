@@ -107,7 +107,7 @@ class ThunderclapTest extends BaseCardTest {
     @DisplayName("A tapped Mountain can be sacrificed and the cost is paid before damage")
     void sacrificesTappedMountainBeforeResolution() {
         Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
-        mountain.setTapped(true);
+        mountain.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new JhovallQueen());
         harness.setHand(player1, List.of(new Thunderclap()));
 

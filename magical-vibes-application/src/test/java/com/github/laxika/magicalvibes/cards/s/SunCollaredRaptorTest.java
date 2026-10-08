@@ -86,7 +86,7 @@ class SunCollaredRaptorTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent raptor = harness.addToBattlefieldAndReturn(player1, new SunCollaredRaptor());
         raptor.setSummoningSick(true);
-        raptor.setTapped(true);
+        raptor.tap();
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.RED, 1);
 

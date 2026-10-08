@@ -136,7 +136,7 @@ class WarriorEnKorTest extends BaseCardTest {
     @DisplayName("The ability may target its own source, without preventing damage")
     void canTargetItselfWhileSummoningSickAndTapped() {
         Permanent warrior = harness.addToBattlefieldAndReturn(player1, new WarriorEnKor());
-        warrior.setTapped(true);
+        warrior.tap();
 
         harness.activateAbility(player1, indexOf(player1, warrior), null, warrior.getId());
         harness.passBothPriorities();

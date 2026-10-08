@@ -147,7 +147,7 @@ class VillainousSyndicationTest extends BaseCardTest {
     void tappedVillainCannotPayCost() {
         harness.addToBattlefield(player1, new VillainousSyndication());
         Permanent villain = harness.addToBattlefieldAndReturn(player1, new DoomsServoGuards());
-        villain.setTapped(true);
+        villain.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

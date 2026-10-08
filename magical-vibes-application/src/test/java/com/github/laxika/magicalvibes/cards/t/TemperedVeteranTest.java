@@ -112,7 +112,7 @@ class TemperedVeteranTest extends BaseCardTest {
     @ValueSource(ints = {0, 1})
     void tappedVeteranCannotActivateEitherAbility(int abilityIndex) {
         Permanent veteran = addCreatureReady(player1, new TemperedVeteran());
-        veteran.setTapped(true);
+        veteran.tap();
         Permanent target = addCreatureReady(player1, new AlpineWatchdog());
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.addMana(player1, ManaColor.WHITE, 6);

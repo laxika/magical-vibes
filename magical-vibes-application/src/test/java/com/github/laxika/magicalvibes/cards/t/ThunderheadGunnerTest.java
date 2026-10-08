@@ -119,7 +119,7 @@ class ThunderheadGunnerTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent gunner = harness.addToBattlefieldAndReturn(player1, new ThunderheadGunner());
         gunner.setSummoningSick(true);
-        gunner.setTapped(true);
+        gunner.tap();
         harness.setHand(player1, List.of(new Forest()));
         harness.setLibrary(player1, List.of(new ThunderheadGunner()));
         prepareMainPhase(player1);

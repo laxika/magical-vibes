@@ -106,8 +106,8 @@ class WaterbendingScrollTest extends BaseCardTest {
     @DisplayName("Tapped Islands still reduce the activation cost")
     void countsTappedIslands() {
         harness.addToBattlefield(player1, new WaterbendingScroll());
-        harness.addToBattlefieldAndReturn(player1, new Island()).setTapped(true);
-        harness.addToBattlefieldAndReturn(player1, new Island()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Island()).tap();
+        harness.addToBattlefieldAndReturn(player1, new Island()).tap();
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 

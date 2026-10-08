@@ -104,7 +104,7 @@ class TCRIBuildingTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
         Permanent building = gd.playerBattlefields.get(player1.getId()).getFirst();
-        building.setTapped(false);
+        building.untap();
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handleListChoice(player1, "BLUE");

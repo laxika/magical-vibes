@@ -71,7 +71,7 @@ class YathanTombguardTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setLibrary(player2, List.of(new Forest()));
         Permanent defender = addCreatureReady(player1, new YathanTombguard());
-        defender.setTapped(true);
+        defender.tap();
         Permanent attacker = addCreatureReady(player2, new YathanTombguard());
         attacker.setCounterCount(CounterType.CHARGE, 1);
         attacker.setAttacking(true);

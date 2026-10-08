@@ -84,7 +84,7 @@ class WinterflameTest extends BaseCardTest {
     @DisplayName("Both modes can target an already tapped creature")
     void alreadyTappedCreatureStillTakesDamage() {
         Permanent target = addCreatureReady(player2, new AirElemental());
-        target.setTapped(true);
+        target.tap();
         castModes(new int[]{0, 1}, List.of(target.getId(), target.getId()));
         harness.passBothPriorities();
 

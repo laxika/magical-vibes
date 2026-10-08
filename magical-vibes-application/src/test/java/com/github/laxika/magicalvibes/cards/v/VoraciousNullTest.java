@@ -120,7 +120,7 @@ class VoraciousNullTest extends BaseCardTest {
     void tappedSummoningSickCreatureCanActivateRepeatedly() {
         Permanent nullCreature = harness.addToBattlefieldAndReturn(player1, new VoraciousNull());
         nullCreature.setSummoningSick(true);
-        nullCreature.setTapped(true);
+        nullCreature.tap();
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         for (int activation = 0; activation < 2; activation++) {

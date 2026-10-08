@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -67,7 +68,7 @@ class TwinmawStormbroodTest extends BaseCardTest {
     @Test
     void omenDealsExactlyFiveDamageToOwnCreatureWithoutGainingLife() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        target.setPlusOnePlusOneCounters(4);
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
         TwinmawStormbrood card = new TwinmawStormbrood();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.RED, 1);

@@ -74,7 +74,7 @@ class WavecrashTritonTest extends BaseCardTest {
     void lockAppliesToAlreadyTappedCreatureForOnlyItsNextUntap() {
         UUID tritonId = harness.addToBattlefieldAndReturn(player1, new WavecrashTriton()).getId();
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new BronzeSable());
-        bears.setTapped(true);
+        bears.tap();
         harness.setHand(player1, List.of(new LightningStrike()));
         harness.addMana(player1, ManaColor.RED, 2);
 

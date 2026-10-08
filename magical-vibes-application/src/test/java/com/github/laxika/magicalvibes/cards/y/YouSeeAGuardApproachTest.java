@@ -73,7 +73,7 @@ class YouSeeAGuardApproachTest extends BaseCardTest {
     @Test
     void distractCanTargetAnAlreadyTappedCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiantHerdgorger());
-        target.setTapped(true);
+        target.tap();
 
         cast(0, target);
 

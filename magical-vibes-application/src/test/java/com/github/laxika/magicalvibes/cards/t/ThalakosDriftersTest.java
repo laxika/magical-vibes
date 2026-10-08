@@ -116,7 +116,7 @@ class ThalakosDriftersTest extends BaseCardTest {
     @DisplayName("A tapped Drifters with summoning sickness can activate its ability")
     void canActivateWhileTappedWithSummoningSickness() {
         Permanent drifters = harness.addToBattlefieldAndReturn(player1, new ThalakosDrifters());
-        drifters.setTapped(true);
+        drifters.tap();
         drifters.setSummoningSick(true);
         harness.setHand(player1, List.of(new ThalakosDrifters()));
 

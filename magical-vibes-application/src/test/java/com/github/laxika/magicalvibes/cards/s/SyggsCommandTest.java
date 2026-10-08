@@ -123,7 +123,7 @@ class SyggsCommandTest extends BaseCardTest {
     @Test
     void anAlreadyTappedCreatureStillReceivesAStunCounter() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        creature.setTapped(true);
+        creature.tap();
         harness.setLibrary(player1, List.of(new CoralMerfolk()));
         harness.setHand(player1, List.of(new SyggsCommand()));
         addMana();

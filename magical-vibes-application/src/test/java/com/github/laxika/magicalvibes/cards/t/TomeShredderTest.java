@@ -92,7 +92,7 @@ class TomeShredderTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent shredder = addCreatureReady(player1, new TomeShredder());
-        shredder.setTapped(true);
+        shredder.tap();
         Card instant = new Shock();
         harness.setGraveyard(player1, List.of(instant));
 

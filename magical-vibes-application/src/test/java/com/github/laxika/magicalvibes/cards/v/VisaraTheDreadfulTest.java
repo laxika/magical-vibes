@@ -74,7 +74,7 @@ class VisaraTheDreadfulTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent visara = addCreatureReady(player1, new VisaraTheDreadful());
         Permanent target = addCreatureReady(player2, new ElvishWarrior());
-        visara.setTapped(true);
+        visara.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)

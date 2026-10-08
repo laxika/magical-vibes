@@ -74,7 +74,7 @@ class SplinterRadicalRatTest extends BaseCardTest {
     @DisplayName("Can target an opponent's Ninja while Splinter is tapped")
     void targetsOpponentsNinjaWhileTapped() {
         Permanent splinter = addCreatureReady(player1, new SplinterRadicalRat());
-        splinter.setTapped(true);
+        splinter.tap();
         Permanent ninja = addCreatureReady(player2, new FootNinjas());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);

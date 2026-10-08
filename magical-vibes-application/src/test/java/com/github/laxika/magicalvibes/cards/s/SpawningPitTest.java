@@ -121,7 +121,7 @@ class SpawningPitTest extends BaseCardTest {
     @DisplayName("A tapped Pit removes exactly two counters as a cost before creating a Spawn")
     void tappedPitPaysCountersBeforeResolution() {
         Permanent pit = harness.addToBattlefieldAndReturn(player1, new SpawningPit());
-        pit.setTapped(true);
+        pit.tap();
         pit.setCounterCount(CounterType.CHARGE, 3);
         harness.addMana(player1, ManaColor.RED, 1);
 

@@ -77,7 +77,7 @@ class StimulusPackageTest extends BaseCardTest {
     void canSacrificeTappedTreasure() {
         castStimulusPackage();
         Permanent treasure = findPermanents(player1, "Treasure").getFirst();
-        treasure.setTapped(true);
+        treasure.tap();
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, treasure.getId());

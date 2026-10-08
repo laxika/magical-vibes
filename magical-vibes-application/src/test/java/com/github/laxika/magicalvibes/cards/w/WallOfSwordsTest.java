@@ -73,7 +73,7 @@ class WallOfSwordsTest extends BaseCardTest {
     void tappedWallCannotBlockFlyingCreature() {
         addCreatureReady(player1, new AirElemental());
         Permanent wall = addCreatureReady(player2, new WallOfSwords());
-        wall.setTapped(true);
+        wall.tap();
 
         declareAttackersAndPrepareBlockers(List.of(0));
 

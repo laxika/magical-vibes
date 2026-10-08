@@ -83,7 +83,7 @@ class ToskiBearerOfSecretsTest extends BaseCardTest {
     @DisplayName("Tapped Toski is not required to attack")
     void tappedToskiNeedNotAttack() {
         Permanent toski = addCreatureReady(player1, new ToskiBearerOfSecrets());
-        toski.setTapped(true);
+        toski.tap();
 
         assertThatCode(() -> declareAttackers(player1, List.of())).doesNotThrowAnyException();
         assertThat(toski.isAttacking()).isFalse();
@@ -135,7 +135,7 @@ class ToskiBearerOfSecretsTest extends BaseCardTest {
     @DisplayName("An ally dealing damage draws even when Toski does not attack")
     void drawsForAllyWhileToskiIsTapped() {
         Permanent toski = addCreatureReady(player1, new ToskiBearerOfSecrets());
-        toski.setTapped(true);
+        toski.tap();
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setAttacking(true);
         int handBefore = gd.playerHands.get(player1.getId()).size();

@@ -126,7 +126,7 @@ class ToymakerTest extends BaseCardTest {
     void animatesTappedArtifactWithoutUntapping() {
         prepareToymaker();
         Permanent matrix = harness.addToBattlefieldAndReturn(player1, new PowerMatrix());
-        matrix.setTapped(true);
+        matrix.tap();
 
         activateToymaker(matrix);
 

@@ -128,7 +128,7 @@ class SwarmGuildmageTest extends BaseCardTest {
                     .isInstanceOf(IllegalStateException.class);
         }
         source.setSummoningSick(false);
-        source.setTapped(true);
+        source.tap();
         for (int abilityIndex = 0; abilityIndex < 2; abilityIndex++) {
             int index = abilityIndex;
             assertThatThrownBy(() -> harness.activateAbility(player1, 0, index, null, null))

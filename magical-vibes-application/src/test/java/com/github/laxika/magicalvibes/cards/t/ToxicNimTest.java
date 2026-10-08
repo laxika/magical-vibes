@@ -183,7 +183,7 @@ class ToxicNimTest extends BaseCardTest {
     void canRegenerateWhileTappedAndSummoningSick() {
         Permanent nim = harness.addToBattlefieldAndReturn(player1, new ToxicNim());
         nim.setSummoningSick(true);
-        nim.setTapped(true);
+        nim.tap();
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, null);

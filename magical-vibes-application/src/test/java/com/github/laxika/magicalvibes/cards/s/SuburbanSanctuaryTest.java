@@ -149,7 +149,7 @@ class SuburbanSanctuaryTest extends BaseCardTest {
     @DisplayName("A tapped sanctuary cannot activate either tap ability")
     void tappedLandCannotActivateAbilities() {
         Permanent land = addLandReady();
-        land.setTapped(true);
+        land.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

@@ -157,7 +157,7 @@ class VoharVodalianDesecratorTest extends BaseCardTest {
     @DisplayName("Vohar can be sacrificed while tapped and summoning sick")
     void sacrificeDoesNotRequireUntappedOrReadyCreature() {
         Permanent vohar = harness.addToBattlefieldAndReturn(player1, new VoharVodalianDesecrator());
-        vohar.setTapped(true);
+        vohar.tap();
         vohar.setSummoningSick(true);
         CounselOfTheSoratami counsel = new CounselOfTheSoratami();
         harness.setGraveyard(player1, List.of(counsel));

@@ -94,7 +94,7 @@ class VividGroveTest extends BaseCardTest {
 
         for (ManaColor color : List.of(ManaColor.WHITE, ManaColor.BLUE, ManaColor.BLACK,
                 ManaColor.RED, ManaColor.GREEN)) {
-            grove.setTapped(false);
+            grove.untap();
             grove.setCounterCount(CounterType.CHARGE, 1);
             harness.activateAbility(player1, 0, 1, null, null);
             harness.handleListChoice(player1, color.name());
@@ -115,7 +115,7 @@ class VividGroveTest extends BaseCardTest {
         grove.setCounterCount(CounterType.CHARGE, 1);
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, "RED");
-        grove.setTapped(false);
+        grove.untap();
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -130,7 +130,7 @@ class VividGroveTest extends BaseCardTest {
     void cannotActivateEitherAbilityWhileTapped() {
         Permanent grove = addReadyGrove(player1);
         grove.setCounterCount(CounterType.CHARGE, 2);
-        grove.setTapped(true);
+        grove.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

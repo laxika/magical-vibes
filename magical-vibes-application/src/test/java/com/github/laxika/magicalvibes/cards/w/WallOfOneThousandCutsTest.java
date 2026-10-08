@@ -103,7 +103,7 @@ class WallOfOneThousandCutsTest extends BaseCardTest {
     @Test
     void tappedWallCanActivateButCannotAttack() {
         Permanent wall = addWallReady();
-        wall.setTapped(true);
+        wall.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);

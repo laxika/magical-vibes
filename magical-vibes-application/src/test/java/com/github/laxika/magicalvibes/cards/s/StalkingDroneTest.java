@@ -81,7 +81,7 @@ class StalkingDroneTest extends BaseCardTest {
     void tappedSummoningSickDroneCanActivate() {
         Permanent drone = harness.addToBattlefieldAndReturn(player1, new StalkingDrone());
         drone.setSummoningSick(true);
-        drone.setTapped(true);
+        drone.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);

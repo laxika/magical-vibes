@@ -77,7 +77,7 @@ class TimberpackWolfTest extends BaseCardTest {
     @DisplayName("Each Timberpack Wolf gets the bonus immediately, even while tapped or summoning sick")
     void eachWolfGetsBonusImmediately() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new TimberpackWolf());
-        first.setTapped(true);
+        first.tap();
         Permanent second = harness.addToBattlefieldAndReturn(player1, new TimberpackWolf());
 
         assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);

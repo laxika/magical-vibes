@@ -69,7 +69,7 @@ class SunmanePegasusTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent pegasus = addCreatureReady(player1, new SunmanePegasus());
         pegasus.setSummoningSick(true);
-        pegasus.setTapped(true);
+        pegasus.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 

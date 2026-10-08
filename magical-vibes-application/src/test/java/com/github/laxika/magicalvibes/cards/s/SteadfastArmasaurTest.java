@@ -249,7 +249,7 @@ class SteadfastArmasaurTest extends BaseCardTest {
         Permanent armasaur = addReadyArmasaur(player1);
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
         setupArmasaurAttackingBlockedBy(armasaur, blocker);
-        armasaur.setTapped(true);
+        armasaur.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, blocker.getId()))

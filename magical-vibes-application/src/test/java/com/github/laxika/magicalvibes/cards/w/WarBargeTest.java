@@ -152,7 +152,7 @@ class WarBargeTest extends BaseCardTest {
     @Test
     void canTargetOwnCreatureWhileBargeIsTapped() {
         Permanent barge = addBarge();
-        barge.setTapped(true);
+        barge.tap();
         Permanent drowned = addDrowned(player1);
 
         enterMain();

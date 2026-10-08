@@ -154,7 +154,7 @@ class VesperlarkTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Llanowar Elves");
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(other).doesNotContain(target);
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(target);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
     @Test

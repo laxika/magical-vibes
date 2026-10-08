@@ -89,7 +89,7 @@ class StalkerHagTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Swamp still prevents blocking")
     void cannotBeBlockedThroughTappedSwamp() {
-        harness.addToBattlefieldAndReturn(player2, new Swamp()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player2, new Swamp()).tap();
         attemptBlock();
 
         assertThatThrownBy(blockAttempt::run)
@@ -100,7 +100,7 @@ class StalkerHagTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Forest still prevents blocking")
     void cannotBeBlockedThroughTappedForest() {
-        harness.addToBattlefieldAndReturn(player2, new Forest()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player2, new Forest()).tap();
         attemptBlock();
 
         assertThatThrownBy(blockAttempt::run)

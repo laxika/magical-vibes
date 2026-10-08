@@ -129,7 +129,7 @@ class WallOfFrostTest extends BaseCardTest {
     void skipsOnlyTheNextControllersUntapStep() {
         addReadyWall(player2);
         Permanent attacker = addReadyAttacker(player1);
-        attacker.setTapped(true);
+        attacker.tap();
         declareBlockers(List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -151,7 +151,7 @@ class WallOfFrostTest extends BaseCardTest {
 
         assertThat(attacker.isTapped()).isFalse();
         harness.performUntapStep(player1);
-        attacker.setTapped(true);
+        attacker.tap();
         harness.performUntapStep(player1);
         assertThat(attacker.isTapped()).isFalse();
     }
@@ -160,7 +160,7 @@ class WallOfFrostTest extends BaseCardTest {
     void triggerResolvesAfterWallLeavesBattlefield() {
         addReadyWall(player2);
         Permanent attacker = addReadyAttacker(player1);
-        attacker.setTapped(true);
+        attacker.tap();
         declareBlockers(List.of(new BlockerAssignment(0, 0)));
         gd.playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
@@ -175,7 +175,7 @@ class WallOfFrostTest extends BaseCardTest {
     void restrictionFollowsCreatureWhenControllerChanges() {
         addReadyWall(player2);
         Permanent attacker = addReadyAttacker(player1);
-        attacker.setTapped(true);
+        attacker.tap();
         declareBlockers(List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
         gd.playerBattlefields.get(player1.getId()).remove(attacker);
@@ -194,7 +194,7 @@ class WallOfFrostTest extends BaseCardTest {
         addReadyWall(player2);
         addReadyWall(player2);
         Permanent attacker = addReadyAttacker(player1);
-        attacker.setTapped(true);
+        attacker.tap();
         declareBlockers(List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();

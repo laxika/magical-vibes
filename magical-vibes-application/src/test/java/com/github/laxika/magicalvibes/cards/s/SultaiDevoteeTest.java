@@ -43,7 +43,7 @@ class SultaiDevoteeTest extends BaseCardTest {
     @DisplayName("A tapped summoning-sick Devotee can produce black mana without using the stack")
     void tappedSummoningSickCreatureCanProduceMana() {
         var devotee = harness.addToBattlefieldAndReturn(player1, new SultaiDevotee());
-        devotee.setTapped(true);
+        devotee.tap();
         devotee.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

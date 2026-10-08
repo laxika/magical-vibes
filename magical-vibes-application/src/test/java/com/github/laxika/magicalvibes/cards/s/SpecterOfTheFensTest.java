@@ -51,7 +51,7 @@ class SpecterOfTheFensTest extends BaseCardTest {
     @DisplayName("Ability can be activated while tapped and summoning sick on an opponent's turn")
     void activatesWhileTappedAndSummoningSickOnOpponentsTurn() {
         Permanent specter = harness.addToBattlefieldAndReturn(player1, new SpecterOfTheFens());
-        specter.setTapped(true);
+        specter.tap();
         specter.setSummoningSick(true);
         addMana();
         harness.forceActivePlayer(player2);

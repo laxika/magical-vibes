@@ -97,7 +97,7 @@ class UrsapineTest extends BaseCardTest {
     void canBoostItselfWhileTappedAndSummoningSick() {
         Permanent ursapine = harness.addToBattlefieldAndReturn(player1, new Ursapine());
         ursapine.setSummoningSick(true);
-        ursapine.setTapped(true);
+        ursapine.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, ursapine.getId());

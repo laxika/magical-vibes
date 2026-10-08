@@ -55,7 +55,7 @@ class TheForetoldSoldierTest extends BaseCardTest {
         Permanent soldier = addCreatureReady(player1, new TheForetoldSoldier());
         soldier.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new TheForetoldSoldier());
-        blocker.setTapped(true);
+        blocker.tap();
         prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of());

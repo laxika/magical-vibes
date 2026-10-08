@@ -43,7 +43,7 @@ class ZygonInfiltratorTest extends BaseCardTest {
     void copiesAlreadyTappedTargetAndRetainsOwnCounters() {
         Permanent infiltrator = harness.addToBattlefieldAndReturn(player1, new ZygonInfiltrator());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new AdiposeOffspring());
-        target.setTapped(true);
+        target.tap();
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         infiltrator.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);

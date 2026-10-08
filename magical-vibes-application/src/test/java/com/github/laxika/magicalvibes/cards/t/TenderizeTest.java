@@ -77,7 +77,7 @@ class TenderizeTest extends BaseCardTest {
     void usesCurrentPowerOfTappedSource() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        source.setTapped(true);
+        source.tap();
         harness.setHand(player1, List.of(new Tenderize()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 

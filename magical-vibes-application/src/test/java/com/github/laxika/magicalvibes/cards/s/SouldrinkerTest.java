@@ -90,7 +90,7 @@ class SouldrinkerTest extends BaseCardTest {
     void tappedSourceReceivesCounterWithoutAffectingOtherCopies() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new Souldrinker());
         Permanent other = harness.addToBattlefieldAndReturn(player1, new Souldrinker());
-        source.setTapped(true);
+        source.tap();
         harness.setLife(player1, 20);
 
         harness.activateAbility(player1, 0, null, null);

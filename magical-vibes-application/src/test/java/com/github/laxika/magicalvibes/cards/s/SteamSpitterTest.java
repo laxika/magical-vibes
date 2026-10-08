@@ -106,7 +106,7 @@ class SteamSpitterTest extends BaseCardTest {
     void tappedSourceBoostsOnlyItself() {
         Permanent otherSpider = addCreatureReady(player1, new SteamSpitter());
         Permanent source = addCreatureReady(player1, new SteamSpitter());
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 1, null, null);

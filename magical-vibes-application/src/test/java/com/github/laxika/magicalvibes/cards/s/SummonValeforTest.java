@@ -85,7 +85,7 @@ class SummonValeforTest extends BaseCardTest {
     @ValueSource(ints = {2, 3})
     void laterChaptersStunAlreadyTappedCreatureAndSacrificeAfterFinalChapter(int startingLore) {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
         target.setCounterCount(CounterType.STUN, 1);
         Permanent saga = addSagaWithLore(startingLore);
 

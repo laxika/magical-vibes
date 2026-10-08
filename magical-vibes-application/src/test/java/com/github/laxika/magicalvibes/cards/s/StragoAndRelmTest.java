@@ -162,7 +162,7 @@ class StragoAndRelmTest extends BaseCardTest {
         activateWithLibrary(List.of(new IncubationDruid()));
         harness.passBothPriorities();
         harness.handleCardChosen(player1, -1);
-        findPermanent(player1, "Strago and Relm").setTapped(false);
+        findPermanent(player1, "Strago and Relm").untap();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -175,7 +175,7 @@ class StragoAndRelmTest extends BaseCardTest {
         activateWithLibrary(List.of(new IncubationDruid()));
         harness.passBothPriorities();
         harness.handleCardChosen(player1, -1);
-        findPermanent(player1, "Strago and Relm").setTapped(false);
+        findPermanent(player1, "Strago and Relm").untap();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.forceStep(TurnStep.UPKEEP);

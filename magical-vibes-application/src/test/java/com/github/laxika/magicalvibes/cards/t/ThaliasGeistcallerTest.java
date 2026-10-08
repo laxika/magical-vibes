@@ -157,7 +157,7 @@ class ThaliasGeistcallerTest extends BaseCardTest {
         Permanent thalia = harness.addToBattlefieldAndReturn(player1, new ThaliasGeistcaller());
         thalia.setSummoningSick(true);
         Permanent spirit = harness.addToBattlefieldAndReturn(player1, new LanternKami());
-        spirit.setTapped(true);
+        spirit.tap();
 
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();

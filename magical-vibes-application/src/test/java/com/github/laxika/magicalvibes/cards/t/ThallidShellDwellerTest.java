@@ -74,7 +74,7 @@ class ThallidShellDwellerTest extends BaseCardTest {
     void tappedSummoningSickCreatureCanActivate() {
         Permanent shellDweller = harness.addToBattlefieldAndReturn(player1, new ThallidShellDweller());
         shellDweller.setSummoningSick(true);
-        shellDweller.setTapped(true);
+        shellDweller.tap();
         shellDweller.setCounterCount(CounterType.valueOf("SPORE"), 4);
 
         harness.activateAbility(player1, 0, null, null);

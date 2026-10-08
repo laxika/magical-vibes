@@ -98,7 +98,7 @@ class TromokratisTest extends BaseCardTest {
         addAttackingTromokratis();
         Permanent untappedBlocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent tappedCreature = addCreatureReady(player2, new GrizzlyBears());
-        tappedCreature.setTapped(true);
+        tappedCreature.tap();
 
         prepareDeclareBlockers();
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,

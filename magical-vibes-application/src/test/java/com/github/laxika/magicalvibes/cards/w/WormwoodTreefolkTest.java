@@ -28,7 +28,7 @@ class WormwoodTreefolkTest extends BaseCardTest {
     void abilityDoesNotRequireTappingOrHaste(int abilityIndex) {
         Permanent treefolk = harness.addToBattlefieldAndReturn(player1, new WormwoodTreefolk());
         treefolk.setSummoningSick(true);
-        treefolk.setTapped(true);
+        treefolk.tap();
         harness.addMana(player1, abilityIndex == 0 ? ManaColor.GREEN : ManaColor.BLACK, 2);
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());

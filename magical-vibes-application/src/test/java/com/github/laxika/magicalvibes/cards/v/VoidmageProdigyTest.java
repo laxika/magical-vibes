@@ -118,7 +118,7 @@ class VoidmageProdigyTest extends BaseCardTest {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new VoidmageProdigy());
         Permanent wizard = harness.addToBattlefieldAndReturn(player1, new AphettoGrifter());
         Permanent opposingWizard = harness.addToBattlefieldAndReturn(player2, new AphettoGrifter());
-        wizard.setTapped(true);
+        wizard.tap();
         Shock shock = new Shock();
         harness.setHand(player2, List.of(shock));
         harness.addMana(player2, ManaColor.RED, 1);

@@ -140,7 +140,7 @@ class SupplyDropTest extends BaseCardTest {
     @DisplayName("A tapped Supply Drop cannot pay its activation cost")
     void tappedArtifactCannotActivate() {
         Permanent supplyDrop = harness.addToBattlefieldAndReturn(player1, new SupplyDrop());
-        supplyDrop.setTapped(true);
+        supplyDrop.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

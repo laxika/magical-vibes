@@ -124,7 +124,7 @@ class SteelshaperApprenticeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
-        addCreatureReady(player1, new SteelshaperApprentice()).setTapped(true);
+        addCreatureReady(player1, new SteelshaperApprentice()).tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

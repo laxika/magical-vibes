@@ -62,8 +62,8 @@ class SweettoothWitchTest extends BaseCardTest {
         harness.castFromHand(player1, new SweettoothWitch(), "{2}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        findPermanent(player1, "Sweettooth Witch").setTapped(true);
-        findPermanent(player1, "Food").setTapped(true);
+        findPermanent(player1, "Sweettooth Witch").tap();
+        findPermanent(player1, "Food").tap();
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, player1.getId());

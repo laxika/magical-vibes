@@ -59,7 +59,7 @@ class ZodiacHorseTest extends BaseCardTest {
     @DisplayName("Zodiac Horse cannot be blocked when the defending player's Island is tapped")
     void cannotBeBlockedWhenDefendersIslandIsTapped() {
         Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
-        island.setTapped(true);
+        island.tap();
         Permanent blockerPerm = addCreatureReady(player2, new ShuFootSoldiers());
         Permanent atkPerm = addCreatureReady(player1, new ZodiacHorse());
         atkPerm.setAttacking(true);

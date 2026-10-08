@@ -126,7 +126,7 @@ class TapestryOfTheAgesTest extends BaseCardTest {
         Permanent tapestry = addReadyTapestry(player1);
         harness.castFromHand(player1, new TapestryOfTheAges(), "{4}");
         harness.passBothPriorities();
-        tapestry.setTapped(true);
+        tapestry.tap();
         addActivationMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

@@ -79,7 +79,7 @@ class TwilightPantherTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent panther = addCreatureReady(player1, new TwilightPanther());
         panther.setSummoningSick(true);
-        panther.setTapped(true);
+        panther.tap();
 
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.activateAbility(player1, 0, null, null);

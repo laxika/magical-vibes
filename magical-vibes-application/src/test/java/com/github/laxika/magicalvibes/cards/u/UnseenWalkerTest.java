@@ -143,7 +143,7 @@ class UnseenWalkerTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Walker can grant forestwalk repeatedly")
     void canActivateRepeatedlyWhileTappedAndSummoningSick() {
         Permanent walker = harness.addToBattlefieldAndReturn(player1, new UnseenWalker());
-        walker.setTapped(true);
+        walker.tap();
         walker.setSummoningSick(true);
         Permanent first = harness.addToBattlefieldAndReturn(player1, new ViashinoWarrior());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new ViashinoWarrior());

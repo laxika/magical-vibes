@@ -99,7 +99,7 @@ class TonyStarkTest extends BaseCardTest {
     @Test
     void transformsWithoutUntappingOrReplacingThePermanent() {
         Permanent tony = addFrontReady();
-        tony.setTapped(true);
+        tony.tap();
         tony.setMarkedDamage(1);
         prepareMainPhase();
         harness.addMana(player1, ManaColor.COLORLESS, 4);

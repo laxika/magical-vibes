@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -123,7 +124,7 @@ class TextbookTabulatorTest extends BaseCardTest {
     @Test
     void incrementDoesNotTriggerWhenManaSpentEqualsPower() {
         Permanent tabulator = harness.addToBattlefieldAndReturn(player1, new TextbookTabulator());
-        tabulator.setPlusOnePlusOneCounters(2);
+        tabulator.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new GrizzlyBears()));
@@ -146,7 +147,7 @@ class TextbookTabulatorTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         assertThat(gd.stack).hasSize(2);
 
-        tabulator.setPlusOnePlusOneCounters(2);
+        tabulator.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.passBothPriorities();
 
         assertThat(tabulator.getPlusOnePlusOneCounters()).isEqualTo(2);

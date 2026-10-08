@@ -38,7 +38,7 @@ class TheHowlingCommandosTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent commandos = harness.addToBattlefieldAndReturn(player1, new TheHowlingCommandos());
         commandos.setSummoningSick(true);
-        commandos.setTapped(true);
+        commandos.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.activateAbility(player1, 0, null, null);

@@ -61,7 +61,7 @@ class WatchfulAutomatonTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedAndSummoningSick() {
         Permanent automaton = harness.addToBattlefieldAndReturn(player1, new WatchfulAutomaton());
-        automaton.setTapped(true);
+        automaton.tap();
         automaton.setSummoningSick(true);
         Card top = new WatchfulAutomaton();
         harness.setLibrary(player1, List.of(top));

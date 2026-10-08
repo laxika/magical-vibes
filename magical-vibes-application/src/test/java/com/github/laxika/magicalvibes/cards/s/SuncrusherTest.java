@@ -161,7 +161,7 @@ class SuncrusherTest extends BaseCardTest {
     void returnAbilityDoesNotRequireTappingOrHaste() {
         Permanent suncrusher = addReadySuncrusher(player1, 1);
         suncrusher.setSummoningSick(true);
-        suncrusher.setTapped(true);
+        suncrusher.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         prepareTurn();
 

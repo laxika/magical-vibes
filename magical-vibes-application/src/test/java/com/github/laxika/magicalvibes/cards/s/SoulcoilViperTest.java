@@ -143,7 +143,7 @@ class SoulcoilViperTest extends BaseCardTest {
     @Test
     void rejectsTappedSource() {
         Permanent viper = addViperReady(player1);
-        viper.setTapped(true);
+        viper.tap();
         Card target = new SoulcoilViper();
         harness.setGraveyard(player1, List.of(target));
         harness.addMana(player1, ManaColor.BLACK, 1);

@@ -86,7 +86,7 @@ class StormFrontTest extends BaseCardTest {
     void canTargetTappedFlyer() {
         harness.addToBattlefieldAndReturn(player1, new StormFront());
         Permanent flyer = addCreatureReady(player2, new FightingDrake());
-        flyer.setTapped(true);
+        flyer.tap();
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, flyer.getId());

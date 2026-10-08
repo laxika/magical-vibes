@@ -1,4 +1,4 @@
-﻿package com.github.laxika.magicalvibes.cards.s;
+package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CounterType;

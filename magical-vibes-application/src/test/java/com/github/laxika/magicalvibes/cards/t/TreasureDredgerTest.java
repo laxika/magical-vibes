@@ -87,7 +87,7 @@ class TreasureDredgerTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent dredger = harness.addToBattlefieldAndReturn(player1, new TreasureDredger());
         dredger.setSummoningSick(false);
-        dredger.setTapped(true);
+        dredger.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         int lifeBefore = gd.getLife(player1.getId());
 

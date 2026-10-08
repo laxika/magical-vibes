@@ -77,7 +77,7 @@ class TurtleDuckTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickOnOpponentsTurn() {
         Permanent turtleDuck = harness.addToBattlefieldAndReturn(player1, new TurtleDuck());
         turtleDuck.setSummoningSick(true);
-        turtleDuck.setTapped(true);
+        turtleDuck.tap();
         Permanent otherTurtleDuck = addCreatureReady(player2, new TurtleDuck());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

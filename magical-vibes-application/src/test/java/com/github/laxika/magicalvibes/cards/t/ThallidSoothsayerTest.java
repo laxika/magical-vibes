@@ -164,7 +164,7 @@ class ThallidSoothsayerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent soothsayer = harness.addToBattlefieldAndReturn(player1, new ThallidSoothsayer());
         soothsayer.setSummoningSick(true);
-        soothsayer.setTapped(true);
+        soothsayer.tap();
         harness.addToBattlefield(player1, new SteelLeafChampion());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));

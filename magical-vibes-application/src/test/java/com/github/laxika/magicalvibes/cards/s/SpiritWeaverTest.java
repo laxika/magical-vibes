@@ -226,7 +226,7 @@ class SpiritWeaverTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent weaver = harness.addToBattlefieldAndReturn(player1, new SpiritWeaver());
         weaver.setSummoningSick(true);
-        weaver.setTapped(true);
+        weaver.tap();
         Permanent target = addCreatureReady(player2, new FugitiveWizard());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

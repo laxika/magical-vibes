@@ -160,7 +160,7 @@ class UnderrealmLichTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedAndIndestructibleExpiresAtEndOfTurn() {
         Permanent lich = harness.addToBattlefieldAndReturn(player1, new UnderrealmLich());
-        lich.setTapped(true);
+        lich.tap();
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();

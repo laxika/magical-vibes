@@ -142,7 +142,7 @@ class VenomspoutBrackusTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent brackus = addCreatureReady(player1, new VenomspoutBrackus());
-        brackus.setTapped(true);
+        brackus.tap();
         Permanent attacker = addCreatureReady(player2, new AscendingAven());
         attacker.setAttacking(true);
         addAbilityMana();

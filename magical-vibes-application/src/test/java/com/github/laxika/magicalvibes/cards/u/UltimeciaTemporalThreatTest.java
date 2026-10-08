@@ -97,7 +97,7 @@ class UltimeciaTemporalThreatTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
         Permanent ownUltimecia = addCreatureReady(player1, new UltimeciaTemporalThreat());
-        ownUltimecia.setTapped(true);
+        ownUltimecia.tap();
         addCreatureReady(player2, new UltimeciaTemporalThreat());
 
         declareAttackers(player2, List.of(0));

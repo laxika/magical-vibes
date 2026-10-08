@@ -66,7 +66,7 @@ class WarFalconTest extends BaseCardTest {
     void canAttackWithTappedSummoningSickSoldier() {
         harness.setLife(player2, 20);
         addCreatureReady(player1, new WarFalcon());
-        harness.addToBattlefieldAndReturn(player1, new EliteVanguard()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new EliteVanguard()).tap();
 
         declareAttackers(player1, List.of(0));
 

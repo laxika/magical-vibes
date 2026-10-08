@@ -182,7 +182,7 @@ class Mh1SunbakedCanyonTest extends BaseCardTest {
     @DisplayName("A tapped Canyon cannot activate either ability")
     void cannotActivateWhileTapped() {
         Permanent canyon = harness.addToBattlefieldAndReturn(player1, new SunbakedCanyon());
-        canyon.setTapped(true);
+        canyon.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 

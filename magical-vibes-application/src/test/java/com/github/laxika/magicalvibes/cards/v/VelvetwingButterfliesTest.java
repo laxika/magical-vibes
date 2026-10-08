@@ -123,7 +123,7 @@ class VelvetwingButterfliesTest extends BaseCardTest {
     @Test
     void adventureResolvesWhenTargetIsAlreadyTapped() {
         Permanent target = addCreatureReady(player2, new VelvetwingButterflies());
-        target.setTapped(true);
+        target.tap();
         VelvetwingButterflies card = new VelvetwingButterflies();
         prepareAdventure(card);
 

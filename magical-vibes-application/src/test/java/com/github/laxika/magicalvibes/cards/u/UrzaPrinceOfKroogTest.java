@@ -76,7 +76,7 @@ class UrzaPrinceOfKroogTest extends BaseCardTest {
         harness.addToBattlefield(player1, new UrzaPrinceOfKroog());
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
         artifact.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        artifact.setTapped(true);
+        artifact.tap();
         prepareMainPhase();
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 

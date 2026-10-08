@@ -81,7 +81,7 @@ class StrongholdOverseerTest extends BaseCardTest {
     void repeatedActivationsWhileTappedAndSummoningSick() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new StrongholdOverseer());
         source.setSummoningSick(true);
-        source.setTapped(true);
+        source.tap();
         Permanent opponentShadow = harness.addToBattlefieldAndReturn(player2, new StrongholdOverseer());
         Permanent nonShadow = harness.addToBattlefieldAndReturn(player2, new CorpulentCorpse());
         harness.addMana(player1, ManaColor.BLACK, 4);

@@ -135,7 +135,7 @@ class XiahouDunTheOneEyedTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent xiahou = harness.addToBattlefieldAndReturn(player1, new XiahouDunTheOneEyed());
         xiahou.setSummoningSick(true);
-        xiahou.setTapped(true);
+        xiahou.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         Card black = new Coercion();

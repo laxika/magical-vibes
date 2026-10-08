@@ -35,7 +35,7 @@ class TitaniumGolemTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent golem = addCreatureReady(player1, new TitaniumGolem());
         golem.setSummoningSick(true);
-        golem.setTapped(true);
+        golem.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);

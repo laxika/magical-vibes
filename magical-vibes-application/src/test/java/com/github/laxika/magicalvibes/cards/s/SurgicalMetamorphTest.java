@@ -83,7 +83,7 @@ class SurgicalMetamorphTest extends BaseCardTest {
     @Test
     void copyingOwnTappedIslandEntersUntappedAndCanImmediatelyProduceMana() {
         Permanent original = harness.addToBattlefieldAndReturn(player1, new Island());
-        original.setTapped(true);
+        original.tap();
         harness.setHand(player1, List.of(new SurgicalMetamorph()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

@@ -115,7 +115,7 @@ class StarportSecurityTest extends BaseCardTest {
     void alreadyTappedCreatureIsLegalTarget() {
         Permanent security = addSecurity();
         Permanent target = addCreatureReady(player2, new StarportSecurity());
-        target.setTapped(true);
+        target.tap();
         addMana(3);
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
@@ -140,7 +140,7 @@ class StarportSecurityTest extends BaseCardTest {
     @Test
     void tappedSourceCannotActivateAgain() {
         Permanent security = addSecurity();
-        security.setTapped(true);
+        security.tap();
         Permanent target = addCreatureReady(player2, new StarportSecurity());
         addMana(3);
 

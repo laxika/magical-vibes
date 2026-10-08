@@ -135,7 +135,7 @@ class StreetSavvyTest extends BaseCardTest {
         Permanent attacker = readyAttacker(player1);
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         attachStreetSavvy(blocker);
-        blocker.setTapped(true);
+        blocker.tap();
 
         prepareDeclareBlockers();
 

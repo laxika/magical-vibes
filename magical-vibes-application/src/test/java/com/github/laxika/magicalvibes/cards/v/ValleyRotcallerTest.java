@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.cards.p.PersistentMarshstalker;
 import com.github.laxika.magicalvibes.cards.b.BakersbaneDuo;
 import com.github.laxika.magicalvibes.cards.i.IntoTheFloodMaw;
 import com.github.laxika.magicalvibes.cards.t.ThreeTreeMascot;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;

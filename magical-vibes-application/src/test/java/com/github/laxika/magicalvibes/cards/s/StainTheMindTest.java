@@ -212,7 +212,7 @@ class StainTheMindTest extends BaseCardTest {
     @DisplayName("Already tapped creatures cannot convoke")
     void cannotConvokeWithAlreadyTappedCreature() {
         Permanent helper = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
-        helper.setTapped(true);
+        helper.tap();
         harness.setHand(player1, List.of(new StainTheMind()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 

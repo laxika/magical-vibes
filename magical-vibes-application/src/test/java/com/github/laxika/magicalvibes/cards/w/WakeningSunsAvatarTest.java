@@ -93,7 +93,7 @@ class WakeningSunsAvatarTest extends BaseCardTest {
         harness.setHand(player2, List.of(new PerilousVoyage()));
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.castInstant(player2, 0,
-                harness.getPermanent(player1, "Wakening Sun's Avatar").getId());
+                findPermanent(player1, "Wakening Sun's Avatar").getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Wakening Sun's Avatar");

@@ -84,7 +84,7 @@ class UnstableObeliskTest extends BaseCardTest {
     @DisplayName("A tapped Obelisk cannot produce mana")
     void tappedObeliskCannotProduceMana() {
         Permanent obelisk = harness.addToBattlefieldAndReturn(player1, new UnstableObelisk());
-        obelisk.setTapped(true);
+        obelisk.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -96,7 +96,7 @@ class UnstableObeliskTest extends BaseCardTest {
     @DisplayName("A tapped Obelisk cannot pay the destruction ability's tap cost")
     void tappedObeliskCannotDestroyPermanent() {
         Permanent obelisk = harness.addToBattlefieldAndReturn(player1, new UnstableObelisk());
-        obelisk.setTapped(true);
+        obelisk.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 

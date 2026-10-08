@@ -162,7 +162,7 @@ class SustenanceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Sustenance());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
-        forest.setTapped(true);
+        forest.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

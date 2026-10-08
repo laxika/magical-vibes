@@ -112,7 +112,7 @@ class SugarCoatTest extends BaseCardTest {
     @DisplayName("A tapped enchanted permanent cannot pay the Food tap cost")
     void tappedPermanentCannotActivateFoodAbility() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
-        target.setTapped(true);
+        target.tap();
         castSugarCoat(target);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 

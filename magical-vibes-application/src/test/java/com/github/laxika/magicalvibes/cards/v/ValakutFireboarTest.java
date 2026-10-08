@@ -77,7 +77,7 @@ class ValakutFireboarTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
-        fireboar.setTapped(false);
+        fireboar.untap();
         declareAttackers(List.of(0));
         resolveAllTriggers();
 

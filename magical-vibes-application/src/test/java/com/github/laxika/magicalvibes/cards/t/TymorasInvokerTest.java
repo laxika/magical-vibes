@@ -51,7 +51,7 @@ class TymorasInvokerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickOnOpponentsTurn() {
         Permanent invoker = harness.addToBattlefieldAndReturn(player1, new TymorasInvoker());
         invoker.setSummoningSick(true);
-        invoker.setTapped(true);
+        invoker.tap();
         harness.forceActivePlayer(player2);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new TymorasInvoker(), new TymorasInvoker()));

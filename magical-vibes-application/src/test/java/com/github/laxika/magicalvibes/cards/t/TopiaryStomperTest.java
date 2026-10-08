@@ -182,7 +182,7 @@ class TopiaryStomperTest extends BaseCardTest {
         addCreatureReady(player2, new ExpendableLackey());
         addForests(player1, 6);
         Permanent plaza = harness.addToBattlefieldAndReturn(player1, new BotanicalPlaza());
-        plaza.setTapped(true);
+        plaza.tap();
 
         declareAttackers(player1, List.of(0));
 

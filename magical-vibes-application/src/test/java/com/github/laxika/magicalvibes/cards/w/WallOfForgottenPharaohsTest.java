@@ -163,7 +163,7 @@ class WallOfForgottenPharaohsTest extends BaseCardTest {
     @Test
     void tappedWallCannotActivate() {
         Permanent wall = addCreatureReady(player1, new WallOfForgottenPharaohs());
-        wall.setTapped(true);
+        wall.tap();
         harness.setGraveyard(player1, List.of(new HashepOasis()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))

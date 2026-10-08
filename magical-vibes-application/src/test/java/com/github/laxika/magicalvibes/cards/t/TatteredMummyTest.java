@@ -21,7 +21,8 @@ class TatteredMummyTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Tattered Mummy puts it on the battlefield")
     void castingPutsOnBattlefield() {
-        harness.castFromHand(player1, new TatteredMummy());
+        TatteredMummy mummy = new TatteredMummy();
+        harness.castFromHand(player1, mummy, mummy.getManaCost());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();

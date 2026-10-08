@@ -143,7 +143,7 @@ class SurveillanceRoomTest extends BaseCardTest {
     @ValueSource(ints = {0, 1})
     void tappedLandCannotActivateEitherManaAbility(int abilityIndex) {
         Permanent room = addReadyRoom();
-        room.setTapped(true);
+        room.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, null))

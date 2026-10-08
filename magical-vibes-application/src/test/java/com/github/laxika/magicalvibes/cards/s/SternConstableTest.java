@@ -114,7 +114,7 @@ class SternConstableTest extends BaseCardTest {
     @DisplayName("An already-tapped Constable cannot activate its tap ability")
     void cannotActivateWhileTapped() {
         Permanent constable = addCreatureReady(player1, new SternConstable());
-        constable.setTapped(true);
+        constable.tap();
         Permanent target = addCreatureReady(player2, new SternConstable());
         harness.setHand(player1, List.of(new SternConstable()));
 
@@ -149,7 +149,7 @@ class SternConstableTest extends BaseCardTest {
     void canTargetTappedCreature() {
         Permanent constable = addCreatureReady(player1, new SternConstable());
         Permanent target = addCreatureReady(player2, new SternConstable());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new SternConstable()));
 
         harness.activateAbility(player1, 0, null, target.getId());

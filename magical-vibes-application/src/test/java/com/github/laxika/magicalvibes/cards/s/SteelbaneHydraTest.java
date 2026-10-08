@@ -125,7 +125,7 @@ class SteelbaneHydraTest extends BaseCardTest {
         Permanent hydra = addReadyHydra(player1);
         hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         hydra.setSummoningSick(true);
-        hydra.setTapped(true);
+        hydra.tap();
         harness.addToBattlefield(player1, new AngelsFeather());
 
         activateAgainst(player1, "Angel's Feather");

@@ -87,7 +87,7 @@ class UlrichsKindredTest extends BaseCardTest {
     void canTargetItselfWhileAttacking() {
         Permanent kindred = addKindred();
         kindred.setAttacking(true);
-        kindred.setTapped(true);
+        kindred.tap();
         addManaForAbility();
 
         harness.activateAbility(player1, 0, 0, null, kindred.getId());

@@ -61,7 +61,7 @@ class TemptingWitchTest extends BaseCardTest {
         castTemptingWitch();
         Permanent witch = findPermanent(player1, "Tempting Witch");
         witch.setSummoningSick(false);
-        findPermanent(player1, "Food").setTapped(true);
+        findPermanent(player1, "Food").tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, player1.getId());

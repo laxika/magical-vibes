@@ -70,7 +70,7 @@ class UnyaroBeesTest extends BaseCardTest {
     void repeatedBoostsDoNotRequireTappingOrHaste() {
         Permanent bees = harness.addToBattlefieldAndReturn(player1, new UnyaroBees());
         bees.setSummoningSick(true);
-        bees.setTapped(true);
+        bees.tap();
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -86,7 +86,7 @@ class UnyaroBeesTest extends BaseCardTest {
     void sacrificesWhileSummoningSickAndTapped() {
         Permanent bees = harness.addToBattlefieldAndReturn(player1, new UnyaroBees());
         bees.setSummoningSick(true);
-        bees.setTapped(true);
+        bees.tap();
         addSacrificeAbilityMana();
 
         harness.activateAbility(player1, 0, 1, null, player1.getId());

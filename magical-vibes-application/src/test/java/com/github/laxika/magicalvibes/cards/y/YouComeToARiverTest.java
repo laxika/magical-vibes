@@ -112,7 +112,7 @@ class YouComeToARiverTest extends BaseCardTest {
 
         harness.assertInHand(player2, "Grizzly Bears");
         harness.assertInGraveyard(player1, "You Come to a River");
-        assertThat(gd.battlefield.get(player2.getId())).containsExactly(other);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(other);
         assertThat(other.getEffectivePower()).isEqualTo(2);
         assertThat(other.isCantBeBlocked()).isFalse();
     }

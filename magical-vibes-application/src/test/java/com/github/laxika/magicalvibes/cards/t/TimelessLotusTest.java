@@ -59,7 +59,7 @@ class TimelessLotusTest extends BaseCardTest {
     @Test
     void manaAbilityResolvesImmediatelyAfterUntappingOnTheTurnItEnters() {
         Permanent lotus = harness.enterBattlefieldAndReturn(player1, new TimelessLotus());
-        lotus.setTapped(false);
+        lotus.untap();
 
         harness.activateAbility(player1, 0, null, null);
 

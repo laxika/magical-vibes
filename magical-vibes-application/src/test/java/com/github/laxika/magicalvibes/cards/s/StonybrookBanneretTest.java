@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.Fertilid;
 import com.github.laxika.magicalvibes.cards.g.GrimoireThief;
 import com.github.laxika.magicalvibes.cards.i.InspiredSprite;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;

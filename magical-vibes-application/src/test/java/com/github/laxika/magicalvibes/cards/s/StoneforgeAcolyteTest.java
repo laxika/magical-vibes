@@ -144,7 +144,7 @@ class StoneforgeAcolyteTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of());
         Permanent acolyte = addCreatureReady(player1, new StoneforgeAcolyte());
-        addCreatureReady(player1, new StoneforgeAcolyte());
+        Permanent ally = addCreatureReady(player1, new StoneforgeAcolyte());
 
         harness.activateAbility(player1, battlefieldIndex(acolyte), 0, null, null);
         harness.passBothPriorities();

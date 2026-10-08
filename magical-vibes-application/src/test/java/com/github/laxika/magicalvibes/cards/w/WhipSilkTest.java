@@ -109,7 +109,7 @@ class WhipSilkTest extends BaseCardTest {
         Permanent aura = findPermanent(player1, "Whip Silk");
         assertThat(aura.getAttachedTo()).isEqualTo(kavu.getId());
         assertThat(gqs.hasKeyword(gd, kavu, Keyword.REACH)).isTrue();
-        aura.setTapped(true);
+        aura.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.activateAbility(player1,
                 gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null);

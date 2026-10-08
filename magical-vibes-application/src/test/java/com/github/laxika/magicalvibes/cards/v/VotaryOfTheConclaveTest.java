@@ -75,7 +75,7 @@ class VotaryOfTheConclaveTest extends BaseCardTest {
     @DisplayName("A tapped creature can activate regeneration repeatedly")
     void tappedCreatureCanActivateRepeatedly() {
         Permanent votary = harness.addToBattlefieldAndReturn(player1, new VotaryOfTheConclave());
-        votary.setTapped(true);
+        votary.tap();
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 

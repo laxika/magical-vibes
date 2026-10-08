@@ -123,7 +123,7 @@ class TerraformerTest extends BaseCardTest {
     @DisplayName("All five basic land types can be chosen with repeated activations from a tapped creature")
     void allBasicTypesCanBeChosenWithoutTappingTerraformer() {
         Permanent terraformer = harness.addToBattlefieldAndReturn(player1, new Terraformer());
-        terraformer.setTapped(true);
+        terraformer.tap();
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.forceActivePlayer(player1);
 

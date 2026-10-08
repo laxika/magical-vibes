@@ -76,7 +76,7 @@ class WonderscapeSageTest extends BaseCardTest {
     void tappedLandCanBeReturnedAndPaidBeforeDrawing() {
         Permanent sage = addCreatureReady(player1, new WonderscapeSage());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Island());
-        land.setTapped(true);
+        land.tap();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new CommandTower()));
 

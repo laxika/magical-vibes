@@ -98,7 +98,7 @@ class VoidAttendantTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent attendant = harness.addToBattlefieldAndReturn(player1, new VoidAttendant());
         attendant.setSummoningSick(true);
-        attendant.setTapped(true);
+        attendant.tap();
         harness.setExile(player2, List.of(new ScourFromExistence()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

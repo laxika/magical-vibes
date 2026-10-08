@@ -71,7 +71,7 @@ class TigerDilloTest extends BaseCardTest {
     void canAttackWithAnotherTigerDilloEvenWhenItIsTapped() {
         Permanent attacker = addCreatureReady(player1, new TigerDillo());
         Permanent support = addCreatureReady(player1, new TigerDillo());
-        support.setTapped(true);
+        support.tap();
 
         harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_ATTACKERS,
                 () -> declareAttackers(List.of(0)));

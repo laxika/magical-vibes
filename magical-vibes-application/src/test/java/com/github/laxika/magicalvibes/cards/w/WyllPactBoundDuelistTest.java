@@ -211,7 +211,7 @@ class WyllPactBoundDuelistTest extends BaseCardTest {
     void bladePactUntapsDuringSameResolutionAsSacrifice() {
         Permanent dragon = addCreatureReady(player1, new YoungRedDragon());
         Permanent wyll = specialize(3, new Mountain());
-        wyll.setTapped(true);
+        wyll.tap();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, dragon.getId());
 

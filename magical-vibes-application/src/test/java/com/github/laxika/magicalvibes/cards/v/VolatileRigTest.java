@@ -138,7 +138,7 @@ class VolatileRigTest extends BaseCardTest {
     @DisplayName("A tapped Volatile Rig is not required to attack")
     void tappedRigNeedNotAttack() {
         Permanent rig = addReadyRig(player1);
-        rig.setTapped(true);
+        rig.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();

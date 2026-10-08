@@ -75,7 +75,7 @@ class VodaSeaScavengerTest extends BaseCardTest {
 
         PendingInteraction.LibrarySearch search = gd.interaction
                 .activeInteraction(PendingInteraction.LibrarySearch.class);
-        assertThat(search.prompt()).doesNotContainIgnoringCase("reveal");
+        assertThat(search.messagePrompt()).doesNotContainIgnoringCase("reveal");
         harness.handleCardChosen(player1, 0);
         assertThat(gameLogContains("reveals")).isFalse();
     }

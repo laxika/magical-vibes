@@ -75,7 +75,7 @@ class ThundersongTrumpeterTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, trumpeter.getId());
         harness.passBothPriorities();
-        trumpeter.setTapped(false);
+        trumpeter.untap();
 
         assertThat(als.canAttack(gd, trumpeter, player1.getId())).isFalse();
         assertThat(bls.canBlock(gd, trumpeter)).isFalse();

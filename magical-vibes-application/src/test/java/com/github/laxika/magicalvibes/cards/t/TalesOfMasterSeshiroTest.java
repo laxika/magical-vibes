@@ -147,7 +147,7 @@ class TalesOfMasterSeshiroTest extends BaseCardTest {
     void finalChapterReturnsNewPermanentThatCanAttackWithoutTapping() {
         Permanent saga = addSagaWithLore(2);
         saga.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        saga.setTapped(true);
+        saga.tap();
         advanceToNextChapter();
         resolveAllTriggers();
 

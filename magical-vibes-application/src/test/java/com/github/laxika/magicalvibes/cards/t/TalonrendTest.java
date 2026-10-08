@@ -115,7 +115,7 @@ class TalonrendTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent talonrend = addCreatureReady(player1, new Talonrend());
         talonrend.setSummoningSick(true);
-        talonrend.setTapped(true);
+        talonrend.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);

@@ -193,7 +193,7 @@ class WaterServantTest extends BaseCardTest {
     void abilitiesWorkWhileTappedAndSummoningSick() {
         Permanent servant = harness.addToBattlefieldAndReturn(player1, new WaterServant());
         servant.setSummoningSick(true);
-        servant.setTapped(true);
+        servant.tap();
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, 0, null, null);

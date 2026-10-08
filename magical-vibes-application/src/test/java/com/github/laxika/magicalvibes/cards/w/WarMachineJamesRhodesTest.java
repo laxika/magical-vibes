@@ -95,7 +95,7 @@ class WarMachineJamesRhodesTest extends BaseCardTest {
     void attackTriggerCanTargetTappedCreature() {
         Permanent warMachine = addCreatureReady(player1, new WarMachineJamesRhodes());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(warMachine)));
         PendingInteraction.PermanentChoice choice =

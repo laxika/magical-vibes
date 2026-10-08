@@ -132,7 +132,7 @@ class SteelcladSpiritTest extends BaseCardTest {
     void permissionDoesNotBypassBeingTapped() {
         Permanent spirit = addSpirit();
         castAnthem(player1);
-        spirit.setTapped(true);
+        spirit.tap();
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)

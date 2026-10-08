@@ -266,7 +266,7 @@ class TamiyoFieldResearcherTest extends BaseCardTest {
     void minusTwoLocksAlreadyTappedPermanentForOnlyOneUntap() {
         addReadyTamiyo();
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        bears.setTapped(true);
+        bears.tap();
 
         harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(bears.getId()));
         harness.passBothPriorities();

@@ -145,7 +145,7 @@ class VedalkenCertarchTest extends BaseCardTest {
         addCertarchReady();
         addSomMetalcraft();
         Permanent target = findPermanent(player1, "Memnite");
-        target.setTapped(true);
+        target.tap();
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();

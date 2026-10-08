@@ -96,7 +96,7 @@ class TrainedPronghornTest extends BaseCardTest {
     void tappedSummoningSickPronghornPreventsRepeatedDamage() {
         Permanent pronghorn = harness.addToBattlefieldAndReturn(player1, new TrainedPronghorn());
         pronghorn.setSummoningSick(true);
-        pronghorn.setTapped(true);
+        pronghorn.tap();
         harness.setHand(player1, List.of(new EmberShot(), new EmberShot(), new EmberShot()));
         harness.setLibrary(player1, List.of(new BorderPatrol(), new BorderPatrol()));
 

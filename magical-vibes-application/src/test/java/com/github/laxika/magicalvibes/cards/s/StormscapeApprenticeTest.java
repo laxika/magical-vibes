@@ -105,7 +105,7 @@ class StormscapeApprenticeTest extends BaseCardTest {
     void tapAbilityMayTargetTappedCreature() {
         Permanent apprentice = addReadyApprentice();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingKavu());
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());

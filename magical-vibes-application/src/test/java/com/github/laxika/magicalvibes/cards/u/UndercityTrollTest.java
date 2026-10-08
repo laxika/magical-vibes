@@ -107,7 +107,7 @@ class UndercityTrollTest extends BaseCardTest {
     @DisplayName("Regeneration can be activated while tapped and does not untap the creature")
     void regenerationWhileTapped() {
         Permanent troll = addCreatureReady(player1, new UndercityTroll());
-        troll.setTapped(true);
+        troll.tap();
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 1);

@@ -158,7 +158,7 @@ class TheBlackstaffOfWaterdeepTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, dagger.getId());
         staff.untap();
-        staff.setTapped(true);
+        staff.tap();
         harness.passBothPriorities();
 
         assertThat(staff.isTapped()).isTrue();

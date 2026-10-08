@@ -98,7 +98,7 @@ class ValgavothsFaithfulTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedAndSummoningSickAndPaysSacrificeImmediately() {
         Permanent faithful = harness.addToBattlefieldAndReturn(player1, new ValgavothsFaithful());
-        faithful.setTapped(true);
+        faithful.tap();
         faithful.setSummoningSick(true);
         Card creature = new FearOfLostTeeth();
         harness.setGraveyard(player1, List.of(creature));

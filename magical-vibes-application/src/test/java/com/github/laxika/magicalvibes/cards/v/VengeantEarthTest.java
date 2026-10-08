@@ -141,7 +141,7 @@ class VengeantEarthTest extends BaseCardTest {
     void mayRemainUnblockedWhenOnlyPotentialBlockerIsTapped() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        blocker.setTapped(true);
+        blocker.tap();
         castVengeantEarth(target);
         declareAttackersAndPrepareBlockers(List.of(0));
 

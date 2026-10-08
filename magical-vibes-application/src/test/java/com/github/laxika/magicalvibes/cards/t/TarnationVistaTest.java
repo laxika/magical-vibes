@@ -77,7 +77,7 @@ class TarnationVistaTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.handleListChoice(player1, "BLACK");
         Permanent vista = findPermanent(player1, "Tarnation Vista");
-        vista.setTapped(false);
+        vista.untap();
 
         harness.activateAbility(player1, 0, 0, null, null);
 

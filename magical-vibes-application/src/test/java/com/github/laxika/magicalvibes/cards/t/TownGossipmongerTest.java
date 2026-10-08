@@ -112,7 +112,7 @@ class TownGossipmongerTest extends BaseCardTest {
     void cannotUseTappedOrOpposingHelper() {
         Permanent gossipmonger = addCreatureReady(player1, new TownGossipmonger());
         Permanent helper = addCreatureReady(player1, new TownGossipmonger());
-        helper.setTapped(true);
+        helper.tap();
         Permanent opponent = addCreatureReady(player2, new TownGossipmonger());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(gossipmonger), null, null))
@@ -147,7 +147,7 @@ class TownGossipmongerTest extends BaseCardTest {
     @DisplayName("A tapped Incited Rabble is not required to attack")
     void tappedRabbleNeedNotAttack() {
         Permanent rabble = addTransformedRabble();
-        rabble.setTapped(true);
+        rabble.tap();
 
         declareAttackers(List.of());
 
@@ -169,7 +169,7 @@ class TownGossipmongerTest extends BaseCardTest {
     @DisplayName("Incited Rabble can repeatedly pump while tapped and summoning sick")
     void pumpStacksWithoutTapOrSummoningSicknessRestriction() {
         Permanent rabble = addTransformedRabble();
-        rabble.setTapped(true);
+        rabble.tap();
         rabble.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 

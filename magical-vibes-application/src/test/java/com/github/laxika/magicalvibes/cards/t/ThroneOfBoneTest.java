@@ -203,7 +203,7 @@ class ThroneOfBoneTest extends BaseCardTest {
     @DisplayName("Tapped Throne of Bone triggers and its generic payment accepts colored mana")
     void tappedThroneAcceptsColoredMana() {
         var throne = harness.addToBattlefieldAndReturn(player1, new ThroneOfBone());
-        throne.setTapped(true);
+        throne.tap();
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.castFromHand(player1, new ScatheZombies(), "{2}{B}");

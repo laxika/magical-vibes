@@ -93,7 +93,7 @@ class StrixLookoutTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent lookout = addCreatureReady(player1, new StrixLookout());
-        lookout.setTapped(true);
+        lookout.tap();
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

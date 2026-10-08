@@ -21,7 +21,7 @@ class ZodiacRatTest extends BaseCardTest {
     @DisplayName("Zodiac Rat cannot be blocked when the defending Swamp is tapped")
     void cannotBeBlockedWhenDefendingSwampIsTapped() {
         Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
-        swamp.setTapped(true);
+        swamp.tap();
         Permanent blocker = addCreatureReady(player2, new ShuFootSoldiers());
         Permanent attacker = addCreatureReady(player1, new ZodiacRat());
         attacker.setAttacking(true);

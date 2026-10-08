@@ -52,7 +52,7 @@ class SunWarriorsTest extends BaseCardTest {
     void firebendingDoesNotCountOpponentsCreatures() {
         addCreatureReady(player1, new SunWarriors());
         Permanent opposingWarriors = addCreatureReady(player2, new SunWarriors());
-        opposingWarriors.setTapped(true);
+        opposingWarriors.tap();
 
         declareAttackers(List.of(0));
         harness.passUntil(TurnStep.END_OF_COMBAT);

@@ -173,9 +173,9 @@ class ThaumatogTest extends BaseCardTest {
     void tappedSummoningSickThaumatogCanActivateBothAbilities() {
         Permanent thaumatog = harness.addToBattlefieldAndReturn(player1, new Thaumatog());
         thaumatog.setSummoningSick(true);
-        thaumatog.setTapped(true);
+        thaumatog.tap();
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
-        land.setTapped(true);
+        land.tap();
         harness.addToBattlefield(player1, new EarnestFellowship());
         int powerBefore = gqs.getEffectivePower(gd, thaumatog);
         int toughnessBefore = gqs.getEffectiveToughness(gd, thaumatog);

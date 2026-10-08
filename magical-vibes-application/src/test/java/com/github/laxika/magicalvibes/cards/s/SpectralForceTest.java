@@ -115,11 +115,11 @@ class SpectralForceTest extends BaseCardTest {
         addCreatureReady(player2, new BenalishCavalry());
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
-        force.setTapped(false);
+        force.untap();
 
         harness.performUntapStep(player1);
         assertThat(force.isTapped()).isFalse();
-        force.setTapped(true);
+        force.tap();
         harness.performUntapStep(player1);
         assertThat(force.isTapped()).isFalse();
     }

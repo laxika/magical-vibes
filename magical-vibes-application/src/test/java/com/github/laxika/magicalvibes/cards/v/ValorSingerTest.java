@@ -76,7 +76,7 @@ class ValorSingerTest extends BaseCardTest {
     @DisplayName("Valor Singer can target itself even while tapped")
     void canBoostItselfWhileTapped() {
         Permanent singer = harness.addToBattlefieldAndReturn(player1, new ValorSinger());
-        singer.setTapped(true);
+        singer.tap();
 
         resolveBeginningOfCombat(player1, singer);
 

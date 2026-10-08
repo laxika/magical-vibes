@@ -99,7 +99,7 @@ class TractorBeamTest extends BaseCardTest {
     void enchantedSpacecraftDoesNotUntap() {
         Permanent spacecraft = harness.addToBattlefieldAndReturn(player2, new SpecimenFreighter());
         Permanent otherCreature = addCreatureReady(player1, new EumidianTerrabotanist());
-        otherCreature.setTapped(true);
+        otherCreature.tap();
         castAndResolve(spacecraft);
 
         harness.performUntapStep(player1);

@@ -108,7 +108,7 @@ class SuperSkrullTest extends BaseCardTest {
     void createsWallsWhileTappedAndSummoningSick() {
         Permanent superSkrull = harness.addToBattlefieldAndReturn(player1, new SuperSkrull());
         superSkrull.setSummoningSick(true);
-        superSkrull.setTapped(true);
+        superSkrull.tap();
         addMana(player1, ManaColor.WHITE, 2);
         addMana(player1, ManaColor.COLORLESS, 4);
 

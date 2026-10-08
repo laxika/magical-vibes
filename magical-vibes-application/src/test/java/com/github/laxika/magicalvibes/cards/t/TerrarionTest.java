@@ -127,7 +127,7 @@ class TerrarionTest extends BaseCardTest {
     @DisplayName("Destruction draws for Terrarion's controller without activating its mana ability")
     void destructionDrawsForController() {
         Permanent terrarion = harness.addToBattlefieldAndReturn(player2, new Terrarion());
-        terrarion.setTapped(true);
+        terrarion.tap();
         harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new Terrarion()));
         harness.setHand(player1, List.of(new SpringsageRitual()));

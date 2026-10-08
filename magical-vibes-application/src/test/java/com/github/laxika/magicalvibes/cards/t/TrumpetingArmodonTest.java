@@ -150,14 +150,14 @@ class TrumpetingArmodonTest extends BaseCardTest {
     void tappedSummoningSickSourceCanActivate() {
         Permanent armodon = harness.addToBattlefieldAndReturn(player1, new TrumpetingArmodon());
         armodon.setSummoningSick(true);
-        armodon.setTapped(true);
+        armodon.tap();
         Permanent blocker = addCreatureReady(player2, new TrainedArmodon());
         giveMana();
 
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        armodon.setTapped(false);
+        armodon.untap();
         armodon.setSummoningSick(false);
         armodon.setAttacking(true);
         prepareDeclareBlockers();
@@ -173,7 +173,7 @@ class TrumpetingArmodonTest extends BaseCardTest {
     void tappedTargetDoesNotHaveToBlock() {
         Permanent armodon = addCreatureReady(player1, new TrumpetingArmodon());
         Permanent blocker = addCreatureReady(player2, new TrainedArmodon());
-        blocker.setTapped(true);
+        blocker.tap();
         giveMana();
 
         harness.activateAbility(player1, 0, null, blocker.getId());

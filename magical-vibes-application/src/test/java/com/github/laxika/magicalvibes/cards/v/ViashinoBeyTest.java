@@ -67,7 +67,7 @@ class ViashinoBeyTest extends BaseCardTest {
     void unableCreaturesCanStayBack() {
         addCreatureReady(player1, new ViashinoBey());
         Permanent tapped = addCreatureReady(player1, new GiantCockroach());
-        tapped.setTapped(true);
+        tapped.tap();
         harness.addToBattlefield(player1, new GiantCockroach());
 
         declareAttackers(List.of(0));

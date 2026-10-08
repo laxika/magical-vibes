@@ -99,8 +99,8 @@ class TowerWorkerTest extends BaseCardTest {
     @Test
     void tappedWorkersStillEnableBonusAndManaDoesNotUseStack() {
         addReadyTowerWorker();
-        harness.addToBattlefieldAndReturn(player1, new MineWorker()).setTapped(true);
-        harness.addToBattlefieldAndReturn(player1, new PowerPlantWorker()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new MineWorker()).tap();
+        harness.addToBattlefieldAndReturn(player1, new PowerPlantWorker()).tap();
 
         harness.activateAbility(player1, 0, null, null);
 

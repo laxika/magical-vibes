@@ -100,7 +100,7 @@ class SutureSpiritTest extends BaseCardTest {
     @Test
     void canActivateRepeatedlyWhileTappedAndSummoningSick() {
         Permanent spirit = harness.addToBattlefieldAndReturn(player1, new SutureSpirit());
-        spirit.setTapped(true);
+        spirit.tap();
         harness.addMana(player1, ManaColor.WHITE, 6);
 
         harness.activateAbility(player1, 0, null, spirit.getId());

@@ -80,7 +80,7 @@ class UrsineChampionTest extends BaseCardTest {
     void activatesWithoutTapOrSummoningRestrictionOnOpponentsTurn() {
         Permanent champion = harness.addToBattlefieldAndReturn(player1, new UrsineChampion());
         champion.setSummoningSick(true);
-        champion.setTapped(true);
+        champion.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

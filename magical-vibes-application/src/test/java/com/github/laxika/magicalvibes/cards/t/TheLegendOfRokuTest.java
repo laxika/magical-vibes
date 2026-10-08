@@ -158,7 +158,7 @@ class TheLegendOfRokuTest extends BaseCardTest {
     @Test
     void chapterThreeReturnsANewSummoningSickPermanentWithoutLoreCounters() {
         Permanent saga = addSaga(2);
-        saga.setTapped(true);
+        saga.tap();
 
         advanceToNextChapter();
         harness.passBothPriorities();

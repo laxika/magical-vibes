@@ -169,7 +169,7 @@ class WhiteShieldCrusaderTest extends BaseCardTest {
         Permanent crusader = addCreatureReady(player1, new WhiteShieldCrusader());
         Permanent other = addCreatureReady(player1, new WhiteShieldCrusader());
         crusader.setSummoningSick(true);
-        crusader.setTapped(true);
+        crusader.tap();
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, 0, null, null);

@@ -154,7 +154,7 @@ class UurgSpawnOfTurgTest extends BaseCardTest {
     void sacrificeIsAnImmediateCost() {
         Permanent uurg = harness.addToBattlefieldAndReturn(player1, new UurgSpawnOfTurg());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
-        land.setTapped(true);
+        land.tap();
         harness.setGraveyard(player1, List.of());
         harness.setLife(player1, 20);
         harness.addMana(player1, ManaColor.BLACK, 1);

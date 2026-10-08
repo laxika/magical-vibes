@@ -103,7 +103,7 @@ class SpectralShepherdTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent shepherd = harness.addToBattlefieldAndReturn(player1, new SpectralShepherd());
         shepherd.setSummoningSick(true);
-        shepherd.setTapped(true);
+        shepherd.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

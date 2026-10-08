@@ -100,7 +100,7 @@ class TheEverChangingDaneTest extends BaseCardTest {
     void retainsOwnCountersAndStatus() {
         Permanent dane = addCreatureReady(player1, new TheEverChangingDane());
         dane.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        dane.setTapped(true);
+        dane.tap();
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

@@ -87,7 +87,7 @@ class SteepleCreeperTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent creeper = harness.addToBattlefieldAndReturn(player1, new SteepleCreeper());
         creeper.setSummoningSick(true);
-        creeper.setTapped(true);
+        creeper.tap();
         addActivationMana();
 
         harness.activateAbility(player1, 0, null, null);

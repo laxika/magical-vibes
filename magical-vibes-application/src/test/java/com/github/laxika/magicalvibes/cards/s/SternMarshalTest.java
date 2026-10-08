@@ -139,7 +139,7 @@ class SternMarshalTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         setupMarshalOnMyTurn(TurnStep.PRECOMBAT_MAIN);
-        findPermanent(player1, "Stern Marshal").setTapped(true);
+        findPermanent(player1, "Stern Marshal").tap();
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))

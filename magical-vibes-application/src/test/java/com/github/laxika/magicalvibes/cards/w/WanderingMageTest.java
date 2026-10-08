@@ -217,7 +217,7 @@ class WanderingMageTest extends BaseCardTest {
     @DisplayName("The white ability can be activated while the Mage is tapped and summoning sick")
     void whiteAbilityDoesNotRequireTapping() {
         Permanent mage = addMageReady();
-        mage.setTapped(true);
+        mage.tap();
         harness.setLife(player1, 20);
         harness.addMana(player1, ManaColor.WHITE, 1);
 

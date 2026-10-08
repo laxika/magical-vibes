@@ -100,7 +100,7 @@ class TheWondrousWaspTest extends BaseCardTest {
     @DisplayName("An already tapped target still loses its abilities")
     void alreadyTappedTargetLosesAbilities() {
         Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        elemental.setTapped(true);
+        elemental.tap();
 
         castWasp(elemental.getId());
         resolveAllTriggers();

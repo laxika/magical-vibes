@@ -48,7 +48,7 @@ class ToppleTheStatueTest extends BaseCardTest {
     @DisplayName("Destroys an already tapped artifact and still draws")
     void destroysTappedArtifactAndDraws() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GuildGlobe());
-        target.setTapped(true);
+        target.tap();
         harness.setLibrary(player1, List.of(new GratefulApparition()));
 
         castAt(target.getId());

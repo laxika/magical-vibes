@@ -106,7 +106,7 @@ class ThunderWallTest extends BaseCardTest {
     @DisplayName("The ability can be activated while Thunder Wall is tapped")
     void abilityCanBeActivatedWhileTapped() {
         Permanent wall = addCreatureReady(player1, new ThunderWall());
-        wall.setTapped(true);
+        wall.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);

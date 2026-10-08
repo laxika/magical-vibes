@@ -79,7 +79,7 @@ class ToriDAvenantFuryRiderTest extends BaseCardTest {
         Permanent tori = addCreatureReady(player1, new ToriDAvenantFuryRider());
         Permanent baird = addCreatureReady(player1, new BairdArgivianRecruiter());
         Permanent opponentBaird = addCreatureReady(player2, new BairdArgivianRecruiter());
-        opponentBaird.setTapped(true);
+        opponentBaird.tap();
 
         declareAttackers(List.of(0, 1));
         assertThat(baird.isTapped()).isTrue();

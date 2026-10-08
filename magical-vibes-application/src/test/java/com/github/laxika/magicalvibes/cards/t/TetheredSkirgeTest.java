@@ -53,7 +53,7 @@ class TetheredSkirgeTest extends BaseCardTest {
     @Test
     void lifeLossUsesTheStackAndResolvesBeforeTheTargetingSpell() {
         Permanent skirge = harness.addToBattlefieldAndReturn(player1, new TetheredSkirge());
-        skirge.setTapped(true);
+        skirge.tap();
         harness.setHand(player1, List.of(new BurstOfEnergy()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 

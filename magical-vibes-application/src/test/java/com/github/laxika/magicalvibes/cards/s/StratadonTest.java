@@ -90,8 +90,8 @@ class StratadonTest extends BaseCardTest {
     void tappedLandsStillReduceCost() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
-        forest.setTapped(true);
-        island.setTapped(true);
+        forest.tap();
+        island.tap();
 
         harness.castFromHand(player1, new Stratadon(), "{8}");
 

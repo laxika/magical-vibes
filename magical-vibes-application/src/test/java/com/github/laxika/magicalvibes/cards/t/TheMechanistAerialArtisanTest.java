@@ -169,7 +169,7 @@ class TheMechanistAerialArtisanTest extends BaseCardTest {
         Permanent clue = addMechanistAndClue();
         harness.activateAbility(player1, 0, null, clue.getId());
         resolveAllTriggers();
-        clue.setTapped(true);
+        clue.tap();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);

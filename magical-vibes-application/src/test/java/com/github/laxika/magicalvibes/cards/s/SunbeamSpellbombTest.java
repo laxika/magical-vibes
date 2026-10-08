@@ -93,7 +93,7 @@ class SunbeamSpellbombTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Spellbomb can gain life, and life is gained only on resolution")
     void tappedSpellbombCanGainLife() {
-        harness.addToBattlefieldAndReturn(player1, new SunbeamSpellbomb()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new SunbeamSpellbomb()).tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.setLife(player1, 10);
         harness.setLife(player2, 10);

@@ -110,7 +110,7 @@ class TroopOfPoniesTest extends BaseCardTest {
     @Test
     @DisplayName("An already tapped Troop of Ponies cannot pay the tap cost")
     void tappedCreatureCannotActivate() {
-        addCreatureReady(player1, new TroopOfPonies()).setTapped(true);
+        addCreatureReady(player1, new TroopOfPonies()).tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

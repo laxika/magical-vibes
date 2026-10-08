@@ -487,7 +487,7 @@ class TimeStopTest extends BaseCardTest {
     void removesActivatedAbilitiesFromStack() {
         addCreatureReady(player1, new RoyalAssassin());
         Permanent target = addCreatureReady(player2, new ScatheZombies());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player2, List.of(new TimeStop()));
         harness.addMana(player2, ManaColor.BLUE, 6);
 

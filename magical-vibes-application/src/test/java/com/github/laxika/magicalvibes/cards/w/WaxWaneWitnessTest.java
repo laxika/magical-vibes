@@ -101,7 +101,7 @@ class WaxWaneWitnessTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         Permanent target = harness.addToBattlefieldAndReturn(player2, new WaxWaneWitness());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new SonarStrike()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castInstant(player1, 0, target.getId());

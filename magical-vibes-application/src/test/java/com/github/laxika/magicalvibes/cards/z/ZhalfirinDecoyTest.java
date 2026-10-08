@@ -113,7 +113,7 @@ class ZhalfirinDecoyTest extends BaseCardTest {
     void canTargetOwnAlreadyTappedCreature() {
         Permanent decoy = addCreatureReady(player1, new ZhalfirinDecoy());
         Permanent target = harness.enterBattlefieldAndReturn(player1, new ZhalfirinDecoy());
-        target.setTapped(true);
+        target.tap();
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();

@@ -110,7 +110,7 @@ class TheEleventhDoctorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
 
-        findPermanent(player1, "The Eleventh Doctor").setTapped(false);
+        findPermanent(player1, "The Eleventh Doctor").untap();
         declareAttackers(List.of(0));
         resolveCombat();
         harness.passBothPriorities();

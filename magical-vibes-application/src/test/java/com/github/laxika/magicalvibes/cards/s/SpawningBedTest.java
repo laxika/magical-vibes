@@ -122,7 +122,7 @@ class SpawningBedTest extends BaseCardTest {
 
         for (int i = 0; i < 3; i++) {
             Permanent scion = gd.playerBattlefields.get(player1.getId()).getFirst();
-            scion.setTapped(true);
+            scion.tap();
             harness.activateAbility(player1, 0, 0, null, null);
             assertThat(gd.stack).isEmpty();
             assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS))

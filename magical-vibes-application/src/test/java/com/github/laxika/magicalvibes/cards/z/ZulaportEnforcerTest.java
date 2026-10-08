@@ -133,7 +133,7 @@ class ZulaportEnforcerTest extends BaseCardTest {
     void levelUpDoesNotRequireTappingOrHaste() {
         Permanent enforcer = addCreatureReady(player1, new ZulaportEnforcer());
         enforcer.setSummoningSick(true);
-        enforcer.setTapped(true);
+        enforcer.tap();
         prepareForLeveling(player1);
 
         levelUp(player1);

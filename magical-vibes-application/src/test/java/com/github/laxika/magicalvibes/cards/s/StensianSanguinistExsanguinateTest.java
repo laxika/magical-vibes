@@ -12,7 +12,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -66,7 +65,7 @@ class StensianSanguinistExsanguinateTest extends BaseCardTest {
 
         assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
         prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, Map.of());
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
         resolveAllTriggers();
 

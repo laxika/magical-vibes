@@ -107,7 +107,7 @@ class TakenosCavalryTest extends BaseCardTest {
     @DisplayName("A tapped Cavalry cannot activate its damage ability")
     void cannotActivateWhileTapped() {
         Permanent cavalry = addCreatureReady(player1, new TakenosCavalry());
-        cavalry.setTapped(true);
+        cavalry.tap();
         Permanent spirit = addCreatureReady(player2, new KamiOfFalseHope());
         spirit.setAttacking(true);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);

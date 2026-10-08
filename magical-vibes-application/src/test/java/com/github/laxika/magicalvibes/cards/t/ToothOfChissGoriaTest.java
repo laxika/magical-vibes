@@ -65,7 +65,7 @@ class ToothOfChissGoriaTest extends BaseCardTest {
     void affinityCountsTappedArtifactsAndStopsAtZero() {
         for (int i = 0; i < 4; i++) {
             Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
-            artifact.setTapped(true);
+            artifact.tap();
         }
         harness.setHand(player1, List.of(new ToothOfChissGoria()));
 

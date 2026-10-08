@@ -76,7 +76,7 @@ class ViridianScoutTest extends BaseCardTest {
     @DisplayName("A tapped summoning-sick Scout can damage its controller's flyer")
     void canActivateWhileTappedAndSummoningSickTargetingOwnFlyer() {
         Permanent scout = harness.addToBattlefieldAndReturn(player1, new ViridianScout());
-        scout.setTapped(true);
+        scout.tap();
         scout.setSummoningSick(true);
         Permanent target = harness.addToBattlefieldAndReturn(player1, new AuriokWindwalker());
         addAbilityMana();

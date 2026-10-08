@@ -84,7 +84,7 @@ class ZoeticCavernTest extends BaseCardTest {
     void turningFaceUpPreservesTappedState() {
         Permanent cavern = harness.addToBattlefieldAndReturn(player1, new ZoeticCavern());
         cavern.setFaceDown(2, 2, Set.of(CardType.CREATURE));
-        cavern.setTapped(true);
+        cavern.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.turnFaceUp(player1, 0);

@@ -65,7 +65,7 @@ class YasminKhanTest extends BaseCardTest {
         assertThat(gd.findExiledCard(firstLand.getId())).isNull();
         harness.assertOnBattlefield(player1, "Forest");
 
-        yasmin.setTapped(false);
+        yasmin.untap();
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(yasmin), null, null);
         harness.passBothPriorities();
         harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,

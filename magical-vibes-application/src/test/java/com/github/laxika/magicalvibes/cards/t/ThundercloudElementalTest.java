@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MomentaryBlink;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -90,7 +91,7 @@ class ThundercloudElementalTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.activateAbility(player1, 0, 0, null, null);
 
-        bear.setPlusOnePlusOneCounters(1);
+        bear.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         Permanent laterBear = addCreatureReady(player2, new GrizzlyBears());
         harness.passBothPriorities();
 

@@ -98,7 +98,7 @@ class WatchersOfTheDeadTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent watchers = harness.addToBattlefieldAndReturn(player1, new WatchersOfTheDead());
         watchers.setSummoningSick(true);
-        watchers.setTapped(true);
+        watchers.tap();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

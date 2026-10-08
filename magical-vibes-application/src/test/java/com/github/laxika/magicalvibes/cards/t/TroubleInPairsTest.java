@@ -180,8 +180,8 @@ class TroubleInPairsTest extends BaseCardTest {
 
         declareAttackers(player2, List.of(0, 1));
         harness.passBothPriorities();
-        first.setTapped(false);
-        second.setTapped(false);
+        first.untap();
+        second.untap();
         first.setAttacking(false);
         second.setAttacking(false);
         declareAttackers(player2, List.of(0, 1));

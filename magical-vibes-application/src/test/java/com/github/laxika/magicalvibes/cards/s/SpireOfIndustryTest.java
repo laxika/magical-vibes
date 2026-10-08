@@ -67,7 +67,7 @@ class SpireOfIndustryTest extends BaseCardTest {
     void producesEachColorWithTappedArtifact(ManaColor color) {
         Permanent spire = addSpire();
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
-        artifact.setTapped(true);
+        artifact.tap();
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, color.name());

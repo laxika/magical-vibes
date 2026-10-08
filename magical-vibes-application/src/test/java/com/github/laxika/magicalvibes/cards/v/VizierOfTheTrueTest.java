@@ -160,7 +160,7 @@ class VizierOfTheTrueTest extends BaseCardTest {
         addCreatureReady(player1, new VizierOfTheTrue());
         addCreatureReady(player1, new StewardOfSolidarity());
         Permanent opponent = addCreatureReady(player2, new StewardOfSolidarity());
-        opponent.setTapped(true);
+        opponent.tap();
 
         harness.activateAbility(player1, 1, null, null);
 

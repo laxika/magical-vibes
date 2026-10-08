@@ -201,7 +201,7 @@ class UrzasSylexTest extends BaseCardTest {
     @Test
     void tappedSylexCannotActivate() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new UrzasSylex());
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

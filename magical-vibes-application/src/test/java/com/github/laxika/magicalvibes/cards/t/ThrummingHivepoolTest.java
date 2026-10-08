@@ -105,7 +105,7 @@ class ThrummingHivepoolTest extends BaseCardTest {
     void affinityWithSevenTappedSliversAllowsCastingWithoutMana() {
         for (int i = 0; i < 7; i++) {
             Permanent sliver = harness.addToBattlefieldAndReturn(player1, new MetallicSliver());
-            sliver.setTapped(true);
+            sliver.tap();
         }
         harness.setHand(player1, List.of(new ThrummingHivepool()));
 

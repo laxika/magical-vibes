@@ -119,7 +119,7 @@ class TemptedByTheOriqTest extends BaseCardTest {
     @DisplayName("Gaining control does not untap the creature or grant haste")
     void doesNotUntapOrGrantHaste() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bear.setTapped(true);
+        bear.tap();
         bear.setSummoningSick(false);
 
         castTemptedByTheOriq(List.of(bear.getId()));

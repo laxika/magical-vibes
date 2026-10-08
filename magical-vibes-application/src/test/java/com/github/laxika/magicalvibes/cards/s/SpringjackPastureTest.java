@@ -239,7 +239,7 @@ class SpringjackPastureTest extends BaseCardTest {
         harness.addMana(player, ManaColor.COLORLESS, 4);
         harness.activateAbility(player, gd.playerBattlefields.get(player.getId()).indexOf(pasture), 1, null, null);
         harness.passBothPriorities();
-        pasture.setTapped(false);
+        pasture.untap();
         return gd.playerBattlefields.get(player.getId()).getLast();
     }
 

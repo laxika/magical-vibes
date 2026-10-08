@@ -64,7 +64,7 @@ class VectisSilencersTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent silencers = harness.addToBattlefieldAndReturn(player1, new VectisSilencers());
         silencers.setSummoningSick(true);
-        silencers.setTapped(true);
+        silencers.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 1);
 

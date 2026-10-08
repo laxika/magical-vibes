@@ -87,7 +87,7 @@ class SpectralSliverTest extends BaseCardTest {
     void tappedSummoningSickSliverCanPumpRepeatedly() {
         Permanent sliver = harness.addToBattlefieldAndReturn(player1, new SpectralSliver());
         sliver.setSummoningSick(true);
-        sliver.setTapped(true);
+        sliver.tap();
         int basePower = gqs.getEffectivePower(gd, sliver);
         int baseToughness = gqs.getEffectiveToughness(gd, sliver);
         harness.addMana(player1, ManaColor.COLORLESS, 4);

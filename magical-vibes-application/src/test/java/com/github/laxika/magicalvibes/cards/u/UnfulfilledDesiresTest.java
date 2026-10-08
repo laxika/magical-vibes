@@ -127,7 +127,7 @@ class UnfulfilledDesiresTest extends BaseCardTest {
     @DisplayName("A tapped Unfulfilled Desires can activate during the opponent's upkeep")
     void activatesWhileTappedOnOpponentsTurn() {
         var desires = harness.addToBattlefieldAndReturn(player1, new UnfulfilledDesires());
-        desires.setTapped(true);
+        desires.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UPKEEP);
         harness.setLife(player1, 20);

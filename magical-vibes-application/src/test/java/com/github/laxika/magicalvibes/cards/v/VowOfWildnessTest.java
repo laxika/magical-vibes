@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -55,7 +56,7 @@ class VowOfWildnessTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(player2, new VowOfWildness());
         aura.setAttachedTo(creature.getId());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new GarrukWildspeaker());
-        planeswalker.setLoyalty(3);
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
 
         beginAttack(player1);
 

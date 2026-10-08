@@ -141,7 +141,7 @@ class TarmogoyfNestTest extends BaseCardTest {
     @DisplayName("A tapped land cannot pay the granted ability's tap cost")
     void tappedLandCannotActivate() {
         Permanent forest = setUpEnchantedForest();
-        forest.setTapped(true);
+        forest.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

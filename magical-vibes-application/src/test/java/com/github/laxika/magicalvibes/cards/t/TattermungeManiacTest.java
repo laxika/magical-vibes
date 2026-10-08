@@ -67,7 +67,7 @@ class TattermungeManiacTest extends BaseCardTest {
     @DisplayName("A tapped Tattermunge Maniac is not forced to attack")
     void doesNotAttackWhileTapped() {
         Permanent maniac = addCreatureReady(player1, new TattermungeManiac());
-        maniac.setTapped(true);
+        maniac.tap();
         addCreatureReady(player1, new GrizzlyBears());
         harness.setLife(player2, 20);
 

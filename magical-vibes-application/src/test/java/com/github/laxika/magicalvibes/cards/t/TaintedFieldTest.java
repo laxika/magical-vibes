@@ -80,7 +80,7 @@ class TaintedFieldTest extends BaseCardTest {
     @DisplayName("A tapped Swamp still enables colored mana")
     void tappedSwampEnablesColoredMana() {
         Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
-        swamp.setTapped(true);
+        swamp.tap();
         Permanent field = addReadyField();
 
         harness.activateAbility(player1, 1, 1, null, null);

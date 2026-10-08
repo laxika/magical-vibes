@@ -88,7 +88,7 @@ class StillLifeTest extends BaseCardTest {
     @DisplayName("Still Life can animate while tapped and summoning sick on an opponent's turn")
     void canAnimateWhileTappedOnOpponentsTurn() {
         Permanent stillLife = addStillLife();
-        stillLife.setTapped(true);
+        stillLife.tap();
         stillLife.setSummoningSick(true);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UPKEEP);

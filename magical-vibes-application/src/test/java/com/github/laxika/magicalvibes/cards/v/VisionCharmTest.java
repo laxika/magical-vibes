@@ -189,7 +189,7 @@ class VisionCharmTest extends BaseCardTest {
         @Test
         void phasesInBeforeControllersNextUntapAndKeepsItsIdentity() {
             Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Millstone());
-            artifact.setTapped(true);
+            artifact.tap();
             UUID artifactId = artifact.getId();
             harness.setHand(player1, List.of(new VisionCharm()));
             harness.addMana(player1, ManaColor.BLUE, 1);

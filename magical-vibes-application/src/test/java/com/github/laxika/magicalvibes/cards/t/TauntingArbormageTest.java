@@ -104,7 +104,7 @@ class TauntingArbormageTest extends BaseCardTest {
         Permanent target = addCreatureReady(player1, new TauntingArbormage());
         Permanent blocker = addCreatureReady(player2, new TauntingArbormage());
         Permanent tappedBlocker = addCreatureReady(player2, new TauntingArbormage());
-        tappedBlocker.setTapped(true);
+        tappedBlocker.tap();
         harness.setHand(player1, List.of(new TauntingArbormage()));
         addMana(6);
 

@@ -119,7 +119,7 @@ class ViashinoSlaughtermasterTest extends BaseCardTest {
     void tappedSummoningSickCreatureCanActivate() {
         Permanent master = harness.addToBattlefieldAndReturn(player1, new ViashinoSlaughtermaster());
         master.setSummoningSick(true);
-        master.setTapped(true);
+        master.tap();
         addBg(player1);
 
         harness.activateAbility(player1, 0, null, null);

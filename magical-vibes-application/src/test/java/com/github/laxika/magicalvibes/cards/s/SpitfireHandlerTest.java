@@ -160,7 +160,7 @@ class SpitfireHandlerTest extends BaseCardTest {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new SpitfireHandler());
         Permanent other = addReadySpitfireHandler(player1);
         source.setSummoningSick(true);
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);

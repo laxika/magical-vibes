@@ -20,7 +20,7 @@ class UndertakerTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         var undertaker = addCreatureReady(player1, new Undertaker());
-        undertaker.setTapped(true);
+        undertaker.tap();
         Card target = new SnortingGahr();
         harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(new SoulChanneling()));

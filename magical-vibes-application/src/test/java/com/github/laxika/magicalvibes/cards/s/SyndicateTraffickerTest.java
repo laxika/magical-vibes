@@ -62,7 +62,7 @@ class SyndicateTraffickerTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTappedButBenefitsWaitForResolution() {
         Permanent trafficker = harness.addToBattlefieldAndReturn(player1, new SyndicateTrafficker());
         trafficker.setSummoningSick(true);
-        trafficker.setTapped(true);
+        trafficker.tap();
         harness.addToBattlefield(player1, new RenegadeFreighter());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

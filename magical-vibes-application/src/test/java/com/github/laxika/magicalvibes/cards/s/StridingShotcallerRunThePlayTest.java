@@ -83,7 +83,7 @@ class StridingShotcallerRunThePlayTest extends BaseCardTest {
     @Test
     void opponentsCombatDamageDoesNotPrepareShotcaller() {
         Permanent shotcaller = addShotcaller();
-        shotcaller.setTapped(true);
+        shotcaller.tap();
         Permanent attacker = addCreatureReady(player2, new StridingShotcallerRunThePlay());
         attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 

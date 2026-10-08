@@ -79,7 +79,7 @@ class WellOfKnowledgeTest extends BaseCardTest {
     @DisplayName("A tapped Well can still be activated during its controller's draw step")
     void tappedWellCanBeActivated() {
         addWell(player1);
-        findPermanent(player1, "Well of Knowledge").setTapped(true);
+        findPermanent(player1, "Well of Knowledge").tap();
         advanceToDraw(player1);
         int handBefore = gd.playerHands.get(player1.getId()).size();
         harness.addMana(player1, ManaColor.COLORLESS, 2);

@@ -18,7 +18,7 @@ class ViashivanDragonTest extends BaseCardTest {
     void tappedSummoningSickDragonCanActivateBothPumps() {
         Permanent dragon = harness.addToBattlefieldAndReturn(player1, new ViashivanDragon());
         dragon.setSummoningSick(true);
-        dragon.setTapped(true);
+        dragon.tap();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 

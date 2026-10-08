@@ -108,7 +108,7 @@ class WinterBlastTest extends BaseCardTest {
     @DisplayName("An already tapped flier still takes damage")
     void damagesAlreadyTappedFlier() {
         Permanent flier = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        flier.setTapped(true);
+        flier.tap();
         harness.setHand(player1, List.of(new WinterBlast()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 

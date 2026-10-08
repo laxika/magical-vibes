@@ -163,7 +163,7 @@ class UnquestionedAuthorityTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Unquestioned Authority")).isZero();
         harness.assertNotInHand(player1, "Giant Warthog");
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
     @Test

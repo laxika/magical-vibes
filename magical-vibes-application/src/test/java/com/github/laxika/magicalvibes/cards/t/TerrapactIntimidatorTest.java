@@ -127,7 +127,7 @@ class TerrapactIntimidatorTest extends BaseCardTest {
     void tappedLanderCannotActivate() {
         castIntimidator();
         harness.handleMayAbilityChosen(player2, true);
-        findPermanent(player1, "Lander").setTapped(true);
+        findPermanent(player1, "Lander").tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(this::activateLander).isInstanceOf(IllegalStateException.class);

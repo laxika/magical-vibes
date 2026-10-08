@@ -106,7 +106,7 @@ class WitchingWellTest extends BaseCardTest {
     @Test
     void tappedWellCanBeSacrificedDuringOpponentsTurn() {
         Permanent well = harness.addToBattlefieldAndReturn(player1, new WitchingWell());
-        well.setTapped(true);
+        well.tap();
         List<Card> library = List.of(new WitchingWell(), new WitchingWell());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, library);

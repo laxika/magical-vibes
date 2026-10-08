@@ -94,7 +94,7 @@ class WitchKingOfAngmarTest extends BaseCardTest {
     void tappedSummoningSickWitchKingCanActivate() {
         Permanent witchKing = harness.addToBattlefieldAndReturn(player1, new WitchKingOfAngmar());
         witchKing.setSummoningSick(true);
-        witchKing.setTapped(true);
+        witchKing.tap();
         harness.setHand(player1, List.of(new WitchKingOfAngmar()));
 
         harness.activateAbility(player1, 0, null, null);

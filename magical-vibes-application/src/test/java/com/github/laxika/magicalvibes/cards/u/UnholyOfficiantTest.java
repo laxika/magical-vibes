@@ -70,7 +70,7 @@ class UnholyOfficiantTest extends BaseCardTest {
     @Test
     void tappedCreatureCanActivateAbility() {
         Permanent officiant = addOfficiant(player1, true);
-        officiant.setTapped(true);
+        officiant.tap();
         addAbilityMana(player1);
 
         harness.activateAbility(player1, 0, 0, null, null);

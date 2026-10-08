@@ -111,7 +111,7 @@ class TwinbladeSlasherTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent slasher = harness.addToBattlefieldAndReturn(player1, new TwinbladeSlasher());
         slasher.setSummoningSick(true);
-        slasher.setTapped(true);
+        slasher.tap();
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, null);

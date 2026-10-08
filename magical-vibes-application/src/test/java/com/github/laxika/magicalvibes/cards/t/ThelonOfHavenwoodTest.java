@@ -85,7 +85,7 @@ class ThelonOfHavenwoodTest extends BaseCardTest {
     @Test
     void paysOwnGraveyardCostBeforeResolutionAndUsesFungiPresentAtResolution() {
         Permanent thelon = harness.addToBattlefieldAndReturn(player1, new ThelonOfHavenwood());
-        thelon.setTapped(true);
+        thelon.tap();
         Permanent fungus = harness.addToBattlefieldAndReturn(player1, new FungusSliver());
         fungus.setCounterCount(CounterType.FUNGUS, 2);
         FungusSliver graveyardFungus = new FungusSliver();

@@ -118,7 +118,7 @@ class TheRavenManTest extends BaseCardTest {
         harness.setHand(player2, List.of(new YavimayaSojourner(), new YavimayaSojourner()));
 
         for (int i = 0; i < 2; i++) {
-            raven.setTapped(false);
+            raven.untap();
             addManaForAbility();
             harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(raven), null, null);
             assertThat(raven.isTapped()).isTrue();
@@ -165,7 +165,7 @@ class TheRavenManTest extends BaseCardTest {
     @DisplayName("The discard ability cannot be activated while the Raven is tapped")
     void cannotActivateWhileTapped() {
         Permanent raven = addReadyRaven();
-        raven.setTapped(true);
+        raven.tap();
         addManaForAbility();
 
         assertThatThrownBy(() -> harness.activateAbility(

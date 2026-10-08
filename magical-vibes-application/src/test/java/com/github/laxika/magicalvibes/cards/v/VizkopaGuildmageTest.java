@@ -143,7 +143,7 @@ class VizkopaGuildmageTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
 
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
         declareAttackers(player2, List.of(0));
         resolveCombat(player2);
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);

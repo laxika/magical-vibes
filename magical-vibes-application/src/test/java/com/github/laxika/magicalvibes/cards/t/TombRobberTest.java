@@ -89,7 +89,7 @@ class TombRobberTest extends BaseCardTest {
         Card firstDiscard = new Forest();
         Card secondDiscard = new Forest();
         addTombRobber(nonland);
-        findPermanent(player1, "Tomb Robber").setTapped(true);
+        findPermanent(player1, "Tomb Robber").tap();
         harness.setHand(player1, List.of(firstDiscard, secondDiscard));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

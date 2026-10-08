@@ -80,7 +80,7 @@ class WolfsbaneHighlandHeroTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent wolfsbane = harness.addToBattlefieldAndReturn(player1, new WolfsbaneHighlandHero());
         wolfsbane.setSummoningSick(true);
-        wolfsbane.setTapped(true);
+        wolfsbane.tap();
         addManaForAbility(player1);
 
         harness.activateAbility(player1, 0, null, null);

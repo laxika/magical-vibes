@@ -53,7 +53,7 @@ class TheModernAgeTest extends BaseCardTest {
     @Test
     void chapterIIITransformsIntoVectorGlider() {
         Permanent saga = addSagaWithLore(2);
-        saga.setTapped(true);
+        saga.tap();
 
         advanceToNextChapter();
         harness.passBothPriorities();

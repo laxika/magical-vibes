@@ -159,7 +159,7 @@ class TuskguardCaptainTest extends BaseCardTest {
     @DisplayName("A tapped Captain cannot activate Outlast")
     void outlastRequiresUntappedCaptain() {
         Permanent captain = addCaptainReady(player1);
-        captain.setTapped(true);
+        captain.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

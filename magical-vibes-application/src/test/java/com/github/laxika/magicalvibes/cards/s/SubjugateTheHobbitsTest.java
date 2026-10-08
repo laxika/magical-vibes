@@ -52,7 +52,7 @@ class SubjugateTheHobbitsTest extends BaseCardTest {
         Permanent first = harness.addToBattlefieldAndReturn(player2, new ReclamationSage());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new ReclamationSage());
         Permanent smaller = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
-        first.setTapped(true);
+        first.tap();
 
         castSubjugateTheHobbits();
 

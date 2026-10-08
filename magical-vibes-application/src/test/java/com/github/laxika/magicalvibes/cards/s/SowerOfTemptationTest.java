@@ -163,7 +163,7 @@ class SowerOfTemptationTest extends BaseCardTest {
     @DisplayName("Taking control does not untap the creature or let it attack immediately")
     void stolenTappedCreatureStaysTappedAndCannotAttackImmediately() {
         Permanent giant = addCreatureReady(player2, new HillcomberGiant());
-        giant.setTapped(true);
+        giant.tap();
 
         castSower(giant.getId());
         harness.passBothPriorities();

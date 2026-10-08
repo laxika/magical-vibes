@@ -57,7 +57,7 @@ class StarvedRusalkaTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent rusalka = harness.addToBattlefieldAndReturn(player1, new StarvedRusalka());
-        rusalka.setTapped(true);
+        rusalka.tap();
         harness.setLife(player1, 20);
         harness.addMana(player1, ManaColor.GREEN, 1);
 

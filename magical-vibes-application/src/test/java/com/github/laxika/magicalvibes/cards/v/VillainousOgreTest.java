@@ -147,7 +147,7 @@ class VillainousOgreTest extends BaseCardTest {
     @DisplayName("The regeneration ability can be activated repeatedly while the Ogre is tapped")
     void tappedOgreCanCreateMultipleRegenerationShields() {
         Permanent ogre = addCreatureReady(player1, new VillainousOgre());
-        ogre.setTapped(true);
+        ogre.tap();
         addCreatureReady(player1, new GutwrencherOni());
         harness.addMana(player1, ManaColor.BLACK, 2);
 

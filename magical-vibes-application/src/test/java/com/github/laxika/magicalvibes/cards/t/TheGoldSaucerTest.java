@@ -103,7 +103,7 @@ class TheGoldSaucerTest extends BaseCardTest {
         Permanent saucer = harness.addToBattlefieldAndReturn(player1, new TheGoldSaucer());
         harness.addToBattlefield(player1, new PhoenixDown());
         harness.addToBattlefield(player1, new PhoenixDown());
-        saucer.setTapped(true);
+        saucer.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))

@@ -174,7 +174,7 @@ class TheFirstIroanGamesTest extends BaseCardTest {
         Permanent gold = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getName().equals("Gold"))
                 .findFirst().orElseThrow();
-        gold.setTapped(true);
+        gold.tap();
         gold.setSummoningSick(true);
         int goldIndex = gd.playerBattlefields.get(player1.getId()).indexOf(gold);
 

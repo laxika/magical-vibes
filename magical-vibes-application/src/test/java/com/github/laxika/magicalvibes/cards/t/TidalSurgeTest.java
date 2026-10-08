@@ -181,7 +181,7 @@ class TidalSurgeTest extends BaseCardTest {
     @DisplayName("An already tapped creature is a legal target")
     void canTargetTappedCreature() {
         Permanent tapped = harness.addToBattlefieldAndReturn(player2, new CravenGiant());
-        tapped.setTapped(true);
+        tapped.tap();
         Permanent untapped = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         castTidalSurge(List.of(tapped.getId(), untapped.getId()));

@@ -58,7 +58,7 @@ class TreasonousOgreTest extends BaseCardTest {
     void manaAbilityWorksWhileTappedAndSummoningSick() {
         Permanent ogre = harness.addToBattlefieldAndReturn(player1, new TreasonousOgre());
         ogre.setSummoningSick(true);
-        ogre.setTapped(true);
+        ogre.tap();
         harness.setLife(player1, 20);
 
         harness.activateAbility(player1, 0, 0, null, null);

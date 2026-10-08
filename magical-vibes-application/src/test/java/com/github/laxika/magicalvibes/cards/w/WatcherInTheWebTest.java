@@ -72,7 +72,7 @@ class WatcherInTheWebTest extends BaseCardTest {
     @DisplayName("Additional blocks do not allow a tapped Watcher to block")
     void cannotBlockWhileTapped() {
         Permanent watcher = prepareCombat(2);
-        watcher.setTapped(true);
+        watcher.tap();
         int watcherIdx = gd.playerBattlefields.get(player2.getId()).indexOf(watcher);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, assignments(watcherIdx, 2)))

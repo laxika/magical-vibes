@@ -87,7 +87,7 @@ class WallOfLavaTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfLava());
         wall.setSummoningSick(true);
-        wall.setTapped(true);
+        wall.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

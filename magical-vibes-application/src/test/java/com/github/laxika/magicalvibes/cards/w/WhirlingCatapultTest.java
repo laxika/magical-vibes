@@ -108,7 +108,7 @@ class WhirlingCatapultTest extends BaseCardTest {
     @Test
     void canActivateRepeatedlyWhileTapped() {
         var catapult = harness.addToBattlefieldAndReturn(player1, new WhirlingCatapult());
-        catapult.setTapped(true);
+        catapult.tap();
         var first = new ShieldSphere();
         var second = new WildAesthir();
         var third = new AesthirGlider();

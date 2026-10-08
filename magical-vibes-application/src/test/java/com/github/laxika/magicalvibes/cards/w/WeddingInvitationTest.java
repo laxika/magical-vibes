@@ -104,7 +104,7 @@ class WeddingInvitationTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent invitation = harness.addToBattlefieldAndReturn(player1, new WeddingInvitation());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
-        invitation.setTapped(true);
+        invitation.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);

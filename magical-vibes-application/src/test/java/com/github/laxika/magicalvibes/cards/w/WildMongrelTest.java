@@ -115,7 +115,7 @@ class WildMongrelTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         Permanent mongrel = harness.addToBattlefieldAndReturn(player1, new WildMongrel());
-        mongrel.setTapped(true);
+        mongrel.tap();
         mongrel.setSummoningSick(true);
         harness.setHand(player1, List.of(new Werebear()));
 

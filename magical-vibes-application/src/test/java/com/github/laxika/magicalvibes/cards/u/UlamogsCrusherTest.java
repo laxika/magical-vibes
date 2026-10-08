@@ -86,7 +86,7 @@ class UlamogsCrusherTest extends BaseCardTest {
     @Test
     void tappedCrusherIsNotRequiredToAttack() {
         Permanent crusher = addCreatureReady(player1, new UlamogsCrusher());
-        crusher.setTapped(true);
+        crusher.tap();
 
         declareAttackers(List.of());
 

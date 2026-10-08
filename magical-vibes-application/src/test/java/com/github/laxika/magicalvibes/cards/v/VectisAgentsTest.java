@@ -94,7 +94,7 @@ class VectisAgentsTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent agents = harness.addToBattlefieldAndReturn(player1, new VectisAgents());
         agents.setSummoningSick(true);
-        agents.setTapped(true);
+        agents.tap();
         int basePower = agents.getEffectivePower();
         addUbMana(player1);
 

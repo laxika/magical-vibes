@@ -134,7 +134,7 @@ class WhipSergeantTest extends BaseCardTest {
     @DisplayName("A tapped Whip Sergeant can activate repeatedly for different creatures")
     void tappedSergeantCanActivateRepeatedly() {
         Permanent sergeant = harness.addToBattlefieldAndReturn(player1, new WhipSergeant());
-        sergeant.setTapped(true);
+        sergeant.tap();
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 2);

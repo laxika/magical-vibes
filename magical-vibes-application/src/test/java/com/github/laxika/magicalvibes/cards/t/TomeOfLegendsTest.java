@@ -137,7 +137,7 @@ class TomeOfLegendsTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent tome = harness.enterBattlefieldAndReturn(player1, new TomeOfLegends());
-        tome.setTapped(true);
+        tome.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

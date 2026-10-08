@@ -129,7 +129,7 @@ class VitosInquisitorTest extends BaseCardTest {
     void canActivateRepeatedlyWhileTappedAndSummoningSick() {
         Permanent inquisitor = harness.addToBattlefieldAndReturn(player1, new VitosInquisitor());
         inquisitor.setSummoningSick(true);
-        inquisitor.setTapped(true);
+        inquisitor.tap();
         harness.addToBattlefield(player1, new GlowcapLantern());
         harness.addMana(player1, ManaColor.BLACK, 2);
 

@@ -110,7 +110,7 @@ class SparkspitterTest extends BaseCardTest {
     @DisplayName("A tapped Sparkspitter cannot activate again")
     void cannotActivateWhileTapped() {
         Permanent sparkspitter = addCreatureReady(player1, new Sparkspitter());
-        sparkspitter.setTapped(true);
+        sparkspitter.tap();
         harness.setHand(player1, List.of(new FomoriNomad()));
         harness.addMana(player1, ManaColor.RED, 1);
 

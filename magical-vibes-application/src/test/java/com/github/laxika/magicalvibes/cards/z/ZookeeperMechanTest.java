@@ -69,7 +69,7 @@ class ZookeeperMechanTest extends BaseCardTest {
     void canBoostItselfWhileTappedAndSummoningSick() {
         Permanent mechan = harness.addToBattlefieldAndReturn(player1, new ZookeeperMechan());
         mechan.setSummoningSick(true);
-        mechan.setTapped(true);
+        mechan.tap();
         harness.addMana(player1, ManaColor.RED, 7);
 
         harness.activateAbility(player1, 0, 1, null, mechan.getId());

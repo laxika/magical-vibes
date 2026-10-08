@@ -177,7 +177,7 @@ class VitalSplicerTest extends BaseCardTest {
         resolveAllTriggers();
         Permanent splicer = findPermanent(player1, "Vital Splicer");
         Permanent golem = findPermanent(player1, "Phyrexian Golem");
-        splicer.setTapped(true);
+        splicer.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, golem.getId());
 

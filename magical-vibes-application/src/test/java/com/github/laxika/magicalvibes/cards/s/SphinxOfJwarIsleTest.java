@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.i.IntoTheRoil;
 import com.github.laxika.magicalvibes.cards.k.KrakenHatchling;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.cards.w.WelkinTern;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -108,9 +109,9 @@ class SphinxOfJwarIsleTest extends BaseCardTest {
         harness.addToBattlefield(player2, new WelkinTern());
         declareAttackersAndPrepareBlockers(List.of(0));
 
-        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, java.util.Map.of(0, 0)))
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
-        gs.declareBlockers(gd, player2, java.util.Map.of(1, 0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
         resolveCombat();
 
         harness.assertLife(player2, 20);

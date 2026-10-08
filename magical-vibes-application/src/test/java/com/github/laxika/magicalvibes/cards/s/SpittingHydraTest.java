@@ -95,7 +95,7 @@ class SpittingHydraTest extends BaseCardTest {
     void paysCounterBeforeResolutionWhileTappedOnOpponentsTurn() {
         Permanent hydra = harness.enterBattlefieldAndReturn(player1, new SpittingHydra());
         Permanent target = harness.enterBattlefieldAndReturn(player2, new SpittingHydra());
-        hydra.setTapped(true);
+        hydra.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.RED, 1);

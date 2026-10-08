@@ -117,7 +117,7 @@ class SunsetPyramidTest extends BaseCardTest {
     void neitherAbilityCanBeActivatedWhileTapped() {
         Permanent pyramid = harness.addToBattlefieldAndReturn(player1, new SunsetPyramid());
         pyramid.setCounterCount(CounterType.BRICK, 3);
-        pyramid.setTapped(true);
+        pyramid.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

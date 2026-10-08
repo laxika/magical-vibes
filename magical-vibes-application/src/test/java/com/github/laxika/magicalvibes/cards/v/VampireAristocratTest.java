@@ -201,7 +201,7 @@ class VampireAristocratTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent vamp = harness.addToBattlefieldAndReturn(player1, new VampireAristocrat());
         vamp.setSummoningSick(true);
-        vamp.setTapped(true);
+        vamp.tap();
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
 
         harness.activateAbility(player1, 0, null, null);

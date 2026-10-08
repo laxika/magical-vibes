@@ -97,7 +97,7 @@ class TeveshSzatDoomOfFoolsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
     }
 
@@ -135,7 +135,7 @@ class TeveshSzatDoomOfFoolsTest extends BaseCardTest {
         assertThat(tevesh.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
     }
 
     @Test

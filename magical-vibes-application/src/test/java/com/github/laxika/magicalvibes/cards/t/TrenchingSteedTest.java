@@ -37,9 +37,9 @@ class TrenchingSteedTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent steed = harness.addToBattlefieldAndReturn(player1, new TrenchingSteed());
         steed.setSummoningSick(true);
-        steed.setTapped(true);
+        steed.tap();
         Permanent land = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
-        land.setTapped(true);
+        land.tap();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

@@ -125,7 +125,7 @@ class StingingLicidTest extends BaseCardTest {
     void attachingToAlreadyTappedCreatureDoesNotDealDamage() {
         Permanent licid = addReadyLicid(player1);
         Permanent host = addCreatureReady(player2, new FightingDrake());
-        host.setTapped(true);
+        host.tap();
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.BLUE, 2);
 

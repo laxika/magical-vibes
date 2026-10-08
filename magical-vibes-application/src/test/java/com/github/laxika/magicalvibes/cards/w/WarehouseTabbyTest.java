@@ -113,7 +113,7 @@ class WarehouseTabbyTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent tabby = harness.addToBattlefieldAndReturn(player1, new WarehouseTabby());
         tabby.setSummoningSick(true);
-        tabby.setTapped(true);
+        tabby.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 

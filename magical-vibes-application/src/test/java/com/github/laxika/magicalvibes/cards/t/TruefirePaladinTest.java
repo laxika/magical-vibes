@@ -129,7 +129,7 @@ class TruefirePaladinTest extends BaseCardTest {
     void abilitiesDoNotRequireTappingOrHaste() {
         Permanent paladin = harness.addToBattlefieldAndReturn(player1, new TruefirePaladin());
         paladin.setSummoningSick(true);
-        paladin.setTapped(true);
+        paladin.tap();
         addRedWhite(player1);
         addRedWhite(player1);
 

@@ -97,7 +97,7 @@ class TimberwatchElfTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped even with mana available")
     void cannotActivateWhileTapped() {
         Permanent elf = addCreatureReady(player1, new TimberwatchElf());
-        elf.setTapped(true);
+        elf.tap();
         addAbilityMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elf.getId()))

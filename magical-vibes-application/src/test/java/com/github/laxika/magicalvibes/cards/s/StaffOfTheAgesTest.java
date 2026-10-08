@@ -116,7 +116,7 @@ class StaffOfTheAgesTest extends BaseCardTest {
     void tappedStaffStillAllowsBlocking() {
         harness.addToBattlefield(player2, new Swamp());
         Permanent staff = harness.addToBattlefieldAndReturn(player1, new StaffOfTheAges());
-        staff.setTapped(true);
+        staff.tap();
         Permanent attacker = addSwampwalker(player1);
         Permanent blocker = addCreatureReady(player2, new BalduvianBears());
         harness.setLife(player2, 20);

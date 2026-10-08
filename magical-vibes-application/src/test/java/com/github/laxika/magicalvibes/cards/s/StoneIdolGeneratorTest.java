@@ -108,7 +108,7 @@ class StoneIdolGeneratorTest extends BaseCardTest {
     @Test
     void tappedGeneratorCannotActivateEvenWithEnoughEnergy() {
         Permanent generator = harness.addToBattlefieldAndReturn(player1, new StoneIdolGenerator());
-        generator.setTapped(true);
+        generator.tap();
         gd.playerEnergyCounters.put(player1.getId(), 6);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

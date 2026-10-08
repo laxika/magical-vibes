@@ -110,7 +110,7 @@ class VeinfireBorderpostTest extends BaseCardTest {
     @DisplayName("A tapped basic land can be returned and is returned before resolution")
     void returnsTappedLandAsCastingCost() {
         Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
-        mountain.setTapped(true);
+        mountain.tap();
         harness.setHand(player1, List.of(new VeinfireBorderpost()));
         harness.addMana(player1, ManaColor.RED, 1);
 

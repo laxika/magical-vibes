@@ -35,6 +35,9 @@ class TeferisProtectionTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(bears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(land);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(land);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentBears);
         assertThat(gd.playersWithLifeTotalCantChangeUntilNextTurn).contains(player1.getId());
         assertThat(gd.playersWithProtectionFromEverythingUntilNextTurn).contains(player1.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -141,9 +144,6 @@ class TeferisProtectionTest extends BaseCardTest {
 
         castProtection();
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(bears);
-        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(land);
-        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(land);
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentBears);
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.UNTAP);

@@ -137,12 +137,12 @@ class UrzasSagaTest extends BaseCardTest {
         harness.activateAbility(player1, sagaIndex, 0, null, null);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
 
-        saga.setTapped(false);
+        saga.untap();
         resolveNextChapter();
         harness.activateAbility(player1, sagaIndex, 0, null, null);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
 
-        saga.setTapped(false);
+        saga.untap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, sagaIndex, 1, null, null);
         harness.passBothPriorities();

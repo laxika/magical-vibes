@@ -128,7 +128,7 @@ class UtopiaMyconTest extends BaseCardTest {
     void abilitiesWorkWhileTappedAndSummoningSick() {
         Permanent mycon = addMycon();
         mycon.setSummoningSick(true);
-        mycon.setTapped(true);
+        mycon.tap();
         mycon.setCounterCount(CounterType.FUNGUS, 3);
 
         harness.activateAbility(player1, 0, null, null);

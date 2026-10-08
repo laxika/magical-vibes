@@ -142,7 +142,7 @@ class SpikeDroneTest extends BaseCardTest {
     void selfTargetWithExtraCounterSurvives() {
         Permanent drone = castDrone();
         drone.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        drone.setTapped(true);
+        drone.tap();
         drone.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

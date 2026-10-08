@@ -107,7 +107,7 @@ class TelekineticSliverTest extends BaseCardTest {
     @Test
     void tappedSliverCannotActivateAgain() {
         Permanent sliver = addCreatureReady(player1, new TelekineticSliver());
-        sliver.setTapped(true);
+        sliver.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))

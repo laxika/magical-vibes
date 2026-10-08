@@ -63,7 +63,7 @@ class WeaselbackRedcapTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent redcap = harness.addToBattlefieldAndReturn(player1, new WeaselbackRedcap());
         redcap.setSummoningSick(true);
-        redcap.setTapped(true);
+        redcap.tap();
         addAbilityMana(player1);
 
         harness.activateAbility(player1, 0, null, null);

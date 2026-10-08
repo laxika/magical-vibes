@@ -102,7 +102,7 @@ class UncontrolledInfestationTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
         assertThat(gd.stack).isEmpty();
 
-        land.setTapped(false);
+        land.untap();
         harness.tapPermanent(player2, 0);
         resolveAllTriggers();
 

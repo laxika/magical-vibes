@@ -83,7 +83,7 @@ class StoneriseSpiritTest extends BaseCardTest {
     @Test
     void tappedSummoningSickSourceCanGrantFlyingToOpponentCreature() {
         Permanent spirit = harness.addToBattlefieldAndReturn(player1, new StoneriseSpirit());
-        spirit.setTapped(true);
+        spirit.tap();
         spirit.setSummoningSick(true);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new EagerFirstYear());
         harness.setGraveyard(player1, List.of(new EagerFirstYear()));

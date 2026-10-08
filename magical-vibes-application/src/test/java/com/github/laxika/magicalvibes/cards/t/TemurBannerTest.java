@@ -81,7 +81,7 @@ class TemurBannerTest extends BaseCardTest {
     @DisplayName("Neither ability can be activated while the banner is tapped")
     void tappedBannerCannotActivate(int abilityIndex) {
         Permanent banner = addReadyBanner();
-        banner.setTapped(true);
+        banner.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);

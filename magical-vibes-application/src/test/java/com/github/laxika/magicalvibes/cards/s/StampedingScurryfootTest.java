@@ -1,4 +1,4 @@
-﻿package com.github.laxika.magicalvibes.cards.s;
+package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -54,7 +54,7 @@ class StampedingScurryfootTest extends BaseCardTest {
     void exhaustWorksWhileTappedAndSummoningSick() {
         Permanent scurryfoot = harness.addToBattlefieldAndReturn(player1, new StampedingScurryfoot());
         scurryfoot.setSummoningSick(true);
-        scurryfoot.setTapped(true);
+        scurryfoot.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

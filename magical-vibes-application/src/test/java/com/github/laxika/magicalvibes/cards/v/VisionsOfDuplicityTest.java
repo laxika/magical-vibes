@@ -73,7 +73,7 @@ class VisionsOfDuplicityTest extends BaseCardTest {
         Player third = addThirdPlayer();
         Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(third, new HillGiant());
-        first.setTapped(true);
+        first.tap();
         harness.setHand(player1, List.of(new VisionsOfDuplicity()));
         addManaForNormalCast();
 

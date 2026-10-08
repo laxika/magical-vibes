@@ -80,7 +80,7 @@ class TheFairBasilicaTest extends BaseCardTest {
     @Test
     void tappedLandCannotActivateEitherAbility() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new TheFairBasilica());
-        land.setTapped(true);
+        land.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 

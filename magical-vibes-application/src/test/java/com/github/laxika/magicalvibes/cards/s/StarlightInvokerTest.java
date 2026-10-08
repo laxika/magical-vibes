@@ -173,7 +173,7 @@ class StarlightInvokerTest extends BaseCardTest {
     void canActivateWhileTapped() {
         harness.setLife(player1, 20);
         Permanent invoker = addCreatureReady(player1, new StarlightInvoker());
-        invoker.setTapped(true);
+        invoker.tap();
         harness.addMana(player1, ManaColor.WHITE, 8);
 
         harness.activateAbility(player1, 0, null, null);

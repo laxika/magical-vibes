@@ -102,7 +102,7 @@ class ThranForgeTest extends BaseCardTest {
     @DisplayName("Can activate a tapped Forge without tapping it as a cost")
     void canActivateWhileTapped() {
         Permanent forge = harness.addToBattlefieldAndReturn(player1, new ThranForge());
-        forge.setTapped(true);
+        forge.tap();
         Permanent target = addCreatureReady(player2, new BenalishKnight());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

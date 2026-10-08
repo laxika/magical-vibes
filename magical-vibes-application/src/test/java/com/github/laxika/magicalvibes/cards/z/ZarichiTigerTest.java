@@ -43,7 +43,7 @@ class ZarichiTigerTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent tiger = harness.addToBattlefieldAndReturn(player1, new ZarichiTiger());
         tiger.setSummoningSick(false);
-        tiger.setTapped(true);
+        tiger.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

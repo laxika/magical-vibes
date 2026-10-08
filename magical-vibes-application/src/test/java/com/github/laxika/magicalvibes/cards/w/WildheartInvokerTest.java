@@ -68,7 +68,7 @@ class WildheartInvokerTest extends BaseCardTest {
     @Test
     void canTargetItselfWhileTappedAndSummoningSick() {
         Permanent invoker = harness.addToBattlefieldAndReturn(player1, new WildheartInvoker());
-        invoker.setTapped(true);
+        invoker.tap();
         invoker.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 8);
 

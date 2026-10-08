@@ -133,7 +133,7 @@ class ThallidDevourerTest extends BaseCardTest {
     void tokenAbilityPaysCountersImmediatelyWithoutTapRestriction() {
         Permanent devourer = harness.addToBattlefieldAndReturn(player1, new ThallidDevourer());
         devourer.setSummoningSick(true);
-        devourer.setTapped(true);
+        devourer.tap();
         devourer.setCounterCount(CounterType.FUNGUS, 3);
 
         harness.activateAbility(player1, 0, null, null);

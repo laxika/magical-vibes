@@ -240,7 +240,7 @@ class SpikeshotElderTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent elder = harness.addToBattlefieldAndReturn(player1, new SpikeshotElder());
         elder.setSummoningSick(true);
-        elder.setTapped(true);
+        elder.tap();
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.activateAbility(player1, 0, null, player2.getId());

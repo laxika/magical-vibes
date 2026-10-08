@@ -159,7 +159,7 @@ class SundialOfTheInfiniteTest extends BaseCardTest {
     @DisplayName("A tapped Sundial cannot activate")
     void cannotActivateWhileTapped() {
         Permanent sundial = addReadySundial(player1);
-        sundial.setTapped(true);
+        sundial.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

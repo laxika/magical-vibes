@@ -116,7 +116,7 @@ class RushwoodDryadTest extends BaseCardTest {
     @DisplayName("A tapped Forest still makes Rushwood Dryad unblockable")
     void cannotBeBlockedWhenDefendersForestIsTapped() {
         harness.addToBattlefield(player2, new Forest());
-        findPermanent(player2, "Forest").setTapped(true);
+        findPermanent(player2, "Forest").tap();
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent attacker = addCreatureReady(player1, new RushwoodDryad());
         declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));

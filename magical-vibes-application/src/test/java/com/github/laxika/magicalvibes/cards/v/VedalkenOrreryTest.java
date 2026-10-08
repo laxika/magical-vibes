@@ -117,7 +117,7 @@ class VedalkenOrreryTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Vedalken Orrery still permits instant timing")
     void tappedOrreryStillAllowsCasting() {
-        harness.addToBattlefieldAndReturn(player1, new VedalkenOrrery()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new VedalkenOrrery()).tap();
         harness.forceStep(TurnStep.END_STEP);
         harness.setHand(player1, List.of(new DrossCrocodile()));
         harness.addMana(player1, ManaColor.BLACK, 1);

@@ -97,7 +97,7 @@ class ThranWarMachineTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Thran War Machine is not required to attack")
     void tappedWarMachineDoesNotHaveToAttack() {
-        addCreatureReady(player1, new ThranWarMachine()).setTapped(true);
+        addCreatureReady(player1, new ThranWarMachine()).tap();
 
         declareAttackers(List.of());
 

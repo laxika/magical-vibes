@@ -161,7 +161,7 @@ class VexingArcanixTest extends BaseCardTest {
         harness.handleListChoice(player2, "Vexing Arcanix");
 
         harness.setHand(player1, List.of(new Incinerate()));
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(false);
+        gd.playerBattlefields.get(player1.getId()).getFirst().untap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();

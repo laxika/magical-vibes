@@ -55,7 +55,7 @@ class WelderAutomatonTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedAndSummoningSick() {
         Permanent automaton = harness.addToBattlefieldAndReturn(player1, new WelderAutomaton());
-        automaton.setTapped(true);
+        automaton.tap();
         automaton.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.RED, 1);

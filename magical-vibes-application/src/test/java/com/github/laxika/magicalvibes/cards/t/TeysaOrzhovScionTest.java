@@ -185,7 +185,7 @@ class TeysaOrzhovScionTest extends BaseCardTest {
     @DisplayName("Can sacrifice the targeted creature and does not refund the cost")
     void sacrificedTargetIsNotExiledAndCostIsNotRefunded() {
         Permanent teysa = harness.addToBattlefieldAndReturn(player1, new TeysaOrzhovScion());
-        teysa.setTapped(true);
+        teysa.tap();
         harness.addToBattlefield(player1, new GhostWarden());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GhostWarden());
 

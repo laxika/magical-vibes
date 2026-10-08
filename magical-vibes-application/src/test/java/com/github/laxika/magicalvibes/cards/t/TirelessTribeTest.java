@@ -90,7 +90,7 @@ class TirelessTribeTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         Permanent tribe = harness.addToBattlefieldAndReturn(player1, new TirelessTribe());
-        tribe.setTapped(true);
+        tribe.tap();
         tribe.setSummoningSick(true);
         harness.setHand(player1, List.of(new TirelessTribe()));
         harness.ensurePriority(player1);

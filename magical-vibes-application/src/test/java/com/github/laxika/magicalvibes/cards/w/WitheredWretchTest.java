@@ -129,7 +129,7 @@ class WitheredWretchTest extends BaseCardTest {
         Card first = new FugitiveWizard();
         Card second = new FugitiveWizard();
         var wretch = harness.addToBattlefieldAndReturn(player1, new WitheredWretch());
-        wretch.setTapped(true);
+        wretch.tap();
         wretch.setSummoningSick(true);
         harness.setGraveyard(player2, List.of(first, second));
         harness.addMana(player1, ManaColor.COLORLESS, 2);

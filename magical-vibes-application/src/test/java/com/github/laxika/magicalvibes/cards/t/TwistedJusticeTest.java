@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.d.DriftOfPhantasms;
 import com.github.laxika.magicalvibes.cards.b.BorosSwiftblade;
 import com.github.laxika.magicalvibes.cards.w.Watchwolf;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -101,7 +102,7 @@ class TwistedJusticeTest extends BaseCardTest {
     @DisplayName("Draw count includes counters on the creature before it is sacrificed")
     void drawsUsingPowerBeforeSacrifice() {
         Permanent swiftblade = harness.addToBattlefieldAndReturn(player2, new BorosSwiftblade());
-        swiftblade.setPlusOnePlusOneCounters(2);
+        swiftblade.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
         harness.setHand(player1, List.of(new TwistedJustice()));
         addManaForTwistedJustice();

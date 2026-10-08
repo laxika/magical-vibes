@@ -192,7 +192,7 @@ class WallOfBoneTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfBone());
         wall.setSummoningSick(true);
-        wall.setTapped(true);
+        wall.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);

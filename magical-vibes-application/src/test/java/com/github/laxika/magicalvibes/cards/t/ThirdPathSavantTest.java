@@ -77,7 +77,7 @@ class ThirdPathSavantTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
         Permanent savant = harness.addToBattlefieldAndReturn(player1, new ThirdPathSavant());
-        savant.setTapped(true);
+        savant.tap();
         savant.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 14);
 

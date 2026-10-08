@@ -90,7 +90,7 @@ class VolcanicRamblerTest extends BaseCardTest {
         harness.setLife(player2, 20);
         Permanent rambler = harness.addToBattlefieldAndReturn(player1, new VolcanicRambler());
         rambler.setSummoningSick(true);
-        rambler.setTapped(true);
+        rambler.tap();
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.activateAbility(player1, 0, 0, null, player2.getId());

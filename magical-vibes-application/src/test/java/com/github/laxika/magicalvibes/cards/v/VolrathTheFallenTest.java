@@ -161,7 +161,7 @@ class VolrathTheFallenTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent volrath = addReadyVolrath(player1);
         volrath.setSummoningSick(true);
-        volrath.setTapped(true);
+        volrath.tap();
         int basePower = gqs.getEffectivePower(gd, volrath);
         int baseToughness = gqs.getEffectiveToughness(gd, volrath);
         harness.setHand(player1, List.of(new SpinelessThug()));

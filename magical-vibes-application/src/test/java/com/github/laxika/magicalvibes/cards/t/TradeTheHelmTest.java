@@ -75,8 +75,8 @@ class TradeTheHelmTest extends BaseCardTest {
         prepareSpell();
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
-        ownCreature.setTapped(true);
-        opponentArtifact.setTapped(true);
+        ownCreature.tap();
+        opponentArtifact.tap();
 
         harness.castAndResolveSorcery(player1, 0, List.of(ownCreature.getId(), opponentArtifact.getId()));
 

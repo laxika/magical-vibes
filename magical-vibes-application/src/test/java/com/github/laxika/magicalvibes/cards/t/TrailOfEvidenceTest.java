@@ -111,7 +111,7 @@ class TrailOfEvidenceTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         resolveAllTriggers();
         Permanent clue = findPermanent(player1, "Clue");
-        clue.setTapped(true);
+        clue.tap();
         int clueIndex = gd.playerBattlefields.get(player1.getId()).indexOf(clue);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

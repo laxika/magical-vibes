@@ -23,7 +23,7 @@ class StrandsOfNightTest extends BaseCardTest {
     void paysCostsBeforeReturningCreature() {
         Card creature = new GrizzlyBears();
         harness.addToBattlefield(player1, new StrandsOfNight());
-        harness.addToBattlefieldAndReturn(player1, new Swamp()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Swamp()).tap();
         harness.setGraveyard(player1, List.of(creature));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.setLife(player1, 20);

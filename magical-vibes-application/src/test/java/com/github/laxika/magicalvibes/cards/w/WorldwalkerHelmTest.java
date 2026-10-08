@@ -125,7 +125,7 @@ class WorldwalkerHelmTest extends BaseCardTest {
         addHelmAndMatterweaver();
         castCreatureAndChooseGnome();
         Permanent gnome = findPermanent(player1, "Gnome");
-        gnome.setTapped(true);
+        gnome.tap();
         gnome.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

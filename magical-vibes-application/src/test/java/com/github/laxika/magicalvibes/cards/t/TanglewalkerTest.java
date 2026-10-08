@@ -108,7 +108,7 @@ class TanglewalkerTest extends BaseCardTest {
     @DisplayName("A tapped artifact land still enables Tanglewalker's ability")
     void tappedArtifactLandEnablesAbility() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new DarksteelCitadel());
-        land.setTapped(true);
+        land.tap();
         Permanent blocker = addCreatureReady(player2, new DarksteelGargoyle());
         Permanent tanglewalker = addAttackingCreature(player1, new Tanglewalker());
 

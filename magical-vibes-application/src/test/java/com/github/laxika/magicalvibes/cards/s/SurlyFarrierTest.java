@@ -106,7 +106,7 @@ class SurlyFarrierTest extends BaseCardTest {
     @Test
     void tappedFarrierCannotActivate() {
         Permanent farrier = addReadyFarrier(player1);
-        farrier.setTapped(true);
+        farrier.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, farrier.getId()))
                 .isInstanceOf(IllegalStateException.class)

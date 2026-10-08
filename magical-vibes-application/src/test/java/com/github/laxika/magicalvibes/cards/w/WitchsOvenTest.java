@@ -65,7 +65,7 @@ class WitchsOvenTest extends BaseCardTest {
     void canSacrificeTappedSummoningSickCreatureWithoutMana() {
         Permanent oven = harness.addToBattlefieldAndReturn(player1, new WitchsOven());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        creature.setTapped(true);
+        creature.tap();
 
         harness.activateAbility(player1, 0, null, null);
 

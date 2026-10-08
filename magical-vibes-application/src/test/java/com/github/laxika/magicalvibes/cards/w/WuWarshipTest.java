@@ -72,7 +72,7 @@ class WuWarshipTest extends BaseCardTest {
     @DisplayName("Wu Warship can attack when the defending player's Island is tapped")
     void canAttackWhenDefendersIslandIsTapped() {
         harness.setLife(player2, 20);
-        harness.addToBattlefieldAndReturn(player2, new Island()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player2, new Island()).tap();
         addCreatureReady(player1, new WuWarship());
 
         declareAttackers(List.of(0));

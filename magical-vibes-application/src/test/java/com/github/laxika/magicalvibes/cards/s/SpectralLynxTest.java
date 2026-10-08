@@ -119,7 +119,7 @@ class SpectralLynxTest extends BaseCardTest {
     @DisplayName("Regeneration can be activated while tapped and does not untap the creature")
     void regenerationCanBeActivatedWhileTapped() {
         Permanent lynx = addCreatureReady(player1, new SpectralLynx());
-        lynx.setTapped(true);
+        lynx.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);

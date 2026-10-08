@@ -131,7 +131,7 @@ class ValorOfTheWorthyTest extends BaseCardTest {
         aura.setAttachedTo(bears.getId());
         Permanent disk = harness.addToBattlefieldAndReturn(player1, new NevinyrralsDisk());
         disk.setSummoningSick(false);
-        disk.setTapped(false);
+        disk.untap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 2, null, null);

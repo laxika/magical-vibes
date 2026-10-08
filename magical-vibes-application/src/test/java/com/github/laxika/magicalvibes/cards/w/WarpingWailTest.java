@@ -170,7 +170,7 @@ class WarpingWailTest extends BaseCardTest {
         var scion = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(gqs.getEffectivePower(gd, scion)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, scion)).isEqualTo(1);
-        scion.setTapped(true);
+        scion.tap();
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
