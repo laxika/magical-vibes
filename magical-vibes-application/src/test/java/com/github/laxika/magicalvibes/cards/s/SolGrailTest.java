@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
@@ -66,6 +68,45 @@ class SolGrailTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Sol Grail").isTapped()).isTrue();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+
+    @ParameterizedTest
+    @EnumSource(CardColor.class)
+    @DisplayName("A newly entered Sol Grail immediately produces one mana of any chosen color without using the stack")
+    void newlyEnteredGrailProducesChosenMana(CardColor color) {
+        harness.setHand(player1, List.of(new SolGrail()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, color.name());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        for (ManaColor manaColor : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor))
+                    .isEqualTo(manaColor.name().equals(color.name()) ? 1 : 0);
+        }
+        assertThat(findPermanent(player1, "Sol Grail").isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Colorless cannot be chosen and an invalid choice leaves the color choice pending")
+    void cannotChooseColorless() {
+        harness.setHand(player1, List.of(new SolGrail()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "COLORLESS"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+
+        harness.handleListChoice(player1, "WHITE");
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
     }
 
     private Permanent addReadyGrail(Player player, CardColor chosenColor) {
