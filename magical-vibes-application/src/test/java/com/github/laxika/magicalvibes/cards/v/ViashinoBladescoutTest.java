@@ -65,6 +65,45 @@ class ViashinoBladescoutTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Flash allows casting during the opponent's end step")
+    void canBeCastDuringOpponentsEndStep() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DurkwoodBaloth());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new ViashinoBladescout()));
+        addBladescoutMana();
+
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Viashino Bladescout");
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An enters trigger with a departed target grants no first strike")
+    void departedTargetDoesNotRedirectFirstStrike() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DurkwoodBaloth());
+        harness.setHand(player1, List.of(new ViashinoBladescout()));
+        addBladescoutMana();
+
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Viashino Bladescout");
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        Permanent bladescout = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gqs.hasKeyword(gd, bladescout, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
     private void castBladescout(UUID targetId) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
