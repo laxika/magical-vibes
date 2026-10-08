@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.g.GodheadOfAwe;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,14 +14,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WoodElemental.class, Forest.class, DurkwoodBoars.class})
+@CardUsed({WoodElemental.class, Forest.class, DurkwoodBoars.class, GodheadOfAwe.class})
 class WoodElementalTest extends BaseCardTest {
 
     private void castWoodElemental() {
-        harness.setHand(player1, List.of(new WoodElemental()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new WoodElemental(), "{3}{G}");
         harness.passBothPriorities();
     }
 
@@ -101,10 +98,8 @@ class WoodElementalTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(tapped);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Wood Elemental"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Wood Elemental"));
+        harness.assertNotOnBattlefield(player1, "Wood Elemental");
+        harness.assertInGraveyard(player1, "Wood Elemental");
     }
 
     @Test
@@ -118,9 +113,40 @@ class WoodElementalTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(forest);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Wood Elemental"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Wood Elemental"));
+        harness.assertNotOnBattlefield(player1, "Wood Elemental");
+        harness.assertInGraveyard(player1, "Wood Elemental");
+    }
+
+    @Test
+    @DisplayName("Only selected Forests are sacrificed when choosing a subset")
+    void maySacrificeOnlySomeEligibleForests() {
+        Permanent selected = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent kept = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        castWoodElemental();
+        harness.handleMultiplePermanentsChosen(player1, List.of(selected.getId()));
+
+        Permanent woodElemental = findPermanent(player1, "Wood Elemental");
+        assertThat(gqs.getEffectivePower(gd, woodElemental)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, woodElemental)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(kept).doesNotContain(selected);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("An existing Godhead of Awe overrides the sacrifice-defined size")
+    void existingBaseSizeSetterOverridesSacrificeCount() {
+        harness.addToBattlefield(player2, new GodheadOfAwe());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        castWoodElemental();
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+
+        Permanent woodElemental = findPermanent(player1, "Wood Elemental");
+        assertThat(gqs.getEffectivePower(gd, woodElemental)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, woodElemental)).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
 }
