@@ -47,7 +47,7 @@ class VenomsHungerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Destroys the target creature and gives its controller 2 life")
+    @DisplayName("Destroys the target creature and gives the spell's controller 2 life")
     void destroysCreatureAndGainsLife() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setLife(player1, 20);
@@ -56,8 +56,7 @@ class VenomsHungerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
@@ -75,5 +74,63 @@ class VenomsHungerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, plainsId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An opponent's Villain does not reduce the cost")
+    void opponentVillainDoesNotReduceCost() {
+        harness.addToBattlefield(player2, new DocOcksHenchmen());
+        harness.setHand(player1, List.of(new VenomsHunger()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        UUID targetId = harness.getPermanentId(player2, "Doc Ock's Henchmen");
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, targetId))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Multiple Villains reduce the cost by only two")
+    void multipleVillainsDoNotStackDiscount() {
+        harness.addToBattlefield(player1, new DocOcksHenchmen());
+        harness.addToBattlefield(player1, new DocOcksHenchmen());
+        harness.addToBattlefield(player2, new DocOcksHenchmen());
+        harness.setHand(player1, List.of(new VenomsHunger()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castAndResolveSorcery(player1, 0,
+                harness.getPermanentId(player2, "Doc Ock's Henchmen"));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Doc Ock's Henchmen");
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Can destroy your own Villain using its discount")
+    void canDestroyOwnVillain() {
+        harness.addToBattlefield(player1, new DocOcksHenchmen());
+        harness.setHand(player1, List.of(new VenomsHunger()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveSorcery(player1, 0,
+                harness.getPermanentId(player1, "Doc Ock's Henchmen"));
+        harness.assertNotOnBattlefield(player1, "Doc Ock's Henchmen");
+        harness.assertInGraveyard(player1, "Doc Ock's Henchmen");
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("No life gain when the only target leaves before resolution")
+    void noLifeGainWhenTargetLeaves() {
+        harness.addToBattlefield(player2, new DocOcksHenchmen());
+        harness.setHand(player1, List.of(new VenomsHunger()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        UUID targetId = harness.getPermanentId(player2, "Doc Ock's Henchmen");
+        harness.castSorcery(player1, 0, targetId);
+        gd.playerBattlefields.get(player2.getId()).removeIf(p -> p.getId().equals(targetId));
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Venom's Hunger");
     }
 }
