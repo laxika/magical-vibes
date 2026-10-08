@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.a.AzoriusAethermage;
 import com.github.laxika.magicalvibes.cards.a.AzoriusChancery;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.w.WreckingBall;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UtopiaSprawl.class, Forest.class, AzoriusChancery.class, AzoriusAethermage.class})
+@CardUsed({UtopiaSprawl.class, Forest.class, AzoriusChancery.class, AzoriusAethermage.class, WreckingBall.class})
 class UtopiaSprawlTest extends BaseCardTest {
 
     @Test
@@ -106,5 +107,63 @@ class UtopiaSprawlTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, nonForestCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a Forest");
+    }
+
+    @Test
+    void multipleSprawlsKeepIndependentColorsAndResolveWithoutTheStack() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new UtopiaSprawl(), new UtopiaSprawl()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+    }
+
+    @Test
+    void destroyedTargetPreventsAuraFromEnteringAndChoosingColor() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new UtopiaSprawl()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new WreckingBall()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.castAndResolveInstant(player2, 0, forest.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Utopia Sprawl");
+        harness.assertInGraveyard(player1, "Utopia Sprawl");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void destroyingEnchantedForestPutsAuraIntoGraveyard() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new UtopiaSprawl()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+        harness.setHand(player2, List.of(new WreckingBall()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, forest.getId());
+
+        harness.assertNotOnBattlefield(player1, "Utopia Sprawl");
+        harness.assertInGraveyard(player1, "Utopia Sprawl");
+        harness.assertInGraveyard(player1, "Forest");
     }
 }
