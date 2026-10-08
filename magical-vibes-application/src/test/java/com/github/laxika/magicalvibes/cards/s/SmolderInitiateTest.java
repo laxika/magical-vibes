@@ -20,6 +20,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SmolderInitiateTest extends BaseCardTest {
 
     private void castBlackSpell(Player caster) {
+        harness.forceActivePlayer(caster);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.addMana(caster, ManaColor.BLACK, 2);
         harness.castFromHand(caster, new Cinderbones(), "{2}{B}");
     }
@@ -31,6 +34,10 @@ class SmolderInitiateTest extends BaseCardTest {
         castBlackSpell(player1);
 
         GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
     }
@@ -46,6 +53,10 @@ class SmolderInitiateTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
     }
@@ -56,16 +67,13 @@ class SmolderInitiateTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SmolderInitiate());
 
         // Opponent casts the black spell so player1's payment mana stays isolated.
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
         castBlackSpell(player2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setLife(player2, 20);
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertLife(player2, 19);
         assertThat(harness.getGameData().playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(0);
@@ -76,16 +84,13 @@ class SmolderInitiateTest extends BaseCardTest {
     void canTargetSelf() {
         harness.addToBattlefield(player1, new SmolderInitiate());
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
         castBlackSpell(player2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setLife(player1, 20);
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertLife(player1, 19);
     }
@@ -97,10 +102,10 @@ class SmolderInitiateTest extends BaseCardTest {
         castBlackSpell(player1);
         harness.setLife(player2, 20);
 
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
-        while (!harness.getGameData().stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         harness.assertLife(player2, 20);
     }
@@ -115,4 +120,37 @@ class SmolderInitiateTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
     }
+
+    @Test
+    @DisplayName("Payment mana is retained until the targeted trigger resolves")
+    void paymentWaitsForResolution() {
+        harness.addToBattlefield(player1, new SmolderInitiate());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        castBlackSpell(player2);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("A black creature spell does not trigger its own Smolder Initiate ability")
+    void doesNotTriggerFromItsOwnCast() {
+        harness.castFromHand(player1, new SmolderInitiate(), "{B}");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
 }
