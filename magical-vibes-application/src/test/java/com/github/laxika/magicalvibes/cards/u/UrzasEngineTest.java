@@ -110,4 +110,48 @@ class UrzasEngineTest extends BaseCardTest {
         assertThat(engine.getBandId()).isNotNull();
         assertThat(engine.getBandId()).isEqualTo(bandmate.getBandId());
     }
+
+    @Test
+    void doesNotGrantTrampleToBandmateRemovedFromCombatBeforeResolution() {
+        Permanent engine = harness.addToBattlefieldAndReturn(player1, new UrzasEngine());
+        Permanent bandmate = harness.addToBattlefieldAndReturn(player1, new DeadlyInsect());
+        UUID bandId = UUID.randomUUID();
+        engine.setAttacking(true);
+        engine.setBandId(bandId);
+        bandmate.setAttacking(true);
+        bandmate.setBandId(bandId);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        bandmate.setAttacking(false);
+        bandmate.setBandId(null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bandmate, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void grantedTramplePersistsAfterBandmateLeavesCombat() {
+        Permanent engine = harness.addToBattlefieldAndReturn(player1, new UrzasEngine());
+        Permanent bandmate = harness.addToBattlefieldAndReturn(player1, new DeadlyInsect());
+        UUID bandId = UUID.randomUUID();
+        engine.setAttacking(true);
+        engine.setBandId(bandId);
+        bandmate.setAttacking(true);
+        bandmate.setBandId(bandId);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        bandmate.setAttacking(false);
+        bandmate.setBandId(null);
+
+        assertThat(gqs.hasKeyword(gd, bandmate, Keyword.TRAMPLE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bandmate, Keyword.TRAMPLE)).isFalse();
+    }
 }
