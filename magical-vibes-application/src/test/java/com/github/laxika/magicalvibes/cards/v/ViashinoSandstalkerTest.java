@@ -100,4 +100,25 @@ class ViashinoSandstalkerTest extends BaseCardTest {
 
         harness.assertNotInHand(player1, "Viashino Sandstalker");
     }
+
+    @Test
+    @DisplayName("A copy entering after the end step begins stays while the earlier copy returns")
+    void copyEnteringAfterEndStepBeginsDoesNotReturn() {
+        harness.setHand(player1, List.of());
+        ViashinoSandstalker original = new ViashinoSandstalker();
+        harness.addToBattlefield(player1, original);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        Permanent lateCopy = harness.enterBattlefieldAndReturn(player1, new ViashinoSandstalker());
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(lateCopy);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(original);
+    }
 }
