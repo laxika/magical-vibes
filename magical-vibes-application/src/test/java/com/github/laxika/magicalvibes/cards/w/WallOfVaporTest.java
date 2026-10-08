@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.d.DAvenantArcher;
 import com.github.laxika.magicalvibes.cards.p.PsychicPurge;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WallOfVapor.class, DAvenantArcher.class, PsychicPurge.class})
+@CardUsed({WallOfVapor.class, DAvenantArcher.class, PsychicPurge.class, TurnToFrog.class})
 class WallOfVaporTest extends BaseCardTest {
 
     @Test
@@ -73,5 +74,22 @@ class WallOfVaporTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, wall.getId());
 
         harness.assertNotOnBattlefield(player2, "Wall of Vapor");
+    }
+
+    @Test
+    @DisplayName("Losing all abilities removes prevention of combat damage from a blocked creature")
+    void doesNotPreventCombatDamageAfterLosingAbilities() {
+        addCreatureReady(player1, new DAvenantArcher());
+        Permanent wall = addCreatureReady(player2, new WallOfVapor());
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, wall.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertNotOnBattlefield(player2, "Wall of Vapor");
+        harness.assertInGraveyard(player2, "Wall of Vapor");
     }
 }
