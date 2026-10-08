@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.Afflict;
 import com.github.laxika.magicalvibes.cards.c.CephalidScout;
 import com.github.laxika.magicalvibes.cards.c.CentaurGarden;
 import com.github.laxika.magicalvibes.cards.f.FledglingImp;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -64,8 +65,7 @@ class VampiricDragonTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Afflict()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
@@ -96,6 +96,67 @@ class VampiricDragonTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Repeated damage to the same creature produces only one death counter")
+    void repeatedDamageProducesOneCounter() {
+        Permanent dragon = addCreatureReady(player1, new VampiricDragon());
+        Permanent target = addCreatureReady(player2, new FledglingImp());
+
+        activateDamageAbility(target);
+        harness.passBothPriorities();
+        activateDamageAbility(target);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(dragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A creature dying without being damaged by the Dragon gives no counter")
+    void undamagedCreatureDeathGivesNoCounter() {
+        Permanent dragon = addCreatureReady(player1, new VampiricDragon());
+        Permanent target = addCreatureReady(player2, new CephalidScout());
+        harness.setHand(player1, List.of(new Afflict()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(dragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The death of a damaged creature you control also gives a counter")
+    void ownDamagedCreatureDeathGivesCounter() {
+        Permanent dragon = addCreatureReady(player1, new VampiricDragon());
+        Permanent target = addCreatureReady(player1, new CephalidScout());
+
+        activateDamageAbility(target);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(dragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Combat damage killing a blocker also gives a counter")
+    void combatDamageDeathGivesCounter() {
+        Permanent dragon = addCreatureReady(player1, new VampiricDragon());
+        Permanent target = addCreatureReady(player2, new CephalidScout());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(dragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     private void activateDamageAbility(Permanent target) {
