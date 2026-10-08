@@ -17,8 +17,7 @@ class WarSqueakTest extends BaseCardTest {
 
     @Test
     void enchantedCreatureGetsBoostAndHaste() {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         Permanent aura = new Permanent(new WarSqueak());
         aura.setAttachedTo(creature.getId());
@@ -31,10 +30,8 @@ class WarSqueakTest extends BaseCardTest {
 
     @Test
     void entersAndStopsAnOpponentCreatureFromBlocking() {
-        Permanent enchanted = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(enchanted);
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new WarSqueak()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -51,8 +48,7 @@ class WarSqueakTest extends BaseCardTest {
 
     @Test
     void mayEnchantTheSameOpponentCreatureItTargetsForTheEtbAbility() {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(creature);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new WarSqueak()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -64,5 +60,62 @@ class WarSqueakTest extends BaseCardTest {
         assertThat(creature.isCantBlockThisTurn()).isTrue();
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void canEnchantCreatureWhenOpponentHasNoCreatures() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WarSqueak()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "War Squeak");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
+        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void choosesOpponentCreatureAfterAuraResolves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WarSqueak()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "War Squeak");
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(blocker.isCantBlockThisTurn()).isFalse();
+        harness.handlePermanentChosen(player1, blocker.getId());
+        resolveAllTriggers();
+
+        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(creature.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    void boostAndHasteEndWhenAuraLeavesButBlockingRestrictionPersists() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WarSqueak()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castEnchantment(player1, 0, List.of(creature.getId(), blocker.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "War Squeak");
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
+        assertThat(blocker.isCantBlockThisTurn()).isTrue();
     }
 }
