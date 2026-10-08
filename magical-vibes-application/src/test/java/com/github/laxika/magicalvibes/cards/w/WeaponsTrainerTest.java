@@ -73,4 +73,49 @@ class WeaponsTrainerTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
     }
+
+    @Test
+    void multipleTrainersBoostEachOtherAndStackForOtherCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new WeaponsTrainer());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new WeaponsTrainer());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new LeoninScimitar());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    void multipleEquipmentDoNotMultiplyBonusAndOneRemainingKeepsItActive() {
+        harness.addToBattlefield(player1, new WeaponsTrainer());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent firstEquipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        harness.addToBattlefield(player1, new LeoninScimitar());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstEquipment);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    void losesBonusWhenTrainerLeavesEvenIfEquipmentRemains() {
+        Permanent trainer = harness.addToBattlefieldAndReturn(player1, new WeaponsTrainer());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new LeoninScimitar());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+
+        gd.playerBattlefields.get(player1.getId()).remove(trainer);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
 }
