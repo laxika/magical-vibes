@@ -3,11 +3,14 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WaxenShapethief.class, AirElemental.class, GrizzlyBears.class, JayemdaeTome.class})
 class WaxenShapethiefTest extends BaseCardTest {
 
     private void castWaxenShapethief() {
@@ -103,5 +107,101 @@ class WaxenShapethiefTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Waxen Shapethief");
         harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Declining to copy makes the unmodified creature die")
+    void decliningCopyDies() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        castWaxenShapethief();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Waxen Shapethief");
+        harness.assertInGraveyard(player1, "Waxen Shapethief");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("With no eligible permanent, Waxen Shapethief enters without copying and dies")
+    void noEligiblePermanentDies() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castWaxenShapethief();
+
+        harness.assertNotOnBattlefield(player1, "Waxen Shapethief");
+        harness.assertInGraveyard(player1, "Waxen Shapethief");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flash allows copying a creature during an opponent's end step")
+    void canBeCastDuringOpponentsEndStep() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        castWaxenShapethief();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Grizzly Bears"));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().getName().equals("Grizzly Bears"))
+                .hasSize(2);
+        harness.assertNotInGraveyard(player1, "Waxen Shapethief");
+    }
+
+    @Test
+    @DisplayName("The copied artifact's activated ability can draw a card")
+    void copiedArtifactAbilityWorks() {
+        harness.addToBattlefield(player1, new JayemdaeTome());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        castWaxenShapethief();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Jayemdae Tome"));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId()).get(1).isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()).get(0).isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Copying a creature does not copy its counters or tapped state")
+    void doesNotCopyCountersOrTappedState() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        original.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        original.tap();
+        castWaxenShapethief();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, original.getId());
+
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).get(1);
+        assertThat(copy.getPlusOnePlusOneCounters()).isZero();
+        assertThat(copy.isTapped()).isFalse();
+        assertThat(copy.getCard().getPower()).isEqualTo(2);
+        assertThat(copy.getCard().getToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cycling discards immediately but draws only when its ability resolves")
+    void cyclingDiscardsAsCost() {
+        harness.setHand(player1, List.of(new WaxenShapethief()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Waxen Shapethief");
+        harness.assertNotInHand(player1, "Waxen Shapethief");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
     }
 }
