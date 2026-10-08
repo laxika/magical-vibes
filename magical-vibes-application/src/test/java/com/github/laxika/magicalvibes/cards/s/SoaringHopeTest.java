@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KithkinDaggerdare;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,51 +15,42 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SoaringHope.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({SoaringHope.class, KithkinDaggerdare.class, SpringleafDrum.class})
 class SoaringHopeTest extends BaseCardTest {
-
-    // ===== ETB life gain =====
 
     @Test
     @DisplayName("ETB trigger causes controller to gain 3 life")
     void etbGainsLife() {
-        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bearsPerm = addCreatureReady(player2, new KithkinDaggerdare());
 
         harness.setHand(player1, List.of(new SoaringHope()));
         harness.addMana(player1, ManaColor.WHITE, 5);
 
         harness.castEnchantment(player1, 0, bearsPerm.getId());
-        harness.passBothPriorities(); // resolve aura spell — ETB trigger goes on stack
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         harness.assertLife(player1, 23);
         harness.assertLife(player2, 20);
     }
 
-    // ===== Flying =====
-
     @Test
     @DisplayName("Enchanted creature has flying")
     void enchantedCreatureHasFlying() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bearsPerm = addCreatureReady(player1, new KithkinDaggerdare());
 
-        Permanent auraPerm = new Permanent(new SoaringHope());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new SoaringHope());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
     }
 
-    // ===== Activated ability: put on top of library =====
-
     @Test
     @DisplayName("Activating {W} ability puts Soaring Hope on top of its owner's library")
     void activateAbilityPutsOnTopOfLibrary() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bearsPerm = addCreatureReady(player1, new KithkinDaggerdare());
 
-        Permanent auraPerm = new Permanent(new SoaringHope());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new SoaringHope());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -81,13 +71,12 @@ class SoaringHopeTest extends BaseCardTest {
     @Test
     @DisplayName("Controlled Soaring Hope goes to its owner's library")
     void activateAbilityUsesOwnerLibraryWhenControlledByOpponent() {
-        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bearsPerm = addCreatureReady(player2, new KithkinDaggerdare());
 
         SoaringHope auraCard = new SoaringHope();
         auraCard.setOwnerId(player1.getId());
-        Permanent auraPerm = new Permanent(auraCard);
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player2, auraCard);
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(auraPerm);
 
         harness.addMana(player2, ManaColor.WHITE, 1);
 
@@ -102,11 +91,10 @@ class SoaringHopeTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses flying after Soaring Hope is put on top of library")
     void creatureLosesFlyingAfterTuck() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bearsPerm = addCreatureReady(player1, new KithkinDaggerdare());
 
-        Permanent auraPerm = new Permanent(new SoaringHope());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new SoaringHope());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
 
@@ -117,29 +105,25 @@ class SoaringHopeTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isFalse();
     }
 
-    // ===== Targeting restriction =====
-
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        addCreatureReady(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        addCreatureReady(player2, new KithkinDaggerdare());
+        harness.addToBattlefield(player1, new SpringleafDrum());
         harness.setHand(player1, List.of(new SoaringHope()));
         harness.addMana(player1, ManaColor.WHITE, 5);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
+        Permanent artifact = findPermanent(player1, "Springleaf Drum");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Fizzles to graveyard if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bearsPerm = addCreatureReady(player2, new KithkinDaggerdare());
 
         harness.setHand(player1, List.of(new SoaringHope()));
         harness.addMana(player1, ManaColor.WHITE, 5);
@@ -152,5 +136,48 @@ class SoaringHopeTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Soaring Hope");
         harness.assertNotOnBattlefield(player1, "Soaring Hope");
+    }
+
+    @Test
+    @DisplayName("Returning the Aura in response to its ETB trigger does not prevent life gain")
+    void lifeGainResolvesAfterAuraReturnsToLibrary() {
+        Permanent creature = addCreatureReady(player1, new KithkinDaggerdare());
+        harness.setHand(player1, List.of(new SoaringHope()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Soaring Hope");
+        harness.assertLife(player1, 20);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+        resolveAllTriggers();
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @DisplayName("Two return activations put the Aura in the library only once")
+    void multipleActivationsDoNotDuplicateAura() {
+        Permanent creature = addCreatureReady(player1, new KithkinDaggerdare());
+        SoaringHope aura = new SoaringHope();
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, aura);
+        permanent.setAttachedTo(creature.getId());
+        harness.setLibrary(player1, List.of(new SpringleafDrum()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 1, null, null);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(card -> card.getName())
+                .containsExactly("Soaring Hope", "Springleaf Drum");
+        harness.assertOnBattlefield(player1, "Kithkin Daggerdare");
+        harness.assertNotOnBattlefield(player1, "Soaring Hope");
+        harness.assertLife(player1, 20);
     }
 }
