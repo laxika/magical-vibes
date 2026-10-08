@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GazeInWonder;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,12 +13,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VelvetwingButterflies.class, GazeInWonder.class, GrizzlyBears.class, Island.class})
+@CardUsed({VelvetwingButterflies.class, GazeInWonder.class, Island.class})
 class VelvetwingButterfliesTest extends BaseCardTest {
 
     @Test
     void adventureTapsOneTargetAndExilesTheCard() {
-        Permanent target = addReadyCreature(new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new VelvetwingButterflies());
         VelvetwingButterflies card = new VelvetwingButterflies();
         prepareAdventure(card);
 
@@ -32,8 +31,8 @@ class VelvetwingButterfliesTest extends BaseCardTest {
 
     @Test
     void adventureTapsTwoTargetCreatures() {
-        Permanent first = addReadyCreature(new GrizzlyBears());
-        Permanent second = addReadyCreature(new GrizzlyBears());
+        Permanent first = addCreatureReady(player2, new VelvetwingButterflies());
+        Permanent second = addCreatureReady(player2, new VelvetwingButterflies());
         VelvetwingButterflies card = new VelvetwingButterflies();
         prepareAdventure(card);
 
@@ -46,7 +45,7 @@ class VelvetwingButterfliesTest extends BaseCardTest {
 
     @Test
     void adventureCreatureFaceCanBeCastFromExile() {
-        Permanent target = addReadyCreature(new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new VelvetwingButterflies());
         VelvetwingButterflies card = new VelvetwingButterflies();
         prepareAdventure(card);
 
@@ -64,9 +63,9 @@ class VelvetwingButterfliesTest extends BaseCardTest {
 
     @Test
     void adventureCannotTargetMoreThanTwoCreatures() {
-        Permanent first = addReadyCreature(new GrizzlyBears());
-        Permanent second = addReadyCreature(new GrizzlyBears());
-        Permanent third = addReadyCreature(new GrizzlyBears());
+        Permanent first = addCreatureReady(player2, new VelvetwingButterflies());
+        Permanent second = addCreatureReady(player2, new VelvetwingButterflies());
+        Permanent third = addCreatureReady(player2, new VelvetwingButterflies());
         VelvetwingButterflies card = new VelvetwingButterflies();
         prepareAdventure(card);
 
@@ -78,7 +77,6 @@ class VelvetwingButterfliesTest extends BaseCardTest {
 
     @Test
     void adventureCannotTargetNoncreature() {
-        addReadyCreature(new GrizzlyBears());
         Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
         VelvetwingButterflies card = new VelvetwingButterflies();
         prepareAdventure(card);
@@ -88,10 +86,95 @@ class VelvetwingButterfliesTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player2, card);
-        permanent.setSummoningSick(false);
-        return permanent;
+    @Test
+    void creatureFaceCanBeCastDirectlyFromHand() {
+        VelvetwingButterflies card = new VelvetwingButterflies();
+
+        harness.castFromHand(player1, card, "{2}{W}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Velvetwing Butterflies");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+    }
+
+    @Test
+    void adventureCannotBeCastWithoutATarget() {
+        prepareAdventure(new VelvetwingButterflies());
+
+        assertThatThrownBy(() -> harness.castAdventure(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void adventureCanTargetCreaturesControlledByDifferentPlayers() {
+        Permanent ownCreature = addCreatureReady(player1, new VelvetwingButterflies());
+        Permanent opposingCreature = addCreatureReady(player2, new VelvetwingButterflies());
+        VelvetwingButterflies card = new VelvetwingButterflies();
+        prepareAdventure(card);
+
+        harness.castAdventure(player1, 0, List.of(ownCreature.getId(), opposingCreature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(ownCreature.isTapped()).isTrue();
+        assertThat(opposingCreature.isTapped()).isTrue();
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+    }
+
+    @Test
+    void adventureResolvesWhenTargetIsAlreadyTapped() {
+        Permanent target = addCreatureReady(player2, new VelvetwingButterflies());
+        target.setTapped(true);
+        VelvetwingButterflies card = new VelvetwingButterflies();
+        prepareAdventure(card);
+
+        harness.castAdventure(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        harness.assertNotInGraveyard(player1, "Velvetwing Butterflies");
+    }
+
+    @Test
+    void adventureResolvesForRemainingLegalTarget() {
+        Permanent first = addCreatureReady(player2, new VelvetwingButterflies());
+        Permanent second = addCreatureReady(player2, new VelvetwingButterflies());
+        VelvetwingButterflies card = new VelvetwingButterflies();
+        prepareAdventure(card);
+
+        harness.castAdventure(player1, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(first);
+        harness.passBothPriorities();
+
+        assertThat(second.isTapped()).isTrue();
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        harness.assertNotInGraveyard(player1, "Velvetwing Butterflies");
+    }
+
+    @Test
+    void adventureGoesToGraveyardWhenAllTargetsLeave() {
+        Permanent first = addCreatureReady(player2, new VelvetwingButterflies());
+        Permanent second = addCreatureReady(player2, new VelvetwingButterflies());
+        VelvetwingButterflies card = new VelvetwingButterflies();
+        prepareAdventure(card);
+
+        harness.castAdventure(player1, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player2.getId()).removeAll(List.of(first, second));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Velvetwing Butterflies");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    void adventureCannotChooseTheSameCreatureTwice() {
+        Permanent target = addCreatureReady(player2, new VelvetwingButterflies());
+        prepareAdventure(new VelvetwingButterflies());
+
+        assertThatThrownBy(() -> harness.castAdventure(player1, 0, List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("All targets must be different");
     }
 
     private void prepareAdventure(VelvetwingButterflies card) {
