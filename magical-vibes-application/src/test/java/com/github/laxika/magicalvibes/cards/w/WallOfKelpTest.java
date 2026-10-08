@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(WallOfKelp.class)
+@CardUsed({WallOfKelp.class})
 class WallOfKelpTest extends BaseCardTest {
 
     @Test
@@ -76,6 +76,64 @@ class WallOfKelpTest extends BaseCardTest {
     @Test
     void defenderPreventsAttacking() {
         addCreatureReady(player1, new WallOfKelp());
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThat(harness.getCombatAttackService()
+                .getAttackableCreatureIndices(gd, player1.getId())).isEmpty();
+    }
+
+    @Test
+    void summoningSicknessPreventsActivation() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfKelp());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(wall.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Kelp");
+    }
+
+    @Test
+    void activationPaysCostsImmediatelyAndCreatesTokenOnlyOnResolution() {
+        Permanent wall = addCreatureReady(player1, new WallOfKelp());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(wall.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Kelp");
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Kelp")).isEqualTo(1);
+        harness.assertNotOnBattlefield(player2, "Kelp");
+        assertThat(findPermanent(player1, "Kelp").isTapped()).isFalse();
+    }
+
+    @Test
+    void opponentCanActivateDuringYourTurnAndReceivesToken() {
+        addCreatureReady(player2, new WallOfKelp());
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player2, "Kelp")).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Kelp");
+    }
+
+    @Test
+    void kelpDefenderPreventsAttackingEvenAfterSummoningSicknessEnds() {
+        addCreatureReady(player1, new WallOfKelp());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        findPermanent(player1, "Kelp").setSummoningSick(false);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         assertThat(harness.getCombatAttackService()
