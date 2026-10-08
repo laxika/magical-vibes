@@ -40,6 +40,18 @@ class WallOfAirTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Wall of Air can block a flying creature while summoning sick")
+    void canBlockFlyingCreatureWhileSummoningSick() {
+        addCreatureReady(player1, new AirElemental());
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfAir());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(wall.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Wall of Air can block a creature without flying")
     void canBlockNonFlyingCreature() {
         addCreatureReady(player1, new GrizzlyBears());
