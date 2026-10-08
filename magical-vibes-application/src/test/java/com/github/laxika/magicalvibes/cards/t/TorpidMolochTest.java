@@ -8,11 +8,37 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TorpidMoloch.class, Mountain.class})
 class TorpidMolochTest extends BaseCardTest {
+
+    @Test
+    void cannotAttackWithDefender() {
+        addCreatureReady(player1, new TorpidMoloch());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canAttackAfterSacrificingLandsAndResolvingAbility() {
+        addCreatureReady(player1, new TorpidMoloch());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
 
     @Test
     void sacrificesThreeLandsAndLosesDefenderUntilEndOfTurn() {
