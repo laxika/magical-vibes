@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,8 +19,44 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({WitchKingBringerOfRuin.class, GiantSpider.class, GrizzlyBears.class, HillGiant.class,
-        LlanowarElves.class})
+        LlanowarElves.class, GiantGrowth.class, Unsummon.class})
 class WitchKingBringerOfRuinTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Least power is determined when the attack trigger resolves")
+    void determinesLeastPowerAtResolution() {
+        addCreatureReady(player1, new WitchKingBringerOfRuin());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new HillGiant());
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        declareAttackers(player1, List.of(0));
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("The attack trigger resolves after Witch-king leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent witchKing = addCreatureReady(player1, new WitchKingBringerOfRuin());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new HillGiant());
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        declareAttackers(player1, List.of(0));
+        harness.castAndResolveInstant(player2, 0, witchKing.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Witch-king, Bringer of Ruin");
+        harness.assertNotOnBattlefield(player1, "Witch-king, Bringer of Ruin");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Hill Giant");
+    }
 
     @Test
     @DisplayName("Attacking makes the defending player sacrifice their least-power creature")
