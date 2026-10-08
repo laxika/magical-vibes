@@ -155,6 +155,62 @@ class TheCelestusTest extends BaseCardTest {
         harness.assertLife(player1, 20);
     }
 
+    @Test
+    void enteringDuringDayDoesNotTriggerLifeGain() {
+        gd.dayNight = DayNight.DAY;
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromHand(player1, new TheCelestus(), "{3}");
+        harness.passBothPriorities();
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void drawingWithAnEmptyHandRequiresDiscardingTheDrawnCard() {
+        gd.dayNight = DayNight.DAY;
+        addReadyCelestus();
+        Card drawn = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        activateToggle();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertLife(player1, 21);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void toggleAndLifeGainTriggerResolveSeparately() {
+        gd.dayNight = DayNight.DAY;
+        addReadyCelestus();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player1, 21);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyCelestus() {
         return harness.addToBattlefieldAndReturn(player1, new TheCelestus());
     }
