@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Atomize.class, GrizzlyBears.class, Island.class, SolRing.class})
+@CardUsed({Atomize.class, DarksteelIngot.class, GrizzlyBears.class, Island.class, SolRing.class})
 class AtomizeTest extends BaseCardTest {
 
     @Test
@@ -129,6 +130,47 @@ class AtomizeTest extends BaseCardTest {
         assertThat(gd.playerRadCounters.get(player1.getId())).isEqualTo(2);
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(3);
         assertThat(gd.playerExperienceCounters.get(player1.getId())).isEqualTo(4);
+    }
+
+    @Test
+    void proliferatesEvenWhenIndestructibleTargetSurvives() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DarksteelIngot());
+        target.setCounterCount(CounterType.CHARGE, 1);
+
+        prepareCast();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
+
+        harness.assertOnBattlefield(player2, "Darksteel Ingot");
+        assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Atomize");
+    }
+
+    @Test
+    void resolvesWhenNoPermanentsOrPlayersHaveCounters() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SolRing());
+
+        prepareCast();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player2, "Sol Ring");
+        harness.assertInGraveyard(player1, "Atomize");
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void destroyedTargetWithOnlyCountersDoesNotLeaveAProliferateChoice() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SolRing());
+        target.setCounterCount(CounterType.CHARGE, 2);
+
+        prepareCast();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player2, "Sol Ring");
+        harness.assertInGraveyard(player1, "Atomize");
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void prepareCast() {
