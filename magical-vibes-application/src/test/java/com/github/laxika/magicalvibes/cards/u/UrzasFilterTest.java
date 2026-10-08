@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.b.BlurredMongoose;
 import com.github.laxika.magicalvibes.cards.g.GalinasKnight;
 import com.github.laxika.magicalvibes.cards.h.HornedCheetah;
+import com.github.laxika.magicalvibes.cards.m.MycosynthLattice;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -11,7 +12,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UrzasFilter.class, HornedCheetah.class, BlurredMongoose.class, GalinasKnight.class})
+@CardUsed({UrzasFilter.class, HornedCheetah.class, BlurredMongoose.class, GalinasKnight.class,
+        MycosynthLattice.class})
 class UrzasFilterTest extends BaseCardTest {
 
     @Test
@@ -54,6 +56,46 @@ class UrzasFilterTest extends BaseCardTest {
 
         // Galina's Knight {W}{U} has no generic mana to reduce; one white is not enough.
         assertThatThrownBy(() -> harness.castFromHand(player1, new GalinasKnight(), "{W}"))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Multiple Filters do not reduce colored mana requirements")
+    void multipleFiltersDoNotReduceColoredMana() {
+        harness.addToBattlefield(player1, new UrzasFilter());
+        harness.addToBattlefield(player2, new UrzasFilter());
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new HornedCheetah(), "{G}"))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A multicolored spell with no generic mana can still be cast")
+    void spellWithNoGenericManaCanBeCast() {
+        harness.addToBattlefield(player1, new UrzasFilter());
+        harness.castFromHand(player1, new GalinasKnight(), "{W}{U}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Galina's Knight");
+    }
+
+    @Test
+    @DisplayName("Colorless artifact spells are not reduced")
+    void colorlessSpellsAreNotReduced() {
+        harness.addToBattlefield(player1, new UrzasFilter());
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new UrzasFilter(), "{2}"))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @CardUsed(MycosynthLattice.class)
+    @DisplayName("Spells made colorless by Mycosynth Lattice are not reduced")
+    void spellsMadeColorlessAreNotReduced() {
+        harness.addToBattlefield(player1, new UrzasFilter());
+        harness.addToBattlefield(player1, new MycosynthLattice());
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new HornedCheetah(), "{G}{W}"))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
