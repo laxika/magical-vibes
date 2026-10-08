@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @CardUsed({VirtuesRuin.class, DevotedHero.class, HillGiant.class, Plains.class})
 class VirtuesRuinTest extends BaseCardTest {
 
@@ -59,5 +61,30 @@ class VirtuesRuinTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Devoted Hero");
         harness.assertOnBattlefield(player1, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Resolves without any creatures on the battlefield")
+    void resolvesOnEmptyBattlefield() {
+        harness.castFromHand(player1, new VirtuesRuin(), "{2}{B}");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Virtue's Ruin");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Destroys every white creature when one player controls several")
+    void destroysMultipleWhiteCreaturesUnderOneController() {
+        var first = harness.addToBattlefieldAndReturn(player2, new DevotedHero());
+        var second = harness.addToBattlefieldAndReturn(player2, new DevotedHero());
+        harness.castFromHand(player1, new VirtuesRuin(), "{2}{B}");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Devoted Hero");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .contains(first.getCard(), second.getCard());
     }
 }
