@@ -158,4 +158,35 @@ class VolcanicHammerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Volcanic Hammer");
     }
+
+    @Test
+    @DisplayName("Volcanic Hammer can damage a creature its controller controls")
+    void canDamageOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        harness.setHand(player1, List.of(new VolcanicHammer()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Volcanic Hammer marks damage that combines with subsequent damage")
+    void damageCombinesWithSubsequentDamage() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+        harness.setHand(player1, List.of(new VolcanicHammer(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        harness.assertOnBattlefield(player2, "Serra Angel");
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Serra Angel");
+        harness.assertInGraveyard(player2, "Serra Angel");
+    }
 }
