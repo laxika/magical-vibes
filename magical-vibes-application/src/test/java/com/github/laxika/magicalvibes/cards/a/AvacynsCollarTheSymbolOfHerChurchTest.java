@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HinterlandHermit;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -24,7 +23,7 @@ class AvacynsCollarTheSymbolOfHerChurchTest extends BaseCardTest {
 
     @Test
     void shackleAttachesToAnOpponentCreature() {
-        Permanent creature = addReadyCreature(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         Permanent collar = harness.addToBattlefieldAndReturn(player1,
                 new AvacynsCollarTheSymbolOfHerChurch());
         addShackleMana();
@@ -37,8 +36,8 @@ class AvacynsCollarTheSymbolOfHerChurchTest extends BaseCardTest {
 
     @Test
     void shackleRejectsYourOwnCreatureAndInstantSpeedActivation() {
-        Permanent ownCreature = addReadyCreature(player1, new GrizzlyBears());
-        Permanent opponentCreature = addReadyCreature(player2, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent collar = harness.addToBattlefieldAndReturn(player1,
                 new AvacynsCollarTheSymbolOfHerChurch());
         addShackleMana();
@@ -58,22 +57,16 @@ class AvacynsCollarTheSymbolOfHerChurchTest extends BaseCardTest {
 
     @Test
     void shackledCreatureCannotAttackBlockOrActivateAbilities() {
-        Permanent creature = addReadyCreature(player2, new BottleGnomes());
+        Permanent creature = addCreatureReady(player2, new BottleGnomes());
         Permanent collar = attachCollar(creature);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of(indexOf(player2, creature))))
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(indexOf(player2, creature))))
                 .isInstanceOf(IllegalStateException.class);
 
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
+
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(indexOf(player2, creature), indexOf(player1, attacker)))))
                 .isInstanceOf(IllegalStateException.class);
@@ -88,17 +81,56 @@ class AvacynsCollarTheSymbolOfHerChurchTest extends BaseCardTest {
 
     @Test
     void shackledCreatureCannotTransform() {
-        Permanent creature = addReadyCreature(player2, new HinterlandHermit());
+        Permanent creature = addCreatureReady(player2, new HinterlandHermit());
         attachCollar(creature);
         gd.spellsCastLastTurn.clear();
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+
+        assertThat(creature.isTransformed()).isFalse();
+    }
+
+    @Test
+    void movingCollarReleasesThePreviouslyShackledCreature() {
+        Permanent first = addCreatureReady(player2, new BottleGnomes());
+        Permanent second = addCreatureReady(player2, new BottleGnomes());
+        Permanent collar = attachCollar(first);
+        addShackleMana();
+
+        harness.activateAbility(player1, indexOf(player1, collar), null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(collar.getAttachedTo()).isEqualTo(second.getId());
+        assertThatThrownBy(() -> harness.activateAbility(
+                player2, indexOf(player2, second), null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+
+        harness.activateAbility(player2, indexOf(player2, first), null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(first);
+        harness.assertLife(player2, 23);
+    }
+
+    @Test
+    void targetLeavingBeforeResolutionPreservesThePreviousAttachment() {
+        Permanent first = addCreatureReady(player2, new GrizzlyBears());
+        Permanent second = addCreatureReady(player2, new BottleGnomes());
+        Permanent collar = attachCollar(first);
+        addShackleMana();
+
+        harness.activateAbility(player1, indexOf(player1, collar), null, second.getId());
+        harness.activateAbility(player2, indexOf(player2, second), null, null);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(creature.isTransformed()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(second);
+        assertThat(collar.getAttachedTo()).isEqualTo(first.getId());
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(indexOf(player2, first))))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent attachCollar(Permanent creature) {
@@ -106,12 +138,6 @@ class AvacynsCollarTheSymbolOfHerChurchTest extends BaseCardTest {
                 new AvacynsCollarTheSymbolOfHerChurch());
         collar.setAttachedTo(creature.getId());
         return collar;
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, card);
-        creature.setSummoningSick(false);
-        return creature;
     }
 
     private void addShackleMana() {
