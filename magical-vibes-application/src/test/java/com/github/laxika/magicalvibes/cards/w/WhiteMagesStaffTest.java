@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -71,11 +72,78 @@ class WhiteMagesStaffTest extends BaseCardTest {
         assertThat(gqs.effectiveCreatureSubtypes(gd, second)).contains(CardSubtype.CLERIC);
     }
 
+    @Test
+    void creaturesControllerGainsLifeEvenWhenOpponentControlsStaff() {
+        Permanent staff = addStaffReady(player1);
+        Permanent creature = addCreatureReady(player2);
+        staff.setAttachedTo(creature.getId());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(21);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void unattachedStaffDoesNotGrantAttackTrigger() {
+        addStaffReady(player1);
+        addCreatureReady(player1);
+        harness.setLife(player1, 20);
+
+        declareAttackers(player1, List.of(1));
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void attackTriggerStillResolvesAfterStaffLeaves() {
+        Permanent staff = addStaffReady(player1);
+        Permanent creature = addCreatureReady(player1);
+        staff.setAttachedTo(creature.getId());
+        harness.setLife(player1, 20);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(1)));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(staff);
+        gd.playerGraveyards.get(player1.getId()).add(staff.getCard());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature))
+                .contains(CardSubtype.BEAR).doesNotContain(CardSubtype.CLERIC);
+    }
+
+    @Test
+    void jobSelectStillCreatesHeroWhenStaffLeavesBeforeTriggerResolves() {
+        harness.setHand(player1, List.of(new WhiteMagesStaff()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent staff = findPermanent(player1, "White Mage's Staff");
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(staff);
+        gd.playerGraveyards.get(player1.getId()).add(staff.getCard());
+        resolveAllTriggers();
+
+        Permanent hero = findPermanent(player1, "Hero");
+        assertThat(countPermanents(player1, "Hero")).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(1);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, hero))
+                .contains(CardSubtype.HERO).doesNotContain(CardSubtype.CLERIC);
+    }
+
     private Permanent addStaffReady(Player player) {
-        Permanent permanent = new Permanent(new WhiteMagesStaff());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return harness.addToBattlefieldAndReturn(player, new WhiteMagesStaff());
     }
 
     private Permanent addCreatureReady(Player player) {
