@@ -119,6 +119,48 @@ class RoutTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Flash casting requires the full seven mana")
+    void flashCastingRequiresFullCost() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Rout()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Rout");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flash casting destroys creatures before a pending creature spell resolves")
+    void flashCastingRespondsToCreatureSpell() {
+        harness.addToBattlefield(player1, new RazorfootGriffin());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new RazorfootGriffin()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castCreature(player2, 0);
+
+        harness.setHand(player1, List.of(new Rout()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Razorfoot Griffin");
+        harness.assertNotOnBattlefield(player2, "Razorfoot Griffin");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Razorfoot Griffin");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Can pay the flash surcharge when casting with granted flashback")
     void canFlashbackAtInstantSpeedWithSurcharge() {
         Rout rout = new Rout();
