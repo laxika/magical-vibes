@@ -64,6 +64,68 @@ class SophicCentaurTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Counts the hand at resolution after another activation discards a card")
+    void countsHandAtResolution() {
+        addReadyCentaur();
+        addCreatureReady(player1, new SophicCentaur());
+        harness.setHand(player1, List.of(new SophicCentaur(), new SophicCentaur(), new SophicCentaur()));
+        harness.setLife(player1, 10);
+        harness.addMana(player1, ManaColor.GREEN, 8);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.assertLife(player1, 10);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        addReadyCentaur().tap();
+        harness.setHand(player1, List.of(new SophicCentaur()));
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate with summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        addReadyCentaur().setSummoningSick(true);
+        harness.setHand(player1, List.of(new SophicCentaur()));
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Requires two green mana even when four total mana are available")
+    void cannotActivateWithoutEnoughGreenMana() {
+        Permanent centaur = addReadyCentaur();
+        harness.setHand(player1, List.of(new SophicCentaur()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(centaur.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
     private Permanent addReadyCentaur() {
         Permanent centaur = addCreatureReady(player1, new SophicCentaur());
         harness.forceActivePlayer(player1);
