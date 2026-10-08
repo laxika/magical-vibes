@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WallOfLimbs.class, AngelOfMercy.class})
 class WallOfLimbsTest extends BaseCardTest {
 
     @Test
@@ -98,4 +100,53 @@ class WallOfLimbsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+    @Test
+    @DisplayName("Can target its controller without gaining life")
+    void canTargetController() {
+        harness.addToBattlefield(player1, new WallOfLimbs());
+        findPermanent(player1, "Wall of Limbs").setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.assertNotOnBattlefield(player1, "Wall of Limbs");
+        harness.assertInGraveyard(player1, "Wall of Limbs");
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Sacrificing with a pending life-gain trigger uses power before that trigger resolves")
+    void sacrificeBeforeCounterTriggerResolves() {
+        harness.addToBattlefield(player1, new WallOfLimbs());
+        Permanent wall = findPermanent(player1, "Wall of Limbs");
+        wall.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new AngelOfMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(wall.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertLife(player1, 23);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.assertNotOnBattlefield(player1, "Wall of Limbs");
+        harness.assertInGraveyard(player1, "Wall of Limbs");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 23);
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Angel of Mercy");
+    }
+
 }
