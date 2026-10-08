@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.OkaunEyeOfChaos;
 import com.github.laxika.magicalvibes.cards.s.SorcerersStrongbox;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,13 +18,14 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ZndrspltEyeOfWisdom.class, GrizzlyBears.class, SorcerersStrongbox.class})
+@CardUsed({ZndrspltEyeOfWisdom.class, OkaunEyeOfChaos.class, GrizzlyBears.class,
+        SorcerersStrongbox.class})
 class ZndrspltEyeOfWisdomTest extends BaseCardTest {
 
     @Test
     @DisplayName("Partner with lets the target player search for Okaun")
     void partnerWithSearchesTargetPlayersLibrary() {
-        Card okaun = namedCard("Okaun, Eye of Chaos");
+        Card okaun = new OkaunEyeOfChaos();
         harness.setLibrary(player2, List.of(okaun));
         harness.setHand(player2, List.of());
 
@@ -86,22 +88,113 @@ class ZndrspltEyeOfWisdomTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(won ? 1 : 0);
     }
 
+    @Test
+    @DisplayName("The targeted player may decline the partner search without shuffling")
+    void targetPlayerMayDeclinePartnerSearch() {
+        Card okaun = new OkaunEyeOfChaos();
+        harness.setLibrary(player2, List.of(okaun));
+        harness.setHand(player2, List.of());
+        harness.enterBattlefieldAndReturn(player1, new ZndrspltEyeOfWisdom());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(okaun);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameLogContains("library is shuffled")).isFalse();
+    }
+
+    @Test
+    @DisplayName("An accepted partner search shuffles even when Okaun is absent")
+    void partnerSearchWithoutMatchingCardStillShuffles() {
+        Card otherCard = new ZndrspltEyeOfWisdom();
+        harness.setLibrary(player1, List.of(otherCard));
+        harness.setHand(player1, List.of());
+        harness.enterBattlefieldAndReturn(player1, new ZndrspltEyeOfWisdom());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(otherCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameLogContains("Alice's library is shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("The target player may fail to find Okaun even when it is in their library")
+    void partnerSearchMayFailToFindMatchingCard() {
+        Card okaun = new OkaunEyeOfChaos();
+        harness.setLibrary(player1, List.of(okaun));
+        harness.setHand(player1, List.of());
+        harness.enterBattlefieldAndReturn(player1, new ZndrspltEyeOfWisdom());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(okaun);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameLogContains("Alice's library is shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Zndrsplt does not flip coins at the beginning of an opponent's combat")
+    void doesNotFlipDuringOpponentsCombat() {
+        harness.setHand(player1, List.of());
+        harness.addToBattlefield(player1, new ZndrspltEyeOfWisdom());
+
+        advanceToBeginningOfCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gameLogContains("coin flip for Zndrsplt, Eye of Wisdom")).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both controllers draw once for each win in a single flip-until-loss ability")
+    void eachZndrspltDrawsForEveryWin() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        List<Card> library1 = IntStream.range(0, 50)
+                .mapToObj(index -> (Card) new ZndrspltEyeOfWisdom()).toList();
+        List<Card> library2 = IntStream.range(0, 50)
+                .mapToObj(index -> (Card) new ZndrspltEyeOfWisdom()).toList();
+        harness.setLibrary(player1, library1);
+        harness.setLibrary(player2, library2);
+        harness.addToBattlefield(player1, new ZndrspltEyeOfWisdom());
+        harness.addToBattlefield(player2, new ZndrspltEyeOfWisdom());
+
+        advanceToBeginningOfCombat(player1);
+        resolveAllTriggers();
+
+        long wins = gd.gameLog.stream()
+                .filter(entry -> entry.plainText().contains("wins the coin flip for Zndrsplt, Eye of Wisdom"))
+                .count();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize((int) wins);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize((int) wins);
+        assertThat(gameLogContains("Bob wins the coin flip for Zndrsplt, Eye of Wisdom")).isFalse();
+        assertThat(gameLogContains("Bob loses the coin flip for Zndrsplt, Eye of Wisdom")).isFalse();
+    }
+
     private void advanceToBeginningOfCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 
     private List<Card> cards(int count) {
         return IntStream.range(0, count)
                 .mapToObj(index -> (Card) new GrizzlyBears())
                 .toList();
-    }
-
-    private Card namedCard(String name) {
-        Card card = new Card();
-        card.setName(name);
-        return card;
     }
 }
