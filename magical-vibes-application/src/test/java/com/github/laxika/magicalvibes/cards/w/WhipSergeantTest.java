@@ -113,4 +113,40 @@ class WhipSergeantTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
+
+    @Test
+    @DisplayName("Whip Sergeant can give itself haste and attack the turn it enters")
+    void canGiveItselfHaste() {
+        Permanent sergeant = harness.addToBattlefieldAndReturn(player1, new WhipSergeant());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, sergeant.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, sergeant, Keyword.HASTE)).isTrue();
+        declareAttackers(List.of(0));
+
+        assertThat(sergeant.isTapped()).isTrue();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("A tapped Whip Sergeant can activate repeatedly for different creatures")
+    void tappedSergeantCanActivateRepeatedly() {
+        Permanent sergeant = harness.addToBattlefieldAndReturn(player1, new WhipSergeant());
+        sergeant.setTapped(true);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 0, null, first.getId());
+        harness.activateAbility(player1, 0, 0, null, second.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, sergeant, Keyword.HASTE)).isFalse();
+        assertThat(sergeant.isTapped()).isTrue();
+    }
 }
