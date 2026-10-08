@@ -26,8 +26,7 @@ class VeinwitchCovenTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
                 .isNotNull();
@@ -48,8 +47,7 @@ class VeinwitchCovenTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -69,12 +67,75 @@ class VeinwitchCovenTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
                 .isNull();
         harness.assertInGraveyard(player1, "Whitesun's Passage");
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void gainingFiveLifeCreatesOnlyOneReturnTrigger() {
+        Card target = new VeinwitchCoven();
+        Card otherCreature = new VeinwitchCoven();
+        harness.addToBattlefield(player1, new VeinwitchCoven());
+        harness.setGraveyard(player1, List.of(target, otherCreature));
+        harness.setHand(player1, List.of(new WhitesunsPassage()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherCreature).doesNotContain(target);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void opponentsLifeGainDoesNotTriggerCoven() {
+        Card target = new VeinwitchCoven();
+        harness.addToBattlefield(player1, new VeinwitchCoven());
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player2, List.of(new WhitesunsPassage()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player2, 0);
+
+        harness.assertLife(player2, 25);
+        harness.assertInGraveyard(player1, "Veinwitch Coven");
+        harness.assertNotInHand(player1, "Veinwitch Coven");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void targetLeavingGraveyardBeforeResolutionPreventsPaymentPrompt() {
+        Card target = new VeinwitchCoven();
+        harness.addToBattlefield(player1, new VeinwitchCoven());
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new WhitesunsPassage()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Veinwitch Coven");
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(target.getId()));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
