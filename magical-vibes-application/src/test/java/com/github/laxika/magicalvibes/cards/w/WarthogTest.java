@@ -72,4 +72,40 @@ class WarthogTest extends BaseCardTest {
 
         assertThat(blockerPerm.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("A tapped Swamp still makes Warthog unblockable")
+    void cannotBeBlockedWhenDefendersSwampIsTapped() {
+        harness.addToBattlefield(player2, new Swamp());
+        findPermanent(player2, "Swamp").setTapped(true);
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent atkPerm = addCreatureReady(player1, new Warthog());
+        atkPerm.setAttacking(true);
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("A Swamp in the defending player's graveyard does not prevent blocking")
+    void canBeBlockedWhenSwampIsOnlyInDefendersGraveyard() {
+        gd.playerGraveyards.get(player2.getId()).add(new Swamp());
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent atkPerm = addCreatureReady(player1, new Warthog());
+        atkPerm.setAttacking(true);
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blockerPerm.isBlocking()).isTrue();
+    }
 }
