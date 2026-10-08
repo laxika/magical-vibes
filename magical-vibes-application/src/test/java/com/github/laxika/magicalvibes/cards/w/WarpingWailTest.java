@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -26,6 +27,7 @@ class WarpingWailTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Exile mode")
+    @CardUsed({WarpingWail.class, GoblinPiker.class, GrizzlyBears.class, Ornithopter.class})
     class ExileMode {
 
         @Test
@@ -70,6 +72,36 @@ class WarpingWailTest extends BaseCardTest {
 
             assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, targetPermanent.getId()))
                     .isInstanceOf(IllegalStateException.class);
+        }
+
+        @Test
+        void doesNotExileTargetThatGrowsBeyondBothLimitsBeforeResolution() {
+            var target = harness.addToBattlefieldAndReturn(player2, new GoblinPiker());
+            harness.setHand(player1, List.of(new WarpingWail()));
+            addMana(player1);
+
+            harness.castInstant(player1, 0, 0, target.getId());
+            target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+            harness.passBothPriorities();
+
+            assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+            assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+            harness.assertInGraveyard(player1, "Warping Wail");
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        void stillExilesTargetIfOnlyPowerRemainsAtMostOne() {
+            var target = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+            harness.setHand(player1, List.of(new WarpingWail()));
+            addMana(player1);
+
+            harness.castInstant(player1, 0, 0, target.getId());
+            target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+            harness.passBothPriorities();
+
+            assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+            assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
         }
     }
 
@@ -124,5 +156,25 @@ class WarpingWailTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(scion);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    void tappedScionCanSacrificeForManaImmediatelyWithoutUsingTheStack() {
+        harness.setHand(player1, List.of(new WarpingWail()));
+        addMana(player1);
+        harness.castInstant(player1, 0, 2, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        var scion = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gqs.getEffectivePower(gd, scion)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, scion)).isEqualTo(1);
+        scion.setTapped(true);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
