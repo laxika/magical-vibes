@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.ForgottenCave;
 import com.github.laxika.magicalvibes.cards.k.KrosanTusker;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,10 +12,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SnappingThragg.class, KrosanTusker.class, ForgottenCave.class})
+@CardUsed({SnappingThragg.class, KrosanTusker.class, ForgottenCave.class, SoltariPriest.class})
 class SnappingThraggTest extends BaseCardTest {
 
     @Test
@@ -120,7 +122,6 @@ class SnappingThraggTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(SoltariPriest.class)
     @DisplayName("Does not offer a creature with protection from red")
     void cannotTargetCreatureWithProtectionFromRed() {
         Permanent thragg = addCreatureReady(player1, new SnappingThragg());
@@ -143,5 +144,82 @@ class SnappingThraggTest extends BaseCardTest {
 
         assertThat(validTarget.getMarkedDamage()).isEqualTo(3);
         assertThat(protectedTarget.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Face-down combat damage does not trigger the printed ability")
+    void faceDownCombatDamageDoesNotTrigger() {
+        Permanent thragg = addCreatureReady(player1, new SnappingThragg());
+        thragg.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        thragg.setAttacking(true);
+        Permanent target = addCreatureReady(player2, new KrosanTusker());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Turning face up before combat damage enables the printed trigger")
+    void turningFaceUpBeforeDamageEnablesTrigger() {
+        Permanent thragg = addCreatureReady(player1, new SnappingThragg());
+        thragg.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.turnFaceUp(player1, 0);
+        thragg.setAttacking(true);
+        Permanent target = addCreatureReady(player2, new KrosanTusker());
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 17);
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The trigger still deals damage after Snapping Thragg dies")
+    void triggerResolvesAfterSourceDies() {
+        Permanent thragg = addCreatureReady(player1, new SnappingThragg());
+        thragg.setAttacking(true);
+        Permanent target = addCreatureReady(player2, new KrosanTusker());
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        thragg.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Snapping Thragg");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The trigger does not resolve when its only target has died")
+    void triggerDoesNotResolveAfterTargetDies() {
+        Permanent thragg = addCreatureReady(player1, new SnappingThragg());
+        thragg.setAttacking(true);
+        Permanent target = addCreatureReady(player2, new KrosanTusker());
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        target.setMarkedDamage(5);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player2, "Krosan Tusker");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 17);
     }
 }
