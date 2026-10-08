@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.t.TrialOfZeal;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -93,7 +92,7 @@ class WeaverOfHarmonyTest extends BaseCardTest {
     @DisplayName("Cannot target an ability from a non-enchantment source")
     void cannotTargetAbilityFromNonEnchantmentSource() {
         addCreatureReady(player1, new WeaverOfHarmony());
-        addReadyPyromancer(player1);
+        addCreatureReady(player1, new ProdigalPyromancer());
         harness.forceActivePlayer(player1);
         harness.activateAbility(player1, 1, null, player2.getId());
         UUID pyromancerAbilityId = gd.stack.getLast().getCard().getId();
@@ -103,8 +102,129 @@ class WeaverOfHarmonyTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void addReadyPyromancer(Player player) {
-        Permanent pyromancer = harness.addToBattlefieldAndReturn(player, new ProdigalPyromancer());
-        pyromancer.setSummoningSick(false);
+    @Test
+    void doesNotBuffItself() {
+        Permanent weaver = harness.addToBattlefieldAndReturn(player1, new WeaverOfHarmony());
+
+        assertThat(gqs.getEffectivePower(gd, weaver)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, weaver)).isEqualTo(2);
+    }
+
+    @Test
+    void mayChooseNewTargetForCopiedTrigger() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent weaver = addCreatureReady(player1, new WeaverOfHarmony());
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new TrialOfZeal()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castEnchantment(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        UUID triggerId = gd.stack.getLast().getTargetableId();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, triggerId);
+        assertThat(weaver.isTapped()).isTrue();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void copiesActivatedAbilityFromAnotherWeaver() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new WeaverOfHarmony());
+        addCreatureReady(player1, new WeaverOfHarmony());
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new TrialOfZeal()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castEnchantment(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        UUID triggerId = gd.stack.getLast().getTargetableId();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, triggerId);
+        UUID activatedAbilityId = gd.stack.getLast().getTargetableId();
+        harness.activateAbility(player1, 1, null, activatedAbilityId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 11);
+    }
+
+    @Test
+    void cannotTargetOpponentEnchantmentTrigger() {
+        addCreatureReady(player1, new WeaverOfHarmony());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new TrialOfZeal()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castEnchantment(player2, 0, player1.getId());
+        harness.passBothPriorities();
+        UUID triggerId = gd.stack.getLast().getTargetableId();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, triggerId))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotTargetEnchantmentSpell() {
+        addCreatureReady(player1, new WeaverOfHarmony());
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new TrialOfZeal()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castEnchantment(player1, 0, player2.getId());
+        UUID spellId = gd.stack.getLast().getTargetableId();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, spellId))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateWithoutGreenMana() {
+        Permanent weaver = addCreatureReady(player1, new WeaverOfHarmony());
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new TrialOfZeal()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castEnchantment(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        UUID triggerId = gd.stack.getLast().getTargetableId();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, triggerId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(weaver.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent weaver = harness.addToBattlefieldAndReturn(player1, new WeaverOfHarmony());
+        weaver.setSummoningSick(true);
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new TrialOfZeal()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castEnchantment(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        UUID triggerId = gd.stack.getLast().getTargetableId();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, triggerId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(weaver.isTapped()).isFalse();
     }
 }
