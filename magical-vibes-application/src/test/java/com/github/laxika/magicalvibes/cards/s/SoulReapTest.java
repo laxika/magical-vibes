@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.h.HobgoblinDragoon;
 import com.github.laxika.magicalvibes.cards.n.NettleSentinel;
+import com.github.laxika.magicalvibes.cards.v.VilisBrokerOfBlood;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SoulReap.class, HobgoblinDragoon.class, NettleSentinel.class})
+@CardUsed({SoulReap.class, HobgoblinDragoon.class, NettleSentinel.class, VilisBrokerOfBlood.class})
 class SoulReapTest extends BaseCardTest {
 
     @Test
@@ -71,6 +72,52 @@ class SoulReapTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(green)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Destroying your own creature makes you lose the conditional life")
+    void ownCreatureControllerLosesLife() {
+        castSoulReap(addCreature(player2, new HobgoblinDragoon()));
+        UUID target = addCreature(player1, new HobgoblinDragoon());
+
+        castSoulReap(target);
+
+        harness.assertInGraveyard(player1, "Hobgoblin Dragoon");
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An absent target prevents both destruction and conditional life loss")
+    void absentTargetPreventsLifeLoss() {
+        castSoulReap(addCreature(player2, new HobgoblinDragoon()));
+        UUID target = addCreature(player2, new HobgoblinDragoon());
+        harness.setHand(player1, List.of(new SoulReap()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castSorcery(player1, 0, List.of(target));
+        gd.playerBattlefields.get(player2.getId()).clear();
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Soul Reap");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The target dies before its controller loses life, so Vilis cannot trigger")
+    void destroysVilisBeforeLifeLoss() {
+        castSoulReap(addCreature(player2, new HobgoblinDragoon()));
+        UUID target = addCreature(player1, new VilisBrokerOfBlood());
+        harness.setLibrary(player1, List.of(
+                new NettleSentinel(), new NettleSentinel(), new NettleSentinel()));
+
+        castSoulReap(target);
+
+        harness.assertInGraveyard(player1, "Vilis, Broker of Blood");
+        harness.assertLife(player1, 17);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
     private UUID addCreature(Player owner, Card card) {
