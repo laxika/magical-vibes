@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ZameckGuildmage.class, GrizzlyBears.class})
 class ZameckGuildmageTest extends BaseCardTest {
 
     @Test
@@ -136,10 +138,99 @@ class ZameckGuildmageTest extends BaseCardTest {
                 .hasMessageContaining("counter");
     }
 
+    @Test
+    void counterEffectAppliesToEveryEntryAfterSourceLeaves() {
+        Permanent source = addReadyGuildmage(player1);
+        activateCounterAbility();
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+
+        Permanent first = harness.enterBattlefieldAndReturn(player1, new ZameckGuildmage());
+        Permanent second = harness.enterBattlefieldAndReturn(player1, new ZameckGuildmage());
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void counterEffectDoesNotApplyBeforeAbilityResolves() {
+        addReadyGuildmage(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        Permanent before = harness.enterBattlefieldAndReturn(player1, new ZameckGuildmage());
+        assertThat(before.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+        Permanent after = harness.enterBattlefieldAndReturn(player1, new ZameckGuildmage());
+        assertThat(after.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(before.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void drawCostCanUseAnotherCreatureAndIsPaidBeforeResolution() {
+        harness.addToBattlefield(player1, new ZameckGuildmage());
+        Permanent donor = harness.addToBattlefieldAndReturn(player1, new ZameckGuildmage());
+        donor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new ZameckGuildmage()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(donor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void playerChoosesWhichControlledCreaturePaysCounterCost() {
+        Permanent source = addReadyGuildmage(player1);
+        Permanent donor = harness.addToBattlefieldAndReturn(player1, new ZameckGuildmage());
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        donor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new ZameckGuildmage()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handlePermanentChosen(player1, donor.getId());
+
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(donor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void opponentCounterCannotPayDrawCost() {
+        addReadyGuildmage(player1);
+        Permanent opponentCreature = addReadyGuildmage(player2);
+        opponentCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("counter");
+        assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private Permanent addReadyGuildmage(Player player) {
-        Permanent perm = new Permanent(new ZameckGuildmage());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ZameckGuildmage());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
