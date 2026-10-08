@@ -1,25 +1,24 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.cards.f.FieldmistBorderpost;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VectisDominator.class, FieldmistBorderpost.class})
 class VectisDominatorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Controller pays 2 life to keep the creature untapped")
     void controllerPaysLifeCreatureStaysUntapped() {
-        addReadyDominator(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new VectisDominator());
+        Permanent target = addCreatureReady(player2, new VectisDominator());
         harness.setLife(player2, 20);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -35,8 +34,8 @@ class VectisDominatorTest extends BaseCardTest {
     @Test
     @DisplayName("Controller declines and the creature is tapped")
     void controllerDeclinesCreatureTapped() {
-        addReadyDominator(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new VectisDominator());
+        Permanent target = addCreatureReady(player2, new VectisDominator());
         harness.setLife(player2, 20);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -52,8 +51,8 @@ class VectisDominatorTest extends BaseCardTest {
     @Test
     @DisplayName("A controller with too little life can't pay and the creature is tapped automatically")
     void cannotPayTapsAutomatically() {
-        addReadyDominator(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new VectisDominator());
+        Permanent target = addCreatureReady(player2, new VectisDominator());
         harness.setLife(player2, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -68,37 +67,86 @@ class VectisDominatorTest extends BaseCardTest {
     @Test
     @DisplayName("Ability fizzles if the target leaves before resolution")
     void fizzlesIfTargetRemoved() {
-        addReadyDominator(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new VectisDominator());
+        Permanent target = addCreatureReady(player2, new VectisDominator());
 
         harness.activateAbility(player1, 0, null, target.getId());
         gd.playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNoncreature() {
-        addReadyDominator(player1);
-        Permanent forest = addReadyForest(player2);
+        addCreatureReady(player1, new VectisDominator());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FieldmistBorderpost());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReadyDominator(Player player) {
-        Permanent perm = new Permanent(new VectisDominator());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    void canTargetFriendlyCreature() {
+        addCreatureReady(player1, new VectisDominator());
+        Permanent target = addCreatureReady(player1, new VectisDominator());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 18);
+        assertThat(target.isTapped()).isFalse();
     }
 
-    private Permanent addReadyForest(Player player) {
-        Permanent perm = new Permanent(new Forest());
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    void tappedTargetStillOffersLifePayment() {
+        addCreatureReady(player1, new VectisDominator());
+        Permanent target = addCreatureReady(player2, new VectisDominator());
+        target.setTapped(true);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 18);
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent source = addCreatureReady(player1, new VectisDominator());
+        Permanent target = addCreatureReady(player2, new VectisDominator());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        assertThat(source.isTapped()).isTrue();
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void summoningSickSourceCannotActivate() {
+        harness.addToBattlefield(player1, new VectisDominator());
+        Permanent target = addCreatureReady(player2, new VectisDominator());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void tappedSourceCannotActivate() {
+        Permanent source = addCreatureReady(player1, new VectisDominator());
+        source.setTapped(true);
+        Permanent target = addCreatureReady(player2, new VectisDominator());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
