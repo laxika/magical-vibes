@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheChiefWarg.class, AirElemental.class, GrizzlyBears.class})
+@CardUsed({TheChiefWarg.class, AirElemental.class, GrizzlyBears.class, Unsummon.class})
 class TheChiefWargTest extends BaseCardTest {
 
     @Test
@@ -70,7 +70,6 @@ class TheChiefWargTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed({Unsummon.class})
     @DisplayName("Ferocious remains satisfied after the qualifying creature is returned to hand")
     void resolvesAfterQualifyingCreatureLeaves() {
         addCreatureReady(player1, new TheChiefWarg());
@@ -127,5 +126,49 @@ class TheChiefWargTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         harness.assertLife(player1, lifeBeforeAttack);
+    }
+
+    @Test
+    @DisplayName("An opponent attacking does not trigger The Chief Warg")
+    void doesNotTriggerWhenOpponentAttacks() {
+        harness.addToBattlefield(player1, new TheChiefWarg());
+        harness.addToBattlefield(player1, new AirElemental());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        int lifeBeforeAttack = gd.playerLifeTotals.get(player1.getId());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player2, List.of(0));
+            assertThat(gd.stack).isEmpty();
+        });
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertLife(player1, lifeBeforeAttack);
+    }
+
+    @Test
+    @DisplayName("The attack trigger resolves after The Chief Warg leaves the battlefield")
+    void resolvesAfterChiefLeaves() {
+        var chief = addCreatureReady(player1, new TheChiefWarg());
+        addCreatureReady(player1, new AirElemental());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        int lifeBeforeAttack = gd.playerLifeTotals.get(player1.getId());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(1));
+            assertThat(gd.stack).hasSize(1);
+            harness.castInstant(player1, 0, chief.getId());
+            harness.passBothPriorities();
+            harness.assertNotOnBattlefield(player1, "The Chief Warg");
+            resolveAllTriggers();
+        });
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertLife(player1, lifeBeforeAttack - 1);
     }
 }
