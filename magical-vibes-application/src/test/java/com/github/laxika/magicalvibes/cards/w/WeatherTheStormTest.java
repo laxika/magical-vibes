@@ -44,6 +44,50 @@ class WeatherTheStormTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }
 
+    @Test
+    @DisplayName("A later opposing spell does not increase the earlier storm count")
+    void stormCountIsFixedWhenCast() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        castWeatherTheStorm();
+        harness.setHand(player2, List.of(new WeatherTheStorm()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0);
+
+        harness.passBothPriorities();
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertLife(player2, 26);
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).isEmpty();
+        harness.passBothPriorities();
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 26);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Storm copies are not casts and do not increase subsequent storm counts")
+    void stormCopiesDoNotCountAsCasts() {
+        harness.setLife(player1, 20);
+        for (int spellNumber = 1; spellNumber <= 3; spellNumber++) {
+            castWeatherTheStorm();
+            harness.passBothPriorities();
+            assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(spellNumber - 1);
+            for (int spell = 0; spell < spellNumber; spell++) {
+                harness.passBothPriorities();
+            }
+            assertThat(gd.stack).isEmpty();
+            harness.assertLife(player1, 20 + 3 * spellNumber * (spellNumber + 1) / 2);
+            harness.assertLife(player2, 20);
+        }
+    }
+
     private void castWeatherTheStorm() {
         harness.setHand(player1, List.of(new WeatherTheStorm()));
         harness.addMana(player1, ManaColor.GREEN, 1);
