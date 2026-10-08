@@ -120,6 +120,40 @@ class VeiledSentryTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, sentry)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("A zero-mana-value spell makes the sentry die as a zero-toughness creature")
+    void diesWhenOpponentCastsZeroManaValueSpell() {
+        harness.addToBattlefield(player1, new VeiledSentry());
+        prepareOpponentCast();
+        harness.setHand(player2, List.of(new ClawsOfGix()));
+
+        harness.castArtifact(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Veiled Sentry");
+        harness.assertInGraveyard(player1, "Veiled Sentry");
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player2, "Claws of Gix");
+    }
+
+    @Test
+    @DisplayName("An opponent activating an ability does not animate the sentry")
+    void doesNotTriggerForOpponentActivatedAbility() {
+        Permanent sentry = harness.addToBattlefieldAndReturn(player1, new VeiledSentry());
+        Permanent key = harness.addToBattlefieldAndReturn(player2, new VoltaicKey());
+        prepareOpponentCast();
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 0, null, key.getId());
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(gqs.isEnchantment(gd, sentry)).isTrue();
+        assertThat(gqs.isCreature(gd, sentry)).isFalse();
+        assertThat(key.isTapped()).isFalse();
+    }
+
     private void animateWithOpponentSpell(Permanent sentry) {
         prepareOpponentCast();
         harness.setHand(player2, List.of(new CoralMerfolk()));
