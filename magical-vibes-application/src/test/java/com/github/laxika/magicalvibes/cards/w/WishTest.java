@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GnollHunter;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,13 +17,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Wish.class, GrizzlyBears.class, Forest.class})
+@CardUsed({Wish.class, GnollHunter.class, Forest.class})
 class WishTest extends BaseCardTest {
 
     @Test
     @DisplayName("Grants permission to play every current sideboard card this turn")
     void grantsOutsideGamePlayPermission() {
-        Card creature = new GrizzlyBears();
+        Card creature = new GnollHunter();
         Card land = new Forest();
         gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(creature, land)));
 
@@ -36,7 +36,7 @@ class WishTest extends BaseCardTest {
     @Test
     @DisplayName("Casts a sideboard creature for its normal mana cost")
     void castsSideboardCreature() {
-        Card creature = new GrizzlyBears();
+        Card creature = new GnollHunter();
         gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(creature)));
         castWish();
 
@@ -50,7 +50,7 @@ class WishTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getSourceZone()).isEqualTo(Zone.OUTSIDE_GAME);
 
         harness.passBothPriorities();
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Gnoll Hunter");
     }
 
     @Test
@@ -72,7 +72,7 @@ class WishTest extends BaseCardTest {
     @Test
     @DisplayName("Unused outside-the-game permission expires at end of turn")
     void permissionExpiresAtEndOfTurn() {
-        Card creature = new GrizzlyBears();
+        Card creature = new GnollHunter();
         gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(creature)));
         castWish();
 
@@ -86,6 +86,115 @@ class WishTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("permission");
+    }
+
+    @Test
+    @DisplayName("One Wish permits only one outside-the-game card, including a land")
+    void playingLandConsumesWishForAllOtherCards() {
+        Card land = new Forest();
+        Card creature = new GnollHunter();
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(land, creature)));
+        castWish();
+        prepareMainPhase();
+        harness.castFromExile(player1, land.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(creature);
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Playing a creature consumes Wish's permission to play a land")
+    void castingCreatureConsumesWishForAllOtherCards() {
+        Card creature = new GnollHunter();
+        Card land = new Forest();
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(creature, land)));
+        castWish();
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castFromExile(player1, creature.getId());
+        harness.passBothPriorities();
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(land);
+        harness.assertOnBattlefield(player1, "Gnoll Hunter");
+    }
+
+    @Test
+    @DisplayName("A failed mana payment does not consume the permission")
+    void failedPaymentCanBeRetried() {
+        Card creature = new GnollHunter();
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(creature)));
+        castWish();
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(creature);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castFromExile(player1, creature.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Gnoll Hunter");
+    }
+
+    @Test
+    @DisplayName("Wish does not let a creature be cast outside a main phase")
+    void respectsCreatureTiming() {
+        Card creature = new GnollHunter();
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(creature)));
+        castWish();
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(creature);
+    }
+
+    @Test
+    @DisplayName("Wish does not grant an additional land play")
+    void respectsLandPlayLimit() {
+        Card land = new Forest();
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(land)));
+        castWish();
+        prepareMainPhase();
+        harness.castFromHand(player1, new Forest(), "");
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(land);
+    }
+
+    @Test
+    @DisplayName("Two resolved Wishes permit two outside-the-game cards")
+    void eachWishGrantsOnePlay() {
+        Card creature = new GnollHunter();
+        Card land = new Forest();
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(creature, land)));
+        castWish();
+        prepareMainPhase();
+        castWish();
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castFromExile(player1, creature.getId());
+        harness.passBothPriorities();
+        prepareMainPhase();
+        harness.castFromExile(player1, land.getId());
+
+        assertThat(gd.playerSideboards.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Gnoll Hunter");
+        harness.assertOnBattlefield(player1, "Forest");
     }
 
     private void castWish() {
