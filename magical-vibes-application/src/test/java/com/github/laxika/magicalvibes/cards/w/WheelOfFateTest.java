@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.p.PithingNeedle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -103,6 +104,99 @@ class WheelOfFateTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Wheel of Fate");
     }
 
+    @Test
+    @DisplayName("Suspend requires the red mana in its cost")
+    void suspendRequiresRedMana() {
+        WheelOfFate card = new WheelOfFate();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each owner's upkeep removes exactly one time counter")
+    void eachUpkeepRemovesOneTimeCounter() {
+        WheelOfFate card = suspendCard();
+
+        for (int remaining = 3; remaining >= 1; remaining--) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+
+            assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), remaining);
+            assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+            assertThat(gd.interaction.activeInteraction())
+                    .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        }
+    }
+
+    @Test
+    @DisplayName("Players with empty hands still draw seven cards")
+    void emptyHandsStillDrawSevenCards() {
+        fillLibraries(10);
+        WheelOfFate card = suspendCard();
+        harness.setHand(player2, List.of());
+
+        for (int i = 0; i < 4; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Declining the suspend cast does not offer it again next upkeep")
+    void declinedSuspendCastIsNotOfferedAgain() {
+        WheelOfFate card = suspendCard();
+
+        for (int i = 0; i < 4; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+        harness.handleMayAbilityChosen(player1, false);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.interaction.activeInteraction())
+                .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.assertNotInGraveyard(player1, "Wheel of Fate");
+    }
+    @Test
+    @CardUsed({WheelOfFate.class, AshcoatBear.class, PithingNeedle.class})
+    @DisplayName("Pithing Needle cannot prevent the suspend special action")
+    void pithingNeedleDoesNotPreventSuspend() {
+        harness.castFromHand(player1, new PithingNeedle(), "{1}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Wheel of Fate");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.ensurePriority(player1);
+
+        WheelOfFate card = suspendCard();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.stack).isEmpty();
+    }
     private WheelOfFate suspendCard() {
         WheelOfFate card = new WheelOfFate();
         harness.setHand(player1, List.of(card));
