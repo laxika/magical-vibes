@@ -14,11 +14,10 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ZodiacSnake.class, ShuFootSoldiers.class})
+@CardUsed({ZodiacSnake.class, ShuFootSoldiers.class, Swamp.class})
 class ZodiacSnakeTest extends BaseCardTest {
 
     @Test
-    @CardUsed(Swamp.class)
     @DisplayName("Zodiac Snake cannot be blocked when defending player controls a Swamp")
     void cannotBeBlockedWhenDefenderControlsSwamp() {
         harness.addToBattlefield(player2, new Swamp());
@@ -57,7 +56,6 @@ class ZodiacSnakeTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Swamp.class)
     @DisplayName("Zodiac Snake can be blocked when only the attacking player controls a Swamp")
     void canBeBlockedWhenOnlyAttackerControlsSwamp() {
         harness.addToBattlefield(player1, new Swamp());
@@ -75,5 +73,24 @@ class ZodiacSnakeTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
 
         assertThat(blockerPerm.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped defending Swamp still prevents Zodiac Snake from being blocked")
+    void cannotBeBlockedWhenDefendingSwampIsTapped() {
+        harness.addToBattlefield(player2, new Swamp());
+        findPermanent(player2, "Swamp").setTapped(true);
+
+        Permanent blockerPerm = addCreatureReady(player2, new ShuFootSoldiers());
+        Permanent atkPerm = addCreatureReady(player1, new ZodiacSnake());
+        atkPerm.setAttacking(true);
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
     }
 }
