@@ -4,18 +4,17 @@ import com.github.laxika.magicalvibes.cards.a.AzoriusGuildgate;
 import com.github.laxika.magicalvibes.cards.b.BorosGuildgate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SmeltWardGatekeepers.class, AzoriusGuildgate.class, BorosGuildgate.class, GrizzlyBears.class})
 class SmeltWardGatekeepersTest extends BaseCardTest {
 
     @Test
@@ -108,15 +107,96 @@ class SmeltWardGatekeepersTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(bears.getId()));
     }
 
+    @Test
+    @DisplayName("Losing a Gate before resolution prevents every part of the ability")
+    void losingGateBeforeResolutionPreventsEffect() {
+        setUpTurn();
+        harness.addToBattlefield(player1, new AzoriusGuildgate());
+        harness.addToBattlefield(player1, new BorosGuildgate());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        bears.tap();
+
+        castGatekeepers();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Boros Guildgate"));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gd.isStolenUntilEndOfTurn(bears.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("Two Gates with the same name satisfy the condition")
+    void twoIdenticalGatesCount() {
+        setUpTurn();
+        harness.addToBattlefield(player1, new AzoriusGuildgate());
+        harness.addToBattlefield(player1, new AzoriusGuildgate());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+        castGatekeepers();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Control and haste last through the end step and expire at cleanup")
+    void controlAndHasteExpireAtCleanup() {
+        setUpTurn();
+        harness.addToBattlefield(player1, new AzoriusGuildgate());
+        harness.addToBattlefield(player1, new BorosGuildgate());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+        castGatekeepers();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gd.isStolenUntilEndOfTurn(bears.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("The triggered ability resolves even if Gatekeepers leaves the battlefield")
+    void sourceLeavingDoesNotPreventEffect() {
+        setUpTurn();
+        harness.addToBattlefield(player1, new AzoriusGuildgate());
+        harness.addToBattlefield(player1, new BorosGuildgate());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        bears.tap();
+
+        castGatekeepers();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Smelt-Ward Gatekeepers"));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
     private void setUpTurn() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
     }
 
     private void castGatekeepers() {
-        harness.setHand(player1, List.of(new SmeltWardGatekeepers()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SmeltWardGatekeepers(), "{3}{R}");
     }
 }
