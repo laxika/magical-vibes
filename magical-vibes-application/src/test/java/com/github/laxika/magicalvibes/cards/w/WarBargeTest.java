@@ -49,8 +49,7 @@ class WarBargeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, barge));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .filteredOn(card -> card instanceof Drowned)
@@ -145,8 +144,53 @@ class WarBargeTest extends BaseCardTest {
         Permanent otherBarge = harness.addToBattlefieldAndReturn(player2, new WarBarge());
 
         enterMain();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(barge), 0, null, otherBarge.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canTargetOwnCreatureWhileBargeIsTapped() {
+        Permanent barge = addBarge();
+        barge.setTapped(true);
+        Permanent drowned = addDrowned(player1);
+
+        enterMain();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, indexOf(barge), 0, null, drowned.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, drowned, Keyword.ISLANDWALK)).isTrue();
+        assertThat(barge.isTapped()).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, barge));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Drowned");
+    }
+
+    @Test
+    void doesNotAffectReplacementWhenTargetLeavesBeforeResolution() {
+        Permanent barge = addBarge();
+        Permanent originalDrowned = addDrowned(player2);
+
+        enterMain();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, indexOf(barge), 0, null, originalDrowned.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, originalDrowned));
+        Permanent replacementDrowned = addDrowned(player2);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, replacementDrowned, Keyword.ISLANDWALK)).isFalse();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, barge));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(replacementDrowned);
+        assertThat(gd.playerHands.get(player2.getId())).contains(originalDrowned.getCard());
     }
 
     private Permanent addBarge() {
