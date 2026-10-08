@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VeteranIceClimber.class, GrizzlyBears.class})
+@CardUsed({VeteranIceClimber.class})
 class VeteranIceClimberTest extends BaseCardTest {
 
     @Test
@@ -54,23 +53,90 @@ class VeteranIceClimberTest extends BaseCardTest {
     @Test
     @DisplayName("Veteran Ice Climber cannot be blocked")
     void cannotBeBlocked() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new VeteranIceClimber());
 
-        Permanent veteran = new Permanent(new VeteranIceClimber());
-        veteran.setSummoningSick(false);
+        Permanent veteran = addReadyVeteran();
         veteran.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(veteran);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("The controller can be chosen as the milling target")
+    void attackingCanMillController() {
+        Permanent veteran = addReadyVeteran();
+        harness.setLibrary(player1, libraryWithFiveCards());
+        harness.setLibrary(player2, libraryWithFiveCards());
+
+        declareAttackers(List.of(indexOf(player1, veteran)));
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(5);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Milling uses power at resolution rather than when attacking")
+    void millingUsesPowerAtResolution() {
+        Permanent veteran = addReadyVeteran();
+        harness.setLibrary(player2, libraryWithFiveCards());
+
+        declareAttackers(List.of(indexOf(player1, veteran)));
+        harness.handlePermanentChosen(player1, player2.getId());
+        veteran.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Zero power mills no cards")
+    void zeroPowerMillsNoCards() {
+        Permanent veteran = addReadyVeteran();
+        veteran.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.setLibrary(player2, libraryWithFiveCards());
+
+        declareAttackers(List.of(indexOf(player1, veteran)));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(5);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Milling more cards than remain mills the entire library")
+    void millingStopsAtEmptyLibrary() {
+        Permanent veteran = addReadyVeteran();
+        veteran.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setLibrary(player2, List.of(new VeteranIceClimber()));
+
+        declareAttackers(List.of(indexOf(player1, veteran)));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Attacking with vigilance leaves Veteran Ice Climber untapped")
+    void attackingDoesNotTapVeteran() {
+        Permanent veteran = addReadyVeteran();
+
+        declareAttackers(List.of(indexOf(player1, veteran)));
+
+        assertThat(veteran.isTapped()).isFalse();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
     }
 
     private Permanent addReadyVeteran() {
@@ -83,11 +149,11 @@ class VeteranIceClimberTest extends BaseCardTest {
 
     private List<Card> libraryWithFiveCards() {
         return List.of(
-                new GrizzlyBears(),
-                new GrizzlyBears(),
-                new GrizzlyBears(),
-                new GrizzlyBears(),
-                new GrizzlyBears()
+                new VeteranIceClimber(),
+                new VeteranIceClimber(),
+                new VeteranIceClimber(),
+                new VeteranIceClimber(),
+                new VeteranIceClimber()
         );
     }
 }
