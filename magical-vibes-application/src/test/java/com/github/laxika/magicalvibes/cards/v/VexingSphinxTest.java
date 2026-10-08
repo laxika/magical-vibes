@@ -69,8 +69,7 @@ class VexingSphinxTest extends BaseCardTest {
         int deckBeforeSecondUpkeep = gd.playerDecks.get(player1.getId()).size();
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(sphinx.getCounterCount(CounterType.AGE)).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sphinx);
@@ -98,5 +97,71 @@ class VexingSphinxTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(sphinx);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Death draws only for age counters and only for the dying creature's controller")
+    void deathDrawsOnlyForAgeCounters() {
+        Permanent sphinx = harness.addToBattlefieldAndReturn(player2, new VexingSphinx());
+        sphinx.setCounterCount(CounterType.AGE, 3);
+        sphinx.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        int controllerHandBefore = gd.playerHands.get(player2.getId()).size();
+        int opponentHandBefore = gd.playerHands.get(player1.getId()).size();
+        int deckBefore = gd.playerDecks.get(player2.getId()).size();
+
+        sphinx.setMarkedDamage(6);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Vexing Sphinx");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(controllerHandBefore + 3);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(opponentHandBefore);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore - 3);
+    }
+
+    @Test
+    @DisplayName("Dying without age counters draws no cards")
+    void deathWithoutAgeCountersDrawsNothing() {
+        Permanent sphinx = harness.addToBattlefieldAndReturn(player1, new VexingSphinx());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+
+        sphinx.setMarkedDamage(4);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Vexing Sphinx");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
+    }
+
+    @Test
+    @DisplayName("An empty hand prevents paying the first upkeep but the new age counter still draws a card")
+    void emptyHandOnFirstUpkeepSacrificesAndDraws() {
+        Permanent sphinx = harness.addToBattlefieldAndReturn(player1, new VexingSphinx());
+        harness.setHand(player1, List.of());
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sphinx);
+        harness.assertInGraveyard(player1, "Vexing Sphinx");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep does not trigger during the opponent's upkeep")
+    void opponentUpkeepDoesNotAddAgeCounter() {
+        Permanent sphinx = harness.addToBattlefieldAndReturn(player1, new VexingSphinx());
+        harness.setHand(player1, List.of());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(sphinx.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(sphinx);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }
