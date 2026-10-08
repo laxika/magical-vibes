@@ -101,6 +101,55 @@ class WoundReflectionTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
     }
 
+    @Test
+    @DisplayName("Life lost in response to the end-step trigger is counted at resolution")
+    void countsDamageInResponseToTrigger() {
+        harness.addToBattlefield(player1, new WoundReflection());
+        harness.setLife(player2, 20);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new FlameJavelin()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
+    }
+
+    @Test
+    @DisplayName("Each Wound Reflection counts life lost to the earlier resolving trigger")
+    void multipleReflectionsCompoundLifeLoss() {
+        harness.addToBattlefield(player1, new WoundReflection());
+        harness.addToBattlefield(player1, new WoundReflection());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new FlameJavelin()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        resolveEndStep(player1);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Counts life lost before Wound Reflection entered the battlefield")
+    void countsLifeLostBeforeEnteringBattlefield() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new FlameJavelin()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.addToBattlefield(player1, new WoundReflection());
+
+        resolveEndStep(player1);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
+    }
+
     /** Advances into the given player's end step and resolves the Wound Reflection trigger. */
     private void resolveEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
