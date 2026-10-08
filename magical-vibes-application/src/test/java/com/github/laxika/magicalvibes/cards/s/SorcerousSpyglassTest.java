@@ -4,17 +4,17 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.cards.d.DroverOfTheMighty;
+import com.github.laxika.magicalvibes.cards.l.LightningRigCrew;
+import com.github.laxika.magicalvibes.cards.t.TreasureMap;
+import com.github.laxika.magicalvibes.cards.t.TreasureCove;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,9 +24,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SorcerousSpyglass.class, LightningRigCrew.class, DroverOfTheMighty.class, SongOfTheDryads.class, TreasureMap.class, TreasureCove.class})
 class SorcerousSpyglassTest extends BaseCardTest {
-
-    // ===== Casting and card name choice =====
 
     @Test
     @DisplayName("Casting Sorcerous Spyglass puts it on the stack as artifact spell")
@@ -54,10 +53,9 @@ class SorcerousSpyglassTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        // Opponent's hand should be revealed in game log
+        // The public log records the look without exposing card identities.
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at") && log.contains("hand"));
 
-        // Permanent should NOT be on the battlefield yet — name must be chosen first (Rule 614.1c)
         harness.assertNotOnBattlefield(player1, "Sorcerous Spyglass");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
@@ -91,6 +89,7 @@ class SorcerousSpyglassTest extends BaseCardTest {
 
         List<String> p1Messages = harness.getConn1().getSentMessages();
         assertThat(p1Messages).anyMatch(msg -> msg.contains("REVEAL_HAND"));
+        assertThat(harness.getConn2().getSentMessages()).noneMatch(msg -> msg.contains("REVEAL_HAND"));
     }
 
     @Test
@@ -101,25 +100,20 @@ class SorcerousSpyglassTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "Prodigal Pyromancer");
+        harness.handleListChoice(player1, "Lightning-Rig Crew");
 
         Permanent perm = findPermanent(player1, "Sorcerous Spyglass");
-        assertThat(perm.getChosenName()).isEqualTo("Prodigal Pyromancer");
+        assertThat(perm.getChosenName()).isEqualTo("Lightning-Rig Crew");
     }
-
-    // ===== Blocking activated abilities =====
 
     @Test
     @DisplayName("Blocks non-mana activated abilities of the named card")
     void blocksNonManaActivatedAbilities() {
-        Permanent spyglass = addReadySpyglass(player1, "Prodigal Pyromancer");
+        addReadySpyglass(player1, "Lightning-Rig Crew");
 
-        Card pyromancer = createCreatureWithTapAbility("Prodigal Pyromancer", 1, 1, CardColor.RED);
-        Permanent pyromancerPerm = new Permanent(pyromancer);
-        pyromancerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(pyromancerPerm);
+        addCreatureReady(player2, new LightningRigCrew());
 
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, player1.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated");
     }
@@ -127,12 +121,9 @@ class SorcerousSpyglassTest extends BaseCardTest {
     @Test
     @DisplayName("Does NOT block mana abilities of the named card")
     void doesNotBlockManaAbilities() {
-        Permanent spyglass = addReadySpyglass(player1, "Birds of Paradise");
+        addReadySpyglass(player1, "Drover of the Mighty");
 
-        Card birds = createCreatureWithManaAbility("Birds of Paradise", 0, 1, CardColor.GREEN);
-        Permanent birdsPerm = new Permanent(birds);
-        birdsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(birdsPerm);
+        addCreatureReady(player2, new DroverOfTheMighty());
 
         harness.activateAbility(player2, 0, null, null);
 
@@ -142,33 +133,25 @@ class SorcerousSpyglassTest extends BaseCardTest {
     @Test
     @DisplayName("Does NOT block abilities of differently-named cards")
     void doesNotBlockDifferentlyNamedCards() {
-        Permanent spyglass = addReadySpyglass(player1, "Some Other Card");
+        addReadySpyglass(player1, "Sorcerous Spyglass");
 
-        Card pyromancer = createCreatureWithTapAbility("Prodigal Pyromancer", 1, 1, CardColor.RED);
-        Permanent pyromancerPerm = new Permanent(pyromancer);
-        pyromancerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(pyromancerPerm);
+        addCreatureReady(player2, new LightningRigCrew());
 
-        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.activateAbility(player2, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Prodigal Pyromancer");
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Lightning-Rig Crew");
     }
-
-    // ===== Spyglass removal =====
 
     @Test
     @DisplayName("After Sorcerous Spyglass leaves the battlefield, abilities are usable again")
     void abilitiesWorkAfterSpyglassRemoved() {
-        Permanent spyglass = addReadySpyglass(player1, "Prodigal Pyromancer");
+        Permanent spyglass = addReadySpyglass(player1, "Lightning-Rig Crew");
 
-        Card pyromancer = createCreatureWithTapAbility("Prodigal Pyromancer", 1, 1, CardColor.RED);
-        Permanent pyromancerPerm = new Permanent(pyromancer);
-        pyromancerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(pyromancerPerm);
+        addCreatureReady(player2, new LightningRigCrew());
 
         // Verify blocked
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, player1.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated");
 
@@ -176,49 +159,115 @@ class SorcerousSpyglassTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(spyglass);
 
         // Now the ability should work
-        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.activateAbility(player2, 0, null, null);
         assertThat(gd.stack).hasSize(1);
     }
 
-    // ===== Helpers =====
+    @Test
+    void namedManaAbilityResolvesWithoutUsingTheStack() {
+        addReadySpyglass(player1, "Drover of the Mighty");
+        Permanent drover = addCreatureReady(player2, new DroverOfTheMighty());
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleListChoice(player2, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(drover.isTapped()).isTrue();
+    }
+
+    @Test
+    void blocksControllersOwnNamedCardWithoutPayingCosts() {
+        addReadySpyglass(player1, "Lightning-Rig Crew");
+        Permanent crew = addCreatureReady(player1, new LightningRigCrew());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+
+        assertThat(crew.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void namingSourceDoesNotStopAbilityAlreadyOnStack() {
+        addCreatureReady(player2, new LightningRigCrew());
+        harness.activateAbility(player2, 0, null, null);
+        addReadySpyglass(player1, "Lightning-Rig Crew");
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void namedCardTriggeredAbilityStillUntaps() {
+        addReadySpyglass(player1, "Lightning-Rig Crew");
+        Permanent crew = addCreatureReady(player1, new LightningRigCrew());
+        crew.setTapped(true);
+        harness.setHand(player1, List.of(new LightningRigCrew()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(crew.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void losingPrintedAbilitiesStopsTheNameLock() {
+        Permanent spyglass = addReadySpyglass(player1, "Lightning-Rig Crew");
+        addCreatureReady(player2, new LightningRigCrew());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new SongOfTheDryads()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castEnchantment(player1, 0, spyglass.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    void namesAbsentFromOpponentsHandAreAllowedEvenWhenHandIsEmpty() {
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new SorcerousSpyglass()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Treasure Cove");
+
+        assertThat(findPermanent(player1, "Sorcerous Spyglass").getChosenName()).isEqualTo("Treasure Cove");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void payingManaDoesNotMakeAnAbilityAManaAbility() {
+        addReadySpyglass(player1, "Treasure Map");
+        Permanent map = harness.addToBattlefieldAndReturn(player2, new TreasureMap());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+
+        assertThat(map.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addReadySpyglass(Player player, String chosenName) {
-        SorcerousSpyglass card = new SorcerousSpyglass();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new SorcerousSpyglass());
         perm.setChosenName(chosenName);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
-    private static Card createCreatureWithTapAbility(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        card.addActivatedAbility(new ActivatedAbility(
-                true, null,
-                List.of(new DealDamageToAnyTargetEffect(1)),
-                "{T}: " + name + " deals 1 damage to any target."
-        ));
-        return card;
-    }
-
-    private static Card createCreatureWithManaAbility(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        card.addActivatedAbility(new ActivatedAbility(
-                true, null,
-                List.of(new AwardAnyColorManaEffect()),
-                "{T}: Add one mana of any color."
-        ));
-        return card;
-    }
 }
