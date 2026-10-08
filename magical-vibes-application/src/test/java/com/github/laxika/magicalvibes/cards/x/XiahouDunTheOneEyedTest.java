@@ -130,6 +130,62 @@ class XiahouDunTheOneEyedTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Can sacrifice itself while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent xiahou = harness.addToBattlefieldAndReturn(player1, new XiahouDunTheOneEyed());
+        xiahou.setSummoningSick(true);
+        xiahou.setTapped(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Card black = new Coercion();
+        harness.setGraveyard(player1, List.of(black));
+
+        harness.activateAbility(player1, 0, null, black.getId(), Zone.GRAVEYARD);
+
+        harness.assertNotOnBattlefield(player1, "Xiahou Dun, the One-Eyed");
+        harness.assertInGraveyard(player1, "Xiahou Dun, the One-Eyed");
+        harness.assertNotInHand(player1, "Coercion");
+        harness.assertInGraveyard(player1, "Coercion");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Coercion");
+    }
+
+    @Test
+    @DisplayName("Can return another Xiahou Dun already in the graveyard")
+    void returnsBlackCreatureCard() {
+        setupXiahouOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Card target = new XiahouDunTheOneEyed();
+        harness.setGraveyard(player1, List.of(target));
+
+        harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(target).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Xiahou Dun, the One-Eyed");
+    }
+
+    @Test
+    @DisplayName("Does not return a target that left the graveyard before resolution")
+    void targetLeavingGraveyardDoesNotRefundSacrifice() {
+        setupXiahouOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Card black = new Coercion();
+        harness.setGraveyard(player1, List.of(black));
+
+        harness.activateAbility(player1, 0, null, black.getId(), Zone.GRAVEYARD);
+        gd.playerGraveyards.get(player1.getId()).remove(black);
+        harness.setExile(player1, List.of(black));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Coercion");
+        harness.assertNotInGraveyard(player1, "Coercion");
+        harness.assertNotOnBattlefield(player1, "Xiahou Dun, the One-Eyed");
+        harness.assertInGraveyard(player1, "Xiahou Dun, the One-Eyed");
+    }
+
     private void setupXiahouOnMyTurn(TurnStep step) {
         addCreatureReady(player1, new XiahouDunTheOneEyed());
         harness.forceActivePlayer(player1);
