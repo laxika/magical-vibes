@@ -125,4 +125,57 @@ class SokenzanSpellbladeTest extends BaseCardTest {
         assertThat(spellblade.getPowerModifier()).isZero();
         assertThat(spellblade.getToughnessModifier()).isZero();
     }
+
+    @Test
+    @DisplayName("Repeated activations stack using only the controller's hand and keep their resolved amounts")
+    void repeatedActivationsStackAndKeepResolvedAmounts() {
+        Permanent spellblade = addCreatureReady(player1, new SokenzanSpellblade());
+        harness.setHand(player1, List.of(new SakuraTribeScout(), new SakuraTribeScout()));
+        harness.setHand(player2, List.of(new SakuraTribeScout()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(spellblade.getPowerModifier()).isEqualTo(2);
+        assertThat(spellblade.getToughnessModifier()).isZero();
+
+        harness.setHand(player1, List.of(new SakuraTribeScout()));
+        assertThat(spellblade.getPowerModifier()).isEqualTo(2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(spellblade.getPowerModifier()).isEqualTo(3);
+        assertThat(spellblade.getToughnessModifier()).isZero();
+
+        harness.setHand(player1, List.of());
+        assertThat(spellblade.getPowerModifier()).isEqualTo(3);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(spellblade.getPowerModifier()).isZero();
+        assertThat(spellblade.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The activated ability can be used while tapped and summoning sick")
+    void activatedAbilityDoesNotRequireTappingOrHaste() {
+        Permanent spellblade = harness.addToBattlefieldAndReturn(player1, new SokenzanSpellblade());
+        spellblade.setSummoningSick(true);
+        spellblade.setTapped(true);
+        harness.setHand(player1, List.of(new SakuraTribeScout()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(spellblade.getPowerModifier()).isEqualTo(1);
+        assertThat(spellblade.getToughnessModifier()).isZero();
+        assertThat(spellblade.isTapped()).isTrue();
+    }
 }
