@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.a.Arachnoid;
 import com.github.laxika.magicalvibes.cards.a.AvariceTotem;
 import com.github.laxika.magicalvibes.cards.f.FangrenPathcutter;
+import com.github.laxika.magicalvibes.cards.g.Granulate;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -18,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VedalkenShackles.class, Arachnoid.class, FangrenPathcutter.class, Island.class, AvariceTotem.class})
+@CardUsed({VedalkenShackles.class, Arachnoid.class, FangrenPathcutter.class, Island.class, AvariceTotem.class, Granulate.class})
 class VedalkenShacklesTest extends BaseCardTest {
 
     @Test
@@ -159,10 +161,90 @@ class VedalkenShacklesTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
     }
 
+    @Test
+    void doesNotGainControlIfSourceUntapsAndRetapsBeforeResolution() {
+        addIslands(player1, 2);
+        Permanent shackles = addReadyShackles(player1);
+        Permanent target = addCreatureReady(player2, new Arachnoid());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, shackles), null, target.getId());
+        shackles.untap();
+        shackles.tap();
+        harness.passBothPriorities();
+
+        assertThat(shackles.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+    }
+
+    @Test
+    void increasedPowerMakesTargetIllegalAtResolution() {
+        addIslands(player1, 2);
+        Permanent shackles = addReadyShackles(player1);
+        Permanent target = addCreatureReady(player2, new Arachnoid());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, shackles), null, target.getId());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+    }
+
+    @Test
+    void increasedPowerAfterResolutionDoesNotEndControl() {
+        addIslands(player1, 2);
+        Permanent shackles = addReadyShackles(player1);
+        Permanent target = addCreatureReady(player2, new Arachnoid());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, shackles), null, target.getId());
+        harness.passBothPriorities();
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+
+        assertThat(shackles.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    void destroyingShacklesEndsControl() {
+        addIslands(player1, 2);
+        Permanent shackles = addReadyShackles(player1);
+        Permanent target = addCreatureReady(player2, new Arachnoid());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, shackles), null, target.getId());
+        harness.passBothPriorities();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Granulate()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(shackles, target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        harness.assertInGraveyard(player1, "Vedalken Shackles");
+    }
+
+    @Test
+    void rejectsNoncreatureTarget() {
+        addIslands(player1, 2);
+        Permanent shackles = addReadyShackles(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvariceTotem());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(player1, shackles), null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addReadyShackles(Player player) {
-        Permanent shackles = harness.addToBattlefieldAndReturn(player, new VedalkenShackles());
-        shackles.setSummoningSick(false);
-        return shackles;
+        return addCreatureReady(player, new VedalkenShackles());
     }
 
     private void addIslands(Player player, int count) {
