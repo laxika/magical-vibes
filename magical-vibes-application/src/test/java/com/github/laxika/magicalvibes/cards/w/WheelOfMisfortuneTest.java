@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.ArrayList;
@@ -15,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WheelOfMisfortune.class, Island.class, Mountain.class, GrizzlyBears.class})
+@CardUsed({WheelOfMisfortune.class, GrizzlyBears.class})
 class WheelOfMisfortuneTest extends BaseCardTest {
 
     @Test
@@ -88,11 +87,117 @@ class WheelOfMisfortuneTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(player2Kept);
     }
 
+    @Test
+    void bothPlayersChoosingZeroTakeNoDamageAndKeepTheirHands() {
+        Card player1Kept = new GrizzlyBears();
+        Card player2Kept = new GrizzlyBears();
+        harness.setHand(player1, List.of(new WheelOfMisfortune(), player1Kept));
+        harness.setHand(player2, List.of(player2Kept));
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        castWheelOfMisfortune();
+        harness.handleXValueChosen(player1, 0);
+        harness.handleXValueChosen(player2, 0);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(player1Kept);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(player2Kept);
+        assertThat(gd.gameResult).isNull();
+    }
+
+    @Test
+    void firstChoiceDoesNotDealDamageOrChangeHandsBeforeSecondChoice() {
+        Card kept = new GrizzlyBears();
+        List<Card> draws = cards(7);
+        harness.setHand(player1, List.of(new WheelOfMisfortune(), kept));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, draws);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        castWheelOfMisfortune();
+        harness.handleXValueChosen(player1, 5);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(draws);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
+
+        harness.handleXValueChosen(player2, 0);
+
+        harness.assertLife(player1, 15);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(draws);
+    }
+
+    @Test
+    void playerWithEmptyHandStillDrawsSevenWhenNotLowest() {
+        List<Card> draws = cards(7);
+        harness.setHand(player1, List.of(new WheelOfMisfortune()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, draws);
+        harness.setLife(player1, 20);
+
+        castWheelOfMisfortune();
+        harness.handleXValueChosen(player1, 1);
+        harness.handleXValueChosen(player2, 0);
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(draws);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void lethalDamageDoesNotSkipDiscardingAndDrawingBeforeResolutionEnds() {
+        Card discarded = new GrizzlyBears();
+        List<Card> draws = cards(7);
+        harness.setHand(player1, List.of(new WheelOfMisfortune(), discarded));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, draws);
+        harness.setLife(player1, 5);
+        harness.setLife(player2, 20);
+
+        castWheelOfMisfortune();
+        harness.handleXValueChosen(player1, 5);
+        harness.handleXValueChosen(player2, 0);
+
+        harness.assertLife(player1, 0);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(draws);
+        assertThat(gd.gameResult).isEqualTo(GameEventFact.GameResult.WIN);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    void insufficientLibraryDrawsAvailableCardsThenLoses() {
+        Card discarded = new GrizzlyBears();
+        List<Card> draws = cards(3);
+        harness.setHand(player1, List.of(new WheelOfMisfortune(), discarded));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, draws);
+        harness.setLife(player1, 20);
+
+        castWheelOfMisfortune();
+        harness.handleXValueChosen(player1, 1);
+        harness.handleXValueChosen(player2, 0);
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(draws);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.gameResult).isEqualTo(GameEventFact.GameResult.WIN);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
     private void castWheelOfMisfortune() {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
     }
 
