@@ -36,7 +36,8 @@ public class ReviewService {
                    COALESCE(SUM(CASE WHEN t.status='COMPLETED' THEN f.total ELSE 0 END),0) AS findingCount,
                    COALESCE(SUM(a.publication_status='FAILED'),0) AS publicationFailures,
                    SUM(costs.estimatedCostUsd) AS estimatedCostUsd,
-                   COALESCE(SUM(costs.missingCostCount),0) AS missingCostCount
+                   COALESCE(SUM(costs.missingCostCount),0) AS missingCostCount,
+                   COALESCE(SUM(costs.estimatedCostUsd IS NOT NULL),0) AS pricedCards
             FROM review_run r
             LEFT JOIN review_task t ON t.run_id=r.id
             LEFT JOIN review_attempt a ON a.token=t.current_attempt
@@ -227,9 +228,12 @@ public class ReviewService {
     }
 
     public int requeueRun(long runId, String status) {
-        require(status != null && Set.of("FAILED", "RUNNING").contains(status), "Bulk requeue supports FAILED or RUNNING tasks");
+        require(status != null && Set.of("FAILED", "RUNNING", "UNFINISHED").contains(status), "Bulk requeue supports FAILED, RUNNING, or UNFINISHED tasks");
         return transactions.execute(transaction -> {
             one("SELECT id FROM review_run WHERE id=?", runId);
+            if (status.equals("UNFINISHED")) {
+                return jdbc.update("UPDATE review_task SET status='CREATED',current_attempt=NULL WHERE run_id=? AND status IN ('RUNNING','FAILED')", runId);
+            }
             return jdbc.update("UPDATE review_task SET status='CREATED',current_attempt=NULL WHERE run_id=? AND status=?", runId, status);
         });
     }

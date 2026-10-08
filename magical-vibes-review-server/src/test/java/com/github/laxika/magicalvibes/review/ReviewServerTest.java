@@ -169,6 +169,31 @@ class ReviewServerTest {
     }
 
     @Test
+    void requeuesEveryUnfinishedTaskWithoutTouchingCompletedOrQueuedOnes() throws Exception {
+        for (int index = 2; index <= 4; index++) {
+            writeCard("Card" + index, "@CardRegistration(set = \"SOS\", collectorNumber = \"" + index + "\")");
+        }
+        var run = newRun("Unfinished", "luna");
+        var completed = service.claim(new ReviewService.Claim("one"));
+        service.submit(id(completed), result(completed, "FINDINGS", List.of("Missing trigger.")));
+        var failed = service.claim(new ReviewService.Claim("two"));
+        service.submit(id(failed), new ReviewService.Result((String) failed.get("attemptToken"), "ERROR", null, List.of(),
+                null, "NOT_REQUIRED", null, "Codex could not finish", null, null, null, null, null));
+        var running = service.claim(new ReviewService.Claim("three"));
+        assertThat(service.run(id(run))).containsEntry("completed", 1).containsEntry("failed", 1)
+                .containsEntry("running", 1).containsEntry("created", 1);
+
+        assertThat(service.requeueRun(id(run), "UNFINISHED")).isEqualTo(2);
+
+        assertThat(service.run(id(run))).containsEntry("completed", 1).containsEntry("failed", 0)
+                .containsEntry("running", 0).containsEntry("created", 3).containsEntry("findingCount", 1);
+        assertThatThrownBy(() -> service.submit(id(running), result(running, "PASS", List.of())))
+                .isInstanceOf(ResponseStatusException.class).hasMessageContaining("409");
+        assertThatThrownBy(() -> service.requeueRun(id(run), "COMPLETED"))
+                .isInstanceOf(ResponseStatusException.class).hasMessageContaining("400");
+    }
+
+    @Test
     void validatesHttpContractsAndServesTheDashboard() throws Exception {
         var client = HttpClient.newHttpClient();
         var home = client.send(HttpRequest.newBuilder(uri("/")).GET().build(), HttpResponse.BodyHandlers.ofString());
@@ -189,7 +214,7 @@ class ReviewServerTest {
     void totalsCostsAcrossCardsAndPreviousAttemptsWithoutChangingRunCounts() throws Exception {
         writeCard("SecondCard", "@CardRegistration(set = \"SOS\", collectorNumber = \"2\")");
         var run = newRun("Cost totals", "luna");
-        assertThat(run).containsEntry("estimatedCostUsd", null).containsEntry("missingCostCount", 0);
+        assertThat(run).containsEntry("estimatedCostUsd", null).containsEntry("missingCostCount", 0).containsEntry("pricedCards", 0);
         var first = service.claim(new ReviewService.Claim("one"));
         service.submit(id(first), new ReviewService.Result((String) first.get("attemptToken"), "FINDINGS", "First Card",
                 List.of("Missing trigger.", "Wrong target."), "a".repeat(40), "NOT_REQUIRED", null, null, null,
@@ -199,13 +224,15 @@ class ReviewServerTest {
                 null, "NOT_REQUIRED", null, "Review failed", null, 1000L, 0L, 200L, new BigDecimal("0.34")));
         assertThat(((Number) service.run(id(run)).get("estimatedCostUsd")).doubleValue()).isCloseTo(0.46, offset(0.000001));
         assertThat(service.run(id(run))).containsEntry("total", 2).containsEntry("completed", 1)
-                .containsEntry("failed", 1).containsEntry("findingCount", 2).containsEntry("missingCostCount", 0);
+                .containsEntry("failed", 1).containsEntry("findingCount", 2).containsEntry("missingCostCount", 0)
+                .containsEntry("pricedCards", 2);
 
         service.requeue(id(first));
         assertThat(((Number) service.run(id(run)).get("estimatedCostUsd")).doubleValue()).isCloseTo(0.46, offset(0.000001));
         var retry = service.claim(new ReviewService.Claim("retry"));
         service.submit(id(retry), result(retry, "PASS", List.of()));
-        assertThat(service.run(id(run))).containsEntry("missingCostCount", 1).containsEntry("findingCount", 0);
+        assertThat(service.run(id(run))).containsEntry("missingCostCount", 1).containsEntry("findingCount", 0)
+                .containsEntry("pricedCards", 2);
 
         var otherRun = newRun("Zero cost", "sol");
         service.activate(id(otherRun));

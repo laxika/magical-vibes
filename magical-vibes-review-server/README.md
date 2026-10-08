@@ -62,7 +62,7 @@ The home page shows individual findings and cards with findings per run, plus to
 
 Search for a card name, implementation class, or printing such as `INR 14b`. A card's page groups findings by run/model and retains prior attempts. Every completed review records the Git commit it inspected; runs use evolving `main`, so later models can see earlier test improvements.
 
-Requeue individual reviews from the dashboard, or requeue all failed/running tasks from a run page. Requeueing invalidates the old attempt token. Late results are rejected instead of overwriting a newer attempt. Counts use each task's latest accepted completed attempt; previous findings remain in history. Jobs are never automatically reassigned or retried. If a worker fails mid-review, resolve any preserved checkout changes before manually requeueing its task.
+Requeue individual reviews from the dashboard, or use a run page's *Recover unfinished work* panel to requeue its failed tasks, its running tasks, or both at once with *Reset unfinished to Queued*. To finish a run after failures: stop all workers, reset unfinished tasks, then restart the workers. Requeueing invalidates the old attempt token. Late results are rejected instead of overwriting a newer attempt. Counts use each task's latest accepted completed attempt; previous findings remain in history. Jobs are never automatically reassigned or retried. If a worker fails mid-review, resolve any preserved checkout changes before manually requeueing its task.
 
 ## SQLite snapshots
 
@@ -76,13 +76,13 @@ Tests and smoke checks use temporary databases or paths under `build`; no initia
 | --- | --- | --- |
 | Overview | `GET /api/overview` | Run metrics and model totals |
 | List / create runs | `GET /api/runs`, `POST /api/runs` | Create: `name`, `model`, `reasoningEffort` |
-| Run details | `GET /api/runs/{id}` | Configuration and progress |
+| Run details | `GET /api/runs/{id}` | Configuration, progress, and cost (`pricedCards` counts cards with cost data, for per-card averages) |
 | Activate / pause | `PUT /api/active-run` | `runId`, or `null` to pause |
 | Claim | `POST /api/tasks/claim` | `workerId`; task/configuration/`attemptToken`, or 204 |
 | Submit | `POST /api/tasks/{id}/result` | Result described below; 204 on acceptance |
 | Task history | `GET /api/tasks/{id}` | Current task and all attempts/findings |
 | Requeue task | `POST /api/tasks/{id}/requeue` | No body |
-| Bulk requeue | `POST /api/runs/{id}/requeue` | `status`: `FAILED` or `RUNNING` |
+| Bulk requeue | `POST /api/runs/{id}/requeue` | `status`: `FAILED`, `RUNNING`, or `UNFINISHED` (both); returns `requeued` |
 | Run tasks | `GET /api/runs/{id}/tasks` | `query`, `status`, zero-based `page` |
 | Search cards | `GET /api/cards` | `query`, zero-based `page` |
 | Card comparisons | `GET /api/cards/{id}` | Printings and reviews grouped by run |
