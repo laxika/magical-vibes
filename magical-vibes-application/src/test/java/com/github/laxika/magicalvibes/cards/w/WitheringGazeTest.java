@@ -17,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WitheringGaze.class, Forest.class, GrizzlyBears.class, GoblinPiker.class, Mountain.class})
+@CardUsed({WitheringGaze.class, Forest.class, GrizzlyBears.class, GoblinPiker.class, Mountain.class,
+        DryadArbor.class})
 class WitheringGazeTest extends BaseCardTest {
 
     private void castWitheringGaze() {
@@ -66,7 +67,6 @@ class WitheringGazeTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(DryadArbor.class)
     @DisplayName("Counts a card that is both a Forest and green only once")
     void countsForestAndGreenCardOnce() {
         harness.setHand(player2, List.of(new DryadArbor()));
@@ -100,6 +100,32 @@ class WitheringGazeTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
+    }
+
+    @Test
+    @DisplayName("Counts the opponent's hand at resolution and leaves every revealed card in hand")
+    void countsCurrentHandAtResolutionWithoutMovingRevealedCards() {
+        harness.setHand(player2, List.of(new Forest()));
+        harness.setHand(player1, List.of(new WitheringGaze()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castSorcery(player1, 0, player2.getId());
+
+        Forest forest = new Forest();
+        GrizzlyBears bears = new GrizzlyBears();
+        Mountain mountain = new Mountain();
+        harness.setHand(player2, List.of(forest, bears, mountain));
+        Mountain firstDraw = new Mountain();
+        Forest secondDraw = new Forest();
+        GoblinPiker remainingCard = new GoblinPiker();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw, remainingCard));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(forest, bears, mountain);
+        assertThat(gameLogContains("reveals their hand: Forest, Grizzly Bears, Mountain")).isTrue();
+        harness.assertInGraveyard(player1, "Withering Gaze");
     }
 
     @Test
