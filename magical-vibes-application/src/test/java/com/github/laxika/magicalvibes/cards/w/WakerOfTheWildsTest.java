@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JungleDelver;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,27 +22,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({WakerOfTheWilds.class, Forest.class, JungleDelver.class})
 class WakerOfTheWildsTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Waker of the Wilds has one activated ability with {X}{G}{G} cost")
-    void hasActivatedAbility() {
-        WakerOfTheWilds card = new WakerOfTheWilds();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{X}{G}{G}");
-        // The counters and permanent animation of the land are asserted behaviorally below.
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(2);
-    }
-
-    // ===== Activating ability =====
 
     @Test
     @DisplayName("Activating ability puts it on the stack with correct X value and target")
     void activatingAbilityPutsItOnStack() {
-        Permanent waker = addWaker(player1);
+        addWaker(player1);
         Permanent land = addLand(player1);
         harness.addMana(player1, ManaColor.GREEN, 4); // {2}{G}{G} → X=2
 
@@ -51,12 +38,9 @@ class WakerOfTheWildsTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Waker of the Wilds");
         assertThat(entry.getXValue()).isEqualTo(2);
         assertThat(entry.getTargetId()).isEqualTo(land.getId());
     }
-
-    // ===== Resolving ability =====
 
     @Test
     @DisplayName("Resolving ability puts X +1/+1 counters on target land")
@@ -125,7 +109,7 @@ class WakerOfTheWildsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, land.getId());
         harness.passBothPriorities();
 
-        assertThat(land.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(harness.getGameData(), land, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -190,6 +174,8 @@ class WakerOfTheWildsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Land is animated as 0/0 with no counters — will die to SBA
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
         assertThat(land.isPermanentlyAnimated()).isTrue();
         assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
@@ -218,8 +204,6 @@ class WakerOfTheWildsTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(3);
     }
 
-    // ===== Targeting restrictions =====
-
     @Test
     @DisplayName("Cannot target opponent's land")
     void cannotTargetOpponentsLand() {
@@ -235,17 +219,13 @@ class WakerOfTheWildsTest extends BaseCardTest {
     @DisplayName("Cannot target a creature that is not a land")
     void cannotTargetNonLandCreature() {
         addWaker(player1);
-        GrizzlyBears bear = new GrizzlyBears();
-        Permanent creature = new Permanent(bear);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new JungleDelver());
         creature.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(creature);
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Mana validation =====
 
     @Test
     @DisplayName("Cannot activate ability without enough mana for GG")
@@ -271,8 +251,6 @@ class WakerOfTheWildsTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
 
-    // ===== Fizzling =====
-
     @Test
     @DisplayName("Ability fizzles if target land is removed before resolution")
     void abilityFizzlesIfTargetRemoved() {
@@ -292,21 +270,66 @@ class WakerOfTheWildsTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Animation and haste persist after the source leaves and through cleanup")
+    void animationPersistsWithoutSource() {
+        Permanent waker = addWaker(player1);
+        Permanent land = addLand(player1);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.activateAbility(player1, 0, 2, land.getId());
+        harness.getGameData().playerBattlefields.get(player1.getId()).remove(waker);
+        harness.passBothPriorities();
+        land.resetModifiers();
+
+        assertThat(gqs.isCreature(harness.getGameData(), land)).isTrue();
+        assertThat(gqs.getEffectivePower(harness.getGameData(), land)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(harness.getGameData(), land)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(harness.getGameData(), land, Keyword.HASTE)).isTrue();
+        assertThat(land.getGrantedSubtypes()).contains(CardSubtype.ELEMENTAL);
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("X zero preserves counters already on the land and the land survives")
+    void zeroWithExistingCountersSurvives() {
+        addWaker(player1);
+        Permanent land = addLand(player1);
+        land.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, 0, land.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gqs.isCreature(harness.getGameData(), land)).isTrue();
+        assertThat(gqs.getEffectivePower(harness.getGameData(), land)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(harness.getGameData(), land)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A land that changes controller before resolution receives neither counters nor animation")
+    void targetChangingControllerIsIllegal() {
+        addWaker(player1);
+        Permanent land = addLand(player1);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.activateAbility(player1, 0, 2, land.getId());
+        harness.getGameData().playerBattlefields.get(player1.getId()).remove(land);
+        harness.getGameData().playerBattlefields.get(player2.getId()).add(land);
+        harness.passBothPriorities();
+
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.isCreature(harness.getGameData(), land)).isFalse();
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
 
     private Permanent addWaker(Player player) {
-        WakerOfTheWilds card = new WakerOfTheWilds();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new WakerOfTheWilds());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addLand(Player player) {
-        Forest forest = new Forest();
-        Permanent perm = new Permanent(forest);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new Forest());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
