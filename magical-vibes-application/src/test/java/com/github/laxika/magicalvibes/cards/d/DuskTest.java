@@ -29,8 +29,7 @@ class DuskTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Dusk()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Hill Giant");
@@ -46,8 +45,7 @@ class DuskTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new Dusk(), lowPowerCreature, highPowerCreature, land));
         harness.addMana(player1, ManaColor.WHITE, 5);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         GameData gameData = harness.getGameData();
         assertThat(gameData.playerGraveyards.get(player1.getId()))
@@ -70,8 +68,7 @@ class DuskTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Dusk()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castSorcery(player1, 0, List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Hill Giant");
@@ -88,8 +85,7 @@ class DuskTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(opponentsBear));
         harness.addMana(player1, ManaColor.WHITE, 5);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(firstBear, secondBear);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
@@ -105,11 +101,33 @@ class DuskTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(dusk, giant));
         harness.addMana(player1, ManaColor.WHITE, 5);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(giant);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(dusk);
         harness.assertNotInHand(player1, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Dawn returns a creature destroyed by Dusk after its power counters cease to apply")
+    void dawnReturnsCreatureWhoseCountersMadeItEligibleForDusk() {
+        Card bear = new GrizzlyBears();
+        Card giant = new HillGiant();
+        Card dusk = new Dusk();
+        harness.addToBattlefieldAndReturn(player1, bear)
+                .setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addToBattlefield(player1, giant);
+        harness.setHand(player1, List.of(dusk));
+        harness.addMana(player1, ManaColor.WHITE, 9);
+
+        harness.castAndResolveSorcery(player1, 0, List.of());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bear, giant, dusk);
+        int duskIndex = gd.playerGraveyards.get(player1.getId()).indexOf(dusk);
+        harness.castAndResolveFlashback(player1, duskIndex, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bear);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(giant);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(dusk);
     }
 }

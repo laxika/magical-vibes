@@ -31,8 +31,7 @@ class DuskDawnTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DuskDawn()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castSorcery(player1, 0, List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of());
 
         harness.assertOnBattlefield(player1, "Fugitive Wizard");
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -52,8 +51,7 @@ class DuskDawnTest extends BaseCardTest {
         ));
         harness.addMana(player1, ManaColor.WHITE, 5);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         GameData gd = harness.getGameData();
         harness.assertInHand(player1, "Fugitive Wizard");
@@ -97,8 +95,7 @@ class DuskDawnTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(new FugitiveWizard(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.WHITE, 5);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherSorcery);
@@ -115,8 +112,7 @@ class DuskDawnTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(spell));
         harness.addMana(player1, ManaColor.WHITE, 5);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -133,8 +129,7 @@ class DuskDawnTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DuskDawn()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castSorcery(player1, 0, List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of());
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
