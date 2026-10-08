@@ -97,4 +97,47 @@ class WhipkeeperTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Counts damage dealt by another activation before it resolves")
+    void evaluatesDamageWhenAbilityResolves() {
+        addCreatureReady(player1, new Whipkeeper());
+        addCreatureReady(player1, new Whipkeeper());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new StoneTongueBasilisk());
+        harness.setHand(player1, List.of(new Firebolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Stone-Tongue Basilisk");
+        harness.assertInGraveyard(player2, "Stone-Tongue Basilisk");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new Whipkeeper());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new StoneTongueBasilisk());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate again while tapped")
+    void cannotActivateAgainWhileTapped() {
+        addCreatureReady(player1, new Whipkeeper());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new StoneTongueBasilisk());
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
 }
