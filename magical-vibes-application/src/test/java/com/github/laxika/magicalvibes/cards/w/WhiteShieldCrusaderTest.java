@@ -140,4 +140,46 @@ class WhiteShieldCrusaderTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("Repeated power boosts accumulate only on their source and expire together")
+    void repeatedBoostsAccumulateOnlyOnSource() {
+        Permanent crusader = addCreatureReady(player1, new WhiteShieldCrusader());
+        Permanent other = addCreatureReady(player1, new WhiteShieldCrusader());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, crusader)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, crusader)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, crusader)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Both abilities can be activated while tapped and summoning sick")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent crusader = addCreatureReady(player1, new WhiteShieldCrusader());
+        Permanent other = addCreatureReady(player1, new WhiteShieldCrusader());
+        crusader.setSummoningSick(true);
+        crusader.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, crusader, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, crusader)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+    }
 }
