@@ -93,4 +93,40 @@ class WindSpiritTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("cannot block Wind Spirit (flying)");
     }
+
+    @Test
+    @DisplayName("Menace allows Wind Spirit to remain unblocked even when two flyers are available")
+    void menaceAllowsNoBlockers() {
+        harness.setLife(player2, 20);
+        Permanent attacker = addCreatureReady(player1, new WindSpirit());
+        addCreatureReady(player2, new KjeldoranSkyknight());
+        addCreatureReady(player2, new KjeldoranSkyknight());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Menace allows more than two flying creatures to block Wind Spirit")
+    void menaceAllowsThreeFlyingBlockers() {
+        Permanent attacker = addCreatureReady(player1, new WindSpirit());
+        Permanent firstBlocker = addCreatureReady(player2, new KjeldoranSkyknight());
+        Permanent secondBlocker = addCreatureReady(player2, new KjeldoranSkyknight());
+        Permanent thirdBlocker = addCreatureReady(player2, new KjeldoranSkyknight());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(2, 0)));
+
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
+        assertThat(thirdBlocker.isBlocking()).isTrue();
+    }
 }
