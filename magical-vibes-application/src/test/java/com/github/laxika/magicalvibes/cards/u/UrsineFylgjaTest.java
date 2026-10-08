@@ -84,11 +84,8 @@ class UrsineFylgjaTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(creature), 0, null, null);
         harness.passBothPriorities();
 
-        harness.forceActivePlayer(player2);
         attacker.setAttacking(true);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(indexOf(creature), 0)));
         harness.passBothPriorities();
 
@@ -134,13 +131,65 @@ class UrsineFylgjaTest extends BaseCardTest {
         assertThat(creature.getDamagePreventionShield()).isZero();
     }
 
+    @Test
+    @DisplayName("Healing counter is paid immediately, but prevention waits for resolution")
+    void counterIsPaidBeforePreventionResolves() {
+        Permanent creature = castUrsineFylgja();
+        creature.setTapped(true);
+
+        harness.activateAbility(player1, indexOf(creature), 0, null, null);
+
+        assertThat(creature.getCounterCount(CounterType.HEALING)).isEqualTo(3);
+        assertThat(creature.getDamagePreventionShield()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Replenishing counters uses the stack and enables prevention again")
+    void replenishingCountersEnablesPreventionAgain() {
+        Permanent creature = castUrsineFylgja();
+        creature.setCounterCount(CounterType.HEALING, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, indexOf(creature), 1, null, null);
+        assertThat(creature.getCounterCount(CounterType.HEALING)).isZero();
+        harness.passBothPriorities();
+        assertThat(creature.getCounterCount(CounterType.HEALING)).isEqualTo(1);
+
+        harness.activateAbility(player1, indexOf(creature), 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.HEALING)).isZero();
+        assertThat(creature.getDamagePreventionShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Self prevention does not protect its controller or consume the shield")
+    void preventionDoesNotProtectController() {
+        Permanent creature = castUrsineFylgja();
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.setHand(player1, List.of(new LightningStorm()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, indexOf(creature), 0, null, null);
+        harness.passBothPriorities();
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, lifeBefore - 3);
+        assertThat(creature.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(creature.getMarkedDamage()).isZero();
+    }
+
     private Permanent castUrsineFylgja() {
         harness.castFromHand(player1, new UrsineFylgja(), "{4}{W}");
         harness.passBothPriorities();
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof UrsineFylgja)
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Ursine Fylgja");
     }
 
     private int indexOf(Permanent permanent) {
