@@ -82,6 +82,41 @@ class VenomousDragonflyTest extends BaseCardTest {
                 .containsExactlyInAnyOrder("Drake Hatchling", "Drake Hatchling");
     }
 
+    @Test
+    @DisplayName("Delayed destruction survives the Dragonfly dying and leaves uninvolved creatures alone")
+    void destroysOnlyBlockerAfterDragonflyDies() {
+        Permanent dragonfly = addReadyDragonfly(player1);
+        dragonfly.setAttacking(true);
+        addReadyDrake(player2);
+        Permanent uninvolvedDrake = addReadyDrake(player2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertInGraveyard(player1, "Venomous Dragonfly");
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(uninvolvedDrake);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(card -> card.getName()).containsExactly("Drake Hatchling");
+    }
+
+    @Test
+    @DisplayName("An unblocked Dragonfly does not destroy an opposing creature")
+    void unblockedDoesNotDestroyOpposingCreature() {
+        Permanent dragonfly = addReadyDragonfly(player1);
+        dragonfly.setAttacking(true);
+        Permanent drake = addReadyDrake(player2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(dragonfly);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(drake);
+        harness.assertLife(player2, 19);
+    }
+
     private Permanent addReadyDragonfly(Player player) {
         return addCreatureReady(player, new VenomousDragonfly());
     }
