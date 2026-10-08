@@ -137,6 +137,46 @@ class WanderlustTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
     }
+
+    @Test
+    @DisplayName("Upkeep damage still affects the original player after control changes in response")
+    void damageRecipientDoesNotChangeAfterTriggering() {
+        Permanent bears = addCreature(player2);
+        attachWanderlust(bears);
+        int player1LifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int player2LifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player2.getId()).remove(bears);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(player1LifeBefore);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(player2LifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Wanderlust can enchant its controller's creature and damages that player")
+    void canEnchantOwnCreatureAndDamageItsController() {
+        Permanent bears = addCreature(player1);
+        harness.setHand(player1, List.of(new Wanderlust()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard() instanceof Wanderlust
+                        && bears.getId().equals(p.getAttachedTo()));
+        int player1LifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int player2LifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(player1LifeBefore - 1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(player2LifeBefore);
+    }
+
     private Permanent attachWanderlust(Permanent creature) {
         Permanent wanderlust = harness.addToBattlefieldAndReturn(player1, new Wanderlust());
         wanderlust.setAttachedTo(creature.getId());
