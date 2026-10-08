@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.t.TangledIslet;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({YavimayaSojourner.class, Forest.class, Island.class, Mountain.class, Plains.class, Swamp.class})
+@CardUsed({YavimayaSojourner.class, Forest.class, Island.class, Mountain.class, Plains.class, Swamp.class, TangledIslet.class})
 class YavimayaSojournerTest extends BaseCardTest {
 
     @Test
@@ -89,5 +90,35 @@ class YavimayaSojournerTest extends BaseCardTest {
 
         assertThat(harness.getGameData().stack).hasSize(1);
         assertThat(harness.getGameData().playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Nonbasic lands contribute each of their basic land types")
+    void nonbasicLandContributesBothBasicLandTypes() {
+        harness.addToBattlefield(player1, new TangledIslet());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new YavimayaSojourner()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(harness.getGameData().stack).hasSize(1);
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Domain does not remove the green mana requirement")
+    void domainDoesNotReduceColoredCost() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new YavimayaSojourner()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
     }
 }
