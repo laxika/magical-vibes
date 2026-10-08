@@ -33,6 +33,7 @@ class ZamrielSeraphOfSteelTest extends BaseCardTest {
     @Test
     @DisplayName("The indestructible grant does not apply during an opponent's turn")
     void grantDoesNotApplyDuringOpponentsTurn() {
+        addCreatureReady(player1, new ZamrielSeraphOfSteel());
         Permanent equippedCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
         equipment.setAttachedTo(equippedCreature.getId());
@@ -57,5 +58,39 @@ class ZamrielSeraphOfSteelTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, ownEquippedCreature, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, opponentEquippedCreature, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    void equippedZamrielGainsIndestructibleAndLosesItWhenUnequipped() {
+        Permanent zamriel = addCreatureReady(player1, new ZamrielSeraphOfSteel());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        harness.forceActivePlayer(player1);
+        equipment.setAttachedTo(zamriel.getId());
+
+        assertThat(gqs.hasKeyword(gd, zamriel, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        equipment.setAttachedTo(null);
+
+        assertThat(gqs.hasKeyword(gd, zamriel, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    void opponentsEquipmentStillQualifiesAndGrantTracksTurnsAndSourcePresence() {
+        Permanent zamriel = addCreatureReady(player1, new ZamrielSeraphOfSteel());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        equipment.setAttachedTo(creature.getId());
+        harness.forceActivePlayer(player1);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        harness.forceActivePlayer(player2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
+
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(zamriel);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 }
