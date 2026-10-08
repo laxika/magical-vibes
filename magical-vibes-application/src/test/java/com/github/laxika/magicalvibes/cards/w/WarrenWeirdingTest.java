@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.a.AssaultSuit;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.m.MoongloveChangeling;
+import com.github.laxika.magicalvibes.cards.t.TajuruPreserver;
 import com.github.laxika.magicalvibes.cards.p.PricklyBoggart;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -17,7 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WarrenWeirding.class, PricklyBoggart.class, ElvishWarrior.class})
+@CardUsed({WarrenWeirding.class, PricklyBoggart.class, ElvishWarrior.class,
+        MoongloveChangeling.class, TajuruPreserver.class, AssaultSuit.class})
 class WarrenWeirdingTest extends BaseCardTest {
 
     private void castAtPlayer2() {
@@ -103,6 +107,92 @@ class WarrenWeirdingTest extends BaseCardTest {
         castAtPlayer2();
 
         assertThat(countPermanents(player2, "Goblin Rogue")).isZero();
+    }
+
+    @Test
+    void changelingSacrificeCreatesGoblinRogues() {
+        addCreatureReady(player2, new MoongloveChangeling());
+
+        castAtPlayer2();
+
+        harness.assertInGraveyard(player2, "Moonglove Changeling");
+        harness.assertNotOnBattlefield(player2, "Moonglove Changeling");
+        assertThat(countPermanents(player2, "Goblin Rogue")).isEqualTo(2);
+    }
+
+    @Test
+    void casterCanTargetThemselvesAndSacrificeCreatedToken() {
+        addCreatureReady(player1, new PricklyBoggart());
+        harness.setHand(player1, List.of(new WarrenWeirding(), new WarrenWeirding()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertInGraveyard(player1, "Prickly Boggart");
+        assertThat(countPermanents(player1, "Goblin Rogue")).isEqualTo(2);
+        Permanent token = findPermanents(player1, "Goblin Rogue").getFirst();
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handlePermanentChosen(player1, token.getId());
+
+        assertThat(findPermanents(player1, "Goblin Rogue"))
+                .hasSize(3).doesNotContain(token);
+        assertThat(countPermanents(player2, "Goblin Rogue")).isZero();
+    }
+
+    @Test
+    void tajuruPreserverPreventsOpponentsSacrificeEffect() {
+        addCreatureReady(player2, new TajuruPreserver());
+
+        castAtPlayer2();
+
+        harness.assertOnBattlefield(player2, "Tajuru Preserver");
+        harness.assertNotInGraveyard(player2, "Tajuru Preserver");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(countPermanents(player2, "Goblin Rogue")).isZero();
+    }
+
+    @Test
+    void tajuruPreserverDoesNotPreventItsControllersOwnSacrificeEffect() {
+        addCreatureReady(player1, new TajuruPreserver());
+        harness.setHand(player1, List.of(new WarrenWeirding()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertNotOnBattlefield(player1, "Tajuru Preserver");
+        harness.assertInGraveyard(player1, "Tajuru Preserver");
+        assertThat(countPermanents(player1, "Goblin Rogue")).isZero();
+    }
+
+    @Test
+    void assaultSuitPreventsSacrificingTheOnlyGoblin() {
+        Permanent goblin = addCreatureReady(player2, new PricklyBoggart());
+        Permanent suit = harness.addToBattlefieldAndReturn(player2, new AssaultSuit());
+        suit.setAttachedTo(goblin.getId());
+
+        castAtPlayer2();
+
+        harness.assertOnBattlefield(player2, "Prickly Boggart");
+        harness.assertNotInGraveyard(player2, "Prickly Boggart");
+        assertThat(countPermanents(player2, "Goblin Rogue")).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void mustSacrificeUnprotectedCreatureInsteadOfAssaultSuitGoblin() {
+        Permanent goblin = addCreatureReady(player2, new PricklyBoggart());
+        Permanent suit = harness.addToBattlefieldAndReturn(player2, new AssaultSuit());
+        suit.setAttachedTo(goblin.getId());
+        addCreatureReady(player2, new ElvishWarrior());
+
+        castAtPlayer2();
+
+        harness.assertOnBattlefield(player2, "Prickly Boggart");
+        harness.assertInGraveyard(player2, "Elvish Warrior");
+        harness.assertNotOnBattlefield(player2, "Elvish Warrior");
+        assertThat(countPermanents(player2, "Goblin Rogue")).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
