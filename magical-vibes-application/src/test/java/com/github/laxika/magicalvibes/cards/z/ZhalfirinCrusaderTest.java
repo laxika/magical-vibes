@@ -160,11 +160,8 @@ class ZhalfirinCrusaderTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, crusader), null, destination.getId());
         harness.passBothPriorities();
 
-        harness.forceActivePlayer(player2);
         attacker.setAttacking(true);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(indexOf(player1, crusader), 0)));
         harness.passBothPriorities();
 
@@ -189,6 +186,32 @@ class ZhalfirinCrusaderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.creatureDamageRedirectShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Redirected combat damage can be redirected again by another Crusader")
+    void redirectsCombatDamageThroughAnotherCrusader() {
+        Permanent first = addCreatureReady(player1, new ZhalfirinCrusader());
+        Permanent second = addCreatureReady(player1, new ZhalfirinCrusader());
+        Permanent attacker = addCreatureReady(player2, new DwarvenVigilantes());
+        int lifeBefore = gd.getLife(player2.getId());
+
+        addCrusaderActivationMana(player1);
+        harness.activateAbility(player1, indexOf(player1, first), null, second.getId());
+        harness.passBothPriorities();
+        addCrusaderActivationMana(player1);
+        harness.activateAbility(player1, indexOf(player1, second), null, player2.getId());
+        harness.passBothPriorities();
+
+        attacker.setAttacking(true);
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(
+                new BlockerAssignment(indexOf(player1, first), indexOf(player2, attacker))));
+        harness.passBothPriorities();
+
+        assertThat(first.getMarkedDamage()).isEqualTo(1);
+        assertThat(second.getMarkedDamage()).isZero();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 1);
     }
 
     private void addCrusaderActivationMana(Player player) {
