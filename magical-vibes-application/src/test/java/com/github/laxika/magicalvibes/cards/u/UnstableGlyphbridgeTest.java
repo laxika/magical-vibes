@@ -30,8 +30,7 @@ class UnstableGlyphbridgeTest extends BaseCardTest {
         Permanent opponentLargeCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
         castGlyphbridge();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -52,7 +51,8 @@ class UnstableGlyphbridgeTest extends BaseCardTest {
     void enteringWithoutBeingCastDoesNotDestroyCreatures() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new HillGiant());
 
-        harness.addToBattlefield(player1, new UnstableGlyphbridge());
+        harness.enterBattlefieldAndReturn(player1, new UnstableGlyphbridge());
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getId)
                 .contains(creature.getId());
@@ -68,8 +68,7 @@ class UnstableGlyphbridgeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         assertThat(gd.findExiledCard(relic.getCard().getId())).isNotNull();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.isTransformed()
@@ -85,8 +84,7 @@ class UnstableGlyphbridgeTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castArtifact(player2, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
@@ -105,6 +103,138 @@ class UnstableGlyphbridgeTest extends BaseCardTest {
 
         GameActionAvailabilityService actionAvailability = harness.getGameActionAvailabilityService();
         assertThat(actionAvailability.getPlayableCardIndices(gd, player2.getId())).isEmpty();
+    }
+
+    @Test
+    void mustChooseAnEligibleCreatureWhenSeveralAreAvailable() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        castGlyphbridge();
+        resolveAllTriggers();
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getId)
+                .contains(first.getId());
+    }
+
+    @Test
+    void controllerChoosesWhichOpposingCreatureSurvives() {
+        Permanent chosen = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent destroyed = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castGlyphbridge();
+        resolveAllTriggers();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validIds()).containsExactly(chosen.getId(), destroyed.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
+                .contains(chosen.getId()).doesNotContain(destroyed.getId());
+    }
+
+    @Test
+    void soleEligibleCreaturesSurviveWithoutAChoicePrompt() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent large = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        castGlyphbridge();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getId)
+                .contains(own.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
+                .contains(opposing.getId()).doesNotContain(large.getId());
+    }
+
+    @Test
+    void craftCanExileAnArtifactCardFromTheGraveyard() {
+        harness.addToBattlefield(player1, new UnstableGlyphbridge());
+        UnstableGlyphbridge material = new UnstableGlyphbridge();
+        harness.setGraveyard(player1, List.of(material));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.findExiledCard(material.getId())).isNotNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.isTransformed()
+                        && permanent.getCard() instanceof SandswirlWanderglyph);
+    }
+
+    @Test
+    void craftCannotUseTheSourceAsItsOnlyMaterial() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new UnstableGlyphbridge());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getId)
+                .contains(source.getId());
+    }
+
+    @Test
+    void resolvedAttackRestrictionPersistsAfterWanderglyphLeaves() {
+        Permanent glyph = addTransformedGlyphbridge();
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new DarksteelRelic()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castArtifact(player2, 0);
+        resolveAllTriggers();
+        gd.playerBattlefields.get(player1.getId()).remove(glyph);
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void castingRestrictionEndsWhenWanderglyphLeaves() {
+        Permanent glyph = addTransformedGlyphbridge();
+        addCreatureReady(player2, new GrizzlyBears());
+        declareAttackers(player2, List.of(0));
+        harness.setHand(player2, List.of(new DarksteelRelic()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gd.playerBattlefields.get(player1.getId()).remove(glyph);
+
+        assertThat(harness.getGameActionAvailabilityService()
+                .getPlayableCardIndices(gd, player2.getId())).contains(0);
+        harness.castArtifact(player2, 0);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player2, "Darksteel Relic");
+    }
+
+    @Test
+    void craftIsNotAllowedDuringCombat() {
+        harness.addToBattlefield(player1, new UnstableGlyphbridge());
+        harness.addToBattlefield(player1, new UnstableGlyphbridge());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void noEligibleCreaturesMeansAllCreaturesAreDestroyed() {
+        harness.addToBattlefield(player1, new HillGiant());
+        harness.addToBattlefield(player2, new HillGiant());
+        castGlyphbridge();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.assertOnBattlefield(player1, "Unstable Glyphbridge");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void castGlyphbridge() {
