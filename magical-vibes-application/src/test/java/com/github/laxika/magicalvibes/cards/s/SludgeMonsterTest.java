@@ -29,8 +29,7 @@ class SludgeMonsterTest extends BaseCardTest {
         addSludgeMonsterMana();
 
         harness.castCreature(player1, 0, List.of(target.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.SLIME)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
@@ -96,6 +95,75 @@ class SludgeMonsterTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, List.of(artifact.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be another creature");
+    }
+
+    @Test
+    @DisplayName("The ETB trigger can choose no target even when another creature is available")
+    void etbCanChooseNoTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new SludgeMonster()));
+        addSludgeMonsterMana();
+
+        harness.castCreature(player1, 0, List.of());
+        resolveAllTriggers();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, player1.getId());
+            resolveAllTriggers();
+        }
+
+        harness.assertOnBattlefield(player1, "Sludge Monster");
+        assertThat(target.getCounterCount(CounterType.SLIME)).isZero();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Slime changes base stats while preserving bonuses from +1/+1 counters")
+    void slimePreservesPowerToughnessCounterBonuses() {
+        addCreatureReady(player1, new SludgeMonster());
+        Permanent target = addCreatureReady(player2, new AirElemental());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        target.setCounterCount(CounterType.SLIME, 1);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Removing the last slime counter restores the creature's abilities and base stats")
+    void removingLastSlimeCounterRestoresCreature() {
+        addCreatureReady(player1, new SludgeMonster());
+        Permanent target = addCreatureReady(player2, new AirElemental());
+        target.setCounterCount(CounterType.SLIME, 2);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        target.setCounterCount(CounterType.SLIME, 1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+
+        target.setCounterCount(CounterType.SLIME, 0);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The attack trigger can add another slime counter to an already slimed creature")
+    void attackAddsCounterToAlreadySlimedCreature() {
+        addCreatureReady(player1, new SludgeMonster());
+        Permanent target = addCreatureReady(player1, new AirElemental());
+        target.setCounterCount(CounterType.SLIME, 1);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getCounterCount(CounterType.SLIME)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
 
     private void addSludgeMonsterMana() {
