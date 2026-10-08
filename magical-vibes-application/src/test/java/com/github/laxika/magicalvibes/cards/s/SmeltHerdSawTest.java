@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -72,6 +74,79 @@ class SmeltHerdSawTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castModalInstant(player1, 0, SAW, List.of(artifact.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    void herdCannotBeCastDuringUpkeep() {
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.setHand(player1, List.of(new SmeltHerdSaw()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.castModalSorcery(player1, 0, HERD, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void sawCannotBeCastDuringUpkeep() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.setHand(player1, List.of(new SmeltHerdSaw()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castModalSorcery(player1, 0, SAW, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void smeltCanBeCastDuringUpkeep() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        harness.forceStep(TurnStep.UPKEEP);
+
+        cast(SMELT, List.of(artifact.getId()), ManaColor.RED, 1);
+
+        harness.assertInGraveyard(player2, "Fountain of Youth");
+    }
+
+    @Test
+    void herdIsASorcerySpellOnTheStack() {
+        harness.setHand(player1, List.of(new SmeltHerdSaw()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castModalSorcery(player1, 0, HERD, List.of());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void sawIsASorcerySpellOnTheStack() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SmeltHerdSaw()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castModalSorcery(player1, 0, SAW, List.of(creature.getId()));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void sawCanTargetOwnCreatureAndGivesTokensToItsController() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        cast(SAW, List.of(creature.getId()), ManaColor.BLACK, 1, ManaColor.COLORLESS, 1);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Half")).hasSize(2);
+        assertThat(findPermanents(player2, "Half")).isEmpty();
     }
 
     private void cast(int mode, List<UUID> targets, ManaColor firstColor, int firstAmount,
