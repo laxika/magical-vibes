@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -25,8 +26,7 @@ class WhiteGloveGourmandTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Human Soldier")).hasSize(2);
     }
@@ -61,6 +61,54 @@ class WhiteGloveGourmandTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
+    }
+
+    @Test
+    @DisplayName("A Human dying in combat enables the surviving Gourmand's end-step ability")
+    void actualHumanDeathCreatesFood() {
+        harness.addToBattlefield(player1, new WhiteGloveGourmand());
+        addCreatureReady(player1, new WhiteGloveGourmand());
+        addCreatureReady(player2, new WhiteGloveGourmand());
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        resolveCombat();
+
+        assertThat(findPermanents(player1, "White Glove Gourmand")).hasSize(1);
+        assertThat(findPermanents(player2, "White Glove Gourmand")).isEmpty();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Food")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Multiple Human deaths create only one Food per Gourmand")
+    void multipleHumanDeathsCreateOneFood() {
+        harness.addToBattlefield(player1, new WhiteGloveGourmand());
+        gd.creatureSubtypeDeathCountThisTurn.put(player1.getId(),
+                Map.of(CardSubtype.HUMAN, 3));
+
+        advanceToControllerEndStep();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Food")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Does not create Food at the opponent's end step")
+    void doesNotTriggerAtOpponentsEndStep() {
+        harness.addToBattlefield(player1, new WhiteGloveGourmand());
+        gd.creatureSubtypeDeathCountThisTurn.put(player1.getId(),
+                Map.of(CardSubtype.HUMAN, 1));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Food")).isEmpty();
     }
 }
