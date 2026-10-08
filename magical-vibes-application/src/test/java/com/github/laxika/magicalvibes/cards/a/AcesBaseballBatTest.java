@@ -246,6 +246,28 @@ class AcesBaseballBatTest extends BaseCardTest {
         assertThat(bat.getAttachedTo()).isNull();
     }
 
+    @Test
+    @DisplayName("One Dalek may satisfy either of two competing Bat blocking requirements")
+    void oneDalekCanBlockEitherEquippedAttacker() {
+        Permanent firstAttacker = addCreatureReady(player1, new CybermanPatrol());
+        Permanent secondAttacker = addCreatureReady(player1, new CybermanPatrol());
+        Permanent firstBat = addCreatureReady(player1, new AcesBaseballBat());
+        Permanent secondBat = addCreatureReady(player2, new AcesBaseballBat());
+        firstBat.setAttachedTo(firstAttacker.getId());
+        secondBat.setAttachedTo(secondAttacker.getId());
+        firstAttacker.setAttacking(true);
+        secondAttacker.setAttacking(true);
+        Permanent dalek = addCreatureReady(player2, new DalekDrone());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(battlefieldIndex(player2, dalek),
+                        battlefieldIndex(player1, firstAttacker))));
+
+        assertThat(dalek.isBlocking()).isTrue();
+        assertThat(secondAttacker.isAttacking()).isTrue();
+    }
+
     private int battlefieldIndex(Player player, Permanent permanent) {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
     }
