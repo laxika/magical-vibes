@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Vanishment.class, GrizzlyBears.class, Pacifism.class, Forest.class})
 class VanishmentTest extends BaseCardTest {
 
     @Test
@@ -32,8 +33,7 @@ class VanishmentTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 4);
         harness.passPriority(player1);
 
-        harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetId);
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
@@ -59,8 +59,7 @@ class VanishmentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castInstant(player1, 0, pacifismId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, pacifismId);
 
         harness.assertNotOnBattlefield(player2, "Pacifism");
         List<Card> deck = gd.playerDecks.get(player2.getId());
@@ -130,5 +129,71 @@ class VanishmentTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
         harness.assertInGraveyard(player2, "Vanishment");
+    }
+
+    @Test
+    @DisplayName("A stolen permanent goes to its owner's library")
+    void stolenPermanentReturnsToOwnerLibrary() {
+        GrizzlyBears bears = new GrizzlyBears();
+        bears.setOwnerId(player1.getId());
+        harness.addToBattlefield(player2, bears);
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        gd.stolenCreatures.put(targetId, player1.getId());
+        int controllerDeckSize = gd.playerDecks.get(player2.getId()).size();
+
+        harness.setHand(player1, List.of(new Vanishment()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(bears);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(controllerDeckSize);
+    }
+
+    @Test
+    @DisplayName("Declining to reveal leaves Vanishment in hand without spending mana")
+    void canDeclineMiracleReveal() {
+        Vanishment vanishment = new Vanishment();
+        harness.setLibrary(player1, List.of(vanishment));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInHand(player1, "Vanishment");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Revealing does not force the player to cast Vanishment")
+    void canDeclineMiracleCast() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Vanishment()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInHand(player1, "Vanishment");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Drawing Vanishment second in a turn does not offer miracle")
+    void secondDrawDoesNotOfferMiracle() {
+        harness.setLibrary(player1, List.of(new Forest(), new Vanishment()));
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
+
+        harness.assertInHand(player1, "Vanishment");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }
