@@ -13,8 +13,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({UrGolemsEye.class})
 class UrGolemsEyeTest extends BaseCardTest {
 
-    // ===== Mana ability =====
-
     @Test
     @DisplayName("Tapping for mana adds two colorless mana")
     void tapForTwoColorlessMana() {
@@ -49,5 +47,33 @@ class UrGolemsEyeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The mana ability can be activated again after untapping")
+    void canActivateAgainAfterUntapping() {
+        Permanent eye = harness.addToBattlefieldAndReturn(player1, new UrGolemsEye());
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.performUntapStep(player1);
+        assertThat(eye.isTapped()).isFalse();
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(eye.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The mana is added to the activating controller's pool")
+    void addsManaToOtherControllersPool() {
+        Permanent eye = harness.addToBattlefieldAndReturn(player2, new UrGolemsEye());
+
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(eye.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }
