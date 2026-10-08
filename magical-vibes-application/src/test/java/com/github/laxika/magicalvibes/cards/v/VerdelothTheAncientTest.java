@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.i.IronrootTreefolk;
+import com.github.laxika.magicalvibes.cards.r.Repulse;
 import com.github.laxika.magicalvibes.cards.t.Thallid;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VerdelothTheAncient.class, IronrootTreefolk.class, Thallid.class})
+@CardUsed({VerdelothTheAncient.class, IronrootTreefolk.class, Thallid.class, Repulse.class})
 class VerdelothTheAncientTest extends BaseCardTest {
 
     @Test
@@ -109,15 +110,47 @@ class VerdelothTheAncientTest extends BaseCardTest {
     void kickedWithZeroXCreatesNoTokens() {
         harness.setHand(player1, List.of(new VerdelothTheAncient()));
         harness.addMana(player1, ManaColor.GREEN, 6);
-        harness.ensurePriority(player1);
 
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false,
-                null, null, null, null, null, true);
+        harness.castKickedCreature(player1, 0);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
 
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken())).isEmpty();
+    }
+
+    @Test
+    @CardUsed({VerdelothTheAncient.class, Repulse.class})
+    @DisplayName("The kicked trigger retains X after Verdeloth returns to hand")
+    void kickedTriggerCreatesTokensAfterSourceLeaves() {
+        harness.setHand(player1, List.of(new VerdelothTheAncient()));
+        harness.addMana(player1, ManaColor.GREEN, 9);
+        harness.ensurePriority(player1);
+        gs.playCard(gd, player1, 0, 3, null, null, List.of(), List.of(), false,
+                null, null, null, null, null, true);
+        harness.passBothPriorities();
+
+        Permanent source = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof VerdelothTheAncient)
+                .findFirst().orElseThrow();
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player2, List.of(new Repulse()));
+        harness.setLibrary(player2, List.of(new Repulse()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.castInstant(player2, 0, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(card -> card instanceof VerdelothTheAncient);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3).allSatisfy(token -> {
+            assertThat(token.getCard().isToken()).isTrue();
+            assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.SAPROLING);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+        });
     }
 }
