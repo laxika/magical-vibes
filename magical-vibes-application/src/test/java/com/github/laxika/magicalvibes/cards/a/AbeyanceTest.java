@@ -158,4 +158,63 @@ class AbeyanceTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(mindStone);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(mindStone.getCard());
     }
+
+    @Test
+    @DisplayName("Abeyance can target its controller and still draws a card")
+    void canTargetItsController() {
+        BenalishInfantry drawnCard = new BenalishInfantry();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(new Abeyance()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castInstant(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThatThrownBy(() -> harness.castFromHand(player1, new Vitalize(), "{G}"))
+                .isInstanceOf(IllegalStateException.class);
+        harness.castFromHand(player2, new Vitalize(), "{G}");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Vitalize");
+    }
+
+    @Test
+    @DisplayName("An instant already on the stack still resolves after Abeyance")
+    void doesNotCounterAnExistingSpell() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BenalishInfantry());
+        creature.setTapped(true);
+        harness.castFromHand(player2, new Vitalize(), "{G}");
+        harness.setHand(player1, List.of(new Abeyance()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.ensurePriority(player1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        harness.assertInGraveyard(player2, "Vitalize");
+    }
+
+    @Test
+    @DisplayName("A non-mana ability can be activated in response to Abeyance")
+    void canActivateInResponse() {
+        Permanent mindStone = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        BenalishInfantry drawnCard = new BenalishInfantry();
+        harness.setLibrary(player2, List.of(drawnCard));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new Abeyance()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.ensurePriority(player2);
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(mindStone);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castFromHand(player2, new Vitalize(), "{G}"))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
