@@ -1,9 +1,13 @@
-package com.github.laxika.magicalvibes.cards.v;
+﻿package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MaskedVandal;
 import com.github.laxika.magicalvibes.cards.t.TibaltCosmicImpostor;
 import com.github.laxika.magicalvibes.model.Emblem;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.event.GameEventEnvelope;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,10 +16,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ValkiGodOfLies.class, TibaltCosmicImpostor.class, Forest.class, GrizzlyBears.class})
+@CardUsed({ValkiGodOfLies.class, TibaltCosmicImpostor.class, Forest.class, GrizzlyBears.class, MaskedVandal.class})
 class ValkiGodOfLiesTest extends BaseCardTest {
 
     @Test
@@ -97,9 +102,153 @@ class ValkiGodOfLiesTest extends BaseCardTest {
         harness.castFromExile(player1, playerTwoTop.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .map(Permanent::getCard)
-                .map(com.github.laxika.magicalvibes.model.Card::getName))
-                .contains(playerTwoTop.getName());
+        harness.assertOnBattlefield(player1, playerTwoTop.getName());
     }
+
+    @Test
+    void tibaltEmblemExistsAsSoonAsTheSpellResolves() {
+        harness.setHand(player1, List.of(new ValkiGodOfLies()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.emblems).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tibaltMinusThreeAllowsCastingTheExiledCreatureAfterTibaltLeaves() {
+        Permanent tibalt = harness.addToBattlefieldAndReturn(player1, new TibaltCosmicImpostor());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MaskedVandal());
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gd.findExiledCard(target.getCard().getId())).isNotNull();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, tibalt));
+
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castFromExile(player1, target.getCard().getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Masked Vandal");
+    }
+
+    @Test
+    void tibaltUltimateAllowsCastingCardsFromBothGraveyardsAfterHeDies() {
+        Permanent tibalt = harness.addToBattlefieldAndReturn(player1, new TibaltCosmicImpostor());
+        tibalt.setCounterCount(CounterType.LOYALTY, 8);
+        MaskedVandal ownCard = new MaskedVandal();
+        MaskedVandal opponentCard = new MaskedVandal();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentCard));
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Tibalt, Cosmic Impostor");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.findExiledCard(ownCard.getId())).isNotNull();
+        assertThat(gd.findExiledCard(opponentCard.getId())).isNotNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(3);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castFromExile(player1, opponentCard.getId());
+        harness.passBothPriorities();
+        harness.castFromExile(player1, ownCard.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void choosingBetweenQualifyingCardsCopiesWithoutMovingEitherOutOfExile() {
+        Permanent valki = harness.addToBattlefieldAndReturn(player1, new ValkiGodOfLies());
+        MaskedVandal first = new MaskedVandal();
+        MaskedVandal second = new MaskedVandal();
+        gd.addToExile(player2.getId(), first, valki.getId());
+        gd.addToExile(player2.getId(), second, valki.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, 2, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+
+        assertThat(valki.getCard().getName()).isEqualTo("Masked Vandal");
+        assertThat(gqs.getEffectivePower(gd, valki)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, valki)).isEqualTo(3);
+        assertThat(gd.getCardsExiledByPermanent(valki.getId())).containsExactly(first, second);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(valki);
+    }
+
+    @Test
+    void activatingWithTheWrongManaValueDoesNotCopyTheExiledCreature() {
+        Permanent valki = harness.addToBattlefieldAndReturn(player1, new ValkiGodOfLies());
+        MaskedVandal creature = new MaskedVandal();
+        gd.addToExile(player2.getId(), creature, valki.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, 1, null);
+        harness.passBothPriorities();
+
+        assertThat(valki.getCard().getName()).isEqualTo("Valki, God of Lies");
+        assertThat(gd.getCardsExiledByPermanent(valki.getId())).containsExactly(creature);
+    }
+
+    @Test
+    void exiledCreatureReturnsEvenAfterValkiBecomesItsCopy() {
+        MaskedVandal creature = new MaskedVandal();
+        harness.setHand(player1, List.of(new ValkiGodOfLies()));
+        harness.setHand(player2, List.of(creature));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        Permanent valki = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+        harness.activateAbility(player1, 0, 0, 2, null);
+        harness.passBothPriorities();
+        assertThat(valki.getCard().getName()).isEqualTo("Masked Vandal");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, valki));
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(creature);
+        harness.assertInHand(player1, "Valki, God of Lies");
+    }
+
+    @Test
+    void leavingBeforeTheEnterTriggerResolvesStillRevealsTheOpponentsHand() throws Exception {
+        MaskedVandal creature = new MaskedVandal();
+        harness.setHand(player1, List.of(new ValkiGodOfLies()));
+        harness.setHand(player2, List.of(creature));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent valki = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, valki));
+
+        List<GameEventEnvelope> events = new ArrayList<>();
+        try (AutoCloseable ignored = harness.subscribeToGameEvents(batch -> events.addAll(batch.events()))) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(events)
+                .filteredOn(event -> event.fact() instanceof GameEventFact.PrivateReveal reveal
+                        && reveal.subjectPlayerId().equals(player2.getId())
+                        && reveal.zone() == GameEventFact.RevealZone.HAND)
+                .anySatisfy(event -> {
+                    GameEventFact.PrivateReveal reveal = (GameEventFact.PrivateReveal) event.fact();
+                    assertThat(reveal.cards()).extracting(GameEventFact.CardSnapshot::name)
+                            .containsExactly("Masked Vandal");
+                    assertThat(event.audience().playerIds())
+                            .containsExactlyInAnyOrder(player1.getId(), player2.getId());
+                });
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
 }
