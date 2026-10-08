@@ -108,6 +108,99 @@ class XunYuWeiAdvisorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Can activate during the beginning of combat before declaring attackers")
+    void canActivateAtBeginningOfCombat() {
+        setupOnMyTurn(TurnStep.BEGINNING_OF_COMBAT);
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Wei Infantry"));
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Wei Infantry").getPowerModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Can target itself even though paying the cost taps it")
+    void canTargetItself() {
+        setupOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent advisor = findPermanent(player1, "Xun Yu, Wei Advisor");
+
+        harness.activateAbility(player1, 0, null, advisor.getId());
+        harness.passBothPriorities();
+
+        assertThat(advisor.isTapped()).isTrue();
+        assertThat(advisor.getPowerModifier()).isEqualTo(2);
+        assertThat(advisor.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot activate in the postcombat main phase even if no creatures attacked")
+    void cannotActivateInPostcombatMain() {
+        setupOnMyTurn(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null,
+                harness.getPermanentId(player1, "Wei Infantry")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers are declared");
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        setupOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        findPermanent(player1, "Xun Yu, Wei Advisor").setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null,
+                harness.getPermanentId(player1, "Wei Infantry")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate again without untapping")
+    void cannotActivateWhileTapped() {
+        setupOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        UUID targetId = harness.getPermanentId(player1, "Wei Infantry");
+        harness.activateAbility(player1, 0, null, targetId);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Ability still resolves if Xun Yu leaves the battlefield")
+    void resolvesWithoutSource() {
+        setupOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent advisor = findPermanent(player1, "Xun Yu, Wei Advisor");
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Wei Infantry"));
+
+        gd.playerBattlefields.get(player1.getId()).remove(advisor);
+        gd.playerGraveyards.get(player1.getId()).add(advisor.getCard());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Wei Infantry").getPowerModifier()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Target becomes illegal if an opponent gains control before resolution")
+    void doesNotBoostTargetNowControlledByOpponent() {
+        setupOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent infantry = findPermanent(player1, "Wei Infantry");
+        harness.activateAbility(player1, 0, null, infantry.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(infantry);
+        gd.playerBattlefields.get(player2.getId()).add(infantry);
+        harness.passBothPriorities();
+
+        assertThat(infantry.getPowerModifier()).isZero();
+        assertThat(infantry.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void setupOnMyTurn(TurnStep step) {
         addCreatureReady(player1, new XunYuWeiAdvisor());
         addCreatureReady(player1, new WeiInfantry());
