@@ -86,12 +86,131 @@ class VerdantConfluenceTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void repeatedCounterModeCanTargetDifferentPlayersCreatures() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        cast(new int[]{0, 0, 0}, List.of(own.getId(), opposing.getId(), own.getId()));
+        harness.passBothPriorities();
+
+        assertThat(own.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(opposing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void repeatedReturnModeReturnsDistinctPermanentCardsIncludingLand() {
+        Card first = new GrizzlyBears();
+        Card second = new Forest();
+        Card third = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(first, second, third));
+
+        cast(new int[]{1, 1, 1}, List.of(first.getId(), second.getId(), third.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second, third);
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Verdant Confluence");
+    }
+
+    @Test
+    void repeatedReturnModeCanTargetTheSameCardButReturnsItOnlyOnce() {
+        Card target = new Forest();
+        harness.setGraveyard(player1, List.of(target));
+
+        cast(new int[]{1, 1, 1}, List.of(target.getId(), target.getId(), target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        harness.assertNotInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    void cannotReturnPermanentCardFromOpponentsGraveyard() {
+        Card target = new Forest();
+        harness.setGraveyard(player2, List.of(target));
+
+        assertThatThrownBy(() -> cast(new int[]{1, 2, 2}, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void allTargetsBecomingIllegalPreventsUntargetedSearchModes() {
+        Card target = new Forest();
+        Forest libraryLand = new Forest();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setLibrary(player1, List.of(libraryLand));
+
+        cast(new int[]{1, 2, 2}, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryLand);
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertNotInHand(player1, "Forest");
+        harness.assertInGraveyard(player1, "Verdant Confluence");
+    }
+
+    @Test
+    void legalCreatureTargetAllowsSearchWhenGraveyardTargetBecomesIllegal() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card target = new Forest();
+        Forest libraryLand = new Forest();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setLibrary(player1, List.of(libraryLand));
+
+        cast(new int[]{0, 1, 2}, List.of(creature.getId(), target.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertNotInHand(player1, "Forest");
+        harness.handleCardChosen(player1, 0);
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void repeatedSearchCanFailToFindEvenWhenBasicLandIsAvailable() {
+        Forest land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+
+        cast(new int[]{2, 2, 2}, List.of());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+        harness.handleCardChosen(player1, -1);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Verdant Confluence");
+    }
+
+    @Test
+    void repeatedSearchWithNoBasicLandsCompletesWithoutFindingCards() {
+        Card creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(creature));
+
+        cast(new int[]{2, 2, 2}, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Verdant Confluence");
+    }
+
     private void cast(int[] modeIndices, List<java.util.UUID> targetIds) {
         harness.setHand(player1, List.of(new VerdantConfluence()));
         addMana();
-        gs.playCard(gd, player1, 0,
+        harness.castModalSorcery(player1, 0,
                 ChooseOneEffect.encodeRepeatedModeSelection(3, modeIndices),
-                null, null, targetIds, List.of());
+                targetIds);
     }
 
     private void addMana() {
