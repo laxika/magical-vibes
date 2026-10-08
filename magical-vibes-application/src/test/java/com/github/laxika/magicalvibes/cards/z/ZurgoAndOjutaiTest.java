@@ -58,9 +58,7 @@ class ZurgoAndOjutaiTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, second, third));
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.resolveCombatDamage();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandTopBottomChoice.class);
@@ -72,5 +70,76 @@ class ZurgoAndOjutaiTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(first, dragon.getCard());
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(nonDragon).doesNotContain(dragon);
+    }
+
+    @Test
+    @DisplayName("Unchosen cards go beneath the untouched library cards")
+    void unchosenCardsGoToBottom() {
+        Permanent dragon = addCreatureReady(player1, new ZurgoAndOjutai());
+        dragon.setAttacking(true);
+        Card first = new ZurgoAndOjutai();
+        Card second = new ZurgoAndOjutai();
+        Card third = new ZurgoAndOjutai();
+        Card untouched = new ZurgoAndOjutai();
+        harness.setLibrary(player1, List.of(first, second, third, untouched));
+        harness.forceActivePlayer(player1);
+        harness.resolveCombatDamage();
+        harness.passBothPriorities();
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.HandTopBottom(0, 1));
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, second, third);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(dragon);
+    }
+
+    @Test
+    @DisplayName("A single library card goes to hand and the damaging source may return")
+    void singleCardLibraryStillAllowsReturningSource() {
+        Permanent dragon = addCreatureReady(player1, new ZurgoAndOjutai());
+        dragon.setAttacking(true);
+        Card onlyCard = new ZurgoAndOjutai();
+        harness.setLibrary(player1, List.of(onlyCard));
+        harness.forceActivePlayer(player1);
+        harness.resolveCombatDamage();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, dragon.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyCard, dragon.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(dragon);
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent returning the damaging Dragon")
+    void emptyLibraryStillAllowsReturningSource() {
+        Permanent dragon = addCreatureReady(player1, new ZurgoAndOjutai());
+        dragon.setAttacking(true);
+        harness.setLibrary(player1, List.of());
+        harness.forceActivePlayer(player1);
+        harness.resolveCombatDamage();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, dragon.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(dragon.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(dragon);
+    }
+
+    @Test
+    @DisplayName("Multiple Dragons damaging the same player create only one trigger")
+    void multipleDragonsCreateOneTrigger() {
+        Permanent zurgo = addCreatureReady(player1, new ZurgoAndOjutai());
+        Permanent otherDragon = addCreatureReady(player1, new ShivanDragon());
+        zurgo.setAttacking(true);
+        otherDragon.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.resolveCombatDamage();
+
+        assertThat(gd.stack).hasSize(1);
     }
 }
