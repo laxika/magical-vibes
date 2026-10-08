@@ -131,6 +131,44 @@ class ZephidsEmbraceTest extends BaseCardTest {
                 .hasMessageContaining("shroud");
     }
 
+    @Test
+    void opponentCannotTargetEnchantedCreature() {
+        Permanent creature = addCreatureReady(player1, new CoralMerfolk());
+        attachAura(creature);
+        harness.setHand(player2, List.of(new Rescind()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
+    @Test
+    void auraCanBeBouncedAndCreatureBecomesTargetableAgain() {
+        Permanent creature = addCreatureReady(player1, new CoralMerfolk());
+        harness.setHand(player1, List.of(new ZephidsEmbrace()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        Permanent aura = findPermanent(player1, "Zephid's Embrace");
+        harness.setHand(player1, List.of(new Rescind(), new Rescind()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature).doesNotContain(aura);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card instanceof ZephidsEmbrace);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card instanceof CoralMerfolk);
+    }
+
     private Permanent attachAura(Permanent creature) {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new ZephidsEmbrace());
         aura.setAttachedTo(creature.getId());
