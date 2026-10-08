@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.b.BloodletterOfAclazotz;
+import com.github.laxika.magicalvibes.cards.c.CourageousResolve;
 import com.github.laxika.magicalvibes.cards.e.Evermind;
 import com.github.laxika.magicalvibes.cards.m.MazeOfIth;
 import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WandOfIth.class, MazeOfIth.class, ScarwoodGoblins.class, BloodletterOfAclazotz.class,
-        Evermind.class, PlatinumEmperion.class})
+        Evermind.class, PlatinumEmperion.class, CourageousResolve.class})
 class WandOfIthTest extends BaseCardTest {
 
     private void readyWand() {
@@ -81,14 +82,14 @@ class WandOfIthTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Paying life is not doubled by an opponent life-loss replacement effect")
-    void payingLifeIsNotDoubledByLifeLossReplacement() {
+    @DisplayName("Paying life is doubled by an opponent life-loss replacement effect")
+    void payingLifeIsDoubledByLifeLossReplacement() {
         activateOnWithBloodletter(new MazeOfIth());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
 
-        harness.assertLife(player2, 19);
+        harness.assertLife(player2, 18);
         harness.assertInHand(player2, "Maze of Ith");
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
@@ -165,6 +166,101 @@ class WandOfIthTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Declining discards the revealed land without paying life")
+    void declineDiscardsLand() {
+        activateOn(new MazeOfIth());
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Maze of Ith");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Only the randomly revealed card is discarded from a multiple-card hand")
+    void discardsExactlyOneCardFromMultipleCardHand() {
+        Card land = new MazeOfIth();
+        Card nonland = new ScarwoodGoblins();
+        harness.setHand(player2, List.of(land, nonland));
+        readyWand();
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId()).getFirst())
+                .isNotSameAs(gd.playerGraveyards.get(player2.getId()).getFirst());
+        assertThat(gd.playerHands.get(player2.getId()).getFirst()).isIn(land, nonland);
+        assertThat(gd.playerGraveyards.get(player2.getId()).getFirst()).isIn(land, nonland);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Can target its controller and activate outside a main phase")
+    void canTargetControllerDuringUpkeep() {
+        harness.setHand(player1, List.of(new ScarwoodGoblins()));
+        readyWand();
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        harness.assertInHand(player1, "Scarwood Goblins");
+    }
+
+    @Test
+    @DisplayName("A player whose life total cannot change must discard a land")
+    void lockedLifeTotalDiscardsLand() {
+        activateOnWithLifeTotalLockedPlayer(new MazeOfIth());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player2, "Maze of Ith");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A player who cannot lose life cannot pay to keep the revealed card")
+    void cannotLoseLifeMustDiscard() {
+        readyWand();
+        harness.setLife(player2, 5);
+        harness.setLibrary(player2, List.of(new MazeOfIth()));
+        harness.setHand(player2, List.of(new CourageousResolve()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0);
+        harness.setHand(player2, List.of(new ScarwoodGoblins()));
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player2, true);
+        }
+
+        harness.assertInGraveyard(player2, "Scarwood Goblins");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertLife(player2, 5);
+    }
+
+    @Test
+    @DisplayName("Activation spends three mana and taps the Wand")
+    void activationPaysManaAndTapCosts() {
+        harness.setHand(player2, List.of());
+        readyWand();
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(findPermanent(player1, "Wand of Ith").isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
