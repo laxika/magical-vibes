@@ -162,4 +162,50 @@ class VampirismTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+    @Test
+    @DisplayName("A lone enchanted creature gets no boost or penalty")
+    void loneEnchantedCreatureIsUnchanged() {
+        Permanent host = harness.addToBattlefieldAndReturn(player1, new Breezekeeper());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Vampirism());
+        aura.setAttachedTo(host.getId());
+
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Delayed draw survives Aura removal, waits for the next turn, and happens only once")
+    void delayedDrawSurvivesAuraRemovalAndWaitsForNextTurn() {
+        Permanent host = harness.addToBattlefieldAndReturn(player1, new Breezekeeper());
+        harness.setHand(player1, List.of(new Vampirism()));
+        harness.setLibrary(player1, List.of(new Breezekeeper(), new Breezekeeper()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, host.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof Vampirism)
+                .findFirst().orElseThrow();
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
+
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.stack).isEmpty();
+
+        gd.turnNumber++;
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+
+        gd.turnNumber++;
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
 }
