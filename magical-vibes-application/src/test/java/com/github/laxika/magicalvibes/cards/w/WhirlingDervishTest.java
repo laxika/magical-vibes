@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
 import com.github.laxika.magicalvibes.cards.f.FireWhip;
 import com.github.laxika.magicalvibes.cards.l.LadyEvangela;
 import com.github.laxika.magicalvibes.cards.l.LostSoul;
+import com.github.laxika.magicalvibes.cards.t.Twiddle;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WhirlingDervish.class, FireWhip.class, DurkwoodBoars.class, LostSoul.class,
-        DemonicTorment.class, LadyEvangela.class})
+        DemonicTorment.class, LadyEvangela.class, Twiddle.class})
 class WhirlingDervishTest extends BaseCardTest {
 
     @Test
@@ -62,8 +63,7 @@ class WhirlingDervishTest extends BaseCardTest {
     void getsCounterAfterDealingDamage() {
         Permanent dervish = addDervish(player1);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
         resolveCombat(player1);
 
@@ -124,6 +124,53 @@ class WhirlingDervishTest extends BaseCardTest {
         advanceToEndStepAndResolve(player1.getId());
 
         assertThat(dervish.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void onlyTheDervishThatDealtDamageGetsACounter() {
+        Permanent damagingDervish = addDervish(player1);
+        Permanent otherDervish = addDervish(player1);
+
+        dealOneDamageWithFireWhip(damagingDervish, player2.getId());
+        advanceToEndStepAndResolve(player1.getId());
+
+        assertThat(damagingDervish.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(otherDervish.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void multipleDamageEventsStillGiveOnlyOneCounter() {
+        Permanent dervish = addDervish(player1);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat(player1);
+        harness.assertLife(player2, 19);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, dervish.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(dervish.isTapped()).isFalse();
+        dealOneDamageWithFireWhip(dervish, player2.getId());
+        harness.assertLife(player2, 18);
+        advanceToEndStepAndResolve(player1.getId());
+
+        assertThat(dervish.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void damageAfterEndStepBeginsDoesNotTriggerRetroactively() {
+        Permanent dervish = addDervish(player1);
+        advanceToEndStepAndResolve(player1.getId());
+
+        dealOneDamageWithFireWhip(dervish, player2.getId());
+        harness.assertLife(player2, 19);
+        resolveAllTriggers();
+
+        assertThat(dervish.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
