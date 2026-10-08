@@ -61,4 +61,67 @@ class VitalSurgeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("cannot be spliced");
     }
+
+    @Test
+    @DisplayName("Multiple Vital Surges can be spliced onto another Vital Surge")
+    void multipleCopiesSpliceOntoVitalSurge() {
+        VitalSurge host = new VitalSurge();
+        VitalSurge firstSplice = new VitalSurge();
+        VitalSurge secondSplice = new VitalSurge();
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+        harness.setHand(player1, List.of(firstSplice, host, secondSplice));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castWithSplice(player1, 1, null, List.of(0, 2));
+        harness.assertLife(player1, 10);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 10);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstSplice, secondSplice);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(host);
+    }
+
+    @Test
+    @DisplayName("A spliced Vital Surge can subsequently be cast normally")
+    void splicedCardCanBeCastNormally() {
+        VitalSurge host = new VitalSurge();
+        VitalSurge spliced = new VitalSurge();
+        harness.setLife(player1, 10);
+        harness.setHand(player1, List.of(host, spliced));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castWithSplice(player1, 0, null, List.of(1));
+        harness.passBothPriorities();
+        harness.assertLife(player1, 16);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(spliced);
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(host, spliced);
+    }
+
+    @Test
+    @DisplayName("Splice requires its mana cost in addition to the host spell's cost")
+    void cannotSpliceWithoutAdditionalMana() {
+        harness.setLife(player1, 10);
+        harness.setHand(player1, List.of(new VitalSurge(), new VitalSurge()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castWithSplice(player1, 0, null, List.of(1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        harness.assertLife(player1, 10);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
 }
