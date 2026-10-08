@@ -16,6 +16,62 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({WandOfDenial.class, Forest.class, GrizzlyBears.class})
 class WandOfDenialTest extends BaseCardTest {
 
+    @Test
+    @DisplayName("The controller privately sees a land even though it cannot be put into the graveyard")
+    void privatelyShowsLandTopCard() {
+        harness.addToBattlefield(player1, new WandOfDenial());
+        Card topCard = new Forest();
+        harness.setLibrary(player2, List.of(topCard));
+        harness.clearMessages();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn1().getMessagesContaining("Forest")).isNotEmpty();
+        assertThat(harness.getConn2().getMessagesContaining("Forest")).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard);
+        assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The controller privately sees the nonland top card even when unable to pay life")
+    void privatelyShowsTopCardWhenCannotPayLife() {
+        harness.addToBattlefield(player1, new WandOfDenial());
+        harness.setLife(player1, 1);
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(topCard));
+        harness.clearMessages();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn1().getMessagesContaining("Grizzly Bears")).isNotEmpty();
+        assertThat(harness.getConn2().getMessagesContaining("Grizzly Bears")).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard);
+        harness.assertLife(player1, 1);
+        assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Payment moves only the top card and charges the ability controller")
+    void movesOnlyTopCardAndDoesNotChargeTarget() {
+        harness.addToBattlefield(player1, new WandOfDenial());
+        Card topCard = new GrizzlyBears();
+        Card secondCard = new Forest();
+        harness.setLibrary(player2, List.of(topCard, secondCard));
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 7);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(secondCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(topCard);
+        harness.assertLife(player1, 8);
+        harness.assertLife(player2, 7);
+    }
+
     // ===== Nonland top card: pay 2 life to bin it =====
 
     @Test
