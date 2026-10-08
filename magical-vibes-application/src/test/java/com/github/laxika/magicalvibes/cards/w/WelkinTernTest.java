@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.SentinelSpider;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WelkinTern.class, SerraAngel.class, WalkingCorpse.class, SentinelSpider.class})
 class WelkinTernTest extends BaseCardTest {
 
     @Test
@@ -33,19 +34,12 @@ class WelkinTernTest extends BaseCardTest {
     @Test
     @DisplayName("Welkin Tern can block a creature with flying")
     void canBlockFlyingCreature() {
-        Permanent ternPerm = new Permanent(new WelkinTern());
-        ternPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(ternPerm);
+        Permanent ternPerm = addCreatureReady(player2, new WelkinTern());
 
-        Permanent atkPerm = new Permanent(new AirElemental());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new SerraAngel());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -55,43 +49,65 @@ class WelkinTernTest extends BaseCardTest {
     @Test
     @DisplayName("Welkin Tern cannot block a creature without flying")
     void cannotBlockNonFlyingCreature() {
-        Permanent ternPerm = new Permanent(new WelkinTern());
-        ternPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(ternPerm);
+        Permanent ternPerm = addCreatureReady(player2, new WelkinTern());
 
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new WalkingCorpse());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can only block creatures with flying");
+        assertThat(ternPerm.isBlocking()).isFalse();
     }
 
     @Test
     @DisplayName("Welkin Tern has flying and can't be blocked by a ground creature")
     void cannotBeBlockedByGroundCreature() {
-        Permanent atkPerm = new Permanent(new WelkinTern());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new WelkinTern());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        addCreatureReady(player2, new WalkingCorpse());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void reachCreatureCanBlockWelkinTern() {
+        addCreatureReady(player1, new WelkinTern());
+        Permanent spider = addCreatureReady(player2, new SentinelSpider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(spider.isBlocking()).isTrue();
+    }
+
+    @Test
+    void cannotBlockCreatureWithReachButWithoutFlying() {
+        addCreatureReady(player1, new SentinelSpider());
+        Permanent tern = addCreatureReady(player2, new WelkinTern());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can only block creatures with flying");
+        assertThat(tern.isBlocking()).isFalse();
+    }
+
+    @Test
+    void flyingCreatureCanBlockWelkinTern() {
+        addCreatureReady(player1, new WelkinTern());
+        Permanent angel = addCreatureReady(player2, new SerraAngel());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(angel.isBlocking()).isTrue();
     }
 }
