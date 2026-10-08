@@ -50,6 +50,83 @@ class VarchildsCrusaderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A non-Wall can block when the ability has not been activated")
+    void nonWallCanBlockWithoutActivation() {
+        Permanent crusader = addCreatureReady(player1, new VarchildsCrusader());
+        crusader.setAttacking(true);
+        Permanent creature = addCreatureReady(player2, new CarrierPigeons());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(creature.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activation during an end step waits for the following turn's end step")
+    void activationDuringEndStepWaitsForNextEndStep() {
+        addCreatureReady(player1, new VarchildsCrusader());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Varchild's Crusader");
+        assertThat(gd.stack).isEmpty();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Varchild's Crusader");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Varchild's Crusader");
+        harness.assertInGraveyard(player1, "Varchild's Crusader");
+    }
+
+    @Test
+    @DisplayName("Each activation creates its own delayed sacrifice trigger")
+    void multipleActivationsCreateMultipleDelayedTriggers() {
+        Permanent crusader = activateCrusader();
+        crusader.setAttacking(false);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Varchild's Crusader");
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Varchild's Crusader"))
+                .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The zero-cost ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent crusader = addCreatureReady(player1, new VarchildsCrusader());
+        crusader.setTapped(true);
+        crusader.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Varchild's Crusader");
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Varchild's Crusader");
+        harness.assertInGraveyard(player1, "Varchild's Crusader");
+    }
+
+    @Test
     @DisplayName("The blocking restriction wears off at the end of the turn")
     void restrictionWearsOffAtEndOfTurn() {
         Permanent crusader = addCreatureReady(player1, new VarchildsCrusader());
@@ -80,9 +157,8 @@ class VarchildsCrusaderTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Varchild's Crusader");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Varchild's Crusader");
         harness.assertInGraveyard(player1, "Varchild's Crusader");
@@ -98,8 +174,7 @@ class VarchildsCrusaderTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(crusader);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
