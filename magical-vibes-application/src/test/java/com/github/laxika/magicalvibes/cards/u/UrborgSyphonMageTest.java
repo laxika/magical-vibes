@@ -78,4 +78,96 @@ class UrborgSyphonMageTest extends BaseCardTest {
         assertThat(mage.isTapped()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(discarded);
     }
+
+    @Test
+    void paysCostsBeforeResolvingAndResolvesWithoutSource() {
+        Permanent mage = addCreatureReady(player1, new UrborgSyphonMage());
+        UrborgSyphonMage discarded = new UrborgSyphonMage();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(mage.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(mage);
+        gd.playerGraveyards.get(player1.getId()).add(mage.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 12);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void cannotActivateWithSummoningSickness() {
+        harness.addToBattlefield(player1, new UrborgSyphonMage());
+        Swamp discarded = new Swamp();
+        harness.setHand(player1, List.of(discarded));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    void requiresBlackMana() {
+        Permanent mage = addCreatureReady(player1, new UrborgSyphonMage());
+        Swamp discarded = new Swamp();
+        harness.setHand(player1, List.of(discarded));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(mage.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    void requiresFullManaCost() {
+        Permanent mage = addCreatureReady(player1, new UrborgSyphonMage());
+        Swamp discarded = new Swamp();
+        harness.setHand(player1, List.of(discarded));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(mage.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    void canActivateDuringOpponentsTurn() {
+        addCreatureReady(player1, new UrborgSyphonMage());
+        harness.setHand(player1, List.of(new Swamp()));
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 12);
+        harness.assertLife(player2, 18);
+    }
 }
