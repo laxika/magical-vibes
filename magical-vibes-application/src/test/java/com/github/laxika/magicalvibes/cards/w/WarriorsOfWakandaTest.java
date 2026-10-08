@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -13,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WarriorsOfWakanda.class, GrizzlyBears.class})
 class WarriorsOfWakandaTest extends BaseCardTest {
@@ -23,11 +23,7 @@ class WarriorsOfWakandaTest extends BaseCardTest {
         addCreatureReady(player1, new WarriorsOfWakanda());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        assertThat(gqs.hasKeyword(gd, gd.playerBattlefields.get(player1.getId()).get(0), Keyword.TRAMPLE))
-                .isTrue();
-
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -40,5 +36,29 @@ class WarriorsOfWakandaTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void trampleRequiresLethalDamageBeforeDamagingDefendingPlayer() {
+        harness.setLife(player2, 20);
+        Permanent attacker = addCreatureReady(player1, new WarriorsOfWakanda());
+        Permanent blocker = addCreatureReady(player2, new WarriorsOfWakanda());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
+        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 3,
+                player2.getId(), 1
+        ))).isInstanceOf(IllegalStateException.class);
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 4));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 }
