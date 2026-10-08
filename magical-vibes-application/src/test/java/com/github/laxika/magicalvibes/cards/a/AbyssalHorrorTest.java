@@ -23,8 +23,7 @@ class AbyssalHorrorTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GrizzlyBears(), new HillGiant()));
         castAbyssalHorror(player2.getId());
 
-        harness.passBothPriorities(); // resolve creature spell -> ETB trigger on stack
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(2);
@@ -43,8 +42,7 @@ class AbyssalHorrorTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GrizzlyBears()));
         castAbyssalHorror(player2.getId());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.handleCardChosen(player2, 0);
 
@@ -61,8 +59,7 @@ class AbyssalHorrorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castCreature(player1, 0, player1.getId());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(2);
@@ -73,6 +70,32 @@ class AbyssalHorrorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Target player chooses exactly two cards from a larger hand")
+    void targetChoosesTwoCardsFromLargerHand() {
+        GrizzlyBears keptCard = new GrizzlyBears();
+        HillGiant firstDiscard = new HillGiant();
+        GrizzlyBears secondDiscard = new GrizzlyBears();
+        harness.setHand(player2, List.of(keptCard, firstDiscard, secondDiscard));
+        castAbyssalHorror(player2.getId());
+
+        resolveAllTriggers();
+
+        PendingInteraction.DiscardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(keptCard);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactlyInAnyOrder(firstDiscard, secondDiscard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Abyssal Horror");
     }
 
     private void castAbyssalHorror(UUID targetPlayerId) {
@@ -95,8 +118,7 @@ class AbyssalHorrorTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         castAbyssalHorror(player2.getId());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
@@ -108,8 +130,7 @@ class AbyssalHorrorTest extends BaseCardTest {
     void etbCanTargetController() {
         castAbyssalHorror(player1.getId(), List.of(new GrizzlyBears(), new HillGiant()));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.DiscardChoice discardChoice =
                 gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
