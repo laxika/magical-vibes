@@ -26,6 +26,37 @@ class WirewoodElfTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Wirewood Elf can produce mana again after untapping")
+    void canTapAgainAfterUntapping() {
+        Permanent elf = addCreatureReady(player1, new WirewoodElf());
+
+        harness.tapPermanent(player1, 0);
+        gd.playerManaPools.get(player1.getId()).clear();
+        harness.performUntapStep(player1);
+
+        assertThat(elf.isTapped()).isFalse();
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(elf.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Wirewood Elf adds mana only to its controller's pool")
+    void addsManaOnlyToController() {
+        Permanent elf = addCreatureReady(player2, new WirewoodElf());
+
+        harness.tapPermanent(player2, 0);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(elf.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Summoning-sick Wirewood Elf cannot tap for mana")
     void summoningSickCannotTap() {
         Permanent elf = harness.addToBattlefieldAndReturn(player1, new WirewoodElf());
