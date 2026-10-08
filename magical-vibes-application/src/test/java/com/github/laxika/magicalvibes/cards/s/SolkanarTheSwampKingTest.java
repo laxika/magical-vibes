@@ -80,6 +80,51 @@ class SolkanarTheSwampKingTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sol'kanar does not trigger for its own casting while off the battlefield")
+    void ownCastingDoesNotTrigger() {
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new SolkanarTheSwampKing(), "{2}{U}{B}{R}");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore);
+        harness.assertOnBattlefield(player1, "Sol'kanar the Swamp King");
+    }
+
+    @Test
+    @DisplayName("A life gain trigger survives Sol'kanar leaving the battlefield")
+    void triggerSurvivesSourceLeavingBattlefield() {
+        SolkanarTheSwampKing solkanar = new SolkanarTheSwampKing();
+        harness.addToBattlefield(player1, solkanar);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new DauthiSlayer(), "{B}{B}");
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.setGraveyard(player1, List.of(solkanar));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore + 1);
+        harness.assertInGraveyard(player1, "Sol'kanar the Swamp King");
+    }
+
+    @Test
+    @DisplayName("A Swamp controlled only by the attacker does not prevent blocking")
+    void attackersSwampDoesNotPreventBlocking() {
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent blocker = addCreatureReady(player2, new Squire());
+        Permanent attacker = addCreatureReady(player1, new SolkanarTheSwampKing());
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        declareAttackersAndPrepareBlockers(List.of(attackerIndex));
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Swampwalk prevents blocking when the defending player controls a Swamp")
     void swampwalkPreventsBlockingWithSwamp() {
         harness.addToBattlefield(player2, new Swamp());
