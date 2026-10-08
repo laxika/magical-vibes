@@ -227,6 +227,53 @@ class TheBookOfExaltedDeedsTest extends BaseCardTest {
         assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
     }
 
+    @Test
+    void createsAngelEvenIfBookLeavesAfterTriggering() {
+        Permanent book = addBookReady(player1);
+        gd.lifeGainedThisTurn.put(player1.getId(), 3);
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToExile(gd, book));
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Angel")).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "The Book of Exalted Deeds");
+    }
+
+    @Test
+    void enlightenedAngelPreventsLosingToPoison() {
+        Permanent angel = addBookAndCreateAngel();
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.activateAbility(player1, 0, null, angel.getId());
+        harness.passBothPriorities();
+
+        gd.playerPoisonCounters.put(player1.getId(), 10);
+        harness.runStateBasedActions();
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToExile(gd, angel));
+        harness.runStateBasedActions();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    void cannotActivateDuringOwnEndStep() {
+        Permanent angel = addBookAndCreateAngel();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, angel.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        harness.assertOnBattlefield(player1, "The Book of Exalted Deeds");
+        assertThat(angel.getCounterCount(CounterType.ENLIGHTENED)).isZero();
+    }
+
     private Permanent addBookAndCreateAngel() {
         addBookReady(player1);
         gd.lifeGainedThisTurn.put(player1.getId(), 3);
