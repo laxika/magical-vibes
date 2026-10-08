@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.b.BrambleWurm;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SporebackWolf;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,10 +12,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WelcomingVampire.class, AirElemental.class, Forest.class, GrizzlyBears.class})
+@CardUsed({WelcomingVampire.class, BrambleWurm.class, Forest.class, SporebackWolf.class,
+        WeddingFestivity.class})
 class WelcomingVampireTest extends BaseCardTest {
 
     @Test
@@ -25,7 +26,7 @@ class WelcomingVampireTest extends BaseCardTest {
         addVampire();
         seedLibrary(1);
 
-        castGrizzlyBears(player1);
+        castSporebackWolf(player1);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -39,12 +40,13 @@ class WelcomingVampireTest extends BaseCardTest {
         addVampire();
         seedLibrary(1);
 
-        harness.setHand(player1, List.of(new AirElemental()));
-        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.setHand(player1, List.of(new BrambleWurm()));
+        harness.addMana(player1, ManaColor.GREEN, 7);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.forceActivePlayer(player2);
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new SporebackWolf()));
         harness.addMana(player2, ManaColor.GREEN, 2);
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
@@ -58,12 +60,12 @@ class WelcomingVampireTest extends BaseCardTest {
         addVampire();
         seedLibrary(2);
 
-        castGrizzlyBears(player1);
+        castSporebackWolf(player1);
         harness.passBothPriorities();
         harness.passBothPriorities();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1)
                 .first().isInstanceOf(Forest.class);
-        castGrizzlyBears(player1);
+        castSporebackWolf(player1);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -76,7 +78,7 @@ class WelcomingVampireTest extends BaseCardTest {
         addVampire();
         seedLibrary(3);
 
-        castGrizzlyBears(player1);
+        castSporebackWolf(player1);
         harness.passBothPriorities();
         harness.passBothPriorities();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1)
@@ -86,7 +88,7 @@ class WelcomingVampireTest extends BaseCardTest {
         advanceTurn();
 
         harness.forceActivePlayer(player1);
-        castGrizzlyBears(player1);
+        castSporebackWolf(player1);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -94,19 +96,80 @@ class WelcomingVampireTest extends BaseCardTest {
                 .first().isInstanceOf(Forest.class);
     }
 
-    private Permanent addVampire() {
-        return harness.addToBattlefieldAndReturn(player1, new WelcomingVampire());
+    @Test
+    @DisplayName("Does not trigger for its own entry")
+    void doesNotDrawForItsOwnEntry() {
+        seedLibrary(1);
+        harness.setHand(player1, List.of(new WelcomingVampire()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Vampire has its own once-per-turn limit")
+    void eachVampireDrawsIndependently() {
+        addVampire();
+        addVampire();
+        seedLibrary(2);
+
+        castSporebackWolf(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A larger creature does not consume the once-per-turn trigger")
+    void largerEntryDoesNotPreventLaterDraw() {
+        addVampire();
+        seedLibrary(1);
+        harness.setHand(player1, List.of(new BrambleWurm()));
+        harness.addMana(player1, ManaColor.GREEN, 7);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        castSporebackWolf(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1)
+                .first().isInstanceOf(Forest.class);
+    }
+
+    @Test
+    @DisplayName("Checks power including continuous boosts when a creature enters")
+    void boostedCreatureAboveTwoPowerDoesNotTrigger() {
+        addVampire();
+        harness.addToBattlefield(player1, new WeddingFestivity());
+        seedLibrary(1);
+
+        castSporebackWolf(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    private void addVampire() {
+        harness.addToBattlefield(player1, new WelcomingVampire());
     }
 
     private void seedLibrary(int count) {
-        gd.playerDecks.get(player1.getId()).clear();
-        for (int i = 0; i < count; i++) {
-            gd.playerDecks.get(player1.getId()).add(new Forest());
-        }
+        harness.setLibrary(player1, IntStream.range(0, count)
+                .mapToObj(i -> new Forest()).toList());
     }
 
-    private void castGrizzlyBears(Player player) {
-        harness.setHand(player, List.of(new GrizzlyBears()));
+    private void castSporebackWolf(Player player) {
+        harness.setHand(player, List.of(new SporebackWolf()));
         harness.addMana(player, ManaColor.GREEN, 2);
         harness.castCreature(player, 0);
     }
