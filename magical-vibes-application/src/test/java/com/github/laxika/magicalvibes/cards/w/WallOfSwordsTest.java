@@ -57,4 +57,29 @@ class WallOfSwordsTest extends BaseCardTest {
 
         assertThat(wall.isBlocking()).isTrue();
     }
+
+    @Test
+    void summoningSickWallCanBlockFlyingCreature() {
+        addCreatureReady(player1, new AirElemental());
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfSwords());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(wall.isBlocking()).isTrue();
+    }
+
+    @Test
+    void tappedWallCannotBlockFlyingCreature() {
+        addCreatureReady(player1, new AirElemental());
+        Permanent wall = addCreatureReady(player2, new WallOfSwords());
+        wall.setTapped(true);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(wall.isBlocking()).isFalse();
+    }
 }
