@@ -27,8 +27,7 @@ class WritOfReturnTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WritOfReturn()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
@@ -69,13 +68,11 @@ class WritOfReturnTest extends BaseCardTest {
         Card first = new GrizzlyBears();
         Card second = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(first, second));
-        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new WritOfReturn()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, first.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, first.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, attacker.getId());
 
@@ -93,5 +90,75 @@ class WritOfReturnTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(second.getId()) && permanent.isTapped());
         assertThat(gd.exiledCards).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Can encode on the tapped creature returned by the spell, but not an opponent's creature")
+    void encodesOnReturnedCreature() {
+        Card creature = new GrizzlyBears();
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new WritOfReturn()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, returned.getId());
+
+        assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card().getName().equals("Writ of Return"));
+        harness.assertNotInGraveyard(player1, "Writ of Return");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not offer cipher when the sole graveyard target is gone at resolution")
+    void doesNotEncodeWhenTargetIsGone() {
+        Card creature = new GrizzlyBears();
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new WritOfReturn()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castSorcery(player1, 0, creature.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Writ of Return");
+        assertThat(gd.exiledCards).noneMatch(exiled -> exiled.card().getName().equals("Writ of Return"));
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The controller may decline casting a cipher copy after combat damage")
+    void mayDeclineCipherCopy() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(first, second));
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WritOfReturn()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, first.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, attacker.getId());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.exiledCards).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
