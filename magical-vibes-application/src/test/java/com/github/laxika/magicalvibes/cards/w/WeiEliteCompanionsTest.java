@@ -16,6 +16,23 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class WeiEliteCompanionsTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Wei Elite Companions can block a creature without horsemanship")
+    void canBlockCreatureWithoutHorsemanship() {
+        Permanent blockerPerm = addCreatureReady(player2, new WeiEliteCompanions());
+        Permanent attackerPerm = addCreatureReady(player1, new WeiInfantry());
+        attackerPerm.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attackerPerm);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blockerPerm.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Wei Elite Companions can't be blocked by a creature without horsemanship")
     void cannotBeBlockedByCreatureWithoutHorsemanship() {
         Permanent blockerPerm = addCreatureReady(player2, new WeiInfantry());
