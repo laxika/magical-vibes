@@ -69,4 +69,35 @@ class WallOfTombstonesTest extends BaseCardTest {
         return addCreatureReady(player, new WallOfTombstones());
     }
 
+    @Test
+    @DisplayName("The upkeep ability counts creature cards when it resolves")
+    void countsGraveyardAtResolution() {
+        Permanent wall = addWallReady(player1);
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wall)).isZero();
+    }
+
+    @Test
+    @DisplayName("A later upkeep with an empty graveyard resets toughness to one")
+    void emptyGraveyardReplacesEarlierSnapshot() {
+        Permanent wall = addWallReady(player1);
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(3);
+
+        harness.setGraveyard(player1, List.of());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(1);
+    }
+
 }
