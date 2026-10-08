@@ -166,6 +166,36 @@ class WhipVineTest extends BaseCardTest {
         assertThat(vine.isTapped()).isTrue();
     }
 
+    @Test
+    void lockedCreatureUntapsAfterVineLeavesBattlefield() {
+        Permanent bird = addCreatureReady(player1, new WildAesthir());
+        Permanent vine = addCreatureReady(player2, new WhipVine());
+
+        blockWithVine();
+        harness.activateAbility(player2, 0, null, bird.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player2.getId()).remove(vine);
+        gd.playerGraveyards.get(player2.getId()).add(vine.getCard());
+        harness.performUntapStep(player1);
+
+        assertThat(bird.isTapped()).isFalse();
+    }
+
+    @Test
+    void summoningSickVineCanBlockButCannotActivateTapAbility() {
+        Permanent bird = addCreatureReady(player1, new WildAesthir());
+        Permanent vine = addCreatureReady(player2, new WhipVine());
+        vine.setSummoningSick(true);
+
+        blockWithVine();
+
+        assertThat(vine.isBlocking()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, bird.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(vine.isTapped()).isFalse();
+    }
+
     /** Declares player1's first creature as an attacker and blocks it with player2's Whip Vine. */
     private void blockWithVine() {
         declareAttackersAndPrepareBlockers(List.of(0));
