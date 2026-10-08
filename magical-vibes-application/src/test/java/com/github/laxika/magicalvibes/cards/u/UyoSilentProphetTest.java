@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GlacialRay;
 import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
+import com.github.laxika.magicalvibes.cards.h.HisokasDefiance;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({UyoSilentProphet.class, CounselOfTheSoratami.class, GlacialRay.class,
-        HumbleBudoka.class, Island.class})
+        HumbleBudoka.class, HisokasDefiance.class, Island.class})
 class UyoSilentProphetTest extends BaseCardTest {
 
     @Test
@@ -40,8 +41,7 @@ class UyoSilentProphetTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.activateAbility(player1, uyoIndex(player1), null, counsel.getId(), Zone.STACK);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Island"));
+        harness.assertNotOnBattlefield(player1, "Island");
         assertThat(gd.playerHands.get(player1.getId()))
                 .filteredOn(c -> c.getName().equals("Island")).hasSize(2);
 
@@ -165,6 +165,93 @@ class UyoSilentProphetTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, uyoIndex(player1), null, counsel.getId(), Zone.STACK))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Declining new targets keeps the original target and both spells resolve")
+    void decliningRetargetKeepsOriginalTarget() {
+        harness.addToBattlefield(player1, new UyoSilentProphet());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        GlacialRay ray = new GlacialRay();
+        harness.setHand(player1, List.of(ray));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.activateAbility(player1, uyoIndex(player1), null, ray.getId(), Zone.STACK);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        StackEntry copy = gd.stack.stream().filter(StackEntry::isCopy).findFirst().orElseThrow();
+        assertThat(copy.getTargetId()).isEqualTo(player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(c -> c.getName().equals("Glacial Ray")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Can choose two tapped lands among three lands to pay the cost")
+    void choosesTwoTappedLandsToReturn() {
+        harness.addToBattlefield(player1, new UyoSilentProphet());
+        Island first = new Island();
+        Island second = new Island();
+        Island third = new Island();
+        harness.addToBattlefield(player1, first);
+        harness.addToBattlefield(player1, second);
+        harness.addToBattlefield(player1, third);
+        gd.playerBattlefields.get(player1.getId()).get(1).setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).get(2).setTapped(true);
+        UUID firstPermanentId = gd.playerBattlefields.get(player1.getId()).get(1).getId();
+        UUID secondPermanentId = gd.playerBattlefields.get(player1.getId()).get(2).getId();
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setHand(player1, List.of(counsel));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.activateAbility(player1, uyoIndex(player1), null, counsel.getId(), Zone.STACK);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, firstPermanentId);
+        harness.handlePermanentChosen(player1, secondPermanentId);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(first, second);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().getName().equals("Island"))
+                .extracting(p -> p.getCard().getId()).containsExactly(third.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("No copy is created if the targeted spell is countered; the lands stay returned")
+    void counteredTargetDoesNotRefundCosts() {
+        harness.addToBattlefield(player1, new UyoSilentProphet());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        GlacialRay ray = new GlacialRay();
+        harness.setHand(player1, List.of(ray));
+        harness.setHand(player2, List.of(new HisokasDefiance()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.activateAbility(player1, uyoIndex(player1), null, ray.getId(), Zone.STACK);
+        harness.castInstant(player2, 0, ray.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Glacial Ray");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player1, "Island");
+        assertThat(gd.playerHands.get(player1.getId()))
+                .filteredOn(c -> c.getName().equals("Island")).hasSize(2);
     }
 
     private int uyoIndex(Player owner) {
