@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(VolcanicVillain.class)
+@CardUsed({VolcanicVillain.class})
 class VolcanicVillainTest extends BaseCardTest {
 
     @Test
@@ -52,5 +52,58 @@ class VolcanicVillainTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once");
+    }
+
+    @Test
+    @DisplayName("An unsuccessful payment does not use up power-up")
+    void failedPaymentDoesNotUseUpPowerUp() {
+        Permanent villain = harness.enterBattlefieldAndReturn(player1, new VolcanicVillain());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(villain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(villain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Power-up cannot be activated again while its first activation is on the stack")
+    void powerUpLimitAppliesBeforeResolution() {
+        Permanent villain = harness.enterBattlefieldAndReturn(player1, new VolcanicVillain());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(villain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+
+        harness.passBothPriorities();
+        assertThat(villain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Full-cost power-up requires red mana after the entry turn")
+    void fullCostRequiresRedMana() {
+        Permanent villain = addCreatureReady(player1, new VolcanicVillain());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(villain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(villain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 }
