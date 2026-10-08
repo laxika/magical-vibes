@@ -46,8 +46,7 @@ class WellOfKnowledgeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
@@ -62,6 +61,8 @@ class WellOfKnowledgeTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player2.getId()).size();
         int libraryBefore = gd.playerDecks.get(player2.getId()).size();
+        int controllerHandBefore = gd.playerHands.get(player1.getId()).size();
+        int controllerLibraryBefore = gd.playerDecks.get(player1.getId()).size();
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player2, 0, null, null);
@@ -69,6 +70,43 @@ class WellOfKnowledgeTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(libraryBefore - 1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(controllerHandBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(controllerLibraryBefore);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped Well can still be activated during its controller's draw step")
+    void tappedWellCanBeActivated() {
+        addWell(player1);
+        findPermanent(player1, "Well of Knowledge").setTapped(true);
+        advanceToDraw(player1);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(findPermanent(player1, "Well of Knowledge").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent cannot use the controller's mana to pay for Well's ability")
+    void opponentMustPayTheirOwnMana() {
+        addWell(player1);
+        advanceToDraw(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
     }
 
     @Test
