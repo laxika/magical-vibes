@@ -95,12 +95,45 @@ class ZombifyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Zombify()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, targetedCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetedCreature.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getId().equals(targetedCreature.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(otherCreature.getId()));
+    }
+
+    @Test
+    @DisplayName("Cannot cast Zombify without a target even with a creature in the graveyard")
+    void cannotCastWithoutTarget() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Zombify()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Must target");
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Returned creature enters untapped under your control with summoning sickness")
+    void returnedCreatureEntersUntappedWithSummoningSickness() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new Zombify()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement().satisfies(permanent -> {
+                    assertThat(permanent.getCard().getId()).isEqualTo(creature.getId());
+                    assertThat(permanent.isTapped()).isFalse();
+                    assertThat(permanent.isSummoningSick()).isTrue();
+                });
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 }
