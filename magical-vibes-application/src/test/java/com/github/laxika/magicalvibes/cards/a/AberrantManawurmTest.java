@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,13 +18,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AberrantManawurm.class, Shock.class, Divination.class, Hurricane.class,
+        GrizzlyBears.class, LightningBolt.class})
 class AberrantManawurmTest extends BaseCardTest {
 
     private Permanent addManawurm(Player player) {
-        AberrantManawurm card = new AberrantManawurm();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new AberrantManawurm());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
@@ -42,9 +43,7 @@ class AberrantManawurmTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setHand(player1, List.of(new Shock()));
-        harness.castInstant(player1, 0, player2.getId());
-
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(manawurm.getPowerModifier()).isEqualTo(1);
         assertThat(manawurm.getToughnessModifier()).isEqualTo(0);
@@ -58,9 +57,7 @@ class AberrantManawurmTest extends BaseCardTest {
 
         harness.addCreatureMana(player1, ManaColor.RED, 1);
         harness.setHand(player1, List.of(new Shock()));
-        harness.castInstant(player1, 0, player2.getId());
-
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(manawurm.getPowerModifier()).isEqualTo(1);
         assertThat(manawurm.getToughnessModifier()).isEqualTo(0);
@@ -74,9 +71,7 @@ class AberrantManawurmTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.setHand(player1, List.of(new Divination()));
-        harness.castSorcery(player1, 0, 0);
-
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(manawurm.getPowerModifier()).isEqualTo(3);
         assertThat(manawurm.getToughnessModifier()).isEqualTo(0);
@@ -90,9 +85,7 @@ class AberrantManawurmTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.GREEN, 4);
         harness.setHand(player1, List.of(new Hurricane()));
-        harness.castSorcery(player1, 0, 3);
-
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3);
 
         assertThat(manawurm.getPowerModifier()).isEqualTo(4);
         assertThat(manawurm.getToughnessModifier()).isEqualTo(0);
@@ -121,18 +114,61 @@ class AberrantManawurmTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setHand(player1, List.of(new Shock()));
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(manawurm.getPowerModifier()).isEqualTo(1);
 
         harness.passBothPriorities();
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setHand(player1, List.of(new LightningBolt()));
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(manawurm.getPowerModifier()).isEqualTo(2);
         assertThat(manawurm.getToughnessModifier()).isEqualTo(0);
     }
+
+    @Test
+    @DisplayName("Opponent's instant does not boost Aberrant Manawurm")
+    void opponentInstantDoesNotBoost() {
+        Permanent manawurm = addManawurm(player1);
+        setUpMainPhase(player2);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new Shock()));
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(manawurm.getPowerModifier()).isZero();
+        assertThat(manawurm.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Power boost expires at end of turn")
+    void powerBoostExpiresAtEndOfTurn() {
+        Permanent manawurm = addManawurm(player1);
+        setUpMainPhase(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        assertThat(manawurm.getPowerModifier()).isEqualTo(1);
+
+        harness.passUntil(TurnStep.UPKEEP);
+
+        assertThat(manawurm.getPowerModifier()).isZero();
+        assertThat(manawurm.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("An X spell cast with X zero still counts its colored mana cost")
+    void zeroXStillCountsColoredMana() {
+        Permanent manawurm = addManawurm(player1);
+        setUpMainPhase(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player1, List.of(new Hurricane()));
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(manawurm.getPowerModifier()).isEqualTo(1);
+        assertThat(manawurm.getToughnessModifier()).isZero();
+    }
+
 }
