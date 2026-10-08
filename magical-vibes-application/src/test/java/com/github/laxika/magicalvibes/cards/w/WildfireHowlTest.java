@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.a.ArtistsTalent;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WildfireHowl.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({WildfireHowl.class, GrizzlyBears.class, HillGiant.class, ArtistsTalent.class})
 class WildfireHowlTest extends BaseCardTest {
 
     @Test
@@ -55,6 +57,68 @@ class WildfireHowlTest extends BaseCardTest {
                 .containsExactly(drawCard.getId());
     }
 
+    @Test
+    void giftedCreatureTargetTakesThreeDamageWhileOtherCreaturesTakeTwo() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+
+        castWithGift(target.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(other);
+        assertThat(other.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Hill Giant");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    void illegalGiftedTargetStopsBothGiftAndCreatureDamage() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card drawCard = new GrizzlyBears();
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(drawCard));
+        prepareSpell();
+        harness.castSorceryWithGift(player1, 0, target.getId(), true);
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setGraveyard(player2, List.of(target.getCard()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(survivor);
+        assertThat(survivor.getMarkedDamage()).isZero();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(drawCard);
+        harness.assertInGraveyard(player1, "Wildfire Howl");
+    }
+
+    @Test
+    void giftedCreatureDamageReceivesArtistsTalentBonusOnlyOnce() {
+        harness.addToBattlefield(player1, new ArtistsTalent());
+        for (int abilityIndex = 0; abilityIndex < 2; abilityIndex++) {
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+            harness.activateAbility(player1, 0, abilityIndex, null, null);
+            harness.passBothPriorities();
+        }
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        other.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        prepareSpell();
+        harness.castSorceryWithGift(player1, 0, target.getId(), true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(target, other);
+        assertThat(target.getMarkedDamage()).isEqualTo(5);
+        assertThat(other.getMarkedDamage()).isEqualTo(4);
+    }
     private void castWithoutGift() {
         prepareSpell();
         harness.castSorceryWithGift(player1, 0, List.of(), false);
