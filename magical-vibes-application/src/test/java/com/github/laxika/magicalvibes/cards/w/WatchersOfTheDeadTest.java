@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DuneBeetle;
+import com.github.laxika.magicalvibes.cards.d.DesecratedTomb;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WatchersOfTheDead.class, DuneBeetle.class, DesecratedTomb.class})
 class WatchersOfTheDeadTest extends BaseCardTest {
 
     @Test
@@ -32,8 +35,8 @@ class WatchersOfTheDeadTest extends BaseCardTest {
     void opponentKeepsTwoExilesRest() {
         addReadyWatchers(player1);
         harness.setGraveyard(player2, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears()));
+                new DuneBeetle(), new DuneBeetle(), new DuneBeetle(),
+                new DuneBeetle(), new DuneBeetle()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -53,7 +56,7 @@ class WatchersOfTheDeadTest extends BaseCardTest {
     @DisplayName("Opponent with two or fewer graveyard cards keeps them all")
     void opponentWithTwoOrFewerKeepsAll() {
         addReadyWatchers(player1);
-        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(new DuneBeetle(), new DuneBeetle()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -68,7 +71,7 @@ class WatchersOfTheDeadTest extends BaseCardTest {
     void doesNotAffectControllerGraveyard() {
         addReadyWatchers(player1);
         harness.setGraveyard(player1, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+                new DuneBeetle(), new DuneBeetle(), new DuneBeetle(), new DuneBeetle()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -77,10 +80,75 @@ class WatchersOfTheDeadTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
     }
 
+    @Test
+    void opponentWithOneCardKeepsIt() {
+        addReadyWatchers(player1);
+        DuneBeetle card = new DuneBeetle();
+        harness.setGraveyard(player2, List.of(card));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(card);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent watchers = harness.addToBattlefieldAndReturn(player1, new WatchersOfTheDead());
+        watchers.setSummoningSick(true);
+        watchers.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Watchers of the Dead");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(watchers.getCard());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentChoosesWhichSpecificCardsRemain() {
+        addReadyWatchers(player1);
+        DuneBeetle first = new DuneBeetle();
+        DuneBeetle second = new DuneBeetle();
+        DuneBeetle third = new DuneBeetle();
+        DuneBeetle fourth = new DuneBeetle();
+        harness.setGraveyard(player2, List.of(first, second, third, fourth));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleGraveyardCardChosen(player2, 1);
+        harness.handleGraveyardCardChosen(player2, 2);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(first, third);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactlyInAnyOrder(second, fourth);
+    }
+
+    @Test
+    void exilesCreatureCardsSimultaneouslyForGraveyardLeaveTriggers() {
+        addReadyWatchers(player1);
+        harness.addToBattlefield(player2, new DesecratedTomb());
+        harness.setGraveyard(player2, List.of(
+                new DuneBeetle(), new DuneBeetle(), new DuneBeetle(),
+                new DuneBeetle(), new DuneBeetle()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleGraveyardCardChosen(player2, 0);
+        harness.handleGraveyardCardChosen(player2, 0);
+        harness.handleGraveyardCardChosen(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(3);
+        assertThat(findPermanents(player2, "Bat")).hasSize(1);
+    }
+
     private Permanent addReadyWatchers(Player player) {
-        Permanent perm = new Permanent(new WatchersOfTheDead());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new WatchersOfTheDead());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
