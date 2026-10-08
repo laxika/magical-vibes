@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ZebraUnicorn.class, JungleWurm.class})
+@CardUsed({ZebraUnicorn.class, JungleWurm.class, Delirium.class})
 class ZebraUnicornTest extends BaseCardTest {
 
     private Permanent addAttacker(ZebraUnicorn card) {
@@ -73,7 +73,47 @@ class ZebraUnicornTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Delirium.class)
+    @DisplayName("Blocking gains life for the defending controller after the trigger resolves")
+    void blockingGainsLifeForDefendingController() {
+        Permanent attacker = addCreatureReady(player1, new JungleWurm());
+        attacker.setAttacking(true);
+        Permanent unicorn = addCreatureReady(player2, new ZebraUnicorn());
+        unicorn.setBlocking(true);
+        unicorn.addBlockingTarget(0);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+
+        harness.assertInGraveyard(player2, "Zebra Unicorn");
+        harness.assertLife(player2, 20);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 22);
+    }
+
+    @Test
+    @DisplayName("Each Unicorn gains life only for the damage it dealt")
+    void eachUnicornTriggersForItsOwnDamage() {
+        addAttacker(new ZebraUnicorn());
+        addAttacker(new ZebraUnicorn());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 16);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
     @DisplayName("Noncombat damage also gains that much life")
     void noncombatDamageAlsoGainsLife() {
         Permanent unicorn = addCreatureReady(player2, new ZebraUnicorn());
