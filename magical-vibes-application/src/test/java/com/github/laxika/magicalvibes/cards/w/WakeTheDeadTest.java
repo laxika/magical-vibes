@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WakeTheDead.class, GrizzlyBears.class, HolyDay.class})
+@CardUsed({WakeTheDead.class, GrizzlyBears.class, HolyDay.class, RayOfCommand.class})
 class WakeTheDeadTest extends BaseCardTest {
 
     @Test
@@ -42,8 +43,7 @@ class WakeTheDeadTest extends BaseCardTest {
                 .extracting(Card::getName)
                 .containsExactly("Wake the Dead");
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
@@ -91,6 +91,96 @@ class WakeTheDeadTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 1, List.of(noncreature.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void zeroXNeedsNoGraveyardTargets() {
+        harness.setHand(player1, List.of(new WakeTheDead()));
+        addManaForX(0);
+        putPlayer1InOpponentsCombat();
+
+        harness.castInstantForX(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Wake the Dead");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotBeCastDuringOwnCombat() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new WakeTheDead()));
+        addManaForX(1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 1, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void sacrificesReturnedCreaturesWithOneDelayedAbility() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new WakeTheDead()));
+        addManaForX(2);
+        putPlayer1InOpponentsCombat();
+        harness.castInstantForX(player1, 0, 2, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(2);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void returnsRemainingLegalTargetWhenAnotherLeavesGraveyard() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new WakeTheDead()));
+        addManaForX(2);
+        putPlayer1InOpponentsCombat();
+        harness.castInstantForX(player1, 0, 2, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.setGraveyard(player1, List.of(second));
+        harness.setHand(player1, List.of(first));
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Grizzly Bears"))
+                .singleElement().satisfies(permanent -> assertThat(permanent.getCard().getId())
+                        .isEqualTo(second.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).contains(first);
+    }
+
+    @Test
+    void doesNotSacrificeCreatureControlledByOpponent() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new WakeTheDead()));
+        addManaForX(1);
+        putPlayer1InOpponentsCombat();
+        harness.castInstantForX(player1, 0, 1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanents(player1, "Grizzly Bears").getFirst();
+        harness.setHand(player2, List.of(new RayOfCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castAndResolveInstant(player2, 0, returned.getId());
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     private void addManaForX(int x) {
