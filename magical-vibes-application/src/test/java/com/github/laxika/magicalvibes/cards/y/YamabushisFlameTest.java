@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.cards.c.ConsumingVortex;
 import com.github.laxika.magicalvibes.cards.g.GlacialRay;
 import com.github.laxika.magicalvibes.cards.h.HearthKami;
 import com.github.laxika.magicalvibes.cards.h.HealingSalve;
 import com.github.laxika.magicalvibes.cards.m.MossKami;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({YamabushisFlame.class, HearthKami.class, MossKami.class, HealingSalve.class, GlacialRay.class})
+@CardUsed({YamabushisFlame.class, HearthKami.class, MossKami.class, HealingSalve.class, GlacialRay.class, ConsumingVortex.class})
 class YamabushisFlameTest extends BaseCardTest {
 
     @Test
@@ -64,8 +66,7 @@ class YamabushisFlameTest extends BaseCardTest {
     @Test
     @DisplayName("Prevented damage does not cause a later death to be exiled")
     void preventedDamageDoesNotMarkCreatureForExile() {
-        harness.addToBattlefield(player2, new HearthKami());
-        UUID targetId = harness.getPermanentId(player2, "Hearth Kami");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new HearthKami()).getId();
 
         harness.setHand(player1, List.of(new YamabushisFlame()));
         harness.addMana(player1, ManaColor.RED, 3);
@@ -89,5 +90,62 @@ class YamabushisFlameTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Hearth Kami");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Hearth Kami"));
+    }
+
+    @Test
+    @DisplayName("A surviving creature is exiled when later damage kills it during the same turn")
+    void laterLethalDamageExilesCreature() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new MossKami()).getId();
+        harness.setHand(player1, List.of(new YamabushisFlame(), new GlacialRay()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.assertOnBattlefield(player2, "Moss Kami");
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "Moss Kami");
+        harness.assertNotInGraveyard(player2, "Moss Kami");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Moss Kami"));
+    }
+
+    @Test
+    @DisplayName("The exile replacement expires after the turn in which damage was dealt")
+    void exileReplacementExpiresAfterTurn() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new MossKami()).getId();
+        harness.setHand(player1, List.of(new YamabushisFlame()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new GlacialRay(), new GlacialRay(), new GlacialRay()));
+        harness.addMana(player2, ManaColor.RED, 6);
+        harness.castAndResolveInstant(player2, 0, targetId);
+        harness.assertOnBattlefield(player2, "Moss Kami");
+        harness.castAndResolveInstant(player2, 0, targetId);
+        harness.assertOnBattlefield(player2, "Moss Kami");
+        harness.castAndResolveInstant(player2, 0, targetId);
+
+        harness.assertInGraveyard(player2, "Moss Kami");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .noneMatch(c -> c.getName().equals("Moss Kami"));
+    }
+
+    @Test
+    @DisplayName("A damaged creature can return to hand rather than being exiled")
+    void returningToHandDoesNotExileCreature() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new MossKami()).getId();
+        harness.setHand(player1, List.of(new YamabushisFlame(), new ConsumingVortex()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "Moss Kami");
+        harness.assertInHand(player2, "Moss Kami");
+        harness.assertNotInGraveyard(player2, "Moss Kami");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .noneMatch(c -> c.getName().equals("Moss Kami"));
     }
 }
