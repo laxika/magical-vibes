@@ -52,4 +52,53 @@ class XanthicStatueTest extends BaseCardTest {
         assertThat(statue.getTransientSubtypes()).doesNotContain(CardSubtype.GOLEM);
         assertThat(statue.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
     }
+
+    @Test
+    @DisplayName("Animation uses the stack and affects only its source")
+    void animatesOnlyItsSourceOnResolution() {
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new XanthicStatue());
+        Permanent statue = harness.addToBattlefieldAndReturn(player1, new XanthicStatue());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new XanthicStatue());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(gqs.isCreature(gd, statue)).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, statue)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, statue)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, statue)).isEqualTo(8);
+        assertThat(gqs.hasKeyword(gd, statue, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.isCreature(gd, other)).isFalse();
+        assertThat(gqs.isCreature(gd, opposing)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Statue can activate repeatedly without untapping")
+    void tappedStatueCanActivateRepeatedly() {
+        Permanent statue = harness.addToBattlefieldAndReturn(player1, new XanthicStatue());
+        statue.setTapped(true);
+        statue.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(statue.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, statue)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, statue)).isEqualTo(8);
+        assertThat(gqs.hasKeyword(gd, statue, Keyword.TRAMPLE)).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(gqs.isCreature(gd, statue)).isFalse();
+        assertThat(gqs.hasKeyword(gd, statue, Keyword.TRAMPLE)).isFalse();
+    }
 }
