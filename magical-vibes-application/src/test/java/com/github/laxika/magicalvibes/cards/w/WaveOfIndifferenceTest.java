@@ -22,7 +22,7 @@ class WaveOfIndifferenceTest extends BaseCardTest {
     @Test
     @DisplayName("X target creatures can't block this turn")
     void targetCreaturesCannotBlockThisTurn() {
-        Permanent attacker = addCreatureReady(player1, new DaruLancer());
+        addCreatureReady(player1, new DaruLancer());
         Permanent firstTarget = addCreatureReady(player2, new DaruLancer());
         Permanent secondTarget = addCreatureReady(player2, new DaruLancer());
         Permanent untargeted = addCreatureReady(player2, new DaruLancer());
@@ -33,8 +33,7 @@ class WaveOfIndifferenceTest extends BaseCardTest {
         assertThat(secondTarget.isCantBlockThisTurn()).isTrue();
         assertThat(untargeted.isCantBlockThisTurn()).isFalse();
 
-        attacker.setAttacking(true);
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -96,6 +95,52 @@ class WaveOfIndifferenceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The same creature cannot be chosen twice")
+    void cannotRepeatCreatureTarget() {
+        Permanent target = addCreatureReady(player2, new DaruLancer());
+        harness.setHand(player1, List.of(new WaveOfIndifference()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 2,
+                List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A remaining legal target is affected when another target leaves")
+    void resolvesForRemainingLegalTarget() {
+        Permanent departing = addCreatureReady(player2, new DaruLancer());
+        Permanent remaining = addCreatureReady(player2, new DaruLancer());
+        harness.setHand(player1, List.of(new WaveOfIndifference()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0, 2, List.of(departing.getId(), remaining.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(departing);
+        gd.playerHands.get(player2.getId()).add(departing.getCard());
+        harness.passBothPriorities();
+
+        assertThat(remaining.isCantBlockThisTurn()).isTrue();
+        assertThat(departing.isCantBlockThisTurn()).isFalse();
+        harness.assertInGraveyard(player1, "Wave of Indifference");
+    }
+
+    @Test
+    @DisplayName("X above 100 still requires exactly X creature targets")
+    void largeXCannotUseFewerTargets() {
+        List<java.util.UUID> targetIds = java.util.stream.IntStream.range(0, 100)
+                .mapToObj(i -> addCreatureReady(player2, new DaruLancer()).getId())
+                .toList();
+        harness.setHand(player1, List.of(new WaveOfIndifference()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 101);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 101, targetIds))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void castWave(int xValue, List<java.util.UUID> targetIds) {
