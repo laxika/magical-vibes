@@ -82,6 +82,40 @@ class SnortingGahrTest extends BaseCardTest {
         assertThat(gahr.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("Blocking an attacker does not boost Snorting Gahr")
+    void blockingDoesNotGiveBoost() {
+        Permanent attacker = addCreatureReady(player1, new FreshVolunteers());
+        attacker.setAttacking(true);
+        Permanent gahr = addReadyGahr(player2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gahr.getPowerModifier()).isZero();
+        assertThat(gahr.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Only the blocked Snorting Gahr receives the boost")
+    void onlyBlockedCopyGetsBoost() {
+        Permanent blockedGahr = addReadyGahr(player1);
+        Permanent unblockedGahr = addReadyGahr(player1);
+        blockedGahr.setAttacking(true);
+        unblockedGahr.setAttacking(true);
+        addCreatureReady(player2, new FreshVolunteers());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(blockedGahr.getPowerModifier()).isEqualTo(2);
+        assertThat(blockedGahr.getToughnessModifier()).isEqualTo(2);
+        assertThat(unblockedGahr.getPowerModifier()).isZero();
+        assertThat(unblockedGahr.getToughnessModifier()).isZero();
+    }
+
     private Permanent addReadyGahr(Player player) {
         return addCreatureReady(player, new SnortingGahr());
     }
