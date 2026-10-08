@@ -26,12 +26,10 @@ class WingbladeDiscipleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt(), new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(findPermanents(player1, "Bird")).isEmpty();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         Permanent bird = findPermanent(player1, "Bird");
         assertThat(bird.getCard().getPower()).isEqualTo(1);
@@ -42,8 +40,70 @@ class WingbladeDiscipleTest extends BaseCardTest {
         assertThat(bird.getCard().getKeywords()).contains(Keyword.FLYING);
         assertThat(bird.getCard().isToken()).isTrue();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(findPermanents(player1, "Bird")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Casting Disciple as the first spell counts toward flurry")
+    void countsItsOwnCastBeforeEnteringBattlefield() {
+        harness.castFromHand(player1, new WingbladeDisciple(), "{2}{U}");
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Bird")).isEmpty();
+
+        harness.castFromHand(player1, new WingbladeDisciple(), "{2}{U}");
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Bird")).hasSize(1);
+        assertThat(findPermanents(player1, "Wingblade Disciple")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Disciple entering as the second spell does not trigger itself")
+    void doesNotTriggerForItsOwnCastAsSecondSpell() {
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.castFromHand(player1, new WingbladeDisciple(), "{2}{U}");
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Wingblade Disciple")).hasSize(1);
+        assertThat(findPermanents(player1, "Bird")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Disciple triggers independently for the second creature spell")
+    void multipleDisciplesTriggerForCreatureSpells() {
+        addCreatureReady(player1, new WingbladeDisciple());
+        addCreatureReady(player1, new WingbladeDisciple());
+
+        harness.castFromHand(player1, new WingbladeDisciple(), "{2}{U}");
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Bird")).isEmpty();
+
+        harness.castFromHand(player1, new WingbladeDisciple(), "{2}{U}");
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Bird")).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Opponent spells neither trigger flurry nor count toward the controller's second spell")
+    void ignoresOpponentSpellCount() {
+        addCreatureReady(player1, new WingbladeDisciple());
+        harness.setHand(player2, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        assertThat(findPermanents(player1, "Bird")).isEmpty();
+
+        harness.castFromHand(player1, new WingbladeDisciple(), "{2}{U}");
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Bird")).isEmpty();
+
+        harness.castFromHand(player1, new WingbladeDisciple(), "{2}{U}");
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Bird")).hasSize(2);
     }
 }
