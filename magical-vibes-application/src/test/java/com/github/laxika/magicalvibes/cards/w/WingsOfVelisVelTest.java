@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.c.CloudgoatRanger;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.l.Lignify;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WingsOfVelisVel.class, CloudgoatRanger.class, WizenedCenn.class, Island.class})
+@CardUsed({WingsOfVelisVel.class, CloudgoatRanger.class, WizenedCenn.class, Island.class, Lignify.class})
 class WingsOfVelisVelTest extends BaseCardTest {
 
     @Test
@@ -107,7 +109,7 @@ class WingsOfVelisVelTest extends BaseCardTest {
         assertThat(ranger.isBasePowerToughnessOverriddenUntilEndOfTurn()).isFalse();
         assertThat(ranger.getEffectivePower()).isEqualTo(3);
         assertThat(ranger.getEffectiveToughness()).isEqualTo(3);
-        assertThat(ranger.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ranger, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -124,5 +126,52 @@ class WingsOfVelisVelTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Wings applied after Lignify restores all creature types, flying, and base 4/4")
+    void appliedAfterLignify() {
+        Permanent ranger = harness.addToBattlefieldAndReturn(player1, new CloudgoatRanger());
+        harness.setHand(player1, List.of(new Lignify(), new WingsOfVelisVel()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, ranger.getId());
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, ranger.getId());
+
+        assertThat(gqs.hasEffectiveSubtype(gd, ranger, CardSubtype.KITHKIN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, ranger, CardSubtype.GIANT)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, ranger)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ranger)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, ranger, Keyword.FLYING)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasEffectiveSubtype(gd, ranger, CardSubtype.KITHKIN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, ranger, CardSubtype.TREEFOLK)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, ranger)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, ranger)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, ranger, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Lignify applied after Wings replaces the granted creature types, abilities, and base power")
+    void lignifyAppliedAfterWings() {
+        Permanent ranger = harness.addToBattlefieldAndReturn(player1, new CloudgoatRanger());
+        harness.setHand(player1, List.of(new WingsOfVelisVel(), new Lignify()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0, ranger.getId());
+        harness.castEnchantment(player1, 0, ranger.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasEffectiveSubtype(gd, ranger, CardSubtype.KITHKIN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, ranger, CardSubtype.GIANT)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, ranger, CardSubtype.TREEFOLK)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, ranger)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, ranger)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, ranger, Keyword.FLYING)).isFalse();
     }
 }
