@@ -31,8 +31,8 @@ class VolcanicSprayTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Dwarven Grunt");
         harness.assertNotOnBattlefield(player2, "Dwarven Grunt");
         harness.assertOnBattlefield(player2, "Aven Flock");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -58,8 +58,8 @@ class VolcanicSprayTest extends BaseCardTest {
         harness.castAndResolveFlashback(player1, 0, null);
 
         harness.assertNotOnBattlefield(player2, "Dwarven Grunt");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
         harness.assertNotInGraveyard(player1, "Volcanic Spray");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Volcanic Spray"));
@@ -73,5 +73,43 @@ class VolcanicSprayTest extends BaseCardTest {
 
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> harness.castFlashback(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The same card can deal damage normally and again with flashback")
+    void normalCastThenFlashback() {
+        var ownFlyer = harness.addToBattlefieldAndReturn(player1, new AvenFlock());
+        var opposingFlyer = harness.addToBattlefieldAndReturn(player2, new AvenFlock());
+        harness.setHand(player1, List.of(new VolcanicSpray()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.assertInGraveyard(player1, "Volcanic Spray");
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player1, "Aven Flock");
+        harness.assertOnBattlefield(player2, "Aven Flock");
+        assertThat(ownFlyer.getMarkedDamage()).isZero();
+        assertThat(opposingFlyer.getMarkedDamage()).isZero();
+        harness.assertNotInGraveyard(player1, "Volcanic Spray");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Volcanic Spray"));
+    }
+
+    @Test
+    @DisplayName("Flashback requires red mana, not merely two mana")
+    void flashbackRequiresRedMana() {
+        harness.setGraveyard(player1, List.of(new VolcanicSpray()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Volcanic Spray");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 }
