@@ -71,6 +71,70 @@ class WallOfStolenIdentityTest extends BaseCardTest {
     }
 
     @Test
+    void copiedCreatureUntapsEvenAfterWallReturnsToOriginalController() {
+        Permanent bears = addBears();
+        castWallAndChoose(bears.getId(), true);
+        UUID wallId = copiedWall().getId();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new ControlMagic()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castEnchantment(player2, 0, wallId);
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(wallId));
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new ControlMagic()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castEnchantment(player1, 0, wallId);
+        resolveAllTriggers();
+        assertThat(copiedWall().getId()).isEqualTo(wallId);
+
+        harness.performUntapStep(player2);
+
+        assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    void stillTapsCopiedCreatureWhenWallLeavesBeforeReflexiveAbilityResolves() {
+        Permanent bears = addBears();
+        harness.setHand(player1, List.of(new WallOfStolenIdentity()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, bears.getId());
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(gd.stack).isNotEmpty();
+        gd.playerBattlefields.get(player1.getId()).remove(copiedWall());
+
+        resolveAllTriggers();
+
+        assertThat(bears.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    void canCopyAnAlreadyTappedCreature() {
+        Permanent bears = addBears();
+        bears.tap();
+
+        castWallAndChoose(bears.getId(), true);
+        harness.performUntapStep(player2);
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(copiedWall().getCard().getKeywords()).contains(Keyword.DEFENDER);
+    }
+
+    @Test
     void copyChoiceAndReflexiveAbilityDoNotTarget() {
         Permanent bears = addBears();
         bears.getGrantedKeywords().add(Keyword.HEXPROOF);
@@ -99,8 +163,7 @@ class WallOfStolenIdentityTest extends BaseCardTest {
     }
 
     private Permanent addBears() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        return gd.playerBattlefields.get(player2.getId()).getFirst();
+        return harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
     }
 
     private void castWallAndChoose(UUID targetId, boolean accept) {
