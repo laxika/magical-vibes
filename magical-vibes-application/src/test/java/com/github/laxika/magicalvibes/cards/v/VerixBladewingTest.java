@@ -3,45 +3,34 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VerixBladewing.class})
 class VerixBladewingTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Has kicker {3} and kicked conditional ETB effect")
-    void hasCorrectEffects() {
-        VerixBladewing card = new VerixBladewing();
+    @DisplayName("Kicker requires three additional mana")
+    void kickerRequiresAdditionalMana() {
+        harness.setHand(player1, List.of(new VerixBladewing()));
+        harness.addMana(player1, ManaColor.RED, 6);
 
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(KickerEffect.class);
-        KickerEffect kicker = (KickerEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(kicker.cost()).isEqualTo("{3}");
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect = (CreateTokenEffect) conditional.wrapped();
-        assertThat(tokenEffect.tokenName()).isEqualTo("Karox Bladewing");
-        assertThat(tokenEffect.tokenPower()).isEqualTo(4);
-        assertThat(tokenEffect.tokenToughness()).isEqualTo(4);
-        assertThat(tokenEffect.legendary()).isTrue();
+        assertThatThrownBy(() -> harness.castKickedCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        harness.assertInHand(player1, "Verix Bladewing");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -90,10 +79,8 @@ class VerixBladewingTest extends BaseCardTest {
         assertThat(battlefield).hasSize(2);
 
         // Verify the Karox Bladewing token
-        Permanent karox = battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Karox Bladewing"))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("Karox Bladewing token not found"));
+        Permanent karox = gqs.findPermanentById(gd,
+                harness.getPermanentId(player1, "Karox Bladewing"));
 
         assertThat(karox.getCard().getPower()).isEqualTo(4);
         assertThat(karox.getCard().getToughness()).isEqualTo(4);
@@ -102,5 +89,35 @@ class VerixBladewingTest extends BaseCardTest {
         assertThat(karox.getCard().getKeywords()).contains(Keyword.FLYING);
         assertThat(karox.getCard().isToken()).isTrue();
         assertThat(karox.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);
+    }
+
+    @Test
+    @DisplayName("Entering without being cast does not create Karox")
+    void enteringWithoutCastingDoesNotCreateToken() {
+        harness.enterBattlefieldAndReturn(player1, new VerixBladewing());
+
+        harness.assertOnBattlefield(player1, "Verix Bladewing");
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Karox Bladewing");
+    }
+
+    @Test
+    @DisplayName("Karox is created even if Verix leaves before its trigger resolves")
+    void triggerResolvesAfterVerixLeaves() {
+        harness.setHand(player1, List.of(new VerixBladewing()));
+        harness.addMana(player1, ManaColor.RED, 7);
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent verix = gqs.findPermanentById(gd,
+                harness.getPermanentId(player1, "Verix Bladewing"));
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, verix));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Verix Bladewing");
+        harness.assertOnBattlefield(player1, "Karox Bladewing");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
