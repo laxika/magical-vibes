@@ -104,6 +104,60 @@ class ZhugeJinWuStrategistTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Zhuge Jin, Wu Strategist").isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Can target an opponent's creature")
+    void canTargetOpponentCreature() {
+        setupZhugeJinOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new WuInfantry());
+
+        harness.activateAbility(player1, 0, null, opponentCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(opponentCreature.isCantBeBlocked()).isTrue();
+        assertThat(findPermanent(player1, "Wu Infantry").isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can target itself even though paying the cost taps it")
+    void canTargetItself() {
+        setupZhugeJinOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent strategist = findPermanent(player1, "Zhuge Jin, Wu Strategist");
+
+        harness.activateAbility(player1, 0, null, strategist.getId());
+        harness.passBothPriorities();
+
+        assertThat(strategist.isTapped()).isTrue();
+        assertThat(strategist.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new ZhugeJinWuStrategist());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new WuInfantry());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(findPermanent(player1, "Zhuge Jin, Wu Strategist").isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate during the postcombat main phase")
+    void cannotActivateDuringPostcombatMain() {
+        setupZhugeJinOnMyTurn(TurnStep.POSTCOMBAT_MAIN);
+        UUID targetId = harness.getPermanentId(player1, "Wu Infantry");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers are declared");
+        assertThat(findPermanent(player1, "Zhuge Jin, Wu Strategist").isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void setupZhugeJinOnMyTurn(TurnStep step) {
         addCreatureReady(player1, new ZhugeJinWuStrategist());
         harness.addToBattlefield(player1, new WuInfantry());
