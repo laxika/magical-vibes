@@ -80,8 +80,7 @@ class ContagionDispenserTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player1, 0);
-        resolveAllTriggers();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleMultiplePermanentsChosen(player1, List.of(bear.getId()));
         resolveAllTriggers();
         PendingInteraction.SpellbookDraftChoice firstChoice =
@@ -90,8 +89,7 @@ class ContagionDispenserTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(firstChoice.cards().getFirst().getId()));
         resolveAllTriggers();
 
-        harness.castInstant(player1, 0);
-        resolveAllTriggers();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleMultiplePermanentsChosen(player1, List.of(bear.getId()));
         resolveAllTriggers();
 
@@ -112,12 +110,81 @@ class ContagionDispenserTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player1, 0);
-        resolveAllTriggers();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleMultiplePermanentsChosen(player1, List.of(bear.getId()));
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class))
                 .isNull();
+    }
+
+    @Test
+    void enteringProliferatesExistingCountersAndEachDispenserDrafts() {
+        Permanent dispenser = harness.addToBattlefieldAndReturn(player1, new ContagionDispenser());
+        dispenser.setCounterCount(CounterType.CHARGE, 1);
+        harness.setHand(player1, List.of(new ContagionDispenser()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+        harness.handleMultiplePermanentsChosen(player1, List.of(dispenser.getId()));
+        resolveAllTriggers();
+
+        assertThat(dispenser.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        PendingInteraction.SpellbookDraftChoice firstChoice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+        assertThat(firstChoice).isNotNull();
+        Card firstDraft = firstChoice.cards().getFirst();
+        harness.handleMultipleCardsChosen(player1, List.of(firstDraft.getId()));
+        resolveAllTriggers();
+        PendingInteraction.SpellbookDraftChoice secondChoice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+        assertThat(secondChoice).isNotNull();
+        Card secondDraft = secondChoice.cards().getFirst();
+        harness.handleMultipleCardsChosen(player1, List.of(secondDraft.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(firstDraft, secondDraft);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class))
+                .isNull();
+    }
+
+    @Test
+    void draftsEvenWhenNoEligiblePermanentIsChosen() {
+        Permanent dispenser = harness.addToBattlefieldAndReturn(player1, new ContagionDispenser());
+        dispenser.setCounterCount(CounterType.CHARGE, 1);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new SteadyProgress()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+        resolveAllTriggers();
+
+        assertThat(dispenser.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class))
+                .isNotNull();
+    }
+
+    @Test
+    void doesNotDraftWhenAnOpponentProliferatesDuringTheControllersTurn() {
+        harness.addToBattlefield(player1, new ContagionDispenser());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new SteadyProgress()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class))
+                .isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }
