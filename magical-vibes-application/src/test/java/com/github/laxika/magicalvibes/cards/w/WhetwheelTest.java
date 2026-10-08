@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(Whetwheel.class)
 class WhetwheelTest extends BaseCardTest {
@@ -75,10 +76,45 @@ class WhetwheelTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
+    @Test
+    void zeroXMillsNothingButStillTaps() {
+        harness.addToBattlefield(player1, new Whetwheel());
+        int librarySize = gd.playerDecks.get(player2.getId()).size();
+
+        harness.activateAbility(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySize);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(findPermanent(player1, "Whetwheel").isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canMillImmediatelyAfterTurningFaceUp() {
+        harness.setHand(player1, List.of(new Whetwheel()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, player2.getId()))
+                .isInstanceOf(RuntimeException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.turnFaceUp(player1, 0);
+        harness.activateAbility(player1, 0, 1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(findPermanent(player1, "Whetwheel").isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
     private void trimDeck(com.github.laxika.magicalvibes.model.Player player, int size) {
         List<com.github.laxika.magicalvibes.model.Card> deck = gd.playerDecks.get(player.getId());
-        while (deck.size() > size) {
-            deck.removeFirst();
-        }
+        harness.setLibrary(player, List.copyOf(deck.subList(0, size)));
     }
 }
