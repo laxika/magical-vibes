@@ -83,6 +83,61 @@ class WojekApothecaryTest extends BaseCardTest {
         assertThat(laterMatchingCreature.getMarkedDamage()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Each shield prevents only one damage across successive damage events")
+    void shieldsAreConsumedByTheFirstDamageEvent() {
+        Permanent apothecary = addCreatureReady(player1, new WojekApothecary());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BenevolentAncestor());
+        Permanent matchingCreature = harness.addToBattlefieldAndReturn(player1, new BenevolentAncestor());
+
+        activate(apothecary, target);
+
+        harness.castFromHand(player1, new RainOfEmbers(), "{1}{R}");
+        harness.passBothPriorities();
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(matchingCreature.getMarkedDamage()).isZero();
+
+        harness.castFromHand(player1, new RainOfEmbers(), "{1}{R}");
+        harness.passBothPriorities();
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(matchingCreature.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Wojek Apothecary");
+    }
+
+    @Test
+    @DisplayName("Shields matching creatures that enter before resolution")
+    void creaturesEnteringBeforeResolutionAreAffected() {
+        Permanent apothecary = addCreatureReady(player1, new WojekApothecary());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BenevolentAncestor());
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(apothecary),
+                null, target.getId());
+        Permanent matchingCreature = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new RainOfEmbers(), "{1}{R}");
+        harness.passBothPriorities();
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(matchingCreature.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Boros Recruit");
+    }
+
+    @Test
+    @DisplayName("Can target itself and prevent damage to itself and other white creatures")
+    void canTargetItself() {
+        Permanent apothecary = addCreatureReady(player1, new WojekApothecary());
+        Permanent matchingCreature = harness.addToBattlefieldAndReturn(player2, new BenevolentAncestor());
+
+        activate(apothecary, apothecary);
+
+        harness.castFromHand(player1, new RainOfEmbers(), "{1}{R}");
+        harness.passBothPriorities();
+        assertThat(apothecary.getMarkedDamage()).isZero();
+        assertThat(matchingCreature.getMarkedDamage()).isZero();
+        assertThat(apothecary.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Wojek Apothecary");
+    }
+
     private void activate(Permanent apothecary, Permanent target) {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(apothecary),
                 null, target.getId());
