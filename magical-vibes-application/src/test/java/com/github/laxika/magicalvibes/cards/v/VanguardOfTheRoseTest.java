@@ -71,6 +71,66 @@ class VanguardOfTheRoseTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, vanguard, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
+    @Test
+    void sacrificeIsPaidBeforeIndestructibleAndTappingResolve() {
+        Permanent vanguard = addReady(new VanguardOfTheRose());
+        Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        addMana();
+
+        harness.activateAbility(player1, battlefieldIndex(vanguard), null, null);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrificed.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrificed);
+        assertThat(vanguard.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, vanguard, Keyword.INDESTRUCTIBLE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(vanguard.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, vanguard, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent vanguard = harness.addToBattlefieldAndReturn(player1, new VanguardOfTheRose());
+        vanguard.setSummoningSick(true);
+        vanguard.setTapped(true);
+        Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        addMana();
+
+        harness.activateAbility(player1, battlefieldIndex(vanguard), null, null);
+        harness.passBothPriorities();
+
+        assertThat(vanguard.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, vanguard, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrificed.getCard());
+    }
+
+    @Test
+    void cannotSacrificeOpponentsPermanent() {
+        Permanent vanguard = addReady(new VanguardOfTheRose());
+        Permanent opponentsArtifact = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+        addMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(vanguard), null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentsArtifact);
+        assertThat(gqs.hasKeyword(gd, vanguard, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    void cannotActivateWithoutManaEvenWithSacrificeAvailable() {
+        Permanent vanguard = addReady(new VanguardOfTheRose());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(vanguard), null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(vanguard, artifact);
+        assertThat(vanguard.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, vanguard, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
     private Permanent addReady(Card card) {
         Permanent permanent = harness.addToBattlefieldAndReturn(player1, card);
         permanent.setSummoningSick(false);
