@@ -104,4 +104,69 @@ class VigilantMartyrTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Martyr can regenerate another creature")
+    void regenerationDoesNotRequireTappingOrHaste() {
+        Permanent martyr = harness.addToBattlefieldAndReturn(player1, new VigilantMartyr());
+        martyr.setSummoningSick(true);
+        martyr.setTapped(true);
+        Permanent griffin = addCreatureReady(player1, new EkunduGriffin());
+
+        harness.activateAbility(player1, 0, null, griffin.getId());
+        harness.assertInGraveyard(player1, "Vigilant Martyr");
+        assertThat(griffin.getRegenerationShield()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(griffin.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Regeneration cannot save a creature from Dark Banishing")
+    void regenerationDoesNotPreventUnregenerableDestruction() {
+        addCreatureReady(player1, new VigilantMartyr());
+        Permanent griffin = addCreatureReady(player1, new EkunduGriffin());
+        harness.activateAbility(player1, 0, null, griffin.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new DarkBanishing()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.forceActivePlayer(player2);
+        harness.castAndResolveInstant(player2, 0, griffin.getId());
+
+        harness.assertInGraveyard(player1, "Ekundu Griffin");
+        harness.assertNotOnBattlefield(player1, "Ekundu Griffin");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Martyr cannot pay the counter ability's tap cost")
+    void summoningSicknessPreventsCounterAbility() {
+        Permanent martyr = harness.addToBattlefieldAndReturn(player1, new VigilantMartyr());
+        martyr.setSummoningSick(true);
+        assertCounterActivationRejected();
+    }
+
+    @Test
+    @DisplayName("A tapped Martyr cannot pay the counter ability's tap cost")
+    void tappedMartyrCannotCounterSpell() {
+        Permanent martyr = addCreatureReady(player1, new VigilantMartyr());
+        martyr.setTapped(true);
+        assertCounterActivationRejected();
+    }
+
+    private void assertCounterActivationRejected() {
+        harness.addToBattlefield(player2, new CadaverousBloom());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        Disenchant disenchant = new Disenchant();
+        harness.setHand(player2, List.of(disenchant));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, harness.getPermanentId(player2, "Cadaverous Bloom"));
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, disenchant.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Vigilant Martyr");
+    }
+
 }
