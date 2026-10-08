@@ -100,11 +100,58 @@ class WickedSlumberTest extends BaseCardTest {
         assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Can resolve without targeting any creatures")
+    void resolvesWithNoTargets() {
+        Permanent untouched = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        cast(List.of());
+
+        assertThat(untouched.isTapped()).isFalse();
+        assertThat(untouched.getCounterCount(CounterType.STUN)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        harness.assertInGraveyard(player1, "Wicked Slumber");
+    }
+
+    @Test
+    @DisplayName("Already tapped creatures still receive both stun counters")
+    void putsCountersOnAlreadyTappedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setTapped(true);
+
+        cast(List.of(target.getId()));
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Wicked Slumber");
+    }
+
+    @Test
+    @DisplayName("Does nothing when all chosen targets leave the battlefield")
+    void doesNotResolveWhenAllTargetsAreIllegal() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent untouched = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WickedSlumber()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player2.getId()).removeAll(List.of(first, second));
+
+        harness.passBothPriorities();
+
+        assertThat(untouched.isTapped()).isFalse();
+        assertThat(untouched.getCounterCount(CounterType.STUN)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        harness.assertInGraveyard(player1, "Wicked Slumber");
+    }
+
     private void cast(List<java.util.UUID> targetIds) {
         harness.setHand(player1, List.of(new WickedSlumber()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castInstant(player1, 0, targetIds);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetIds);
     }
 }
