@@ -1,27 +1,26 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.c.CopperCarapace;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VedalkenInfuser.class, CopperCarapace.class})
 class VedalkenInfuserTest extends BaseCardTest {
-
-    // ===== Upkeep triggered ability =====
 
     @Test
     @DisplayName("Upkeep trigger may put a charge counter on target artifact")
     void upkeepTriggerMayPutChargeCounterOnArtifact() {
-        Permanent infuser = addReadyInfuser(player1);
+        addReadyInfuser(player1);
         Permanent artifact = addReadyArtifact(player1);
 
-        triggerUpkeep(player1);
+        advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
@@ -32,10 +31,10 @@ class VedalkenInfuserTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the may ability does not put a charge counter")
     void decliningMayAbilityDoesNotPutCounter() {
-        Permanent infuser = addReadyInfuser(player1);
+        addReadyInfuser(player1);
         Permanent artifact = addReadyArtifact(player1);
 
-        triggerUpkeep(player1);
+        advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, false);
@@ -46,10 +45,10 @@ class VedalkenInfuserTest extends BaseCardTest {
     @Test
     @DisplayName("Can target opponent's artifact")
     void canTargetOpponentArtifact() {
-        Permanent infuser = addReadyInfuser(player1);
+        addReadyInfuser(player1);
         Permanent opponentArtifact = addReadyArtifact(player2);
 
-        triggerUpkeep(player1);
+        advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, opponentArtifact.getId());
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
@@ -60,11 +59,11 @@ class VedalkenInfuserTest extends BaseCardTest {
     @Test
     @DisplayName("Multiple upkeep triggers accumulate charge counters on same artifact")
     void multipleUpkeepTriggersAccumulateCounters() {
-        Permanent infuser = addReadyInfuser(player1);
+        addReadyInfuser(player1);
         Permanent artifact = addReadyArtifact(player1);
 
         // First upkeep
-        triggerUpkeep(player1);
+        advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
@@ -72,7 +71,7 @@ class VedalkenInfuserTest extends BaseCardTest {
         assertThat(artifact.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
 
         // Second upkeep
-        triggerUpkeep(player1);
+        advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
@@ -81,38 +80,67 @@ class VedalkenInfuserTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Upkeep ability does not trigger when no legal artifact target exists")
-    void noTriggerWhenNoArtifacts() {
-        Permanent infuser = addReadyInfuser(player1);
+    @DisplayName("Upkeep ability is not put on the stack when no legal artifact target exists")
+    void noStackEntryWhenNoArtifacts() {
+        addReadyInfuser(player1);
 
-        triggerUpkeep(player1);
+        advanceToUpkeep(player1);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentUpkeep() {
+        addReadyInfuser(player1);
+        Permanent artifact = addReadyArtifact(player1);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(artifact.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A target that leaves the battlefield makes the ability fail to resolve")
+    void targetLeavingBattlefieldPreventsCounter() {
+        addReadyInfuser(player1);
+        Permanent artifact = addReadyArtifact(player1);
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, artifact.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(artifact);
+        gd.playerGraveyards.get(player1.getId()).add(artifact.getCard());
+        harness.passBothPriorities();
+
+        assertThat(artifact.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability resolves even after its source leaves the battlefield")
+    void sourceLeavingBattlefieldDoesNotPreventCounter() {
+        Permanent infuser = addReadyInfuser(player1);
+        Permanent artifact = addReadyArtifact(player1);
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, artifact.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(infuser);
+        gd.playerGraveyards.get(player1.getId()).add(infuser.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(artifact.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
 
     private Permanent addReadyInfuser(Player player) {
-        VedalkenInfuser card = new VedalkenInfuser();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new VedalkenInfuser());
     }
 
     private Permanent addReadyArtifact(Player player) {
-        LeoninScimitar card = new LeoninScimitar();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private void triggerUpkeep(Player player) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        return addCreatureReady(player, new CopperCarapace());
     }
 }
