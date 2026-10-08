@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.cards.m.MaraudingMako;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -97,6 +97,94 @@ class VeronicaDissidentScribeTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
         assertThat(countPermanents(player1, "Junk")).isZero();
+    }
+
+    @Test
+    @DisplayName("A nonland discarded before Veronica enters already uses the first discard of the turn")
+    void earlierNonlandDiscardPreventsJunk() {
+        Card firstDiscard = new MaraudingMako();
+        Card secondDiscard = new MaraudingMako();
+        harness.setHand(player1, List.of(firstDiscard, secondDiscard));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateHandAbility(player1, 0, null);
+        resolveAllTriggers();
+
+        addCreatureReady(player1, new VeronicaDissidentScribe());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateHandAbility(player1, 0, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(firstDiscard, secondDiscard);
+        assertThat(countPermanents(player1, "Junk")).isZero();
+    }
+
+    @Test
+    @DisplayName("Discarding a land first does not consume the nonland discard trigger")
+    void landBeforeNonlandStillCreatesJunk() {
+        harness.setHand(player1, List.of(new Forest(), new MaraudingMako()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        addCreatureReady(player1, new VeronicaDissidentScribe());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Junk")).isZero();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateHandAbility(player1, 0, null);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Junk")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Attacking with an empty hand cannot draw a card")
+    void emptyHandDoesNotDraw() {
+        Card topCard = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(topCard));
+        addCreatureReady(player1, new VeronicaDissidentScribe());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(countPermanents(player1, "Junk")).isZero();
+    }
+
+    @Test
+    @DisplayName("Junk sacrifices itself to exile a card that can be cast by paying its cost")
+    void junkExilesAndAllowsCasting() {
+        Card exiled = new MaraudingMako();
+        harness.setHand(player1, List.of(new VeronicaDissidentScribe()));
+        harness.setLibrary(player1, List.of(new Forest(), exiled));
+        addCreatureReady(player1, new VeronicaDissidentScribe());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 1, null, null);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Junk")).isZero();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castFromExile(player1, exiled.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Marauding Mako");
     }
 
 }
