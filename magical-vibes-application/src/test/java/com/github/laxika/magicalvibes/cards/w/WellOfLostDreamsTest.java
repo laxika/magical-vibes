@@ -14,6 +14,71 @@ import static org.assertj.core.api.Assertions.assertThat;
 class WellOfLostDreamsTest extends BaseCardTest {
 
     @Test
+    @DisplayName("May pay less than the life gained")
+    void mayPayLessThanLifeGained() {
+        harness.addToBattlefield(player1, new WellOfLostDreams());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 4));
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Opponent life gain does not trigger the Well")
+    void opponentLifeGainDoesNotTrigger() {
+        harness.addToBattlefield(player1, new WellOfLostDreams());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Gaining zero life does not trigger the Well")
+    void zeroLifeGainDoesNotTrigger() {
+        harness.addToBattlefield(player1, new WellOfLostDreams());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 0));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each life gain uses its own amount rather than the turn's total")
+    void separateLifeGainsHaveSeparateCaps() {
+        harness.addToBattlefield(player1, new WellOfLostDreams());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 3);
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
+        harness.passBothPriorities();
+        PendingInteraction.XValueChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxValue()).isEqualTo(1);
+        harness.handleXValueChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 4);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Caps X at the life gained and draws the amount paid")
     void capsXAtLifeGainedAndDrawsPaidAmount() {
         harness.addToBattlefield(player1, new WellOfLostDreams());
