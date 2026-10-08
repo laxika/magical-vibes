@@ -100,8 +100,7 @@ class WhipVineTest extends BaseCardTest {
         addCreatureReady(player2, new WhipVine());
         addCreatureReady(player2, new WildAesthir());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
@@ -127,10 +126,49 @@ class WhipVineTest extends BaseCardTest {
         assertThat(bird.isTapped()).isFalse();
     }
 
+    @Test
+    void untappingVineBeforeResolutionStillTapsFlyerWithoutLockingIt() {
+        Permanent bird = addCreatureReady(player1, new WildAesthir());
+        Permanent vine = addCreatureReady(player2, new WhipVine());
+
+        blockWithVine();
+        bird.untap();
+        harness.activateAbility(player2, 0, null, bird.getId());
+        vine.untap();
+        harness.passBothPriorities();
+
+        assertThat(bird.isTapped()).isTrue();
+        assertThat(vine.isTapped()).isFalse();
+
+        harness.performUntapStep(player1);
+
+        assertThat(bird.isTapped()).isFalse();
+    }
+
+    @Test
+    void untappingAndRetappingVineBeforeResolutionDoesNotStartUntapRestriction() {
+        Permanent bird = addCreatureReady(player1, new WildAesthir());
+        Permanent vine = addCreatureReady(player2, new WhipVine());
+
+        blockWithVine();
+        bird.untap();
+        harness.activateAbility(player2, 0, null, bird.getId());
+        vine.untap();
+        vine.tap();
+        harness.passBothPriorities();
+
+        assertThat(bird.isTapped()).isTrue();
+        assertThat(vine.isTapped()).isTrue();
+
+        harness.performUntapStep(player1);
+
+        assertThat(bird.isTapped()).isFalse();
+        assertThat(vine.isTapped()).isTrue();
+    }
+
     /** Declares player1's first creature as an attacker and blocks it with player2's Whip Vine. */
     private void blockWithVine() {
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
     }
@@ -146,14 +184,8 @@ class WhipVineTest extends BaseCardTest {
     }
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
+        advanceToNextTurn(currentActivePlayer);
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
-
         harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
     }
 }
