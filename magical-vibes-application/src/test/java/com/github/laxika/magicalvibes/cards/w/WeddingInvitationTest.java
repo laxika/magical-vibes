@@ -28,8 +28,7 @@ class WeddingInvitationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Wedding Invitation");
         harness.assertInHand(player1, "Grizzly Bears");
@@ -79,5 +78,59 @@ class WeddingInvitationTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Sacrifices the Invitation as a cost before its ability resolves")
+    void sacrificesAsAnActivationCost() {
+        harness.addToBattlefield(player1, new WeddingInvitation());
+        Permanent target = addCreatureReady(player1, new VampireNoble());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Wedding Invitation");
+        harness.assertInGraveyard(player1, "Wedding Invitation");
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Invitation cannot pay the tap cost")
+    void cannotActivateWhileTapped() {
+        Permanent invitation = harness.addToBattlefieldAndReturn(player1, new WeddingInvitation());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        invitation.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Wedding Invitation");
+        harness.assertNotInGraveyard(player1, "Wedding Invitation");
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Both effects on a Vampire last through the end step and expire at cleanup")
+    void vampireEffectsExpireAtEndOfTurn() {
+        harness.addToBattlefield(player1, new WeddingInvitation());
+        Permanent vampire = addCreatureReady(player1, new VampireNoble());
+
+        harness.activateAbility(player1, 0, null, vampire.getId());
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        assertThat(gqs.hasCantBeBlocked(gd, vampire)).isTrue();
+        assertThat(gqs.hasKeyword(gd, vampire, Keyword.LIFELINK)).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasCantBeBlocked(gd, vampire)).isFalse();
+        assertThat(gqs.hasKeyword(gd, vampire, Keyword.LIFELINK)).isFalse();
     }
 }
