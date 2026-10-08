@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WalkerOfTheGrove.class})
 class WalkerOfTheGroveTest extends BaseCardTest {
 
     @Test
@@ -56,5 +58,74 @@ class WalkerOfTheGroveTest extends BaseCardTest {
                 .toList();
         assertThat(tokens).hasSize(1);
         assertThat(tokens.getFirst().getCard().getName()).isEqualTo("Elemental");
+    }
+    @Test
+    @DisplayName("Paying the normal cost leaves Walker on the battlefield without a token")
+    void normalCastingDoesNotSacrificeWalker() {
+        harness.castFromHand(player1, new WalkerOfTheGrove(), "{6}{G}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Walker of the Grove");
+        harness.assertNotInGraveyard(player1, "Walker of the Grove");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().isToken());
+    }
+
+    @Test
+    @DisplayName("Returning Walker to hand creates a token")
+    void returningToHandCreatesToken() {
+        Permanent walker = harness.addToBattlefieldAndReturn(player1, new WalkerOfTheGrove());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, walker));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Walker of the Grove");
+        harness.assertNotInGraveyard(player1, "Walker of the Grove");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertElementalToken(gd.playerBattlefields.get(player1.getId()).getFirst());
+    }
+
+    @Test
+    @DisplayName("Exiling an opponent's Walker creates a token for that opponent")
+    void exileCreatesTokenForController() {
+        Permanent walker = harness.addToBattlefieldAndReturn(player2, new WalkerOfTheGrove());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, walker));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Walker of the Grove");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(walker.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        assertElementalToken(gd.playerBattlefields.get(player2.getId()).getFirst());
+    }
+
+    @Test
+    @DisplayName("Returning an evoked Walker before sacrifice creates only one token and preserves the card")
+    void returningEvokedWalkerBeforeSacrifice() {
+        harness.setHand(player1, List.of(new WalkerOfTheGrove()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreatureWithEvoke(player1, 0, null);
+        harness.passBothPriorities();
+        Permanent walker = findPermanent(player1, "Walker of the Grove");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, walker));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Walker of the Grove");
+        harness.assertNotInGraveyard(player1, "Walker of the Grove");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertElementalToken(gd.playerBattlefields.get(player1.getId()).getFirst());
+    }
+
+    private void assertElementalToken(Permanent token) {
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.getCard().getName()).isEqualTo("Elemental");
+        assertThat(token.getCard().getPower()).isEqualTo(4);
+        assertThat(token.getCard().getToughness()).isEqualTo(4);
+        assertThat(token.getCard().getColor()).isEqualTo(com.github.laxika.magicalvibes.model.CardColor.GREEN);
+        assertThat(token.getCard().getSubtypes()).containsExactly(com.github.laxika.magicalvibes.model.CardSubtype.ELEMENTAL);
     }
 }
