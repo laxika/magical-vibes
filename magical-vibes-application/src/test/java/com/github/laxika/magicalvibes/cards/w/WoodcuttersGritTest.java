@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WoodcuttersGrit.class, GrizzlyBears.class, GiantGrowth.class})
 class WoodcuttersGritTest extends BaseCardTest {
 
     @Test
@@ -72,10 +74,49 @@ class WoodcuttersGritTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Hexproof still allows its controller to target the creature")
+    void controllerCanTargetHexproofCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castResolve(creature);
+
+        castResolve(creature);
+
+        assertThat(creature.getPowerModifier()).isEqualTo(6);
+        assertThat(creature.getToughnessModifier()).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Gaining hexproof makes an opponent's pending spell fail to resolve")
+    void hexproofInvalidatesPendingOpponentSpell() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, creature.getId());
+
+        harness.setHand(player1, List.of(new WoodcuttersGrit()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.passPriority(player2);
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(creature.getToughnessModifier()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card instanceof GiantGrowth);
+    }
+
     private void castResolve(Permanent target) {
         harness.setHand(player1, List.of(new WoodcuttersGrit()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
