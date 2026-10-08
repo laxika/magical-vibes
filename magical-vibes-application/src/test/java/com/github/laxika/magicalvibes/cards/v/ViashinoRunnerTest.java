@@ -35,8 +35,7 @@ class ViashinoRunnerTest extends BaseCardTest {
         Permanent blockerOne = addCreatureReady(player2, new GorillaWarrior());
         Permanent blockerTwo = addCreatureReady(player2, new GorillaWarrior());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -45,6 +44,45 @@ class ViashinoRunnerTest extends BaseCardTest {
 
         assertThat(blockerOne.isBlocking()).isTrue();
         assertThat(blockerTwo.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Viashino Runner can be blocked by more than two creatures")
+    void canBeBlockedByThreeCreatures() {
+        addCreatureReady(player1, new ViashinoRunner());
+        Permanent blockerOne = addCreatureReady(player2, new GorillaWarrior());
+        Permanent blockerTwo = addCreatureReady(player2, new GorillaWarrior());
+        Permanent blockerThree = addCreatureReady(player2, new GorillaWarrior());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(2, 0)
+        ));
+
+        assertThat(blockerOne.isBlocking()).isTrue();
+        assertThat(blockerTwo.isBlocking()).isTrue();
+        assertThat(blockerThree.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Each attacking Viashino Runner requires its own two blockers")
+    void twoBlockersCannotBeSplitAcrossTwoRunners() {
+        addCreatureReady(player1, new ViashinoRunner());
+        addCreatureReady(player1, new ViashinoRunner());
+        addCreatureReady(player2, new GorillaWarrior());
+        addCreatureReady(player2, new GorillaWarrior());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 1)
+        )))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked except by two or more creatures");
     }
 
     @Test
