@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.s.SavannahLions;
+import com.github.laxika.magicalvibes.cards.t.TitanicBulvox;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,10 +18,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WaveOfTerror.class, GrizzlyBears.class, HillGiant.class, Ornithopter.class, SavannahLions.class})
+@CardUsed({WaveOfTerror.class, GrizzlyBears.class, HillGiant.class, Ornithopter.class, SavannahLions.class, TitanicBulvox.class})
 class WaveOfTerrorTest extends BaseCardTest {
 
     @Test
@@ -149,12 +152,52 @@ class WaveOfTerrorTest extends BaseCardTest {
         return harness.addToBattlefieldAndReturn(owner, new WaveOfTerror());
     }
 
+    @Test
+    void zeroAgeCountersDestroyFaceDownCreatures() {
+        addWave(player1);
+        Permanent bulvox = harness.addToBattlefieldAndReturn(player2, new TitanicBulvox());
+        bulvox.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent lions = harness.addToBattlefieldAndReturn(player2, new SavannahLions());
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bulvox).contains(lions);
+        harness.assertInGraveyard(player2, "Titanic Bulvox");
+    }
+
+    @Test
+    void faceDownCreaturesDoNotUseTheirPrintedManaValue() {
+        addWave(player1).setCounterCount(CounterType.AGE, 8);
+        Permanent bulvox = harness.addToBattlefieldAndReturn(player2, new TitanicBulvox());
+        bulvox.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bulvox);
+    }
+
+    @Test
+    void sweepReadsAgeCountersAtResolution() {
+        Permanent wave = addWave(player1);
+        wave.setCounterCount(CounterType.AGE, 1);
+        Permanent lions = harness.addToBattlefieldAndReturn(player2, new SavannahLions());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        advanceToDraw(player1);
+        wave.setCounterCount(CounterType.AGE, 2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(lions).doesNotContain(bears);
+    }
+
     private void advanceToDraw(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2;
         harness.setLibrary(activePlayer, List.of(new GrizzlyBears()));
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // UPKEEP -> DRAW fires the draw-step trigger
+        harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 }
