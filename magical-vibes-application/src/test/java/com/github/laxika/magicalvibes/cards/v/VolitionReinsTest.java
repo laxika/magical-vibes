@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.a.AlexisCloak;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -7,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +16,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VolitionReins.class, GrizzlyBears.class, FountainOfYouth.class, Demystify.class, AlexisCloak.class})
 class VolitionReinsTest extends BaseCardTest {
 
-    // ===== Stealing creatures =====
 
     @Test
     @DisplayName("Resolving Volition Reins steals opponent's creature")
@@ -38,13 +40,11 @@ class VolitionReinsTest extends BaseCardTest {
         assertThat(gd.stolenCreatures).containsEntry(creature.getId(), player2.getId());
     }
 
-    // ===== Stealing noncreature permanents =====
 
     @Test
     @DisplayName("Resolving Volition Reins steals opponent's artifact")
     void stealsArtifact() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
-        Permanent artifact = findPermanent(player2, "Fountain of Youth");
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
 
         harness.setHand(player1, List.of(new VolitionReins()));
         harness.addMana(player1, ManaColor.BLUE, 6);
@@ -60,7 +60,6 @@ class VolitionReinsTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(artifact.getId()));
     }
 
-    // ===== ETB untap =====
 
     @Test
     @DisplayName("Volition Reins untaps enchanted permanent if it was tapped")
@@ -96,7 +95,6 @@ class VolitionReinsTest extends BaseCardTest {
         assertThat(creature.isTapped()).isFalse();
     }
 
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("Volition Reins fizzles if target is no longer on the battlefield")
@@ -117,7 +115,6 @@ class VolitionReinsTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Volition Reins");
     }
 
-    // ===== Permanent returns when aura leaves =====
 
     @Test
     @DisplayName("Creature returns to owner when Volition Reins is destroyed")
@@ -145,8 +142,7 @@ class VolitionReinsTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, volitionReinsPerm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, volitionReinsPerm.getId());
 
         // Creature should return to player2's battlefield
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -156,5 +152,55 @@ class VolitionReinsTest extends BaseCardTest {
         assertThat(gd.stolenCreatures).doesNotContainKey(creature.getId());
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("No untap ability triggers when the enchanted permanent enters untapped")
+    void untappedPermanentDoesNotCreateUntapTrigger() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        harness.setHand(player1, List.of(new VolitionReins()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castEnchantment(player1, 0, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Fountain of Youth");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Volition Reins untaps an enchanted artifact")
+    void untapsTappedArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        artifact.tap();
+        harness.setHand(player1, List.of(new VolitionReins()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castEnchantment(player1, 0, artifact.getId());
+        harness.passBothPriorities();
+        assertThat(artifact.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Fountain of Youth");
+        harness.passBothPriorities();
+
+        assertThat(artifact.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Gaining shroud in response does not stop the nontargeting untap ability")
+    void untapsPermanentThatGainsShroudInResponse() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        creature.tap();
+        harness.setHand(player1, List.of(new VolitionReins(), new AlexisCloak()));
+        harness.addMana(player1, ManaColor.BLUE, 8);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        assertThat(creature.isTapped()).isTrue();
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Alexi's Cloak");
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
 }
