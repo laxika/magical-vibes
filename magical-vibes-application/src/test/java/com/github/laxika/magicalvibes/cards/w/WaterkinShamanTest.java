@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.l.Levitation;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WaterkinShaman.class, SuntailHawk.class, FugitiveWizard.class, Levitation.class, Unsummon.class})
 class WaterkinShamanTest extends BaseCardTest {
 
     @Test
@@ -21,7 +24,7 @@ class WaterkinShamanTest extends BaseCardTest {
     void flyingAllyEnteringBoosts() {
         Permanent shaman = harness.addToBattlefieldAndReturn(player1, new WaterkinShaman());
 
-        castSuntailHawk(player1);
+        harness.castFromHand(player1, new SuntailHawk(), "{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -34,7 +37,7 @@ class WaterkinShamanTest extends BaseCardTest {
     void nonFlyingAllyEnteringDoesNotBoost() {
         Permanent shaman = harness.addToBattlefieldAndReturn(player1, new WaterkinShaman());
 
-        castFugitiveWizard(player1);
+        harness.castFromHand(player1, new FugitiveWizard(), "{U}");
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, shaman)).isEqualTo(2);
@@ -49,7 +52,7 @@ class WaterkinShamanTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        castSuntailHawk(player2);
+        harness.castFromHand(player2, new SuntailHawk(), "{W}");
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, shaman)).isEqualTo(2);
@@ -61,10 +64,10 @@ class WaterkinShamanTest extends BaseCardTest {
     void flyingAllyBoostsStackAndWearOff() {
         Permanent shaman = harness.addToBattlefieldAndReturn(player1, new WaterkinShaman());
 
-        castSuntailHawk(player1);
+        harness.castFromHand(player1, new SuntailHawk(), "{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        castSuntailHawk(player1);
+        harness.castFromHand(player1, new SuntailHawk(), "{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -79,15 +82,46 @@ class WaterkinShamanTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, shaman)).isEqualTo(1);
     }
 
-    private void castSuntailHawk(Player player) {
-        harness.setHand(player, List.of(new SuntailHawk()));
-        harness.addMana(player, ManaColor.WHITE, 1);
-        harness.castCreature(player, 0);
+    @Test
+    @DisplayName("Triggers for itself when it enters with flying from Levitation")
+    void enteringWithGrantedFlyingBoostsItself() {
+        harness.addToBattlefield(player1, new Levitation());
+
+        Permanent shaman = harness.enterBattlefieldAndReturn(player1, new WaterkinShaman());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, shaman)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shaman)).isEqualTo(2);
     }
 
-    private void castFugitiveWizard(Player player) {
-        harness.setHand(player, List.of(new FugitiveWizard()));
-        harness.addMana(player, ManaColor.BLUE, 1);
-        harness.castCreature(player, 0);
+    @Test
+    @DisplayName("Triggers for an entering creature that gains flying from Levitation")
+    void enteringAllyWithGrantedFlyingBoosts() {
+        Permanent shaman = harness.addToBattlefieldAndReturn(player1, new WaterkinShaman());
+        harness.addToBattlefield(player1, new Levitation());
+
+        harness.enterBattlefieldAndReturn(player1, new FugitiveWizard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, shaman)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shaman)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Boost resolves even if the entering flying creature leaves in response")
+    void boostResolvesAfterFlyingCreatureLeaves() {
+        Permanent shaman = harness.addToBattlefieldAndReturn(player1, new WaterkinShaman());
+        Permanent hawk = harness.enterBattlefieldAndReturn(player1, new SuntailHawk());
+        assertThat(gqs.getEffectivePower(gd, shaman)).isEqualTo(2);
+
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, hawk.getId());
+        harness.assertNotOnBattlefield(player1, "Suntail Hawk");
+        harness.assertInHand(player1, "Suntail Hawk");
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, shaman)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shaman)).isEqualTo(2);
     }
 }
