@@ -62,4 +62,50 @@ class SmaugTheGreatCalamityTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Smaug, the Great Calamity");
         assertThat(harness.getGameData().findExiledCard(card.getId())).isNull();
     }
+
+    @Test
+    void adventureDealsExactlyFiveDamageToAnOwnCreatureThatSurvives() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ColossalDreadmaw());
+        SmaugTheGreatCalamity card = new SmaugTheGreatCalamity();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAdventure(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Colossal Dreadmaw");
+        assertThat(target.getMarkedDamage()).isEqualTo(5);
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void adventureGoesToGraveyardWhenItsOnlyTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        SmaugTheGreatCalamity card = new SmaugTheGreatCalamity();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castAdventure(player1, 0, target.getId());
+
+        target.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Smaug, the Great Calamity");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    void creatureFaceCanBeCastDirectlyWithoutATargetOrAdventure() {
+        harness.castFromHand(player1, new SmaugTheGreatCalamity(), "{5}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Smaug, the Great Calamity");
+        harness.assertNotInGraveyard(player1, "Smaug, the Great Calamity");
+    }
 }
