@@ -86,6 +86,56 @@ class WitchsCottageTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
     }
 
+    @Test
+    void mayDeclinePuttingTheTargetOnTop() {
+        Card creature = new GrizzlyBears();
+        Card topCard = new HolyDay();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLibrary(player1, List.of(topCard));
+        addSwamp(player1);
+        addSwamp(player1);
+        addSwamp(player1);
+
+        playCottage();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    void opposingSwampsDoNotSatisfyTheEntryCondition() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        addSwamp(player1);
+        addSwamp(player1);
+        addSwamp(player2);
+        addSwamp(player2);
+        addSwamp(player2);
+
+        playCottage();
+
+        assertThat(findCottage(player1).isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void noTriggerCanBeStackedWithoutACreatureInYourGraveyard() {
+        harness.setGraveyard(player1, List.of(new HolyDay()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        addSwamp(player1);
+        addSwamp(player1);
+        addSwamp(player1);
+
+        playCottage();
+
+        assertThat(findCottage(player1).isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
     private void playCottage() {
         harness.setHand(player1, List.of(new WitchsCottage()));
         harness.forceActivePlayer(player1);
