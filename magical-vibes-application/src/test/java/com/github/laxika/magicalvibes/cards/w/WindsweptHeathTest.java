@@ -93,6 +93,36 @@ class WindsweptHeathTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("A Plains can be selected and leaves the library")
+    void canFindPlains() {
+        Plains plains = new Plains();
+        activateSearchWithLibrary(List.of(plains, new Mountain()));
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Plains");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement().satisfies(permanent -> assertThat(permanent.isTapped()).isFalse());
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(plains).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent activation or leave a pending search")
+    void searchWithEmptyLibrary() {
+        activateSearchWithLibrary(List.of());
+
+        harness.assertLife(player1, 19);
+        harness.assertInGraveyard(player1, "Windswept Heath");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void activateSearch() {
         activateSearchWithLibrary(List.of(new Forest(), new Plains(), new Mountain()));
     }
