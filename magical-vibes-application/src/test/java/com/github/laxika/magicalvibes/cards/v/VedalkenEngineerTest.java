@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
@@ -39,6 +41,50 @@ class VedalkenEngineerTest extends BaseCardTest {
         activateForBlue();
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyMana(ManaColor.BLUE)).isEqualTo(2);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("Both mana are the chosen color and the mana ability resolves without using the stack")
+    void addsTwoManaOfAnyOneColorImmediately(ManaColor chosenColor) {
+        Permanent engineer = addCreatureReady(player1, new VedalkenEngineer());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, chosenColor.name());
+
+        assertThat(engineer.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        for (ManaColor color : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isZero();
+            assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyMana(color))
+                    .isEqualTo(color == chosenColor ? 2 : 0);
+        }
+    }
+
+    @Test
+    @DisplayName("A summoning-sick engineer cannot activate its tap ability")
+    void cannotActivateWhileSummoningSick() {
+        Permanent engineer = harness.addToBattlefieldAndReturn(player1, new VedalkenEngineer());
+        engineer.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(engineer.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyManaTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped engineer cannot activate again")
+    void cannotActivateTwiceWithoutUntapping() {
+        addReadyEngineer();
+        activateForBlue();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
         assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyMana(ManaColor.BLUE)).isEqualTo(2);
     }
 
