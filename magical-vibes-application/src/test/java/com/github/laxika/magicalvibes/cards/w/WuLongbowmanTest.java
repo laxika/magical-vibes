@@ -28,7 +28,7 @@ class WuLongbowmanTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Deals 1 damage to target creature, destroying a 1/1")
+    @DisplayName("Deals 1 damage to target creature, destroying a 2/1")
     void deals1DamageDestroying1Toughness() {
         setupOnMyTurn(TurnStep.PRECOMBAT_MAIN);
         harness.addToBattlefield(player2, new WuInfantry());
@@ -82,6 +82,64 @@ class WuLongbowmanTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sickness");
+    }
+
+    @Test
+    @DisplayName("Can target its controller")
+    void canDamageItsController() {
+        setupOnMyTurn(TurnStep.UPKEEP);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Can target itself and dies to its own damage")
+    void canDamageItself() {
+        setupOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        UUID sourceId = harness.getPermanentId(player1, "Wu Longbowman");
+
+        harness.activateAbility(player1, 0, null, sourceId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Wu Longbowman");
+    }
+
+    @Test
+    @DisplayName("Cannot activate again while tapped")
+    void cannotActivateAgainWhileTapped() {
+        setupOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Cannot activate during the postcombat main phase")
+    void cannotActivateDuringPostcombatMain() {
+        setupOnMyTurn(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers are declared");
+    }
+
+    @Test
+    @DisplayName("Cannot activate before attackers in a second combat phase")
+    void cannotActivateDuringSecondCombat() {
+        setupOnMyTurn(TurnStep.BEGINNING_OF_COMBAT);
+        gd.combatPhasesThisTurn = 2;
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers are declared");
     }
 
     private void setupOnMyTurn(TurnStep step) {
