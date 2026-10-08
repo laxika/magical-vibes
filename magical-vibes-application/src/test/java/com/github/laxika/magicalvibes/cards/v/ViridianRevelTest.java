@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +19,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ViridianRevel.class, Memnite.class, MindStone.class, Naturalize.class,
+        CruelEdict.class, GrizzlyBears.class})
 class ViridianRevelTest extends BaseCardTest {
-
-    // ===== Triggering =====
 
     @Test
     @DisplayName("Triggers when an opponent's artifact creature is destroyed")
@@ -30,8 +31,7 @@ class ViridianRevelTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Cruel Edict — MayEffect on stack
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         GameData gd = harness.getGameData();
@@ -51,8 +51,7 @@ class ViridianRevelTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Naturalize()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castInstant(player1, 0, mindStoneId);
-        harness.passBothPriorities(); // Resolve Naturalize — MayEffect on stack
+        harness.castAndResolveInstant(player1, 0, mindStoneId);
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         GameData gd = harness.getGameData();
@@ -76,8 +75,7 @@ class ViridianRevelTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, mindStoneId);
-        harness.passBothPriorities(); // Resolve Naturalize
+        harness.castAndResolveInstant(player2, 0, mindStoneId);
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player1, "Mind Stone");
@@ -95,8 +93,7 @@ class ViridianRevelTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Cruel Edict
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -106,8 +103,6 @@ class ViridianRevelTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Resolving =====
-
     @Test
     @DisplayName("Accepting the may ability draws a card")
     void acceptingMayAbilityDrawsCard() {
@@ -116,8 +111,7 @@ class ViridianRevelTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Cruel Edict — MayEffect on stack
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Hand is now empty after casting Cruel Edict
         int handSizeAfterCast = harness.getGameData().playerHands.get(player1.getId()).size();
@@ -144,8 +138,7 @@ class ViridianRevelTest extends BaseCardTest {
 
         int handSizeBefore = harness.getGameData().playerHands.get(player1.getId()).size();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Cruel Edict — MayEffect on stack
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         // Decline the may ability
@@ -156,8 +149,6 @@ class ViridianRevelTest extends BaseCardTest {
         // No card drawn (hand size = before - 1 for casting Cruel Edict)
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore - 1);
     }
-
-    // ===== Multiple triggers =====
 
     @Test
     @DisplayName("Triggers separately for each opponent artifact destroyed")
@@ -172,8 +163,7 @@ class ViridianRevelTest extends BaseCardTest {
         // Destroy first artifact
         harness.setHand(player1, List.of(new Naturalize()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castInstant(player1, 0, memniteId);
-        harness.passBothPriorities(); // Resolve Naturalize — MayEffect on stack
+        harness.castAndResolveInstant(player1, 0, memniteId);
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         // Accept the may ability — inner effect resolves inline
@@ -182,8 +172,7 @@ class ViridianRevelTest extends BaseCardTest {
         // Destroy second artifact
         harness.setHand(player1, List.of(new Naturalize()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castInstant(player1, 0, mindStoneId);
-        harness.passBothPriorities(); // Resolve Naturalize — MayEffect on stack
+        harness.castAndResolveInstant(player1, 0, mindStoneId);
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         // Accept the may ability — inner effect resolves inline
@@ -194,5 +183,45 @@ class ViridianRevelTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Memnite");
         harness.assertInGraveyard(player2, "Mind Stone");
         assertThat(gd.stack).isEmpty();
+    }
+    @Test
+    @DisplayName("Triggers for an opponent-owned artifact even when you control it")
+    void triggersForOpponentOwnedArtifactYouControl() {
+        harness.addToBattlefield(player1, new ViridianRevel());
+        Memnite artifact = new Memnite();
+        artifact.setOwnerId(player2.getId());
+        UUID artifactId = harness.addToBattlefieldAndReturn(player1, artifact).getId();
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.setLibrary(player1, List.of(new Memnite()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, artifactId);
+
+        harness.assertInGraveyard(player2, "Memnite");
+        assertThat(harness.getGameData().stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(harness.getGameData().interaction
+                .activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertInHand(player1, "Memnite");
+    }
+
+    @Test
+    @DisplayName("Does not trigger for your artifact controlled by an opponent")
+    void doesNotTriggerForOwnArtifactControlledByOpponent() {
+        harness.addToBattlefield(player1, new ViridianRevel());
+        Memnite artifact = new Memnite();
+        artifact.setOwnerId(player1.getId());
+        UUID artifactId = harness.addToBattlefieldAndReturn(player2, artifact).getId();
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, artifactId);
+
+        harness.assertInGraveyard(player1, "Memnite");
+        assertThat(harness.getGameData().stack).isEmpty();
+        assertThat(harness.getGameData().interaction
+                .activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 }
