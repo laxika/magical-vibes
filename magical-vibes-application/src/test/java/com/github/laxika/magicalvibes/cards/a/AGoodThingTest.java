@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.f.FracturingGust;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AGoodThing.class, Disenchant.class})
+@CardUsed({AGoodThing.class, Disenchant.class, FracturingGust.class})
 class AGoodThingTest extends BaseCardTest {
 
     @Test
@@ -72,9 +73,49 @@ class AGoodThingTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player2, 0, goodThing.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, goodThing.getId());
 
         harness.assertInGraveyard(player1, "A Good Thing");
+    }
+
+    @Test
+    @DisplayName("Doubling to exactly 1,000 life causes the controller to lose")
+    void losesAtExactlyOneThousandLife() {
+        harness.addToBattlefield(player1, new AGoodThing());
+        harness.setLife(player1, 500);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Doubling to fewer than 1,000 life does not cause a loss")
+    void survivesJustBelowThreshold() {
+        harness.addToBattlefield(player1, new AGoodThing());
+        harness.setLife(player1, 499);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 998);
+        assertThat(gd.winnerPlayerId).isNull();
+    }
+
+    @Test
+    @DisplayName("The controller's untargeted enchantment destruction cannot destroy A Good Thing")
+    void survivesOwnUntargetedDestruction() {
+        harness.addToBattlefield(player1, new AGoodThing());
+        harness.addToBattlefield(player2, new AGoodThing());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new FracturingGust()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertOnBattlefield(player1, "A Good Thing");
+        harness.assertInGraveyard(player2, "A Good Thing");
+        harness.assertLife(player1, 22);
     }
 }
