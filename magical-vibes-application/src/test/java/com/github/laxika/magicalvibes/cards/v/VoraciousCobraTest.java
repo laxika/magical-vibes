@@ -45,4 +45,40 @@ class VoraciousCobraTest extends BaseCardTest {
         harness.assertLife(player2, 18);
         harness.assertOnBattlefield(player2, "Ancient Kavu");
     }
+
+    @Test
+    @DisplayName("Blocking Cobra destroys the attacker before regular combat damage")
+    void blockingCobraDestroysAttacker() {
+        Permanent attacker = addCreatureReady(player1, new AncientKavu());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new VoraciousCobra());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Ancient Kavu");
+        harness.assertNotOnBattlefield(player1, "Ancient Kavu");
+        harness.assertOnBattlefield(player2, "Voracious Cobra");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Cobra with zero power does not destroy its blocker")
+    void zeroPowerDoesNotTriggerDestruction() {
+        Permanent cobra = addCreatureReady(player1, new VoraciousCobra());
+        cobra.setPowerModifier(-2);
+        cobra.setAttacking(true);
+        addCreatureReady(player2, new AncientKavu());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Ancient Kavu");
+        harness.assertInGraveyard(player1, "Voracious Cobra");
+        harness.assertNotOnBattlefield(player1, "Voracious Cobra");
+    }
 }
