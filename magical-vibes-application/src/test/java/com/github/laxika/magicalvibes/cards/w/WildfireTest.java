@@ -167,6 +167,48 @@ class WildfireTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrifices and damage wait until both players have chosen their lands")
+    void sacrificesAndDamageWaitForAllChoices() {
+        addLands(5);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AncientSilverback());
+
+        castWildfire();
+
+        PendingInteraction.MultiPermanentChoice firstChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(firstChoice.playerId()).isEqualTo(player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, firstChoice.validIds().subList(0, 4));
+
+        assertThat(landCount(player1)).isEqualTo(5);
+        assertThat(landCount(player2)).isEqualTo(5);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(findPermanent(player2, "Ancient Silverback").getMarkedDamage()).isZero();
+
+        PendingInteraction.MultiPermanentChoice secondChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(secondChoice.playerId()).isEqualTo(player2.getId());
+        harness.handleMultiplePermanentsChosen(player2, secondChoice.validIds().subList(0, 4));
+
+        assertThat(landCount(player1)).isEqualTo(1);
+        assertThat(landCount(player2)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(findPermanent(player2, "Ancient Silverback").getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Marks exactly four damage on surviving creatures on both sides")
+    void marksFourDamageOnSurvivingCreatures() {
+        harness.addToBattlefield(player1, new AncientSilverback());
+        harness.addToBattlefield(player2, new AncientSilverback());
+
+        castWildfire();
+
+        assertThat(findPermanent(player1, "Ancient Silverback").getMarkedDamage()).isEqualTo(4);
+        assertThat(findPermanent(player2, "Ancient Silverback").getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("A player with no lands still has their creatures dealt damage")
     void playerWithNoLandsStillHasCreaturesDamaged() {
         harness.addToBattlefield(player1, new AncientSilverback());
