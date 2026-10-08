@@ -55,7 +55,7 @@ class ZellDinchtTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         GameData gameData = harness.getGameData();
@@ -68,5 +68,86 @@ class ZellDinchtTest extends BaseCardTest {
         assertThat(gameData.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(forest.getId()));
         harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Returning a land immediately reduces Zell's power")
+    void powerUpdatesWhenLandReturns() {
+        Permanent zell = harness.addToBattlefieldAndReturn(player1, new ZellDincht());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        assertThat(gqs.getEffectivePower(gd, zell)).isEqualTo(1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, forest.getId());
+
+        assertThat(gqs.getEffectivePower(gd, zell)).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not trigger during the opponent's end step")
+    void doesNotReturnLandOnOpponentsTurn() {
+        harness.addToBattlefield(player1, new ZellDincht());
+        harness.addToBattlefield(player1, new Forest());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Returns a controlled land to its owner rather than its controller")
+    void returnsLandToOwner() {
+        harness.addToBattlefield(player1, new ZellDincht());
+        Forest forestCard = new Forest();
+        forestCard.setOwnerId(player2.getId());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, forestCard);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, forest.getId());
+
+        harness.assertInHand(player2, "Forest");
+        harness.assertNotInHand(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("The end-step ability resolves without a choice when no lands are controlled")
+    void resolvesWithoutLands() {
+        harness.addToBattlefield(player1, new ZellDincht());
+        harness.addToBattlefield(player2, new Forest());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Losing Zell removes the additional land permission even after a land was played")
+    void losesAdditionalLandPermissionWhenZellLeaves() {
+        Permanent zell = harness.addToBattlefieldAndReturn(player1, new ZellDincht());
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.playLand(player1, 0);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, zell));
+
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getMaxLandsThisTurn(player1.getId())).isEqualTo(1);
     }
 }
