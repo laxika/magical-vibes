@@ -28,8 +28,7 @@ class VengefulTownsfolkTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
 
         assertThat(townsfolk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -43,8 +42,7 @@ class VengefulTownsfolkTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(townsfolk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -59,14 +57,12 @@ class VengefulTownsfolkTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TakeUpTheShield()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, townsfolk.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, townsfolk.getId());
 
         harness.forceActivePlayer(player2);
         harness.setHand(player2, List.of(new WrathOfGod()));
         harness.addMana(player2, ManaColor.WHITE, 4);
-        harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0);
 
         assertThat(gd.stack).hasSize(1);
 
@@ -75,5 +71,55 @@ class VengefulTownsfolkTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(townsfolk);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstBear, secondBear);
         assertThat(townsfolk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Triggers for each separate creature death in the same turn")
+    void triggersForSeparateDeathsInSameTurn() {
+        Permanent townsfolk = harness.addToBattlefieldAndReturn(player1, new VengefulTownsfolk());
+        Permanent firstBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, firstBear.getId());
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, secondBear.getId());
+        harness.passBothPriorities();
+
+        assertThat(townsfolk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Does not trigger for its own death")
+    void doesNotTriggerForOwnDeath() {
+        harness.addToBattlefield(player1, new VengefulTownsfolk());
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertInGraveyard(player1, "Vengeful Townsfolk");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Triggers when it dies simultaneously with another allied creature")
+    void triggersWhenDyingWithAnotherCreature() {
+        Permanent townsfolk = harness.addToBattlefieldAndReturn(player1, new VengefulTownsfolk());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertInGraveyard(player1, "Vengeful Townsfolk");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(townsfolk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
