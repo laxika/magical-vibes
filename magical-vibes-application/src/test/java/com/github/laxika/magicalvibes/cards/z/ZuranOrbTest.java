@@ -81,4 +81,75 @@ class ZuranOrbTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.assertOnBattlefield(player2, "Forest");
     }
+
+    @Test
+    @DisplayName("The land is sacrificed as a cost before life is gained on resolution")
+    void sacrificeIsPaidBeforeResolution() {
+        harness.addToBattlefield(player1, new ZuranOrb());
+        harness.addToBattlefield(player1, new Forest());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Zuran Orb");
+    }
+
+    @Test
+    @DisplayName("A tapped Orb can sacrifice tapped lands repeatedly without tapping or paying mana")
+    void tappedOrbCanActivateRepeatedlyWithTappedLands() {
+        Permanent orb = harness.addToBattlefieldAndReturn(player1, new ZuranOrb());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Forest());
+        orb.setTapped(true);
+        first.setTapped(true);
+        second.setTapped(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(2);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Zuran Orb");
+        assertThat(orb.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The nonactive controller may activate the Orb during the opponent's upkeep")
+    void nonactiveControllerGainsLifeDuringOpponentsTurn() {
+        harness.addToBattlefield(player2, new ZuranOrb());
+        harness.addToBattlefield(player2, new Forest());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 22);
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertOnBattlefield(player2, "Zuran Orb");
+    }
 }
