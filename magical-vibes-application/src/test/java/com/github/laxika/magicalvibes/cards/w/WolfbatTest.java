@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Wolfbat.class, GrizzlyBears.class})
+@CardUsed({Wolfbat.class})
 @DisplayName("Wolfbat")
 class WolfbatTest extends BaseCardTest {
 
@@ -22,7 +21,7 @@ class WolfbatTest extends BaseCardTest {
     void returnsFromGraveyardWithFinalityCounter() {
         Wolfbat wolfbat = new Wolfbat();
         harness.setGraveyard(player1, List.of(wolfbat));
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Wolfbat(), new Wolfbat()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         drawCard(player1);
@@ -41,7 +40,7 @@ class WolfbatTest extends BaseCardTest {
     void triggersOnlyOnSecondDrawEachTurn() {
         Wolfbat wolfbat = new Wolfbat();
         harness.setGraveyard(player1, List.of(wolfbat));
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Wolfbat(), new Wolfbat(), new Wolfbat()));
 
         drawCard(player1);
         assertThat(gd.stack).isEmpty();
@@ -68,6 +67,76 @@ class WolfbatTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Wolfbat");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Wolfbat"));
+    }
+
+    @Test
+    @DisplayName("Declining payment leaves Wolfbat in the graveyard and spends no mana")
+    void decliningPaymentLeavesItInGraveyard() {
+        harness.setGraveyard(player1, List.of(new Wolfbat()));
+        harness.setLibrary(player1, List.of(new Wolfbat(), new Wolfbat()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        drawCard(player1);
+        drawCard(player1);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Wolfbat");
+        harness.assertNotOnBattlefield(player1, "Wolfbat");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot return Wolfbat by paying mana of the wrong color")
+    void cannotPayWithWrongColor() {
+        harness.setGraveyard(player1, List.of(new Wolfbat()));
+        harness.setLibrary(player1, List.of(new Wolfbat(), new Wolfbat()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        drawCard(player1);
+        drawCard(player1);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Wolfbat");
+        harness.assertNotOnBattlefield(player1, "Wolfbat");
+    }
+
+    @Test
+    @DisplayName("An opponent's second draw does not trigger Wolfbat")
+    void doesNotTriggerOnOpponentsDraw() {
+        harness.setGraveyard(player1, List.of(new Wolfbat()));
+        harness.setLibrary(player2, List.of(new Wolfbat(), new Wolfbat()));
+
+        drawCard(player2);
+        drawCard(player2);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Wolfbat");
+    }
+
+    @Test
+    @DisplayName("An old draw trigger cannot return Wolfbat after it leaves and re-enters the graveyard")
+    void oldTriggerCannotReturnNewGraveyardObject() {
+        Wolfbat wolfbat = new Wolfbat();
+        harness.setGraveyard(player1, List.of(wolfbat));
+        harness.setLibrary(player1, List.of(new Wolfbat(), new Wolfbat()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        drawCard(player1);
+        drawCard(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerGraveyards.get(player1.getId()).remove(wolfbat);
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, wolfbat);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, returned));
+
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Wolfbat");
+        harness.assertInGraveyard(player1, "Wolfbat");
     }
 
     private void drawCard(com.github.laxika.magicalvibes.model.Player player) {
