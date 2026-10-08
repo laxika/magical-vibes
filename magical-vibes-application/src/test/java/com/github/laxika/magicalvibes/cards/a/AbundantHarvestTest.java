@@ -58,11 +58,64 @@ class AbundantHarvestTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(firstLand, secondLand);
     }
 
+    @Test
+    void emptyLibraryStillAllowsChoiceAndAddsNothingToHand() {
+        castWithLibrary();
+
+        harness.handleListChoice(player1, "LAND");
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void matchingTopCardLeavesRemainingLibraryInOrder() {
+        Card land = new Forest();
+        Card next = new GrizzlyBears();
+        Card last = new Mountain();
+        castWithLibrary(land, next, last);
+
+        harness.handleListChoice(player1, "LAND");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(next, last);
+    }
+
+    @Test
+    void multipleRevealedCardsGoBelowUnrevealedCards() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        Card land = new Forest();
+        Card next = new Mountain();
+        Card last = new Forest();
+        castWithLibrary(first, second, land, next, last);
+
+        harness.handleListChoice(player1, "LAND");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(0, 2)).containsExactly(next, last);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(2, 4))
+                .containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+    }
+
+    @Test
+    void putsEntireNonlandLibraryBackWhenLandIsMissing() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        castWithLibrary(first, second);
+
+        harness.handleListChoice(player1, "LAND");
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+    }
+
     private void castWithLibrary(Card... library) {
         harness.setHand(player1, List.of(new AbundantHarvest()));
         harness.setLibrary(player1, List.of(library));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }
