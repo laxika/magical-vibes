@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SmeltWardMinotaur.class, GrizzlyBears.class, Shock.class, Divination.class, SureStrike.class})
 class SmeltWardMinotaurTest extends BaseCardTest {
 
     @Test
@@ -79,8 +80,7 @@ class SmeltWardMinotaurTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         harness.handlePermanentChosen(player1, opponentCreature.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(opponentCreature.isCantBlockThisTurn()).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -88,5 +88,58 @@ class SmeltWardMinotaurTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(opponentCreature.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's instant does not trigger the Minotaur")
+    void opponentsInstantDoesNotTrigger() {
+        Permanent minotaur = addCreatureReady(player1, new SmeltWardMinotaur());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new SureStrike()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player2, 0, opponentCreature.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(minotaur.isCantBlockThisTurn()).isFalse();
+        assertThat(opponentCreature.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A spell can resolve when the Minotaur trigger has no legal target")
+    void noOpponentCreatureDoesNotPreventSpellResolving() {
+        Permanent minotaur = addCreatureReady(player1, new SmeltWardMinotaur());
+        harness.setHand(player1, List.of(new SureStrike()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, minotaur.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        resolveAllTriggers();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof SureStrike);
+        assertThat(minotaur.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A triggered ability still resolves after its source leaves the battlefield")
+    void triggerResolvesAfterSourceLeaves() {
+        Permanent minotaur = addCreatureReady(player1, new SmeltWardMinotaur());
+        Permanent opponentCreature = addCreatureReady(player2, new SmeltWardMinotaur());
+        Permanent otherOpponentCreature = addCreatureReady(player2, new SmeltWardMinotaur());
+        harness.setHand(player1, List.of(new SureStrike()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, opponentCreature.getId());
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(minotaur);
+        gd.playerGraveyards.get(player1.getId()).add(minotaur.getCard());
+        resolveAllTriggers();
+
+        assertThat(opponentCreature.isCantBlockThisTurn()).isTrue();
+        assertThat(otherOpponentCreature.isCantBlockThisTurn()).isFalse();
     }
 }
