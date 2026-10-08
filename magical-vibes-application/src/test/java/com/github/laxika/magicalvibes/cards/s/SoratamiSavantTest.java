@@ -210,6 +210,73 @@ class SoratamiSavantTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Cannot activate with less than three mana")
+    void cannotActivateWithoutEnoughMana() {
+        harness.addToBattlefield(player1, new SoratamiSavant());
+        harness.addToBattlefield(player1, new Island());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.forceActivePlayer(player2);
+        DevotedRetainer retainer = new DevotedRetainer();
+        harness.castFromHand(player2, retainer, "{W}");
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(player1, "Soratami Savant"), 0, retainer.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Island");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Savant can return a tapped land")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent savant = harness.addToBattlefieldAndReturn(player1, new SoratamiSavant());
+        savant.setSummoningSick(true);
+        savant.setTapped(true);
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        island.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.forceActivePlayer(player2);
+        DevotedRetainer retainer = new DevotedRetainer();
+        harness.castFromHand(player2, retainer, "{W}");
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, "Soratami Savant"), 0, retainer.getId());
+
+        harness.assertInHand(player1, "Island");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(savant.isTapped()).isTrue();
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Devoted Retainer");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A land controlled by Savant's controller returns to its owner's hand")
+    void returnsBorrowedLandToOwner() {
+        harness.addToBattlefield(player1, new SoratamiSavant());
+        Island island = new Island();
+        island.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, island);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.forceActivePlayer(player2);
+        DevotedRetainer retainer = new DevotedRetainer();
+        harness.castFromHand(player2, retainer, "{W}");
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, "Soratami Savant"), 0, retainer.getId());
+
+        harness.assertNotOnBattlefield(player1, "Island");
+        assertThat(gd.playerHands.get(player2.getId())).contains(island);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(island);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Devoted Retainer");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private int battlefieldIndex(Player owner, String name) {
         return gd.playerBattlefields.get(owner.getId()).indexOf(findPermanent(owner, name));
     }
