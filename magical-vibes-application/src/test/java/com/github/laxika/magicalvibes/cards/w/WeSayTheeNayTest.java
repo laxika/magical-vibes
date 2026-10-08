@@ -41,20 +41,78 @@ class WeSayTheeNayTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    void canPayFourToSaveSpellWhenTeamworkIsPaid() {
+        Permanent teammate = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        LlanowarElves elves = castTargetSpellWithThreeManaRemaining();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        castWeSayTheeNay(elves, List.of(teammate.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
+        assertThat(teammate.isTapped()).isTrue();
+    }
+
+    @Test
+    void canDeclineFourEvenWhenEnoughManaIsAvailable() {
+        Permanent teammate = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        LlanowarElves elves = castTargetSpellWithThreeManaRemaining();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        castWeSayTheeNay(elves, List.of(teammate.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+    }
+
+    @Test
+    void teamworkCanCombinePowerOfSummoningSickCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        first.setSummoningSick(true);
+        second.setSummoningSick(true);
+        LlanowarElves elves = castTargetSpellWithThreeManaRemaining();
+
+        castWeSayTheeNay(elves, List.of(first.getId(), second.getId()));
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(first, second);
+    }
+
+    @Test
+    void canDeclineTwoWithoutTeamwork() {
+        LlanowarElves elves = castTargetSpellWithTwoManaRemaining();
+
+        castWeSayTheeNay(elves, List.of());
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+    }
+
     private LlanowarElves castTargetSpellWithTwoManaRemaining() {
         LlanowarElves elves = new LlanowarElves();
-        harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, elves, "{G}");
+        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.passPriority(player1);
         return elves;
     }
 
     private LlanowarElves castTargetSpellWithThreeManaRemaining() {
         LlanowarElves elves = new LlanowarElves();
-        harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, elves, "{G}");
+        harness.addMana(player1, ManaColor.GREEN, 3);
         harness.passPriority(player1);
         return elves;
     }
