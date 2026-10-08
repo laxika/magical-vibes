@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -69,5 +70,71 @@ class WitchKingOfAngmarTest extends BaseCardTest {
                 com.github.laxika.magicalvibes.model.CardSupertype.LEGENDARY)).isTrue();
         assertThat(gqs.hasEffectiveSupertype(gd, otherCreature,
                 com.github.laxika.magicalvibes.model.CardSupertype.LEGENDARY)).isFalse();
+    }
+
+    @Test
+    void discardIsPaidBeforeIndestructibleAndTapResolve() {
+        Permanent witchKing = addCreatureReady(player1, new WitchKingOfAngmar());
+        harness.setHand(player1, List.of(new WitchKingOfAngmar()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Witch-king of Angmar");
+        assertThat(witchKing.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, witchKing, Keyword.INDESTRUCTIBLE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(witchKing.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, witchKing, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    void tappedSummoningSickWitchKingCanActivate() {
+        Permanent witchKing = harness.addToBattlefieldAndReturn(player1, new WitchKingOfAngmar());
+        witchKing.setSummoningSick(true);
+        witchKing.setTapped(true);
+        harness.setHand(player1, List.of(new WitchKingOfAngmar()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(witchKing.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, witchKing, Keyword.INDESTRUCTIBLE)).isTrue();
+        harness.assertInGraveyard(player1, "Witch-king of Angmar");
+    }
+
+    @Test
+    void indestructibleExpiresAtEndOfTurn() {
+        Permanent witchKing = addCreatureReady(player1, new WitchKingOfAngmar());
+        harness.setHand(player1, List.of(new WitchKingOfAngmar()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, witchKing, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.hasKeyword(gd, witchKing, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    void onlyCreatureThatDealtDamageIsSacrificed() {
+        Permanent witchKing = addCreatureReady(player1, new WitchKingOfAngmar());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent nonattacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(nonattacker);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.ringLevels).containsEntry(player1.getId(), 1);
+        assertThat(gd.ringBearerIds).containsEntry(player1.getId(), witchKing.getId());
     }
 }
