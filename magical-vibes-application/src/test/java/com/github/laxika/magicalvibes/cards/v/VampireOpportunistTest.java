@@ -2,17 +2,18 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VampireOpportunist.class})
 class VampireOpportunistTest extends BaseCardTest {
 
     @Test
     void activationMakesEachOpponentLoseLifeAndControllerGainLife() {
-        Permanent opportunist = addReadyOpportunist(player1);
+        Permanent opportunist = addCreatureReady(player1, new VampireOpportunist());
         harness.setLife(player1, 10);
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
@@ -21,15 +22,53 @@ class VampireOpportunistTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(12);
-        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        harness.assertLife(player1, 12);
+        harness.assertLife(player2, 18);
+        assertThat(opportunist.isTapped()).isFalse();
+    }
+
+    @Test
+    void canActivateWhileTapped() {
+        Permanent opportunist = addCreatureReady(player1, new VampireOpportunist());
+        opportunist.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
         assertThat(opportunist.isTapped()).isTrue();
     }
 
-    private Permanent addReadyOpportunist(Player player) {
-        Permanent opportunist = new Permanent(new VampireOpportunist());
-        opportunist.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(opportunist);
-        return opportunist;
+    @Test
+    void canActivateWhileSummoningSick() {
+        Permanent opportunist = harness.addToBattlefieldAndReturn(player1, new VampireOpportunist());
+        opportunist.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+        assertThat(opportunist.isTapped()).isFalse();
+    }
+
+    @Test
+    void canActivateTwiceWithoutUntapping() {
+        addCreatureReady(player1, new VampireOpportunist());
+        harness.addMana(player1, ManaColor.COLORLESS, 12);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 16);
     }
 }
