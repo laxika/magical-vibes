@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.e.EdgarMarkov;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.y.YawgmothsWill;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VisionsOfGlory.class, GrizzlyBears.class, EdgarMarkov.class})
+@CardUsed({VisionsOfGlory.class, GrizzlyBears.class, EdgarMarkov.class, YawgmothsWill.class})
 class VisionsOfGloryTest extends BaseCardTest {
 
     @Test
@@ -29,8 +30,7 @@ class VisionsOfGloryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of());
 
         assertHumans(2);
     }
@@ -46,8 +46,7 @@ class VisionsOfGloryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertHumans(0);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
@@ -64,8 +63,7 @@ class VisionsOfGloryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertHumans(1);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
@@ -80,6 +78,141 @@ class VisionsOfGloryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
+    }
+
+    @Test
+    void countsCreaturesAtResolutionAndExcludesOpponentsCreatures() {
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new VisionsOfGlory()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castSorcery(player1, 0);
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertHumans(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    void existingCreatureTokensCountForSubsequentCast() {
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new VisionsOfGlory(), new VisionsOfGlory()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.castAndResolveSorcery(player1, 0, List.of());
+        assertHumans(1);
+        harness.castAndResolveSorcery(player1, 0, List.of());
+
+        assertHumans(3);
+    }
+
+    @Test
+    void flashbackUsesExactReducedCostForOwnedCommanderControlledByOpponent() {
+        EdgarMarkov commander = new EdgarMarkov();
+        gd.makeCommander(player1.getId(), commander);
+        addCreatureReady(player2, commander);
+        VisionsOfGlory spell = new VisionsOfGlory();
+        harness.setGraveyard(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertHumans(0);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void opponentsCommanderDoesNotReduceFlashbackCost() {
+        EdgarMarkov commander = new EdgarMarkov();
+        gd.makeCommander(player2.getId(), commander);
+        addCreatureReady(player1, commander);
+        harness.setGraveyard(player1, List.of(new VisionsOfGlory()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    void ownedCommanderInGraveyardDoesNotReduceFlashbackCost() {
+        EdgarMarkov commander = new EdgarMarkov();
+        gd.makeCommander(player1.getId(), commander);
+        harness.setGraveyard(player1, List.of(new VisionsOfGlory(), commander));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    void normalCastFromHandDoesNotReceiveCommanderDiscount() {
+        EdgarMarkov commander = new EdgarMarkov();
+        gd.makeCommander(player1.getId(), commander);
+        gd.playerCommandZones.get(player1.getId()).add(commander);
+        harness.setHand(player1, List.of(new VisionsOfGlory()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    void flashbackSucceedsAtFullCostWithoutCommander() {
+        addCreatureReady(player1, new GrizzlyBears());
+        VisionsOfGlory spell = new VisionsOfGlory();
+        harness.setGraveyard(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertHumans(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(spell);
+    }
+
+    @Test
+    void commanderDiscountDoesNotReduceWhiteManaRequirement() {
+        EdgarMarkov commander = new EdgarMarkov();
+        gd.makeCommander(player1.getId(), commander);
+        gd.playerCommandZones.get(player1.getId()).add(commander);
+        harness.setGraveyard(player1, List.of(new VisionsOfGlory()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    void normalGraveyardCastDoesNotReceiveFlashbackDiscount() {
+        EdgarMarkov commander = new EdgarMarkov();
+        gd.makeCommander(player1.getId(), commander);
+        gd.playerCommandZones.get(player1.getId()).add(commander);
+        VisionsOfGlory spell = new VisionsOfGlory();
+        harness.setGraveyard(player1, List.of(spell));
+        harness.setHand(player1, List.of(new YawgmothsWill()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveSorcery(player1, 0, List.of());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
