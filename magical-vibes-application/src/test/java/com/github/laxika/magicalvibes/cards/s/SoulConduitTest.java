@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,14 +16,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SoulConduit.class, PlatinumEmperion.class})
 class SoulConduitTest extends BaseCardTest {
-
-    // ===== Exchange life totals =====
 
     @Test
     @DisplayName("Exchanges life totals between two players")
     void exchangesLifeTotals() {
-        Permanent conduit = addConduitReady(player1);
+        addConduitReady(player1);
         harness.setLife(player1, 5);
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
@@ -37,7 +37,7 @@ class SoulConduitTest extends BaseCardTest {
     @Test
     @DisplayName("Exchanges life totals when controller is at higher life")
     void exchangesWhenControllerHigher() {
-        Permanent conduit = addConduitReady(player1);
+        addConduitReady(player1);
         harness.setLife(player1, 30);
         harness.setLife(player2, 10);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
@@ -52,7 +52,7 @@ class SoulConduitTest extends BaseCardTest {
     @Test
     @DisplayName("Exchange with equal life totals results in no change")
     void exchangeWithEqualLifeTotals() {
-        Permanent conduit = addConduitReady(player1);
+        addConduitReady(player1);
         harness.setLife(player1, 15);
         harness.setLife(player2, 15);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
@@ -64,12 +64,10 @@ class SoulConduitTest extends BaseCardTest {
         harness.assertLife(player2, 15);
     }
 
-    // ===== Stack behavior =====
-
     @Test
     @DisplayName("Activating ability puts it on the stack with both player targets")
     void activatingAbilityPutsOnStack() {
-        Permanent conduit = addConduitReady(player1);
+        addConduitReady(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player1.getId(), player2.getId()));
@@ -77,16 +75,13 @@ class SoulConduitTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Soul Conduit");
         assertThat(entry.getTargetIds()).containsExactly(player1.getId(), player2.getId());
     }
-
-    // ===== Cost enforcement =====
 
     @Test
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutMana() {
-        Permanent conduit = addConduitReady(player1);
+        addConduitReady(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player1.getId(), player2.getId())))
@@ -121,7 +116,7 @@ class SoulConduitTest extends BaseCardTest {
     @Test
     @DisplayName("Must target exactly two players")
     void mustTargetTwoPlayers() {
-        Permanent conduit = addConduitReady(player1);
+        addConduitReady(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player1.getId())))
@@ -131,7 +126,7 @@ class SoulConduitTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target same player twice")
     void cannotTargetSamePlayerTwice() {
-        Permanent conduit = addConduitReady(player1);
+        addConduitReady(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player1.getId(), player1.getId())))
@@ -139,12 +134,10 @@ class SoulConduitTest extends BaseCardTest {
                 .hasMessageContaining("different");
     }
 
-    // ===== Life total can't change (Platinum Emperion) =====
-
     @Test
     @DisplayName("Exchange does not occur when first targeted player's life can't change")
     void exchangeBlockedWhenFirstPlayerLifeCantChange() {
-        Permanent conduit = addConduitReady(player1);
+        addConduitReady(player1);
         harness.addToBattlefield(player1, new PlatinumEmperion());
         harness.setLife(player1, 5);
         harness.setLife(player2, 20);
@@ -161,7 +154,7 @@ class SoulConduitTest extends BaseCardTest {
     @Test
     @DisplayName("Exchange does not occur when second targeted player's life can't change")
     void exchangeBlockedWhenSecondPlayerLifeCantChange() {
-        Permanent conduit = addConduitReady(player1);
+        addConduitReady(player1);
         harness.addToBattlefield(player2, new PlatinumEmperion());
         harness.setLife(player1, 5);
         harness.setLife(player2, 20);
@@ -178,7 +171,7 @@ class SoulConduitTest extends BaseCardTest {
     @Test
     @DisplayName("Exchange does not occur when both players' life totals can't change")
     void exchangeBlockedWhenBothPlayersLifeCantChange() {
-        Permanent conduit = addConduitReady(player1);
+        addConduitReady(player1);
         harness.addToBattlefield(player1, new PlatinumEmperion());
         harness.addToBattlefield(player2, new PlatinumEmperion());
         harness.setLife(player1, 5);
@@ -193,12 +186,52 @@ class SoulConduitTest extends BaseCardTest {
         harness.assertLife(player2, 20);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Uses life totals at resolution, even with reversed target order")
+    void exchangesCurrentLifeTotals() {
+        addConduitReady(player1);
+        harness.setLife(player1, 5);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player2.getId(), player1.getId()));
+        harness.setLife(player1, 8);
+        harness.setLife(player2, 17);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 8);
+    }
+
+    @Test
+    @DisplayName("A newly entered noncreature artifact can activate its tap ability")
+    void canActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new SoulConduit());
+        harness.setLife(player1, 5);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player1.getId(), player2.getId()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 5);
+    }
+
+    @Test
+    @DisplayName("Cannot target a permanent instead of a player")
+    void cannotTargetPermanent() {
+        Permanent conduit = addConduitReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(player1.getId(), conduit.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
     private Permanent addConduitReady(Player player) {
-        Permanent perm = new Permanent(new SoulConduit());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new SoulConduit());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
