@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.l.Lhurgoyf;
 import com.github.laxika.magicalvibes.cards.m.Melting;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -18,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Snowblind.class, BalduvianBears.class, Plains.class, SnowCoveredPlains.class, Melting.class})
+@CardUsed({Snowblind.class, BalduvianBears.class, Plains.class, SnowCoveredPlains.class, Melting.class,
+        Lhurgoyf.class})
 class SnowblindTest extends BaseCardTest {
 
     /** A 2/2 owned by {@code creatureController}, enchanted by a Snowblind player1 controls. */
@@ -144,5 +146,68 @@ class SnowblindTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Casting Snowblind attaches it to an opponent's creature and applies the reduction")
+    void castingAttachesAndShrinksOpponentCreature() {
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
+        addSnowLands(player2, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Snowblind()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Snowblind").getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The snow-land count changes immediately when the creature starts or stops attacking")
+    void reductionTracksCombatState() {
+        Permanent bears = enchantedBears(player1);
+        addSnowLands(player1, 1);
+        addSnowLands(player2, 3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+
+        bears.setAttacking(true);
+        bears.setAttackTarget(player2.getId());
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+
+        bears.setAttacking(false);
+        bears.setAttackTarget(null);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple Snowblinds reduce power separately while each respects the toughness cap")
+    void multipleAurasRespectToughnessCap() {
+        Permanent bears = enchantedBears(player2);
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player1, new Snowblind());
+        secondAura.setAttachedTo(bears.getId());
+        addSnowLands(player2, 2);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The toughness cap includes a creature's characteristic-defining ability")
+    void toughnessCapUsesCharacteristicDefinedToughness() {
+        harness.setGraveyard(player1, List.of(new BalduvianBears(), new BalduvianBears()));
+        Permanent lhurgoyf = addCreatureReady(player2, new Lhurgoyf());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Snowblind());
+        aura.setAttachedTo(lhurgoyf.getId());
+        addSnowLands(player2, 1);
+
+        assertThat(gqs.getEffectivePower(gd, lhurgoyf)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, lhurgoyf)).isEqualTo(2);
     }
 }
