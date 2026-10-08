@@ -15,7 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SoldeviHeretic.class)
+@CardUsed({SoldeviHeretic.class})
 class SoldeviHereticTest extends BaseCardTest {
 
     private Permanent addHereticReady() {
@@ -115,8 +115,7 @@ class SoldeviHereticTest extends BaseCardTest {
 
         assertThat(source.isTapped()).isTrue();
 
-        declareAttackers(player1, List.of(1));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(1));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         harness.passBothPriorities();
 
@@ -124,5 +123,50 @@ class SoldeviHereticTest extends BaseCardTest {
         assertThat(target.getMarkedDamage()).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+    }
+
+    @Test
+    @DisplayName("The opponent may still draw when the creature target leaves the battlefield")
+    void opponentMayDrawWhenCreatureTargetLeaves() {
+        addHereticReady();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SoldeviHeretic());
+        harness.setLibrary(player2, List.of(new SoldeviHeretic()));
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setGraveyard(player2, List.of(target.getCard()));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
+                .isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("The Heretic can protect itself while offering the opponent the draw")
+    void canTargetItself() {
+        Permanent heretic = addHereticReady();
+        harness.setLibrary(player2, List.of(new SoldeviHeretic()));
+
+        harness.activateAbility(player1, 0, null, heretic.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(heretic.isTapped()).isTrue();
+        assertThat(heretic.getDamagePreventionShield()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Heretic cannot pay the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        Permanent heretic = harness.addToBattlefieldAndReturn(player1, new SoldeviHeretic());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, heretic.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
