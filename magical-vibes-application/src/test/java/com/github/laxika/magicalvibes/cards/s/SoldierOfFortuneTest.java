@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -8,6 +7,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -42,7 +43,7 @@ class SoldierOfFortuneTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffles their library"));
+        assertThat(gameLogContains("shuffles their library")).isTrue();
     }
 
     @Test
@@ -58,7 +59,7 @@ class SoldierOfFortuneTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(opponentDeckSizeBefore);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffles their library"));
+        assertThat(gameLogContains("shuffles their library")).isTrue();
     }
 
     @Test
@@ -104,5 +105,50 @@ class SoldierOfFortuneTest extends BaseCardTest {
 
         assertThat(soldier.isTapped()).isFalse();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithSummoningSickness() {
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new SoldierOfFortune());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(soldier.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canShuffleEmptyLibrary() {
+        addCreatureReady(player1, new SoldierOfFortune());
+        harness.setLibrary(player2, List.of());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains(player2.getName() + " shuffles their library.")).isTrue();
+    }
+
+    @Test
+    void shufflingOpponentPreservesBothLibrariesContents() {
+        addCreatureReady(player1, new SoldierOfFortune());
+        SoldierOfFortune ownCard = new SoldierOfFortune();
+        SoldierOfFortune opponentCard = new SoldierOfFortune();
+        harness.setLibrary(player1, List.of(ownCard));
+        harness.setLibrary(player2, List.of(opponentCard));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains(player2.getName() + " shuffles their library.")).isTrue();
+        assertThat(gameLogContains(player1.getName() + " shuffles their library.")).isFalse();
     }
 }
