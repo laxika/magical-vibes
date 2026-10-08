@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.p.Python;
 import com.github.laxika.magicalvibes.cards.q.Quicksand;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Vanishing.class, Python.class, Quicksand.class})
+@CardUsed({Vanishing.class, Python.class, Quicksand.class, Disenchant.class})
 class VanishingTest extends BaseCardTest {
 
     @Test
@@ -25,7 +26,7 @@ class VanishingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Vanishing()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        gs.playCard(gd, player1, 0, 0, creature.getId(), null);
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -118,6 +119,26 @@ class VanishingTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Removing Vanishing in response does not stop its activated ability")
+    void removingAuraInResponseStillPhasesOutCreature() {
+        Permanent creature = addCreatureReady(player1, new Python());
+        Permanent aura = attachVanishing(creature);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.activateAbility(player1, 1, null, null);
+
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, aura.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(aura.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(creature);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).doesNotContain(aura);
+    }
     private Permanent attachVanishing(Permanent host) {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new Vanishing());
         aura.setAttachedTo(host.getId());
