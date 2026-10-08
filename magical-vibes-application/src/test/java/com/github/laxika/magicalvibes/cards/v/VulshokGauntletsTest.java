@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.f.Frogmite;
+import com.github.laxika.magicalvibes.cards.d.DreamsGrip;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -9,10 +10,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VulshokGauntlets.class, Frogmite.class})
+@CardUsed({VulshokGauntlets.class, Frogmite.class, DreamsGrip.class})
 class VulshokGauntletsTest extends BaseCardTest {
 
     @Test
@@ -137,6 +140,72 @@ class VulshokGauntletsTest extends BaseCardTest {
 
         assertThat(gauntlets.getAttachedTo()).isNull();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Moving the Gauntlets transfers both the boost and the untap restriction")
+    void reequippingTransfersBothStaticEffects() {
+        Permanent gauntlets = addGauntletsReady(player1);
+        Permanent first = addCreatureReady(player1, new Frogmite());
+        Permanent second = addCreatureReady(player1, new Frogmite());
+        gauntlets.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(gauntlets.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+        first.tap();
+        second.tap();
+
+        advanceToUpkeep(player1);
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The equipped creature can be untapped by a spell")
+    void equippedCreatureCanBeUntappedBySpell() {
+        Permanent creature = addCreatureReady(player1, new Frogmite());
+        Permanent gauntlets = addGauntletsReady(player1);
+        gauntlets.setAttachedTo(creature.getId());
+        creature.tap();
+        harness.setHand(player1, List.of(new DreamsGrip()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castModalInstant(player1, 0, 1, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gauntlets.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Gauntlets controlled by another player still prevent the host from untapping")
+    void differentEquipmentControllerDoesNotRemoveUntapRestriction() {
+        Permanent creature = addCreatureReady(player1, new Frogmite());
+        Permanent gauntlets = addGauntletsReady(player2);
+        gauntlets.setAttachedTo(creature.getId());
+        creature.tap();
+        gauntlets.tap();
+
+        advanceToUpkeep(player1);
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gauntlets.isTapped()).isFalse();
+        assertThat(creature.isTapped()).isTrue();
     }
 
     private Permanent addGauntletsReady(Player player) {
