@@ -81,4 +81,65 @@ class VedalkenOrreryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
+
+    @Test
+    @DisplayName("Can cast a creature during an opponent's upkeep")
+    void canCastDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new VedalkenOrrery());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.setHand(player1, List.of(new DrossCrocodile()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dross Crocodile");
+    }
+
+    @Test
+    @DisplayName("Can cast an artifact in response to a sorcery")
+    void canCastArtifactWithNonemptyStack() {
+        harness.addToBattlefield(player1, new VedalkenOrrery());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new NightsWhisper(), new VedalkenOrrery()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castSorcery(player1, 0);
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.assertNotInHand(player1, "Vedalken Orrery");
+    }
+
+    @Test
+    @DisplayName("A tapped Vedalken Orrery still permits instant timing")
+    void tappedOrreryStillAllowsCasting() {
+        harness.addToBattlefieldAndReturn(player1, new VedalkenOrrery()).setTapped(true);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new DrossCrocodile()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dross Crocodile");
+    }
+
+    @Test
+    @DisplayName("An Orrery in hand does not give itself instant timing")
+    void orreryInHandDoesNotGrantFlash() {
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new VedalkenOrrery()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Vedalken Orrery");
+    }
 }
