@@ -110,6 +110,41 @@ class WirewoodHivemasterTest extends BaseCardTest {
                         && permanent.getCard().hasType(CardType.CREATURE));
     }
 
+    @Test
+    void anotherHivemasterTriggersOnlyTheExistingHivemaster() {
+        harness.addToBattlefield(player1, new WirewoodHivemaster());
+        castCreature(player2, new WirewoodHivemaster(), "{1}{G}");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Insect")).hasSize(1);
+        assertThat(findPermanents(player2, "Insect")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void triggerStillCreatesInsectAfterHivemasterDies() {
+        harness.addToBattlefield(player1, new WirewoodHivemaster());
+        harness.enterBattlefieldAndReturn(player2, new LlanowarElves());
+
+        findPermanent(player1, "Wirewood Hivemaster").setMarkedDamage(1);
+        harness.runStateBasedActions();
+        assertThat(findPermanents(player1, "Wirewood Hivemaster")).isEmpty();
+
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Insect")).hasSize(1);
+        assertThat(findPermanents(player2, "Insect")).isEmpty();
+    }
+
     private void castCreature(Player player,
                               Card creature,
                               String manaCost) {
