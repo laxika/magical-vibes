@@ -63,6 +63,45 @@ class WheelOfFortuneTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Hands larger than seven are discarded completely before drawing seven")
+    void largeHandsStillDrawExactlySeven() {
+        fillLibraries(10);
+        List<Card> originalHand = new ArrayList<>();
+        for (int i = 0; i < 9; i++) {
+            originalHand.add(new GrizzlyBears());
+        }
+        harness.setHand(player2, originalHand);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new WheelOfFortune(), "{2}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(7).doesNotContainAnyElementsOf(originalHand);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrderElementsOf(originalHand);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Both players with insufficient libraries draw available cards and the game is a draw")
+    void bothPlayersWithInsufficientLibrariesDrawGame() {
+        fillLibraries(3);
+        harness.setHand(player2, List.of());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new WheelOfFortune(), "{2}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.gameResult).isEqualTo(com.github.laxika.magicalvibes.model.event.GameEventFact.GameResult.DRAW);
+    }
     private void fillLibraries(int cardsEach) {
         List<Card> library = new ArrayList<>();
         for (int i = 0; i < cardsEach; i++) {
