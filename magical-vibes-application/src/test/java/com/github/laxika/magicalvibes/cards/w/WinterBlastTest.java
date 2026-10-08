@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.z.ZephyrFalcon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,11 +14,13 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WinterBlast.class, AirElemental.class, GrizzlyBears.class, Forest.class, ZephyrFalcon.class})
+@CardUsed({WinterBlast.class, AirElemental.class, GrizzlyBears.class, Forest.class, ZephyrFalcon.class,
+        Unsummon.class})
 class WinterBlastTest extends BaseCardTest {
 
     @Test
@@ -99,5 +102,71 @@ class WinterBlastTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, List.of(forestId)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("An already tapped flier still takes damage")
+    void damagesAlreadyTappedFlier() {
+        Permanent flier = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        flier.setTapped(true);
+        harness.setHand(player1, List.of(new WinterBlast()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 1, flier.getId());
+
+        assertThat(flier.isTapped()).isTrue();
+        assertThat(flier.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The same creature cannot be chosen twice")
+    void rejectsDuplicateTargets() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new WinterBlast()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 2,
+                List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A remaining legal target is tapped and damaged when another target leaves")
+    void resolvesForRemainingTarget() {
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent returned = harness.addToBattlefieldAndReturn(player2, new ZephyrFalcon());
+        harness.setHand(player1, List.of(new WinterBlast()));
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, 2, List.of(remaining.getId(), returned.getId()));
+        harness.castAndResolveInstant(player2, 0, returned.getId());
+        harness.passBothPriorities();
+
+        assertThat(remaining.isTapped()).isTrue();
+        assertThat(remaining.getMarkedDamage()).isEqualTo(2);
+        harness.assertInHand(player2, "Zephyr Falcon");
+        harness.assertNotOnBattlefield(player2, "Zephyr Falcon");
+        harness.assertInGraveyard(player1, "Winter Blast");
+    }
+
+    @Test
+    @DisplayName("X can exceed 100 when enough distinct creatures are available")
+    void canTargetMoreThanOneHundredCreatures() {
+        List<Permanent> targets = IntStream.range(0, 101)
+                .mapToObj(i -> harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()))
+                .toList();
+        harness.setHand(player1, List.of(new WinterBlast()));
+        harness.addMana(player1, ManaColor.GREEN, 102);
+
+        harness.castSorcery(player1, 0, 101, targets.stream().map(Permanent::getId).toList());
+        harness.passBothPriorities();
+
+        assertThat(targets).allSatisfy(target -> {
+            assertThat(target.isTapped()).isTrue();
+            assertThat(target.getMarkedDamage()).isZero();
+        });
+        harness.assertInGraveyard(player1, "Winter Blast");
     }
 }
