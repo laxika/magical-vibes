@@ -57,20 +57,19 @@ class WurmsToothTest extends BaseCardTest {
 
         harness.castFromHand(player1, new LlanowarElves(), "{G}");
 
-        // Player1 should be prompted for may ability
         GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
 
-        // Triggered ability should be on the stack
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard() instanceof WurmsTooth);
-
-        // Resolve the triggered ability
-        harness.passBothPriorities();
-
         harness.assertLife(player1, lifeBefore + 1);
+        harness.assertLife(player2, 20);
+        resolveAllTriggers();
     }
 
     @Test
@@ -78,12 +77,15 @@ class WurmsToothTest extends BaseCardTest {
     void controllerCastsGreenSpellAndDeclines() {
         harness.addToBattlefield(player1, new WurmsTooth());
 
-        int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
+        GameData gd = harness.getGameData();
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.castFromHand(player1, new LlanowarElves(), "{G}");
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        GameData gd = harness.getGameData();
         // No triggered ability on stack
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard() instanceof WurmsTooth);
@@ -110,16 +112,18 @@ class WurmsToothTest extends BaseCardTest {
 
         harness.castFromHand(player2, new LlanowarElves(), "{G}");
 
-        // Player1 (controller of Wurm's Tooth) should be prompted
         GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
 
-        // Resolve the triggered ability and then the creature spell
+        // Resolve the creature spell
         resolveAllTriggers();
 
         harness.assertLife(player1, lifeBefore + 1);
+        harness.assertLife(player2, 20);
     }
 
     // ===== Non-green spell does NOT trigger =====
@@ -153,17 +157,19 @@ class WurmsToothTest extends BaseCardTest {
 
         harness.castFromHand(player1, new LlanowarElves(), "{G}");
 
-        // First tooth prompt
-        harness.handleMayAbilityChosen(player1, true);
-        // Second tooth prompt
-        harness.handleMayAbilityChosen(player1, true);
-
         GameData gd = harness.getGameData();
         // Two triggered abilities on the stack (plus the creature spell)
         long triggeredCount = gd.stack.stream()
                 .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
                 .count();
         assertThat(triggeredCount).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player1, lifeBefore + 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         // Resolve all
         resolveAllTriggers();
@@ -186,5 +192,31 @@ class WurmsToothTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("A green creature entering without being cast does not trigger Wurm's Tooth")
+    void enteringWithoutCastingDoesNotTrigger() {
+        harness.addToBattlefield(player1, new WurmsTooth());
+
+        harness.enterBattlefieldAndReturn(player1, new LlanowarElves());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Casting another colorless artifact does not trigger Wurm's Tooth")
+    void colorlessSpellDoesNotTrigger() {
+        harness.addToBattlefield(player1, new WurmsTooth());
+
+        harness.castFromHand(player1, new WurmsTooth(), "{2}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Wurm's Tooth")).isEqualTo(2);
+        harness.assertLife(player1, 20);
     }
 }
