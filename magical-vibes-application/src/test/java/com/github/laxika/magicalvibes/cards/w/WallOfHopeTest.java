@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WallOfHope.class, GempalmIncinerator.class, GoblinTurncoat.class})
 class WallOfHopeTest extends BaseCardTest {
@@ -62,6 +63,64 @@ class WallOfHopeTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
         assertThat(wall.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Damage beyond lethal still contributes to the life gained")
+    void gainsFullLifeFromDamageBeyondLethal() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfHope());
+        for (int i = 0; i < 5; i++) {
+            addCreatureReady(player1, new GoblinTurncoat());
+        }
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+
+        cycleGempalmAndAcceptDamage(wall);
+
+        harness.assertLife(player2, 15);
+        harness.assertLife(player1, 10);
+        harness.assertInGraveyard(player2, "Wall of Hope");
+    }
+
+    @Test
+    @DisplayName("Separate damage events gain life for each event rather than accumulated damage")
+    void gainsLifeSeparatelyForRepeatedDamage() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfHope());
+        addCreatureReady(player1, new GoblinTurncoat());
+        harness.setLife(player2, 10);
+
+        cycleGempalmAndAcceptDamage(wall);
+        harness.assertLife(player2, 11);
+        assertThat(wall.getMarkedDamage()).isEqualTo(1);
+
+        cycleGempalmAndAcceptDamage(wall);
+
+        harness.assertLife(player2, 12);
+        assertThat(wall.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Zero damage does not trigger Wall of Hope")
+    void noLifeGainFromZeroDamage() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfHope());
+        harness.setLife(player2, 10);
+
+        cycleGempalmAndAcceptDamage(wall);
+
+        harness.assertLife(player2, 10);
+        assertThat(wall.getMarkedDamage()).isZero();
+        assertThat(gameLogContains("Wall of Hope's ability triggers")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Defender prevents Wall of Hope from attacking")
+    void cannotAttackWithDefender() {
+        Permanent wall = addCreatureReady(player1, new WallOfHope());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(wall.isAttacking()).isFalse();
     }
 
     private void cycleGempalmAndAcceptDamage(Permanent target) {
