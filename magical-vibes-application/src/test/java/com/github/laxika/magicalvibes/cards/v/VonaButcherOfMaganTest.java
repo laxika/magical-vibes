@@ -1,21 +1,23 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.r.RaptorCompanion;
+import com.github.laxika.magicalvibes.cards.r.RaidersWake;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VonaButcherOfMagan.class, RaptorCompanion.class, Forest.class, RaidersWake.class})
 class VonaButcherOfMaganTest extends BaseCardTest {
-
-    // ===== Ability: destroy target nonland permanent =====
 
     @Test
     @DisplayName("Destroys target nonland permanent and pays 7 life")
@@ -23,16 +25,15 @@ class VonaButcherOfMaganTest extends BaseCardTest {
         Permanent vona = addCreatureReady(player1, new VonaButcherOfMagan());
         harness.setLife(player1, 20);
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
 
         int vonaIdx = gd.playerBattlefields.get(player1.getId()).indexOf(vona);
         harness.activateAbility(player1, vonaIdx, null, bears.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(13);
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Raptor Companion");
+        harness.assertInGraveyard(player2, "Raptor Companion");
     }
 
     @Test
@@ -41,8 +42,7 @@ class VonaButcherOfMaganTest extends BaseCardTest {
         Permanent vona = addCreatureReady(player1, new VonaButcherOfMagan());
         harness.setLife(player1, 20);
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
 
         int vonaIdx = gd.playerBattlefields.get(player1.getId()).indexOf(vona);
         harness.activateAbility(player1, vonaIdx, null, bears.getId());
@@ -56,8 +56,7 @@ class VonaButcherOfMaganTest extends BaseCardTest {
         Permanent vona = addCreatureReady(player1, new VonaButcherOfMagan());
         harness.setLife(player1, 6);
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
 
         int vonaIdx = gd.playerBattlefields.get(player1.getId()).indexOf(vona);
         assertThatThrownBy(() -> harness.activateAbility(player1, vonaIdx, null, bears.getId()))
@@ -71,8 +70,7 @@ class VonaButcherOfMaganTest extends BaseCardTest {
         Permanent vona = addCreatureReady(player1, new VonaButcherOfMagan());
         harness.setLife(player1, 7);
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
 
         int vonaIdx = gd.playerBattlefields.get(player1.getId()).indexOf(vona);
         // Activation succeeds (7 life is enough to pay the cost),
@@ -89,8 +87,7 @@ class VonaButcherOfMaganTest extends BaseCardTest {
         Permanent vona = addCreatureReady(player1, new VonaButcherOfMagan());
         harness.setLife(player1, 20);
 
-        harness.addToBattlefield(player2, new Forest());
-        Permanent forest = findPermanent(player2, "Forest");
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         int vonaIdx = gd.playerBattlefields.get(player1.getId()).indexOf(vona);
         assertThatThrownBy(() -> harness.activateAbility(player1, vonaIdx, null, forest.getId()))
@@ -103,8 +100,7 @@ class VonaButcherOfMaganTest extends BaseCardTest {
         Permanent vona = addCreatureReady(player1, new VonaButcherOfMagan());
         harness.setLife(player1, 20);
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
 
         // Make it player2's turn
         harness.forceActivePlayer(player2);
@@ -122,8 +118,7 @@ class VonaButcherOfMaganTest extends BaseCardTest {
         Permanent vona = addCreatureReady(player1, new VonaButcherOfMagan());
         harness.setLife(player1, 20);
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -132,7 +127,7 @@ class VonaButcherOfMaganTest extends BaseCardTest {
         harness.activateAbility(player1, vonaIdx, null, bears.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Raptor Companion");
     }
 
     @Test
@@ -144,8 +139,7 @@ class VonaButcherOfMaganTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VonaButcherOfMagan());
         // Default: summoning sick
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
 
         harness.setLife(player1, 20);
 
@@ -159,18 +153,59 @@ class VonaButcherOfMaganTest extends BaseCardTest {
         Permanent vona = addCreatureReady(player1, new VonaButcherOfMagan());
         harness.setLife(player1, 20);
 
-        // Create an enchantment-like permanent (use any non-land card)
-        Card enchantment = new GrizzlyBears();
-        enchantment.setName("Test Enchantment");
-        Permanent enchPerm = new Permanent(enchantment);
-        gd.playerBattlefields.get(player2.getId()).add(enchPerm);
+        Permanent enchPerm = harness.addToBattlefieldAndReturn(player2, new RaidersWake());
 
         int vonaIdx = gd.playerBattlefields.get(player1.getId()).indexOf(vona);
         harness.activateAbility(player1, vonaIdx, null, enchPerm.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(enchPerm.getId()));
+        harness.assertNotOnBattlefield(player2, "Raiders' Wake");
+        harness.assertInGraveyard(player2, "Raiders' Wake");
+    }
+
+    @Test
+    @DisplayName("Vona can destroy itself")
+    void canTargetItself() {
+        Permanent vona = addCreatureReady(player1, new VonaButcherOfMagan());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, vona.getId());
+        harness.assertLife(player1, 13);
+        assertThat(vona.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Vona, Butcher of Magan");
+        harness.assertInGraveyard(player1, "Vona, Butcher of Magan");
+    }
+
+    @Test
+    @DisplayName("Vigilance leaves Vona untapped and lifelink gains life from combat damage")
+    void attacksWithoutTappingAndGainsLife() {
+        Permanent vona = addCreatureReady(player1, new VonaButcherOfMagan());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        assertThat(vona.isTapped()).isFalse();
+        resolveCombat();
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("A tapped Vona cannot activate again and does not pay life again")
+    void cannotActivateWhileTapped() {
+        Permanent vona = addCreatureReady(player1, new VonaButcherOfMagan());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
+        harness.setLife(player1, 20);
+        vona.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
     }
 
 }
