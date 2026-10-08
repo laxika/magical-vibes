@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HealingSalve;
 import com.github.laxika.magicalvibes.cards.m.MesaFalcon;
 import com.github.laxika.magicalvibes.cards.s.SibilantSpirit;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -18,7 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Vertigo.class, MesaFalcon.class, SibilantSpirit.class, GrizzlyBears.class})
+@CardUsed({Vertigo.class, MesaFalcon.class, SibilantSpirit.class, GrizzlyBears.class, HealingSalve.class})
 class VertigoTest extends BaseCardTest {
 
     @Test
@@ -82,10 +83,41 @@ class VertigoTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, target.getId());
         harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Sibilant Spirit");
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Preventing all damage does not stop the creature from losing flying")
+    void removesFlyingEvenWhenDamageIsPrevented() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MesaFalcon());
+        harness.setHand(player1, List.of(new Vertigo()));
+        harness.setHand(player2, List.of(new HealingSalve()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castInstant(player2, 0, 1, target.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Mesa Falcon");
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Vertigo can damage and remove flying from its controller's creature")
+    void canTargetOwnFlyingCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SibilantSpirit());
+        harness.setHand(player1, List.of(new Vertigo()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player1, "Sibilant Spirit");
         assertThat(target.getMarkedDamage()).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
