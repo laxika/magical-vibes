@@ -27,10 +27,7 @@ class VengefulRegrowthTest extends BaseCardTest {
         Card second = new Mountain();
         Card third = new Forest();
         harness.setGraveyard(player1, List.of(first, second, third));
-        harness.setHand(player1, List.of(spell));
-        addMana(4, 2);
-
-        harness.castSorcery(player1, 0);
+        harness.castFromHand(player1, spell, "{4}{G}{G}");
         choose(first, second, third);
         harness.passBothPriorities();
 
@@ -69,6 +66,92 @@ class VengefulRegrowthTest extends BaseCardTest {
                 .contains(first.getId(), second.getId());
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Can resolve with no lands in either graveyard")
+    void resolvesWithEmptyGraveyard() {
+        harness.setGraveyard(player1, List.of());
+        harness.castFromHand(player1, new VengefulRegrowth(), "{4}{G}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Vengeful Regrowth");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("May select zero lands even when lands are available")
+    void mayChooseNoLands() {
+        Card land = new Forest();
+        harness.setGraveyard(player1, List.of(land));
+        harness.castFromHand(player1, new VengefulRegrowth(), "{4}{G}{G}");
+        choose();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Vengeful Regrowth");
+    }
+
+    @Test
+    @DisplayName("Only selected lands return and opponent lands remain in their graveyard")
+    void returnsOnlySelectedLands() {
+        Card selected = new Forest();
+        Card unselected = new Mountain();
+        Card opponentLand = new Forest();
+        Card nonland = new VengefulRegrowth();
+        harness.setGraveyard(player1, List.of(selected, unselected, nonland));
+        harness.setGraveyard(player2, List.of(opponentLand));
+        harness.castFromHand(player1, new VengefulRegrowth(), "{4}{G}{G}");
+        choose(selected);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(unselected, nonland);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentLand);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A removed target does not contribute to the number of tokens")
+    void countsOnlyLandsActuallyReturned() {
+        Card first = new Forest();
+        Card second = new Mountain();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.castFromHand(player1, new VengefulRegrowth(), "{4}{G}{G}");
+        choose(first, second);
+        harness.setGraveyard(player1, List.of(first));
+        harness.setExile(player1, List.of(second));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId()).contains(first.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(second);
+    }
+
+    @Test
+    @DisplayName("Flashback creates no tokens when every target becomes illegal and still exiles the spell")
+    void flashbackWithAllTargetsRemoved() {
+        Card spell = new VengefulRegrowth();
+        Card land = new Forest();
+        harness.setGraveyard(player1, List.of(spell, land));
+        addMana(6, 2);
+
+        harness.castFlashback(player1, 0);
+        choose(land);
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(land));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(land, spell);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void choose(Card... cards) {
