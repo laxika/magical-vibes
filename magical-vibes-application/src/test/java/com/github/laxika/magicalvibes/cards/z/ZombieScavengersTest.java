@@ -112,4 +112,53 @@ class ZombieScavengersTest extends BaseCardTest {
         assertThat(scavengers.isTapped()).isTrue();
         assertThat(scavengers.getMarkedDamage()).isZero();
     }
+
+    @Test
+    @DisplayName("Only the most recently buried creature is exiled, skipping newer noncreatures")
+    void exilesMostRecentCreatureAmongDifferentCreatures() {
+        harness.addToBattlefield(player1, new ZombieScavengers());
+        harness.setGraveyard(player1, List.of(
+                new GrizzlyBears(), new ZombieScavengers(), new GiantGrowth()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(graveyardNames()).containsExactly("Grizzly Bears", "Giant Growth");
+        assertThat(gd.exiledCards).extracting(e -> e.card().getName())
+                .containsExactly("Zombie Scavengers");
+        assertThat(findPermanent(player1, "Zombie Scavengers").getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The creature is exiled immediately but regeneration waits for resolution")
+    void paysExileCostBeforeAbilityResolves() {
+        harness.addToBattlefield(player1, new ZombieScavengers());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(graveyardNames()).isEmpty();
+        assertThat(gd.exiledCards).extracting(e -> e.card().getName()).containsExactly("Grizzly Bears");
+        assertThat(findPermanent(player1, "Zombie Scavengers").getRegenerationShield()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Zombie Scavengers").getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A tapped creature can activate regeneration without spending mana")
+    void canActivateWhileTapped() {
+        harness.addToBattlefield(player1, new ZombieScavengers());
+        findPermanent(player1, "Zombie Scavengers").tap();
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent scavengers = findPermanent(player1, "Zombie Scavengers");
+        assertThat(scavengers.isTapped()).isTrue();
+        assertThat(scavengers.getRegenerationShield()).isEqualTo(1);
+        assertThat(graveyardNames()).isEmpty();
+    }
 }
