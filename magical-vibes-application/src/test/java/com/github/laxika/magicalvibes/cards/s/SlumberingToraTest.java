@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -91,12 +92,52 @@ class SlumberingToraTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.isCreature(gd, tora)).isTrue();
 
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, tora)).isFalse();
         assertThat(gqs.hasEffectiveSubtype(gd, tora, CardSubtype.CAT)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Slumbering Tora can animate without untapping")
+    void tappedToraCanAnimate() {
+        Permanent tora = addReadyTora(player1);
+        tora.setTapped(true);
+        harness.setHand(player1, List.of(new RibbonsOfTheReikai()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, tora)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, tora)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, tora)).isEqualTo(5);
+        assertThat(tora.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The discard is paid before resolution and removing the discarded card does not change X")
+    void discardIsPaidBeforeResolutionAndManaValueIsRemembered() {
+        Permanent tora = addReadyTora(player1);
+        RibbonsOfTheReikai discarded = new RibbonsOfTheReikai();
+        harness.setHand(player1, List.of(discarded));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.activateAbility(player1, 0, null, null);
+            harness.handleCardChosen(player1, 0);
+        });
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gqs.isCreature(gd, tora)).isFalse();
+        gd.playerGraveyards.get(player1.getId()).remove(discarded);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, tora)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, tora)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, tora)).isEqualTo(5);
     }
 
     private Permanent addReadyTora(Player player) {
