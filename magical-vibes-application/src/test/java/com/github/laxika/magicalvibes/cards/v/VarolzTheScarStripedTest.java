@@ -3,11 +3,14 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.s.SavagebornHydra;
+import com.github.laxika.magicalvibes.cards.t.TurnBurn;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VarolzTheScarStriped.class, GrizzlyBears.class, HillGiant.class,
+        LightningBolt.class, TurnBurn.class, SavagebornHydra.class})
 class VarolzTheScarStripedTest extends BaseCardTest {
 
     private Permanent addVarolz() {
@@ -116,18 +121,131 @@ class VarolzTheScarStripedTest extends BaseCardTest {
         varolz.setBlocking(true);
         varolz.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new HillGiant());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new HillGiant());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Varolz, the Scar-Striped");
         assertThat(varolz.isTapped()).isTrue();
         assertThat(varolz.getRegenerationShield()).isEqualTo(0);
+    }
+
+    @Test
+    void losingAbilitiesStopsGrantingScavenge() {
+        Permanent varolz = addVarolz();
+        Permanent target = addCreatureReady(player1, new HillGiant());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new TurnBurn()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, 0, varolz.getId());
+        harness.passBothPriorities();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void scavengeCanTargetAnOpponentsCreatureAndExilesAsACost() {
+        addVarolz();
+        Permanent target = addCreatureReady(player2, new HillGiant());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void scavengeCannotBeActivatedDuringCombat() {
+        addVarolz();
+        Permanent target = addCreatureReady(player1, new HillGiant());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void doesNotGrantScavengeToOpponentsGraveyard() {
+        addVarolz();
+        Permanent target = addCreatureReady(player2, new HillGiant());
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player2, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void activatedScavengeResolvesAfterVarolzLeavesBattlefield() {
+        Permanent varolz = addVarolz();
+        Permanent target = addCreatureReady(player1, new HillGiant());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, varolz.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Varolz, the Scar-Striped");
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void scavengeTreatsXInManaCostAsZero() {
+        addVarolz();
+        Permanent target = addCreatureReady(player1, new HillGiant());
+        harness.setGraveyard(player1, List.of(new SavagebornHydra()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player1, "Savageborn Hydra");
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void cannotChooseNonzeroXForGrantedScavenge() {
+        addVarolz();
+        Permanent target = addCreatureReady(player1, new HillGiant());
+        harness.setGraveyard(player1, List.of(new SavagebornHydra()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> gs.activateGraveyardAbility(gd, player1, 0, 0, 3, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Savageborn Hydra");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(5);
     }
 }
