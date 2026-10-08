@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IvoryMask;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Portent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,10 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SoulBarrier.class, BalduvianBears.class, IvoryMask.class, Portent.class})
+@CardUsed({SoulBarrier.class, GrizzlyBears.class, IvoryMask.class, Island.class, Portent.class})
 class SoulBarrierTest extends BaseCardTest {
-
-    // ===== Only triggers on opponent creature spells =====
 
     @Test
     @DisplayName("Triggers when opponent casts a creature spell")
@@ -30,7 +29,7 @@ class SoulBarrierTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castFromHand(player2, new BalduvianBears(), "{1}{G}");
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -48,7 +47,7 @@ class SoulBarrierTest extends BaseCardTest {
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        harness.castFromHand(player2, new BalduvianBears(), "{1}{G}");
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(3);
         resolveAllTriggers();
@@ -77,13 +76,11 @@ class SoulBarrierTest extends BaseCardTest {
     @DisplayName("Does NOT trigger when controller casts a creature spell")
     void doesNotTriggerOnControllerCreatureSpell() {
         harness.addToBattlefield(player1, new SoulBarrier());
-        harness.castFromHand(player1, new BalduvianBears(), "{1}{G}");
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
-
-    // ===== Opponent has mana: chooses to pay =====
 
     @Test
     @DisplayName("Opponent with mana is prompted to pay or take damage")
@@ -124,8 +121,6 @@ class SoulBarrierTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
     }
 
-    // ===== Opponent has no mana: auto damage =====
-
     @Test
     @DisplayName("Auto-takes 2 damage when opponent has no mana to pay")
     void autoTakesDamageWithNoMana() {
@@ -137,7 +132,7 @@ class SoulBarrierTest extends BaseCardTest {
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        harness.castFromHand(player2, new BalduvianBears(), "{1}{G}");
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
@@ -153,7 +148,7 @@ class SoulBarrierTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castFromHand(player2, new BalduvianBears(), "{1}{G}");
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
         gd.playerDamagePreventionShields.put(player2.getId(), 2);
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
@@ -176,13 +171,11 @@ class SoulBarrierTest extends BaseCardTest {
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        harness.castFromHand(player2, new BalduvianBears(), "{1}{G}");
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
     }
-
-    // ===== Damage can kill opponent =====
 
     @Test
     @DisplayName("Damage from not paying can reduce opponent to 0 or below")
@@ -194,14 +187,75 @@ class SoulBarrierTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.setLife(player2, 1);
-        harness.castFromHand(player2, new BalduvianBears(), "{1}{G}");
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
 
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(-1);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Opponent can produce mana when the resolving trigger asks for payment")
+    void opponentCanPayUsingUntappedLandsDuringResolution() {
+        harness.addToBattlefield(player1, new SoulBarrier());
+        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player2, new Island());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.tapPermanent(player2, 0);
+        harness.tapPermanent(player2, 1);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay the generic payment")
+    void coloredManaCanPay() {
+        harness.addToBattlefield(player1, new SoulBarrier());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each copy requires its own payment")
+    void payingOneTriggerDoesNotPayForAnother() {
+        harness.addToBattlefield(player1, new SoulBarrier());
+        harness.addToBattlefield(player1, new SoulBarrier());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
 
     private void setupOpponentCastsCreatureWithMana() {
         harness.addToBattlefield(player1, new SoulBarrier());
@@ -210,11 +264,8 @@ class SoulBarrierTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new BalduvianBears()));
-        harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player2, 0);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
