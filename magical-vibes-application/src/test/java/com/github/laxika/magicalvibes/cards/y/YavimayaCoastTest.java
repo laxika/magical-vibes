@@ -104,6 +104,47 @@ class YavimayaCoastTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Blue mana damage can be prevented without preventing mana production")
+    void blueManaDamageCanBePrevented() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new SamiteHealer());
+        harness.addToBattlefield(player1, new YavimayaCoast());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 2, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Colorless mana preserves a prevention shield for a later colored activation")
+    void colorlessManaDoesNotConsumePreventionShield() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new SamiteHealer());
+        harness.addToBattlefield(player1, new YavimayaCoast());
+        harness.addToBattlefield(player1, new YavimayaCoast());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+
+        harness.activateAbility(player1, 2, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Colored mana abilities are mana abilities and do not use the stack")
     void coloredManaAbilitiesDoNotUseStack() {
         harness.addToBattlefield(player1, new YavimayaCoast());
