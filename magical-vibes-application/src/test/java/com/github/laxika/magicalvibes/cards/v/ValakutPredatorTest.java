@@ -37,8 +37,7 @@ class ValakutPredatorTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(predator.getEffectivePower()).isEqualTo(2);
         assertThat(predator.getEffectiveToughness()).isEqualTo(2);
@@ -56,5 +55,43 @@ class ValakutPredatorTest extends BaseCardTest {
 
         assertThat(predator.getEffectivePower()).isEqualTo(2);
         assertThat(predator.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Lands entering without being played each trigger a cumulative boost")
+    void multipleLandEntriesStack() {
+        Permanent predator = harness.addToBattlefieldAndReturn(player1, new ValakutPredator());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(predator.getEffectivePower()).isEqualTo(2);
+        assertThat(predator.getEffectiveToughness()).isEqualTo(2);
+
+        resolveAllTriggers();
+
+        assertThat(predator.getEffectivePower()).isEqualTo(6);
+        assertThat(predator.getEffectiveToughness()).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Each Valakut Predator boosts only itself when its controller's land enters")
+    void eachPredatorBoostsItself() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ValakutPredator());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ValakutPredator());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new ValakutPredator());
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(first.getEffectivePower()).isEqualTo(4);
+        assertThat(first.getEffectiveToughness()).isEqualTo(4);
+        assertThat(second.getEffectivePower()).isEqualTo(4);
+        assertThat(second.getEffectiveToughness()).isEqualTo(4);
+        assertThat(opponent.getEffectivePower()).isEqualTo(2);
+        assertThat(opponent.getEffectiveToughness()).isEqualTo(2);
     }
 }
