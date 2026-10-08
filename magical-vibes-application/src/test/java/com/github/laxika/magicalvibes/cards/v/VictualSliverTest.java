@@ -74,4 +74,61 @@ class VictualSliverTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately but life is gained only on resolution")
+    void sacrificesAsCostAndGainsLifeOnResolution() {
+        Permanent sliver = harness.addToBattlefieldAndReturn(player1, new VictualSliver());
+        sliver.setSummoningSick(true);
+        sliver.tap();
+        harness.setLife(player1, 10);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Victual Sliver");
+        harness.assertInGraveyard(player1, "Victual Sliver");
+        harness.assertLife(player1, 10);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Insufficient mana does not sacrifice the Sliver or gain life")
+    void cannotActivateWithoutTwoMana() {
+        harness.addToBattlefield(player1, new VictualSliver());
+        harness.setLife(player1, 10);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Victual Sliver");
+        harness.assertNotInGraveyard(player1, "Victual Sliver");
+        harness.assertLife(player1, 10);
+    }
+
+    @Test
+    @DisplayName("An activated ability still resolves after the granting Sliver is sacrificed")
+    void resolvesAfterGrantingSliverLeaves() {
+        harness.addToBattlefield(player1, new VictualSliver());
+        harness.addToBattlefield(player1, new CrystallineSliver());
+        harness.setLife(player1, 10);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Crystalline Sliver");
+        harness.assertInGraveyard(player1, "Victual Sliver");
+        harness.assertLife(player1, 10);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 14);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+    }
 }
