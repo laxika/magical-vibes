@@ -98,7 +98,71 @@ class WaterTribeRallierTest extends BaseCardTest {
     }
 
     private void setLibrary(Card... cards) {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
+    }
+
+    @Test
+    @DisplayName("May decline an eligible creature and bottom all four cards below the untouched library")
+    void mayDeclineEligibleCreature() {
+        Card eligible = new GrizzlyBears();
+        Card second = new Shock();
+        Card third = new CrawWurm();
+        Card fourth = new Plains();
+        Card untouched = new HillGiant();
+        setLibrary(eligible, second, third, fourth, untouched);
+        int handSize = gd.playerHands.get(player1.getId()).size();
+        activateWithCreatures();
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(untouched);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 5))
+                .containsExactlyInAnyOrder(eligible, second, third, fourth);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Looks at all available cards when the library has fewer than four")
+    void shortLibrary() {
+        Card eligible = new HillGiant();
+        Card other = new Shock();
+        setLibrary(eligible, other);
+        activateWithCreatures();
+
+        harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
+
+        harness.assertInHand(player1, "Hill Giant");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(other);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Resolves without a choice when the library is empty")
+    void emptyLibrary() {
+        setLibrary();
+        activateWithCreatures();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Waterbend can be paid entirely with mana even when its source is tapped")
+    void paysWithManaFromTappedSource() {
+        Permanent rallier = harness.addToBattlefieldAndReturn(player1, new WaterTribeRallier());
+        rallier.tap();
+        Card eligible = new GrizzlyBears();
+        setLibrary(eligible);
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(rallier.isTapped()).isTrue();
     }
 }
