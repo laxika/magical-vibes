@@ -50,4 +50,63 @@ class SonicSeizureTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Must discard a card at random");
     }
+
+    @Test
+    @DisplayName("Pays exactly one random discard before resolving, excluding the spell itself")
+    void paysRandomDiscardBeforeResolution() {
+        SonicSeizure spell = new SonicSeizure();
+        SengirVampire first = new SengirVampire();
+        SengirVampire second = new SengirVampire();
+        harness.setHand(player1, List.of(first, spell, second));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 1, player2.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1)
+                .containsAnyOf(first, second).doesNotContain(spell);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1)
+                .containsAnyOf(first, second).doesNotContain(spell);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2).contains(spell);
+    }
+
+    @Test
+    @DisplayName("Can target its own controller")
+    void canDamageItsController() {
+        harness.setHand(player1, List.of(new SonicSeizure(), new SengirVampire()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Does not refund the discard when its creature target leaves before resolution")
+    void discardRemainsPaidWhenTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SengirVampire());
+        harness.setHand(player1, List.of(new SonicSeizure(), new SengirVampire()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, target.getId());
+        harness.assertInGraveyard(player1, "Sengir Vampire");
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerHands.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Sengir Vampire");
+        harness.assertInGraveyard(player1, "Sonic Seizure");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 }
