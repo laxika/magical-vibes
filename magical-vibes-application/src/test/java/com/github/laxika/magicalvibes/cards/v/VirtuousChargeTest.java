@@ -90,4 +90,40 @@ class VirtuousChargeTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Multiple charges give cumulative boosts")
+    void multipleChargesGiveCumulativeBoosts() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new VolunteerMilitia());
+        harness.setHand(player1, List.of(new VirtuousCharge(), new VirtuousCharge()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(1);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Boost includes creatures entering before resolution")
+    void boostsCreaturesEnteringBeforeResolution() {
+        harness.setHand(player1, List.of(new VirtuousCharge()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castSorcery(player1, 0, 0);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new VolunteerMilitia());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+    }
 }
