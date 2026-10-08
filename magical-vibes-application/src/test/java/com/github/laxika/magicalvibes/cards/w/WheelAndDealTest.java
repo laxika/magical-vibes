@@ -86,6 +86,41 @@ class WheelAndDealTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The other player can cast it without discarding their remaining hand")
+    void otherControllerRetainsHandAndDrawsOne() {
+        Card retained = new Mountain();
+        Card controllerDraw = new Forest();
+        List<Card> opponentDraws = List.of(
+                new Island(), new Island(), new Island(), new Island(),
+                new Island(), new Island(), new Island());
+        List<Card> discarded = List.of(new Mountain(), new Forest());
+        harness.setLibrary(player2, List.of(controllerDraw));
+        harness.setLibrary(player1, opponentDraws);
+        harness.setHand(player2, List.of(new WheelAndDeal(), retained));
+        harness.setHand(player1, discarded);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player2, 0, List.of(player1.getId()));
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(retained, controllerDraw);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(opponentDraws);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(discarded);
+        harness.assertInGraveyard(player2, "Wheel and Deal");
+    }
+
+    @Test
+    @DisplayName("The same opponent cannot be targeted twice")
+    void cannotTargetOpponentTwice() {
+        harness.setHand(player1, List.of(new WheelAndDeal()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(player2.getId(), player2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void addMana() {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
