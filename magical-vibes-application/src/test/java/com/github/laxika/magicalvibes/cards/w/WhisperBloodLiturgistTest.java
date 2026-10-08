@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,9 +21,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WhisperBloodLiturgist.class, AngelOfMercy.class, GrizzlyBears.class,
+        HolyDay.class, LlanowarElves.class})
 class WhisperBloodLiturgistTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Whisper puts it on the stack and resolves to battlefield")
@@ -34,7 +35,6 @@ class WhisperBloodLiturgistTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Whisper, Blood Liturgist");
 
         harness.passBothPriorities();
 
@@ -53,8 +53,6 @@ class WhisperBloodLiturgistTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
-    // ===== Activating ability — sacrifice choice flow =====
-
     @Test
     @DisplayName("Prompts for sacrifice choice when more than 2 creatures available")
     void promptsForChoiceWhenMoreThanTwoCreatures() {
@@ -66,7 +64,8 @@ class WhisperBloodLiturgistTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         // Whisper + GrizzlyBears + LlanowarElves = 3 creatures, needs choice
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0,
+                List.of(gd.playerGraveyards.get(player1.getId()).getFirst().getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
@@ -85,7 +84,8 @@ class WhisperBloodLiturgistTest extends BaseCardTest {
         UUID bears = gd.playerBattlefields.get(player1.getId()).get(1).getId();
         UUID elves = gd.playerBattlefields.get(player1.getId()).get(2).getId();
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0,
+                List.of(gd.playerGraveyards.get(player1.getId()).getFirst().getId()));
 
         // First choice
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -104,8 +104,6 @@ class WhisperBloodLiturgistTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Angel of Mercy");
     }
 
-    // ===== Resolution — returning creature from graveyard =====
-
     @Test
     @DisplayName("Returns creature from graveyard to battlefield")
     void returnsCreatureFromGraveyardToBattlefield() {
@@ -119,14 +117,13 @@ class WhisperBloodLiturgistTest extends BaseCardTest {
         UUID bears = gd.playerBattlefields.get(player1.getId()).get(1).getId();
         UUID elves = gd.playerBattlefields.get(player1.getId()).get(2).getId();
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0,
+                List.of(gd.playerGraveyards.get(player1.getId()).getFirst().getId()));
         harness.handlePermanentChosen(player1, bears);
         harness.handlePermanentChosen(player1, elves);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-
-        harness.handleGraveyardCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         harness.assertOnBattlefield(player1, "Angel of Mercy");
         harness.assertNotInGraveyard(player1, "Angel of Mercy");
@@ -145,53 +142,31 @@ class WhisperBloodLiturgistTest extends BaseCardTest {
         UUID bears = gd.playerBattlefields.get(player1.getId()).get(1).getId();
         UUID elves = gd.playerBattlefields.get(player1.getId()).get(2).getId();
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0,
+                List.of(gd.playerGraveyards.get(player1.getId()).getFirst().getId()));
         harness.handlePermanentChosen(player1, bears);
         harness.handlePermanentChosen(player1, elves);
         harness.passBothPriorities();
-
-        // Graveyard after sacrifice: [AngelOfMercy, GrizzlyBears, GrizzlyBears, LlanowarElves]
-        // Choose Angel of Mercy at index 0
-        harness.handleGraveyardCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Angel of Mercy");
     }
 
     @Test
-    @DisplayName("Sacrificed creatures are valid graveyard choices at resolution")
-    void sacrificedCreaturesAreValidGraveyardChoices() {
-        addReadyWhisper(player1);
+    @DisplayName("Cannot activate with an empty graveyard even when two creatures can be sacrificed")
+    void cannotActivateWithEmptyGraveyard() {
+        Permanent whisper = addReadyWhisper(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new LlanowarElves());
-        // Empty graveyard — sacrificed creatures will be the only options
         harness.setGraveyard(player1, List.of());
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        UUID bears = gd.playerBattlefields.get(player1.getId()).get(1).getId();
-        UUID elves = gd.playerBattlefields.get(player1.getId()).get(2).getId();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, bears);
-        harness.handlePermanentChosen(player1, elves);
-        harness.passBothPriorities();
-
-        // Graveyard should contain the two sacrificed creatures
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-
-        // Choose one of the sacrificed creatures
-        harness.handleGraveyardCardChosen(player1, 0);
-
-        // One of the sacrificed creatures should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .filteredOn(p -> p.getCard().getName().equals("Grizzly Bears")
-                        || p.getCard().getName().equals("Llanowar Elves"))
-                .hasSize(1);
+        assertThat(whisper.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
-
-    // ===== ETB on returned creature =====
 
     @Test
     @DisplayName("Returned creature's ETB ability triggers")
@@ -207,11 +182,11 @@ class WhisperBloodLiturgistTest extends BaseCardTest {
         UUID bears = gd.playerBattlefields.get(player1.getId()).get(1).getId();
         UUID elves = gd.playerBattlefields.get(player1.getId()).get(2).getId();
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0,
+                List.of(gd.playerGraveyards.get(player1.getId()).getFirst().getId()));
         harness.handlePermanentChosen(player1, bears);
         harness.handlePermanentChosen(player1, elves);
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
 
         // Angel of Mercy's ETB (gain 3 life) should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -222,8 +197,6 @@ class WhisperBloodLiturgistTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
     }
 
-    // ===== Validation — cannot activate =====
-
     @Test
     @DisplayName("Cannot activate with only Whisper on battlefield")
     void cannotActivateWithOnlyWhisper() {
@@ -232,7 +205,8 @@ class WhisperBloodLiturgistTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, 0, 0,
+                List.of(gd.playerGraveyards.get(player1.getId()).getFirst().getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough permanents to sacrifice");
     }
@@ -248,7 +222,8 @@ class WhisperBloodLiturgistTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, 0, 0,
+                List.of(gd.playerGraveyards.get(player1.getId()).getFirst().getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
@@ -264,38 +239,27 @@ class WhisperBloodLiturgistTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, 0, 0,
+                List.of(gd.playerGraveyards.get(player1.getId()).getFirst().getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sickness");
     }
 
-    // ===== Invalid graveyard choice =====
-
     @Test
-    @DisplayName("Cannot choose non-creature card from graveyard")
+    @DisplayName("Cannot target a non-creature card in the graveyard")
     void cannotChooseNonCreatureFromGraveyard() {
-        addReadyWhisper(player1);
+        Permanent whisper = addReadyWhisper(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new LlanowarElves());
-        harness.setGraveyard(player1, List.of(new HolyDay(), new AngelOfMercy()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        HolyDay holyDay = new HolyDay();
+        harness.setGraveyard(player1, List.of(holyDay, new AngelOfMercy()));
 
-        UUID bears = gd.playerBattlefields.get(player1.getId()).get(1).getId();
-        UUID elves = gd.playerBattlefields.get(player1.getId()).get(2).getId();
-
-        harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, bears);
-        harness.handlePermanentChosen(player1, elves);
-        harness.passBothPriorities();
-
-        // HolyDay is at index 0, not a creature
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid card index");
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(holyDay.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(whisper.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
     }
-
-    // ===== Stack is empty after full resolution =====
 
     @Test
     @DisplayName("Stack is empty after full resolution")
@@ -310,19 +274,17 @@ class WhisperBloodLiturgistTest extends BaseCardTest {
         UUID bears = gd.playerBattlefields.get(player1.getId()).get(1).getId();
         UUID elves = gd.playerBattlefields.get(player1.getId()).get(2).getId();
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0,
+                List.of(gd.playerGraveyards.get(player1.getId()).getFirst().getId()));
         harness.handlePermanentChosen(player1, bears);
         harness.handlePermanentChosen(player1, elves);
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
 
         // Angel of Mercy ETB is on the stack — resolve it
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
     }
-
-    // ===== No mana cost for ability =====
 
     @Test
     @DisplayName("Ability does not require mana")
@@ -338,22 +300,102 @@ class WhisperBloodLiturgistTest extends BaseCardTest {
         UUID elves = gd.playerBattlefields.get(player1.getId()).get(2).getId();
 
         // No mana added — should still work
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0,
+                List.of(gd.playerGraveyards.get(player1.getId()).getFirst().getId()));
         harness.handlePermanentChosen(player1, bears);
         harness.handlePermanentChosen(player1, elves);
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Angel of Mercy");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Whisper can sacrifice itself and another creature to return its announced target")
+    void canSacrificeWhisperItself() {
+        Permanent whisper = addReadyWhisper(player1);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new LlanowarElves());
+        AngelOfMercy target = new AngelOfMercy();
+        harness.setGraveyard(player1, List.of(target));
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        harness.handlePermanentChosen(player1, whisper.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Whisper, Blood Liturgist");
+        harness.assertInGraveyard(player1, "Whisper, Blood Liturgist");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Angel of Mercy");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature in the opponent's graveyard")
+    void cannotTargetOpponentsGraveyard() {
+        Permanent whisper = addReadyWhisper(player1);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new LlanowarElves());
+        AngelOfMercy opponentCard = new AngelOfMercy();
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(opponentCard));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(opponentCard.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(whisper.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("An ability with a removed target cannot return a different creature")
+    void removedTargetDoesNotAllowChoosingAnotherCreature() {
+        addReadyWhisper(player1);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        AngelOfMercy target = new AngelOfMercy();
+        harness.setGraveyard(player1, List.of(target, new GrizzlyBears()));
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, elves.getId());
+        // Model the announced target being exiled in response.
+        gd.playerGraveyards.get(player1.getId()).remove(target);
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Angel of Mercy");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Tapped creatures can be sacrificed and the ability taps Whisper")
+    void canSacrificeTappedCreatures() {
+        Permanent whisper = addReadyWhisper(player1);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        bears.tap();
+        elves.tap();
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, elves.getId());
+
+        assertThat(whisper.isTapped()).isTrue();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 
     private Permanent addReadyWhisper(Player player) {
-        WhisperBloodLiturgist card = new WhisperBloodLiturgist();
-        Permanent whisper = new Permanent(card);
+        Permanent whisper = harness.addToBattlefieldAndReturn(player, new WhisperBloodLiturgist());
         whisper.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(whisper);
         return whisper;
     }
 }
