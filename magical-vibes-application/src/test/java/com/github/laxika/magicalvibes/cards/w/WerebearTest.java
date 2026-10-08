@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Werebear.class, WoodlandDruid.class})
 class WerebearTest extends BaseCardTest {
@@ -95,6 +96,50 @@ class WerebearTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, werebear)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, werebear)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Werebear gains threshold immediately when its controller reaches seven cards")
+    void gainsThresholdWhenGraveyardReachesSevenCards() {
+        harness.setGraveyard(player1, graveyardWithCards(6));
+        Permanent werebear = addCreatureReady(player1, new Werebear());
+
+        assertThat(gqs.getEffectivePower(gd, werebear)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, werebear)).isEqualTo(1);
+
+        harness.setGraveyard(player1, graveyardWithCards(7));
+
+        assertThat(gqs.getEffectivePower(gd, werebear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, werebear)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Summoning-sick Werebear cannot activate its tap mana ability")
+    void summoningSickCannotActivateManaAbility() {
+        Permanent werebear = harness.addToBattlefieldAndReturn(player1, new Werebear());
+        werebear.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(werebear.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Werebear cannot pay its tap cost again while tapped")
+    void tappedCannotActivateManaAbilityAgain() {
+        Permanent werebear = addCreatureReady(player1, new Werebear());
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(werebear.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 
     private List<Card> graveyardWithCards(int count) {
