@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishLookout;
 import com.github.laxika.magicalvibes.cards.h.HulkingOgre;
+import com.github.laxika.magicalvibes.cards.r.RecklessAbandon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,10 +10,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({YavimayaHollow.class, HulkingOgre.class, ElvishLookout.class})
+@CardUsed({YavimayaHollow.class, HulkingOgre.class, ElvishLookout.class, RecklessAbandon.class})
 class YavimayaHollowTest extends BaseCardTest {
 
     @Test
@@ -122,5 +125,59 @@ class YavimayaHollowTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(land.isTapped()).isFalse();
         assertThat(shroudedCreature.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("A regeneration shield saves a creature from lethal damage once")
+    void shieldReplacesLethalDamageOnce() {
+        harness.addToBattlefield(player1, new YavimayaHollow());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new HulkingOgre());
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new ElvishLookout());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(creature.getTimesRegeneratedThisTurn()).isZero();
+
+        harness.setHand(player1, List.of(new RecklessAbandon()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castSorceryWithSacrifice(player1, 0, creature.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hulking Ogre");
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(creature.getTimesRegeneratedThisTurn()).isEqualTo(1);
+
+        Permanent secondSacrifice = harness.addToBattlefieldAndReturn(player1, new ElvishLookout());
+        harness.setHand(player1, List.of(new RecklessAbandon()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castSorceryWithSacrifice(player1, 0, creature.getId(), secondSacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Hulking Ogre");
+        harness.assertInGraveyard(player1, "Hulking Ogre");
+    }
+
+    @Test
+    @DisplayName("Regeneration does not prevent sacrificing the protected creature")
+    void shieldDoesNotPreventSacrifice() {
+        harness.addToBattlefield(player1, new YavimayaHollow());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new HulkingOgre());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new RecklessAbandon()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castSorceryWithSacrifice(player1, 0, player2.getId(), creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Hulking Ogre");
+        harness.assertInGraveyard(player1, "Hulking Ogre");
+        assertThat(creature.getTimesRegeneratedThisTurn()).isZero();
     }
 }
