@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.x;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HarmsWay;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({XyrisTheWrithingStorm.class, GrizzlyBears.class})
+@CardUsed({XyrisTheWrithingStorm.class, GrizzlyBears.class, HarmsWay.class})
 class XyrisTheWrithingStormTest extends BaseCardTest {
 
     @Test
@@ -80,6 +83,97 @@ class XyrisTheWrithingStormTest extends BaseCardTest {
                 .containsExactly(player1Drawn1, player1Drawn2, player1Drawn3);
         assertThat(gd.playerHands.get(player2.getId()))
                 .containsExactly(player2Drawn1, player2Drawn2, player2Drawn3);
+    }
+
+    @Test
+    @DisplayName("Creates a Snake for the opponent's first draw outside their draw step")
+    void createsSnakeForFirstDrawOutsideDrawStep() {
+        harness.addToBattlefield(player1, new XyrisTheWrithingStorm());
+        harness.setLibrary(player2, List.of(new XyrisTheWrithingStorm()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        draw(player2);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Snake")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Does not create Snakes for its controller's draws")
+    void controllerDrawsDoNotCreateSnakes() {
+        harness.addToBattlefield(player1, new XyrisTheWrithingStorm());
+        harness.setLibrary(player1, List.of(new XyrisTheWrithingStorm(), new XyrisTheWrithingStorm()));
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        draw(player1);
+        draw(player1);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Snake")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Opponent draws during the controller's draw step still create Snakes")
+    void opponentDrawDuringControllersDrawStepCreatesSnake() {
+        harness.addToBattlefield(player1, new XyrisTheWrithingStorm());
+        harness.setLibrary(player2, List.of(new XyrisTheWrithingStorm()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+
+        draw(player2);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Snake")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A prior upkeep draw does not consume the draw-step exception")
+    void upkeepDrawDoesNotConsumeDrawStepException() {
+        harness.addToBattlefield(player1, new XyrisTheWrithingStorm());
+        harness.setLibrary(player2, List.of(new XyrisTheWrithingStorm(), new XyrisTheWrithingStorm()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        draw(player2);
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Snake")).hasSize(1);
+
+        harness.forceStep(TurnStep.DRAW);
+        draw(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Snake")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Redirected damage from a defending Xyris makes the active player draw first")
+    void activePlayerDrawsFirstForDefendingXyris() {
+        addCreatureReady(player1, new XyrisTheWrithingStorm());
+        Permanent blocker = addCreatureReady(player2, new XyrisTheWrithingStorm());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new HarmsWay()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new XyrisTheWrithingStorm(), new XyrisTheWrithingStorm()));
+        harness.setLibrary(player2, List.of(new XyrisTheWrithingStorm(), new XyrisTheWrithingStorm()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.handlePermanentChosen(player1, blocker.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        String activeDraw = gd.playerIdToName.get(player1.getId()) + " draws a card.";
+        String defendingDraw = gd.playerIdToName.get(player2.getId()) + " draws a card.";
+        assertThat(gd.gameLog.stream().map(entry -> entry.plainText())
+                .filter(text -> text.equals(activeDraw) || text.equals(defendingDraw)).toList())
+                .containsExactly(activeDraw, activeDraw, defendingDraw, defendingDraw);
     }
 
     private void draw(Player player) {
