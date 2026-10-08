@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({VenomousFangs.class, ShivanHellkite.class, BullHippo.class, CoralMerfolk.class,
@@ -101,6 +103,45 @@ class VenomousFangsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Bull Hippo");
         harness.assertInGraveyard(player2, "Venomous Fangs");
         harness.assertInGraveyard(player1, "Coral Merfolk");
+    }
+
+    @Test
+    @DisplayName("Casting the Aura on an opponent's creature enables its damage trigger")
+    void castAuraOnOpponentsCreature() {
+        Permanent source = addCreatureReady(player2, new ShivanHellkite());
+        Permanent target = addCreatureReady(player1, new BullHippo());
+        harness.setHand(player1, List.of(new VenomousFangs()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        gs.playCard(gd, player1, 0, 0, source.getId(), null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Venomous Fangs").getAttachedTo()).isEqualTo(source.getId());
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Bull Hippo");
+        harness.assertOnBattlefield(player2, "Shivan Hellkite");
+    }
+
+    @Test
+    @DisplayName("Destroys a damaged creature controlled by the enchanted creature's controller")
+    void destroysAnotherCreatureWithSameController() {
+        Permanent source = addCreatureReady(player1, new ShivanHellkite());
+        Permanent target = addCreatureReady(player1, new BullHippo());
+        attachFangs(player1, source);
+        addShivanHellkiteMana();
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Bull Hippo");
+        harness.assertOnBattlefield(player1, "Shivan Hellkite");
     }
 
     private void addShivanHellkiteMana() {
