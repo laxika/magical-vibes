@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.r.RusticClachan;
 import com.github.laxika.magicalvibes.model.Card;
@@ -85,7 +83,7 @@ class VendilionCliqueTest extends BaseCardTest {
         // Both lands remain; no draw happened.
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no nonland"));
+        assertThat(gameLogContains("no nonland")).isTrue();
     }
 
     @Test
@@ -95,7 +93,7 @@ class VendilionCliqueTest extends BaseCardTest {
         resolveVendilionCliqueTargeting(player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("empty"));
+        assertThat(gameLogContains("empty")).isTrue();
     }
 
     @Test
@@ -116,8 +114,7 @@ class VendilionCliqueTest extends BaseCardTest {
         harness.setLibrary(player1, new ArrayList<>(List.of(new RusticClachan())));
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.castCreature(player1, 0, player1.getId());
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         PendingInteraction.RevealedHandChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
@@ -132,11 +129,51 @@ class VendilionCliqueTest extends BaseCardTest {
                 .containsExactly("Rustic Clachan");
     }
 
+    @Test
+    @DisplayName("Looking at a hand does not publish its cards in the public log")
+    void handContentsRemainPrivate() {
+        harness.setHand(player2, List.of(new ElvishWarrior(), new RusticClachan()));
+        resolveVendilionCliqueTargeting(player2.getId());
+
+        assertThat(gameLogContains("Elvish Warrior")).isFalse();
+        assertThat(gameLogContains("Rustic Clachan")).isFalse();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gameLogContains("Elvish Warrior")).isTrue();
+        assertThat(gameLogContains("Rustic Clachan")).isFalse();
+    }
+
+    @Test
+    @DisplayName("An all-land hand remains private even when there is no choice prompt")
+    void allLandHandContentsRemainPrivate() {
+        harness.setHand(player2, List.of(new RusticClachan()));
+        resolveVendilionCliqueTargeting(player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Rustic Clachan")).isFalse();
+    }
+
+    @Test
+    @DisplayName("With an empty library the target draws the chosen card back")
+    void emptyLibraryDrawsChosenCardBack() {
+        ElvishWarrior chosen = new ElvishWarrior();
+        harness.setHand(player2, List.of(chosen));
+        harness.setLibrary(player2, List.of());
+        resolveVendilionCliqueTargeting(player2.getId());
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
     private void resolveVendilionCliqueTargeting(UUID targetPlayerId) {
         harness.setHand(player1, new ArrayList<>(List.of(new VendilionClique())));
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.castCreature(player1, 0, targetPlayerId);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
     }
 }
