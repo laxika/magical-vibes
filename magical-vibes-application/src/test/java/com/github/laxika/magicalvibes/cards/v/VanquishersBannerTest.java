@@ -2,13 +2,15 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
+import com.github.laxika.magicalvibes.cards.e.ElvishMystic;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,22 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VanquishersBanner.class, LlanowarElves.class, GoblinPiker.class, ElvishMystic.class})
 class VanquishersBannerTest extends BaseCardTest {
-
-    private static Card createCreature(String name, String manaCost, int power, int toughness,
-                                       CardColor color, CardSubtype... subtypes) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        card.setSubtypes(List.of(subtypes));
-        return card;
-    }
-
-    // ===== Entering the battlefield =====
 
     @Test
     @DisplayName("Casting and resolving Vanquisher's Banner prompts for creature type choice")
@@ -61,18 +49,14 @@ class VanquishersBannerTest extends BaseCardTest {
         assertThat(banner.getChosenSubtype()).isEqualTo(CardSubtype.ELF);
     }
 
-    // ===== Static +1/+1 boost =====
-
     @Test
     @DisplayName("Creatures you control of the chosen type get +1/+1")
     void boostsCreaturesOfChosenType() {
-        Card elf = createCreature("Llanowar Elves", "{G}", 1, 1, CardColor.GREEN, CardSubtype.ELF, CardSubtype.DRUID);
+        Card elf = new LlanowarElves();
         harness.addToBattlefield(player1, elf);
 
-        VanquishersBanner bannerCard = new VanquishersBanner();
-        Permanent bannerPerm = new Permanent(bannerCard);
+        Permanent bannerPerm = harness.addToBattlefieldAndReturn(player1, new VanquishersBanner());
         bannerPerm.setChosenSubtype(CardSubtype.ELF);
-        gd.playerBattlefields.get(player1.getId()).add(bannerPerm);
 
         Permanent elfPerm = findPermanent(player1, "Llanowar Elves");
 
@@ -84,13 +68,11 @@ class VanquishersBannerTest extends BaseCardTest {
     @Test
     @DisplayName("Creatures of a different type do not get the boost")
     void doesNotBoostDifferentType() {
-        Card goblin = createCreature("Goblin Piker", "{1}{R}", 2, 1, CardColor.RED, CardSubtype.GOBLIN, CardSubtype.WARRIOR);
+        Card goblin = new GoblinPiker();
         harness.addToBattlefield(player1, goblin);
 
-        VanquishersBanner bannerCard = new VanquishersBanner();
-        Permanent bannerPerm = new Permanent(bannerCard);
+        Permanent bannerPerm = harness.addToBattlefieldAndReturn(player1, new VanquishersBanner());
         bannerPerm.setChosenSubtype(CardSubtype.ELF);
-        gd.playerBattlefields.get(player1.getId()).add(bannerPerm);
 
         Permanent goblinPerm = findPermanent(player1, "Goblin Piker");
 
@@ -102,13 +84,11 @@ class VanquishersBannerTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent's creatures of the chosen type do not get the boost")
     void doesNotBoostOpponentCreatures() {
-        Card elf = createCreature("Llanowar Elves", "{G}", 1, 1, CardColor.GREEN, CardSubtype.ELF);
+        Card elf = new LlanowarElves();
         harness.addToBattlefield(player2, elf);
 
-        VanquishersBanner bannerCard = new VanquishersBanner();
-        Permanent bannerPerm = new Permanent(bannerCard);
+        Permanent bannerPerm = harness.addToBattlefieldAndReturn(player1, new VanquishersBanner());
         bannerPerm.setChosenSubtype(CardSubtype.ELF);
-        gd.playerBattlefields.get(player1.getId()).add(bannerPerm);
 
         Permanent elfPerm = findPermanent(player2, "Llanowar Elves");
 
@@ -120,7 +100,7 @@ class VanquishersBannerTest extends BaseCardTest {
     @Test
     @DisplayName("No boost if no creature type was chosen yet")
     void noBoostWithoutChoice() {
-        Card elf = createCreature("Llanowar Elves", "{G}", 1, 1, CardColor.GREEN, CardSubtype.ELF);
+        Card elf = new LlanowarElves();
         harness.addToBattlefield(player1, elf);
 
         // Add banner without setting chosen subtype
@@ -133,17 +113,13 @@ class VanquishersBannerTest extends BaseCardTest {
         assertThat(bonus.toughness()).isEqualTo(0);
     }
 
-    // ===== Cast trigger: draw a card =====
-
     @Test
     @DisplayName("Casting a creature of the chosen type triggers draw a card")
     void castingChosenTypeCreatureTriggersDrawCard() {
-        VanquishersBanner bannerCard = new VanquishersBanner();
-        Permanent bannerPerm = new Permanent(bannerCard);
+        Permanent bannerPerm = harness.addToBattlefieldAndReturn(player1, new VanquishersBanner());
         bannerPerm.setChosenSubtype(CardSubtype.ELF);
-        gd.playerBattlefields.get(player1.getId()).add(bannerPerm);
 
-        Card elf = createCreature("Llanowar Elves", "{G}", 1, 1, CardColor.GREEN, CardSubtype.ELF, CardSubtype.DRUID);
+        Card elf = new LlanowarElves();
         harness.setHand(player1, List.of(elf));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -158,12 +134,10 @@ class VanquishersBannerTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving cast-triggered ability draws a card")
     void castTriggerDrawsCard() {
-        VanquishersBanner bannerCard = new VanquishersBanner();
-        Permanent bannerPerm = new Permanent(bannerCard);
+        Permanent bannerPerm = harness.addToBattlefieldAndReturn(player1, new VanquishersBanner());
         bannerPerm.setChosenSubtype(CardSubtype.ELF);
-        gd.playerBattlefields.get(player1.getId()).add(bannerPerm);
 
-        Card elf = createCreature("Llanowar Elves", "{G}", 1, 1, CardColor.GREEN, CardSubtype.ELF);
+        Card elf = new LlanowarElves();
         harness.setHand(player1, List.of(elf));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -180,12 +154,10 @@ class VanquishersBannerTest extends BaseCardTest {
     @Test
     @DisplayName("Casting a creature of a different type does not trigger draw")
     void castingDifferentTypeDoesNotTrigger() {
-        VanquishersBanner bannerCard = new VanquishersBanner();
-        Permanent bannerPerm = new Permanent(bannerCard);
+        Permanent bannerPerm = harness.addToBattlefieldAndReturn(player1, new VanquishersBanner());
         bannerPerm.setChosenSubtype(CardSubtype.ELF);
-        gd.playerBattlefields.get(player1.getId()).add(bannerPerm);
 
-        Card goblin = createCreature("Goblin Piker", "{1}{R}", 2, 1, CardColor.RED, CardSubtype.GOBLIN, CardSubtype.WARRIOR);
+        Card goblin = new GoblinPiker();
         harness.setHand(player1, List.of(goblin));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -200,16 +172,14 @@ class VanquishersBannerTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent casting a creature of the chosen type does not trigger controller's Banner")
     void opponentCastingDoesNotTrigger() {
-        VanquishersBanner bannerCard = new VanquishersBanner();
-        Permanent bannerPerm = new Permanent(bannerCard);
+        Permanent bannerPerm = harness.addToBattlefieldAndReturn(player1, new VanquishersBanner());
         bannerPerm.setChosenSubtype(CardSubtype.ELF);
-        gd.playerBattlefields.get(player1.getId()).add(bannerPerm);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        Card elf = createCreature("Llanowar Elves", "{G}", 1, 1, CardColor.GREEN, CardSubtype.ELF);
+        Card elf = new LlanowarElves();
         harness.setHand(player2, List.of(elf));
         harness.addMana(player2, ManaColor.GREEN, 1);
 
@@ -226,7 +196,7 @@ class VanquishersBannerTest extends BaseCardTest {
         // Add banner without setting chosen subtype
         harness.addToBattlefield(player1, new VanquishersBanner());
 
-        Card elf = createCreature("Llanowar Elves", "{G}", 1, 1, CardColor.GREEN, CardSubtype.ELF);
+        Card elf = new LlanowarElves();
         harness.setHand(player1, List.of(elf));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -237,18 +207,14 @@ class VanquishersBannerTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
 
-    // ===== Boost removed when Banner leaves =====
-
     @Test
     @DisplayName("Boost is removed when Vanquisher's Banner leaves the battlefield")
     void boostRemovedWhenBannerLeaves() {
-        Card elf = createCreature("Llanowar Elves", "{G}", 1, 1, CardColor.GREEN, CardSubtype.ELF);
+        Card elf = new LlanowarElves();
         harness.addToBattlefield(player1, elf);
 
-        VanquishersBanner bannerCard = new VanquishersBanner();
-        Permanent bannerPerm = new Permanent(bannerCard);
+        Permanent bannerPerm = harness.addToBattlefieldAndReturn(player1, new VanquishersBanner());
         bannerPerm.setChosenSubtype(CardSubtype.ELF);
-        gd.playerBattlefields.get(player1.getId()).add(bannerPerm);
 
         // Verify boost is applied
         Permanent elfPerm = findPermanent(player1, "Llanowar Elves");
@@ -261,12 +227,70 @@ class VanquishersBannerTest extends BaseCardTest {
         assertThat(gqs.computeStaticBonus(gd, elfPerm).power()).isEqualTo(0);
     }
 
-    // ===== Full integration test =====
+    @Test
+    @DisplayName("Each Banner independently boosts and triggers for a creature with both chosen types")
+    void multipleBannersRecognizeDifferentSubtypesOfSameCreature() {
+        Permanent elfBanner = harness.addToBattlefieldAndReturn(player1, new VanquishersBanner());
+        elfBanner.setChosenSubtype(CardSubtype.ELF);
+        Permanent druidBanner = harness.addToBattlefieldAndReturn(player1, new VanquishersBanner());
+        druidBanner.setChosenSubtype(CardSubtype.DRUID);
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+
+        var bonus = gqs.computeStaticBonus(gd, elf);
+        assertThat(bonus.power()).isEqualTo(2);
+        assertThat(bonus.toughness()).isEqualTo(2);
+
+        harness.setLibrary(player1, List.of(new GoblinPiker(), new LlanowarElves()));
+        harness.setHand(player1, List.of(new LlanowarElves()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A chosen-type creature entering without being cast does not draw a card")
+    void enteringWithoutCastingDoesNotTrigger() {
+        Permanent banner = harness.addToBattlefieldAndReturn(player1, new VanquishersBanner());
+        banner.setChosenSubtype(CardSubtype.ELF);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        Permanent elf = harness.enterBattlefieldAndReturn(player1, new LlanowarElves());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gqs.computeStaticBonus(gd, elf).power()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The draw trigger still resolves after its Banner leaves the battlefield")
+    void drawTriggerSurvivesBannerLeaving() {
+        Permanent banner = harness.addToBattlefieldAndReturn(player1, new VanquishersBanner());
+        banner.setChosenSubtype(CardSubtype.ELF);
+        GoblinPiker drawnCard = new GoblinPiker();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(new LlanowarElves()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(banner);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
 
     @Test
     @DisplayName("Full flow: cast Banner, choose type, creature gets boost, casting creature draws a card")
     void fullIntegrationTest() {
-        Card elfOnBattlefield = createCreature("Elvish Mystic", "{G}", 1, 1, CardColor.GREEN, CardSubtype.ELF, CardSubtype.DRUID);
+        Card elfOnBattlefield = new ElvishMystic();
         harness.addToBattlefield(player1, elfOnBattlefield);
 
         harness.setHand(player1, List.of(new VanquishersBanner()));
@@ -286,7 +310,7 @@ class VanquishersBannerTest extends BaseCardTest {
         assertThat(bonus.toughness()).isEqualTo(1);
 
         // Now cast another Elf creature and verify draw trigger
-        Card anotherElf = createCreature("Llanowar Elves", "{G}", 1, 1, CardColor.GREEN, CardSubtype.ELF, CardSubtype.DRUID);
+        Card anotherElf = new LlanowarElves();
         harness.setHand(player1, List.of(anotherElf));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
