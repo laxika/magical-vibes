@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GhituFireEater;
 import com.github.laxika.magicalvibes.cards.g.GraniteGrip;
 import com.github.laxika.magicalvibes.cards.s.ShivanPhoenix;
 import com.github.laxika.magicalvibes.cards.s.Snap;
+import com.github.laxika.magicalvibes.cards.s.SteamBlast;
 import com.github.laxika.magicalvibes.cards.v.VigilantDrake;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WeatherseedFaeries.class, GhituFireEater.class, ShivanPhoenix.class, VigilantDrake.class,
-        AboutFace.class, Snap.class, GraniteGrip.class})
+        AboutFace.class, Snap.class, GraniteGrip.class, WalkingSponge.class, SteamBlast.class})
 class WeatherseedFaeriesTest extends BaseCardTest {
 
     @Test
@@ -122,6 +123,50 @@ class WeatherseedFaeriesTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, faeries.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from red");
+    }
+
+
+    @Test
+    @DisplayName("A blue creature without flying cannot block Weatherseed Faeries")
+    void nonFlyingBlueCreatureCannotBlock() {
+        Permanent faeries = addCreatureReady(player1, new WeatherseedFaeries());
+        faeries.setAttacking(true);
+        addCreatureReady(player2, new WalkingSponge());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A red creature's activated ability cannot target Weatherseed Faeries")
+    void cannotBeTargetedByRedActivatedAbility() {
+        addCreatureReady(player1, new GhituFireEater());
+        Permanent faeries = addCreatureReady(player2, new WeatherseedFaeries());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, faeries.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from red");
+    }
+
+    @Test
+    @DisplayName("Protection prevents untargeted red spell damage for either controller")
+    void preventsUntargetedRedSpellDamage() {
+        Permanent ownFaeries = addCreatureReady(player1, new WeatherseedFaeries());
+        Permanent opposingFaeries = addCreatureReady(player2, new WeatherseedFaeries());
+        Permanent drake = addCreatureReady(player2, new VigilantDrake());
+
+        harness.castFromHand(player1, new SteamBlast(), "{2}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Weatherseed Faeries");
+        harness.assertOnBattlefield(player2, "Weatherseed Faeries");
+        assertThat(ownFaeries.getMarkedDamage()).isZero();
+        assertThat(opposingFaeries.getMarkedDamage()).isZero();
+        assertThat(drake.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
     }
 
 }
