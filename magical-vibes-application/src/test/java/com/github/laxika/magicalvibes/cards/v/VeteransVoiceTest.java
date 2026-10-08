@@ -140,4 +140,105 @@ class VeteransVoiceTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(host.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("A summoning-sick enchanted creature can pay the tapping cost")
+    void canTapSummoningSickHost() {
+        setupAura();
+        host.setSummoningSick(true);
+
+        harness.activateAbility(player1, 1, null, other.getId());
+        harness.passBothPriorities();
+
+        assertThat(host.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The Aura being tapped does not prevent activation")
+    void canActivateTappedAura() {
+        setupAura();
+        aura.tap();
+
+        harness.activateAbility(player1, 1, null, other.getId());
+        harness.passBothPriorities();
+
+        assertThat(host.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Untapping the host permits another activation and the boosts stack")
+    void canActivateAgainAfterHostUntaps() {
+        setupAura();
+
+        harness.activateAbility(player1, 1, null, other.getId());
+        host.untap();
+        harness.activateAbility(player1, 1, null, other.getId());
+        resolveAllTriggers();
+
+        assertThat(host.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Moving the Aura onto the target does not make that target the creature tapped for the cost")
+    void targetRemainsLegalAfterAuraMovesOntoIt() {
+        setupAura();
+
+        harness.activateAbility(player1, 1, null, other.getId());
+        aura.setAttachedTo(other.getId());
+        harness.passBothPriorities();
+
+        assertThat(host.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The ability still resolves after the creature tapped for its cost dies")
+    void resolvesAfterHostDies() {
+        setupAura();
+
+        harness.activateAbility(player1, 1, null, other.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, host));
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(host, aura);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The Aura goes to the graveyard when its controller loses control of the enchanted creature")
+    void auraDiesWhenHostChangesController() {
+        setupAura();
+
+        gd.playerBattlefields.get(player1.getId()).remove(host);
+        gd.playerBattlefields.get(player2.getId()).add(host);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(host);
+        harness.assertInGraveyard(player1, "Veteran's Voice");
+    }
+
+    @Test
+    @DisplayName("Losing the target does not refund the creature tapped to pay the cost")
+    void targetDiesBeforeResolution() {
+        setupAura();
+
+        harness.activateAbility(player1, 1, null, other.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, other));
+        harness.passBothPriorities();
+
+        assertThat(host.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(other);
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(2);
+    }
 }
