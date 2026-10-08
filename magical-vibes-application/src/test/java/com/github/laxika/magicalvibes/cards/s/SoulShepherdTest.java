@@ -115,4 +115,32 @@ class SoulShepherdTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Serrated Biskelion"));
     }
+
+    @Test
+    @DisplayName("A tapped Soul Shepherd can activate repeatedly, paying a creature for each activation")
+    void tappedShepherdCanActivateRepeatedly() {
+        var shepherd = harness.addToBattlefieldAndReturn(player1, new SoulShepherd());
+        shepherd.setTapped(true);
+        shepherd.setSummoningSick(true);
+        harness.setGraveyard(player1, List.of(new BenalishKnight(), new SerratedBiskelion()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.assertLife(player1, 20);
+        harness.assertNotInGraveyard(player1, "Benalish Knight");
+        harness.passBothPriorities();
+        harness.assertLife(player1, 21);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.assertLife(player1, 21);
+        harness.assertNotInGraveyard(player1, "Serrated Biskelion");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
+        assertThat(shepherd.isTapped()).isTrue();
+    }
 }
