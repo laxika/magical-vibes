@@ -42,8 +42,62 @@ class VirtuousVariantTest extends BaseCardTest {
         harness.setHand(player1, List.of(new VirtuousVariant()));
         addVariantMana();
         harness.castCreature(player1, 0, targetId);
+        resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("On an empty battlefield the entry trigger can target Variant itself")
+    void canPutCounterOnItself() {
+        harness.castFromHand(player1, new VirtuousVariant(), "{2}{W}");
         harness.passBothPriorities();
+        Permanent variant = findPermanent(player1, "Virtuous Variant");
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, variant.getId());
+        resolveAllTriggers();
+
+        assertThat(variant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The entry trigger does not put a counter on a target now controlled by the opponent")
+    void targetChangingControllerBecomesIllegal() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new VirtuousVariant());
+        harness.setHand(player1, List.of(new VirtuousVariant()));
+        addVariantMana();
+        harness.castCreature(player1, 0, target.getId());
         harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        resolveAllTriggers();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The entry trigger resolves after Variant leaves the battlefield")
+    void triggerResolvesWithoutItsSource() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new VirtuousVariant());
+        harness.setHand(player1, List.of(new VirtuousVariant()));
+        addVariantMana();
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        Permanent source = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(target.getId()))
+                .findFirst().orElseThrow();
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        resolveAllTriggers();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addVariantMana() {
