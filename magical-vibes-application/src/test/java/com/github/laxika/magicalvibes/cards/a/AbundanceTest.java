@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.s.SharedFate;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -151,5 +152,81 @@ class AbundanceTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
                 .contains(bears.getId(), island.getId());
+    }
+
+    @Test
+    @DisplayName("Abundance does not replace an opponent's draw")
+    void doesNotReplaceOpponentsDraw() {
+        harness.addToBattlefield(player1, new Abundance());
+        Card forest = new Forest();
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(forest));
+
+        advanceToDraw(player2);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(forest);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Replacing a draw stops at the first matching card")
+    void stopsAtFirstMatchingCard() {
+        harness.addToBattlefield(player1, new Abundance());
+        Card forest = new Forest();
+        Card island = new Island();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(forest, island));
+
+        advanceToDraw(player1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "LAND");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.cardsDrawnThisTurn).doesNotContainKey(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Declining one Abundance still allows a second copy to replace the draw")
+    void canUseSecondCopyAfterDecliningFirst() {
+        harness.addToBattlefield(player1, new Abundance());
+        harness.addToBattlefield(player1, new Abundance());
+        Card forest = new Forest();
+        Card bears = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(forest, bears));
+
+        advanceToDraw(player1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "NONLAND");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.cardsDrawnThisTurn).doesNotContainKey(player1.getId());
+    }
+
+    @Test
+    @CardUsed({SharedFate.class})
+    @DisplayName("The drawing player can choose Abundance instead of Shared Fate")
+    void offersChoiceBeforeSharedFateReplacesDraw() {
+        harness.addToBattlefield(player1, new Abundance());
+        harness.addToBattlefield(player2, new SharedFate());
+        Card forest = new Forest();
+        Card island = new Island();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(forest));
+        harness.setLibrary(player2, List.of(island));
+
+        advanceToDraw(player1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(island);
+        assertThat(gd.findExiledCard(island.getId())).isNull();
     }
 }
