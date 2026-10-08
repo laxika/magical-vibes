@@ -24,8 +24,7 @@ class VenomousVinesTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         attachAura(creature);
 
-        castAt(creature);
-        harness.passBothPriorities();
+        castAndResolveAt(creature);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -38,8 +37,7 @@ class VenomousVinesTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new FaithsFetters());
         aura.setAttachedTo(land.getId());
 
-        castAt(land);
-        harness.passBothPriorities();
+        castAndResolveAt(land);
 
         harness.assertNotOnBattlefield(player2, "Forest");
         harness.assertInGraveyard(player2, "Forest");
@@ -71,15 +69,82 @@ class VenomousVinesTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
+    @Test
+    @DisplayName("Can destroy its controller's enchanted permanent")
+    void destroysOwnEnchantedPermanent() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new ArcaneFlight());
+        aura.setAttachedTo(creature.getId());
+
+        castAndResolveAt(creature);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Arcane Flight");
+    }
+
+    @Test
+    @DisplayName("Still destroys the target if one of two Auras leaves")
+    void destroysTargetWhileAnotherAuraRemains() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent removedAura = attachAura(creature);
+        attachAura(creature);
+
+        castAt(creature);
+        gd.playerBattlefields.get(player1.getId()).remove(removedAura);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Arcane Flight");
+    }
+
+    @Test
+    @DisplayName("Can destroy an Aura enchanted by another Aura")
+    void destroysEnchantedAuraWithoutDestroyingItsHost() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent targetAura = attachAura(creature);
+        Permanent outerAura = harness.addToBattlefieldAndReturn(player2, new FaithsFetters());
+        outerAura.setAttachedTo(targetAura.getId());
+
+        castAndResolveAt(targetAura);
+
+        harness.assertInGraveyard(player1, "Arcane Flight");
+        harness.assertInGraveyard(player2, "Faith's Fetters");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An Aura is not enchanted merely because it enchants a permanent")
+    void cannotTargetAuraWithoutAnAuraAttachedToIt() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent aura = attachAura(creature);
+        prepareSpell();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, aura.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be an enchanted permanent");
+    }
+
     private Permanent attachAura(Permanent creature) {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new ArcaneFlight());
         aura.setAttachedTo(creature.getId());
         return aura;
     }
 
-    private void castAt(Permanent target) {
+    private void prepareSpell() {
         harness.setHand(player1, List.of(new VenomousVines()));
         harness.addMana(player1, ManaColor.GREEN, 4);
+    }
+
+    private void castAt(Permanent target) {
+        prepareSpell();
         harness.castSorcery(player1, 0, target.getId());
+    }
+
+    private void castAndResolveAt(Permanent target) {
+        prepareSpell();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 }
