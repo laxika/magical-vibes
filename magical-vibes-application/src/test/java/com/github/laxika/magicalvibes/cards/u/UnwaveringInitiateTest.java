@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({UnwaveringInitiate.class})
 class UnwaveringInitiateTest extends BaseCardTest {
 
     private void setUpEmbalm() {
@@ -44,10 +46,9 @@ class UnwaveringInitiateTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities(); // resolve the Embalm ability
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Unwavering Initiate") && p.getCard().isToken())
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Unwavering Initiate");
 
+        assertThat(token.getCard().isToken()).isTrue();
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
         assertThat(token.getCard().getColors()).contains(CardColor.WHITE);
         assertThat(token.getCard().getSubtypes())
@@ -70,5 +71,62 @@ class UnwaveringInitiateTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.assertInGraveyard(player1, "Unwavering Initiate");
+    }
+
+    @Test
+    @DisplayName("Vigilance allows the original creature to attack without tapping")
+    void originalAttacksWithoutTapping() {
+        Permanent initiate = addCreatureReady(player1, new UnwaveringInitiate());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+
+        assertThat(initiate.isAttacking()).isTrue();
+        assertThat(initiate.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The embalmed token retains vigilance")
+    void embalmedTokenAttacksWithoutTapping() {
+        setUpEmbalm();
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        Permanent token = findPermanent(player1, "Unwavering Initiate");
+        token.setSummoningSick(false);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+
+        assertThat(token.isAttacking()).isTrue();
+        assertThat(token.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Embalm cannot be activated during upkeep")
+    void embalmCannotBeActivatedDuringUpkeep() {
+        setUpEmbalm();
+        harness.forceStep(TurnStep.UPKEEP);
+
+        Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Unwavering Initiate");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Embalm requires white mana and does not exile the card if payment fails")
+    void embalmRequiresWhiteMana() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player1, List.of(new UnwaveringInitiate()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Unwavering Initiate");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }
