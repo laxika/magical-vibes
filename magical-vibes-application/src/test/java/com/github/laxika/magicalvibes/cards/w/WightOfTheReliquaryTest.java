@@ -76,4 +76,103 @@ class WightOfTheReliquaryTest extends BaseCardTest {
     private Permanent addReadyWight(Player player) {
         return addCreatureReady(player, new WightOfTheReliquary());
     }
+
+    @Test
+    void boostUpdatesWhenCreatureCardsLeaveGraveyard() {
+        Permanent wight = addReadyWight(player1);
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        assertThat(gqs.getEffectivePower(gd, wight)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wight)).isEqualTo(3);
+
+        harness.setGraveyard(player1, List.of());
+
+        assertThat(gqs.getEffectivePower(gd, wight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wight)).isEqualTo(2);
+    }
+
+    @Test
+    void sacrificeBoostsWightBeforeSearchResolves() {
+        Permanent wight = addReadyWight(player1);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.getEffectivePower(gd, wight)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wight)).isEqualTo(3);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    void mayFailToFindEvenWithLandInLibrary() {
+        addReadyWight(player1);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void resolvesWithoutLandInLibrary() {
+        Permanent wight = addReadyWight(player1);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Shock shock = new Shock();
+        harness.setLibrary(player1, List.of(shock));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(shock);
+        assertThat(wight.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void cannotSacrificeOpponentsCreature() {
+        Permanent wight = addReadyWight(player1);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(wight.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent wight = addReadyWight(player1);
+        wight.setSummoningSick(true);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(wight.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent wight = addReadyWight(player1);
+        wight.setTapped(true);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
 }
