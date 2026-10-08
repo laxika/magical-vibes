@@ -52,4 +52,34 @@ class ViciousKavuTest extends BaseCardTest {
         assertThat(viciousKavu.getPowerModifier()).isEqualTo(0);
         assertThat(viciousKavu.getToughnessModifier()).isEqualTo(0);
     }
+
+    @Test
+    @DisplayName("Attacking boosts only the attacking copy")
+    void boostsOnlyAttackingCopy() {
+        Permanent attacker = addCreatureReady(player1, new ViciousKavu());
+        Permanent nonAttacker = addCreatureReady(player1, new ViciousKavu());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(2);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(0);
+        assertThat(nonAttacker.getPowerModifier()).isEqualTo(0);
+        assertThat(nonAttacker.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Attack trigger works for the other player")
+    void boostsWhenOtherPlayerAttacks() {
+        Permanent attacker = addCreatureReady(player2, new ViciousKavu());
+        Permanent opposingCopy = addCreatureReady(player1, new ViciousKavu());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(2);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(0);
+        assertThat(opposingCopy.getPowerModifier()).isEqualTo(0);
+        assertThat(opposingCopy.getToughnessModifier()).isEqualTo(0);
+    }
 }
