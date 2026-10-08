@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NikaraLairScavenger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,13 +16,13 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({YannikScavengingSentinel.class, GrizzlyBears.class, YotianSoldier.class})
+@CardUsed({YannikScavengingSentinel.class, NikaraLairScavenger.class, GrizzlyBears.class, YotianSoldier.class})
 class YannikScavengingSentinelTest extends BaseCardTest {
 
     @Test
     @DisplayName("Partner with lets the target player search for Nikara")
     void partnerWithSearchesTargetPlayersLibrary() {
-        Card nikara = namedCard("Nikara, Lair Scavenger");
+        Card nikara = new NikaraLairScavenger();
         harness.setLibrary(player2, List.of(nikara));
         harness.setHand(player2, List.of());
 
@@ -83,9 +84,76 @@ class YannikScavengingSentinelTest extends BaseCardTest {
         }
     }
 
-    private Card namedCard(String name) {
-        Card card = new Card();
-        card.setName(name);
-        return card;
+    @Test
+    void doesNotExileWhenYannikLeavesBeforeEntryTriggerResolves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent yannik = harness.enterBattlefieldAndReturn(player1, new YannikScavengingSentinel());
+        resolvePartnerWithNoSearch();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, yannik));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(creature.getCard());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void zeroTargetsStillExilesAndReturnsCreatureWhenYannikLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent yannik = harness.enterBattlefieldAndReturn(player1, new YannikScavengingSentinel());
+        resolvePartnerWithNoSearch();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature.getCard());
+        assertThat(yannik.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, yannik));
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(creature.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anySatisfy(returned -> {
+                    assertThat(returned.getCard()).isSameAs(creature.getCard());
+                    assertThat(returned.getId()).isNotEqualTo(creature.getId());
+                });
+    }
+
+    @Test
+    void usesPowerIncludingCountersAndCanPutCountersOnYannik() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        Permanent yannik = harness.enterBattlefieldAndReturn(player1, new YannikScavengingSentinel());
+        gd.pendingETBDamageAssignments = Map.of(yannik.getId(), 5);
+        resolvePartnerWithNoSearch();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, yannik.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(yannik.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature.getCard());
+    }
+
+    @Test
+    void countersAssignedToRemovedTargetAreNotRedistributed() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent otherTarget = harness.addToBattlefieldAndReturn(player2, new YotianSoldier());
+        Permanent yannik = harness.enterBattlefieldAndReturn(player1, new YannikScavengingSentinel());
+        gd.pendingETBDamageAssignments = Map.of(yannik.getId(), 1, otherTarget.getId(), 1);
+        resolvePartnerWithNoSearch();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, yannik.getId());
+        harness.handlePermanentChosen(player1, otherTarget.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, otherTarget));
+        harness.passBothPriorities();
+
+        assertThat(yannik.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature.getCard());
     }
 }
