@@ -55,4 +55,32 @@ class UtvaraScalperTest extends BaseCardTest {
 
         assertThat(scalper.isAttacking()).isFalse();
     }
+
+    @Test
+    @DisplayName("Each eligible Utvara Scalper must attack")
+    void everyEligibleCopyMustAttack() {
+        addCreatureReady(player1, new UtvaraScalper());
+        addCreatureReady(player1, new UtvaraScalper());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+
+        declareAttackers(List.of(0, 1));
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A tapped Utvara Scalper does not prevent another copy from attacking")
+    void onlyEligibleCopiesMustAttack() {
+        addCreatureReady(player1, new UtvaraScalper());
+        Permanent tappedScalper = addCreatureReady(player1, new UtvaraScalper());
+        tappedScalper.tap();
+
+        declareAttackers(List.of(0));
+
+        harness.assertLife(player2, 19);
+        assertThat(tappedScalper.isAttacking()).isFalse();
+    }
 }
