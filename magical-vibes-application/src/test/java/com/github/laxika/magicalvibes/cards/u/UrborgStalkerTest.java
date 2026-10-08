@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @CardUsed({UrborgStalker.class, ArdentMilitia.class, NullRod.class, WindingCanyons.class,
         LlanowarDruid.class})
 class UrborgStalkerTest extends BaseCardTest {
@@ -75,5 +77,47 @@ class UrborgStalkerTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Llanowar Druid");
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Multiple qualifying permanents still cause only 1 damage per Stalker")
+    void multipleQualifyingPermanentsCauseOnlyOneDamage() {
+        harness.addToBattlefield(player1, new UrborgStalker());
+        harness.addToBattlefield(player1, new ArdentMilitia());
+        harness.addToBattlefield(player1, new NullRod());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Each Stalker triggers independently during the opponent's upkeep")
+    void multipleStalkersEachDamageActivePlayer() {
+        harness.addToBattlefield(player1, new UrborgStalker());
+        harness.addToBattlefield(player2, new UrborgStalker());
+        harness.addToBattlefield(player2, new ArdentMilitia());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A qualifying permanent controlled by a nonactive player does not cause a trigger")
+    void nonactivePlayersPermanentDoesNotSatisfyCondition() {
+        harness.addToBattlefield(player1, new UrborgStalker());
+        harness.addToBattlefield(player1, new ArdentMilitia());
+        harness.addToBattlefield(player2, new WindingCanyons());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }
