@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WarrenPilferers.class, GoblinPiker.class, GrizzlyBears.class, HolyDay.class})
 class WarrenPilferersTest extends BaseCardTest {
 
     /** Casts Warren Pilferers and resolves it plus its ETB trigger, up to the graveyard choice. */
@@ -27,15 +29,12 @@ class WarrenPilferersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → enters, ETB pushed
-        harness.passBothPriorities(); // resolve ETB → graveyard choice prompt
+        resolveAllTriggers();
     }
 
     private Permanent findPilferers() {
         return findPermanent(player1, "Warren Pilferers");
     }
-
-    // ===== Base return =====
 
     @Test
     @DisplayName("Returns chosen creature card from graveyard to hand")
@@ -49,8 +48,6 @@ class WarrenPilferersTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
-
-    // ===== Conditional haste =====
 
     @Test
     @DisplayName("Returning a Goblin card grants Warren Pilferers haste until end of turn")
@@ -103,8 +100,6 @@ class WarrenPilferersTest extends BaseCardTest {
         assertThat(findPilferers().getGrantedKeywords()).doesNotContain(Keyword.HASTE);
     }
 
-    // ===== No valid targets =====
-
     @Test
     @DisplayName("No creatures in graveyard: no choice, no haste, creature still enters")
     void noCreaturesInGraveyard() {
@@ -116,8 +111,6 @@ class WarrenPilferersTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Warren Pilferers");
     }
 
-    // ===== Invalid choice =====
-
     @Test
     @DisplayName("Cannot choose a non-creature card from graveyard")
     void cannotChooseNonCreature() {
@@ -127,5 +120,51 @@ class WarrenPilferersTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0)) // HolyDay is not a creature
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid card index");
+    }
+
+    @Test
+    @DisplayName("The graveyard target must be chosen before the ETB ability resolves")
+    void choosesTargetWhenTriggerIsPutOnStack() {
+        harness.setGraveyard(player1, List.of(new GoblinPiker()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new WarrenPilferers()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.assertInGraveyard(player1, "Goblin Piker");
+        harness.assertNotInHand(player1, "Goblin Piker");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Goblin Piker");
+        assertThat(findPilferers().getGrantedKeywords()).contains(Keyword.HASTE);
+    }
+
+    @Test
+    @DisplayName("Returning a creature is mandatory when a legal creature card is available")
+    void cannotDeclineCreatureReturn() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        castAndResolveEtb();
+
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot return a creature from the opponent's graveyard")
+    void doesNotReturnOpponentsCreature() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new GoblinPiker()));
+        castAndResolveEtb();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+        harness.assertInGraveyard(player2, "Goblin Piker");
+        harness.assertNotInHand(player1, "Goblin Piker");
+        assertThat(findPilferers().getGrantedKeywords()).doesNotContain(Keyword.HASTE);
     }
 }
