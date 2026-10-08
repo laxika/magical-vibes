@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.f.FuelForTheCause;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WhiteSunsZenith.class, FuelForTheCause.class})
 class WhiteSunsZenithTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting puts it on the stack with correct X value")
@@ -30,11 +31,9 @@ class WhiteSunsZenithTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("White Sun's Zenith");
+        assertThat(entry.getCard()).isInstanceOf(WhiteSunsZenith.class);
         assertThat(entry.getXValue()).isEqualTo(3);
     }
-
-    // ===== Resolution: token creation =====
 
     @Test
     @DisplayName("X=3 creates 3 Cat tokens")
@@ -86,8 +85,6 @@ class WhiteSunsZenithTest extends BaseCardTest {
         assertThat(catTokenCount).isZero();
     }
 
-    // ===== Shuffle into library =====
-
     @Test
     @DisplayName("White Sun's Zenith is shuffled into library instead of going to graveyard")
     void shuffledIntoLibraryNotGraveyard() {
@@ -108,8 +105,6 @@ class WhiteSunsZenithTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("White Sun's Zenith"));
     }
 
-    // ===== Stack cleanup =====
-
     @Test
     @DisplayName("Stack is empty after resolution")
     void stackIsEmptyAfterResolution() {
@@ -119,6 +114,67 @@ class WhiteSunsZenithTest extends BaseCardTest {
         harness.castInstant(player1, 0, 1, null);
         harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("X=0 still shuffles the physical spell into its owner's library")
+    void xZeroStillShufflesIntoLibrary() {
+        WhiteSunsZenith zenith = new WhiteSunsZenith();
+        harness.setHand(player1, List.of(zenith));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        int librarySize = gd.playerDecks.get(player1.getId()).size();
+
+        harness.castInstant(player1, 0, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(librarySize + 1).contains(zenith);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertNotInGraveyard(player1, "White Sun's Zenith");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The second player's Zenith creates tokens for that player and returns to their library")
+    void secondPlayerReceivesTokensAndShuffledSpell() {
+        WhiteSunsZenith zenith = new WhiteSunsZenith();
+        harness.setHand(player2, List.of(zenith));
+        harness.addMana(player2, ManaColor.WHITE, 5);
+        int librarySize = gd.playerDecks.get(player2.getId()).size();
+
+        harness.castInstant(player2, 0, 2, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2)
+                .allSatisfy(token -> {
+                    assertThat(token.getCard().isToken()).isTrue();
+                    assertThat(token.isTapped()).isFalse();
+                    assertThat(token.isAttacking()).isFalse();
+                });
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySize + 1).contains(zenith);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(zenith);
+        harness.assertNotInGraveyard(player2, "White Sun's Zenith");
+    }
+
+    @Test
+    @DisplayName("Countering Zenith prevents token creation and sends it to the graveyard")
+    void counteredZenithDoesNotCreateTokensOrShuffleIntoLibrary() {
+        WhiteSunsZenith zenith = new WhiteSunsZenith();
+        harness.setHand(player1, List.of(zenith));
+        harness.setHand(player2, List.of(new FuelForTheCause()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        int librarySize = gd.playerDecks.get(player1.getId()).size();
+
+        harness.castInstant(player1, 0, 3, null);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, zenith.getId());
+
+        harness.assertInGraveyard(player1, "White Sun's Zenith");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(librarySize).doesNotContain(zenith);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 }
