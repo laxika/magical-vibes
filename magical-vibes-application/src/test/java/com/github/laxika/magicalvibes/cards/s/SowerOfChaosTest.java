@@ -138,6 +138,40 @@ class SowerOfChaosTest extends BaseCardTest {
         assertThat(sower.isCantBlockThisTurn()).isFalse();
     }
 
+    @Test
+    @DisplayName("The activated ability resolves after Sower dies")
+    void abilityResolvesAfterSourceDies() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BearCub());
+        readySower();
+        Permanent sower = findPermanent(player1, "Sower of Chaos");
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        sower.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Sower of Chaos");
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An ability whose target dies does not affect another creature")
+    void abilityDoesNotAffectReplacementCreatureWhenTargetDies() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BearCub());
+        readySower();
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        target.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player2, "Bear Cub");
+        Permanent replacement = harness.addToBattlefieldAndReturn(player2, new BearCub());
+        harness.passBothPriorities();
+
+        assertThat(replacement.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void readySower() {
         harness.addToBattlefield(player1, new SowerOfChaos());
         harness.forceActivePlayer(player1);
