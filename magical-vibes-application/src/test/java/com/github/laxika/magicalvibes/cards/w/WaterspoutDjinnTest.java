@@ -49,8 +49,7 @@ class WaterspoutDjinnTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(djinn);
         harness.assertNotOnBattlefield(player1, "Island");
-        assertThat(gd.playerHands.get(player1.getId()).stream()
-                .anyMatch(c -> c.getName().equals("Island"))).isTrue();
+        harness.assertInHand(player1, "Island");
     }
 
     @Test
@@ -116,5 +115,59 @@ class WaterspoutDjinnTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(djinn);
+    }
+
+    @Test
+    @DisplayName("An Island controlled by the Djinn's controller returns to its actual owner")
+    void returnsBorrowedIslandToOwner() {
+        Permanent djinn = addCreatureReady(player1, new WaterspoutDjinn());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        gd.stolenCreatures.put(island.getId(), player2.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(djinn);
+        harness.assertNotOnBattlefield(player1, "Island");
+        harness.assertInHand(player2, "Island");
+        harness.assertNotInHand(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("Only the untapped Island is returned when another Island is tapped")
+    void returnsOnlyUntappedIsland() {
+        Permanent djinn = addCreatureReady(player1, new WaterspoutDjinn());
+        Permanent tappedIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent untappedIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+
+        advanceToUpkeep(player1);
+        tappedIsland.tap();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(djinn, tappedIsland).doesNotContain(untappedIsland);
+        harness.assertInHand(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("Keeping the Djinn requires another payment on the next upkeep")
+    void paymentIsRequiredEachUpkeep() {
+        addCreatureReady(player1, new WaterspoutDjinn());
+        harness.addToBattlefield(player1, new Island());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertOnBattlefield(player1, "Waterspout Djinn");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Waterspout Djinn");
+        harness.assertInGraveyard(player1, "Waterspout Djinn");
+        harness.assertInHand(player1, "Island");
     }
 }
