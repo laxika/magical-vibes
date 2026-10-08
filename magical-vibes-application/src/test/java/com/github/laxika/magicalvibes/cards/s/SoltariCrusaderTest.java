@@ -91,4 +91,48 @@ class SoltariCrusaderTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Ability works while tapped and summoning sick with mixed mana")
+    void abilityWorksWhileTappedAndSummoningSick() {
+        Permanent crusader = harness.addToBattlefieldAndReturn(player1, new SoltariCrusader());
+        crusader.setSummoningSick(true);
+        crusader.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, crusader)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, crusader)).isEqualTo(1);
+        assertThat(crusader.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Crusader cannot block a creature without shadow")
+    void cannotBlockNonShadowAttacker() {
+        Permanent attacker = addCreatureReady(player1, new KnightOfDawn());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new SoltariCrusader());
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cannot block");
+    }
+
+    @Test
+    @DisplayName("Crusader can block a creature with shadow")
+    void canBlockShadowAttacker() {
+        Permanent attacker = addCreatureReady(player1, new SoltariFootSoldier());
+        attacker.setAttacking(true);
+        Permanent crusader = addCreatureReady(player2, new SoltariCrusader());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(crusader.isBlocking()).isTrue();
+    }
 }
