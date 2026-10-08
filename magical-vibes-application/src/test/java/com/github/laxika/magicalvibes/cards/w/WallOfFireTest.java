@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.cards.w;
+﻿package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -30,7 +30,7 @@ class WallOfFireTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Activating ability puts BoostSelf on the stack with self as target")
+    @DisplayName("Activating ability puts its source reference on the stack")
     void activatingAbilityPutsOnStack() {
         Permanent wall = addCreatureReady(player1, new WallOfFire());
         harness.addMana(player1, ManaColor.RED, 1);
@@ -150,5 +150,45 @@ class WallOfFireTest extends BaseCardTest {
 
         assertThat(wall.getPowerModifier()).isEqualTo(1);
         assertThat(wall.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Multiple activations stack and resolve independently")
+    void multipleActivationsResolveIndependently() {
+        Permanent wall = addCreatureReady(player1, new WallOfFire());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(wall.getEffectivePower()).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(wall.getEffectivePower()).isEqualTo(1);
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        assertThat(wall.getEffectivePower()).isEqualTo(2);
+        assertThat(wall.getEffectiveToughness()).isEqualTo(5);
+        assertThat(wall.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability can be activated during an opponent's turn")
+    void canActivateDuringOpponentsTurn() {
+        Permanent wall = addCreatureReady(player1, new WallOfFire());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wall.getEffectivePower()).isEqualTo(1);
+        assertThat(wall.getEffectiveToughness()).isEqualTo(5);
+        assertThat(wall.isTapped()).isFalse();
     }
 }
