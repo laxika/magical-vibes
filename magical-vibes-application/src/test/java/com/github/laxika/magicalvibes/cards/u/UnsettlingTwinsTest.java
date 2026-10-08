@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ParanormalAnalyst;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,19 +14,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UnsettlingTwins.class, GrizzlyBears.class, Forest.class, ParanormalAnalyst.class})
+@CardUsed({UnsettlingTwins.class, Forest.class, ParanormalAnalyst.class})
 class UnsettlingTwinsTest extends BaseCardTest {
 
     @Test
     void entersAndManifestsOneOfTheTopTwoCards() {
-        Card manifestedCard = new GrizzlyBears();
+        Card manifestedCard = new UnsettlingTwins();
         Card graveyardCard = new Forest();
-        harness.setHand(player1, List.of(new UnsettlingTwins()));
         harness.setLibrary(player1, List.of(manifestedCard, graveyardCard));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new UnsettlingTwins(), "{3}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -87,6 +82,54 @@ class UnsettlingTwinsTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(manifested)))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(manifested.isFaceDown()).isTrue();
+    }
+
+    @Test
+    void usesOnlyTheEnteringCreaturesControllersLibrary() {
+        Card manifestedCard = new Forest();
+        Card graveyardCard = new UnsettlingTwins();
+        Card opponentsCard = new Forest();
+        harness.setLibrary(player1, List.of(opponentsCard));
+        harness.setLibrary(player2, List.of(manifestedCard, graveyardCard));
+        harness.enterBattlefieldAndReturn(player2, new UnsettlingTwins());
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryRevealChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.allCards()).containsExactly(manifestedCard, graveyardCard);
+        harness.handleMultipleCardsChosen(player2, List.of(manifestedCard.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.isManifested()
+                        && permanent.getCard() == manifestedCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(graveyardCard);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(opponentsCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(Permanent::isManifested);
+    }
+
+    @Test
+    void analystReturnsTheUnchosenCardAfterManifesting() {
+        Card manifestedCard = new UnsettlingTwins();
+        Card graveyardCard = new Forest();
+        harness.addToBattlefield(player1, new ParanormalAnalyst());
+        harness.setLibrary(player1, List.of(manifestedCard, graveyardCard));
+        harness.enterBattlefieldAndReturn(player1, new UnsettlingTwins());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(manifestedCard.getId()));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardCard);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(graveyardCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.isManifested()
+                        && permanent.getCard() == manifestedCard);
     }
 
     @Test
