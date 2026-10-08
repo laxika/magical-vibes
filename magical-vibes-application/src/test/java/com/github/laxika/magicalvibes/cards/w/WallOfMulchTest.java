@@ -87,4 +87,50 @@ class WallOfMulchTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Wall of Mulch");
     }
+
+    @Test
+    @DisplayName("Sacrifice is paid before resolution and cannot use an opponent's Wall")
+    void sacrificesOwnWallAsCostBeforeDrawing() {
+        harness.addToBattlefield(player1, new WallOfMulch());
+        harness.addToBattlefield(player2, new WallOfMulch());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Wall of Mulch");
+        harness.assertInGraveyard(player1, "Wall of Mulch");
+        harness.assertOnBattlefield(player2, "Wall of Mulch");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Wall of Mulch");
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Wall can activate on the opponent's turn")
+    void canActivateTappedAndSummoningSickOnOpponentsTurn() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfMulch());
+        wall.tap();
+        wall.setSummoningSick(true);
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Wall of Mulch");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
 }
