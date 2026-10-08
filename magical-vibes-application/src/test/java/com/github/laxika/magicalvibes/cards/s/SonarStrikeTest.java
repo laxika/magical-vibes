@@ -49,10 +49,9 @@ class SonarStrikeTest extends BaseCardTest {
     @Test
     @DisplayName("Can target a blocking creature")
     void canTargetBlockingCreature() {
-        Permanent target = new Permanent(new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         target.setSummoningSick(false);
         target.setBlocking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(target);
 
         castSonarStrike(target.getId());
         harness.passBothPriorities();
@@ -75,10 +74,115 @@ class SonarStrikeTest extends BaseCardTest {
                 .hasMessageContaining("attacking, blocking, or tapped creature");
     }
 
+    @Test
+    @DisplayName("Can target an untapped attacking creature")
+    void canTargetUntappedAttackingCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setSummoningSick(false);
+        target.setAttacking(true);
+
+        castSonarStrike(target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An opponent's Bat does not grant life")
+    void opponentsBatDoesNotGrantLife() {
+        harness.setLife(player2, 15);
+        Permanent target = addTappedWall(player1);
+        harness.addToBattlefield(player1, new VampireBats());
+
+        castSonarStrike(target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+    }
+
+    @Test
+    @DisplayName("A Bat acquired before resolution grants life")
+    void batAcquiredBeforeResolutionGrantsLife() {
+        harness.setLife(player2, 15);
+        Permanent target = addTappedWall(player1);
+        castSonarStrike(target.getId());
+        harness.addToBattlefield(player2, new VampireBats());
+
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("A Bat lost before resolution does not grant life")
+    void batLostBeforeResolutionDoesNotGrantLife() {
+        harness.setLife(player2, 15);
+        Permanent target = addTappedWall(player1);
+        Permanent bat = harness.addToBattlefieldAndReturn(player2, new VampireBats());
+        castSonarStrike(target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(bat);
+        gd.playerGraveyards.get(player2.getId()).add(bat.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+    }
+
+    @Test
+    @DisplayName("An untapped noncombat target makes the whole spell fail to resolve")
+    void targetUntappedBeforeResolutionPreventsLifeGain() {
+        harness.setLife(player2, 15);
+        Permanent target = addTappedWall(player1);
+        harness.addToBattlefield(player2, new VampireBats());
+        castSonarStrike(target.getId());
+        target.untap();
+
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        harness.assertInGraveyard(player2, "Sonar Strike");
+    }
+
+    @Test
+    @DisplayName("A removed target prevents damage and life gain")
+    void removedTargetPreventsLifeGain() {
+        harness.setLife(player2, 15);
+        Permanent target = addTappedWall(player1);
+        harness.addToBattlefield(player2, new VampireBats());
+        castSonarStrike(target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerGraveyards.get(player1.getId()).add(target.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        harness.assertInGraveyard(player2, "Sonar Strike");
+    }
+
+    @Test
+    @DisplayName("A lethally damaged own Bat still grants life during resolution")
+    void lethallyDamagedOwnBatStillGrantsLife() {
+        harness.setLife(player2, 15);
+        Permanent bat = harness.addToBattlefieldAndReturn(player2, new VampireBats());
+        bat.tap();
+
+        castSonarStrike(bat.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertNotOnBattlefield(player2, "Vampire Bats");
+        harness.assertInGraveyard(player2, "Vampire Bats");
+    }
+
     private Permanent addTappedWall(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent wall = new Permanent(new WallOfTanglecord());
+        Permanent wall = harness.addToBattlefieldAndReturn(player, new WallOfTanglecord());
         wall.tap();
-        harness.getGameData().playerBattlefields.get(player.getId()).add(wall);
         return wall;
     }
 
