@@ -77,4 +77,43 @@ class UrzasMineTest extends BaseCardTest {
         assertThat(harness.getGameActionAvailabilityService()
                 .getPotentialManaTotal(gd, player1.getId())).isEqualTo(7);
     }
+
+    @Test
+    @DisplayName("Tapped Power-Plant and Tower still enable two colorless mana immediately")
+    void tappedSupportLandsStillEnableBonus() {
+        harness.addToBattlefield(player1, new UrzasMine());
+        harness.addToBattlefieldAndReturn(player1, new UrzasPowerPlant()).tap();
+        harness.addToBattlefieldAndReturn(player1, new UrzasTower()).tap();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Additional Power-Plants and Towers do not increase the Mine's output")
+    void duplicateSupportLandsDoNotIncreaseOutput() {
+        harness.addToBattlefield(player1, new UrzasMine());
+        harness.addToBattlefield(player1, new UrzasPowerPlant());
+        harness.addToBattlefield(player1, new UrzasPowerPlant());
+        harness.addToBattlefield(player1, new UrzasTower());
+        harness.addToBattlefield(player1, new UrzasTower());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A Tower controlled by an opponent does not complete the controller's Tron")
+    void splitControlDoesNotEnableBonus() {
+        harness.addToBattlefield(player1, new UrzasMine());
+        harness.addToBattlefield(player1, new UrzasPowerPlant());
+        harness.addToBattlefield(player2, new UrzasTower());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
 }
