@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BolaSlinger;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,32 +10,29 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VoldarenThrillseeker.class, GrizzlyBears.class})
+@CardUsed({VoldarenThrillseeker.class, BolaSlinger.class})
 class VoldarenThrillseekerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Backup puts two +1/+1 counters on another creature and grants the sacrifice damage ability")
     void backsUpAnotherCreature() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setSummoningSick(false);
+        Permanent slinger = harness.addToBattlefieldAndReturn(player1, new BolaSlinger());
         castVoldarenThrillseeker();
-        resolveEtbTargeting(bears);
+        resolveEtbTargeting(slinger);
 
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(slinger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         int opponentLife = gd.getLife(player2.getId());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        int bearsIndex = gd.playerBattlefields.get(player1.getId()).indexOf(bears);
-        harness.activateAbility(player1, bearsIndex, null, player2.getId());
+        int slingerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(slinger);
+        harness.activateAbility(player1, slingerIndex, null, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife - 4);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Bola Slinger");
     }
 
     @Test
@@ -50,30 +47,99 @@ class VoldarenThrillseekerTest extends BaseCardTest {
     @Test
     @DisplayName("Backup's granted sacrifice damage ability expires at the end of the turn")
     void grantedAbilityExpiresAtEndOfTurn() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent slinger = harness.addToBattlefieldAndReturn(player1, new BolaSlinger());
         castVoldarenThrillseeker();
-        resolveEtbTargeting(bears);
+        resolveEtbTargeting(slinger);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        int bearsIndex = gd.playerBattlefields.get(player1.getId()).indexOf(bears);
-        assertThatThrownBy(() -> harness.activateAbility(player1, bearsIndex, null, player2.getId()))
+        int slingerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(slinger);
+        assertThatThrownBy(() -> harness.activateAbility(player1, slingerIndex, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no activated ability");
+        assertThat(slinger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Thrillseeker can sacrifice itself immediately after entering and uses its counters for damage")
+    void sacrificesItselfWithBackupCounters() {
+        Permanent thrillseeker = castVoldarenThrillseeker();
+        resolveEtbTargeting(thrillseeker);
+        int opponentLife = gd.getLife(player2.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(thrillseeker);
+        harness.activateAbility(player1, index, null, player2.getId());
+
+        harness.assertInGraveyard(player1, "Voldaren Thrillseeker");
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife - 3);
+    }
+
+    @Test
+    @DisplayName("An opponent's creature can receive backup and its controller can activate the granted ability")
+    void backsUpOpponentsCreature() {
+        Permanent slinger = harness.addToBattlefieldAndReturn(player2, new BolaSlinger());
+        castVoldarenThrillseeker();
+        resolveEtbTargeting(slinger);
+        int controllerLife = gd.getLife(player1.getId());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        int index = gd.playerBattlefields.get(player2.getId()).indexOf(slinger);
+        harness.activateAbility(player2, index, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(controllerLife - 4);
+        harness.assertInGraveyard(player2, "Bola Slinger");
+        harness.assertOnBattlefield(player1, "Voldaren Thrillseeker");
+    }
+
+    @Test
+    @DisplayName("Backup still grants its ability after Thrillseeker is sacrificed in response")
+    void backupResolvesAfterSourceLeaves() {
+        Permanent slinger = harness.addToBattlefieldAndReturn(player1, new BolaSlinger());
+        Permanent thrillseeker = castVoldarenThrillseeker();
+        harness.handlePermanentChosen(player1, slinger.getId());
+        int opponentLife = gd.getLife(player2.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        int sourceIndex = gd.playerBattlefields.get(player1.getId()).indexOf(thrillseeker);
+        harness.activateAbility(player1, sourceIndex, null, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(slinger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        int slingerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(slinger);
+        harness.activateAbility(player1, slingerIndex, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife - 5);
+        harness.assertInGraveyard(player1, "Voldaren Thrillseeker");
+        harness.assertInGraveyard(player1, "Bola Slinger");
+    }
+
+    @Test
+    @DisplayName("The sacrifice ability can deal damage to a creature")
+    void dealsDamageToCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BolaSlinger());
+        Permanent thrillseeker = castVoldarenThrillseeker();
+        resolveEtbTargeting(thrillseeker);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(thrillseeker);
+        harness.activateAbility(player1, index, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Voldaren Thrillseeker");
+        harness.assertInGraveyard(player2, "Bola Slinger");
     }
 
     private Permanent castVoldarenThrillseeker() {
-        harness.setHand(player1, List.of(new VoldarenThrillseeker()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VoldarenThrillseeker(), "{2}{R}");
         harness.passBothPriorities();
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof VoldarenThrillseeker)
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Voldaren Thrillseeker");
     }
 
     private void resolveEtbTargeting(Permanent target) {
