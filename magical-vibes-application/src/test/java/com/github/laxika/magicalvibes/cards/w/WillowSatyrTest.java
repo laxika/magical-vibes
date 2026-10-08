@@ -106,6 +106,37 @@ class WillowSatyrTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(legendary);
     }
 
+    @Test
+    @DisplayName("Losing control of Willow Satyr before resolution prevents gaining control")
+    void losingSourceBeforeResolutionPreventsControl() {
+        Permanent satyr = addCreatureReady(player1, new WillowSatyr());
+        Permanent legendary = addCreatureReady(player2, new BarktoothWarbeard());
+        Permanent rubinia = addCreatureReady(player2, new RubiniaSoulsinger());
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(satyr),
+                null, legendary.getId());
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(rubinia),
+                null, satyr.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(satyr, legendary);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(satyr, legendary);
+        assertThat(satyr.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability can target a legendary creature already controlled by its controller")
+    void canTargetOwnLegendaryCreature() {
+        Permanent satyr = addCreatureReady(player1, new WillowSatyr());
+        Permanent legendary = addCreatureReady(player1, new BarktoothWarbeard());
+
+        activateAbility(satyr, legendary);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(legendary);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(legendary);
+        assertThat(satyr.isTapped()).isTrue();
+    }
+
     private void activateAbility(Permanent satyr, Permanent target) {
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(satyr);
         harness.activateAbility(player1, index, null, target.getId());
