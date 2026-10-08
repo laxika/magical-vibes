@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.cards.s.ShuFootSoldiers;
+import com.github.laxika.magicalvibes.cards.o.OrnithopterOfParadise;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,13 +13,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VedalkenInfiltrator.class, Spellbook.class, ShuFootSoldiers.class})
+@CardUsed({VedalkenInfiltrator.class, OrnithopterOfParadise.class})
 class VedalkenInfiltratorTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Has base 1/3 without metalcraft")
-    void baseStatsWithoutMetalcraft() {
+    @DisplayName("Two artifacts do not enable metalcraft")
+    void twoArtifactsDoNotEnableMetalcraft() {
         Permanent infiltrator = harness.addToBattlefieldAndReturn(player1, new VedalkenInfiltrator());
+        harness.addToBattlefield(player1, new OrnithopterOfParadise());
+        harness.addToBattlefield(player1, new OrnithopterOfParadise());
 
         assertThat(gqs.getEffectivePower(gd, infiltrator)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, infiltrator)).isEqualTo(3);
@@ -30,9 +31,9 @@ class VedalkenInfiltratorTest extends BaseCardTest {
     @DisplayName("Gets +1/+0 with three artifacts")
     void getsBoostWithThreeArtifacts() {
         Permanent infiltrator = harness.addToBattlefieldAndReturn(player1, new VedalkenInfiltrator());
-        harness.addToBattlefield(player1, new Spellbook());
-        harness.addToBattlefield(player1, new Spellbook());
-        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new OrnithopterOfParadise());
+        harness.addToBattlefield(player1, new OrnithopterOfParadise());
+        harness.addToBattlefield(player1, new OrnithopterOfParadise());
 
         assertThat(gqs.getEffectivePower(gd, infiltrator)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, infiltrator)).isEqualTo(3);
@@ -42,9 +43,9 @@ class VedalkenInfiltratorTest extends BaseCardTest {
     @DisplayName("Loses the boost when artifact count drops below three")
     void losesBoostWhenArtifactRemoved() {
         Permanent infiltrator = harness.addToBattlefieldAndReturn(player1, new VedalkenInfiltrator());
-        harness.addToBattlefield(player1, new Spellbook());
-        harness.addToBattlefield(player1, new Spellbook());
-        Permanent thirdArtifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        harness.addToBattlefield(player1, new OrnithopterOfParadise());
+        harness.addToBattlefield(player1, new OrnithopterOfParadise());
+        Permanent thirdArtifact = harness.addToBattlefieldAndReturn(player1, new OrnithopterOfParadise());
 
         assertThat(gqs.getEffectivePower(gd, infiltrator)).isEqualTo(2);
 
@@ -57,9 +58,9 @@ class VedalkenInfiltratorTest extends BaseCardTest {
     @DisplayName("Opponent artifacts do not count for metalcraft")
     void opponentArtifactsDoNotCount() {
         Permanent infiltrator = harness.addToBattlefieldAndReturn(player1, new VedalkenInfiltrator());
-        harness.addToBattlefield(player2, new Spellbook());
-        harness.addToBattlefield(player2, new Spellbook());
-        harness.addToBattlefield(player2, new Spellbook());
+        harness.addToBattlefield(player2, new OrnithopterOfParadise());
+        harness.addToBattlefield(player2, new OrnithopterOfParadise());
+        harness.addToBattlefield(player2, new OrnithopterOfParadise());
 
         assertThat(gqs.getEffectivePower(gd, infiltrator)).isEqualTo(1);
     }
@@ -67,15 +68,57 @@ class VedalkenInfiltratorTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot be blocked")
     void cannotBeBlocked() {
-        Permanent blocker = addCreatureReady(player2, new ShuFootSoldiers());
+        Permanent blocker = addCreatureReady(player2, new OrnithopterOfParadise());
         Permanent infiltrator = addCreatureReady(player1, new VedalkenInfiltrator());
-        infiltrator.setAttacking(true);
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(infiltrator);
 
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Additional artifacts do not increase the metalcraft bonus")
+    void fourArtifactsStillGiveOnlyOnePower() {
+        Permanent infiltrator = harness.addToBattlefieldAndReturn(player1, new VedalkenInfiltrator());
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new OrnithopterOfParadise());
+        }
+
+        assertThat(gqs.getEffectivePower(gd, infiltrator)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, infiltrator)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Tapped artifact creatures count and are not boosted by metalcraft")
+    void tappedArtifactsCountWithoutReceivingBoost() {
+        Permanent infiltrator = harness.addToBattlefieldAndReturn(player1, new VedalkenInfiltrator());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new OrnithopterOfParadise());
+        artifact.setTapped(true);
+        harness.addToBattlefield(player1, new OrnithopterOfParadise());
+        harness.addToBattlefield(player1, new OrnithopterOfParadise());
+
+        assertThat(gqs.getEffectivePower(gd, infiltrator)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, artifact)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, artifact)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Unblockability remains active with metalcraft")
+    void cannotBeBlockedWithMetalcraft() {
+        Permanent blocker = addCreatureReady(player2, new OrnithopterOfParadise());
+        Permanent infiltrator = addCreatureReady(player1, new VedalkenInfiltrator());
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new OrnithopterOfParadise());
+        }
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(infiltrator);
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
                 .isInstanceOf(IllegalStateException.class)
