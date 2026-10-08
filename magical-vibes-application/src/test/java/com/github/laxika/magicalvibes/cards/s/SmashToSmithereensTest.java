@@ -30,8 +30,7 @@ class SmashToSmithereensTest extends BaseCardTest {
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player2.getId());
         UUID targetId = harness.getPermanentId(player2, "Rod of Ruin");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Rod of Ruin");
         harness.assertInGraveyard(player2, "Rod of Ruin");
@@ -47,8 +46,7 @@ class SmashToSmithereensTest extends BaseCardTest {
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player2.getId());
         UUID targetId = harness.getPermanentId(player2, "Tatterkite");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Tatterkite");
         harness.assertInGraveyard(player2, "Tatterkite");
@@ -64,8 +62,7 @@ class SmashToSmithereensTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Rod of Ruin");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         // Energy Field prevents damage from the player 1 spell because player 1 is its controller.
         harness.assertLife(player2, 20);
@@ -81,8 +78,7 @@ class SmashToSmithereensTest extends BaseCardTest {
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player2.getId());
         UUID targetId = harness.getPermanentId(player2, "Darksteel Plate");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         // Darksteel Plate is indestructible, still on battlefield
         harness.assertOnBattlefield(player2, "Darksteel Plate");
@@ -117,5 +113,38 @@ class SmashToSmithereensTest extends BaseCardTest {
 
         assertThat(gameLogContains("fizzles")).isTrue();
         harness.assertLife(player2, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Can destroy your own artifact and deal damage to you")
+    void destroysOwnArtifactAndDealsDamageToCaster() {
+        harness.addToBattlefield(player1, new Tatterkite());
+        harness.setHand(player1, List.of(new SmashToSmithereens()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        UUID targetId = harness.getPermanentId(player1, "Tatterkite");
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Tatterkite");
+        harness.assertInGraveyard(player1, "Tatterkite");
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Energy Field prevents opponent spell damage when the artifact survives")
+    void energyFieldPreventsDamageToIndestructibleArtifactController() {
+        harness.addToBattlefield(player2, new EnergyField());
+        harness.addToBattlefield(player2, new DarksteelPlate());
+        harness.setHand(player1, List.of(new SmashToSmithereens()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        UUID targetId = harness.getPermanentId(player2, "Darksteel Plate");
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertOnBattlefield(player2, "Darksteel Plate");
+        harness.assertOnBattlefield(player2, "Energy Field");
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
     }
 }
