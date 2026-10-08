@@ -151,4 +151,72 @@ class VisceridDroneTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, victim.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void snowSwampDestructionCannotBeRegenerated() {
+        addCreatureReady(player1, new VisceridDrone());
+        UUID fodderId = addCreatureReady(player1, new GrizzlyBears()).getId();
+        harness.addToBattlefield(player1, new SnowCoveredSwamp());
+        Permanent victim = addCreatureReady(player2, new Ornithopter());
+        victim.setRegenerationShield(1);
+
+        harness.activateAbility(player1, 0, 1, null, victim.getId());
+        harness.handlePermanentChosen(player1, fodderId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Snow-Covered Swamp");
+        harness.assertInGraveyard(player2, "Ornithopter");
+    }
+
+    @Test
+    void bothAbilitiesRejectNoncreatureTargets() {
+        addCreatureReady(player1, new VisceridDrone());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new SnowCoveredSwamp());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Swamp());
+
+        for (int abilityIndex = 0; abilityIndex < 2; abilityIndex++) {
+            int index = abilityIndex;
+            assertThatThrownBy(() -> harness.activateAbility(player1, 0, index, null, target.getId()))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Snow-Covered Swamp");
+    }
+
+    @Test
+    void opponentsSwampCannotPaySacrificeCost() {
+        addCreatureReady(player1, new VisceridDrone());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new SnowCoveredSwamp());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        for (int abilityIndex = 0; abilityIndex < 2; abilityIndex++) {
+            int index = abilityIndex;
+            assertThatThrownBy(() -> harness.activateAbility(player1, 0, index, null, target.getId()))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        harness.assertOnBattlefield(player2, "Snow-Covered Swamp");
+    }
+
+    @Test
+    void ownCreatureCanBeTargetedAndSacrificedToPayCost() {
+        Permanent source = addCreatureReady(player1, new VisceridDrone());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Swamp());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Swamp");
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Viscerid Drone");
+        assertThat(gd.stack).isEmpty();
+    }
 }
