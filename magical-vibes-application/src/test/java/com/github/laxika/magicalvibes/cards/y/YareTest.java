@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.n.NobleElephant;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Yare.class, NobleElephant.class, Plains.class})
+@CardUsed({Yare.class, NobleElephant.class, Plains.class, Boomerang.class})
 class YareTest extends BaseCardTest {
 
     @Test
@@ -147,14 +148,106 @@ class YareTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Yare can be cast at the beginning of combat before attackers are declared")
+    void canBeCastBeforeAttackersAreDeclared() {
+        Permanent blocker = addCreatureReady(player2, new NobleElephant());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        castYare(player2, blocker);
+
+        assertThat(blocker.getPowerModifier()).isEqualTo(3);
+        assertThat(blocker.getAdditionalBlocksUntilEndOfTurn()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Yare can target the defending player's creature at end of combat without attackers")
+    void canBeCastAtEndOfCombatWithoutAttackers() {
+        Permanent blocker = addCreatureReady(player2, new NobleElephant());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+
+        castYare(player2, blocker);
+
+        assertThat(blocker.getPowerModifier()).isEqualTo(3);
+        assertThat(blocker.getAdditionalBlocksUntilEndOfTurn()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Removing the last attacker in response does not invalidate Yare's target")
+    void stillResolvesAfterLastAttackerLeavesCombat() {
+        Permanent blocker = addCreatureReady(player2, new NobleElephant());
+        Permanent attacker = addAttacker();
+        harness.setHand(player2, List.of(new Yare()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.castInstant(player2, 0, blocker.getId());
+
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(blocker.getPowerModifier()).isEqualTo(3);
+        assertThat(blocker.getAdditionalBlocksUntilEndOfTurn()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Yare does not affect a target that leaves the battlefield before resolution")
+    void doesNotAffectRemovedTarget() {
+        Permanent blocker = addCreatureReady(player2, new NobleElephant());
+        addAttacker();
+        harness.setHand(player2, List.of(new Yare()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.castInstant(player2, 0, blocker.getId());
+
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(blocker.getPowerModifier()).isZero();
+        assertThat(blocker.getAdditionalBlocksUntilEndOfTurn()).isZero();
+        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(card -> card instanceof Yare);
+    }
+
+    @Test
+    @DisplayName("Two Yares stack their power boosts and additional blocking permissions")
+    void twoCopiesAllowBlockingFiveAttackers() {
+        Permanent blocker = addCreatureReady(player2, new NobleElephant());
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        for (int i = 0; i < 5; i++) {
+            addAttacker();
+        }
+
+        castYare(player2, blocker);
+        castYare(player2, blocker);
+
+        assertThat(blocker.getPowerModifier()).isEqualTo(6);
+        assertThat(blocker.getAdditionalBlocksUntilEndOfTurn()).isEqualTo(4);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(blockerIdx, 0),
+                new BlockerAssignment(blockerIdx, 1),
+                new BlockerAssignment(blockerIdx, 2),
+                new BlockerAssignment(blockerIdx, 3),
+                new BlockerAssignment(blockerIdx, 4)
+        ));
+
+        assertThat(blocker.getBlockingTargets()).containsExactlyInAnyOrder(0, 1, 2, 3, 4);
+    }
+
     private void castYare(Player caster, Permanent target) {
         harness.setHand(caster, List.of(new Yare()));
         harness.addMana(caster, ManaColor.WHITE, 3);
-        harness.castInstant(caster, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, target.getId());
     }
 
     private Permanent addAttacker() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         Permanent atk = addCreatureReady(player1, new NobleElephant());
         atk.setAttacking(true);
         atk.setAttackTarget(player2.getId());
