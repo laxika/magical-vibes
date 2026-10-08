@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Overrun;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +17,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Tanglesap.class, GrizzlyBears.class, AvatarOfMight.class})
+@CardUsed({Tanglesap.class, GrizzlyBears.class, AvatarOfMight.class, Overrun.class})
 class TanglesapTest extends BaseCardTest {
 
     @Test
@@ -105,11 +106,57 @@ class TanglesapTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castTanglesap();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isPreventedFromDealingDamage(gd, bears, true)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Prevents damage in both directions between creatures without trample")
+    void preventsDamageFromBothAttackerAndBlocker() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        castTanglesap();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An unblocked creature with trample still deals combat damage")
+    void allowsUnblockedTrampleDamage() {
+        addCreatureReady(player1, new AvatarOfMight());
+
+        castTanglesap();
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 12);
+    }
+
+    @Test
+    @DisplayName("A creature gaining trample after resolution is exempt from prevention")
+    void gainingTrampleAfterResolutionAllowsDamage() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        castTanglesap();
+        assertThat(gqs.isPreventedFromDealingDamage(gd, attacker, true)).isTrue();
+
+        harness.setHand(player1, List.of(new Overrun()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 15);
     }
 
     private void castTanglesap() {
