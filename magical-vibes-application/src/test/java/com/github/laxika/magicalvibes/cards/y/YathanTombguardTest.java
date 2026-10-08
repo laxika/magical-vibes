@@ -16,6 +16,76 @@ import static org.assertj.core.api.Assertions.assertThat;
 class YathanTombguardTest extends BaseCardTest {
 
     @Test
+    @CardUsed({YathanTombguard.class, Forest.class})
+    void tombguardWithNonPowerCounterTriggersForItsOwnDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        Permanent attacker = addCreatureReady(player1, new YathanTombguard());
+        attacker.setCounterCount(CounterType.CHARGE, 1);
+        attacker.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @CardUsed({YathanTombguard.class, Forest.class})
+    void eachCounteredCreatureTriggersEachTombguardSeparately() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        for (int i = 0; i < 2; i++) {
+            Permanent attacker = addCreatureReady(player1, new YathanTombguard());
+            attacker.setCounterCount(CounterType.CHARGE, 2);
+            attacker.setAttacking(true);
+        }
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        for (int i = 0; i < 3; i++) {
+            harness.passBothPriorities();
+        }
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @CardUsed({YathanTombguard.class, Forest.class})
+    void opposingCounteredCreatureDoesNotTriggerYourTombguard() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        Permanent defender = addCreatureReady(player1, new YathanTombguard());
+        defender.setTapped(true);
+        Permanent attacker = addCreatureReady(player2, new YathanTombguard());
+        attacker.setCounterCount(CounterType.CHARGE, 1);
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
     void counteredCreatureDealsCombatDamageDrawsAndLosesLife() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
