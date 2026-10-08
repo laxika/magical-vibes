@@ -20,6 +20,51 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class WildernessHypnotistTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Can target your own green creature and taps as a cost")
+    void canTargetOwnCreatureAndPaysTapCost() {
+        Permanent hypnotist = addCreatureReady(player1, new WildernessHypnotist());
+        Permanent target = addCreatureReady(player1, new NettleSentinel());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(hypnotist.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, target)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new WildernessHypnotist());
+        Permanent target = addCreatureReady(player2, new StigmaLasher());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two Hypnotists give cumulative reductions and allow negative power")
+    void reductionsAccumulate() {
+        addCreatureReady(player1, new WildernessHypnotist());
+        addCreatureReady(player1, new WildernessHypnotist());
+        Permanent target = addCreatureReady(player2, new StigmaLasher());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Stigma Lasher");
+    }
+
+    @Test
     @DisplayName("{T}: red target gets -2/-0 until end of turn")
     void redTargetGetsMinusTwoPower() {
         addCreatureReady(player1, new WildernessHypnotist());
