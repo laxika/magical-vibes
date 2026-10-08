@@ -84,11 +84,85 @@ class WorkshopEldersTest extends BaseCardTest {
                 .hasMessageContaining("Invalid permanent");
     }
 
+    @Test
+    @DisplayName("Animation survives turn cleanup and grants flying while Elders is present")
+    void animationSurvivesTurnCleanup() {
+        harness.addToBattlefieldAndReturn(player1, new WorkshopElders());
+        Permanent relic = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
+
+        resolveBeginningOfCombatTrigger();
+        harness.handlePermanentChosen(player1, relic.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.hasKeyword(gd, relic, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, relic, Keyword.INDESTRUCTIBLE)).isTrue();
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.isCreature(gd, relic)).isTrue();
+        assertThat(gqs.isArtifact(gd, relic)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, relic)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, relic)).isEqualTo(4);
+        assertThat(relic.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, relic, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not trigger at the beginning of an opponent's combat")
+    void doesNotTriggerDuringOpponentsTurn() {
+        harness.addToBattlefieldAndReturn(player1, new WorkshopElders());
+        Permanent relic = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.isCreature(gd, relic)).isFalse();
+        assertThat(relic.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The ability does not resolve if its target leaves the battlefield")
+    void missingTargetDoesNotResolve() {
+        harness.addToBattlefieldAndReturn(player1, new WorkshopElders());
+        Permanent relic = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
+
+        resolveBeginningOfCombatTrigger();
+        harness.handlePermanentChosen(player1, relic.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(relic);
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, harness::passBothPriorities);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(relic.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Animation remains after Elders leaves, but its flying grant ends")
+    void animationRemainsAfterEldersLeaves() {
+        Permanent elders = harness.addToBattlefieldAndReturn(player1, new WorkshopElders());
+        Permanent relic = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
+
+        resolveBeginningOfCombatTrigger();
+        harness.handlePermanentChosen(player1, relic.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        gd.playerBattlefields.get(player1.getId()).remove(elders);
+
+        assertThat(gqs.isCreature(gd, relic)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, relic)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, relic)).isEqualTo(4);
+        assertThat(relic.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, relic, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, relic, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
     private void resolveBeginningOfCombatTrigger() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
     }
 }
