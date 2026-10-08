@@ -51,9 +51,59 @@ class SnappingGnarlidTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gnarlid.getEffectivePower()).isEqualTo(2);
+        assertThat(gnarlid.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A land entering without being played triggers landfall and uses the stack")
+    void landEnteringWithoutBeingPlayedTriggers() {
+        Permanent gnarlid = harness.addToBattlefieldAndReturn(player1, new SnappingGnarlid());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gnarlid.getEffectivePower()).isEqualTo(2);
+        assertThat(gnarlid.getEffectiveToughness()).isEqualTo(2);
         harness.passBothPriorities();
 
+        assertThat(gnarlid.getEffectivePower()).isEqualTo(3);
+        assertThat(gnarlid.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Multiple land entries give cumulative boosts only to each trigger's source")
+    void multipleLandEntriesBoostEachGnarlid() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SnappingGnarlid());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SnappingGnarlid());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new SnappingGnarlid());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(gd.stack).hasSize(4);
+        for (int i = 0; i < 4; i++) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(first.getEffectivePower()).isEqualTo(4);
+        assertThat(first.getEffectiveToughness()).isEqualTo(4);
+        assertThat(second.getEffectivePower()).isEqualTo(4);
+        assertThat(second.getEffectiveToughness()).isEqualTo(4);
+        assertThat(opponent.getEffectivePower()).isEqualTo(2);
+        assertThat(opponent.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A nonland entering does not trigger landfall")
+    void nonlandEnteringDoesNotTrigger() {
+        Permanent gnarlid = harness.addToBattlefieldAndReturn(player1, new SnappingGnarlid());
+
+        harness.enterBattlefieldAndReturn(player1, new SnappingGnarlid());
+
+        assertThat(gd.stack).isEmpty();
         assertThat(gnarlid.getEffectivePower()).isEqualTo(2);
         assertThat(gnarlid.getEffectiveToughness()).isEqualTo(2);
     }
