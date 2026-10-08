@@ -98,11 +98,91 @@ class UnyaroTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         creature.tap();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+        harness.inMutationScope(() -> planar.step(gd, EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
         assertThat(creature.isTapped()).isTrue();
+    }
+    @Test
+    void creaturesRemainPhasedOutThroughBothPlayersUntapSteps() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        gd.planechase.planeswalkedToTurn = gd.turnNumber;
+        gd.planechase.planeswalkedToNamesThisTurn.add("Unyaro");
+
+        harness.inMutationScope(() -> planar.step(gd, EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
+        harness.passBothPriorities();
+        harness.performUntapStep(player2);
+        harness.performUntapStep(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ownCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opposingCreature);
+
+        harness.inMutationScope(() -> planar.finishPlaneswalk(gd, List.of()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingCreature);
+    }
+
+    @Test
+    void creaturesEnteringAfterTriggerAlsoPhaseOutOnResolution() {
+        gd.planechase.planeswalkedToTurn = gd.turnNumber;
+        gd.planechase.planeswalkedToNamesThisTurn.add("Unyaro");
+        harness.inMutationScope(() -> planar.step(gd, EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.tap();
+
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(creature);
+    }
+
+    @Test
+    void enteringUnyaroOnAnEarlierTurnDoesNotTriggerEndStepAbility() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.tap();
+        gd.planechase.planeswalkedToTurn = gd.turnNumber - 1;
+        gd.planechase.planeswalkedToNamesThisTurn.add("Unyaro");
+
+        harness.inMutationScope(() -> planar.step(gd, EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    void chaosTokensPhaseOutAndReturnWithoutCeasingToExist() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        List<Permanent> tokens = List.copyOf(gd.playerBattlefields.get(player1.getId()));
+        gd.planechase.planeswalkedToTurn = gd.turnNumber;
+        gd.planechase.planeswalkedToNamesThisTurn.add("Unyaro");
+
+        harness.inMutationScope(() -> planar.step(gd, EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
+        harness.passBothPriorities();
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContainAnyElementsOf(tokens);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).containsAll(tokens);
+
+        harness.inMutationScope(() -> planar.finishPlaneswalk(gd, List.of()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsAll(tokens);
+    }
+    @Test
+    void chaosCreatesTokensForTheCurrentPlanarController() {
+        harness.forceActivePlayer(player2);
+        gd.planechase.controllerId = player2.getId();
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2)
+                .allSatisfy(token -> assertThat(token.getCard().isToken()).isTrue());
     }
 }
