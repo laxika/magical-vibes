@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GloweringRogon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SmokespewInvoker.class, GrizzlyBears.class, Forest.class})
+@CardUsed({SmokespewInvoker.class, GrizzlyBears.class, Forest.class, GloweringRogon.class})
 class SmokespewInvokerTest extends BaseCardTest {
 
     @Test
@@ -77,7 +78,6 @@ class SmokespewInvokerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
@@ -98,10 +98,10 @@ class SmokespewInvokerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without seven generic and one black mana")
     void cannotActivateWithoutEnoughMana() {
-        harness.addToBattlefield(player1, new SmokespewInvoker());
+        Permanent invoker = harness.addToBattlefieldAndReturn(player1, new SmokespewInvoker());
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, invoker.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
@@ -109,12 +109,111 @@ class SmokespewInvokerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate with eight colorless mana and no black mana")
     void cannotActivateWithOnlyColorlessMana() {
-        harness.addToBattlefield(player1, new SmokespewInvoker());
+        Permanent invoker = harness.addToBattlefieldAndReturn(player1, new SmokespewInvoker());
         harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, invoker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Cannot activate with only six generic mana and one black mana")
+    void cannotActivateWithTooLittleGenericMana() {
+        Permanent invoker = harness.addToBattlefieldAndReturn(player1, new SmokespewInvoker());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, invoker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without choosing a target")
+    void cannotActivateWithoutTarget() {
+        harness.addToBattlefield(player1, new SmokespewInvoker());
+        addActivationMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .hasMessageContaining("requires a target");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent invoker = harness.addToBattlefieldAndReturn(player1, new SmokespewInvoker());
+        invoker.setTapped(true);
+        invoker.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GloweringRogon());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(invoker.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations cumulatively reduce toughness")
+    void repeatedActivationsStack() {
+        harness.addToBattlefield(player1, new SmokespewInvoker());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GloweringRogon());
+        harness.addMana(player1, ManaColor.COLORLESS, 14);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Glowering Rogon");
+        harness.assertInGraveyard(player2, "Glowering Rogon");
+    }
+
+    @Test
+    @DisplayName("An activated ability resolves after its source dies")
+    void resolvesAfterSourceDies() {
+        Permanent invoker = harness.addToBattlefieldAndReturn(player1, new SmokespewInvoker());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GloweringRogon());
+        harness.addMana(player1, ManaColor.COLORLESS, 14);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, invoker.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Smokespew Invoker");
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An ability whose target dies does not affect another creature")
+    void doesNotResolveForDeadTarget() {
+        harness.addToBattlefield(player1, new SmokespewInvoker());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SmokespewInvoker());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GloweringRogon());
+        harness.addMana(player1, ManaColor.COLORLESS, 14);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Smokespew Invoker");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(4);
+        harness.assertOnBattlefield(player1, "Smokespew Invoker");
     }
 
     private void addActivationMana() {
