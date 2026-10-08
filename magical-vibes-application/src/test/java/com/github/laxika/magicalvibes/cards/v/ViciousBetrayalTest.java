@@ -70,8 +70,7 @@ class ViciousBetrayalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
         assertThat(target.getToughnessModifier()).isEqualTo(0);
@@ -118,5 +117,63 @@ class ViciousBetrayalTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorceryWithSacrifices(player1, 0, cranialPlating.getId(), List.of()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Creatures are sacrificed during casting before the boost resolves")
+    void sacrificesArePaidBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DrossCrocodile());
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new DrossCrocodile());
+        harness.setHand(player1, List.of(new ViciousBetrayal()));
+        addMana();
+
+        harness.castSorceryWithSacrifices(player1, 0, target.getId(), List.of(sacrifice.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target).doesNotContain(sacrifice);
+        harness.assertInGraveyard(player1, "Dross Crocodile");
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The targeted creature can be sacrificed to pay the additional cost")
+    void canSacrificeTargetAndSpellDoesNotResolve() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DrossCrocodile());
+        harness.setHand(player1, List.of(new ViciousBetrayal()));
+        addMana();
+
+        harness.castSorceryWithSacrifices(player1, 0, target.getId(), List.of(target.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Dross Crocodile");
+        harness.assertInGraveyard(player1, "Dross Crocodile");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Vicious Betrayal");
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The same creature cannot be sacrificed twice")
+    void cannotSacrificeSameCreatureTwice() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DrossCrocodile());
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new DrossCrocodile());
+        harness.setHand(player1, List.of(new ViciousBetrayal()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifices(player1, 0, target.getId(),
+                List.of(sacrifice.getId(), sacrifice.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Dross Crocodile");
+        harness.assertNotInGraveyard(player1, "Dross Crocodile");
+        assertThat(gd.stack).isEmpty();
     }
 }
