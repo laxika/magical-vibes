@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.event.GameEventEnvelope;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -23,14 +25,8 @@ class WingbrightThiefTest extends BaseCardTest {
         Card land = new Forest();
         Card nonland = new ChildOfNight();
         harness.setHand(player2, new ArrayList<>(List.of(land, nonland)));
-        harness.setHand(player1, List.of(new WingbrightThief()));
         harness.setLibrary(player1, List.of(new Forest()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castCreature(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveThief();
 
         PendingInteraction.PerpetualTargetCardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PerpetualTargetCardChoice.class);
@@ -62,5 +58,80 @@ class WingbrightThiefTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("opponent");
+    }
+
+    @Test
+    void revealsOnlyNonlandCardsToBothPlayers() throws Exception {
+        Card land = new Forest();
+        Card nonland = new ChildOfNight();
+        harness.setHand(player2, List.of(land, nonland));
+        List<GameEventEnvelope> events = new ArrayList<>();
+
+        try (AutoCloseable ignored = harness.subscribeToGameEvents(batch -> events.addAll(batch.events()))) {
+            resolveThief();
+        }
+
+        assertThat(events)
+                .filteredOn(event -> event.fact() instanceof GameEventFact.PrivateReveal reveal
+                        && reveal.zone() == GameEventFact.RevealZone.HAND
+                        && reveal.subjectPlayerId().equals(player2.getId()))
+                .isNotEmpty()
+                .allSatisfy(event -> {
+                    GameEventFact.PrivateReveal reveal = (GameEventFact.PrivateReveal) event.fact();
+                    assertThat(reveal.cards()).extracting(GameEventFact.CardSnapshot::cardId)
+                            .containsExactly(nonland.getId());
+                    assertThat(event.audience().playerIds())
+                            .containsExactlyInAnyOrder(player1.getId(), player2.getId());
+                });
+    }
+
+    @Test
+    void emptyHandDoesNotRequireAChoice() {
+        harness.setHand(player2, List.of());
+
+        resolveThief();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void handWithOnlyLandsDoesNotRequireAChoice() {
+        Card land = new Forest();
+        harness.setHand(player2, List.of(land));
+
+        resolveThief();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(land);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void choiceIsMandatoryAndCannotSelectALandOrBeMadeByOpponent() {
+        harness.setHand(player2, List.of(new Forest(), new ChildOfNight()));
+        resolveThief();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleCardChosen(player1, 1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+    }
+
+    private void resolveThief() {
+        harness.setHand(player1, List.of(new WingbrightThief()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castCreature(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
     }
 }
