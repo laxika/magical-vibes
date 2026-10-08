@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +16,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VolcanicWind.class, GrizzlyBears.class, Forest.class})
+@CardUsed({VolcanicWind.class, FreshVolunteers.class, Forest.class})
 class VolcanicWindTest extends BaseCardTest {
 
     private void prepare() {
@@ -28,9 +28,9 @@ class VolcanicWindTest extends BaseCardTest {
     @Test
     @DisplayName("Divides damage equal to all creatures on the battlefield among target creatures")
     void dividesBattlefieldCreatureCountDamage() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new FreshVolunteers());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
         prepare();
 
         harness.castSorcery(player1, 0, Map.of(first.getId(), 2, second.getId(), 1));
@@ -44,7 +44,7 @@ class VolcanicWindTest extends BaseCardTest {
     @Test
     @DisplayName("Counts creatures but not other permanents")
     void countsOnlyCreaturesOnBattlefield() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
         harness.addToBattlefield(player1, new Forest());
         prepare();
 
@@ -70,9 +70,9 @@ class VolcanicWindTest extends BaseCardTest {
     @Test
     @DisplayName("Locks the creature count at cast time")
     void locksCreatureCountAtCastTime() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        harness.addToBattlefield(player1, new FreshVolunteers());
         prepare();
 
         harness.castSorcery(player1, 0, Map.of(target.getId(), 3));
@@ -87,7 +87,7 @@ class VolcanicWindTest extends BaseCardTest {
     @Test
     @DisplayName("Requires assignments to sum to the cast-time creature count")
     void assignmentsMustSumToCreatureCount() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
         prepare();
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of(target.getId(), 2)))
@@ -97,10 +97,73 @@ class VolcanicWindTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot assign damage to a player")
     void cannotTargetPlayer() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new FreshVolunteers());
         prepare();
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of(player2.getId(), 1)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+    @Test
+    @DisplayName("Cannot choose zero targets while creatures are on the battlefield")
+    void requiresTargetWhenCreaturesExist() {
+        harness.addToBattlefield(player1, new FreshVolunteers());
+        prepare();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Each target must be assigned at least one damage")
+    void rejectsZeroDamageAssignment() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        prepare();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                Map.of(first.getId(), 2, second.getId(), 0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetLand() {
+        harness.addToBattlefield(player1, new FreshVolunteers());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        prepare();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of(land.getId(), 1)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An illegal target's assigned damage is not redistributed")
+    void doesNotRedistributeDamageFromRemovedTarget() {
+        harness.addToBattlefield(player1, new FreshVolunteers());
+        Permanent removed = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        prepare();
+
+        harness.castSorcery(player1, 0, Map.of(removed.getId(), 2, remaining.getId(), 1));
+        harness.getGameData().playerBattlefields.get(player2.getId()).remove(removed);
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().playerBattlefields.get(player2.getId())).containsExactly(remaining);
+        assertThat(remaining.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Volcanic Wind");
+    }
+
+    @Test
+    @DisplayName("Creatures entering after casting do not increase assigned damage")
+    void enteringCreaturesDoNotIncreaseDamage() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        prepare();
+
+        harness.castSorcery(player1, 0, Map.of(target.getId(), 1));
+        harness.addToBattlefield(player1, new FreshVolunteers());
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().playerBattlefields.get(player2.getId())).containsExactly(target);
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
     }
 }
