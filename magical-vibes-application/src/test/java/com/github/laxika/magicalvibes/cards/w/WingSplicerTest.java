@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.b.BladeSplicer;
+import com.github.laxika.magicalvibes.cards.x.Xenograft;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -13,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WingSplicer.class, BladeSplicer.class, Xenograft.class})
 class WingSplicerTest extends BaseCardTest {
 
     
@@ -20,11 +23,7 @@ class WingSplicerTest extends BaseCardTest {
     @Test
     @DisplayName("ETB creates a 3/3 colorless Phyrexian Golem artifact creature token")
     void etbCreatesGolemToken() {
-        harness.setHand(player1, List.of(new WingSplicer()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new WingSplicer(), "{3}{U}");
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
@@ -45,11 +44,7 @@ class WingSplicerTest extends BaseCardTest {
     @Test
     @DisplayName("Golem token has flying from Wing Splicer's static ability")
     void golemTokenHasFlying() {
-        harness.setHand(player1, List.of(new WingSplicer()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new WingSplicer(), "{3}{U}");
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
@@ -73,11 +68,7 @@ class WingSplicerTest extends BaseCardTest {
     void grantsFlyingToOtherGolems() {
         harness.addToBattlefield(player1, new WingSplicer());
 
-        harness.setHand(player1, List.of(new WingSplicer()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new WingSplicer(), "{3}{U}");
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
@@ -96,28 +87,19 @@ class WingSplicerTest extends BaseCardTest {
     void opponentGolemsDoNotGetFlying() {
         harness.addToBattlefield(player1, new WingSplicer());
 
-        harness.setHand(player2, List.of(new WingSplicer()));
-        harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.forceActivePlayer(player2);
-        harness.castCreature(player2, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        harness.castFromHand(player2, new BladeSplicer(), "{2}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
 
-        Permanent p2WingSplicer = findPermanent(player2, "Wing Splicer");
-
-        // Player 2's Wing Splicer should not get flying from Player 1's Wing Splicer
-        assertThat(gqs.hasKeyword(gd, p2WingSplicer, Keyword.FLYING)).isFalse();
+        Permanent opponentGolem = findPermanent(player2, "Phyrexian Golem");
+        assertThat(gqs.hasKeyword(gd, opponentGolem, Keyword.FLYING)).isFalse();
     }
 
     @Test
     @DisplayName("Flying is lost when Wing Splicer leaves the battlefield")
     void flyingLostWhenWingSplicerLeaves() {
-        harness.setHand(player1, List.of(new WingSplicer()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new WingSplicer(), "{3}{U}");
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
@@ -132,5 +114,46 @@ class WingSplicerTest extends BaseCardTest {
 
         // Golem should no longer have flying
         assertThat(gqs.hasKeyword(gd, golemToken, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Wing Splicer grants flying to itself when Xenograft makes it a Golem")
+    void grantsFlyingToItselfWhenItBecomesAGolem() {
+        Permanent splicer = harness.addToBattlefieldAndReturn(player1, new WingSplicer());
+        harness.castFromHand(player1, new Xenograft(), "{4}{U}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GOLEM");
+
+        assertThat(gqs.hasKeyword(gd, splicer, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Wing Splicer grants flying to a Golem created by another card")
+    void grantsFlyingToGolemCreatedByBladeSplicer() {
+        harness.castFromHand(player1, new BladeSplicer(), "{2}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent golem = findPermanent(player1, "Phyrexian Golem");
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isFalse();
+
+        harness.castFromHand(player1, new WingSplicer(), "{3}{U}");
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isTrue();
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("ETB still creates a Golem after Wing Splicer leaves the battlefield")
+    void etbResolvesWithoutWingSplicer() {
+        harness.castFromHand(player1, new WingSplicer(), "{3}{U}");
+        harness.passBothPriorities();
+        Permanent splicer = findPermanent(player1, "Wing Splicer");
+        gd.playerBattlefields.get(player1.getId()).remove(splicer);
+        harness.passBothPriorities();
+
+        Permanent golem = findPermanent(player1, "Phyrexian Golem");
+        assertThat(golem.getEffectivePower()).isEqualTo(3);
+        assertThat(golem.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isFalse();
     }
 }
