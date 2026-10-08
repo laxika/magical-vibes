@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
@@ -16,7 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WreakHavoc.class, Cancel.class, Forest.class, FountainOfYouth.class, GrizzlyBears.class,
+@CardUsed({WreakHavoc.class, Boomerang.class, Cancel.class, Forest.class, FountainOfYouth.class, GrizzlyBears.class,
         Juggernaut.class})
 class WreakHavocTest extends BaseCardTest {
 
@@ -92,10 +93,42 @@ class WreakHavocTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, card.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Forest");
         harness.assertInGraveyard(player2, "Cancel");
+    }
+
+    @Test
+    @DisplayName("Wreak Havoc can destroy its controller's artifact")
+    void destroysOwnArtifact() {
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        setUpWreakHavoc(new WreakHavoc());
+
+        UUID targetId = harness.getPermanentId(player1, "Fountain of Youth");
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Fountain of Youth");
+        harness.assertInGraveyard(player1, "Fountain of Youth");
+    }
+
+    @Test
+    @DisplayName("Wreak Havoc does not resolve when its only target leaves the battlefield")
+    void doesNotResolveWithMissingTarget() {
+        harness.addToBattlefield(player2, new Forest());
+        setUpWreakHavoc(new WreakHavoc());
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        UUID targetId = harness.getPermanentId(player2, "Forest");
+        harness.castSorcery(player1, 0, targetId);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, targetId);
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Forest");
+        harness.assertNotInGraveyard(player2, "Forest");
+        harness.assertInGraveyard(player1, "Wreak Havoc");
+        harness.assertInGraveyard(player2, "Boomerang");
     }
 }
