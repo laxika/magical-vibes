@@ -165,4 +165,68 @@ class TheCelestialToymakerTest extends BaseCardTest {
     private Permanent addReadyToymaker() {
         return addCreatureReady(player1, new TheCelestialToymaker());
     }
+
+    @Test
+    void attackLooksAtOnlyTheTopThreeCards() {
+        addReadyToymaker();
+        Card first = new Forest();
+        Card second = new Island();
+        Card third = new Swamp();
+        Card fourth = new Forest();
+        harness.setLibrary(player1, List.of(first, second, third, fourth));
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId(), third.getId()));
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(first, second, third).doesNotContain(fourth);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    void defendingPlayerCanChooseEmptyFaceDownPile() {
+        addReadyToymaker();
+        Card first = new Forest();
+        Card second = new Island();
+        harness.setLibrary(player1, List.of(first, second));
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(first, second);
+        assertThat(gd.exiledCards).hasSize(2).allSatisfy(exiled -> assertThat(exiled.faceDown()).isFalse());
+        int lifeBeforeEndStep = gd.playerLifeTotals.get(player2.getId());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.assertLife(player2, lifeBeforeEndStep - 2);
+    }
+
+    @Test
+    void pileGroupingDoesNotCarryOverToTheNextTurn() {
+        addReadyToymaker();
+        Card card = new Forest();
+        harness.setLibrary(player1, List.of(card));
+        harness.setLibrary(player2, List.of(new Island(), new Swamp()));
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
+        harness.handleMayAbilityChosen(player2, true);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        int lifeAfterFirstEndStep = gd.playerLifeTotals.get(player2.getId());
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeAfterFirstEndStep);
+        harness.assertLife(player1, 20);
+    }
 }
