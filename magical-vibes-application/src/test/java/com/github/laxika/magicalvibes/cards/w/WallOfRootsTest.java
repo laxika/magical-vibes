@@ -110,4 +110,58 @@ class WallOfRootsTest extends BaseCardTest {
         assertThat(wall.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
     }
+
+    @Test
+    @DisplayName("A summoning-sick Wall can activate its mana ability without using the stack")
+    void summoningSickWallCanActivate() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfRoots());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(wall.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isEqualTo(1);
+        assertThat(wall.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The Wall can activate again on the opponent's next turn")
+    void canActivateOnOpponentsTurn() {
+        Permanent wall = addCreatureReady(player1, new WallOfRoots());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, null);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(wall.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Each Wall has its own once-per-turn activation limit")
+    void activationLimitIsPerPermanent() {
+        Permanent first = addCreatureReady(player1, new WallOfRoots());
+        Permanent second = addCreatureReady(player1, new WallOfRoots());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(first.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
