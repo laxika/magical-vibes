@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
+import com.github.laxika.magicalvibes.cards.a.AvenMindcensor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindlockOrb;
 import com.github.laxika.magicalvibes.cards.p.Peek;
@@ -25,7 +26,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HeadGames.class, GrizzlyBears.class, Peek.class, Plains.class, Swamp.class})
+@CardUsed({HeadGames.class, GrizzlyBears.class, Peek.class, Plains.class, Swamp.class,
+        PsychogenicProbe.class, MindlockOrb.class, AvenMindcensor.class})
 class HeadGamesTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -75,8 +77,7 @@ class HeadGamesTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(handCard1, handCard2)));
         setupOpponentLibrary();
 
-        castHeadGames();
-        harness.passBothPriorities();
+        resolveHeadGames();
 
         // Opponent's hand should be empty (cards moved to library)
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
@@ -99,8 +100,7 @@ class HeadGamesTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(handCard1, handCard2)));
         setupOpponentLibrary();
 
-        castHeadGames();
-        harness.passBothPriorities();
+        resolveHeadGames();
 
         int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
 
@@ -127,8 +127,7 @@ class HeadGamesTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(handCard1, handCard2)));
         setupOpponentLibrary();
 
-        castHeadGames();
-        harness.passBothPriorities();
+        resolveHeadGames();
 
         // Pick card 1
         harness.handleCardChosen(player1, 0);
@@ -158,8 +157,7 @@ class HeadGamesTest extends BaseCardTest {
         Card plains = new Plains();
         harness.setLibrary(player2, List.of(swamp, plains));
 
-        castHeadGames();
-        harness.passBothPriorities();
+        resolveHeadGames();
 
         // Library now has 3 cards (1 from hand + 2 original)
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(3);
@@ -190,8 +188,7 @@ class HeadGamesTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         setupOpponentLibrary();
 
-        castHeadGames();
-        harness.passBothPriorities();
+        resolveHeadGames();
 
         // No library search should be initiated
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -213,8 +210,7 @@ class HeadGamesTest extends BaseCardTest {
         setupOpponentLibrary();
         harness.setLife(player2, 20);
 
-        castHeadGames();
-        harness.passBothPriorities();
+        resolveHeadGames();
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
@@ -230,8 +226,7 @@ class HeadGamesTest extends BaseCardTest {
         setupOpponentLibrary();
         harness.setLife(player2, 20);
 
-        castHeadGames();
-        harness.passBothPriorities();
+        resolveHeadGames();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
@@ -247,8 +242,7 @@ class HeadGamesTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(handCard)));
         setupOpponentLibrary();
 
-        castHeadGames();
-        harness.passBothPriorities();
+        resolveHeadGames();
 
         // Should be in library search with 1 remaining
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -270,8 +264,7 @@ class HeadGamesTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(handCard)));
         setupOpponentLibrary();
 
-        castHeadGames();
-        harness.passBothPriorities();
+        resolveHeadGames();
 
         assertThatThrownBy(() -> harness.handleCardChosen(player2, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -285,8 +278,7 @@ class HeadGamesTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(handCard)));
         setupOpponentLibrary();
 
-        castHeadGames();
-        harness.passBothPriorities();
+        resolveHeadGames();
 
         assertThatThrownBy(() -> harness.handleCardChosen(player1, 999))
                 .isInstanceOf(IllegalStateException.class)
@@ -300,8 +292,7 @@ class HeadGamesTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(handCard)));
         setupOpponentLibrary();
 
-        castHeadGames();
-        harness.passBothPriorities();
+        resolveHeadGames();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isFalse();
 
@@ -319,8 +310,7 @@ class HeadGamesTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(handCard)));
         setupOpponentLibrary();
 
-        castHeadGames();
-        harness.passBothPriorities();
+        resolveHeadGames();
 
         harness.handleCardChosen(player1, 0);
 
@@ -339,8 +329,7 @@ class HeadGamesTest extends BaseCardTest {
         setupOpponentLibrary();
 
         harness.addMana(player1, ManaColor.BLACK, 5);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Caster's hand should be empty (Head Games was cast from it)
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -363,8 +352,7 @@ class HeadGamesTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(handCard1, handCard2)));
         setupOpponentLibrary();
 
-        castHeadGames();
-        harness.passBothPriorities();
+        resolveHeadGames();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("puts 2 cards from their hand on top of their library"));
     }
@@ -376,8 +364,7 @@ class HeadGamesTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(handCard)));
         setupOpponentLibrary();
 
-        castHeadGames();
-        harness.passBothPriorities();
+        resolveHeadGames();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("searches") && log.contains("library"));
     }
@@ -389,8 +376,7 @@ class HeadGamesTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(handCard)));
         setupOpponentLibrary();
 
-        castHeadGames();
-        harness.passBothPriorities();
+        resolveHeadGames();
 
         harness.handleCardChosen(player1, 0);
 
@@ -407,8 +393,7 @@ class HeadGamesTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(handCard1, handCard2)));
         setupOpponentLibrary();
 
-        castHeadGames();
-        harness.passBothPriorities();
+        resolveHeadGames();
 
         int initialSearchSize = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().size();
 
@@ -421,10 +406,61 @@ class HeadGamesTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-    private void castHeadGames() {
+    @Test
+    @CardUsed(AvenMindcensor.class)
+    @DisplayName("Opponent chooses hand order before the caster searches the top four cards")
+    void opponentOrdersHandBeforeRestrictedSearch() {
+        harness.addToBattlefield(player2, new AvenMindcensor());
+        harness.setHand(player2, List.of(new GrizzlyBears(), new Peek(), new Plains(),
+                new Swamp(), new GrizzlyBears()));
+        setupOpponentLibrary();
+
+        resolveHeadGames();
+
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("An initially empty library can return every former hand card")
+    void emptyLibraryReturnsFormerHand() {
+        Card bear = new GrizzlyBears();
+        Card peek = new Peek();
+        harness.setHand(player2, List.of(bear, peek));
+        harness.setLibrary(player2, List.of());
+
+        resolveHeadGames();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyInAnyOrder(bear, peek);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Head Games");
+    }
+
+    @Test
+    @CardUsed(MindlockOrb.class)
+    @DisplayName("Preventing the search still moves the opponent's entire hand into their library")
+    void preventedSearchMovesEntireHandIntoLibrary() {
+        Card bear = new GrizzlyBears();
+        Card peek = new Peek();
+        harness.addToBattlefield(player2, new MindlockOrb());
+        harness.setHand(player2, List.of(bear, peek));
+        harness.setLibrary(player2, List.of());
+
+        resolveHeadGames();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyInAnyOrder(bear, peek);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Head Games");
+    }
+
+    private void resolveHeadGames() {
         harness.setHand(player1, List.of(new HeadGames()));
         harness.addMana(player1, ManaColor.BLACK, 5);
-        harness.castSorcery(player1, 0, player2.getId());
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
     private void setupOpponentLibrary() {
