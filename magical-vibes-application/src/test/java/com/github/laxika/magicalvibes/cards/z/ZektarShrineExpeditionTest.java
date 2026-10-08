@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Zektar Shrine Expedition")
+@CardUsed({ZektarShrineExpedition.class, Forest.class})
 class ZektarShrineExpeditionTest extends BaseCardTest {
 
     @Test
@@ -77,8 +79,8 @@ class ZektarShrineExpeditionTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Elemental")).isZero();
     }
@@ -90,6 +92,96 @@ class ZektarShrineExpeditionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void landEnteringWithoutBeingPlayedTriggersLandfall() {
+        Permanent expedition = addExpedition();
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(expedition.getCounterCount(CounterType.QUEST)).isEqualTo(1);
+    }
+
+    @Test
+    void opponentsLandDoesNotTriggerLandfall() {
+        Permanent expedition = addExpedition();
+
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(expedition.getCounterCount(CounterType.QUEST)).isZero();
+    }
+
+    @Test
+    void twoQuestCountersAndAnotherCounterCannotPayCost() {
+        Permanent expedition = addExpedition();
+        expedition.setCounterCount(CounterType.QUEST, 2);
+        expedition.setCounterCount(CounterType.CHARGE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(expedition.getCounterCount(CounterType.QUEST)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(expedition);
+    }
+
+    @Test
+    void activationPaysCostsBeforeCreatingToken() {
+        Permanent expedition = addExpedition();
+        expedition.setCounterCount(CounterType.QUEST, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(expedition.getCounterCount(CounterType.QUEST)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(expedition);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(expedition.getCard());
+        assertThat(countPermanents(player1, "Elemental")).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
+    }
+
+    @Test
+    void exileUsesTheStackAtTheNextEndStep() {
+        Permanent expedition = addExpedition();
+        expedition.setCounterCount(CounterType.QUEST, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Elemental")).isZero();
+    }
+
+    @Test
+    void tokenCreatedDuringEndStepWaitsUntilFollowingEndStep() {
+        Permanent expedition = addExpedition();
+        expedition.setCounterCount(CounterType.QUEST, 3);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passBothPriorities());
+
+        assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Elemental")).isZero();
     }
 
     private Permanent addExpedition() {
