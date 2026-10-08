@@ -87,6 +87,52 @@ class SoramaroFirstToDreamTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Returning a land increases size immediately, before the draw resolves")
+    void sizeUpdatesDuringCostPaymentAndResolution() {
+        Permanent soramaro = addSoramaro();
+        OboroPalaceInTheClouds returnedLand = new OboroPalaceInTheClouds();
+        OboroPalaceInTheClouds drawnCard = new OboroPalaceInTheClouds();
+        harness.addToBattlefield(player1, returnedLand);
+        harness.setHand(player1, List.of(new OboroPalaceInTheClouds()));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(soramaro), 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2).contains(returnedLand).doesNotContain(drawnCard);
+        harness.assertNotOnBattlefield(player1, "Oboro, Palace in the Clouds");
+        assertThat(gqs.getEffectivePower(gd, soramaro)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, soramaro)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3).contains(drawnCard);
+        assertThat(gqs.getEffectivePower(gd, soramaro)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, soramaro)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick, returning a tapped land")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent soramaro = addSoramaro();
+        soramaro.setSummoningSick(true);
+        soramaro.setTapped(true);
+        harness.addToBattlefield(player1, new OboroPalaceInTheClouds());
+        findPermanent(player1, "Oboro, Palace in the Clouds").setTapped(true);
+        harness.setHand(player1, List.of(new OboroPalaceInTheClouds()));
+        OboroPalaceInTheClouds drawnCard = new OboroPalaceInTheClouds();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(soramaro), 0, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Oboro, Palace in the Clouds");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3).contains(drawnCard);
+        assertThat(soramaro.isTapped()).isTrue();
+    }
+
     private Permanent addSoramaro() {
         return addCreatureReady(player1, new SoramaroFirstToDream());
     }
