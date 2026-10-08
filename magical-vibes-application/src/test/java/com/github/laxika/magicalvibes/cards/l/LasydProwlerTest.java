@@ -24,9 +24,7 @@ class LasydProwlerTest extends BaseCardTest {
 
     private void prepareLibrary() {
         List<Card> library = gd.playerDecks.get(player1.getId());
-        while (library.size() > 10) {
-            library.removeFirst();
-        }
+        harness.setLibrary(player1, library.subList(library.size() - 10, library.size()));
     }
 
     @Test
@@ -40,8 +38,7 @@ class LasydProwlerTest extends BaseCardTest {
         prepareLibrary();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
 
         harness.handleMayAbilityChosen(player1, true);
@@ -62,8 +59,7 @@ class LasydProwlerTest extends BaseCardTest {
         prepareLibrary();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(10);
@@ -113,5 +109,64 @@ class LasydProwlerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Entering counts only your lands when the trigger resolves")
+    void enteringCountsCurrentControlledLands() {
+        harness.setHand(player1, List.of(new LasydProwler()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new Island());
+        prepareLibrary();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new Mountain());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(8);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Renew can target an opponent's creature and counts your lands at resolution")
+    void renewCountsCurrentGraveyardForOpponentTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LasydProwler());
+        harness.setGraveyard(player1, List.of(new LasydProwler(), new Island(), new LasydProwler()));
+        harness.setGraveyard(player2, List.of(new Island(), new Mountain(), new Island()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(card -> card instanceof LasydProwler);
+        harness.setGraveyard(player1, List.of(new Island(), new Mountain(), new LasydProwler()));
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Renew with no land cards still exiles its source and puts no counters")
+    void renewWithNoLands() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LasydProwler());
+        harness.setGraveyard(player1, List.of(new LasydProwler(), new LasydProwler()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
     }
 }
