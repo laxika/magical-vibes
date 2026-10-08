@@ -126,6 +126,62 @@ class ArcMageTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(mage);
     }
 
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new ArcMage());
+        harness.setHand(player1, List.of(new FlowstoneCrusher()));
+        addAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateAbilityWithDamageAssignments(
+                player1, 0, 0, null, Map.of(player2.getId(), 2)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate when already tapped")
+    void cannotActivateWhenTapped() {
+        Permanent mage = addReadyArcMage();
+        mage.tap();
+        harness.setHand(player1, List.of(new FlowstoneCrusher()));
+        addAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateAbilityWithDamageAssignments(
+                player1, 0, 0, null, Map.of(player2.getId(), 2)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without the required red mana")
+    void cannotActivateWithoutRedMana() {
+        addReadyArcMage();
+        harness.setHand(player1, List.of(new FlowstoneCrusher()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithDamageAssignments(
+                player1, 0, 0, null, Map.of(player2.getId(), 2)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The ability still deals damage after Arc Mage leaves the battlefield")
+    void dealsDamageAfterSourceLeavesBattlefield() {
+        Permanent mage = addReadyArcMage();
+        harness.setHand(player1, List.of(new FlowstoneCrusher()));
+        addAbilityMana();
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.activateAbilityWithDamageAssignments(player1, 0, 0, null, Map.of(player2.getId(), 2));
+        harness.handleCardChosen(player1, 0);
+        gd.playerBattlefields.get(player1.getId()).remove(mage);
+        gd.playerGraveyards.get(player1.getId()).add(mage.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore - 2);
+        harness.assertInGraveyard(player1, "Arc Mage");
+        harness.assertInGraveyard(player1, "Flowstone Crusher");
+    }
+
     private Permanent addReadyArcMage() {
         return addCreatureReady(player1, new ArcMage());
     }
