@@ -13,8 +13,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SoulShredder.class, GrizzlyBears.class, WrathOfGod.class})
+@CardUsed({SoulShredder.class, GrizzlyBears.class, WrathOfGod.class, Shock.class})
 class SoulShredderTest extends BaseCardTest {
 
     @Test
@@ -71,8 +72,124 @@ class SoulShredderTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(countPermanents(player1, "Soul Shredder")).isEqualTo(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getName().equals("Soul Shredder"));
+        harness.assertOnBattlefield(player1, "Soul Shredder");
+        harness.assertNotInGraveyard(player1, "Soul Shredder");
+    }
+
+    @Test
+    void graveyardAbilityTriggersForOpponentCreatureDeath() {
+        harness.setGraveyard(player1, List.of(new SoulShredder()));
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bears.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        Card shredder = gd.playerGraveyards.get(player1.getId()).getFirst();
+        assertThat(shredder.getPower()).isEqualTo(3);
+        assertThat(shredder.getToughness()).isEqualTo(3);
+    }
+
+    @Test
+    void graveyardAbilityTriggersOnceForSimultaneousDeaths() {
+        harness.setGraveyard(player1, List.of(new SoulShredder()));
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new WrathOfGod()));
+        harness.addMana(player2, ManaColor.WHITE, 4);
+
+        harness.castSorcery(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        Card shredder = gd.playerGraveyards.get(player1.getId()).getFirst();
+        assertThat(shredder.getPower()).isEqualTo(3);
+        assertThat(shredder.getToughness()).isEqualTo(3);
+    }
+
+    @Test
+    void sacrificeCostGrantsOnePerpetualBoostBeforeReturning() {
+        harness.setGraveyard(player1, List.of(new SoulShredder()));
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateGraveyardAbility(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        Permanent shredder = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gqs.getEffectivePower(gd, shredder)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shredder)).isEqualTo(3);
+    }
+
+    @Test
+    void crewAnimatesVehicleUsingSummoningSickCreature() {
+        Permanent shredder = harness.addToBattlefieldAndReturn(player1, new SoulShredder());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, shredder)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, shredder)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shredder)).isEqualTo(2);
+    }
+
+    @Test
+    void perpetualBoostImmediatelyAppliesToCrewedVehicle() {
+        Permanent shredder = harness.addToBattlefieldAndReturn(player1, new SoulShredder());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, shredder)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shredder)).isEqualTo(3);
+    }
+
+    @Test
+    void ownDeathAloneDoesNotTriggerPerpetualBoost() {
+        Permanent shredder = harness.addToBattlefieldAndReturn(player1, new SoulShredder());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, shredder.getId());
+
+        harness.assertInGraveyard(player1, "Soul Shredder");
+        assertThat(gd.stack).isEmpty();
+        Card card = gd.playerGraveyards.get(player1.getId()).stream()
+                .filter(c -> c.getName().equals("Soul Shredder")).findFirst().orElseThrow();
+        assertThat(card.getPower()).isEqualTo(2);
+        assertThat(card.getToughness()).isEqualTo(2);
+    }
+
+    @Test
+    void graveyardReturnCannotBeActivatedOutsideMainPhase() {
+        harness.setGraveyard(player1, List.of(new SoulShredder()));
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Soul Shredder");
     }
 }
