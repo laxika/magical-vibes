@@ -37,7 +37,7 @@ class SmellFearTest extends BaseCardTest {
     void mayOmitFightTarget() {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         ownCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
 
         cast(List.of(ownCreature.getId()));
         harness.handleMultiplePermanentsChosen(player1, List.of(ownCreature.getId()));
@@ -58,10 +58,126 @@ class SmellFearTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void cannotCastWithoutControlledCreatureTarget() {
+        prepareCard();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotChooseControlledCreatureAsSecondTarget() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareCard();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void fightsWhenThereAreNoCountersToProliferate() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        cast(List.of(first.getId(), second.getId()));
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Smell Fear");
+    }
+
+    @Test
+    void mayDeclineProliferateAndStillFight() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        first.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        cast(List.of(first.getId(), second.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(first.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void proliferatesOpposingPermanentAndEveryPlayerCounterKind() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        second.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        second.setCounterCount(CounterType.CHARGE, 2);
+        gd.playerPoisonCounters.put(player2.getId(), 1);
+        gd.playerEnergyCounters.put(player2.getId(), 2);
+
+        cast(List.of(first.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId(), player2.getId()));
+
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(2);
+        assertThat(gd.playerEnergyCounters.get(player2.getId())).isEqualTo(3);
+        assertThat(first.getCounters()).isEmpty();
+        assertThat(first.getMarkedDamage()).isZero();
+        assertThat(second.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void stillProliferatesWhenFirstTargetLeavesButSecondRemains() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        second.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        prepareCard();
+        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Smell Fear");
+    }
+
+    @Test
+    void stillProliferatesWhenSecondTargetLeavesButFirstRemains() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        first.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareCard();
+        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(second);
+
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(first.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Smell Fear");
+    }
+
+    @Test
+    void doesNotProliferateWhenOnlyTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        other.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        prepareCard();
+        harness.castSorcery(player1, 0, List.of(target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+
+        harness.passBothPriorities();
+
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Smell Fear");
+    }
+
     private void cast(List<java.util.UUID> targetIds) {
         prepareCard();
-        harness.castSorcery(player1, 0, targetIds);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetIds);
     }
 
     private void prepareCard() {
