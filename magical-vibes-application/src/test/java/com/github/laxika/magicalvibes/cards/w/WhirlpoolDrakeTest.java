@@ -94,6 +94,49 @@ class WhirlpoolDrakeTest extends BaseCardTest {
         assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains(playerTwoName + " draws"));
     }
 
+    @Test
+    @DisplayName("Its enters ability uses the hand size when the trigger resolves")
+    void entersUsesHandSizeAtResolution() {
+        harness.setHand(player1, List.of(new WhirlpoolDrake(), new GoblinLegionnaire()));
+        harness.setLibrary(player1, libraryWithThreeCards());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new GoblinLegionnaire(), new GoblinLegionnaire()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        String playerName = gd.playerIdToName.get(player1.getId());
+        assertThat(gameLogContains(playerName + " shuffles 2 cards from hand into their library.")).isTrue();
+        assertThat(gameLogContains(playerName + " draws 2 cards.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Its death ability shuffles the hand before drawing from an empty library")
+    void diesWithEmptyLibraryDrawsShuffledHand() {
+        Card first = new GoblinLegionnaire();
+        Card second = new GoblinLegionnaire();
+        harness.setHand(player1, List.of(first, second));
+        harness.setLibrary(player1, List.of());
+        Permanent drake = harness.addToBattlefieldAndReturn(player1, new WhirlpoolDrake());
+        harness.addToBattlefield(player2, new GoblinLegionnaire());
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.activateAbility(player2, 0, 0, null, drake.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Whirlpool Drake");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        String playerName = gd.playerIdToName.get(player1.getId());
+        assertThat(gameLogContains(playerName + " shuffles 2 cards from hand into their library.")).isTrue();
+        assertThat(gameLogContains(playerName + " draws 2 cards.")).isTrue();
+    }
+
     private List<Card> libraryWithThreeCards() {
         return List.of(new GoblinLegionnaire(), new GoblinLegionnaire(), new GoblinLegionnaire());
     }
