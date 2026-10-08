@@ -3,6 +3,9 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PrecognitionField;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -56,22 +59,100 @@ class WranglerOfTheDamnedTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castFromLibraryTop(player1, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveFromLibraryTop(player1, player2.getId());
         advanceToEndStep(player1);
 
         assertThat(findPermanents(player1, "Spirit")).hasSize(1);
     }
 
-    private Permanent addWrangler() {
-        return harness.addToBattlefieldAndReturn(player1, new WranglerOfTheDamned());
+    @Test
+    void doesNotTriggerDuringOpponentsEndStep() {
+        addWrangler();
+
+        advanceToEndStep(player2);
+
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+    }
+
+    @Test
+    void opponentsHandSpellDoesNotPreventToken() {
+        addWrangler();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        advanceToEndStep(player1);
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+    }
+
+    @Test
+    void handSpellInResponsePreventsTokenOnResolution() {
+        addWrangler();
+        harness.setHand(player1, List.of(new WranglerOfTheDamned()));
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Wrangler of the Damned")).hasSize(2);
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+    }
+
+    @Test
+    void castingWranglerFromHandCountsAsHandSpell() {
+        harness.setHand(player1, List.of(new WranglerOfTheDamned()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(findPermanents(player1, "Wrangler of the Damned")).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+    }
+
+    @Test
+    void eachWranglerCreatesItsOwnToken() {
+        addWrangler();
+        addWrangler();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(2);
+        assertThat(findPermanents(player1, "Spirit")).allSatisfy(spirit -> {
+            assertThat(spirit.getCard().isToken()).isTrue();
+            assertThat(spirit.getCard().getColors()).containsExactly(CardColor.WHITE);
+            assertThat(spirit.getCard().getType()).isEqualTo(CardType.CREATURE);
+            assertThat(spirit.getCard().getSubtypes()).containsExactly(CardSubtype.SPIRIT);
+            assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(2);
+            assertThat(gqs.hasKeyword(gd, spirit, Keyword.FLYING)).isTrue();
+        });
+    }
+
+    private void addWrangler() {
+        harness.addToBattlefield(player1, new WranglerOfTheDamned());
     }
 
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 }
