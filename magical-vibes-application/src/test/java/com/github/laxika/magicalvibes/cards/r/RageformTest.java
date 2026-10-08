@@ -23,10 +23,7 @@ class RageformTest extends BaseCardTest {
     @DisplayName("Manifests the top card, attaches Rageform, and grants double strike")
     void manifestsTopCardAndAttaches() {
         Permanent manifested = resolveRageform(new ArashinCleric());
-        Permanent rageform = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isAura())
-                .findFirst()
-                .orElseThrow();
+        Permanent rageform = findPermanent(player1, "Rageform");
 
         assertThat(manifested.isFaceDown()).isTrue();
         assertThat(manifested.isManifested()).isTrue();
@@ -120,11 +117,46 @@ class RageformTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, manifested, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
+    @Test
+    @DisplayName("The manifested creature deals damage in both combat damage steps")
+    void manifestedCreatureDealsDoubleStrikeCombatDamage() {
+        Permanent manifested = resolveRageform(new Forest());
+        manifested.setSummoningSick(false);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(manifested)));
+        resolveCombat();
+
+        harness.assertLife(player2, lifeBefore - 4);
+    }
+
+    @Test
+    @DisplayName("Manifests only the controller's top card without triggering its printed enter ability")
+    void manifestsOnlyControllerTopCardWithoutPrintedEnterTrigger() {
+        ArashinCleric topCard = new ArashinCleric();
+        Forest nextCard = new Forest();
+        Forest opponentCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.setLibrary(player2, List.of(opponentCard));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new Rageform(), "{2}{R}{R}");
+        resolveAllTriggers();
+
+        Permanent manifested = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(Permanent::isFaceDown)
+                .findFirst().orElseThrow();
+        assertThat(manifested.getCard().getId()).isEqualTo(topCard.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent resolveRageform(Card topCard) {
         harness.setLibrary(player1, List.of(topCard));
         harness.castFromHand(player1, new Rageform(), "{2}{R}{R}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         return gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(Permanent::isFaceDown)
