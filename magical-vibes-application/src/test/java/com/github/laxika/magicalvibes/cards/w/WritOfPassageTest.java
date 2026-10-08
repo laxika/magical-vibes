@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
+import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -139,9 +141,7 @@ class WritOfPassageTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new MistralCharger());
         WritOfPassage writ = new WritOfPassage();
         harness.setHand(player1, List.of(writ));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -159,9 +159,7 @@ class WritOfPassageTest extends BaseCardTest {
         Permanent firstTarget = addCreatureReady(player2, new MistralCharger());
         Permanent secondTarget = addCreatureReady(player2, new MistralCharger());
         harness.setHand(player1, List.of(new WritOfPassage()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -179,9 +177,7 @@ class WritOfPassageTest extends BaseCardTest {
         Permanent largeTarget = addCreatureReady(player2, new AssaultZeppelid());
         WritOfPassage writ = new WritOfPassage();
         harness.setHand(player1, List.of(writ));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -192,6 +188,94 @@ class WritOfPassageTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, smallTarget.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only be activated during your upkeep");
+    }
+
+    @Test
+    void forecastTargetBecomingTooLargeBeforeResolutionIsIllegal() {
+        Permanent target = addCreatureReady(player2, new MistralCharger());
+        harness.setHand(player1, List.of(new WritOfPassage()));
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, target.getId());
+        target.setPowerModifier(1);
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void forecastCannotBeActivatedDuringOpponentsUpkeep() {
+        Permanent target = addCreatureReady(player1, new MistralCharger());
+        harness.setHand(player1, List.of(new WritOfPassage()));
+        advanceToUpkeep(player2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only be activated during your upkeep");
+    }
+
+    @Test
+    void forecastUnblockablePersistsAfterPowerIncreaseAndExpiresAtEndOfTurn() {
+        Permanent target = addCreatureReady(player1, new MistralCharger());
+        harness.setHand(player1, List.of(new WritOfPassage()));
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, target.getId());
+        harness.passBothPriorities();
+        target.setPowerModifier(1);
+        assertThat(target.isCantBeBlocked()).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    void forecastCardRemainsRevealedThroughoutUpkeep() throws Exception {
+        Permanent target = addCreatureReady(player1, new MistralCharger());
+        WritOfPassage writ = new WritOfPassage();
+        harness.setHand(player1, List.of(writ));
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.clearMessages();
+        harness.publishState();
+
+        var mapper = new JacksonConfig().objectMapper();
+        GameStateMessage state = mapper.readValue(harness.getConn2()
+                .getMessagesContaining("\"type\":\"GAME_STATE\"").getLast(), GameStateMessage.class);
+        assertThat(state.opponentHand()).extracting(card -> card.id()).containsExactly(writ.getId());
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearMessages();
+        harness.publishState();
+        GameStateMessage mainPhaseState = mapper.readValue(harness.getConn2()
+                .getMessagesContaining("\"type\":\"GAME_STATE\"").getLast(), GameStateMessage.class);
+        assertThat(mainPhaseState.opponentHand()).isEmpty();
+    }
+
+    @Test
+    void attackTriggerStillResolvesAfterAuraLeavesWithPowerTwo() {
+        Permanent attacker = addCreatureReady(player2, new MistralCharger());
+        Permanent aura = addAuraOn(attacker, player1);
+
+        declareAttackers(player2, List.of(0));
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        assertThat(attacker.isCantBeBlocked()).isTrue();
     }
 
     private Permanent addAuraOn(Permanent host, Player controller) {
