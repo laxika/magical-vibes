@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WordsOfWind.class, Island.class})
+@CardUsed({WordsOfWind.class, Island.class, WordsOfWorship.class, WarpedDevotion.class})
 class WordsOfWindTest extends BaseCardTest {
 
     @Test
@@ -145,6 +145,122 @@ class WordsOfWindTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(wordsOfWind);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A returned permanent observes all simultaneous returns")
+    void returnedPermanentObservesSimultaneousReturns() {
+        Permanent wordsOfWind = harness.addToBattlefieldAndReturn(player1, new WordsOfWind());
+        Permanent devotion = harness.addToBattlefieldAndReturn(player1, new WarpedDevotion());
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Island()));
+        activateWordsOfWind();
+
+        draw(player1);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
+                () -> harness.handleMultiplePermanentsChosen(player1, List.of(devotion.getId())));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(wordsOfWind);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(devotion.getCard());
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(island.getCard());
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard() instanceof WarpedDevotion).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The drawing player chooses between competing draw replacements")
+    void drawingPlayerChoosesBetweenCompetingReplacements() {
+        Permanent wordsOfWind = harness.addToBattlefieldAndReturn(player1, new WordsOfWind());
+        Permanent wordsOfWorship = harness.addToBattlefieldAndReturn(player1, new WordsOfWorship());
+        harness.setHand(player1, List.of());
+        Island drawnCard = new Island();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setLife(player1, 20);
+
+        activateWordsOfWind();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        draw(player1);
+
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        assertThat(gd.interaction.activeInteraction())
+                .isNotInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(wordsOfWind, wordsOfWorship);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("The active player chooses first even when the nonactive player replaces a draw")
+    void activePlayerChoosesFirstDuringOpponentsTurn() {
+        Permanent wordsOfWind = harness.addToBattlefieldAndReturn(player1, new WordsOfWind());
+        Permanent firstIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent secondIsland = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent thirdIsland = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Island()));
+        activateWordsOfWind();
+        harness.forceActivePlayer(player2);
+
+        draw(player1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(secondIsland.getId()));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(secondIsland, thirdIsland);
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstIsland.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(wordsOfWind);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(thirdIsland);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstIsland.getCard());
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(secondIsland.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Replacing a draw from an empty library does not cause a failed draw")
+    void replacesDrawFromEmptyLibrary() {
+        Permanent wordsOfWind = harness.addToBattlefieldAndReturn(player1, new WordsOfWind());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
+        activateWordsOfWind();
+
+        draw(player1);
+        harness.runStateBasedActions();
+
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.RUNNING);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(wordsOfWind.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Remaining cards in a multi-card draw wait for permanent choices")
+    void multiCardDrawResumesAfterPermanentChoices() {
+        Permanent wordsOfWind = harness.addToBattlefieldAndReturn(player1, new WordsOfWind());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.setHand(player1, List.of());
+        Island firstDraw = new Island();
+        Island secondDraw = new Island();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        activateWordsOfWind();
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 2));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        harness.handleMultiplePermanentsChosen(player1, List.of(island.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(wordsOfWind);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(island.getCard(), firstDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondDraw);
     }
 
     private void activateWordsOfWind() {
