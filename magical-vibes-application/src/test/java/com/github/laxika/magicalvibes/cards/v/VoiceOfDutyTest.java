@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishLookout;
 import com.github.laxika.magicalvibes.cards.f.FendOff;
+import com.github.laxika.magicalvibes.cards.g.GoblinMasons;
 import com.github.laxika.magicalvibes.cards.p.PatternOfRebirth;
 import com.github.laxika.magicalvibes.cards.p.PlatedSpider;
 import com.github.laxika.magicalvibes.cards.s.ScentOfIvy;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({VoiceOfDuty.class, FendOff.class, PatternOfRebirth.class, ScentOfIvy.class, ElvishLookout.class,
-        SerraAdvocate.class, PlatedSpider.class})
+        SerraAdvocate.class, PlatedSpider.class, GoblinMasons.class})
 class VoiceOfDutyTest extends BaseCardTest {
 
     @Test
@@ -66,12 +67,10 @@ class VoiceOfDutyTest extends BaseCardTest {
     @Test
     @DisplayName("Green creature cannot block Voice of Duty")
     void greenCreatureCannotBlock() {
-        Permanent attacker = addCreatureReady(player1, new VoiceOfDuty());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new VoiceOfDuty());
+        addCreatureReady(player2, new PlatedSpider());
 
-        Permanent blocker = addCreatureReady(player2, new PlatedSpider());
-
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -81,12 +80,10 @@ class VoiceOfDutyTest extends BaseCardTest {
     @Test
     @DisplayName("Non-green creature can block Voice of Duty")
     void nonGreenCreatureCanBlock() {
-        Permanent attacker = addCreatureReady(player1, new VoiceOfDuty());
-        attacker.setAttacking(true);
-
+        addCreatureReady(player1, new VoiceOfDuty());
         Permanent blocker = addCreatureReady(player2, new SerraAdvocate());
 
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -123,5 +120,46 @@ class VoiceOfDutyTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Serra Advocate");
         harness.assertInGraveyard(player2, "Voice of Duty");
+    }
+
+    @Test
+    @DisplayName("Prevents otherwise lethal combat damage from a green creature")
+    void preventsLethalGreenCombatDamage() {
+        addCreatureReady(player1, new PlatedSpider());
+        addCreatureReady(player2, new VoiceOfDuty());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player2, "Voice of Duty");
+        harness.assertOnBattlefield(player1, "Plated Spider");
+    }
+
+    @Test
+    @DisplayName("Flying prevents a non-green ground creature from blocking")
+    void nonGreenGroundCreatureCannotBlock() {
+        addCreatureReady(player1, new VoiceOfDuty());
+        addCreatureReady(player2, new GoblinMasons());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
+    }
+
+    @Test
+    @DisplayName("A non-green creature ability can target Voice of Duty")
+    void nonGreenAbilityCanTarget() {
+        addCreatureReady(player1, new SerraAdvocate());
+        Permanent voice = addCreatureReady(player1, new VoiceOfDuty());
+        voice.setAttacking(true);
+
+        harness.activateAbility(player1, 0, null, voice.getId());
+        harness.passBothPriorities();
+
+        assertThat(voice.getPowerModifier()).isEqualTo(2);
+        assertThat(voice.getToughnessModifier()).isEqualTo(2);
     }
 }
