@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,7 +35,6 @@ class ZyymMesmericLordTest extends BaseCardTest {
 
         gs.handleInteractionAnswer(gd, player2,
                 new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
-        harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(bears);
@@ -44,8 +42,8 @@ class ZyymMesmericLordTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("stopping before the first reveal does not discard a card")
-    void canStopBeforeRevealing() {
+    @DisplayName("the first card is revealed before the controller can stop")
+    void firstRevealIsMandatory() {
         Card forest = new Forest();
         Card ritual = new DarkRitual();
         resolveZyym(List.of(forest, ritual));
@@ -54,12 +52,54 @@ class ZyymMesmericLordTest extends BaseCardTest {
                 new InteractionAnswer.CardOrder(List.of(1, 0)));
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-        assertThat(gd.playerHands.get(player2.getId())).containsExactly(forest, ritual);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(ritual);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(forest);
     }
 
+    @Test
+    @DisplayName("revealing the entire hand discards only the final card in the chosen order")
+    void revealingEntireHandDiscardsLastCard() {
+        Card forest = new Forest();
+        Card ritual = new DarkRitual();
+        Card bears = new GrizzlyBears();
+        resolveZyym(List.of(forest, ritual, bears));
+
+        gs.handleInteractionAnswer(gd, player2,
+                new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(ritual);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(forest, bears);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("a one-card hand is revealed and discarded without an optional first reveal")
+    void oneCardHandIsDiscarded() {
+        Card forest = new Forest();
+        resolveZyym(List.of(forest));
+
+        gs.handleInteractionAnswer(gd, player2,
+                new InteractionAnswer.CardOrder(List.of(0)));
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(forest);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("an empty opposing hand completes without a reveal or discard choice")
+    void emptyHandCompletes() {
+        resolveZyym(List.of());
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
     private void resolveZyym(List<Card> opponentHand) {
-        harness.setHand(player2, new ArrayList<>(opponentHand));
+        harness.setHand(player2, opponentHand);
         harness.setHand(player1, List.of(new ZyymMesmericLord()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
