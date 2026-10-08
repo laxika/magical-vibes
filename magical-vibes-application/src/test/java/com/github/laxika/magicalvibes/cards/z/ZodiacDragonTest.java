@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.cards.c.CaoCaoLordOfWei;
+import com.github.laxika.magicalvibes.cards.n.NihilSpellbomb;
 import com.github.laxika.magicalvibes.cards.o.OverwhelmingForces;
 import com.github.laxika.magicalvibes.cards.v.VolitionReins;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,14 +17,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ZodiacDragon.class, OverwhelmingForces.class, VolitionReins.class})
+@CardUsed({ZodiacDragon.class, OverwhelmingForces.class, VolitionReins.class,
+        CaoCaoLordOfWei.class, NihilSpellbomb.class})
 class ZodiacDragonTest extends BaseCardTest {
 
     @Test
     @DisplayName("When Zodiac Dragon dies, you may return it to your hand")
     void diesMayReturnToHand() {
-        harness.addToBattlefield(player2, new ZodiacDragon());
-        Permanent dragon = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent dragon = harness.addToBattlefieldAndReturn(player2, new ZodiacDragon());
         Card dragonCard = dragon.getCard();
 
         // Overwhelming Forces resolves — the Dragon dies and its ON_DEATH may-trigger goes on the stack.
@@ -43,8 +45,7 @@ class ZodiacDragonTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the may-trigger leaves Zodiac Dragon in the graveyard")
     void decliningLeavesInGraveyard() {
-        harness.addToBattlefield(player2, new ZodiacDragon());
-        Permanent dragon = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent dragon = harness.addToBattlefieldAndReturn(player2, new ZodiacDragon());
         Card dragonCard = dragon.getCard();
 
         harness.setHand(player1, List.of(new OverwhelmingForces()));
@@ -88,5 +89,51 @@ class ZodiacDragonTest extends BaseCardTest {
                 .anyMatch(c -> c.getId().equals(dragonCard.getId()));
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(dragonCard.getId()));
+    }
+
+    @Test
+    @DisplayName("Discarding Zodiac Dragon does not trigger its return ability")
+    void discardedDragonDoesNotTrigger() {
+        addCreatureReady(player1, new CaoCaoLordOfWei());
+        Card dragon = new ZodiacDragon();
+        harness.setHand(player2, List.of(dragon));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(dragon);
+    }
+
+    @Test
+    @DisplayName("Zodiac Dragon cannot return if exiled before its death trigger resolves")
+    void exiledDragonCannotReturn() {
+        Card dragon = new ZodiacDragon();
+        harness.addToBattlefield(player2, dragon);
+        harness.addToBattlefield(player1, new NihilSpellbomb());
+        harness.setHand(player1, List.of(new OverwhelmingForces()));
+        harness.addMana(player1, ManaColor.BLACK, 8);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(dragon);
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player2, true);
+        }
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(dragon);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(dragon);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(dragon);
     }
 }
