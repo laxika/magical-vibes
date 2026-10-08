@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,9 +11,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ViciousConquistador.class})
 class ViciousConquistadorTest extends BaseCardTest {
-
-    // ===== ON_ATTACK — each opponent loses 1 life =====
 
     @Test
     @DisplayName("Attacking causes each opponent to lose 1 life (plus combat damage)")
@@ -53,10 +53,7 @@ class ViciousConquistadorTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
 
         // Simulate next combat — untap and attack again
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        Permanent conquistador = gd.playerBattlefields.get(player1.getId()).getFirst();
-        conquistador.untap();
+        harness.performUntapStep(player1);
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
@@ -93,5 +90,56 @@ class ViciousConquistadorTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(player2LifeBefore);
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Attack life loss resolves before blockers and combat damage")
+    void attackLifeLossResolvesBeforeCombatDamage() {
+        addCreatureReady(player1, new ViciousConquistador());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.assertLife(player2, 20);
+            assertThat(gd.stack).hasSize(1);
+
+            resolveAllTriggers();
+
+            harness.assertLife(player2, 19);
+            harness.assertLife(player1, 20);
+        });
+    }
+
+    @Test
+    @DisplayName("A blocked Conquistador still makes the opponent lose life")
+    void blockedAttackerStillCausesLifeLoss() {
+        addCreatureReady(player1, new ViciousConquistador());
+        addCreatureReady(player2, new ViciousConquistador());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Each attacking Conquistador triggers once; a nonattacker does not trigger")
+    void onlyAttackingCopiesTrigger() {
+        addCreatureReady(player1, new ViciousConquistador());
+        addCreatureReady(player1, new ViciousConquistador());
+        addCreatureReady(player1, new ViciousConquistador());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1));
+            assertThat(gd.stack).hasSize(2);
+
+            resolveAllTriggers();
+
+            harness.assertLife(player2, 18);
+            harness.assertLife(player1, 20);
+        });
+    }
 }
