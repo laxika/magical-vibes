@@ -68,8 +68,7 @@ class YavimayaScionTest extends BaseCardTest {
         Permanent scion = addCreatureReady(player1, new YavimayaScion());
         Permanent artifactAttacker = addCreatureReady(player2, new TickingGnomes());
 
-        declareAttackers(player2, List.of(indexOf(player2, artifactAttacker)));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(indexOf(player2, artifactAttacker)));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
                 indexOf(player1, scion), indexOf(player2, artifactAttacker))));
         resolveCombat(player2);
@@ -86,12 +85,70 @@ class YavimayaScionTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFromSourceCardTypes(gd, scion, artifactBlocker)).isFalse();
         assertThat(gqs.hasProtectionFromSourceCardTypes(gd, scion, new RingOfGix())).isFalse();
 
-        declareAttackers(player1, List.of(indexOf(player1, scion)));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(indexOf(player1, scion)));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 indexOf(player2, artifactBlocker), indexOf(player1, scion))));
 
         assertThat(artifactBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Protection from artifacts also prevents targeting by a friendly artifact")
+    void protectionPreventsFriendlyArtifactTargeting() {
+        harness.addToBattlefield(player1, new RingOfGix());
+        Permanent scion = addCreatureReady(player1, new YavimayaScion());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, scion.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+        assertThat(scion.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Losing protection allows an artifact ability to target and tap the creature")
+    void losingProtectionAllowsArtifactTargeting() {
+        Permanent scion = addCreatureReady(player2, new YavimayaScion());
+        scion.setLosesAllAbilitiesUntilEndOfTurn(true);
+        harness.addToBattlefield(player1, new RingOfGix());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, scion.getId());
+        harness.passBothPriorities();
+
+        assertThat(scion.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Protection from artifacts does not prevent lethal non-artifact combat damage")
+    void nonArtifactCombatDamageIsNotPrevented() {
+        Permanent scion = addCreatureReady(player1, new YavimayaScion());
+        Permanent attacker = addCreatureReady(player2, new GiantCockroach());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(indexOf(player2, attacker)));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                indexOf(player1, scion), indexOf(player2, attacker))));
+        resolveCombat(player2);
+
+        harness.assertInGraveyard(player1, "Yavimaya Scion");
+        harness.assertNotOnBattlefield(player1, "Yavimaya Scion");
+    }
+
+    @Test
+    @DisplayName("Regaining protection makes sacrificed Ticking Gnomes' target illegal on resolution")
+    void regainedProtectionInvalidatesSacrificedArtifactTarget() {
+        Permanent scion = addCreatureReady(player2, new YavimayaScion());
+        scion.setLosesAllAbilitiesUntilEndOfTurn(true);
+        harness.addToBattlefield(player1, new TickingGnomes());
+
+        harness.activateAbility(player1, 0, null, scion.getId());
+        harness.assertInGraveyard(player1, "Ticking Gnomes");
+        scion.setLosesAllAbilitiesUntilEndOfTurn(false);
+        harness.passBothPriorities();
+
+        assertThat(scion.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Yavimaya Scion");
+        assertThat(gd.stack).isEmpty();
     }
 
     private int indexOf(Player player, Permanent permanent) {
