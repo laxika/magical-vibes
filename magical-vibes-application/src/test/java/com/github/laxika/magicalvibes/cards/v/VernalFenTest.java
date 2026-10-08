@@ -18,6 +18,33 @@ import static org.assertj.core.api.Assertions.assertThat;
 class VernalFenTest extends BaseCardTest {
 
     @Test
+    void entersTappedWithoutBasicLands() {
+        playVernalFen(player1);
+
+        assertThat(findVernalFen(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    void oneBasicLandAndOneNonbasicForestStillEnterTapped() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new VernalFen());
+
+        playVernalFen(player1);
+
+        assertThat(findPermanents(player1, "Vernal Fen").getLast().isTapped()).isTrue();
+    }
+
+    @Test
+    void tappedBasicLandsStillAllowUntappedEntry() {
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
+
+        playVernalFen(player1);
+
+        assertThat(findVernalFen(player1).isTapped()).isFalse();
+    }
+
+    @Test
     void entersTappedWithFewerThanTwoBasicLands() {
         harness.addToBattlefield(player1, new Forest());
 
@@ -76,9 +103,8 @@ class VernalFenTest extends BaseCardTest {
     }
 
     private Permanent addReadyVernalFen(Player player) {
-        Permanent fen = new Permanent(new VernalFen());
+        Permanent fen = harness.addToBattlefieldAndReturn(player, new VernalFen());
         fen.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(fen);
         return fen;
     }
 
@@ -92,29 +118,8 @@ class VernalFenTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VernalFen());
         harness.addToBattlefield(player1, new VernalFen());
 
-        playLand();
+        playVernalFen(player1);
 
-        assertThat(findFen().isTapped()).isTrue();
-    }
-
-    private void playLand() {
-        harness.setHand(player1, List.of(new VernalFen()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.playLand(player1, 0);
-    }
-
-    private Permanent addReadyFen() {
-        Permanent fen = new Permanent(new VernalFen());
-        fen.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(fen);
-        return fen;
-    }
-
-    private Permanent findFen() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getOriginalCard() instanceof VernalFen)
-                .reduce((first, second) -> second)
-                .orElseThrow();
+        assertThat(findPermanents(player1, "Vernal Fen").getLast().isTapped()).isTrue();
     }
 }
