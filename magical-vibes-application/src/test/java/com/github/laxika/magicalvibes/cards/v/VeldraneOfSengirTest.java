@@ -171,4 +171,40 @@ class VeldraneOfSengirTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Veldrane can activate, and the effects wait for resolution")
+    void tappedSummoningSickCreatureCanActivate() {
+        Permanent veldrane = harness.addToBattlefieldAndReturn(player1, new VeldraneOfSengir());
+        veldrane.setSummoningSick(true);
+        veldrane.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(veldrane.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, veldrane, Keyword.FORESTWALK)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(veldrane.getEffectivePower()).isEqualTo(2);
+        assertThat(veldrane.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, veldrane, Keyword.FORESTWALK)).isTrue();
+        assertThat(veldrane.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("One black mana cannot pay the ability's two black symbols")
+    void cannotActivateWithOnlyOneBlackMana() {
+        addVeldrane();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
+    }
 }
