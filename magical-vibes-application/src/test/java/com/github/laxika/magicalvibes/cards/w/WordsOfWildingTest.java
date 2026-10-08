@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WordsOfWilding.class, Forest.class})
+@CardUsed({WordsOfWilding.class, WordsOfWorship.class, Forest.class})
 class WordsOfWildingTest extends BaseCardTest {
 
     @Test
@@ -29,10 +29,7 @@ class WordsOfWildingTest extends BaseCardTest {
         activateWordsOfWilding(1);
         draw(player1);
 
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Bear"))
-                .findFirst()
-                .orElseThrow();
+        Permanent bear = findPermanent(player1, "Bear");
         assertThat(bear.getCard().getPower()).isEqualTo(2);
         assertThat(bear.getCard().getToughness()).isEqualTo(2);
         assertThat(bear.getCard().getColor()).isEqualTo(CardColor.GREEN);
@@ -125,6 +122,89 @@ class WordsOfWildingTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Bear")).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An unresolved activation does not replace a draw")
+    void unresolvedActivationDoesNotReplaceDraw() {
+        harness.addToBattlefield(player1, new WordsOfWilding());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        draw(player1);
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(countPermanents(player1, "Bear")).isZero();
+
+        harness.passBothPriorities();
+        draw(player1);
+
+        assertThat(countPermanents(player1, "Bear")).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A resolved replacement survives its source leaving the battlefield")
+    void replacementSurvivesSourceLeavingBattlefield() {
+        harness.addToBattlefield(player1, new WordsOfWilding());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        activateWordsOfWilding(1);
+
+        harness.inMutationScope(() -> {
+            Permanent source = findPermanent(player1, "Words of Wilding");
+            gd.playerBattlefields.get(player1.getId()).remove(source);
+            gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        });
+        draw(player1);
+
+        assertThat(countPermanents(player1, "Bear")).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Multiple draws in one instruction consume one activation per draw")
+    void multipleDrawInstructionConsumesOneActivationPerDraw() {
+        harness.addToBattlefield(player1, new WordsOfWilding());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        activateWordsOfWilding(2);
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 3));
+
+        assertThat(countPermanents(player1, "Bear")).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The drawing player chooses between pending Words replacements")
+    void drawingPlayerChoosesBetweenWordsReplacements() {
+        harness.addToBattlefield(player1, new WordsOfWilding());
+        harness.addToBattlefield(player1, new WordsOfWorship());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        activateWordsOfWilding(1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        draw(player1);
+
+        assertThat(gd.interaction.isAwaitingInput() || !gd.pendingMayAbilities.isEmpty())
+                .as("The drawing player must be offered a choice before either replacement is consumed")
+                .isTrue();
+        harness.assertLife(player1, 20);
+        assertThat(countPermanents(player1, "Bear")).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
     private void activateWordsOfWilding(int activations) {
