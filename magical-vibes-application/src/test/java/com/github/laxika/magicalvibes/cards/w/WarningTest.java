@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Warning.class, BalduvianBears.class})
+@CardUsed({Warning.class, BalduvianBears.class, ZuranSpellcaster.class})
 class WarningTest extends BaseCardTest {
 
     @Test
@@ -46,7 +46,6 @@ class WarningTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(ZuranSpellcaster.class)
     @DisplayName("Does not prevent noncombat damage dealt by the target creature")
     void doesNotPreventNoncombatDamage() {
         Permanent attacker = addCreatureReady(player1, new ZuranSpellcaster());
@@ -72,8 +71,10 @@ class WarningTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // POSTCOMBAT_MAIN -> END_STEP
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
     }
@@ -102,9 +103,50 @@ class WarningTest extends BaseCardTest {
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
     }
 
+    @Test
+    @DisplayName("Does not prevent damage from another attacking creature")
+    void otherAttackerStillDealsDamage() {
+        Permanent warned = addAttacker(player1, player2, 2, 2);
+        addAttacker(player1, player2, 2, 2);
+
+        castWarning(warned);
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Does not prevent combat damage dealt to the warned creature")
+    void warnedAttackerStillReceivesCombatDamage() {
+        Permanent attacker = addAttacker(player1, player2, 2, 2);
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        castWarning(attacker);
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Balduvian Bears");
+        harness.assertOnBattlefield(player2, "Balduvian Bears");
+        assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can target an opponent's attacking creature")
+    void canTargetOpponentsAttacker() {
+        harness.forceActivePlayer(player2);
+        Permanent attacker = addAttacker(player2, player1, 2, 2);
+
+        castWarning(attacker);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+    }
+
     private void castWarning(Permanent target) {
-        castWarningWithoutResolving(target);
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Warning()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void castWarningWithoutResolving(Permanent target) {
