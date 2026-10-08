@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,10 +14,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ZenithChronicler.class, WoollyThoctar.class, GrizzlyBears.class})
 class ZenithChroniclerTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Each player draws when they cast their first multicolored spell")
+    @DisplayName("Each other player draws when a player casts their first multicolored spell")
     void triggersForEachPlayerIndependently() {
         harness.addToBattlefield(player1, new ZenithChronicler());
         harness.setHand(player1, List.of(new WoollyThoctar(), new GrizzlyBears()));
@@ -77,6 +79,64 @@ class ZenithChroniclerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(player2HandBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Earlier multicolored casts count even before Chronicler enters")
+    void countsSpellsCastBeforeEntering() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new WoollyThoctar(), "{R}{G}{W}");
+        resolveAllTriggers();
+        harness.addToBattlefield(player1, new ZenithChronicler());
+        int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.castFromHand(player1, new WoollyThoctar(), "{R}{G}{W}");
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore);
+    }
+
+    @Test
+    @DisplayName("Colorless spells do not consume the first multicolored cast")
+    void ignoresColorlessSpellsAndEachChroniclerTriggers() {
+        harness.addToBattlefield(player1, new ZenithChronicler());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.castFromHand(player1, new ZenithChronicler(), "{2}");
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore);
+
+        harness.castFromHand(player1, new WoollyThoctar(), "{R}{G}{W}");
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore + 2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The same player can trigger again on a later turn")
+    void resetsFirstMulticoloredSpellOnNewTurn() {
+        harness.addToBattlefield(player1, new ZenithChronicler());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
+        harness.castFromHand(player1, new WoollyThoctar(), "{R}{G}{W}");
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore + 1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        int opponentHandBeforeSecondCast = gd.playerHands.get(player2.getId()).size();
+
+        harness.castFromHand(player1, new WoollyThoctar(), "{R}{G}{W}");
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBeforeSecondCast + 1);
     }
 
     private void addWoollyMana(Player player) {
