@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -53,7 +52,7 @@ class WebShootersTest extends BaseCardTest {
         shooters.setAttachedTo(creature.getId());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers();
+        declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
@@ -69,7 +68,7 @@ class WebShootersTest extends BaseCardTest {
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers();
+        declareAttackers(List.of(0));
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -85,25 +84,86 @@ class WebShootersTest extends BaseCardTest {
         addWebShootersReady(player1);
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers();
+        declareAttackers(List.of(0));
 
         assertThat(gd.interaction.activeInteraction())
                 .isNotInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.stack).noneMatch(entry -> entry.getCard() instanceof WebShooters);
     }
 
-    private Permanent addWebShootersReady(Player player) {
-        Permanent perm = new Permanent(new WebShooters());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("The attack ability belongs to the equipped creature")
+    void attackAbilityHasCreatureAsSource() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent shooters = addWebShootersReady(player1);
+        shooters.setAttachedTo(creature.getId());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(creature.getId());
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        harness.passBothPriorities();
+        assertThat(target.isTapped()).isTrue();
     }
 
-    private void declareAttackers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0), null);
+    @Test
+    @DisplayName("The creature's controller chooses targets even when the opponent controls the Equipment")
+    void creatureControllerControlsGrantedTrigger() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent shooters = addWebShootersReady(player2);
+        shooters.setAttachedTo(creature.getId());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.decidingPlayerId()).isEqualTo(player1.getId());
+        assertThat(choice.validPermanentIds()).containsExactly(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The attack trigger still resolves after the Equipment leaves the battlefield")
+    void removingEquipmentDoesNotRemovePendingTrigger() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent shooters = addWebShootersReady(player1);
+        shooters.setAttachedTo(creature.getId());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(shooters);
+        gd.playerGraveyards.get(player1.getId()).add(shooters.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.REACH)).isFalse();
+    }
+
+    @Test
+    @DisplayName("No attack ability remains on the stack when no opposing creature can be targeted")
+    void noTriggerOnStackWithoutLegalTargets() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent shooters = addWebShootersReady(player1);
+        shooters.setAttachedTo(creature.getId());
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.interaction.activeInteraction())
+                .isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private Permanent addWebShootersReady(Player player) {
+        return addCreatureReady(player, new WebShooters());
     }
 }
