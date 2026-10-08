@@ -21,8 +21,7 @@ class WarMammothTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         addCreatureReady(player1, new WarMammoth());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -33,5 +32,47 @@ class WarMammothTest extends BaseCardTest {
 
         harness.assertLife(player2, 19);
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Trample permits assigning all damage to the blocker")
+    void canAssignAllDamageToBlocker() {
+        harness.setLife(player2, 20);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new WarMammoth());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 3));
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "War Mammoth");
+    }
+
+    @Test
+    @DisplayName("Multiple blockers can absorb all of War Mammoth's combat damage")
+    void multipleBlockersLeaveNoExcessDamage() {
+        harness.setLife(player2, 20);
+        Permanent firstBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondBlocker = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new WarMammoth());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveCombat();
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                firstBlocker.getId(), 2,
+                secondBlocker.getId(), 1
+        ));
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "War Mammoth");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 }
