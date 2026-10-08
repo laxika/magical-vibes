@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GoblinChirurgeon;
 import com.github.laxika.magicalvibes.cards.g.GoblinGrenade;
+import com.github.laxika.magicalvibes.cards.m.MerrowCommerce;
 import com.github.laxika.magicalvibes.cards.r.RiverMerfolk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VodalianWarMachine.class, RiverMerfolk.class, GoblinChirurgeon.class, GoblinGrenade.class})
+@CardUsed({VodalianWarMachine.class, RiverMerfolk.class, GoblinChirurgeon.class, GoblinGrenade.class,
+        MerrowCommerce.class})
 class VodalianWarMachineTest extends BaseCardTest {
 
     @Test
@@ -69,8 +71,7 @@ class VodalianWarMachineTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.castSorceryWithSacrifice(player2, 0, machine.getId(), goblin.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(paidForAttack, paidForBoost)
                 .contains(unrelatedMerfolk);
@@ -86,5 +87,155 @@ class VodalianWarMachineTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotAttackWithoutActivatingPermission() {
+        addCreatureReady(player1, new VodalianWarMachine());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotPayEitherCostWithOpponentsMerfolkOrOwnGoblin() {
+        harness.addToBattlefield(player1, new VodalianWarMachine());
+        harness.addToBattlefield(player1, new GoblinChirurgeon());
+        harness.addToBattlefield(player2, new RiverMerfolk());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void boostStacksAndExpiresAtCleanup() {
+        Permanent machine = harness.addToBattlefieldAndReturn(player1, new VodalianWarMachine());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new RiverMerfolk());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new RiverMerfolk());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handlePermanentChosen(player1, first.getId());
+        assertThat(first.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, machine)).isZero();
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(second.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, machine)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, machine)).isEqualTo(6);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, machine)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, machine)).isEqualTo(4);
+    }
+
+    @Test
+    void deathDoesNotDestroyMerfolkUsedOnPreviousTurn() {
+        Permanent machine = harness.addToBattlefieldAndReturn(player1, new VodalianWarMachine());
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new RiverMerfolk());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new GoblinChirurgeon());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.setLibrary(player2, List.of(new RiverMerfolk()));
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new GoblinGrenade()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castSorceryWithSacrifice(player2, 0, machine.getId(), goblin.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(merfolk).doesNotContain(machine);
+    }
+
+    @Test
+    void deathStillDestroysMerfolkThatHasUntapped() {
+        Permanent machine = harness.addToBattlefieldAndReturn(player1, new VodalianWarMachine());
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new RiverMerfolk());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new GoblinChirurgeon());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        merfolk.untap();
+
+        harness.setHand(player2, List.of(new GoblinGrenade()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castSorceryWithSacrifice(player2, 0, machine.getId(), goblin.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(merfolk);
+        harness.assertInGraveyard(player1, "River Merfolk");
+    }
+
+    @Test
+    void noncreatureMerfolkCanPayForAttackPermission() {
+        Permanent machine = addCreatureReady(player1, new VodalianWarMachine());
+        Permanent commerce = harness.addToBattlefieldAndReturn(player1, new MerrowCommerce());
+        addCreatureReady(player2, new RiverMerfolk());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        declareAttackers(List.of(0));
+
+        assertThat(commerce.isTapped()).isTrue();
+        assertThat(machine.isAttacking()).isTrue();
+    }
+
+    @Test
+    void noncreatureMerfolkCanPayForBoost() {
+        Permanent machine = harness.addToBattlefieldAndReturn(player1, new VodalianWarMachine());
+        Permanent commerce = harness.addToBattlefieldAndReturn(player1, new MerrowCommerce());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(commerce.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, machine)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, machine)).isEqualTo(5);
+    }
+
+    @Test
+    void attackPermissionExpiresAtCleanup() {
+        addCreatureReady(player1, new VodalianWarMachine());
+        harness.addToBattlefield(player1, new RiverMerfolk());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void deathDoesNotDestroyMerfolkUsedForAnotherWarMachine() {
+        Permanent dyingMachine = harness.addToBattlefieldAndReturn(player1, new VodalianWarMachine());
+        Permanent survivingMachine = harness.addToBattlefieldAndReturn(player1, new VodalianWarMachine());
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new RiverMerfolk());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new GoblinChirurgeon());
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new GoblinGrenade()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castSorceryWithSacrifice(player2, 0, dyingMachine.getId(), goblin.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(survivingMachine, merfolk)
+                .doesNotContain(dyingMachine);
     }
 }
