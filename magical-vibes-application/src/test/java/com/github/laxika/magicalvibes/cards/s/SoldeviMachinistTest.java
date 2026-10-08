@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SoldeviMachinist.class)
+@CardUsed({SoldeviMachinist.class, IcyManipulator.class, ArcticFoxes.class, BarbedSextant.class, ZuranEnchanter.class})
 class SoldeviMachinistTest extends BaseCardTest {
 
     private Permanent machinistOnBattlefield() {
@@ -110,5 +110,58 @@ class SoldeviMachinistTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getArtifactAbilityOnlyColorless()).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(enchanter.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Mana ability resolves immediately and taps its source")
+    void resolvesImmediatelyAndTapsSource() {
+        Permanent machinist = machinistOnBattlefield();
+
+        activateManaAbility();
+
+        assertThat(machinist.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactAbilityOnlyColorless()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).getArtifactAbilityOnlyColorless()).isZero();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Machinist cannot activate its tap ability")
+    void cannotActivateWhileSummoningSick() {
+        Permanent machinist = harness.addToBattlefieldAndReturn(player1, new SoldeviMachinist());
+        machinist.setSummoningSick(true);
+
+        assertThatThrownBy(this::activateManaAbility).isInstanceOf(IllegalStateException.class);
+
+        assertThat(machinist.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactAbilityOnlyColorless()).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped Machinist cannot produce mana again")
+    void cannotActivateTwiceWithoutUntapping() {
+        machinistOnBattlefield();
+        activateManaAbility();
+
+        assertThatThrownBy(this::activateManaAbility).isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactAbilityOnlyColorless()).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed(BarbedSextant.class)
+    @DisplayName("Restricted mana pays an artifact mana ability even when its source is sacrificed")
+    void paysArtifactManaAbilityWithSacrificeCost() {
+        machinistOnBattlefield();
+        harness.addToBattlefield(player1, new BarbedSextant());
+        activateManaAbility();
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactAbilityOnlyColorless()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Barbed Sextant");
     }
 }
