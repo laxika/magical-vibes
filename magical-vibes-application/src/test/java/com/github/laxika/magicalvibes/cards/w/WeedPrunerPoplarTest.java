@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.b.BurrentonShieldBearers;
+import com.github.laxika.magicalvibes.cards.c.CennsTactician;
 import com.github.laxika.magicalvibes.cards.m.Mutavault;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WeedPrunerPoplar.class, BurrentonShieldBearers.class, Mutavault.class})
+@CardUsed({WeedPrunerPoplar.class, BurrentonShieldBearers.class, Mutavault.class, CennsTactician.class})
 class WeedPrunerPoplarTest extends BaseCardTest {
 
     @Test
@@ -140,5 +141,57 @@ class WeedPrunerPoplarTest extends BaseCardTest {
 
         assertThat(bears.getPowerModifier()).isEqualTo(0);
         assertThat(bears.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("A creature reduced to zero toughness dies")
+    void zeroToughnessTargetDies() {
+        addCreatureReady(player1, new WeedPrunerPoplar());
+        Permanent target = addCreatureReady(player2, new CennsTactician());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Cenn's Tactician");
+        harness.assertInGraveyard(player2, "Cenn's Tactician");
+    }
+
+    @Test
+    @DisplayName("The trigger resolves after its source leaves the battlefield")
+    void triggerResolvesWithoutSource() {
+        Permanent source = addCreatureReady(player1, new WeedPrunerPoplar());
+        Permanent target = addCreatureReady(player2, new BurrentonShieldBearers());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        source.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Weed-Pruner Poplar");
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(-1);
+        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("A removed target is not replaced with another creature")
+    void removedTargetDoesNotRedirectTrigger() {
+        Permanent source = addCreatureReady(player1, new WeedPrunerPoplar());
+        Permanent target = addCreatureReady(player2, new BurrentonShieldBearers());
+        Permanent other = addCreatureReady(player2, new BurrentonShieldBearers());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        target.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player2, "Burrenton Shield-Bearers");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(source.getPowerModifier()).isZero();
+        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
     }
 }
