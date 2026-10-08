@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.b.Brushland;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WeatheredWayfarer.class, Forest.class, GlorySeeker.class, Plains.class})
+@CardUsed({WeatheredWayfarer.class, Brushland.class, Forest.class, GlorySeeker.class, Plains.class})
 class WeatheredWayfarerTest extends BaseCardTest {
 
     @Test
@@ -127,6 +128,64 @@ class WeatheredWayfarerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertNotInHand(player1, "Glory Seeker");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Land counts are checked only when activating, not when resolving")
+    void resolvesAfterLandCountsBecomeEqual() {
+        activateWithOpponentAhead();
+        setupLibrary();
+        harness.addToBattlefield(player1, new Plains());
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Plains");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new WeatheredWayfarer());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Resolves normally with an empty library")
+    void resolvesWithEmptyLibrary() {
+        activateWithOpponentAhead();
+        harness.setLibrary(player1, List.of());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can search for a nonbasic land")
+    void canFindNonbasicLand() {
+        activateWithOpponentAhead();
+        harness.setLibrary(player1, List.of(new Brushland(), new GlorySeeker()));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Brushland");
+        harness.assertNotOnBattlefield(player1, "Brushland");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private Permanent addWayfarer() {
