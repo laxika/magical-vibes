@@ -108,4 +108,68 @@ class WastelandTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Can target itself, sacrificing itself before the ability resolves")
+    void canTargetItself() {
+        harness.addToBattlefield(player1, new Wasteland());
+        UUID targetId = harness.getPermanentId(player1, "Wasteland");
+
+        harness.activateAbility(player1, 0, 1, null, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Wasteland");
+        harness.assertInGraveyard(player1, "Wasteland");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Target can tap for mana in response before being destroyed")
+    void targetCanProduceManaInResponse() {
+        harness.addToBattlefield(player1, new Wasteland());
+        harness.addToBattlefield(player2, new MazeOfShadows());
+        UUID targetId = harness.getPermanentId(player2, "Maze of Shadows");
+        int manaBefore = gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS);
+
+        harness.activateAbility(player1, 0, 1, null, targetId);
+        harness.activateAbility(player2, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS))
+                .isEqualTo(manaBefore + 1);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player2, "Maze of Shadows");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Maze of Shadows");
+    }
+
+    @Test
+    @DisplayName("Ability does nothing when its target is sacrificed in response")
+    void targetSacrificedInResponse() {
+        harness.addToBattlefield(player1, new Wasteland());
+        harness.addToBattlefield(player2, new Wasteland());
+        harness.addToBattlefield(player2, new MazeOfShadows());
+        UUID targetId = harness.getPermanentId(player2, "Wasteland");
+        UUID responseTargetId = harness.getPermanentId(player2, "Maze of Shadows");
+
+        harness.activateAbility(player1, 0, 1, null, targetId);
+        harness.activateAbility(player2, 0, 1, null, responseTargetId);
+
+        harness.assertInGraveyard(player1, "Wasteland");
+        harness.assertInGraveyard(player2, "Wasteland");
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Maze of Shadows");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
 }
