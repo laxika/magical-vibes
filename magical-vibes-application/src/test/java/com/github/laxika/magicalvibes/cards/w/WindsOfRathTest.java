@@ -21,9 +21,8 @@ class WindsOfRathTest extends BaseCardTest {
     }
 
     private void enchant(Permanent host) {
-        Permanent aura = new Permanent(new Pacifism());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Pacifism());
         aura.setAttachedTo(host.getId());
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(aura);
     }
 
     @Test
@@ -72,6 +71,36 @@ class WindsOfRathTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Static Orb");
         harness.assertInGraveyard(player2, "Soltari Foot Soldier");
+    }
+
+    @Test
+    @DisplayName("An Aura also protects the caster's creature and stays on the battlefield")
+    void casterEnchantedCreatureAndAuraSurvive() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new SoltariFootSoldier());
+        enchant(enchanted);
+        harness.addToBattlefield(player1, new SkyshroudTroll());
+        harness.addToBattlefield(player2, new SkyshroudTroll());
+
+        castWinds();
+
+        harness.assertOnBattlefield(player1, "Soltari Foot Soldier");
+        harness.assertOnBattlefield(player1, "Pacifism");
+        harness.assertInGraveyard(player1, "Skyshroud Troll");
+        harness.assertInGraveyard(player2, "Skyshroud Troll");
+    }
+
+    @Test
+    @DisplayName("An unattached Aura does not protect creatures from destruction")
+    void unattachedAuraDoesNotProtectCreatures() {
+        harness.addToBattlefield(player1, new Pacifism());
+        harness.addToBattlefield(player1, new SoltariFootSoldier());
+        harness.addToBattlefield(player2, new SkyshroudTroll());
+
+        castWinds();
+
+        harness.assertInGraveyard(player1, "Soltari Foot Soldier");
+        harness.assertInGraveyard(player2, "Skyshroud Troll");
+        harness.assertInGraveyard(player1, "Pacifism");
     }
 
     @Test
