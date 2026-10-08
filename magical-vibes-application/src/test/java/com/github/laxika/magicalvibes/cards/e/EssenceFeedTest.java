@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NestInvader;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EssenceFeed.class, NestInvader.class})
 class EssenceFeedTest extends BaseCardTest {
 
     @Test
@@ -43,7 +46,7 @@ class EssenceFeedTest extends BaseCardTest {
     @Test
     @DisplayName("Essence Feed cannot target a creature")
     void cannotTargetCreature() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new NestInvader());
         harness.setHand(player1, List.of(new EssenceFeed()));
         addEssenceFeedMana();
 
@@ -51,12 +54,24 @@ class EssenceFeedTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Self-targeting at three life gains life before state-based actions and still creates tokens")
+    void canTargetSelfAtThreeLife() {
+        harness.setLife(player1, 3);
+        castAndResolve(player1.getId());
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(3);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(findPermanents(player1, "Eldrazi Spawn")).hasSize(3);
+        assertThat(findPermanents(player2, "Eldrazi Spawn")).isEmpty();
+    }
+
     private void castAndResolve(UUID targetId) {
         harness.setHand(player1, List.of(new EssenceFeed()));
         addEssenceFeedMana();
 
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
     }
 
     private void addEssenceFeedMana() {
