@@ -111,6 +111,43 @@ class ZombieBoaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Two activations create two independent triggers for the same blocker")
+    void repeatedColorChoiceCreatesSeparateTriggers() {
+        Permanent boa = addReadyZombieBoa();
+        Permanent blocker = addCreatureReady(player2, new MournfulZombie());
+
+        activateAndChoose("BLACK");
+        activateAndChoose("BLACK");
+        boa.setAttacking(true);
+        prepareDeclareBlockers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+    }
+
+    @Test
+    @DisplayName("A destruction trigger still resolves after Zombie Boa leaves the battlefield")
+    void destructionDoesNotRequireSourceToRemainOnBattlefield() {
+        Permanent boa = addReadyZombieBoa();
+        Permanent blocker = addCreatureReady(player2, new MournfulZombie());
+
+        activateAndChoose("BLACK");
+        boa.setAttacking(true);
+        prepareDeclareBlockers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(boa);
+        gd.playerGraveyards.get(player1.getId()).add(boa.getCard());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+    }
+
+    @Test
     @DisplayName("The ability can only be activated at sorcery speed")
     void onlyActivatesAtSorcerySpeed() {
         addReadyZombieBoa();
