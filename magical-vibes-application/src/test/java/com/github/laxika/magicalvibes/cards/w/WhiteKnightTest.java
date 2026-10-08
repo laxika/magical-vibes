@@ -34,10 +34,7 @@ class WhiteKnightTest extends BaseCardTest {
     @DisplayName("Casting White Knight puts it on the stack")
     void castingPutsOnStack() {
         WhiteKnight whiteKnight = new WhiteKnight();
-        harness.setHand(player1, List.of(whiteKnight));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, whiteKnight, "{W}{W}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
@@ -50,10 +47,7 @@ class WhiteKnightTest extends BaseCardTest {
     @DisplayName("Resolving puts White Knight on the battlefield")
     void resolvingPutsOnBattlefield() {
         WhiteKnight whiteKnight = new WhiteKnight();
-        harness.setHand(player1, List.of(whiteKnight));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, whiteKnight, "{W}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -215,5 +209,61 @@ class WhiteKnightTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard()).isSameAs(holyStrength);
+    }
+    @Test
+    @DisplayName("Unblocked first striker deals damage only once")
+    void unblockedFirstStrikerDealsDamageOnlyOnce() {
+        addCreatureReady(player1, new WhiteKnight());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("White Knight kills an attacking bear before regular combat damage")
+    void firstStrikeWorksWhileBlocking() {
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new WhiteKnight());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "White Knight");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("White removal resolves against White Knight despite protection from black")
+    void whiteRemovalResolves() {
+        Permanent knight = addCreatureReady(player2, new WhiteKnight());
+        harness.setHand(player1, List.of(new SwordsToPlowshares()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, knight.getId());
+
+        harness.assertNotOnBattlefield(player2, "White Knight");
+        harness.assertNotInGraveyard(player2, "White Knight");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(knight.getCard());
+        harness.assertLife(player2, 22);
+    }
+
+    @Test
+    @DisplayName("White Aura resolves and enchants White Knight")
+    void whiteAuraResolves() {
+        Permanent knight = addCreatureReady(player1, new WhiteKnight());
+        harness.setHand(player1, List.of(new HolyStrength()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, knight.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Holy Strength").getAttachedTo()).isEqualTo(knight.getId());
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(4);
     }
 }
