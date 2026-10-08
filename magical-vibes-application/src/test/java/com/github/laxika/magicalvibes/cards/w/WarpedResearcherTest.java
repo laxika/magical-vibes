@@ -63,8 +63,7 @@ class WarpedResearcherTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, researcher, Keyword.SHROUD)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, researcher, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, researcher, Keyword.SHROUD)).isFalse();
@@ -90,6 +89,54 @@ class WarpedResearcherTest extends BaseCardTest {
                 researcher.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shroud");
+    }
+
+    @Test
+    @DisplayName("Cycling grants keywords when the trigger resolves, before the cycling draw")
+    void keywordsAreGrantedOnlyWhenTriggerResolves() {
+        Permanent researcher = harness.addToBattlefieldAndReturn(player1, new WarpedResearcher());
+        setUpCycling(player1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gqs.hasKeyword(gd, researcher, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, researcher, Keyword.SHROUD)).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, researcher, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, researcher, Keyword.SHROUD)).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Repeated cycling grants keywords to each Researcher despite existing shroud")
+    void repeatedCyclingAffectsEachResearcherWithoutTargeting() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new WarpedResearcher());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new WarpedResearcher());
+        Permanent wizard = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
+        harness.setHand(player1, List.of(new KeeneyeAven(), new KeeneyeAven()));
+        harness.setLibrary(player1, List.of(new FugitiveWizard(), new FugitiveWizard()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        for (int cycle = 0; cycle < 2; cycle++) {
+            harness.activateHandAbility(player1, 0, null);
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            assertThat(gqs.hasKeyword(gd, first, Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, first, Keyword.SHROUD)).isTrue();
+            assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, second, Keyword.SHROUD)).isTrue();
+            assertThat(gqs.hasKeyword(gd, wizard, Keyword.FLYING)).isFalse();
+            assertThat(gqs.hasKeyword(gd, wizard, Keyword.SHROUD)).isFalse();
+        }
     }
 
     private void setUpCycling(Player player) {
