@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -151,6 +152,69 @@ class YavimayaGnatsTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("(flying)");
+    }
+
+    @Test
+    @DisplayName("Colorless mana cannot pay the regeneration cost")
+    void regenerationRequiresGreenMana() {
+        Permanent gnats = addCreatureReady(player1, new YavimayaGnats());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gnats.getRegenerationShield()).isZero();
+        assertThat(gnats.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each shield replaces only one destruction, including while already tapped")
+    void multipleShieldsSaveFromSeparateLethalDamageEvents() {
+        Permanent gnats = addCreatureReady(player1, new YavimayaGnats());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        gnats.setMarkedDamage(1);
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Yavimaya Gnats");
+        assertThat(gnats.getRegenerationShield()).isEqualTo(1);
+        assertThat(gnats.getMarkedDamage()).isZero();
+        assertThat(gnats.isTapped()).isTrue();
+
+        gnats.setMarkedDamage(1);
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Yavimaya Gnats");
+        assertThat(gnats.getRegenerationShield()).isZero();
+        assertThat(gnats.getMarkedDamage()).isZero();
+
+        gnats.setMarkedDamage(1);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Yavimaya Gnats");
+        harness.assertInGraveyard(player1, "Yavimaya Gnats");
+    }
+
+    @Test
+    @DisplayName("Regeneration cannot save a creature with zero toughness")
+    void regenerationDoesNotPreventZeroToughnessDeath() {
+        Permanent gnats = addCreatureReady(player1, new YavimayaGnats());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        gnats.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Yavimaya Gnats");
+        harness.assertInGraveyard(player1, "Yavimaya Gnats");
     }
 
     private Permanent addCreatureReady(Player player, int power, int toughness) {
