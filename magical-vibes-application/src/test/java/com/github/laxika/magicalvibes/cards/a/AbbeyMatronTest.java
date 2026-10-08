@@ -59,8 +59,7 @@ class AbbeyMatronTest extends BaseCardTest {
 
     @Test
     void abilityRequiresAReadyCreature() {
-        Permanent matron = new Permanent(new AbbeyMatron());
-        gd.playerBattlefields.get(player1.getId()).add(matron);
+        Permanent matron = harness.addToBattlefieldAndReturn(player1, new AbbeyMatron());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -68,5 +67,51 @@ class AbbeyMatronTest extends BaseCardTest {
 
         assertThat(matron.isTapped()).isFalse();
         assertThat(gqs.getEffectiveToughness(gd, matron)).isEqualTo(3);
+    }
+
+    @Test
+    void boostAppliesOnlyWhenAbilityResolves() {
+        Permanent matron = addCreatureReady(player1, new AbbeyMatron());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(matron.isTapped()).isTrue();
+        assertThat(gqs.getEffectiveToughness(gd, matron)).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, matron)).isEqualTo(6);
+    }
+
+    @Test
+    void abilityCannotBeActivatedWhileTapped() {
+        Permanent matron = addCreatureReady(player1, new AbbeyMatron());
+        matron.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectiveToughness(gd, matron)).isEqualTo(3);
+    }
+
+    @Test
+    void abilityBoostsOnlyItsSource() {
+        Permanent matron = addCreatureReady(player1, new AbbeyMatron());
+        Permanent otherMatron = addCreatureReady(player1, new AbbeyMatron());
+        Permanent opposingMatron = addCreatureReady(player2, new AbbeyMatron());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, matron)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, otherMatron)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposingMatron)).isEqualTo(3);
+        assertThat(otherMatron.isTapped()).isFalse();
+        assertThat(opposingMatron.isTapped()).isFalse();
     }
 }
