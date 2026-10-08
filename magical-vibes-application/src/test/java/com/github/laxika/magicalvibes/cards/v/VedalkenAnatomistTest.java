@@ -11,10 +11,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -24,35 +22,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({VedalkenAnatomist.class, GrizzlyBears.class, LlanowarElves.class, AngelsFeather.class})
 class VedalkenAnatomistTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
     @Test
-    @DisplayName("Has activated ability with tap, {2}{U} cost, -1/-1 counter and may tap/untap effects")
-    void hasCorrectStructure() {
-        VedalkenAnatomist card = new VedalkenAnatomist();
+    @DisplayName("Can target itself and untap after paying the activation costs")
+    void canTargetItselfAndUntap() {
+        Permanent anatomist = addReadyAnatomist(player1);
+        addAnatomistMana(player1);
 
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{2}{U}");
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(2);
-        // The -1/-1 counter placement is asserted behaviorally below.
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(1))
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getActivatedAbilities().get(0).getEffects().get(1);
-        assertThat(mayEffect.wrapped()).isInstanceOf(TapOrUntapTargetPermanentEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getTargetFilter())
-                .isInstanceOf(PermanentPredicateTargetFilter.class);
+        harness.activateAbility(player1, 0, null, anatomist.getId());
+
+        assertThat(anatomist.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(anatomist.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(anatomist.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Activation puts ability on stack =====
 
     @Test
     @DisplayName("Activating ability puts it on the stack targeting a creature")
     void activatingPutsOnStack() {
-        Permanent anatomist = addReadyAnatomist(player1);
+        addReadyAnatomist(player1);
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addAnatomistMana(player1);
 
@@ -61,7 +55,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Vedalken Anatomist");
+        assertThat(entry.getCard()).isInstanceOf(VedalkenAnatomist.class);
         assertThat(entry.getTargetId()).isEqualTo(target.getId());
     }
 
@@ -76,8 +70,6 @@ class VedalkenAnatomistTest extends BaseCardTest {
 
         assertThat(anatomist.isTapped()).isTrue();
     }
-
-    // ===== Puts -1/-1 counter on target =====
 
     @Test
     @DisplayName("Puts a -1/-1 counter on target creature and prompts may choice")
@@ -98,8 +90,6 @@ class VedalkenAnatomistTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
-    // ===== May tap/untap — accept taps untapped creature =====
-
     @Test
     @DisplayName("Accepting may choice taps an untapped target creature")
     void acceptingMayTapsUntappedCreature() {
@@ -116,8 +106,6 @@ class VedalkenAnatomistTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isTrue();
     }
-
-    // ===== May tap/untap — accept untaps tapped creature =====
 
     @Test
     @DisplayName("Accepting may choice untaps a tapped target creature")
@@ -136,8 +124,6 @@ class VedalkenAnatomistTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isFalse();
     }
-
-    // ===== May tap/untap — decline leaves creature unchanged =====
 
     @Test
     @DisplayName("Declining may choice leaves untapped creature untapped")
@@ -174,8 +160,6 @@ class VedalkenAnatomistTest extends BaseCardTest {
         assertThat(target.isTapped()).isTrue();
     }
 
-    // ===== Kills creature with -1/-1 counter =====
-
     @Test
     @DisplayName("Kills a 1/1 creature after the may choice finishes resolving")
     void killsOneOneCreature() {
@@ -193,8 +177,6 @@ class VedalkenAnatomistTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Llanowar Elves");
     }
 
-    // ===== Can target own creatures =====
-
     @Test
     @DisplayName("Can target own creature")
     void canTargetOwnCreature() {
@@ -208,23 +190,17 @@ class VedalkenAnatomistTest extends BaseCardTest {
         assertThat(ownCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
-    // ===== Invalid targets =====
-
     @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         addReadyAnatomist(player1);
-        AngelsFeather artifact = new AngelsFeather();
-        Permanent artifactPerm = new Permanent(artifact);
-        gd.playerBattlefields.get(player2.getId()).add(artifactPerm);
+        Permanent artifactPerm = harness.addToBattlefieldAndReturn(player2, new AngelsFeather());
         addAnatomistMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifactPerm.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
-
-    // ===== Costs =====
 
     @Test
     @DisplayName("Cannot activate ability without enough mana")
@@ -252,10 +228,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability with summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        VedalkenAnatomist card = new VedalkenAnatomist();
-        Permanent anatomist = new Permanent(card);
-        // summoningSick is true by default
-        gd.playerBattlefields.get(player1.getId()).add(anatomist);
+        harness.addToBattlefield(player1, new VedalkenAnatomist());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addAnatomistMana(player1);
 
@@ -263,8 +236,6 @@ class VedalkenAnatomistTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sick");
     }
-
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("Fizzles if target creature is removed before resolution")
@@ -284,14 +255,45 @@ class VedalkenAnatomistTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Ability still resolves when its source leaves the battlefield")
+    void resolvesWithoutItsSource() {
+        Permanent anatomist = addReadyAnatomist(player1);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addAnatomistMana(player1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(anatomist);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature with zero toughness can still be untapped before it dies")
+    void untapsBeforeStateBasedDeath() {
+        addReadyAnatomist(player1);
+        Permanent target = addCreatureReady(player2, new LlanowarElves());
+        target.tap();
+        addAnatomistMana(player1);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Llanowar Elves");
+        assertThat(gqs.getEffectiveToughness(gd, target)).isZero();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isFalse();
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addReadyAnatomist(Player player) {
-        VedalkenAnatomist card = new VedalkenAnatomist();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new VedalkenAnatomist());
     }
 
     private void addAnatomistMana(Player player) {
