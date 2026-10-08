@@ -76,6 +76,106 @@ class WitnessOfTomorrowsTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("Scrying can keep the top card without drawing it or changing the opponent's library")
+    void scryCanKeepTopCard() {
+        addReadyWitness();
+        Card top = new WitnessOfTomorrows();
+        Card second = new WitnessOfTomorrows();
+        Card opposingTop = new WitnessOfTomorrows();
+        harness.setLibrary(player1, List.of(top, second));
+        harness.setLibrary(player2, List.of(opposingTop));
+        List<Card> handBefore = List.copyOf(gd.playerHands.get(player1.getId()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry.playerId()).isEqualTo(player1.getId());
+        assertThat(scry.cards()).containsExactly(top);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, second);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingTop);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(handBefore);
+    }
+
+    @Test
+    @DisplayName("Scrying an empty library completes without requiring a choice")
+    void scryEmptyLibraryCompletes() {
+        addReadyWitness();
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent witness = addReadyWitness();
+        witness.setSummoningSick(true);
+        witness.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(witness.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(1);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+    }
+
+    @Test
+    @DisplayName("The ability can be activated repeatedly and survives its source leaving the battlefield")
+    void repeatedActivationsSurviveSourceLeaving() {
+        addReadyWitness();
+        Card first = new WitnessOfTomorrows();
+        Card second = new WitnessOfTomorrows();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.addMana(player1, ManaColor.BLUE, 8);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.stack).hasSize(2);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd,
+                gd.playerBattlefields.get(player1.getId()).getFirst()));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(first);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(second);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Four generic mana cannot pay the required blue mana")
+    void cannotActivateWithoutBlueMana() {
+        addReadyWitness();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+    }
     private Permanent addReadyWitness() {
         Permanent witness = harness.addToBattlefieldAndReturn(player1, new WitnessOfTomorrows());
         witness.setSummoningSick(false);
