@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.MazeOfShadows;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -16,7 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WasteLandPlaytest.class, MazeOfShadows.class, Forest.class})
+@CardUsed({WasteLandPlaytest.class, MazeOfShadows.class, Forest.class, DarksteelCitadel.class})
 class WasteLandPlaytestTest extends BaseCardTest {
 
     @Test
@@ -34,8 +35,7 @@ class WasteLandPlaytestTest extends BaseCardTest {
     @DisplayName("Destroys target nonbasic land and gives its controller a Wastes token")
     void destroysTargetAndCreatesWastesForLandController() {
         harness.addToBattlefield(player1, new WasteLandPlaytest());
-        harness.addToBattlefield(player2, new MazeOfShadows());
-        UUID targetId = harness.getPermanentId(player2, "Maze of Shadows");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new MazeOfShadows()).getId();
 
         harness.activateAbility(player1, 0, 1, null, targetId);
         harness.passBothPriorities();
@@ -57,10 +57,91 @@ class WasteLandPlaytestTest extends BaseCardTest {
     @DisplayName("Cannot target a basic land")
     void cannotTargetBasicLand() {
         harness.addToBattlefield(player1, new WasteLandPlaytest());
-        harness.addToBattlefield(player2, new Forest());
-        UUID targetId = harness.getPermanentId(player2, "Forest");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Forest()).getId();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Sacrifices Waste Land as a cost before destroying the target")
+    void sacrificesSourceBeforeResolution() {
+        harness.addToBattlefield(player1, new WasteLandPlaytest());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new MazeOfShadows()).getId();
+
+        harness.activateAbility(player1, 0, 1, null, targetId);
+
+        harness.assertInGraveyard(player1, "Waste Land");
+        harness.assertNotOnBattlefield(player1, "Waste Land");
+        harness.assertOnBattlefield(player2, "Maze of Shadows");
+        assertThat(findPermanents(player2, "Wastes")).isEmpty();
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Maze of Shadows");
+        assertThat(countPermanents(player2, "Wastes")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Wastes tokens are basic lands and cannot be targeted by Waste Land")
+    void cannotTargetCreatedWastesToken() {
+        harness.addToBattlefield(player1, new WasteLandPlaytest());
+        harness.addToBattlefield(player1, new WasteLandPlaytest());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new MazeOfShadows()).getId();
+
+        harness.activateAbility(player1, 0, 1, null, targetId);
+        harness.passBothPriorities();
+
+        UUID wastesId = findPermanent(player2, "Wastes").getId();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, wastesId))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Waste Land");
+        assertThat(countPermanents(player2, "Wastes")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can destroy your own nonbasic land and create the token for you")
+    void canTargetOwnLand() {
+        harness.addToBattlefield(player1, new WasteLandPlaytest());
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new MazeOfShadows()).getId();
+
+        harness.activateAbility(player1, 0, 1, null, targetId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Maze of Shadows");
+        assertThat(countPermanents(player1, "Wastes")).isEqualTo(1);
+        assertThat(findPermanents(player2, "Wastes")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creates a Wastes even when the target land is indestructible")
+    void createsTokenForIndestructibleLandController() {
+        harness.addToBattlefield(player1, new WasteLandPlaytest());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new DarksteelCitadel()).getId();
+
+        harness.activateAbility(player1, 0, 1, null, targetId);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Darksteel Citadel");
+        harness.assertNotInGraveyard(player2, "Darksteel Citadel");
+        harness.assertInGraveyard(player1, "Waste Land");
+        assertThat(countPermanents(player2, "Wastes")).isEqualTo(1);
+        assertThat(findPermanents(player1, "Wastes")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not create another token when the target is destroyed in response")
+    void illegalTargetDoesNotCreateToken() {
+        harness.addToBattlefield(player1, new WasteLandPlaytest());
+        harness.addToBattlefield(player2, new WasteLandPlaytest());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new MazeOfShadows()).getId();
+
+        harness.activateAbility(player1, 0, 1, null, targetId);
+        harness.activateAbility(player2, 0, 1, null, targetId);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Waste Land");
+        harness.assertInGraveyard(player2, "Waste Land");
+        harness.assertInGraveyard(player2, "Maze of Shadows");
+        assertThat(countPermanents(player2, "Wastes")).isEqualTo(1);
+        assertThat(findPermanents(player1, "Wastes")).isEmpty();
     }
 }
