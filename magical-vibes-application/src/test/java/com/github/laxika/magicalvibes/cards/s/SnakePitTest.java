@@ -14,7 +14,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,6 +36,7 @@ class SnakePitTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
 
         harness.castInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -57,7 +57,8 @@ class SnakePitTest extends BaseCardTest {
         harness.setHand(player2, List.of(new DarkRitual()));
         harness.addMana(player2, ManaColor.BLACK, 1);
 
-        harness.castInstant(player2, 0, (UUID) null);
+        harness.castInstant(player2, 0);
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -101,9 +102,71 @@ class SnakePitTest extends BaseCardTest {
         harness.setHand(player2, List.of(new DarkRitual()));
         harness.addMana(player2, ManaColor.BLACK, 1);
 
-        harness.castInstant(player2, 0, (UUID) null);
+        harness.castInstant(player2, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(countPermanents(player1, "Snake")).isZero();
+    }
+
+    @Test
+    @DisplayName("The optional token choice waits until the triggered ability resolves")
+    void tokenChoiceWaitsForResolution() {
+        setUpOpponentTurn();
+        harness.setHand(player2, List.of(new DarkRitual()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.castInstant(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(2);
+        assertThat(countPermanents(player1, "Snake")).isZero();
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(countPermanents(player1, "Snake")).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Dark Ritual");
+    }
+
+    @Test
+    @DisplayName("Each qualifying spell can create a Snake during the same turn")
+    void repeatedCastsEachCreateSnake() {
+        setUpOpponentTurn();
+        harness.setHand(player2, List.of(new DarkRitual(), new DarkRitual()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        for (int i = 0; i < 2; i++) {
+            harness.castInstant(player2, 0);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+        }
+
+        assertThat(countPermanents(player1, "Snake")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Snake")).isZero();
+    }
+
+    @Test
+    @DisplayName("Two Snake Pits make independent optional triggers")
+    void multipleSnakePitsMakeIndependentChoices() {
+        setUpOpponentTurn();
+        harness.addToBattlefield(player1, new SnakePit());
+        harness.setHand(player2, List.of(new DarkRitual()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.castInstant(player2, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Snake")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Snake")).isZero();
     }
 }
