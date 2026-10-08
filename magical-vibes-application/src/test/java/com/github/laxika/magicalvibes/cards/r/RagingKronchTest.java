@@ -85,4 +85,25 @@ class RagingKronchTest extends BaseCardTest {
 
         harness.assertLife(player2, 18);
     }
+
+    @Test
+    @DisplayName("An opponent's creature does not permit Kronch to attack alone")
+    void cantAttackAloneWithOpposingCreaturePresent() {
+        addCreatureReady(player1, new RagingKronch());
+        addCreatureReady(player2, new ViviensGrizzly());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped companion does not permit Kronch to attack alone")
+    void cantAttackAloneWithTappedCompanion() {
+        addCreatureReady(player1, new RagingKronch());
+        Permanent companion = addCreatureReady(player1, new ViviensGrizzly());
+        companion.setTapped(true);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
