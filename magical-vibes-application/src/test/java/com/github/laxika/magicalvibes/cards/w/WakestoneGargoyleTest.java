@@ -84,10 +84,35 @@ class WakestoneGargoyleTest extends BaseCardTest {
         activateAbility();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Gargoyle can activate the ability")
+    void tappedSummoningSickSourceCanActivateAbility() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new WakestoneGargoyle());
+        source.setTapped(true);
+        Permanent defender = addCreatureReady(player1, new WakestoneGargoyle());
+
+        activateAbility();
+        declareAttackers(List.of(1));
+
+        assertThat(defender.isAttacking()).isTrue();
+        assertThat(source.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability does not allow a tapped defender to attack")
+    void abilityDoesNotBypassTappedRestriction() {
+        Permanent gargoyle = addCreatureReady(player1, new WakestoneGargoyle());
+        gargoyle.setTapped(true);
+        activateAbility();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
