@@ -125,6 +125,73 @@ class VivienOnTheHuntTest extends BaseCardTest {
         assertThat(rhino.getCard().getSubtypes()).containsExactly(CardSubtype.RHINO, CardSubtype.WARRIOR);
     }
 
+    @Test
+    @DisplayName("+2 may fail to find even when a matching creature exists")
+    void plusTwoMayFailToFindAfterSacrificing() {
+        addReadyVivien(3);
+        Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card matching = new BenalishKnight();
+        harness.setLibrary(player1, List.of(matching));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, sacrificed.getId());
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Benalish Knight");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matching);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("+1 mills a short library and can return all newly milled creatures")
+    void plusOneReturnsAllMilledCreaturesFromShortLibrary() {
+        Permanent vivien = addReadyVivien(3);
+        Card oldCreature = new HillGiant();
+        Card first = new GrizzlyBears();
+        Card second = new BenalishKnight();
+        Card land = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(oldCreature));
+        harness.setLibrary(player1, List.of(first, second, land));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(first.getId(), second.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(oldCreature, land);
+        assertThat(vivien.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("+1 with no milled creatures leaves existing graveyard creatures alone")
+    void plusOneWithoutMilledCreaturesFinishesWithoutAChoice() {
+        addReadyVivien(3);
+        Card oldCreature = new GrizzlyBears();
+        Card land = new Forest();
+        Card instant = new Shock();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(oldCreature));
+        harness.setLibrary(player1, List.of(land, instant));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(oldCreature, land, instant);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private Permanent addReadyVivien(int loyalty) {
         Permanent vivien = harness.addToBattlefieldAndReturn(player1, new VivienOnTheHunt());
         vivien.setCounterCount(CounterType.LOYALTY, loyalty);
