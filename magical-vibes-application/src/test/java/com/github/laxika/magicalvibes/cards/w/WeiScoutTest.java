@@ -42,4 +42,17 @@ class WeiScoutTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Wei Scout can block a creature without horsemanship")
+    void canBlockCreatureWithoutHorsemanship() {
+        Permanent blocker = addCreatureReady(player2, new WeiScout());
+        addCreatureReady(player1, new WeiInfantry());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 }
