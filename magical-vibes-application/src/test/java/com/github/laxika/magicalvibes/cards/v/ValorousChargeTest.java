@@ -69,6 +69,41 @@ class ValorousChargeTest extends BaseCardTest {
         assertThat(whiteCreature.getEffectiveToughness()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Multiple Valorous Charges stack until end of turn")
+    void multipleChargesStack() {
+        Permanent whiteCreature = addCreatureReady(player1, new KnightErrant());
+        Permanent greenCreature = addCreatureReady(player2, new GrizzlyBears());
+
+        castValorousCharge();
+        castValorousCharge();
+
+        assertThat(whiteCreature.getEffectivePower()).isEqualTo(6);
+        assertThat(whiteCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(greenCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(greenCreature.getEffectiveToughness()).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(whiteCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(whiteCreature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("White creatures entering while the spell is on the stack are boosted")
+    void includesWhiteCreaturesEnteringBeforeResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new ValorousCharge(), "{1}{W}{W}");
+
+        Permanent whiteCreature = addCreatureReady(player2, new KnightErrant());
+        harness.passBothPriorities();
+
+        assertThat(whiteCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(whiteCreature.getEffectiveToughness()).isEqualTo(2);
+    }
     private void castValorousCharge() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
