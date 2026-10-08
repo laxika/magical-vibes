@@ -15,10 +15,59 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Willbender.class, PsionicBlast.class, ProdigalSorcerer.class, ChromeshellCrab.class,
         AvalancheRiders.class, Desert.class})
 class WillbenderTest extends BaseCardTest {
+
+    @Test
+    void cannotTurnFaceUpWithoutTheRequiredBlueMana() {
+        Permanent willbender = castFaceDownWillbender();
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(player2,
+                gd.playerBattlefields.get(player2.getId()).indexOf(willbender)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(willbender.isFaceDown()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void canTurnFaceUpWithoutAnEligibleSpellOrAbility() {
+        Permanent willbender = castFaceDownWillbender();
+
+        turnFaceUp(willbender);
+
+        assertThat(willbender.isFaceDown()).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void leavesOriginalTargetUnchangedWhenNoOtherLegalTargetExists() {
+        Permanent willbender = castFaceDownWillbender();
+        Permanent onlyLand = harness.addToBattlefieldAndReturn(player2, new Desert());
+        AvalancheRiders riders = new AvalancheRiders();
+        harness.setHand(player1, List.of(riders));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0, onlyLand.getId());
+        harness.passPriority(player1);
+
+        turnFaceUp(willbender);
+        harness.handlePermanentChosen(player2, riders.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(onlyLand);
+        harness.assertInGraveyard(player2, "Desert");
+        assertThat(willbender.isFaceDown()).isFalse();
+    }
 
     @Test
     void turningFaceUpRetargetsSingleTargetSpell() {
