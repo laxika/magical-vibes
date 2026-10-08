@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WharfInfiltrator.class, Censor.class, Forest.class, GraniticTitan.class,
+        GrizzlyBears.class, HillGiant.class})
 class WharfInfiltratorTest extends BaseCardTest {
 
     @Test
@@ -29,10 +31,7 @@ class WharfInfiltratorTest extends BaseCardTest {
         Permanent infiltrator = addCreatureReady(player1, new WharfInfiltrator());
         infiltrator.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(infiltrator);
@@ -119,5 +118,57 @@ class WharfInfiltratorTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().isToken()
                         && p.getCard().getSubtypes().contains(CardSubtype.ELDRAZI));
+    }
+
+    @Test
+    @DisplayName("Skulk allows an equal-power creature to block")
+    void equalPowerCreatureCanBlock() {
+        Permanent blocker = addCreatureReady(player2, new WharfInfiltrator());
+        Permanent attacker = addCreatureReady(player1, new WharfInfiltrator());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+
+        assertThat(blocker.isBlockedThisTurn()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Declining the combat damage draw also skips the discard")
+    void decliningDrawDoesNotDiscard() {
+        harness.setHand(player1, List.of(new WharfInfiltrator()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        addCreatureReady(player1, new WharfInfiltrator()).setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInHand(player1, "Wharf Infiltrator");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's creature discard does not trigger the token ability")
+    void opponentDiscardDoesNotTriggerToken() {
+        harness.addToBattlefield(player1, new WharfInfiltrator());
+        harness.setHand(player2, List.of(new GraniticTitan()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player2);
+
+        harness.activateHandAbility(player2, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Granitic Titan");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().isToken());
     }
 }
