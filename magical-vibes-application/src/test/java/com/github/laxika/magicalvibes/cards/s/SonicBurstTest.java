@@ -45,6 +45,51 @@ class SonicBurstTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Discard is paid before damage resolves")
+    void paysDiscardBeforeResolution() {
+        harness.setHand(player1, List.of(new SonicBurst(), new WoodElves()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        harness.assertInGraveyard(player1, "Wood Elves");
+        harness.assertNotInGraveyard(player1, "Sonic Burst");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        harness.assertInGraveyard(player1, "Sonic Burst");
+    }
+
+    @Test
+    @DisplayName("Discards exactly one other card from a larger hand")
+    void discardsExactlyOneCardFromLargerHand() {
+        WoodElves elves = new WoodElves();
+        WallOfNets wall = new WallOfNets();
+        harness.setHand(player1, List.of(new SonicBurst(), elves, wall));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, player1.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId()).getFirst()).isIn(elves, wall);
+        assertThat(gd.playerGraveyards.get(player1.getId()).getFirst()).isIn(elves, wall);
+        assertThat(gd.playerHands.get(player1.getId()).getFirst())
+                .isNotSameAs(gd.playerGraveyards.get(player1.getId()).getFirst());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertInGraveyard(player1, "Sonic Burst");
+    }
+
+    @Test
     @DisplayName("Cannot be cast when there is no other card to discard")
     void cannotCastWithoutCardToDiscard() {
         harness.setHand(player1, List.of(new SonicBurst()));
