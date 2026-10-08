@@ -65,11 +65,57 @@ class SlitheringShadeTest extends BaseCardTest {
         assertThat(shade.getEffectiveToughness()).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(shade.getEffectivePower()).isZero();
         assertThat(shade.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Repeated activations boost only their source and accumulate")
+    void repeatedActivationsBoostOnlySource() {
+        Permanent shade = addCreatureReady(player1, new SlitheringShade());
+        Permanent otherShade = addCreatureReady(player1, new SlitheringShade());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(shade.getEffectivePower()).isEqualTo(2);
+        assertThat(shade.getEffectiveToughness()).isEqualTo(3);
+        assertThat(otherShade.getEffectivePower()).isZero();
+        assertThat(otherShade.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Shade can activate its pump with cards in hand")
+    void canPumpWhileTappedAndSummoningSick() {
+        harness.setHand(player1, List.of(new SlitheringShade()));
+        Permanent shade = addCreatureReady(player1, new SlitheringShade());
+        shade.setTapped(true);
+        shade.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(shade.getEffectivePower()).isEqualTo(1);
+        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
+        assertThat(shade.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Hellbent is checked against the controller's current hand at attack declaration")
+    void handChangeBeforeAttackingDisablesHellbent() {
+        harness.setHand(player1, List.of());
+        Permanent shade = addCreatureReady(player1, new SlitheringShade());
+        harness.setHand(player1, List.of(new SlitheringShade()));
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+        assertThat(shade.isAttacking()).isFalse();
     }
 
 }
