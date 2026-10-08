@@ -91,6 +91,51 @@ class WarpingWurmTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
+    @Test
+    @DisplayName("The Wurm neither phases nor triggers its upkeep ability on its opponent's turn")
+    void opponentUpkeepDoesNotAffectWurm() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player1, new WarpingWurm());
+
+        advanceTurn();
+
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(wurm);
+        assertThat(gd.stack).isEmpty();
+        assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A Wurm phased out during untap has no upkeep payment trigger")
+    void phasedOutWurmDoesNotTriggerAtUpkeep() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player1, new WarpingWurm());
+
+        advanceTurn();
+        advanceTurn();
+
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.currentStep).isEqualTo(TurnStep.UPKEEP);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(wurm);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A tapped Wurm phases in before untapping and receives its counter only on trigger resolution")
+    void phasesInBeforeUntappingAndCounterResolution() {
+        Permanent wurm = phasedOutWurm();
+        wurm.setTapped(true);
+
+        advanceTurn();
+        advanceTurn();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(wurm);
+        assertThat(wurm.isTapped()).isFalse();
+        assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
     /**
      * Returns a Wurm that has already phased out through the untap-step turn-based action, so the
      * next time its controller untaps it phases back in.
