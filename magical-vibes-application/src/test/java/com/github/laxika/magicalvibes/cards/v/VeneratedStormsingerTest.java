@@ -100,6 +100,77 @@ class VeneratedStormsingerTest extends BaseCardTest {
         harness.assertLife(player2, 20);
     }
 
+    @Test
+    @DisplayName("Sacrificing the mobilized token triggers the life drain")
+    void mobilizedTokenDyingDrainsOpponent() {
+        addCreatureReady(player1, new VeneratedStormsinger());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Warrior");
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Mobilize resolves and sacrifices its token even if Stormsinger dies in response")
+    void mobilizeResolvesAfterSourceDies() {
+        Permanent stormsinger = addCreatureReady(player1, new VeneratedStormsinger());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new LightningStrike()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        declareAttackers(List.of(0));
+        harness.castAndResolveInstant(player1, 0, stormsinger.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Venerated Stormsinger");
+        harness.assertOnBattlefield(player1, "Warrior");
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Warrior");
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Stormsinger sees itself and its Warrior token die simultaneously")
+    void simultaneousSourceAndTokenDeathsEachDrainOpponent() {
+        Permanent stormsinger = addCreatureReady(player1, new VeneratedStormsinger());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        Permanent warrior = findPermanent(player1, "Warrior");
+
+        stormsinger.setMarkedDamage(3);
+        warrior.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Venerated Stormsinger");
+        harness.assertNotOnBattlefield(player1, "Warrior");
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
     private void killPermanent(com.github.laxika.magicalvibes.model.Player controller, String name) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -109,7 +180,6 @@ class VeneratedStormsingerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         UUID permanentId = harness.getPermanentId(controller, name);
-        harness.castInstant(player2, 0, permanentId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, permanentId);
     }
 }
