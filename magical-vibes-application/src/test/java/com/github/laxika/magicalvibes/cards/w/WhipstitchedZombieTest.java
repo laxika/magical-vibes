@@ -83,4 +83,34 @@ class WhipstitchedZombieTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Whipstitched Zombie");
     }
+
+    @Test
+    @DisplayName("May decline payment even when black mana is available")
+    void declineWithManaAvailableSacrifices() {
+        harness.addToBattlefield(player1, new WhipstitchedZombie());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Whipstitched Zombie");
+        harness.assertInGraveyard(player1, "Whipstitched Zombie");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Nonblack mana cannot pay the upkeep cost")
+    void wrongColorManaCannotPay() {
+        harness.addToBattlefield(player1, new WhipstitchedZombie());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Whipstitched Zombie");
+        harness.assertInGraveyard(player1, "Whipstitched Zombie");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
 }
