@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.b.BorosSwiftblade;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.y.YavimayaBarbarian;
-import com.github.laxika.magicalvibes.cards.z.Zap;
+import com.github.laxika.magicalvibes.cards.t.ThornscapeMaster;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VigorousCharge.class, YavimayaBarbarian.class, Forest.class, Zap.class})
+@CardUsed({VigorousCharge.class, YavimayaBarbarian.class, Forest.class, ThornscapeMaster.class})
 class VigorousChargeTest extends BaseCardTest {
 
     @Test
@@ -70,8 +70,7 @@ class VigorousChargeTest extends BaseCardTest {
         castCharge(target, true);
         harness.setLife(player1, 10);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
         harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 2));
@@ -98,15 +97,85 @@ class VigorousChargeTest extends BaseCardTest {
     @Test
     @DisplayName("A kicked charge does not trigger on noncombat damage")
     void kickedChargeDoesNotTriggerOnNoncombatDamage() {
-        Permanent target = addCreatureReady(player1, new YavimayaBarbarian());
+        Permanent target = addCreatureReady(player1, new ThornscapeMaster());
+        Permanent victim = addCreatureReady(player2, new YavimayaBarbarian());
         castCharge(target, true);
         harness.setLife(player1, 10);
-        harness.setLibrary(player1, List.of(new VigorousCharge()));
-        harness.setHand(player1, List.of(new Zap()));
-        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, target.getId());
+        harness.activateAbility(player1, 0, 0, null, victim.getId());
         harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(10);
+        harness.assertInGraveyard(player2, "Yavimaya Barbarian");
+    }
+
+    @Test
+    @DisplayName("The caster gains life when an opposing target deals combat damage")
+    void casterGainsLifeForOpposingCreature() {
+        Permanent target = addCreatureReady(player2, new YavimayaBarbarian());
+        castCharge(target, true);
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(10);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Each kicked charge creates a separate life-gain trigger")
+    void multipleKickedChargesEachGainLife() {
+        Permanent target = addCreatureReady(player1, new YavimayaBarbarian());
+        castCharge(target, true);
+        castCharge(target, true);
+        harness.setLife(player1, 10);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(14);
+    }
+
+    @Test
+    @DisplayName("A charge does not resolve when its target dies in response")
+    void targetDiesBeforeResolution() {
+        Permanent target = addCreatureReady(player1, new YavimayaBarbarian());
+        addCreatureReady(player2, new ThornscapeMaster());
+        harness.setHand(player1, List.of(new VigorousCharge()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castKickedInstant(player1, 0, target.getId());
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.activateAbility(player2, 0, 0, null, target.getId());
+        harness.setLife(player1, 10);
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Yavimaya Barbarian");
+        harness.assertInGraveyard(player1, "Vigorous Charge");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(10);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The kicked life-gain trigger expires at end of turn")
+    void lifeGainTriggerExpiresAtEndOfTurn() {
+        Permanent target = addCreatureReady(player1, new YavimayaBarbarian());
+        castCharge(target, true);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.setLife(player1, 10);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(10);
     }
@@ -144,7 +213,8 @@ class VigorousChargeTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.WHITE, 1);
             harness.castKickedInstant(player1, 0, target.getId());
         } else {
-            harness.castInstant(player1, 0, target.getId());
+            harness.castAndResolveInstant(player1, 0, target.getId());
+            return;
         }
         harness.passBothPriorities();
     }
