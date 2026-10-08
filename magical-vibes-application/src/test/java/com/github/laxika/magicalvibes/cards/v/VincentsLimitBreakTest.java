@@ -101,6 +101,65 @@ class VincentsLimitBreakTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getCard().getId().equals(creatureCard.getId()));
     }
 
+
+    @Test
+    @DisplayName("A borrowed creature returns to its owner rather than its controller")
+    void borrowedCreatureReturnsToOwner() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card creatureCard = creature.getCard();
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        gd.playerBattlefields.get(player1.getId()).add(creature);
+        gd.stolenCreatures.put(creature.getId(), player2.getId());
+
+        cast(creature, 2, 5);
+        destroy(player2, creature);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(creatureCard.getId()));
+        Permanent returned = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(creatureCard.getId()))
+                .findFirst().orElseThrow();
+        assertThat(returned.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A returned creature loses the temporary stats and cannot return a second time")
+    void returnedCreatureIsANewObject() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Card creatureCard = creature.getCard();
+        cast(creature, 2, 5);
+
+        destroy(player2, creature);
+        resolveAllTriggers();
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(creatureCard.getId()))
+                .findFirst().orElseThrow();
+        assertThat(returned.getId()).isNotEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(2);
+
+        destroy(player2, returned);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(creatureCard.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(creatureCard.getId()));
+    }
+
+    @Test
+    @DisplayName("Hellmasker cannot be cast without paying its additional cost")
+    void hellmaskerRequiresFullAdditionalCost() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new VincentsLimitBreak()));
+        addMana(player1, 4);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 2, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void cast(Permanent target, int mode, int totalMana) {
         cast(target, mode, totalMana, player1);
     }
@@ -121,8 +180,7 @@ class VincentsLimitBreakTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(caster, List.of(new DoomBlade()));
         harness.addMana(caster, ManaColor.BLACK, 2);
-        harness.castInstant(caster, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, target.getId());
     }
 
     private void addMana(com.github.laxika.magicalvibes.model.Player player, int totalMana) {
