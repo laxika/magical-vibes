@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SunscorchedDesert;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,13 +16,14 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WretchedCamel.class, GrizzlyBears.class, Shock.class, SunscorchedDesert.class})
 class WretchedCamelTest extends BaseCardTest {
 
     @Test
     @DisplayName("Dies while controlling a Desert — target player discards a card")
     void diesWithDesertOnBattlefieldForcesDiscard() {
         harness.addToBattlefield(player1, new WretchedCamel());
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new SunscorchedDesert()));
+        harness.addToBattlefield(player1, new SunscorchedDesert());
 
         killCamel();
 
@@ -60,7 +61,7 @@ class WretchedCamelTest extends BaseCardTest {
     @DisplayName("\"Target player\" lets the controller choose themselves to discard")
     void controllerMayTargetSelf() {
         harness.addToBattlefield(player1, new WretchedCamel());
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new SunscorchedDesert()));
+        harness.addToBattlefield(player1, new SunscorchedDesert());
         harness.setHand(player1, List.of(new GrizzlyBears()));
 
         killCamel();
@@ -91,6 +92,49 @@ class WretchedCamelTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
+    @Test
+    void opponentsDesertsDoNotEnableTrigger() {
+        harness.addToBattlefield(player1, new WretchedCamel());
+        harness.addToBattlefield(player2, new SunscorchedDesert());
+        harness.setGraveyard(player2, List.of(new SunscorchedDesert()));
+
+        killCamel();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void desertConditionIsCheckedAgainOnResolution() {
+        harness.addToBattlefield(player1, new WretchedCamel());
+        harness.setGraveyard(player1, List.of(new SunscorchedDesert()));
+        killCamel();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.setGraveyard(player1, List.of(new WretchedCamel()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void targetWithEmptyHandDoesNotDiscard() {
+        harness.addToBattlefield(player1, new WretchedCamel());
+        harness.setGraveyard(player1, List.of(new SunscorchedDesert()));
+        killCamel();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.setHand(player2, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
     /** Player2 becomes active and Shocks the camel to death, leaving one card in player2's hand. */
     private void killCamel() {
         harness.forceActivePlayer(player2);
@@ -100,7 +144,6 @@ class WretchedCamelTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID camelId = harness.getPermanentId(player1, "Wretched Camel");
-        harness.castInstant(player2, 0, camelId);
-        harness.passBothPriorities(); // Shock resolves → camel dies → death trigger awaits target
+        harness.castAndResolveInstant(player2, 0, camelId); // Shock resolves → camel dies → death trigger awaits target
     }
 }
