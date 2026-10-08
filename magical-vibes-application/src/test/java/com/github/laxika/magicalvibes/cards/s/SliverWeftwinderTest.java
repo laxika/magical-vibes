@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.cards.t.TheFirstSliver;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -55,8 +56,7 @@ class SliverWeftwinderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent warpedSliver = findPermanent(player1, "Belligerent Sliver");
         assertThat(warpedSliver.isCastWithWarp()).isTrue();
@@ -94,6 +94,113 @@ class SliverWeftwinderTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void enteringWeftwinderGrantsItsOwnConjureTrigger() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, fiveGrizzlyBears());
+
+        harness.enterBattlefieldAndReturn(player1, new SliverWeftwinder());
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void opposingSliverDoesNotConjureOrDraw() {
+        addCreatureReady(player1, new SliverWeftwinder());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, fiveGrizzlyBears());
+        harness.setLibrary(player2, fiveGrizzlyBears());
+
+        harness.enterBattlefieldAndReturn(player2, new BelligerentSliver());
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(5);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void emptyLibraryReceivesConjuredCardBeforeDrawing() {
+        addCreatureReady(player1, new SliverWeftwinder());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
+
+        harness.enterBattlefieldAndReturn(player1, new BelligerentSliver());
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId()).getFirst().getOwnerId())
+                .isEqualTo(player1.getId());
+    }
+
+    @Test
+    void conjuringIntoTopFivePreservesCardsBelowThatRange() {
+        addCreatureReady(player1, new SliverWeftwinder());
+        harness.setHand(player1, List.of());
+        List<Card> originalLibrary = java.util.stream.Stream.generate(GrizzlyBears::new)
+                .limit(10).map(card -> (Card) card).toList();
+        harness.setLibrary(player1, originalLibrary);
+
+        harness.enterBattlefieldAndReturn(player1, new BelligerentSliver());
+        resolveAllTriggers();
+
+        List<Card> library = gd.playerDecks.get(player1.getId());
+        assertThat(library).hasSize(10);
+        assertThat(library.subList(5, 10)).containsExactlyElementsOf(originalLibrary.subList(5, 10));
+        List<Card> conjuredInLibrary = library.stream()
+                .filter(card -> !(card instanceof GrizzlyBears)).toList();
+        if (!conjuredInLibrary.isEmpty()) {
+            assertThat(conjuredInLibrary).hasSize(1);
+            assertThat(library.indexOf(conjuredInLibrary.getFirst())).isBetween(0, 3);
+            assertThat(gd.playerHands.get(player1.getId())).containsExactly(originalLibrary.getFirst());
+        } else {
+            assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+            assertThat(gd.playerHands.get(player1.getId()).getFirst()).isNotInstanceOf(GrizzlyBears.class);
+        }
+    }
+
+    @Test
+    void nativeWarpWorksWithoutAnotherWeftwinderAndExilesAtEndStep() {
+        SliverWeftwinder weftwinder = new SliverWeftwinder();
+        harness.setHand(player1, List.of(weftwinder));
+        harness.setLibrary(player1, fiveGrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Sliver Weftwinder").isCastWithWarp()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Sliver Weftwinder")).isZero();
+        assertThat(gd.findExiledCard(weftwinder.getId())).isNotNull();
+    }
+
+    @Test
+    void grantedTriggerStillResolvesAfterWeftwinderLeaves() {
+        Permanent weftwinder = addCreatureReady(player1, new SliverWeftwinder());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, fiveGrizzlyBears());
+
+        harness.enterBattlefieldAndReturn(player1, new BelligerentSliver());
+        gd.playerBattlefields.get(player1.getId()).remove(weftwinder);
+        gd.playerGraveyards.get(player1.getId()).add(weftwinder.getCard());
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     private List<Card> fiveGrizzlyBears() {
