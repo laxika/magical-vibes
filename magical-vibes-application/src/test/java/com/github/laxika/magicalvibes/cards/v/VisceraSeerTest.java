@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,24 +17,23 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VisceraSeer.class, RuneclawBear.class})
 class VisceraSeerTest extends BaseCardTest {
-
-    // ===== Activation: sacrifice a creature to scry 1 =====
 
     @Test
     @DisplayName("Sacrificing a creature enters scry state with 1 card")
     void sacrificeCreatureTriggersScry() {
         addReadySeer(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.addToBattlefield(player1, new RuneclawBear());
+        UUID bearsId = harness.getPermanentId(player1, "Runeclaw Bear");
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
         // Bears should be sacrificed
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Runeclaw Bear");
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
 
         // Should be in scry state
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
@@ -46,10 +45,9 @@ class VisceraSeerTest extends BaseCardTest {
     @DisplayName("Scry 1 keeping card on top preserves it")
     void scryKeepOnTop() {
         addReadySeer(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.addToBattlefield(player1, new RuneclawBear());
+        UUID bearsId = harness.getPermanentId(player1, "Runeclaw Bear");
 
-        GameData gd = harness.getGameData();
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card topCard = deck.get(0);
 
@@ -66,10 +64,9 @@ class VisceraSeerTest extends BaseCardTest {
     @DisplayName("Scry 1 putting card on bottom moves it")
     void scryPutOnBottom() {
         addReadySeer(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.addToBattlefield(player1, new RuneclawBear());
+        UUID bearsId = harness.getPermanentId(player1, "Runeclaw Bear");
 
-        GameData gd = harness.getGameData();
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card topCard = deck.get(0);
 
@@ -101,8 +98,8 @@ class VisceraSeerTest extends BaseCardTest {
     void worksWhileTapped() {
         Permanent seer = addReadySeer(player1);
         seer.tap();
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.addToBattlefield(player1, new RuneclawBear());
+        UUID bearsId = harness.getPermanentId(player1, "Runeclaw Bear");
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, bearsId);
@@ -127,13 +124,11 @@ class VisceraSeerTest extends BaseCardTest {
     @DisplayName("Can activate multiple times per turn with different creatures")
     void canActivateMultipleTimes() {
         addReadySeer(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        GrizzlyBears bears2 = new GrizzlyBears();
-        Permanent bears2Perm = new Permanent(bears2);
+        harness.addToBattlefield(player1, new RuneclawBear());
+        Permanent bears2Perm = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
         bears2Perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears2Perm);
 
-        UUID bears1Id = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bears1Id = harness.getPermanentId(player1, "Runeclaw Bear");
 
         // First activation (3 creatures: Seer + 2 Bears)
         harness.activateAbility(player1, 0, null, null);
@@ -141,7 +136,6 @@ class VisceraSeerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Complete scry
-        GameData gd = harness.getGameData();
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         // Second activation with the other bears (2 creatures: Seer + 1 Bear)
@@ -154,18 +148,58 @@ class VisceraSeerTest extends BaseCardTest {
 
         // Both bears should be in graveyard
         long bearsInGraveyard = gd.playerGraveyards.get(player1.getId()).stream()
-                .filter(c -> c.getName().equals("Grizzly Bears"))
+                .filter(c -> c.getName().equals("Runeclaw Bear"))
                 .count();
         assertThat(bearsInGraveyard).isEqualTo(2);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Self-sacrifice resolves and scries only the controller's library")
+    void selfSacrificeResolvesScry() {
+        harness.addToBattlefield(player1, new VisceraSeer());
+        harness.addToBattlefield(player2, new RuneclawBear());
+        Card topCard = new RuneclawBear();
+        Card secondCard = new VisceraSeer();
+        Card opponentCard = new RuneclawBear();
+        harness.setLibrary(player1, List.of(topCard, secondCard));
+        harness.setLibrary(player2, List.of(opponentCard));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Viscera Seer");
+        harness.assertOnBattlefield(player2, "Runeclaw Bear");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, secondCard);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(topCard);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard, topCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Scry with an empty library resolves without a choice")
+    void emptyLibraryStillAllowsSacrifice() {
+        harness.addToBattlefield(player1, new VisceraSeer());
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Viscera Seer");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addReadySeer(Player player) {
-        VisceraSeer card = new VisceraSeer();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new VisceraSeer());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
