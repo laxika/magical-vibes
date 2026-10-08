@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -57,7 +56,7 @@ class WormfangCrabTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, crab));
-        resolvePendingTrigger();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(Permanent::getCard)
@@ -97,7 +96,7 @@ class WormfangCrabTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, crab));
-        resolvePendingTrigger();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
         assertThat(gd.exiledCards).noneMatch(entry -> entry.card().isToken());
@@ -118,7 +117,7 @@ class WormfangCrabTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, crab));
-        resolvePendingTrigger();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(stolen);
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -157,10 +156,7 @@ class WormfangCrabTest extends BaseCardTest {
         crab.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new GiantWarthog());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(crab);
@@ -176,11 +172,44 @@ class WormfangCrabTest extends BaseCardTest {
         return findPermanent(player1, "Wormfang Crab");
     }
 
-    private void resolvePendingTrigger() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
+    @Test
+    @DisplayName("Each Crab returns only the card exiled by its own entry ability")
+    void multipleCrabsKeepTheirExiledCardsSeparate() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GiantWarthog());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GiantWarthog());
+        Permanent firstCrab = castCrab();
+        harness.handlePermanentChosen(player2, first.getId());
+
+        harness.castFromHand(player1, new WormfangCrab(), "{3}{U}");
         harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent secondCrab = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof WormfangCrab)
+                .filter(permanent -> permanent != firstCrab)
+                .findFirst().orElseThrow();
+        harness.handlePermanentChosen(player2, second.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, firstCrab));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard)
+                .contains(first.getCard(), secondCrab.getCard())
+                .doesNotContain(second.getCard());
+        assertThat(gd.exiledCards)
+                .filteredOn(ExiledCardEntry::sourcePermanentId, secondCrab.getId())
+                .extracting(ExiledCardEntry::card)
+                .containsExactly(second.getCard());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, secondCrab));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard)
+                .contains(first.getCard(), second.getCard());
+        assertThat(gd.exiledCards).isEmpty();
     }
 
     @Test
