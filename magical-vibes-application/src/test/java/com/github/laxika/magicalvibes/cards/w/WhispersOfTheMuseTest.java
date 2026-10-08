@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
+import com.github.laxika.magicalvibes.cards.s.SapphireMedallion;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WhispersOfTheMuse.class, HornedTurtle.class, Counterspell.class})
+@CardUsed({WhispersOfTheMuse.class, HornedTurtle.class, Counterspell.class, SapphireMedallion.class})
 class WhispersOfTheMuseTest extends BaseCardTest {
 
     @Test
@@ -97,6 +98,48 @@ class WhispersOfTheMuseTest extends BaseCardTest {
 
         assertThat(handNames(player1)).containsExactly("Whispers of the Muse");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("A returned spell can be cast again without buying it back")
+    void recastingWithoutBuybackDoesNotRetainPreviousPayment() {
+        WhispersOfTheMuse whispers = new WhispersOfTheMuse();
+        harness.setLibrary(player1, List.of(new HornedTurtle(), new HornedTurtle(), new HornedTurtle()));
+        harness.setHand(player1, List.of(whispers));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castInstantWithBuyback(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(whispers);
+        assertThat(handNames(player1)).containsExactlyInAnyOrder("Horned Turtle", "Whispers of the Muse");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
+
+        int returnedSpellIndex = gd.playerHands.get(player1.getId()).indexOf(whispers);
+        harness.castAndResolveInstant(player1, returnedSpellIndex);
+
+        assertThat(handNames(player1)).containsExactly("Horned Turtle", "Horned Turtle");
+        assertThat(graveyardNames(player1)).containsExactly("Whispers of the Muse");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Spell cost reductions include the buyback additional cost")
+    void sapphireMedallionReducesBuybackCost() {
+        harness.addToBattlefield(player1, new SapphireMedallion());
+        harness.setLibrary(player1, List.of(new HornedTurtle()));
+        harness.setHand(player1, List.of(new WhispersOfTheMuse()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castInstantWithBuyback(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(handNames(player1)).containsExactlyInAnyOrder("Horned Turtle", "Whispers of the Muse");
+        assertThat(graveyardNames(player1)).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 
     private List<String> handNames(Player player) {
