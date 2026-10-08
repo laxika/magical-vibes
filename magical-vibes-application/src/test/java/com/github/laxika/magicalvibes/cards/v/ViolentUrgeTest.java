@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
+import com.github.laxika.magicalvibes.cards.f.FearOfMissingOut;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ViolentUrge.class, GrizzlyBears.class, Mountain.class, Shock.class, DarksteelRelic.class})
+@CardUsed({ViolentUrge.class, GrizzlyBears.class, Mountain.class, Shock.class, DarksteelRelic.class, FearOfMissingOut.class})
 class ViolentUrgeTest extends BaseCardTest {
 
     @Test
@@ -28,8 +29,7 @@ class ViolentUrgeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ViolentUrge()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
@@ -45,8 +45,7 @@ class ViolentUrgeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ViolentUrge()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
@@ -60,8 +59,7 @@ class ViolentUrgeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ViolentUrge()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -83,5 +81,119 @@ class ViolentUrgeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void countsMultipleTypesOnOneGraveyardCard() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FearOfMissingOut());
+        harness.setGraveyard(player1, List.of(new FearOfMissingOut(), new Mountain(), new ViolentUrge()));
+        harness.setHand(player1, List.of(new ViolentUrge()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
+
+        harness.setGraveyard(player1, List.of());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    void resolvingSpellDoesNotCountItselfForDelirium() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FearOfMissingOut());
+        harness.setGraveyard(player1, List.of(new FearOfMissingOut(), new Mountain()));
+        harness.setHand(player1, List.of(new ViolentUrge()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        harness.assertInGraveyard(player1, "Violent Urge");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    void checksDeliriumAtResolutionRatherThanCasting() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FearOfMissingOut());
+        harness.setGraveyard(player1, List.of(new FearOfMissingOut(), new Mountain()));
+        harness.setHand(player1, List.of(new ViolentUrge()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, creature.getId());
+        harness.setGraveyard(player1, List.of(new FearOfMissingOut(), new Mountain(), new ViolentUrge()));
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    void doesNotGrantDoubleStrikeIfDeliriumIsLostBeforeResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FearOfMissingOut());
+        harness.setGraveyard(player1, List.of(new FearOfMissingOut(), new Mountain(), new ViolentUrge()));
+        harness.setHand(player1, List.of(new ViolentUrge()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, creature.getId());
+        harness.setGraveyard(player1, List.of(new FearOfMissingOut(), new Mountain()));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    void usesCastersGraveyardWhenTargetingOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new FearOfMissingOut());
+        harness.setGraveyard(player1, List.of(new FearOfMissingOut(), new Mountain(), new ViolentUrge()));
+        harness.setHand(player1, List.of(new ViolentUrge()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    void opponentsDeliriumDoesNotGrantDoubleStrike() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new FearOfMissingOut());
+        harness.setGraveyard(player2, List.of(new FearOfMissingOut(), new Mountain(), new ViolentUrge()));
+        harness.setHand(player1, List.of(new ViolentUrge()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    void fourCardsOfOnlyThreeTypesDoNotEnableDelirium() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FearOfMissingOut());
+        harness.setGraveyard(player1, List.of(
+                new FearOfMissingOut(), new FearOfMissingOut(), new Mountain(), new Mountain()));
+        harness.setHand(player1, List.of(new ViolentUrge()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 }
