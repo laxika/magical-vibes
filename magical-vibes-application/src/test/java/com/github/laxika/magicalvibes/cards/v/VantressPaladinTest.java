@@ -8,8 +8,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({VantressPaladin.class})
@@ -18,11 +16,7 @@ class VantressPaladinTest extends BaseCardTest {
     @Test
     @DisplayName("Enters with a +1/+1 counter when at least three blue mana is spent")
     void entersWithCounterWhenThreeBlueManaIsSpent() {
-        harness.setHand(player1, List.of(new VantressPaladin()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VantressPaladin(), "{1}{U}{U}{U}");
         harness.passBothPriorities();
 
         Permanent paladin = findPermanent(player1, "Vantress Paladin");
@@ -32,14 +26,41 @@ class VantressPaladinTest extends BaseCardTest {
     @Test
     @DisplayName("Does not enter with a counter when fewer than three blue mana is spent")
     void doesNotEnterWithCounterWhenFewerThanThreeBlueManaIsSpent() {
-        harness.setHand(player1, List.of(new VantressPaladin()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VantressPaladin(), "{3}{U}");
         harness.passBothPriorities();
 
         Permanent paladin = findPermanent(player1, "Vantress Paladin");
         assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Exactly two blue mana does not satisfy adamant")
+    void doesNotEnterWithCounterWhenTwoBlueManaIsSpent() {
+        harness.castFromHand(player1, new VantressPaladin(), "{2}{U}{U}");
+        harness.passBothPriorities();
+
+        Permanent paladin = findPermanent(player1, "Vantress Paladin");
+        assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Spending four blue mana still gives exactly one counter")
+    void entersWithOneCounterWhenFourBlueManaIsSpent() {
+        harness.castFromHand(player1, new VantressPaladin(), "{U}{U}{U}{U}");
+        harness.passBothPriorities();
+
+        Permanent paladin = findPermanent(player1, "Vantress Paladin");
+        assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering without being cast does not give an adamant counter")
+    void doesNotEnterWithCounterWithoutBeingCast() {
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        Permanent paladin = harness.enterBattlefieldAndReturn(player1, new VantressPaladin());
+
+        assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }
