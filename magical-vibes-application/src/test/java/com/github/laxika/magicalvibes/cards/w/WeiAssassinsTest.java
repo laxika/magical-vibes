@@ -94,6 +94,68 @@ class WeiAssassinsTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an opponent");
     }
 
+    @Test
+    @DisplayName("Opponent may choose an indestructible creature and keep both creatures")
+    void opponentMayChooseIndestructibleCreature() {
+        Permanent infantry = harness.addToBattlefieldAndReturn(player2, new WeiInfantry());
+        infantry.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        Permanent eliteCompanions = harness.addToBattlefieldAndReturn(player2, new WeiEliteCompanions());
+
+        castWeiAssassins(player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).containsExactly(infantry.getId(), eliteCompanions.getId());
+        harness.handlePermanentChosen(player2, infantry.getId());
+
+        harness.assertOnBattlefield(player2, "Wei Infantry");
+        harness.assertOnBattlefield(player2, "Wei Elite Companions");
+        harness.assertNotInGraveyard(player2, "Wei Infantry");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Opponent can choose a creature with shroud because only the opponent is targeted")
+    void chosenCreatureDoesNotNeedToBeTargetable() {
+        Permanent infantry = harness.addToBattlefieldAndReturn(player2, new WeiInfantry());
+        infantry.getGrantedKeywords().add(Keyword.SHROUD);
+        Permanent eliteCompanions = harness.addToBattlefieldAndReturn(player2, new WeiEliteCompanions());
+
+        castWeiAssassins(player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).containsExactly(infantry.getId(), eliteCompanions.getId());
+        harness.handlePermanentChosen(player2, infantry.getId());
+
+        harness.assertNotOnBattlefield(player2, "Wei Infantry");
+        harness.assertInGraveyard(player2, "Wei Infantry");
+        harness.assertOnBattlefield(player2, "Wei Elite Companions");
+    }
+
+    @Test
+    @DisplayName("Destruction consumes a regeneration shield and taps the chosen creature")
+    void chosenCreatureCanRegenerate() {
+        Permanent infantry = harness.addToBattlefieldAndReturn(player2, new WeiInfantry());
+        infantry.setRegenerationShield(1);
+        harness.addToBattlefield(player2, new WeiEliteCompanions());
+
+        castWeiAssassins(player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, infantry.getId());
+
+        harness.assertOnBattlefield(player2, "Wei Infantry");
+        harness.assertNotInGraveyard(player2, "Wei Infantry");
+        harness.assertOnBattlefield(player2, "Wei Elite Companions");
+        assertThat(infantry.getRegenerationShield()).isZero();
+        assertThat(infantry.isTapped()).isTrue();
+    }
+
     private void castWeiAssassins(UUID targetPlayerId) {
         harness.setHand(player1, List.of(new WeiAssassins()));
         harness.addMana(player1, ManaColor.BLACK, 5);
