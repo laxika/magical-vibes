@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -73,10 +75,63 @@ class ViperCruelConspiratorTest extends BaseCardTest {
                 .hasMessageContaining("attacking alone");
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    void canTargetRemainingAttackerAfterOtherAttackerLeaves(int abilityIndex) {
+        harness.addToBattlefield(player1, new ViperCruelConspirator());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherAttacker = addCreatureReady(player1, new GrizzlyBears());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(1, 2)));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, otherAttacker));
+        int power = gqs.getEffectivePower(gd, attacker);
+
+        activate(abilityIndex, attacker);
+        if (abilityIndex == 1) {
+            harness.handleListChoice(player1, LIFELINK_MODE);
+            assertThat(gqs.hasKeyword(gd, attacker, Keyword.LIFELINK)).isTrue();
+        } else {
+            assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(power + 1);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    void rejectsTargetWhenAnotherCreatureIsPutOntoBattlefieldAttacking(int abilityIndex) {
+        Permanent attacker = setUpLoneAttacker();
+        Permanent additionalAttacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        additionalAttacker.setAttacking(true);
+        additionalAttacker.setAttackTarget(player2.getId());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("attacking alone");
+    }
+
+    @Test
+    void boostAndBothKeywordsExpireAtEndOfTurn() {
+        Permanent attacker = setUpLoneAttacker();
+        int power = gqs.getEffectivePower(gd, attacker);
+        int toughness = gqs.getEffectiveToughness(gd, attacker);
+        activate(0, attacker);
+        activate(1, attacker);
+        harness.handleListChoice(player1, DEATHTOUCH_MODE);
+        activate(1, attacker);
+        harness.handleListChoice(player1, LIFELINK_MODE);
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.LIFELINK)).isTrue();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(toughness);
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.LIFELINK)).isFalse();
+    }
     private Permanent setUpLoneAttacker() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
+
         harness.addToBattlefield(player1, new ViperCruelConspirator());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
 
