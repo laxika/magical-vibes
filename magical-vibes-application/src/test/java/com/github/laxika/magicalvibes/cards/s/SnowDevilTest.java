@@ -25,9 +25,8 @@ class SnowDevilTest extends BaseCardTest {
     private Permanent enchantedWarrior() {
         Permanent warrior = addCreatureReady(player1, new KjeldoranWarrior());
 
-        Permanent aura = new Permanent(new SnowDevil());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SnowDevil());
         aura.setAttachedTo(warrior.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return warrior;
     }
 
@@ -63,9 +62,8 @@ class SnowDevilTest extends BaseCardTest {
     void snowLandIsCheckedForAuraController() {
         Permanent warrior = addCreatureReady(player2, new KjeldoranWarrior());
 
-        Permanent aura = new Permanent(new SnowDevil());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SnowDevil());
         aura.setAttachedTo(warrior.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         addSnowLand();
         warrior.setBlocking(true);
 
@@ -98,6 +96,51 @@ class SnowDevilTest extends BaseCardTest {
         Permanent warrior = enchantedWarrior();
         addSnowLand();
 
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Casting the Aura attaches it and grants flying")
+    void castingAuraGrantsFlying() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent warrior = addCreatureReady(player2, new KjeldoranWarrior());
+        harness.setHand(player1, List.of(new SnowDevil()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0, warrior.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Snow Devil").getAttachedTo()).isEqualTo(warrior.getId());
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's snow land does not satisfy the Aura's condition")
+    void opponentsSnowLandDoesNotGrantFirstStrike() {
+        Permanent warrior = enchantedWarrior();
+        harness.addToBattlefield(player2, new SnowCoveredPlains());
+        warrior.setBlocking(true);
+
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("First strike is lost when the snow land leaves or blocking ends")
+    void firstStrikeTracksCurrentConditions() {
+        Permanent warrior = enchantedWarrior();
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new SnowCoveredPlains());
+        warrior.setBlocking(true);
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isTrue();
+
+        warrior.setBlocking(false);
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isFalse();
+
+        warrior.setBlocking(true);
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isTrue();
+        gd.playerBattlefields.get(player1.getId()).remove(land);
         assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gqs.hasKeyword(gd, warrior, Keyword.FLYING)).isTrue();
     }
