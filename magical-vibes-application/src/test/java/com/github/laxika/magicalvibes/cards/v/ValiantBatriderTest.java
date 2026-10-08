@@ -12,7 +12,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,9 +49,7 @@ class ValiantBatriderTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
 
-        harness.setHand(player2, List.of(new DarkRitual()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.castInstant(player2, 0, (UUID) null);
+        harness.castFromHand(player2, new DarkRitual(), "{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -66,10 +63,7 @@ class ValiantBatriderTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         dealCombatDamageToPlayer2();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -80,12 +74,76 @@ class ValiantBatriderTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
+    @Test
+    @DisplayName("Paying consumes the boon")
+    void payingConsumesBoon() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of());
+        dealCombatDamageToPlayer2();
+
+        castDarkRitualWithMana(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.castFromHand(player2, new DarkRitual(), "{B}");
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The boon still triggers after Valiant Batrider leaves the battlefield")
+    void boonSurvivesSourceLeavingBattlefield() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of());
+        dealCombatDamageToPlayer2();
+        Permanent batrider = findPermanent(player1, "Valiant Batrider");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, batrider));
+
+        castDarkRitualWithMana(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two combat damage events give separate boons that trigger on the same spell")
+    void multipleBoonsTriggerSeparately() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of());
+        Permanent secondBatrider = addCreatureReady(player1, new ValiantBatrider());
+        secondBatrider.setAttacking(true);
+        dealCombatDamageToPlayer2();
+
+        castDarkRitualWithMana(3);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.passBothPriorities();
+
+        harness.castFromHand(player2, new DarkRitual(), "{B}");
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
     private void dealCombatDamageToPlayer2() {
         Permanent batrider = addCreatureReady(player1, new ValiantBatrider());
         batrider.setAttacking(true);
         harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN, () -> {
             resolveCombat();
-            harness.passBothPriorities();
+            resolveAllTriggers();
         });
 
         harness.forceActivePlayer(player2);
@@ -94,8 +152,7 @@ class ValiantBatriderTest extends BaseCardTest {
     }
 
     private void castDarkRitualWithMana(int amount) {
-        harness.setHand(player2, List.of(new DarkRitual()));
-        harness.addMana(player2, ManaColor.BLACK, amount);
-        harness.castInstant(player2, 0, (UUID) null);
+        harness.addMana(player2, ManaColor.BLACK, amount - 1);
+        harness.castFromHand(player2, new DarkRitual(), "{B}");
     }
 }
