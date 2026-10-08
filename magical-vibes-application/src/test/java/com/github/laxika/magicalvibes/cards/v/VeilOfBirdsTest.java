@@ -91,4 +91,41 @@ class VeilOfBirdsTest extends BaseCardTest {
                 .filter(log -> log.contains("becomes a 1/1 creature")))
                 .hasSize(1);
     }
+
+    @Test
+    @DisplayName("Remains a Bird creature with flying on the next turn")
+    void transformationPersistsAcrossTurns() {
+        Permanent veil = addVeilOfBirds();
+        prepareOpponentCast();
+
+        harness.castFromHand(player2, new DarkRitual(), "{B}");
+        resolveAllTriggers();
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.passUntil(TurnStep.UNTAP);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(veil);
+        assertThat(gqs.isCreature(gd, veil)).isTrue();
+        assertThat(gqs.isEnchantment(gd, veil)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, veil)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, veil)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, veil, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Each copy transforms independently when an opponent casts a spell")
+    void eachCopyTransformsIndependently() {
+        Permanent firstVeil = addVeilOfBirds();
+        Permanent secondVeil = addVeilOfBirds();
+        prepareOpponentCast();
+
+        harness.castFromHand(player2, new DarkRitual(), "{B}");
+        resolveAllTriggers();
+
+        assertThat(gqs.isCreature(gd, firstVeil)).isTrue();
+        assertThat(gqs.isCreature(gd, secondVeil)).isTrue();
+        assertThat(gqs.isEnchantment(gd, firstVeil)).isFalse();
+        assertThat(gqs.isEnchantment(gd, secondVeil)).isFalse();
+        assertThat(gqs.hasKeyword(gd, firstVeil, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, secondVeil, Keyword.FLYING)).isTrue();
+    }
 }
