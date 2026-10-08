@@ -59,4 +59,76 @@ class VituGhaziTheCityTreeTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    void manaAbilityResolvesImmediatelyAndCannotBeActivatedAgainWhileTapped() {
+        harness.addToBattlefield(player1, new VituGhaziTheCityTree());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    void tokenAbilityUsesStackAndCreatesExactlyOneUntappedTokenForItsController() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new VituGhaziTheCityTree());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+        Permanent token = findPermanent(player1, "Saproling");
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.isTapped()).isFalse();
+        assertThat(findPermanents(player2, "Saproling")).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    void cannotCreateTokenFromTappedLandEvenWithEnoughMana() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new VituGhaziTheCityTree());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void colorlessManaCannotPayTheColoredPortionOfTokenCost() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new VituGhaziTheCityTree());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(land.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
 }
