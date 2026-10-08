@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({YuanShaosInfantry.class, ShuCavalry.class, ShuFootSoldiers.class, RelentlessAssault.class})
 class YuanShaosInfantryTest extends BaseCardTest {
@@ -24,10 +25,10 @@ class YuanShaosInfantryTest extends BaseCardTest {
     void attacksAloneBecomesUnblockable() {
         Permanent infantry = addCreatureReady(player1, new YuanShaosInfantry());
 
-        gd.playerAutoStopSteps.put(player1.getId(),
-                new java.util.HashSet<>(java.util.Set.of(TurnStep.DECLARE_BLOCKERS)));
-        declareAttackers(player1, List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            resolveAllTriggers();
+        });
 
         assertThat(gqs.hasCantBeBlocked(gd, infantry)).isTrue();
     }
@@ -49,10 +50,10 @@ class YuanShaosInfantryTest extends BaseCardTest {
     void unblockableResetsAtEndOfTurn() {
         Permanent infantry = addCreatureReady(player1, new YuanShaosInfantry());
 
-        gd.playerAutoStopSteps.put(player1.getId(),
-                new java.util.HashSet<>(java.util.Set.of(TurnStep.DECLARE_BLOCKERS)));
-        declareAttackers(player1, List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            resolveAllTriggers();
+        });
 
         assertThat(gqs.hasCantBeBlocked(gd, infantry)).isTrue();
 
@@ -83,8 +84,7 @@ class YuanShaosInfantryTest extends BaseCardTest {
         gs.advanceStep(gd);
         gs.advanceStep(gd);
 
-        declareAttackers(List.of(0, 1));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(infantry);
@@ -92,5 +92,25 @@ class YuanShaosInfantryTest extends BaseCardTest {
                 gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
                 .doesNotThrowAnyException();
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature cannot block the Infantry after its attack-alone trigger resolves")
+    void attackingAloneRejectsBlockers() {
+        Permanent infantry = addCreatureReady(player1, new YuanShaosInfantry());
+        Permanent blocker = addCreatureReady(player2, new ShuFootSoldiers());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(infantry);
+        assertThatThrownBy(() -> gs.declareBlockers(
+                gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
     }
 }
