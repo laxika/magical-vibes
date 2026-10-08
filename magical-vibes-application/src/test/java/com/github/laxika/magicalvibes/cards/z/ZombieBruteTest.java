@@ -97,8 +97,7 @@ class ZombieBruteTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new ZombieBrute());
         Permanent blocker = addCreatureReady(player2, new GempalmPolluter());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -112,6 +111,42 @@ class ZombieBruteTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
         assertThat(attacker.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Enters without counters when no Zombie cards remain in hand")
+    void entersWithoutCountersWhenNoZombiesRemainInHand() {
+        harness.castFromHand(player1, new ZombieBrute(), "{6}{B}");
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Zombie Brute")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Another Zombie Brute can be revealed and remains in hand")
+    void revealsAnotherZombieBruteWithoutDiscardingIt() {
+        ZombieBrute entering = new ZombieBrute();
+        ZombieBrute revealed = new ZombieBrute();
+        harness.setHand(player1, List.of(entering, revealed));
+        payMana();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(revealed.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+
+        harness.handleMultipleCardsChosen(player1, List.of(revealed.getId()));
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Zombie Brute")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(revealed);
     }
 
     private void payMana() {
