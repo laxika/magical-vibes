@@ -20,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WandOfTheElements.class, Island.class, Mountain.class})
+@CardUsed({WandOfTheElements.class, Island.class, Mountain.class, MarchOfTheMachines.class,
+        AshayaSoulOfTheWild.class, AquitectsWill.class})
 class WandOfTheElementsTest extends BaseCardTest {
 
     @Test
@@ -101,5 +102,53 @@ class WandOfTheElementsTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
         harness.assertInGraveyard(player1, "Wand of the Elements");
+    }
+
+    @Test
+    @DisplayName("Sacrifice and tap costs are paid before the token is created")
+    void costsArePaidBeforeResolution() {
+        harness.addToBattlefield(player1, new WandOfTheElements());
+        harness.addToBattlefield(player1, new Island());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Island");
+        harness.assertNotOnBattlefield(player1, "Island");
+        assertThat(findPermanent(player1, "Wand of the Elements").isTapped()).isTrue();
+        assertThat(countPermanents(player1, "Elemental")).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Elemental")).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped Mountain can be sacrificed")
+    void canSacrificeTappedMountain() {
+        harness.addToBattlefield(player1, new WandOfTheElements());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        mountain.tap();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Mountain");
+        assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Elemental").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's Island cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsIsland() {
+        harness.addToBattlefield(player1, new WandOfTheElements());
+        harness.addToBattlefield(player2, new Island());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Island");
+        assertThat(findPermanent(player1, "Wand of the Elements").isTapped()).isFalse();
+        assertThat(countPermanents(player1, "Elemental")).isZero();
     }
 }
