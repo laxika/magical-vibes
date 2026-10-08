@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.Blossombind;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranWarrior;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SoldeviGolem.class, IcyManipulator.class, KjeldoranWarrior.class})
+@CardUsed({SoldeviGolem.class, IcyManipulator.class, KjeldoranWarrior.class, Blossombind.class})
 class SoldeviGolemTest extends BaseCardTest {
 
     @Test
@@ -141,11 +142,100 @@ class SoldeviGolemTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("A creature prohibited from untapping cannot pay the upkeep untap cost")
+    void prohibitedUntapCannotUntapGolem() {
+        Permanent golem = addReadyGolem(player1);
+        golem.tap();
+        Permanent target = addCreatureReady(player2, new KjeldoranWarrior());
+        target.tap();
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Blossombind());
+        aura.setAttachedTo(target.getId());
+
+        triggerUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(golem.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An untapped Golem can still untap an opponent's creature")
+    void untappedGolemCanAcceptTrigger() {
+        Permanent golem = addReadyGolem(player1);
+        Permanent target = addCreatureReady(player2, new KjeldoranWarrior());
+        target.tap();
+
+        triggerUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(golem.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A target that changes to your control is illegal on resolution")
+    void targetChangesControllerBeforeResolution() {
+        Permanent golem = addReadyGolem(player1);
+        golem.tap();
+        Permanent target = addCreatureReady(player2, new KjeldoranWarrior());
+        target.tap();
+
+        triggerUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(golem.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A departed source's trigger still untaps its target without untapping a new Golem")
+    void departedSourceDoesNotUntapReplacement() {
+        Permanent golem = addReadyGolem(player1);
+        golem.tap();
+        Permanent target = addCreatureReady(player2, new KjeldoranWarrior());
+        target.tap();
+
+        triggerUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(golem);
+        Permanent replacement = addReadyGolem(player1);
+        replacement.tap();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(replacement.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A target that leaves the battlefield prevents the Golem from untapping")
+    void targetLeavesBeforeResolution() {
+        Permanent golem = addReadyGolem(player1);
+        golem.tap();
+        Permanent target = addCreatureReady(player2, new KjeldoranWarrior());
+        target.tap();
+
+        triggerUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(golem.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyGolem(Player player) {
-        Permanent perm = new Permanent(new SoldeviGolem());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new SoldeviGolem());
     }
 
     private void triggerUpkeep(Player player) {
