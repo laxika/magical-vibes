@@ -65,7 +65,64 @@ class SmogSmasherTest extends BaseCardTest {
         harness.passBothPriorities();
         resolveAllTriggers();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(duplicate);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @CardUsed({SmogSmasher.class})
+    void multipleDamageDealersConjureOnlyOneDuplicatePerSmogSmasher() {
+        Permanent first = addCreatureReady(player1, new SmogSmasher());
+        Permanent second = addCreatureReady(player1, new SmogSmasher());
+        first.setAttacking(true);
+        second.setAttacking(true);
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getCardsExiledByPermanent(first.getId())).hasSize(1);
+        assertThat(gd.getCardsExiledByPermanent(second.getId())).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({SmogSmasher.class})
+    void canConjureAnOpponentsCreatureWithoutMovingTheOriginal() {
+        Permanent source = addCreatureReady(player1, new SmogSmasher());
+        Permanent target = addCreatureReady(player2, new SmogSmasher());
+        source.setAttacking(true);
+
+        resolveCombat();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
+                .validIds()).contains(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.getCardsExiledByPermanent(source.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.exiledCards).singleElement().satisfies(entry ->
+                assertThat(entry.ownerId()).isEqualTo(player1.getId()));
+    }
+
+    @Test
+    @CardUsed({SmogSmasher.class})
+    void duplicatesStayExiledWhenCombatBeginsBelowMaxSpeed() {
+        Permanent source = addCreatureReady(player1, new SmogSmasher());
+        source.setAttacking(true);
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, source.getId());
+        resolveAllTriggers();
+        gd.playerSpeeds.put(player1.getId(), 3);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.getCardsExiledByPermanent(source.getId())).hasSize(1);
+        assertThat(findPermanents(player1, "Smog Smasher")).containsExactly(source);
     }
 }
