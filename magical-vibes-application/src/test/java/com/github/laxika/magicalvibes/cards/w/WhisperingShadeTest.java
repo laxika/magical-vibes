@@ -104,6 +104,42 @@ class WhisperingShadeTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("A tapped summoning-sick Whispering Shade can pay black mana to pump")
+    void tappedSummoningSickShadeCanPump() {
+        Permanent shade = harness.addToBattlefieldAndReturn(player1, new WhisperingShade());
+        shade.setSummoningSick(true);
+        shade.tap();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(2);
+        assertThat(shade.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each pending pump applies only to the Shade that activated it")
+    void pendingPumpsAffectTheirOwnSources() {
+        Permanent firstShade = addCreatureReady(player1, new WhisperingShade());
+        Permanent secondShade = addCreatureReady(player1, new WhisperingShade());
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 1, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, firstShade)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstShade)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondShade)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, secondShade)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
     private void declareBlock(Permanent blocker, Permanent attacker) {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
