@@ -1,21 +1,20 @@
 package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SolemnSimulacrum;
+import com.github.laxika.magicalvibes.cards.t.ThranDynamo;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ZuriWarriorOfWakanda.class, GrizzlyBears.class})
+@CardUsed({ZuriWarriorOfWakanda.class, GrizzlyBears.class, SolemnSimulacrum.class, ThranDynamo.class})
 class ZuriWarriorOfWakandaTest extends BaseCardTest {
 
     @Test
@@ -46,14 +45,60 @@ class ZuriWarriorOfWakandaTest extends BaseCardTest {
     }
 
     private void castAndResolve(Card spell) {
-        harness.setHand(player1, List.of(spell));
-        harness.addMana(player1, ManaColor.COLORLESS, Integer.parseInt(spell.getManaCost().replace("{", "").replace("}", "")));
-        if (spell.getType() == CardType.ARTIFACT) {
-            harness.castArtifact(player1, 0);
-        } else {
-            harness.castSorcery(player1, 0);
-        }
+        harness.castFromHand(player1, spell, spell.getManaCost());
         resolveAllTriggers();
+    }
+
+    @Test
+    void artifactCreatureTriggersBeforeItEntersTheBattlefield() {
+        Permanent zuri = addCreatureReady(player1, new ZuriWarriorOfWakanda());
+        Permanent existingCreature = addCreatureReady(player1, new SolemnSimulacrum());
+        SolemnSimulacrum spell = new SolemnSimulacrum();
+
+        harness.castFromHand(player1, spell, "{4}");
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(zuri.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(zuri.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(existingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getId().equals(spell.getId()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().getId().equals(spell.getId()))
+                .singleElement().satisfies(p ->
+                        assertThat(p.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero());
+    }
+
+    @Test
+    void opponentsArtifactSpellDoesNotTrigger() {
+        Permanent zuri = addCreatureReady(player1, new ZuriWarriorOfWakanda());
+        harness.forceActivePlayer(player2);
+
+        harness.castFromHand(player2, new ThranDynamo(), "{4}");
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(zuri.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void eachQualifyingCastAddsCountersOnlyToCreatures() {
+        Permanent zuri = addCreatureReady(player1, new ZuriWarriorOfWakanda());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ThranDynamo());
+
+        harness.castFromHand(player1, new ThranDynamo(), "{4}");
+        resolveAllTriggers();
+        harness.castFromHand(player1, new ThranDynamo(), "{4}");
+        resolveAllTriggers();
+
+        assertThat(zuri.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(artifact.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private static Card artifactSpell(String name, int manaValue) {
