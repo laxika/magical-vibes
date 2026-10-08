@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FiresOfYavimaya;
 import com.github.laxika.magicalvibes.cards.r.RagingKavu;
 import com.github.laxika.magicalvibes.cards.s.SlinkingSerpent;
 import com.github.laxika.magicalvibes.cards.s.SwayOfIllusion;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({WashOut.class, SwayOfIllusion.class, RagingKavu.class, SlinkingSerpent.class,
-        Forest.class, ViashinoGrappler.class})
+        Forest.class, ViashinoGrappler.class, FiresOfYavimaya.class})
 class WashOutTest extends BaseCardTest {
 
     @Test
@@ -74,8 +75,7 @@ class WashOutTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castInstant(player1, 0, List.of(target.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(target.getId()));
         harness.handleListChoice(player1, "BLUE");
 
         harness.castAndResolveSorcery(player1, 0, 0);
@@ -98,6 +98,44 @@ class WashOutTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Raging Kavu");
         harness.assertInHand(player1, "Raging Kavu");
         harness.assertNotInHand(player2, "Raging Kavu");
+    }
+
+    @Test
+    @DisplayName("Returns colored enchantments as well as creatures of the chosen color")
+    void returnsNoncreaturePermanents() {
+        harness.addToBattlefield(player1, new FiresOfYavimaya());
+        harness.addToBattlefield(player2, new FiresOfYavimaya());
+        harness.addToBattlefield(player2, new RagingKavu());
+        harness.addToBattlefield(player2, new Forest());
+        castWashOut();
+
+        harness.handleListChoice(player1, "RED");
+
+        harness.assertNotOnBattlefield(player1, "Fires of Yavimaya");
+        harness.assertNotOnBattlefield(player2, "Fires of Yavimaya");
+        harness.assertNotOnBattlefield(player2, "Raging Kavu");
+        harness.assertInHand(player1, "Fires of Yavimaya");
+        harness.assertInHand(player2, "Fires of Yavimaya");
+        harness.assertInHand(player2, "Raging Kavu");
+        harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Does not return a creature whose original color has been replaced")
+    void ignoresReplacedOriginalColor() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingKavu());
+        harness.setHand(player1, List.of(new SwayOfIllusion(), new WashOut()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castAndResolveInstant(player1, 0, List.of(target.getId()));
+        harness.handleListChoice(player1, "BLUE");
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleListChoice(player1, "GREEN");
+
+        harness.assertOnBattlefield(player2, "Raging Kavu");
+        harness.assertNotInHand(player2, "Raging Kavu");
+        harness.assertInGraveyard(player1, "Wash Out");
     }
 
     private void castWashOut() {
