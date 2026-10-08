@@ -26,6 +26,7 @@ class VigeanHydroponTest extends BaseCardTest {
         Permanent hydropon = castHydropon(player1);
 
         assertThat(hydropon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -84,7 +85,8 @@ class VigeanHydroponTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot attack")
     void cannotAttack() {
-        castHydropon(player1);
+        Permanent hydropon = castHydropon(player1);
+        hydropon.setSummoningSick(false);
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
@@ -101,6 +103,49 @@ class VigeanHydroponTest extends BaseCardTest {
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Moving the last graft counter puts Hydropon into the graveyard")
+    void movingLastCounterCausesHydroponToDie() {
+        Permanent hydropon = castHydropon(player1);
+        hydropon.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent ragworm = castRagworm(player1);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(ragworm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Vigean Hydropon");
+        harness.assertInGraveyard(player1, "Vigean Hydropon");
+    }
+
+    @Test
+    @DisplayName("Graft cannot move a counter when Hydropon has left the battlefield")
+    void graftDoesNothingWhenSourceHasLeft() {
+        Permanent hydropon = castHydropon(player1);
+        Permanent ragworm = castRagworm(player1);
+        harness.handleMayAbilityChosen(player1, true);
+        gd.playerBattlefields.get(player1.getId()).remove(hydropon);
+        gd.playerGraveyards.get(player1.getId()).add(hydropon.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(ragworm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Graft does not remove a counter when the entering creature has left")
+    void graftDoesNothingWhenEnteringCreatureHasLeft() {
+        Permanent hydropon = castHydropon(player1);
+        Permanent ragworm = castRagworm(player1);
+        harness.handleMayAbilityChosen(player1, true);
+        gd.playerBattlefields.get(player1.getId()).remove(ragworm);
+        gd.playerGraveyards.get(player1.getId()).add(ragworm.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(hydropon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
     }
 
     private Permanent castHydropon(Player player) {
