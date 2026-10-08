@@ -108,4 +108,48 @@ class SoothsayingTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
+
+    @Test
+    @DisplayName("A positive X with an empty library resolves without a choice")
+    void positiveXWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        harness.addToBattlefield(player1, new Soothsaying());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, 2, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The activated ability retains its controller and X after its source leaves")
+    void reordersControllersLibraryAfterSourceLeaves() {
+        Card first = new Soothsaying();
+        Card second = new Soothsaying();
+        Card third = new Soothsaying();
+        Card opponentCard = new Soothsaying();
+        harness.setLibrary(player2, List.of(first, second, third));
+        harness.setLibrary(player1, List.of(opponentCard));
+        harness.addToBattlefield(player2, new Soothsaying());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player2, 0, 1, 2, null);
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        assertThat(reorder.playerId()).isEqualTo(player2.getId());
+        assertThat(reorder.cards()).containsExactly(first, second);
+
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(second, first, third);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(opponentCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }
