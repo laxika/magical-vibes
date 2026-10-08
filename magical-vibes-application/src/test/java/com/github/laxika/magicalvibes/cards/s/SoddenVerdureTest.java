@@ -20,6 +20,56 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SoddenVerdureTest extends BaseCardTest {
 
     @Test
+    void entersTappedWithoutBasicLands() {
+        playVerdure(player1);
+
+        assertThat(findVerdure(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    void entersUntappedWithDifferentBasicLandTypes() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Island());
+
+        playVerdure(player1);
+
+        assertThat(findVerdure(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    void tappedBasicLandsStillCount() {
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
+        harness.addToBattlefieldAndReturn(player1, new Island()).tap();
+
+        playVerdure(player1);
+
+        assertThat(findVerdure(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    void oneBasicLandAndOneNonbasicLandDoNotSatisfyTheCheck() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new DrownedCatacomb());
+
+        playVerdure(player1);
+
+        assertThat(findVerdure(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    void canProduceManaImmediatelyAfterEnteringUntapped() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Island());
+        playVerdure(player1);
+
+        harness.activateAbility(player1, 2, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(findVerdure(player1).isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Enters tapped with fewer than two basic lands")
     void entersTappedWithFewerThanTwoBasicLands() {
         addBasicLand(player1);
@@ -119,13 +169,6 @@ class SoddenVerdureTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.playLand(player1, 0);
-    }
-
-    private Permanent addReadySoddenVerdure(Player player) {
-        Permanent permanent = new Permanent(new SoddenVerdure());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 
     private Permanent findSoddenVerdure(Player player) {
