@@ -118,6 +118,27 @@ class WarriorsHonorTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(honor);
     }
 
+    @Test
+    @DisplayName("Two resolving copies give cumulative boosts until end of turn")
+    void multipleCopiesGiveCumulativeBoosts() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castWarriorsHonor();
+        harness.passBothPriorities();
+        castWarriorsHonor();
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(4);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+    }
+
     private WarriorsHonor castWarriorsHonor() {
         WarriorsHonor honor = new WarriorsHonor();
         harness.castFromHand(player1, honor, "{2}{W}");
