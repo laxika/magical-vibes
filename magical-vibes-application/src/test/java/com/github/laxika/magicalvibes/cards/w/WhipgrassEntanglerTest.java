@@ -120,4 +120,48 @@ class WhipgrassEntanglerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Repeated activations create cumulative attack costs")
+    void repeatedActivationsStack() {
+        addCreatureReady(player1, new WhipgrassEntangler());
+        Permanent attacker = addCreatureReady(player1, new FugitiveWizard());
+        addCreatureReady(player2, new FugitiveWizard());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(1)))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        declareAttackersAndPrepareBlockers(player1, List.of(1));
+
+        assertThat(attacker.isAttacking()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The cost becomes zero when the last Cleric leaves the battlefield")
+    void noClericsMeansNoAttackCost() {
+        Permanent entangler = addCreatureReady(player1, new WhipgrassEntangler());
+        Permanent attacker = addCreatureReady(player1, new FugitiveWizard());
+        addCreatureReady(player2, new FugitiveWizard());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, entangler));
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        assertThat(attacker.isAttacking()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }
