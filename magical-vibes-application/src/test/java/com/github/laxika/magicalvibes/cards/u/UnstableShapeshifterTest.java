@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.j.JackalPup;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -14,7 +15,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UnstableShapeshifter.class, JackalPup.class, WindDrake.class})
+@CardUsed({UnstableShapeshifter.class, JackalPup.class, WindDrake.class, Clone.class})
 class UnstableShapeshifterTest extends BaseCardTest {
 
     private Permanent putShapeshifter() {
@@ -112,5 +113,55 @@ class UnstableShapeshifterTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, shifter)).isEqualTo(2);
         assertThat(gqs.getEffectiveColors(gd, shifter)).isEmpty();
         assertThat(gqs.hasKeyword(gd, shifter, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Uses the entering creature's copied characteristics immediately before it leaves")
+    void usesLastKnownCopyRatherThanEntrySnapshot() {
+        Permanent shifter = putShapeshifter();
+        Permanent entering = harness.enterBattlefieldAndReturn(player1, new UnstableShapeshifter());
+
+        harness.enterBattlefieldAndReturn(player1, new WindDrake());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(entering.getCard().getName()).isEqualTo("Wind Drake");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, entering));
+        harness.passBothPriorities();
+
+        assertThat(shifter.getCard().getName()).isEqualTo("Wind Drake");
+        assertThat(gqs.getEffectivePower(gd, shifter)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shifter)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, shifter, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A Clone of Unstable Shapeshifter retains the ability after copying another creature")
+    void cloneRetainsAcquiredCopyAbility() {
+        Permanent shifter = putShapeshifter();
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, shifter.getId());
+        Permanent clone = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(shifter.getId()))
+                .findFirst().orElseThrow();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, shifter));
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new JackalPup(), "{R}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(clone.getCard().getName()).isEqualTo("Jackal Pup");
+
+        harness.castFromHand(player1, new WindDrake(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(clone.getCard().getName()).isEqualTo("Wind Drake");
+        assertThat(gqs.hasKeyword(gd, clone, Keyword.FLYING)).isTrue();
     }
 }
