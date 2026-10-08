@@ -112,6 +112,38 @@ class TheCaveOfTwoLoversTest extends BaseCardTest {
     }
 
     @Test
+    void chapterIIWithNoMatchingCardsFinishesWithoutAddingToHand() {
+        addSaga(1);
+        Card nonmatchingCard = new TheCaveOfTwoLovers();
+        harness.setLibrary(player1, List.of(nonmatchingCard));
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(nonmatchingCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonmatchingCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void earthbendAddsCountersToExistingCountersAndPreservesTappedState() {
+        addSaga(2);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        land.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        land.tap();
+
+        advanceToNextChapter();
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(5);
+        assertThat(land.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "The Cave of Two Lovers");
+    }
+
+    @Test
     void dyingEarthbendedLandReturnsAfterSagaIsSacrificed() {
         Permanent land = earthbendMountain();
         harness.assertNotOnBattlefield(player1, "The Cave of Two Lovers");
