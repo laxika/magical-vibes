@@ -85,11 +85,103 @@ class SorinVengefulBloodlordTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void plusTwoGainsLifeFromLifelink() {
+        addReadySorin(player1, 4);
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(11);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    void plusTwoDamagesPlaneswalkerAndGainsLife() {
+        addReadySorin(player1, 4);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SorinVengefulBloodlord());
+        target.setCounterCount(CounterType.LOYALTY, 4);
+        harness.setLife(player1, 10);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(11);
+    }
+
+    @Test
+    void plusTwoCanTargetItsController() {
+        addReadySorin(player1, 4);
+        harness.setLife(player1, 10);
+
+        harness.activateAbility(player1, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(10);
+    }
+
+    @Test
+    void plusTwoRejectsCreatureTarget() {
+        addReadySorin(player1, 4);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bear.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void minusXRejectsOpponentsGraveyard() {
+        addReadySorin(player1, 4);
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(bears));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 2, bears.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void minusXRejectsNoncreatureWithMatchingManaValue() {
+        addReadySorin(player1, 4);
+        Card otherSorin = new SorinVengefulBloodlord();
+        harness.setGraveyard(player1, List.of(otherSorin));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 4, otherSorin.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void minusXResolvesAfterSpendingAllLoyalty() {
+        addReadySorin(player1, 2);
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+
+        harness.activateAbility(player1, 0, 1, 2, bears.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard() instanceof SorinVengefulBloodlord);
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(gqs.effectiveCreatureSubtypes(gd, returned)).contains(CardSubtype.BEAR, CardSubtype.VAMPIRE);
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    void minusXRejectsCostGreaterThanAvailableLoyalty() {
+        addReadySorin(player1, 1);
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 2, bears.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addReadySorin(Player player, int loyalty) {
-        Permanent sorin = new Permanent(new SorinVengefulBloodlord());
+        Permanent sorin = harness.addToBattlefieldAndReturn(player, new SorinVengefulBloodlord());
         sorin.setCounterCount(CounterType.LOYALTY, loyalty);
         sorin.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(sorin);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return sorin;
