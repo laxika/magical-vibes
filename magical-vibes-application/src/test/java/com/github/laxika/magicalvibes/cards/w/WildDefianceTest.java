@@ -1,13 +1,17 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.e.ElaborateFirecannon;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.n.NaturalAffinity;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.p.PillarOfFlame;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +20,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WildDefiance.class, GrizzlyBears.class, GiantGrowth.class, Shock.class,
+        ElaborateFirecannon.class, PillarOfFlame.class, NaturalAffinity.class, Forest.class})
 class WildDefianceTest extends BaseCardTest {
 
     @Test
@@ -32,8 +38,7 @@ class WildDefianceTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Wild Defiance");
 
-        harness.passBothPriorities(); // Wild Defiance trigger
-        harness.passBothPriorities(); // Giant Growth
+        resolveAllTriggers();
 
         Permanent bears = bears(bearsId);
         assertThat(bears.getEffectivePower()).isEqualTo(8);
@@ -55,8 +60,7 @@ class WildDefianceTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         harness.castInstant(player2, 0, bearsId);
-        harness.passBothPriorities(); // Wild Defiance trigger resolves first
-        harness.passBothPriorities(); // Shock
+        resolveAllTriggers();
 
         Permanent bears = bears(bearsId);
         assertThat(bears).isNotNull();
@@ -87,9 +91,7 @@ class WildDefianceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        Permanent firecannon = new Permanent(new ElaborateFirecannon());
-        firecannon.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(firecannon);
+        addCreatureReady(player2, new ElaborateFirecannon());
 
         harness.addMana(player2, ManaColor.COLORLESS, 4);
         harness.activateAbility(player2, 0, null, bearsId);
@@ -109,8 +111,7 @@ class WildDefianceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -121,6 +122,63 @@ class WildDefianceTest extends BaseCardTest {
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Sorcery targeting your creature triggers before damage")
+    void triggersOnSorcery() {
+        harness.addToBattlefield(player1, new WildDefiance());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PillarOfFlame()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorcery(player1, 0, creature.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(creature.getEffectivePower()).isEqualTo(5);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(creature.getMarkedDamage()).isZero();
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each Wild Defiance independently boosts the targeted creature")
+    void multipleEnchantmentsTrigger() {
+        harness.addToBattlefield(player1, new WildDefiance());
+        harness.addToBattlefield(player1, new WildDefiance());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, creature.getId());
+
+        assertThat(gd.stack).hasSize(3);
+        resolveAllTriggers();
+        assertThat(creature.getEffectivePower()).isEqualTo(8);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(8);
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+    }
+    @Test
+    @DisplayName("An animated land is a creature for Wild Defiance")
+    void triggersForAnimatedLand() {
+        harness.addToBattlefield(player1, new WildDefiance());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new NaturalAffinity(), new Shock()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0);
+        resolveAllTriggers();
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+
+        harness.castInstant(player1, 0, land.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(land);
+        assertThat(land.getMarkedDamage()).isEqualTo(2);
+    }
     private Permanent bears(UUID permanentId) {
         return gd.playerBattlefields.values().stream()
                 .flatMap(List::stream)
