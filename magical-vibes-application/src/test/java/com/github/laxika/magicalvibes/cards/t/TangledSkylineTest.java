@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.a.AtraxasFall;
 import com.github.laxika.magicalvibes.cards.i.IchorDrinker;
 import com.github.laxika.magicalvibes.cards.w.WaryThespian;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,6 +29,25 @@ class TangledSkylineTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(25);
         assertThat(findPermanent(player1, "Incubator")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+    }
+
+    @Test
+    void enterTriggerStillGainsLifeAndIncubatesAfterSkylineLeaves() {
+        harness.castFromHand(player1, new TangledSkyline(), "{4}{G}");
+        harness.passBothPriorities();
+        Permanent skyline = findPermanent(player1, "Tangled Skyline");
+
+        gd.playerBattlefields.get(player1.getId()).remove(skyline);
+        harness.setGraveyard(player1, List.of(skyline.getCard()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 25);
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player1, "Tangled Skyline");
+        Permanent incubator = findPermanent(player1, "Incubator");
+        assertThat(incubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(gqs.isCreature(gd, incubator)).isFalse();
+        assertThat(gqs.hasKeyword(gd, incubator, Keyword.REACH)).isFalse();
     }
 
     @Test
@@ -65,6 +85,18 @@ class TangledSkylineTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, incubator)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, incubator, Keyword.REACH)).isTrue();
         harness.assertLife(player1, 25);
+    }
+
+    @Test
+    void skylineHasReachWhenItBecomesAPhyrexianCreature() {
+        Permanent skyline = harness.addToBattlefieldAndReturn(player1, new TangledSkyline());
+        skyline.setAnimatedUntilEndOfTurn(true);
+        skyline.setAnimatedPower(4);
+        skyline.setAnimatedToughness(4);
+        skyline.getTransientSubtypes().add(CardSubtype.PHYREXIAN);
+
+        assertThat(gqs.isCreature(gd, skyline)).isTrue();
+        assertThat(gqs.hasKeyword(gd, skyline, Keyword.REACH)).isTrue();
     }
 
     @Test
