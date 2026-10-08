@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.t.TeferiMageOfZhalfir;
+import com.github.laxika.magicalvibes.cards.p.PithingNeedle;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VisceridDeepwalker.class})
+@CardUsed({VisceridDeepwalker.class, TeferiMageOfZhalfir.class, PithingNeedle.class})
 class VisceridDeepwalkerTest extends BaseCardTest {
 
     @Test
@@ -41,7 +43,7 @@ class VisceridDeepwalkerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Suspend can only be activated at sorcery speed")
+    @DisplayName("Without flash, suspend is unavailable during upkeep")
     void suspendRequiresSorcerySpeed() {
         VisceridDeepwalker card = new VisceridDeepwalker();
         harness.setHand(player1, List.of(card));
@@ -118,6 +120,99 @@ class VisceridDeepwalkerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.activateHandAbility(player1, 0, null);
         return card;
+    }
+
+    @Test
+    @DisplayName("Removing a suspend counter waits for the upkeep trigger to resolve")
+    void upkeepCounterRemovalUsesTheStack() {
+        VisceridDeepwalker card = suspendCard();
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flash allows suspending during an opponent's upkeep")
+    void flashAllowsSuspendOutsideSorceryTiming() {
+        harness.addToBattlefield(player1, new TeferiMageOfZhalfir());
+        advanceToUpkeep(player2);
+        VisceridDeepwalker card = new VisceridDeepwalker();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.ensurePriority(player1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Suspend requires its blue mana payment")
+    void suspendWithoutManaLeavesCardInHand() {
+        VisceridDeepwalker card = new VisceridDeepwalker();
+        harness.setHand(player1, List.of(card));
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    @DisplayName("Repeated pump activations stack and affect only their source")
+    void multiplePumpActivationsAffectOnlySource() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new VisceridDeepwalker());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new VisceridDeepwalker());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(source.getPowerModifier()).isZero();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(2);
+        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Casting normally does not grant suspend haste")
+    void normalCastDoesNotGrantHaste() {
+        harness.castFromHand(player1, new VisceridDeepwalker(), "{4}{U}");
+        harness.passBothPriorities();
+
+        Permanent permanent = findPermanent(player1, "Viscerid Deepwalker");
+        assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Pithing Needle cannot prohibit the suspend special action")
+    void activatedAbilityLockDoesNotPreventSuspend() {
+        harness.castFromHand(player1, new PithingNeedle(), "{1}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Viscerid Deepwalker");
+
+        VisceridDeepwalker card = suspendCard();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.stack).isEmpty();
     }
 
 }
