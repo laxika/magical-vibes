@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AncestralMask.class, BogSmugglers.class, VernalEquinox.class})
+@CardUsed({AncestralMask.class, BogSmugglers.class, VernalEquinox.class, SoulSculptor.class})
 class AncestralMaskTest extends BaseCardTest {
 
     @Test
@@ -111,7 +111,6 @@ class AncestralMaskTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(SoulSculptor.class)
     void countsCreaturesThatBecomeEnchantments() {
         addCreatureReady(player1, new SoulSculptor());
         Permanent enchanted = addCreatureReady(player1, new BogSmugglers());
@@ -125,5 +124,20 @@ class AncestralMaskTest extends BaseCardTest {
         assertThat(gqs.isEnchantment(gd, other)).isTrue();
         assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, enchanted)).isEqualTo(4);
+    }
+
+    @Test
+    void multipleMasksOnTheSameCreatureEachCountTheOtherMask() {
+        Permanent creature = addCreatureReady(player1, new BogSmugglers());
+        attachMask(creature);
+        attachMask(creature);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+
+        harness.addToBattlefield(player2, new VernalEquinox());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(10);
     }
 }
