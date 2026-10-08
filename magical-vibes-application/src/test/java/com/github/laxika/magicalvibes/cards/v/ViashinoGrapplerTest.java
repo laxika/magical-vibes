@@ -65,4 +65,32 @@ class ViashinoGrapplerTest extends BaseCardTest {
 
         assertThat(grappler.isTapped()).isFalse();
     }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent grappler = harness.addToBattlefieldAndReturn(player1, new ViashinoGrappler());
+        grappler.setSummoningSick(true);
+        grappler.tap();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, grappler, Keyword.TRAMPLE)).isTrue();
+        assertThat(grappler.isTapped()).isTrue();
+    }
+
+    @Test
+    void gainsTrampleOnlyAfterAbilityResolves() {
+        Permanent grappler = addCreatureReady(player1, new ViashinoGrappler());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gqs.hasKeyword(gd, grappler, Keyword.TRAMPLE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, grappler, Keyword.TRAMPLE)).isTrue();
+    }
 }
