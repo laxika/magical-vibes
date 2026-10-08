@@ -68,4 +68,39 @@ class WallOfOppositionTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("Colored mana can pay for the ability while the wall is tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfOpposition());
+        wall.setSummoningSick(true);
+        wall.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wall.getPowerModifier()).isEqualTo(1);
+        assertThat(wall.getToughnessModifier()).isZero();
+        assertThat(wall.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The boost applies only to the wall that activated it and waits for resolution")
+    void boostsOnlyItsSourceOnResolution() {
+        Permanent firstWall = addCreatureReady(player1, new WallOfOpposition());
+        Permanent secondWall = addCreatureReady(player1, new WallOfOpposition());
+        Permanent opposingWall = addCreatureReady(player2, new WallOfOpposition());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(secondWall.getPowerModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(firstWall.getPowerModifier()).isZero();
+        assertThat(secondWall.getPowerModifier()).isEqualTo(1);
+        assertThat(opposingWall.getPowerModifier()).isZero();
+    }
 }
