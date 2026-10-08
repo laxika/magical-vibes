@@ -2,9 +2,12 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WorldlyCounsel.class, Plains.class, Island.class, Swamp.class})
+@CardUsed({WorldlyCounsel.class, Plains.class, Island.class, Swamp.class, Mountain.class, Forest.class})
 class WorldlyCounselTest extends BaseCardTest {
 
     private void castWorldlyCounsel(Card... top) {
@@ -90,7 +93,7 @@ class WorldlyCounselTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A library shorter than Domain puts every available card into hand")
+    @DisplayName("A one-card library puts its only card into hand")
     void shortLibraryPutsAvailableCardsIntoHand() {
         harness.addToBattlefield(player1, new Plains());
         harness.addToBattlefield(player1, new Island());
@@ -122,5 +125,95 @@ class WorldlyCounselTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(top1);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top2, top3);
+    }
+
+    @Test
+    @DisplayName("An empty library resolves without a choice or a loss")
+    void emptyLibraryDoesNothing() {
+        harness.addToBattlefield(player1, new Island());
+
+        castWorldlyCounsel();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Opposing lands do not increase domain")
+    void ignoresOpponentsBasicLandTypes() {
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new Plains());
+        harness.addToBattlefield(player2, new Swamp());
+        Card top1 = new Plains();
+        Card top2 = new Swamp();
+
+        castWorldlyCounsel(top1, top2);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A two-card library with domain three still puts only one card into hand")
+    void shortLibraryStillChoosesOnlyOne() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Swamp());
+        Card top1 = new Plains();
+        Card top2 = new Island();
+
+        castWorldlyCounsel(top1, top2);
+        harness.handleMultipleCardsChosen(player1, List.of(top2.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top2);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Unchosen cards can be reversed below the untouched library")
+    void reversesRemainingCardsOnBottom() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Swamp());
+        Card top1 = new Plains();
+        Card top2 = new Island();
+        Card top3 = new Swamp();
+        Card untouched = new Island();
+
+        castWorldlyCounsel(top1, top2, top3, untouched);
+        harness.handleMultipleCardsChosen(player1, List.of(top2.getId()));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top2);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, top3, top1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("All five basic land types allow choosing the fifth card")
+    void domainFiveLooksAtExactlyFiveCards() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Forest());
+        Card top1 = new Plains();
+        Card top2 = new Island();
+        Card top3 = new Swamp();
+        Card top4 = new Mountain();
+        Card top5 = new Forest();
+        Card untouched = new Island();
+
+        castWorldlyCounsel(top1, top2, top3, top4, top5, untouched);
+        harness.handleMultipleCardsChosen(player1, List.of(top5.getId()));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top5);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, top4, top3, top2, top1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
