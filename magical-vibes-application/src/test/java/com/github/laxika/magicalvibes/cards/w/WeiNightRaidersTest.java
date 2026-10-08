@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WeiNightRaiders.class, WeiInfantry.class, WeiEliteCompanions.class, HermeticStudy.class})
 class WeiNightRaidersTest extends BaseCardTest {
@@ -81,7 +82,7 @@ class WeiNightRaidersTest extends BaseCardTest {
         resolveCombat();
         resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -98,7 +99,7 @@ class WeiNightRaidersTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
         harness.assertInGraveyard(player2, "Wei Infantry");
     }
 
@@ -115,7 +116,62 @@ class WeiNightRaidersTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(cardInHand);
+    }
+
+    @Test
+    @DisplayName("The damaged opponent chooses exactly one card even when two damage is dealt")
+    void opponentChoosesOneCardFromLargerHand() {
+        WeiInfantry retained = new WeiInfantry();
+        WeiEliteCompanions discarded = new WeiEliteCompanions();
+        harness.setHand(player2, List.of(retained, discarded));
+        Permanent raiders = addCreatureReady(player1, new WeiNightRaiders());
+        raiders.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(retained);
+        harness.assertInGraveyard(player2, "Wei Elite Companions");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A creature without horsemanship cannot block the Raiders")
+    void cannotBeBlockedWithoutHorsemanship() {
+        Permanent raiders = addCreatureReady(player1, new WeiNightRaiders());
+        raiders.setAttacking(true);
+        addCreatureReady(player2, new WeiInfantry());
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("horsemanship");
+    }
+
+    @Test
+    @DisplayName("Noncombat damage to a creature does not trigger discard")
+    void damageToCreatureDoesNotTriggerDiscard() {
+        WeiInfantry cardInHand = new WeiInfantry();
+        harness.setHand(player2, List.of(cardInHand));
+        Permanent raiders = addCreatureReady(player1, new WeiNightRaiders());
+        Permanent target = addCreatureReady(player2, new WeiEliteCompanions());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HermeticStudy());
+        aura.setAttachedTo(raiders.getId());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(cardInHand);
+        harness.assertLife(player2, 20);
     }
 }
