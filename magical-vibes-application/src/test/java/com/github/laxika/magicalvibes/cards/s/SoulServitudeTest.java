@@ -63,6 +63,81 @@ class SoulServitudeTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
     }
 
+    @Test
+    void conjuresDuringTheDiscardAbilityResolution() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SoulServitude(), new Forest()));
+        cast();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void sacrificeCreatesDiscardTriggerEvenWhenControllersHandIsEmpty() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SoulServitude()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(bears.getCard());
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void noCreatureMeansNoDiscardOrDuplicate() {
+        Forest forest = new Forest();
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new SoulServitude(), forest));
+
+        cast();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void targetedPlayerChoosesWhichNontokenCreatureToSacrifice() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SoulServitude(), new Forest()));
+        cast();
+
+        harness.handlePermanentChosen(player2, second.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(second.getCard())
+                .doesNotContain(first.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(first).doesNotContain(second);
+        harness.handleMayAbilityChosen(player1, false);
+    }
+
+    @Test
+    void duplicateCanBeCastUsingOnlyBlackMana() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SoulServitude(), new Forest()));
+        cast();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        Card duplicate = gd.playerHands.get(player1.getId()).getFirst();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anySatisfy(permanent -> assertThat(permanent.getCard().getId()).isEqualTo(duplicate.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
     private void cast() {
         cast(player2.getId());
     }
