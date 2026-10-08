@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +17,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WallOfCaltrops.class, WallOfEarth.class, BarbaryApes.class})
+@CardUsed({WallOfCaltrops.class, WallOfEarth.class, BarbaryApes.class, Boomerang.class})
 class WallOfCaltropsTest extends BaseCardTest {
 
     @Test
@@ -24,8 +26,7 @@ class WallOfCaltropsTest extends BaseCardTest {
         Permanent firstWall = addCreatureReady(player2, new WallOfCaltrops());
         Permanent secondWall = addCreatureReady(player2, new WallOfCaltrops());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -47,8 +48,7 @@ class WallOfCaltropsTest extends BaseCardTest {
         addCreatureReady(player1, smallAttacker());
         Permanent wall = addCreatureReady(player2, new WallOfCaltrops());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         resolveCombat();
@@ -62,8 +62,7 @@ class WallOfCaltropsTest extends BaseCardTest {
         Permanent wall = addCreatureReady(player2, new WallOfCaltrops());
         addCreatureReady(player2, new BarbaryApes());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -84,8 +83,7 @@ class WallOfCaltropsTest extends BaseCardTest {
         Permanent wallOfCaltrops = addCreatureReady(player2, new WallOfCaltrops());
         Permanent otherWall = addCreatureReady(player2, new WallOfEarth());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -109,8 +107,7 @@ class WallOfCaltropsTest extends BaseCardTest {
         Permanent firstWall = addCreatureReady(player2, new WallOfCaltrops());
         Permanent secondWall = addCreatureReady(player2, new WallOfCaltrops());
 
-        declareAttackers(player1, List.of(0, 1));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0, 1));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 1)));
@@ -127,8 +124,7 @@ class WallOfCaltropsTest extends BaseCardTest {
         Permanent wallOfCaltrops = addCreatureReady(player2, new WallOfCaltrops());
         Permanent otherWall = addCreatureReady(player2, new WallOfEarth());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -147,6 +143,51 @@ class WallOfCaltropsTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.CLEANUP);
 
         assertThat(gqs.hasKeyword(gd, wallOfCaltrops, Keyword.BANDING)).isFalse();
+    }
+
+    @Test
+    void doesNotGainBandingWhenTheOtherWallLeavesBeforeResolution() {
+        addCreatureReady(player1, new BarbaryApes());
+        Permanent wall = addCreatureReady(player2, new WallOfCaltrops());
+        Permanent otherWall = addCreatureReady(player2, new WallOfEarth());
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+
+        assertThat(gd.stack).isNotEmpty();
+        harness.castInstant(player1, 0, otherWall.getId());
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::resolveAllTriggers);
+
+        harness.assertInHand(player2, "Wall of Earth");
+        harness.assertOnBattlefield(player2, "Wall of Caltrops");
+        assertThat(gqs.hasKeyword(gd, wall, Keyword.BANDING)).isFalse();
+    }
+
+    @Test
+    void gainsBandingWhenThreeWallsBlockTheSameCreature() {
+        addCreatureReady(player1, new BarbaryApes());
+        Permanent wall = addCreatureReady(player2, new WallOfCaltrops());
+        Permanent firstOtherWall = addCreatureReady(player2, new WallOfEarth());
+        addCreatureReady(player2, new WallOfEarth());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(2, 0)));
+        resolveAllTriggers();
+        resolveCombat();
+
+        assertThat(gqs.hasKeyword(gd, wall, Keyword.BANDING)).isTrue();
+        PendingInteraction.CombatDamageAssignment prompt =
+                gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class);
+        assertThat(prompt).isNotNull();
+        assertThat(prompt.playerId()).isEqualTo(player2.getId());
+        harness.handleCombatDamageAssigned(player2, 0, Map.of(firstOtherWall.getId(), 2));
     }
 
     private BarbaryApes smallAttacker() {
