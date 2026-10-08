@@ -98,6 +98,45 @@ class WallOfPutridFleshTest extends BaseCardTest {
                 .hasMessageContaining("protection from white");
     }
 
+    @Test
+    @DisplayName("Defender prevents declaring the Wall as an attacker")
+    void cannotAttack() {
+        addCreatureReady(player1, new WallOfPutridFlesh());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Unenchanted creatures deal combat damage to the Wall")
+    void doesNotPreventCombatDamageFromUnenchantedCreature() {
+        Permanent wall = addCreatureReady(player2, new WallOfPutridFlesh());
+        addCreatureReady(player1, new BarbaryApes());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player1);
+
+        assertThat(wall.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1))
+                .anyMatch(card -> card instanceof BarbaryApes);
+    }
+
+    @Test
+    @DisplayName("Prevention applies when the Wall's controller controls the source's Aura")
+    void preventsDamageRegardlessOfAuraController() {
+        Permanent wall = addCreatureReady(player2, new WallOfPutridFlesh());
+        Permanent source = addCreatureReady(player1, new PsionicEntity());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new SpiritLink());
+        aura.setAttachedTo(source.getId());
+
+        harness.activateAbility(player1, 0, null, wall.getId());
+        harness.passBothPriorities();
+
+        assertThat(wall.getMarkedDamage()).isZero();
+        assertThat(gd.playerGraveyards.get(player1))
+                .anyMatch(card -> card instanceof PsionicEntity);
+    }
+
     private void attachSpiritLink(Permanent creature) {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new SpiritLink());
         aura.setAttachedTo(creature.getId());
