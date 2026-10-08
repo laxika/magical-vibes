@@ -49,7 +49,7 @@ class UtopiaMyconTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(mycon.getCounterCount(CounterType.FUNGUS)).isOne();
-        Permanent saproling = findPermanents(player1, "Saproling").getFirst();
+        Permanent saproling = findPermanent(player1, "Saproling");
         assertThat(saproling.getEffectivePower()).isOne();
         assertThat(saproling.getEffectiveToughness()).isOne();
         assertThat(saproling.getEffectiveColor()).isEqualTo(CardColor.GREEN);
@@ -104,6 +104,62 @@ class UtopiaMyconTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Spore counters are paid immediately while the token waits for resolution")
+    void countersArePaidBeforeTokenResolves() {
+        Permanent mycon = addMycon();
+        mycon.setCounterCount(CounterType.FUNGUS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(mycon.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Both abilities work while tapped and summoning sick, and the mana ability uses no stack")
+    void abilitiesWorkWhileTappedAndSummoningSick() {
+        Permanent mycon = addMycon();
+        mycon.setSummoningSick(true);
+        mycon.setTapped(true);
+        mycon.setCounterCount(CounterType.FUNGUS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        Permanent saproling = findPermanent(player1, "Saproling");
+        assertThat(saproling.isSummoningSick()).isTrue();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isOne();
+        assertThat(gd.stack).isEmpty();
+        assertThat(mycon.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's Saproling cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsSaproling() {
+        addMycon();
+        Permanent opposingMycon = addCreatureReady(player2, new UtopiaMycon());
+        opposingMycon.setCounterCount(CounterType.FUNGUS, 3);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(findPermanents(player2, "Saproling")).hasSize(1);
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+    }
     private Permanent addMycon() {
         return addCreatureReady(player1, new UtopiaMycon());
     }
