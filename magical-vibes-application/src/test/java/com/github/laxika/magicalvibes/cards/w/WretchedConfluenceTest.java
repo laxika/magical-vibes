@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -49,7 +50,7 @@ class WretchedConfluenceTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
         addMana();
 
-        cast(new int[]{1, 0, 2}, List.of(creature.getId(), player1.getId(), graveyardCreature.getId()));
+        cast(new int[]{0, 1, 2}, List.of(player1.getId(), creature.getId(), graveyardCreature.getId()));
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(0);
@@ -63,7 +64,10 @@ class WretchedConfluenceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WretchedConfluence()));
         addMana();
 
-        cast(new int[]{2, 0, 0}, List.of(creature.getId(), player1.getId(), player2.getId()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+
+        cast(new int[]{0, 0, 2}, List.of(player1.getId(), player2.getId(), creature.getId()));
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Grizzly Bears");
@@ -76,16 +80,160 @@ class WretchedConfluenceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WretchedConfluence()));
         addMana();
 
-        int modes = ChooseOneEffect.encodeRepeatedModeSelection(3, 1, 0, 0);
+        int modes = ChooseOneEffect.encodeRepeatedModeSelection(3, 0, 0, 1);
         assertThatThrownBy(() -> gs.playCard(gd, player1, 0, modes,
-                null, null, List.of(artifact.getId(), player1.getId(), player2.getId()), List.of()))
+                null, null, List.of(player1.getId(), player2.getId(), artifact.getId()), List.of()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void repeatedPlayerModeMayTargetSamePlayerThreeTimes() {
+        harness.setHand(player1, List.of(new WretchedConfluence()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLife(player2, 20);
+        addMana();
+
+        cast(new int[]{0, 0, 0}, List.of(player2.getId(), player2.getId(), player2.getId()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    void repeatedCreatureModeStacksOnSameCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        harness.setHand(player1, List.of(new WretchedConfluence()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        addMana();
+
+        cast(new int[]{0, 1, 1}, List.of(player1.getId(), creature.getId(), creature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Giant Spider");
+        harness.assertInGraveyard(player2, "Giant Spider");
+    }
+
+    @Test
+    void repeatedGraveyardModeMayTargetSameCardThreeTimes() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new WretchedConfluence()));
+        addMana();
+
+        cast(new int[]{2, 2, 2}, List.of(creature.getId(), creature.getId(), creature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId).containsExactly(creature.getId());
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void repeatedGraveyardModeReturnsThreeDifferentCards() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        Card third = new GiantSpider();
+        harness.setGraveyard(player1, List.of(first, second, third));
+        harness.setHand(player1, List.of(new WretchedConfluence()));
+        addMana();
+
+        cast(new int[]{2, 2, 2}, List.of(first.getId(), second.getId(), third.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
+                .containsExactlyInAnyOrder(first.getId(), second.getId(), third.getId());
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Giant Spider");
+    }
+
+    @Test
+    void graveyardModeRejectsOpponentsCreatureCard() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setHand(player1, List.of(new WretchedConfluence()));
+        addMana();
+
+        assertThatThrownBy(() -> cast(new int[]{0, 0, 2},
+                List.of(player1.getId(), player2.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void graveyardModeRejectsNoncreatureCard() {
+        Card artifact = new Spellbook();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.setHand(player1, List.of(new WretchedConfluence()));
+        addMana();
+
+        assertThatThrownBy(() -> cast(new int[]{0, 0, 2},
+                List.of(player1.getId(), player2.getId(), artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void legalModesStillResolveWhenCreatureTargetDisappears() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        Card graveyardCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(graveyardCreature));
+        harness.setHand(player1, List.of(new WretchedConfluence()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of());
+        harness.setLife(player2, 20);
+        addMana();
+
+        cast(new int[]{0, 1, 2}, List.of(player2.getId(), creature.getId(), graveyardCreature.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(graveyardCreature.getId());
+    }
+
+    @Test
+    void creaturePenaltyExpiresAfterTurnEnds() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        Card graveyardCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(graveyardCreature));
+        harness.setHand(player1, List.of(new WretchedConfluence()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        addMana();
+
+        cast(new int[]{0, 1, 2}, List.of(player1.getId(), creature.getId(), graveyardCreature.getId()));
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    void spellDoesNotResolveWhenEveryGraveyardTargetDisappears() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        Card third = new GiantSpider();
+        harness.setGraveyard(player1, List.of(first, second, third));
+        harness.setHand(player1, List.of(new WretchedConfluence()));
+        addMana();
+
+        cast(new int[]{2, 2, 2}, List.of(first.getId(), second.getId(), third.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Wretched Confluence");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void cast(int[] modeIndices, List<java.util.UUID> targetIds) {
-        gs.playCard(gd, player1, 0,
-                ChooseOneEffect.encodeRepeatedModeSelection(3, modeIndices),
-                null, null, targetIds, List.of());
+        harness.castModalInstant(player1, 0,
+                ChooseOneEffect.encodeRepeatedModeSelection(3, modeIndices), targetIds);
     }
 
     private void addMana() {
