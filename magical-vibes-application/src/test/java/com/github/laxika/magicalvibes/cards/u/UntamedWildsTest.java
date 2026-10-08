@@ -153,6 +153,32 @@ class UntamedWildsTest extends BaseCardTest {
         assertThat(gameLogContains("Library is shuffled.")).isTrue();
     }
 
+    @Test
+    @DisplayName("Selecting a later basic land puts only that card onto the controller's battlefield")
+    void selectingLaterBasicLandPutsOnlyChosenCardOntoBattlefield() {
+        setupAndCast();
+        Plains unchosen = new Plains();
+        Mountain chosen = new Mountain();
+        CityOfBrass nonbasic = new CityOfBrass();
+        harness.setLibrary(player1, List.of(nonbasic, unchosen, chosen));
+        int controllerBattlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
+        int opponentBattlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .hasSize(controllerBattlefieldBefore + 1)
+                .anyMatch(permanent -> permanent.getCard().getId().equals(chosen.getId())
+                        && !permanent.isTapped());
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(opponentBattlefieldBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(nonbasic, unchosen);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(chosen);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Untamed Wilds");
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
     private void castAndOpenLibrarySearch() {
         setupAndCast();
         setupLibrary();
