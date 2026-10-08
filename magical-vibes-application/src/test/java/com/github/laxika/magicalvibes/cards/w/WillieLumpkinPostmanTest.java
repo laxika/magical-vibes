@@ -60,11 +60,7 @@ class WillieLumpkinPostmanTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(attacker.isAttacking()).isFalse();
     }
@@ -83,10 +79,51 @@ class WillieLumpkinPostmanTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player2, List.of(0));
+        declareAttackers(player2, List.of(0));
+    }
+
+    @Test
+    @DisplayName("An intervening extra turn for Willie's controller does not remove the restriction")
+    void controllerExtraTurnDoesNotRemoveRestrictionBeforeDamagedPlayersNextTurn() {
+        resolveAcceptedDraw();
+        gd.queueExtraTurnFirst(player1.getId(), false, false);
+
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The restriction ends after the damaged player's next turn, even before an extra turn")
+    void damagedPlayersSecondConsecutiveTurnIsNotRestricted() {
+        resolveAcceptedDraw();
+        harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);
+        gd.queueExtraTurnFirst(player2.getId(), false, false);
+        declareAttackers(player2, List.of());
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player2, List.of(0)));
+        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().isAttacking()).isTrue();
+    }
+
+    private void resolveAcceptedDraw() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        addCreatureReady(player1, new WillieLumpkinPostman());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
     }
 }
