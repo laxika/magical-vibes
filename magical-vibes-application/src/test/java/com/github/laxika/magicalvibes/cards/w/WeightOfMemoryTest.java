@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,17 +11,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WeightOfMemory.class})
 class WeightOfMemoryTest extends BaseCardTest {
-
-    // ===== Draw effect =====
 
     @Test
     @DisplayName("Draws three cards for the caster")
     void drawsThreeCards() {
         harness.setHand(player1, List.of(new WeightOfMemory()));
         harness.addMana(player1, ManaColor.BLUE, 5);
-
-        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
@@ -29,18 +27,14 @@ class WeightOfMemoryTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
     }
 
-    // ===== Mill effect =====
-
     @Test
     @DisplayName("Mills three cards from target player's library")
     void millsThreeCards() {
         harness.setHand(player1, List.of(new WeightOfMemory()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        List<Card> deck = gd.playerDecks.get(player2.getId());
-        while (deck.size() > 10) {
-            deck.removeFirst();
-        }
+        harness.setLibrary(player2, gd.playerDecks.get(player2.getId()).reversed().stream()
+                .limit(10).toList().reversed());
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
@@ -55,10 +49,8 @@ class WeightOfMemoryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WeightOfMemory()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        while (deck.size() > 10) {
-            deck.removeFirst();
-        }
+        harness.setLibrary(player1, gd.playerDecks.get(player1.getId()).reversed().stream()
+                .limit(10).toList().reversed());
 
         harness.castSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
@@ -75,10 +67,8 @@ class WeightOfMemoryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WeightOfMemory()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        List<Card> opponentDeck = gd.playerDecks.get(player2.getId());
-        while (opponentDeck.size() > 10) {
-            opponentDeck.removeFirst();
-        }
+        harness.setLibrary(player2, gd.playerDecks.get(player2.getId()).reversed().stream()
+                .limit(10).toList().reversed());
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
@@ -101,5 +91,59 @@ class WeightOfMemoryTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Weight of Memory");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Self-targeting draws the top three before milling the next three")
+    void drawsBeforeMillingWhenTargetingSelf() {
+        WeightOfMemory spell = new WeightOfMemory();
+        List<WeightOfMemory> drawn = List.of(new WeightOfMemory(), new WeightOfMemory(), new WeightOfMemory());
+        List<WeightOfMemory> milled = List.of(new WeightOfMemory(), new WeightOfMemory(), new WeightOfMemory());
+        harness.setLibrary(player1, List.of(drawn.get(0), drawn.get(1), drawn.get(2),
+                milled.get(0), milled.get(1), milled.get(2)));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(drawn);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(milled.get(0), milled.get(1), milled.get(2), spell);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Mills only the available cards from a short library")
+    void millsShortLibraryWithoutCausingLoss() {
+        WeightOfMemory first = new WeightOfMemory();
+        WeightOfMemory second = new WeightOfMemory();
+        harness.setLibrary(player2, List.of(first, second));
+        harness.setHand(player1, List.of(new WeightOfMemory()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("An empty target library does not prevent the caster drawing three")
+    void emptyTargetLibraryStillAllowsDraw() {
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new WeightOfMemory()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 }
