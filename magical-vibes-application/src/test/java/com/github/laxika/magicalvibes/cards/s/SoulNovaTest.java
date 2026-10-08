@@ -38,8 +38,8 @@ class SoulNovaTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(player2, new Arrest());
         aura.setAttachedTo(attacker.getId());
 
-        castSoulNova(attacker.getId());
-        harness.passBothPriorities();
+        prepareSoulNova();
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
 
         GameData gameData = harness.getGameData();
         harness.assertNotOnBattlefield(player1, "Alpha Myr");
@@ -81,6 +81,61 @@ class SoulNovaTest extends BaseCardTest {
                 .noneMatch(card -> card.getName().equals("Alpha Myr"));
     }
 
+    @Test
+    @DisplayName("Leaves attached Equipment untouched when the target becomes illegal")
+    void leavesEquipmentWhenTargetStopsAttacking() {
+        Permanent attacker = addAttacker(player1);
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        equipment.setAttachedTo(attacker.getId());
+
+        castSoulNova(attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Alpha Myr");
+        harness.assertOnBattlefield(player1, "Leonin Scimitar");
+        assertThat(equipment.getAttachedTo()).isEqualTo(attacker.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exiles an attacking creature with no Equipment")
+    void exilesUnequippedAttacker() {
+        Permanent attacker = addAttacker(player1);
+
+        prepareSoulNova();
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
+
+        harness.assertNotOnBattlefield(player1, "Alpha Myr");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .containsExactly(attacker.getCard());
+        harness.assertInGraveyard(player2, "Soul Nova");
+    }
+
+    @Test
+    @DisplayName("Uses Equipment attached at resolution rather than at casting")
+    void usesAttachmentsAtResolution() {
+        Permanent attacker = addAttacker(player1);
+        Permanent otherCreature = addCreatureReady(player1, new AlphaMyr());
+        Permanent movedAway = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        movedAway.setAttachedTo(attacker.getId());
+        Permanent movedOnto = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        movedOnto.setAttachedTo(otherCreature.getId());
+
+        castSoulNova(attacker.getId());
+        movedAway.setAttachedTo(otherCreature.getId());
+        movedOnto.setAttachedTo(attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(otherCreature, movedAway)
+                .doesNotContain(attacker, movedOnto);
+        assertThat(movedAway.getAttachedTo()).isEqualTo(otherCreature.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .containsExactlyInAnyOrder(attacker.getCard(), movedOnto.getCard());
+    }
+
     private Permanent addAttacker(Player owner) {
         Permanent attacker = addCreatureReady(owner, new AlphaMyr());
         attacker.setAttacking(true);
@@ -94,10 +149,9 @@ class SoulNovaTest extends BaseCardTest {
 
     private void prepareSoulNova() {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new SoulNova()));
         harness.addMana(player2, ManaColor.WHITE, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
-        harness.passPriority(player1);
+        harness.ensurePriority(player2);
     }
 }
