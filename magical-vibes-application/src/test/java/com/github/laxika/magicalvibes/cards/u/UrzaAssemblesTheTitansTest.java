@@ -89,6 +89,97 @@ class UrzaAssemblesTheTitansTest extends BaseCardTest {
                 .hasMessageContaining("loyalty");
     }
 
+    @Test
+    void readAheadCanStartAtChapterThree() {
+        addReadyGarruk(player1);
+        harness.castFromHand(player1, new UrzaAssemblesTheTitans(), "{3}{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "3");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Urza Assembles the Titans");
+        harness.assertNotOnBattlefield(player1, "Urza Assembles the Titans");
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void chapterIIIAffectsPlaneswalkersEnteringLater() {
+        addSagaWithLore(2);
+        triggerChapter();
+        Permanent garruk = harness.enterBattlefieldAndReturn(player1, new GarrukWildspeaker());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+    }
+
+    @Test
+    void multipleChapterIIIResolutionsStillAllowOnlyTwoActivations() {
+        addSagaWithLore(2);
+        addSagaWithLore(2);
+        Permanent garruk = addReadyGarruk(player1);
+        triggerChapter();
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("loyalty");
+    }
+
+    @Test
+    void chapterICanDeclineToReveal() {
+        Card planeswalker = new JaceBeleren();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(planeswalker));
+        addSagaWithLore(0);
+        triggerChapter();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(planeswalker);
+    }
+
+    @Test
+    void chapterILeavesRevealedNonPlaneswalkerOnTop() {
+        Card land = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(land));
+        addSagaWithLore(0);
+        triggerChapter();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+    }
+
+    @Test
+    void chapterIICanDeclineToPutPlaneswalkerOntoBattlefield() {
+        Card planeswalker = new JaceBeleren();
+        harness.setHand(player1, List.of(planeswalker));
+        addSagaWithLore(1);
+        triggerChapter();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(planeswalker);
+        harness.assertNotOnBattlefield(player1, "Jace Beleren");
+    }
+
     private Permanent addSagaWithLore(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new UrzaAssemblesTheTitans());
         saga.setCounterCount(CounterType.LORE, loreCounters);
@@ -96,10 +187,9 @@ class UrzaAssemblesTheTitansTest extends BaseCardTest {
     }
 
     private Permanent addReadyGarruk(Player player) {
-        Permanent garruk = new Permanent(new GarrukWildspeaker());
+        Permanent garruk = harness.addToBattlefieldAndReturn(player, new GarrukWildspeaker());
         garruk.setCounterCount(CounterType.LOYALTY, 5);
         garruk.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(garruk);
         return garruk;
     }
 
