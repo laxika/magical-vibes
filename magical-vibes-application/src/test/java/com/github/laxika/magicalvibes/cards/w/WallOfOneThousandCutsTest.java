@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.c.CloudSprite;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WallOfOneThousandCuts.class, CloudSprite.class})
+@CardUsed({WallOfOneThousandCuts.class})
 class WallOfOneThousandCutsTest extends BaseCardTest {
 
     private Permanent addWallReady() {
@@ -35,7 +34,7 @@ class WallOfOneThousandCutsTest extends BaseCardTest {
     @DisplayName("Ability lets Wall of One Thousand Cuts attack this turn")
     void abilityAllowsAttack() {
         Permanent wall = addWallReady();
-        harness.addToBattlefield(player2, new CloudSprite());
+        harness.addToBattlefield(player2, new WallOfOneThousandCuts());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -72,5 +71,47 @@ class WallOfOneThousandCutsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    void permissionDoesNotApplyToAnotherWall() {
+        addWallReady();
+        addWallReady();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    void abilityDoesNotOverrideSummoningSickness() {
+        harness.addToBattlefield(player1, new WallOfOneThousandCuts());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    void tappedWallCanActivateButCannotAttack() {
+        Permanent wall = addWallReady();
+        wall.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wall.isTapped()).isTrue();
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
     }
 }
