@@ -158,8 +158,7 @@ class RageWeaverTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, blackTarget.getId());
         harness.activateAbility(player1, 0, null, greenTarget.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(blackTarget.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(greenTarget.hasKeyword(Keyword.HASTE)).isTrue();
@@ -209,6 +208,33 @@ class RageWeaverTest extends BaseCardTest {
         harness.passBothPriorities();
         declareAttackers(java.util.List.of(1));
 
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot target the red Rage Weaver itself")
+    void cannotTargetRedSource() {
+        Permanent weaver = addCreatureReady(player1, new RageWeaver());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, weaver.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a");
+    }
+
+    @Test
+    @DisplayName("Can grant haste to an opponent's tapped black creature without untapping it")
+    void grantsHasteToTappedOpponentBlackCreature() {
+        addCreatureReady(player1, new RageWeaver());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DrudgeSkeletons());
+        target.setSummoningSick(true);
+        target.tap();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(target.isTapped()).isTrue();
     }
 }
