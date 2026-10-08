@@ -54,7 +54,6 @@ class VolcanicSpiteTest extends BaseCardTest {
         castAt(target);
 
         harness.handleMultipleCardsChosen(player1, List.of(bottom.getId()));
-        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(keep, draw);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bottom);
@@ -88,10 +87,75 @@ class VolcanicSpiteTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castAt(Permanent target) {
+    @Test
+    void drawsDuringResolutionWithoutASeparateStackAbility() {
+        Card bottom = new Mountain();
+        Card draw = new Mountain();
+        harness.setHand(player1, List.of(new VolcanicSpite(), bottom));
+        harness.setLibrary(player1, List.of(draw));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        castAt(target);
+
+        harness.handleMultipleCardsChosen(player1, List.of(bottom.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bottom);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Volcanic Spite");
+    }
+
+    @Test
+    void canDrawTheBottomedCardWhenLibraryWasEmpty() {
+        Card bottom = new Mountain();
+        harness.setHand(player1, List.of(new VolcanicSpite(), bottom));
+        harness.setLibrary(player1, List.of());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        castAt(target);
+
+        harness.handleMultipleCardsChosen(player1, List.of(bottom.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bottom);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNotDrawWhenHandIsEmptyAfterCasting() {
+        Card draw = new Mountain();
+        harness.setHand(player1, List.of(new VolcanicSpite()));
+        harness.setLibrary(player1, List.of(draw));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        castAt(target);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Volcanic Spite");
+    }
+
+    @Test
+    void doesNotOfferToBottomOrDrawWhenTargetLeavesBeforeResolution() {
+        Card keep = new Mountain();
+        Card draw = new Mountain();
+        harness.setHand(player1, List.of(new VolcanicSpite(), keep));
+        harness.setLibrary(player1, List.of(draw));
+        harness.setHand(player2, List.of(new Shock()));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         addMana();
         harness.castInstant(player1, 0, target.getId());
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(keep);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Volcanic Spite");
+    }
+
+    private void castAt(Permanent target) {
+        addMana();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void addMana() {
