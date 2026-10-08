@@ -68,8 +68,7 @@ class WellLaidPlansTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new AngelOfMercy()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
     }
@@ -102,6 +101,48 @@ class WellLaidPlansTest extends BaseCardTest {
         assertThat(target.getMarkedDamage()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Prevents damage using a creature source's last known information")
+    void preventsDamageAfterSourceLeavesBattlefield() {
+        harness.addToBattlefield(player1, new WellLaidPlans());
+        Permanent archer = addCreatureReady(player1, new SamiteArcher());
+        Permanent target = addCreatureReady(player2, new AngelOfMercy());
+        harness.setHand(player2, List.of(new Zap()));
+        harness.setLibrary(player2, List.of(new RagingKavu()));
+        harness.addMana(player2, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 1, 1, null, target.getId());
+        harness.castAndResolveInstant(player2, 0, archer.getId());
+        harness.assertInGraveyard(player1, "Samite Archer");
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not prevent damage a creature deals to itself")
+    void allowsDamageToSelf() {
+        harness.addToBattlefield(player1, new WellLaidPlans());
+        Permanent archer = addCreatureReady(player1, new SamiteArcher());
+
+        harness.activateAbility(player1, 1, 1, null, archer.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Samite Archer");
+    }
+
+    @Test
+    @DisplayName("Prevents shared-color damage between creatures with the same controller")
+    void preventsDamageBetweenFriendlyCreatures() {
+        harness.addToBattlefield(player1, new WellLaidPlans());
+        addCreatureReady(player1, new SamiteArcher());
+        Permanent target = addCreatureReady(player1, new AngelOfMercy());
+
+        harness.activateAbility(player1, 1, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+    }
     @Test
     @DisplayName("Prevents combat damage between creatures with a shared color")
     void preventsCombatDamageWithSharedColor() {
