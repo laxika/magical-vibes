@@ -184,9 +184,44 @@ class ZektarShrineExpeditionTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Elemental")).isZero();
     }
 
-    private Permanent addExpedition() {
+    @Test
+    void newlyEnteredExpeditionCanActivateDuringOpponentsTurn() {
         Permanent expedition = harness.addToBattlefieldAndReturn(player1, new ZektarShrineExpedition());
-        expedition.setSummoningSick(false);
-        return expedition;
+        expedition.setCounterCount(CounterType.QUEST, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Elemental")).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(expedition.getCard());
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Elemental")).isZero();
+    }
+
+    @Test
+    void eachExpeditionGetsItsOwnLandfallCounter() {
+        Permanent first = addExpedition();
+        Permanent second = addExpedition();
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(first.getCounterCount(CounterType.QUEST)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.QUEST)).isEqualTo(1);
+    }
+
+    private Permanent addExpedition() {
+        return harness.addToBattlefieldAndReturn(player1, new ZektarShrineExpedition());
     }
 }
