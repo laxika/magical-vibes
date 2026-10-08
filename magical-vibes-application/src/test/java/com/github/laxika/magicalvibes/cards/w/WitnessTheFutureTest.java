@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.a.Abrade;
+import com.github.laxika.magicalvibes.cards.d.DawnhartDisciple;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,27 +16,27 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WitnessTheFuture.class, GrizzlyBears.class, LightningBolt.class, Shock.class})
+@CardUsed({WitnessTheFuture.class, DawnhartDisciple.class, Abrade.class, Island.class})
 class WitnessTheFutureTest extends BaseCardTest {
 
     @Test
     @DisplayName("Shuffles up to four cards from the target graveyard, then looks at four and randomizes the rest")
     void shufflesTargetGraveyardThenSelectsFromOwnLibrary() {
-        Card graveyardCard1 = new GrizzlyBears();
-        Card graveyardCard2 = new LightningBolt();
-        Card graveyardCard3 = new Shock();
-        Card graveyardCard4 = new GrizzlyBears();
-        Card graveyardCard5 = new LightningBolt();
+        Card graveyardCard1 = new DawnhartDisciple();
+        Card graveyardCard2 = new Abrade();
+        Card graveyardCard3 = new Island();
+        Card graveyardCard4 = new DawnhartDisciple();
+        Card graveyardCard5 = new Abrade();
         harness.setGraveyard(player2, List.of(
                 graveyardCard1, graveyardCard2, graveyardCard3, graveyardCard4, graveyardCard5));
 
-        Card topCard1 = new GrizzlyBears();
-        Card topCard2 = new LightningBolt();
-        Card topCard3 = new Shock();
-        Card topCard4 = new GrizzlyBears();
-        Card untouched = new LightningBolt();
+        Card topCard1 = new DawnhartDisciple();
+        Card topCard2 = new Abrade();
+        Card topCard3 = new Island();
+        Card topCard4 = new DawnhartDisciple();
+        Card untouched = new Abrade();
         harness.setLibrary(player1, List.of(topCard1, topCard2, topCard3, topCard4, untouched));
-        Card opponentLibraryCard = new Shock();
+        Card opponentLibraryCard = new Island();
         harness.setLibrary(player2, List.of(opponentLibraryCard));
         harness.setHand(player1, List.of(new WitnessTheFuture()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -81,8 +82,8 @@ class WitnessTheFutureTest extends BaseCardTest {
     @DisplayName("With no cards chosen from the target graveyard, the library effect still resolves")
     void choosingNoGraveyardCardsStillLooksAtLibrary() {
         harness.setGraveyard(player2, List.of());
-        Card topCard = new GrizzlyBears();
-        harness.setLibrary(player1, List.of(topCard, new LightningBolt(), new Shock(), new GrizzlyBears()));
+        Card topCard = new DawnhartDisciple();
+        harness.setLibrary(player1, List.of(topCard, new Abrade(), new Island(), new DawnhartDisciple()));
         harness.setHand(player1, List.of(new WitnessTheFuture()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -97,6 +98,99 @@ class WitnessTheFutureTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Witness the Future");
+    }
+    @Test
+    void canChooseZeroCardsFromNonemptyGraveyard() {
+        Card graveyardCard = new DawnhartDisciple();
+        Card topCard = new Island();
+        harness.setGraveyard(player2, List.of(graveyardCard));
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new WitnessTheFuture()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(graveyardCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Witness the Future");
+    }
+
+    @Test
+    void canTargetSelfAndSelectFromCardsJustShuffledIntoLibrary() {
+        Card recovered = new DawnhartDisciple();
+        harness.setGraveyard(player1, List.of(recovered));
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new WitnessTheFuture()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(recovered.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(recovered);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(recovered);
+        harness.assertInGraveyard(player1, "Witness the Future");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void looksAtAllAvailableCardsWhenLibraryHasFewerThanFour() {
+        Card chosen = new Abrade();
+        Card remaining = new Island();
+        harness.setGraveyard(player2, List.of());
+        harness.setLibrary(player1, List.of(chosen, remaining));
+        harness.setHand(player1, List.of(new WitnessTheFuture()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Witness the Future");
+    }
+
+    @Test
+    void resolvesWithEmptyLibraryWithoutDrawingOrLosing() {
+        harness.setGraveyard(player2, List.of());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new WitnessTheFuture()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Witness the Future");
+    }
+
+    @Test
+    void stillSelectsFromLibraryWhenAllGraveyardCardTargetsHaveLeft() {
+        Card removed = new DawnhartDisciple();
+        Card selected = new Island();
+        harness.setGraveyard(player2, List.of(removed));
+        harness.setLibrary(player1, List.of(selected));
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new WitnessTheFuture()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(removed.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player2, List.of(removed));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(selected);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(removed);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Witness the Future");
     }
 }
