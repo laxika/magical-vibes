@@ -52,4 +52,67 @@ class WalkingDeadTest extends BaseCardTest {
         assertThat(walkingDead.getRegenerationShield()).isZero();
         assertThat(walkingDead.getMarkedDamage()).isZero();
     }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent walkingDead = harness.addToBattlefieldAndReturn(player1, new WalkingDead());
+        walkingDead.setSummoningSick(true);
+        walkingDead.tap();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(walkingDead.getRegenerationShield()).isEqualTo(1);
+        assertThat(walkingDead.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void separateActivationsProtectAgainstSeparateDestructionEvents() {
+        Permanent walkingDead = addCreatureReady(player1, new WalkingDead());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        walkingDead.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        assertThat(walkingDead.getRegenerationShield()).isEqualTo(1);
+        assertThat(walkingDead.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(walkingDead);
+
+        walkingDead.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        assertThat(walkingDead.getRegenerationShield()).isZero();
+        assertThat(walkingDead.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(walkingDead);
+
+        walkingDead.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player1, "Walking Dead");
+        harness.assertInGraveyard(player1, "Walking Dead");
+    }
+
+    @Test
+    void shieldCreationDoesNotRemoveAttackerFromCombatButRegenerationDoes() {
+        Permanent walkingDead = addCreatureReady(player1, new WalkingDead());
+        walkingDead.setAttacking(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(walkingDead.isAttacking()).isTrue();
+        assertThat(walkingDead.isTapped()).isFalse();
+
+        walkingDead.setMarkedDamage(1);
+        harness.runStateBasedActions();
+
+        assertThat(walkingDead.isAttacking()).isFalse();
+        assertThat(walkingDead.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(walkingDead);
+    }
 }
