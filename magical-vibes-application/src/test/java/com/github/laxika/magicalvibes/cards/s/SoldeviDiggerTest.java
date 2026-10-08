@@ -94,4 +94,53 @@ class SoldeviDiggerTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(controllerLibraryCard);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentLibraryCard);
     }
+
+    @Test
+    @DisplayName("Uses the top graveyard card at resolution rather than activation")
+    void usesTopCardAtResolution() {
+        ShieldSphere originalTop = new ShieldSphere();
+        SolGrail newTop = new SolGrail();
+        harness.setGraveyard(player1, List.of(originalTop));
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.setGraveyard(player1, List.of(originalTop, newTop));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(originalTop);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(newTop);
+    }
+
+    @Test
+    @DisplayName("An activation with an empty graveyard can move a card added before resolution")
+    void initiallyEmptyGraveyardIsCheckedAtResolution() {
+        ShieldSphere newTop = new ShieldSphere();
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.setGraveyard(player1, List.of(newTop));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(newTop);
+    }
+
+    @Test
+    @DisplayName("Stacked activations each move the current top graveyard card")
+    void stackedActivationsMoveDifferentCards() {
+        ShieldSphere olderCard = new ShieldSphere();
+        SolGrail newerCard = new SolGrail();
+        harness.setGraveyard(player1, List.of(olderCard, newerCard));
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(newerCard, olderCard);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }
