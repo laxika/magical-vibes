@@ -1,9 +1,13 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HierophantsChalice;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,6 +17,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,11 +25,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({VraskaRelicSeeker.class, GrizzlyBears.class, GloriousAnthem.class, Forest.class, HierophantsChalice.class})
 class VraskaRelicSeekerTest extends BaseCardTest {
 
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting puts planeswalker spell on the stack")
@@ -39,7 +43,6 @@ class VraskaRelicSeekerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.PLANESWALKER_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Vraska, Relic Seeker");
     }
 
     @Test
@@ -60,7 +63,6 @@ class VraskaRelicSeekerTest extends BaseCardTest {
         assertThat(vraska.isSummoningSick()).isFalse();
     }
 
-    // ===== +2 ability: Create a 2/2 black Pirate creature token with menace =====
 
     @Test
     @DisplayName("+2 creates a 2/2 black Pirate token with menace and increases loyalty")
@@ -72,11 +74,10 @@ class VraskaRelicSeekerTest extends BaseCardTest {
 
         assertThat(vraska.getCounterCount(CounterType.LOYALTY)).isEqualTo(8); // 6 + 2
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Pirate"))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("Pirate token not found"));
+        Permanent token = findPermanent(player1, "Pirate");
 
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(token.getCard().getPower()).isEqualTo(2);
         assertThat(token.getCard().getToughness()).isEqualTo(2);
         assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
@@ -108,7 +109,6 @@ class VraskaRelicSeekerTest extends BaseCardTest {
         assertThat(pirateCount).isEqualTo(2);
     }
 
-    // ===== −3 ability: Destroy target artifact, creature, or enchantment. Create a Treasure token. =====
 
     @Test
     @DisplayName("-3 destroys target creature and creates a Treasure token")
@@ -163,7 +163,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
     @DisplayName("-3 rejects targeting a land")
     void minusThreeRejectsLand() {
         addReadyVraska(player1);
-        harness.addToBattlefield(player2, new com.github.laxika.magicalvibes.cards.f.Forest());
+        harness.addToBattlefield(player2, new Forest());
 
         Permanent forest = findPermanent(player2, "Forest");
 
@@ -193,7 +193,6 @@ class VraskaRelicSeekerTest extends BaseCardTest {
                 .count()).isEqualTo(1);
     }
 
-    // ===== −10 ability: Target player's life total becomes 1 =====
 
     @Test
     @DisplayName("-10 sets target opponent's life total to 1")
@@ -232,7 +231,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
     @Test
     @DisplayName("-10 cannot be activated without enough loyalty")
     void minusTenRequiresTenLoyalty() {
-        Permanent vraska = addReadyVraska(player1);
+        addReadyVraska(player1);
         // Default loyalty is 6, not enough for -10
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, player2.getId()))
@@ -240,7 +239,6 @@ class VraskaRelicSeekerTest extends BaseCardTest {
                 .hasMessageContaining("loyalty");
     }
 
-    // ===== Loyalty ability restrictions =====
 
     @Test
     @DisplayName("Cannot activate loyalty ability during opponent's turn")
@@ -266,14 +264,88 @@ class VraskaRelicSeekerTest extends BaseCardTest {
                 .hasMessageContaining("one loyalty ability");
     }
 
-    // ===== Helpers =====
+
+    @Test
+    @DisplayName("-3 destroys an artifact and its Treasure can immediately produce mana")
+    void minusThreeDestroysArtifactAndTreasureProducesMana() {
+        addReadyVraska(player1);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new HierophantsChalice());
+
+        harness.activateAbility(player1, 0, 1, null, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Hierophant's Chalice");
+        harness.assertInGraveyard(player2, "Hierophant's Chalice");
+        Permanent treasure = findPermanent(player1, "Treasure");
+        assertThat(treasure.isTapped()).isFalse();
+        int treasureIndex = gd.playerBattlefields.get(player1.getId()).indexOf(treasure);
+        harness.activateAbility(player1, treasureIndex, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+
+        harness.assertNotOnBattlefield(player1, "Treasure");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("-3 creates no Treasure when its only target leaves before resolution")
+    void minusThreeDoesNotCreateTreasureWithMissingTarget() {
+        Permanent vraska = addReadyVraska(player1);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new HierophantsChalice());
+        harness.activateAbility(player1, 0, 1, null, artifact.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(artifact);
+
+        harness.passBothPriorities();
+
+        assertThat(vraska.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        harness.assertNotOnBattlefield(player1, "Treasure");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("-3 creates Treasure even when an indestructible target survives")
+    void minusThreeCreatesTreasureWhenDestructionFails() {
+        addReadyVraska(player1);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new HierophantsChalice());
+        artifact.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+
+        harness.activateAbility(player1, 0, 1, null, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Hierophant's Chalice");
+        harness.assertOnBattlefield(player1, "Treasure");
+    }
+
+    @Test
+    @DisplayName("-3 rejects targeting a planeswalker")
+    void minusThreeRejectsPlaneswalker() {
+        addReadyVraska(player1);
+        Permanent opponentVraska = harness.addToBattlefieldAndReturn(player2, new VraskaRelicSeeker());
+        opponentVraska.setCounterCount(CounterType.LOYALTY, 6);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, opponentVraska.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("-10 leaves a player already at one life at one and preserves excess loyalty")
+    void minusTenAtOneLifeWithExcessLoyalty() {
+        Permanent vraska = addReadyVraska(player1);
+        vraska.setCounterCount(CounterType.LOYALTY, 11);
+        harness.setLife(player2, 1);
+
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(1);
+        assertThat(vraska.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Vraska, Relic Seeker");
+    }
 
     private Permanent addReadyVraska(Player player) {
-        VraskaRelicSeeker card = new VraskaRelicSeeker();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new VraskaRelicSeeker());
         perm.setCounterCount(CounterType.LOYALTY, 6);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
