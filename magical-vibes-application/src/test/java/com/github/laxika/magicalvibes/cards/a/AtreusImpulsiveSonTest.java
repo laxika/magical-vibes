@@ -98,6 +98,35 @@ class AtreusImpulsiveSonTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
     }
 
+    @Test
+    void abilityStillDrawsDiscardsAndDealsDamageAfterAtreusDies() {
+        Permanent atreus = addReadyAtreus();
+        gd.playerExperienceCounters.put(player1.getId(), 2);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new AtreusImpulsiveSon(), new AtreusImpulsiveSon()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        atreus.setMarkedDamage(4);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(atreus);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private Permanent addReadyAtreus() {
         return addCreatureReady(player1, new AtreusImpulsiveSon());
     }
