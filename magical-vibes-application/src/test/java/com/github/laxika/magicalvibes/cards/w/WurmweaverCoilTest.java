@@ -104,4 +104,70 @@ class WurmweaverCoilTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
         harness.assertInGraveyard(player1, "Wurmweaver Coil");
     }
+    @Test
+    @DisplayName("Coil can enchant an opponent's creature but its controller receives the Wurm")
+    void enchantingOpponentsCreatureCreatesTokenForAuraController() {
+        Permanent creature = addCreatureReady(player2, new GruulNodorog());
+        harness.setHand(player1, List.of(new WurmweaverCoil()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(10);
+        assertThat(findPermanent(player1, "Wurmweaver Coil").getAttachedTo()).isEqualTo(creature.getId());
+
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Wurm");
+        harness.assertNotOnBattlefield(player2, "Wurm");
+        harness.assertOnBattlefield(player2, "Gruul Nodorog");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Sacrifice removes Coil and its boost before the Wurm ability resolves")
+    void sacrificeIsPaidBeforeTokenCreation() {
+        Permanent creature = addCreatureReady(player1, new GruulNodorog());
+        Permanent coil = harness.addToBattlefieldAndReturn(player1, new WurmweaverCoil());
+        coil.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Wurmweaver Coil");
+        harness.assertInGraveyard(player1, "Wurmweaver Coil");
+        harness.assertNotOnBattlefield(player1, "Wurm");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Wurm");
+    }
+
+    @Test
+    @DisplayName("Coil cannot be sacrificed without paying three green mana")
+    void insufficientGreenManaDoesNotSacrificeAura() {
+        Permanent creature = addCreatureReady(player1, new GruulNodorog());
+        Permanent coil = harness.addToBattlefieldAndReturn(player1, new WurmweaverCoil());
+        coil.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Wurmweaver Coil");
+        harness.assertNotInGraveyard(player1, "Wurmweaver Coil");
+        harness.assertNotOnBattlefield(player1, "Wurm");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(10);
+        assertThat(gd.stack).isEmpty();
+    }
 }
