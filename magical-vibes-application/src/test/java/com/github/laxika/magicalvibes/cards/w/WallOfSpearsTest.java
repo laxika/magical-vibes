@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WallOfSpears.class, GrizzlyBears.class})
+@CardUsed({WallOfSpears.class, GrizzlyBears.class, HillGiant.class})
 class WallOfSpearsTest extends BaseCardTest {
 
     @Test
@@ -35,5 +36,21 @@ class WallOfSpearsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(wall);
         assertThat(wall.getMarkedDamage()).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+    }
+
+    @Test
+    void survivingAttackerDealsRegularDamageAndWallDoesNotDealDamageTwice() {
+        Permanent attacker = addCreatureReady(player1, new HillGiant());
+        Permanent wall = addCreatureReady(player2, new WallOfSpears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(wall);
+        harness.assertInGraveyard(player2, "Wall of Spears");
+        harness.assertLife(player2, 20);
     }
 }
