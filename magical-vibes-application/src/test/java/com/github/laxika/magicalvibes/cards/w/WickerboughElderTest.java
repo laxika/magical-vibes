@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +19,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WickerboughElder.class, AngelsFeather.class, AngelicChorus.class, GrizzlyBears.class})
 class WickerboughElderTest extends BaseCardTest {
-
-    // ===== ETB: enters with a -1/-1 counter =====
 
     @Test
     @DisplayName("Enters the battlefield with a -1/-1 counter (4/4 becomes 3/3)")
@@ -32,16 +32,14 @@ class WickerboughElderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB effect
+        harness.passBothPriorities();
 
-        Permanent elder = findElder(player1);
+        Permanent elder = findPermanent(player1, "Wickerbough Elder");
+        assertThat(gd.stack).isEmpty();
         assertThat(elder.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(elder.getEffectivePower()).isEqualTo(3);
         assertThat(elder.getEffectiveToughness()).isEqualTo(3);
     }
-
-    // ===== Activated ability =====
 
     @Test
     @DisplayName("Ability removes a -1/-1 counter and destroys target artifact")
@@ -80,8 +78,6 @@ class WickerboughElderTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Angelic Chorus");
     }
 
-    // ===== Cannot activate without a counter =====
-
     @Test
     @DisplayName("Cannot activate ability when no -1/-1 counters remain")
     void cannotActivateWithoutCounters() {
@@ -99,8 +95,6 @@ class WickerboughElderTest extends BaseCardTest {
                 .hasMessageContaining("Not enough counters");
     }
 
-    // ===== Illegal target =====
-
     @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
@@ -117,18 +111,30 @@ class WickerboughElderTest extends BaseCardTest {
                 .hasMessageContaining("artifact or enchantment");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("A summoning-sick Elder can pay its counter cost before resolution")
+    void summoningSickElderPaysCounterImmediately() {
+        Permanent elder = addReadyElder(player1);
+        elder.setSummoningSick(true);
+        harness.addToBattlefield(player1, new AngelsFeather());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Angel's Feather"));
+
+        assertThat(elder.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(elder.getEffectivePower()).isEqualTo(4);
+        harness.assertOnBattlefield(player1, "Angel's Feather");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Angel's Feather");
+    }
 
     private Permanent addReadyElder(Player player) {
-        WickerboughElder card = new WickerboughElder();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new WickerboughElder());
         perm.setSummoningSick(false);
         perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
-    private Permanent findElder(Player player) {
-        return findPermanent(player, "Wickerbough Elder");
-    }
 }
