@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SpiderSlayerHatredHoned.class, AirElemental.class, GiantSpider.class, RabidBite.class})
 class SpiderSlayerHatredHonedTest extends BaseCardTest {
@@ -28,10 +30,9 @@ class SpiderSlayerHatredHonedTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RabidBite()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castSorcery(player1, 0, List.of(
+        harness.castAndResolveSorcery(player1, 0, List.of(
                 harness.getPermanentId(player1, "Spider-Slayer, Hatred Honed"),
                 harness.getPermanentId(player2, "Giant Spider")));
-        harness.passBothPriorities();
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Giant Spider");
@@ -45,10 +46,9 @@ class SpiderSlayerHatredHonedTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RabidBite()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castSorcery(player1, 0, List.of(
+        harness.castAndResolveSorcery(player1, 0, List.of(
                 harness.getPermanentId(player1, "Spider-Slayer, Hatred Honed"),
                 harness.getPermanentId(player2, "Air Elemental")));
-        harness.passBothPriorities();
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Air Elemental");
@@ -81,5 +81,56 @@ class SpiderSlayerHatredHonedTest extends BaseCardTest {
             assertThat(robot.getCard().getKeywords()).contains(Keyword.FLYING);
             assertThat(robot.isTapped()).isTrue();
         });
+    }
+
+    @Test
+    @DisplayName("Combat damage destroys the Spider even when Spider-Slayer dies simultaneously")
+    void combatTriggerSurvivesSourceDeath() {
+        addCreatureReady(player1, new SpiderSlayerHatredHoned());
+        addCreatureReady(player2, new GiantSpider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+
+        harness.assertInGraveyard(player1, "Spider-Slayer, Hatred Honed");
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("Damage dealt by another creature does not trigger Spider-Slayer")
+    void anotherCreatureDoesNotTriggerDestruction() {
+        harness.addToBattlefield(player1, new SpiderSlayerHatredHoned());
+        harness.addToBattlefield(player1, new GiantSpider());
+        harness.addToBattlefield(player2, new GiantSpider());
+        harness.setHand(player1, List.of(new RabidBite()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(
+                harness.getPermanentId(player1, "Giant Spider"),
+                harness.getPermanentId(player2, "Giant Spider")));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        harness.assertNotInGraveyard(player2, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("Five mana cannot pay the graveyard ability cost")
+    void insufficientManaDoesNotExileSource() {
+        harness.setGraveyard(player1, List.of(new SpiderSlayerHatredHoned()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Spider-Slayer, Hatred Honed");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(findPermanents(player1, "Robot")).isEmpty();
     }
 }
