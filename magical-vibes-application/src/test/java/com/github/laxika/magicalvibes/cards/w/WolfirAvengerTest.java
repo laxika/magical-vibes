@@ -1,15 +1,18 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WolfirAvenger.class})
 class WolfirAvengerTest extends BaseCardTest {
 
     @Test
@@ -33,15 +36,10 @@ class WolfirAvengerTest extends BaseCardTest {
         avenger.setBlocking(true);
         avenger.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new HillGiant());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new WolfirAvenger());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Wolfir Avenger");
         assertThat(avenger.isTapped()).isTrue();
@@ -55,17 +53,85 @@ class WolfirAvengerTest extends BaseCardTest {
         avenger.setBlocking(true);
         avenger.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new HillGiant());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new WolfirAvenger());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertNotOnBattlefield(player1, "Wolfir Avenger");
         harness.assertInGraveyard(player1, "Wolfir Avenger");
+    }
+
+    @Test
+    @DisplayName("Flash allows casting during an opponent's combat")
+    void canCastDuringOpponentsCombat() {
+        harness.setHand(player1, List.of(new WolfirAvenger()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Wolfir Avenger");
+        harness.assertNotInHand(player1, "Wolfir Avenger");
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Avenger can activate regeneration")
+    void canRegenerateWhileTappedAndSummoningSick() {
+        Permanent avenger = harness.addToBattlefieldAndReturn(player1, new WolfirAvenger());
+        avenger.setSummoningSick(true);
+        avenger.tap();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(avenger.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Activated regeneration saves a blocker and removes it from combat")
+    void activatedRegenerationSavesBlocker() {
+        Permanent avenger = addCreatureReady(player1, new WolfirAvenger());
+        Permanent attacker = addCreatureReady(player2, new WolfirAvenger());
+        attacker.setAttacking(true);
+        avenger.setBlocking(true);
+        avenger.addBlockingTarget(0);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Wolfir Avenger");
+        harness.assertInGraveyard(player2, "Wolfir Avenger");
+        assertThat(avenger.isTapped()).isTrue();
+        assertThat(avenger.isBlocking()).isFalse();
+        assertThat(avenger.getBlockingTargets()).isEmpty();
+        assertThat(avenger.getMarkedDamage()).isZero();
+        assertThat(avenger.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Creating a regeneration shield does not tap or heal the creature")
+    void creatingShieldDoesNotRegenerateImmediately() {
+        Permanent avenger = addCreatureReady(player1, new WolfirAvenger());
+        avenger.setMarkedDamage(1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(avenger.getRegenerationShield()).isEqualTo(1);
+        assertThat(avenger.isTapped()).isFalse();
+        assertThat(avenger.getMarkedDamage()).isEqualTo(1);
     }
 }
