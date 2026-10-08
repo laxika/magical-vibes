@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,6 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SnowfieldSinkhole.class})
 class SnowfieldSinkholeTest extends BaseCardTest {
 
     @Test
@@ -26,7 +28,7 @@ class SnowfieldSinkholeTest extends BaseCardTest {
     @Test
     @DisplayName("Mana ability adds white or black mana")
     void manaAbilityAddsWhiteOrBlackMana() {
-        Permanent sinkhole = addReadySinkhole();
+        Permanent sinkhole = harness.addToBattlefieldAndReturn(player1, new SnowfieldSinkhole());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handleListChoice(player1, "WHITE");
@@ -41,10 +43,27 @@ class SnowfieldSinkholeTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
     }
 
-    private Permanent addReadySinkhole() {
-        Permanent sinkhole = new Permanent(new SnowfieldSinkhole());
-        sinkhole.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(sinkhole);
-        return sinkhole;
+    @Test
+    @DisplayName("Mana from the snow land is snow mana and resolves without using the stack")
+    void producesSnowManaWithoutUsingStack() {
+        harness.addToBattlefield(player1, new SnowfieldSinkhole());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.stack).isEmpty();
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowMana(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Enters tapped when put onto the battlefield without being played")
+    void entersTappedWithoutBeingPlayed() {
+        Permanent sinkhole = harness.enterBattlefieldAndReturn(player1, new SnowfieldSinkhole());
+
+        assertThat(sinkhole.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }
