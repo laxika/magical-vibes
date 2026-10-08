@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.c.ConstantMists;
 import com.github.laxika.magicalvibes.cards.d.Delirium;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(WarriorAngel.class)
+@CardUsed({WarriorAngel.class, Delirium.class, ConstantMists.class})
 class WarriorAngelTest extends BaseCardTest {
 
     @Test
@@ -25,8 +26,7 @@ class WarriorAngelTest extends BaseCardTest {
         Permanent angel = addCreatureReady(player1, new WarriorAngel());
         Permanent blocker = addCreatureReady(player2, new WarriorAngel());
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(angel)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(angel)));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(angel))));
@@ -54,7 +54,6 @@ class WarriorAngelTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Delirium.class)
     @DisplayName("Noncombat damage also gains that much life")
     void gainsLifeFromNoncombatDamage() {
         Permanent angel = addCreatureReady(player2, new WarriorAngel());
@@ -65,13 +64,70 @@ class WarriorAngelTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, angel.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, angel.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
 
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Damage dealt while dying in combat still triggers life gain")
+    void gainsLifeEvenWhenItDiesDealingDamage() {
+        Permanent angel = addCreatureReady(player1, new WarriorAngel());
+        angel.setMarkedDamage(1);
+        Permanent blocker = addCreatureReady(player2, new WarriorAngel());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(angel);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        harness.assertInGraveyard(player1, "Warrior Angel");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 23);
+    }
+
+    @Test
+    @DisplayName("Prevented damage does not trigger life gain")
+    void preventedDamageDoesNotGainLife() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.castFromHand(player1, new ConstantMists(), "{1}{G}");
+        harness.passBothPriorities();
+        addCreatureReady(player1, new WarriorAngel());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Another Angel's damage does not trigger an idle Angel")
+    void onlyDamageFromThisAngelTriggersLifeGain() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new WarriorAngel());
+        addCreatureReady(player1, new WarriorAngel());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 17);
     }
 }
