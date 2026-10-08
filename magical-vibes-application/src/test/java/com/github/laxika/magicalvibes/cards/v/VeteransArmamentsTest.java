@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VeteransArmaments.class, GrizzlyBears.class, VeteranArmorsmith.class})
 class VeteransArmamentsTest extends BaseCardTest {
 
     // ===== Granted trigger: "Whenever this creature attacks or blocks, it gets +1/+1
@@ -86,10 +87,7 @@ class VeteransArmamentsTest extends BaseCardTest {
         Permanent armaments = addCreatureReady(player2, new VeteransArmaments());
         armaments.setAttachedTo(blocker.getId());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -118,9 +116,7 @@ class VeteransArmamentsTest extends BaseCardTest {
     void attachesToEnteringSoldierOnAccept() {
         Permanent armaments = addCreatureReady(player1, new VeteransArmaments());
 
-        harness.setHand(player1, List.of(new VeteranArmorsmith()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VeteranArmorsmith(), "{W}{W}");
 
         harness.passBothPriorities(); // resolve creature spell → trigger, may-ability on stack
         harness.passBothPriorities(); // resolve may-ability → may prompt
@@ -129,7 +125,7 @@ class VeteransArmamentsTest extends BaseCardTest {
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
 
-        Permanent soldier = soldierOnBattlefield(player1);
+        Permanent soldier = findPermanent(player1, "Veteran Armorsmith");
         assertThat(armaments.getAttachedTo()).isEqualTo(soldier.getId());
     }
 
@@ -138,9 +134,7 @@ class VeteransArmamentsTest extends BaseCardTest {
     void doesNotTriggerForNonSoldier() {
         addCreatureReady(player1, new VeteransArmaments());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         harness.passBothPriorities();
 
@@ -163,9 +157,104 @@ class VeteransArmamentsTest extends BaseCardTest {
         assertThat(armaments.getAttachedTo()).isEqualTo(creature.getId());
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Declining the attachment leaves the Equipment on its previous creature")
+    void decliningAttachmentKeepsPreviousCreature() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent armaments = harness.addToBattlefieldAndReturn(player1, new VeteransArmaments());
+        armaments.setAttachedTo(creature.getId());
 
-    private Permanent soldierOnBattlefield(Player player) {
-        return findPermanent(player, "Veteran Armorsmith");
+        harness.castFromHand(player1, new VeteranArmorsmith(), "{W}{W}");
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(armaments.getAttachedTo()).isEqualTo(creature.getId());
     }
+
+    @Test
+    @DisplayName("The Equipment controller may attach it to an opponent's entering Soldier")
+    void attachesToOpponentsSoldier() {
+        Permanent armaments = harness.addToBattlefieldAndReturn(player1, new VeteransArmaments());
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new VeteranArmorsmith(), "{W}{W}");
+
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        Permanent soldier = findPermanent(player2, "Veteran Armorsmith");
+        assertThat(armaments.getAttachedTo()).isEqualTo(soldier.getId());
+    }
+
+    @Test
+    @DisplayName("A pending combat boost remains with the creature that triggered it after reattachment")
+    void pendingBoostRemainsWithOriginalCreature() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent armaments = harness.addToBattlefieldAndReturn(player1, new VeteransArmaments());
+        armaments.setAttachedTo(attacker.getId());
+
+        declareAttackers(player1, List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        Permanent soldier = harness.enterBattlefieldAndReturn(player1, new VeteranArmorsmith());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(armaments.getAttachedTo()).isEqualTo(soldier.getId());
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(soldier.getPowerModifier()).isZero();
+        assertThat(soldier.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Unattaching the Equipment does not stop a pending combat boost")
+    void pendingBoostSurvivesUnattachment() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent armaments = harness.addToBattlefieldAndReturn(player1, new VeteransArmaments());
+        armaments.setAttachedTo(attacker.getId());
+
+        declareAttackers(player1, List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        armaments.setAttachedTo(null);
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The equipped creature's controller controls its granted combat trigger")
+    void creatureControllerControlsGrantedTrigger() {
+        Permanent armaments = harness.addToBattlefieldAndReturn(player1, new VeteransArmaments());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        armaments.setAttachedTo(attacker.getId());
+
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getControllerId()).isEqualTo(player2.getId()));
+        resolveAllTriggers();
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The boost counts attackers when it resolves rather than when it triggers")
+    void countsAttackersAtResolution() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent armaments = harness.addToBattlefieldAndReturn(player1, new VeteransArmaments());
+        armaments.setAttachedTo(attacker.getId());
+        Permanent otherAttacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0, 2));
+        assertThat(gd.stack).hasSize(1);
+        otherAttacker.setAttacking(false);
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+    }
+
 }
