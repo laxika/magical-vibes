@@ -72,4 +72,54 @@ class VodalianMysticTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+
+    @Test
+    @DisplayName("The ability can change an opponent's instant spell")
+    void changesOpponentsInstant() {
+        addCreatureReady(player1, new VodalianMystic());
+        harness.setHand(player2, List.of(new PropheticBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castInstant(player2, 0, player1.getId());
+        Card targetSpell = gd.stack.getFirst().getCard();
+
+        harness.activateAbility(player1, 0, 0, null, targetSpell.getId(), Zone.STACK);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gqs.getEffectiveCardColors(gd, targetSpell)).containsExactly(CardColor.GREEN);
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves after Mystic leaves the battlefield")
+    void resolvesWithoutSource() {
+        Permanent mystic = addCreatureReady(player1, new VodalianMystic());
+        Card targetSpell = new Index();
+        harness.castFromHand(player1, targetSpell, "{U}");
+        harness.activateAbility(player1, 0, 0, null, targetSpell.getId(), Zone.STACK);
+
+        gd.playerBattlefields.get(player1.getId()).remove(mystic);
+        harness.setGraveyard(player1, List.of(mystic.getCard()));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(gqs.getEffectiveCardColors(gd, targetSpell)).containsExactly(CardColor.BLACK);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Mystic cannot pay the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        Permanent mystic = harness.addToBattlefieldAndReturn(player1, new VodalianMystic());
+        mystic.setSummoningSick(true);
+        Card targetSpell = new Index();
+        harness.castFromHand(player1, targetSpell, "{U}");
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 0, null, targetSpell.getId(), Zone.STACK))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(mystic.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+    }
 }
