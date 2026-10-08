@@ -31,13 +31,51 @@ class SoaringLightbringerTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(1));
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        resolveAllTriggers();
 
         Permanent glimmer = findPermanent(player1, "Glimmer");
         assertThat(glimmer.isTapped()).isTrue();
-        assertThat(glimmer.isAttackedThisTurn()).isTrue();
+        assertThat(glimmer.isAttackedThisTurn()).isFalse();
         assertThat(glimmer.getAttackTarget()).isEqualTo(player2.getId());
         assertThat(gqs.hasKeyword(gd, glimmer, Keyword.FLYING)).isTrue();
         assertThat(attacker.isAttacking()).isTrue();
+    }
+
+    @Test
+    void multipleAttackersCreateOnlyOneGlimmerForTheAttackedPlayer() {
+        addCreatureReady(player1, new SoaringLightbringer());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0, 1, 2));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Glimmer")).hasSize(1);
+        Permanent glimmer = findPermanent(player1, "Glimmer");
+        assertThat(glimmer.isTapped()).isTrue();
+        assertThat(glimmer.isAttacking()).isTrue();
+        assertThat(glimmer.getAttackTarget()).isEqualTo(player2.getId());
+        assertThat(findPermanents(player2, "Glimmer")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotGrantFlyingToOpposingEnchantmentCreatures() {
+        addCreatureReady(player1, new SoaringLightbringer());
+        Permanent opposingCreature = addCreatureReady(player2, new NyxbornBehemoth());
+
+        assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    void opponentAttackingDoesNotCreateAGlimmer() {
+        addCreatureReady(player1, new SoaringLightbringer());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Glimmer")).isEmpty();
+        assertThat(findPermanents(player2, "Glimmer")).isEmpty();
     }
 }
