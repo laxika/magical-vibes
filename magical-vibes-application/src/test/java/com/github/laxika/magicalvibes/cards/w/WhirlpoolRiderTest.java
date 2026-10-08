@@ -38,14 +38,10 @@ class WhirlpoolRiderTest extends BaseCardTest {
     @Test
     @DisplayName("Its enters-the-battlefield ability draws nothing when its controller has no other cards in hand")
     void entersWithNoOtherCardsInHand() {
-        harness.setHand(player1, List.of(new WhirlpoolRider()));
         harness.setHand(player2, List.of(new WhirlpoolRider()));
         harness.setLibrary(player1, List.of(new WhirlpoolRider(), new WhirlpoolRider()));
         harness.setLibrary(player2, List.of(new WhirlpoolRider()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new WhirlpoolRider(), "{1}{U}");
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -53,5 +49,39 @@ class WhirlpoolRiderTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
         assertThat(gameLogContains(player1.getUsername() + " has no cards in hand to shuffle.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cards shuffled from hand can be drawn even when the library starts empty")
+    void replenishesEmptyLibraryBeforeDrawing() {
+        WhirlpoolRider first = new WhirlpoolRider();
+        WhirlpoolRider second = new WhirlpoolRider();
+        harness.setHand(player1, List.of(first, second));
+        harness.setLibrary(player1, List.of());
+
+        harness.enterBattlefieldAndReturn(player1, new WhirlpoolRider());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Whirlpool Rider");
+    }
+
+    @Test
+    @DisplayName("The number of cards shuffled and drawn uses the hand when the trigger resolves")
+    void usesHandAtResolution() {
+        harness.setHand(player1, List.of(new WhirlpoolRider()));
+        harness.setLibrary(player1, List.of());
+        harness.enterBattlefieldAndReturn(player1, new WhirlpoolRider());
+        assertThat(gd.stack).hasSize(1);
+
+        WhirlpoolRider first = new WhirlpoolRider();
+        WhirlpoolRider second = new WhirlpoolRider();
+        harness.setHand(player1, List.of(first, second));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains(player1.getUsername() + " draws 2 cards.")).isTrue();
     }
 }
