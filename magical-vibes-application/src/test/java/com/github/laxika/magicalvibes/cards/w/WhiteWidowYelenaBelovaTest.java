@@ -49,10 +49,54 @@ class WhiteWidowYelenaBelovaTest extends BaseCardTest {
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    void eachDeathtouchDamageDealerGetsItsOwnCounter() {
+        Permanent whiteWidow = addReady(new WhiteWidowYelenaBelova());
+        Permanent firstViper = addReady(new AmbushViper());
+        Permanent secondViper = addReady(new AmbushViper());
+        firstViper.setAttacking(true);
+        secondViper.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(firstViper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(secondViper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(whiteWidow.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void opponentsDeathtouchCreatureDoesNotGetCounter() {
+        addReady(new WhiteWidowYelenaBelova());
+        Permanent viper = harness.addToBattlefieldAndReturn(player2, new AmbushViper());
+        viper.setSummoningSick(false);
+        viper.setAttacking(true);
+
+        resolveCombat(player2);
+        harness.passBothPriorities();
+
+        assertThat(viper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void counterStillGoesOnDealerAfterWhiteWidowLeavesBattlefield() {
+        Permanent whiteWidow = addReady(new WhiteWidowYelenaBelova());
+        Permanent viper = addReady(new AmbushViper());
+        viper.setAttacking(true);
+
+        resolveCombat();
+        assertThat(viper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        gd.playerBattlefields.get(player1.getId()).remove(whiteWidow);
+        gd.playerGraveyards.get(player1.getId()).add(whiteWidow.getCard());
+        harness.passBothPriorities();
+
+        assertThat(viper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private Permanent addReady(Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
         return permanent;
     }
 }
