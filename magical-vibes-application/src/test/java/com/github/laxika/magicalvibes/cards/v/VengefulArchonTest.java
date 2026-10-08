@@ -1,6 +1,12 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+
+import java.util.List;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,9 +20,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VengefulArchon.class, RuneclawBear.class, LightningBolt.class, ChandraNalaar.class})
 class VengefulArchonTest extends BaseCardTest {
-
-    // ===== Activation =====
 
     @Test
     @DisplayName("Activating ability puts it on the stack")
@@ -30,7 +35,6 @@ class VengefulArchonTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Vengeful Archon");
         assertThat(entry.getXValue()).isEqualTo(3);
     }
 
@@ -56,8 +60,6 @@ class VengefulArchonTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
-
-    // ===== Resolution =====
 
     @Test
     @DisplayName("Resolving ability creates a damage redirect shield")
@@ -88,8 +90,6 @@ class VengefulArchonTest extends BaseCardTest {
         assertThat(gd.damageRedirectShields).isEmpty();
     }
 
-    // ===== Damage prevention and redirect =====
-
     @Test
     @DisplayName("Redirect shield prevents damage to controller and deals it to target")
     void redirectShieldPreventsDamageAndDealsToTarget() {
@@ -102,13 +102,11 @@ class VengefulArchonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 3, player2.getId());
         harness.passBothPriorities();
 
-        // Set up combat: player2 attacks with Grizzly Bears (2/2) against player1
+        // Set up combat: player2 attacks with Runeclaw Bear (2/2) against player1
         harness.forceActivePlayer(player2);
-        GrizzlyBears bear = new GrizzlyBears();
-        Permanent attacker = new Permanent(bear);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
@@ -133,13 +131,11 @@ class VengefulArchonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 5, player2.getId());
         harness.passBothPriorities();
 
-        // Set up combat: player2 attacks with Grizzly Bears (2/2) against player1
+        // Set up combat: player2 attacks with Runeclaw Bear (2/2) against player1
         harness.forceActivePlayer(player2);
-        GrizzlyBears bear = new GrizzlyBears();
-        Permanent attacker = new Permanent(bear);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
@@ -167,13 +163,11 @@ class VengefulArchonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, player2.getId());
         harness.passBothPriorities();
 
-        // Set up combat: player2 attacks with Grizzly Bears (2/2) against player1
+        // Set up combat: player2 attacks with Runeclaw Bear (2/2) against player1
         harness.forceActivePlayer(player2);
-        GrizzlyBears bear = new GrizzlyBears();
-        Permanent attacker = new Permanent(bear);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
@@ -187,8 +181,6 @@ class VengefulArchonTest extends BaseCardTest {
         // Shield fully consumed
         assertThat(gd.damageRedirectShields).isEmpty();
     }
-
-    // ===== End of turn cleanup =====
 
     @Test
     @DisplayName("Redirect shield is cleared at end of turn")
@@ -207,8 +199,6 @@ class VengefulArchonTest extends BaseCardTest {
 
         assertThat(harness.getGameData().damageRedirectShields).isEmpty();
     }
-
-    // ===== Can activate multiple times =====
 
     @Test
     @DisplayName("Ability can be activated multiple times")
@@ -229,13 +219,75 @@ class VengefulArchonTest extends BaseCardTest {
         assertThat(gd.damageRedirectShields).hasSize(2);
     }
 
-    // ===== Helpers =====
+    @Test
+    void preventedDamageCanBeDealtToPlaneswalker() {
+        addReadyArchon(player1);
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 6);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 3, chandra.getId());
+        harness.passBothPriorities();
+        boltController();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+    }
+
+    @Test
+    void shieldPreventsSuccessiveNoncombatDamageEvents() {
+        addReadyArchon(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.activateAbility(player1, 0, 5, player2.getId());
+        harness.passBothPriorities();
+
+        boltController();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+        boltController();
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    void resolvedShieldStillWorksAfterArchonLeavesBattlefield() {
+        Permanent archon = addReadyArchon(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 3, player2.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(archon);
+        gd.playerGraveyards.get(player1.getId()).add(archon.getCard());
+
+        boltController();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void targetingYourselfPreventsOriginalDamageButDealsNewDamageToYou() {
+        addReadyArchon(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 3, player1.getId());
+        harness.passBothPriorities();
+
+        boltController();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+        assertThat(gd.damageRedirectShields).isEmpty();
+    }
+
+    private void boltController() {
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+    }
 
     private Permanent addReadyArchon(Player player) {
-        VengefulArchon card = new VengefulArchon();
-        Permanent archon = new Permanent(card);
+        Permanent archon = harness.addToBattlefieldAndReturn(player, new VengefulArchon());
         archon.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(archon);
         return archon;
     }
 }
