@@ -93,6 +93,81 @@ class VillageElderTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
+    @Test
+    @DisplayName("Regeneration protects against destruction once and taps the creature")
+    void regenerationProtectsAgainstOneDestruction() {
+        addElderReady(player1);
+        harness.addToBattlefield(player1, new Forest());
+        Permanent mantis = addCreatureReady(player1, new GiantMantis());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, mantis.getId());
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(mantis.getRegenerationShield()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(harness.getPermanentRemovalService().tryDestroyPermanent(gd, mantis)).isFalse();
+        harness.assertOnBattlefield(player1, "Giant Mantis");
+        assertThat(mantis.isTapped()).isTrue();
+        assertThat(mantis.getRegenerationShield()).isZero();
+
+        assertThat(harness.getPermanentRemovalService().tryDestroyPermanent(gd, mantis)).isTrue();
+        harness.assertInGraveyard(player1, "Giant Mantis");
+    }
+
+    @Test
+    @DisplayName("Can target itself and sacrifice a tapped Forest")
+    void canRegenerateItselfWithTappedForest() {
+        Permanent elder = addElderReady(player1);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, elder.getId());
+        harness.passBothPriorities();
+
+        assertThat(elder.getRegenerationShield()).isEqualTo(1);
+        assertThat(elder.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent elder = harness.addToBattlefieldAndReturn(player1, new VillageElder());
+        elder.setSummoningSick(true);
+        harness.addToBattlefield(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elder.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Cannot activate without green mana")
+    void cannotActivateWithoutGreenMana() {
+        Permanent elder = addElderReady(player1);
+        harness.addToBattlefield(player1, new Forest());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elder.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's Forest to pay the cost")
+    void cannotPayWithOpponentForest() {
+        Permanent elder = addElderReady(player1);
+        harness.addToBattlefield(player2, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elder.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Forest");
+    }
+
     private Permanent addElderReady(Player player) {
         return addCreatureReady(player, new VillageElder());
     }
