@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.e.EgoErasure;
 import com.github.laxika.magicalvibes.cards.i.InkDissolver;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WaterspoutWeavers.class, ElvishWarrior.class, InkDissolver.class})
+@CardUsed({WaterspoutWeavers.class, ElvishWarrior.class, InkDissolver.class, EgoErasure.class})
 class WaterspoutWeaversTest extends BaseCardTest {
 
     @Test
@@ -109,5 +111,54 @@ class WaterspoutWeaversTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gqs.hasKeyword(gd, elf, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Losing all creature types before Kinship resolves prevents a match")
+    void losingCreatureTypesPreventsReveal() {
+        Permanent weavers = addCreatureReady(player1, new WaterspoutWeavers());
+        harness.setLibrary(player1, List.of(new InkDissolver()));
+        EgoErasure erasure = new EgoErasure();
+        harness.setHand(player2, List.of(erasure));
+
+        advanceToUpkeep(player1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gqs.hasKeyword(gd, weavers, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Revealing leaves the top card in place and does not grant flying to later creatures")
+    void revealLeavesCardOnTopAndOnlyAffectsCurrentCreatures() {
+        Permanent weavers = addCreatureReady(player1, new WaterspoutWeavers());
+        InkDissolver topCard = new InkDissolver();
+        harness.setLibrary(player1, List.of(topCard));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        Permanent lateCreature = addCreatureReady(player1, new ElvishWarrior());
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gqs.hasKeyword(gd, weavers, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Kinship does not trigger during the opponent's upkeep")
+    void opponentUpkeepDoesNotTrigger() {
+        Permanent weavers = addCreatureReady(player1, new WaterspoutWeavers());
+        harness.setLibrary(player1, List.of(new InkDissolver()));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gqs.hasKeyword(gd, weavers, Keyword.FLYING)).isFalse();
     }
 }
