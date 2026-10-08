@@ -135,6 +135,104 @@ class WitchHunterTest extends BaseCardTest {
                 .hasMessageContaining("creature an opponent controls");
     }
 
+    @Test
+    @DisplayName("Both tap abilities are unavailable while summoning sick")
+    void cannotActivateEitherAbilityWhileSummoningSick() {
+        Permanent hunter = addCreatureReady(player1, new WitchHunter());
+        hunter.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new Squire());
+        addBounceMana(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(hunter.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both tap abilities are unavailable while tapped")
+    void cannotActivateEitherAbilityWhileTapped() {
+        Permanent hunter = addCreatureReady(player1, new WitchHunter());
+        hunter.tap();
+        Permanent target = addCreatureReady(player2, new Squire());
+        addBounceMana(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Bounce requires two white mana even with enough total mana")
+    void cannotPayBounceCostWithOnlyOneWhiteMana() {
+        Permanent hunter = addCreatureReady(player1, new WitchHunter());
+        Permanent target = addCreatureReady(player2, new Squire());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(hunter.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Squire");
+    }
+
+    @Test
+    @DisplayName("Damage resolves after Witch Hunter leaves the battlefield")
+    void damageResolvesWithoutSource() {
+        harness.setLife(player2, 20);
+        Permanent hunter = addCreatureReady(player1, new WitchHunter());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, hunter));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Witch Hunter");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Bounce resolves after Witch Hunter leaves the battlefield")
+    void bounceResolvesWithoutSource() {
+        Permanent hunter = addCreatureReady(player1, new WitchHunter());
+        Permanent target = addCreatureReady(player2, new Squire());
+        addBounceMana(player1);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, hunter));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Witch Hunter");
+        harness.assertNotOnBattlefield(player2, "Squire");
+        harness.assertInHand(player2, "Squire");
+    }
+
+    @Test
+    @DisplayName("Bounce does not resolve if its controller gains control of the target")
+    void bounceRechecksOpponentsControlAtResolution() {
+        addCreatureReady(player1, new WitchHunter());
+        Squire targetCard = new Squire();
+        targetCard.setOwnerId(player2.getId());
+        Permanent target = addCreatureReady(player2, targetCard);
+        addBounceMana(player1);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Squire");
+        harness.assertNotInHand(player1, "Squire");
+        harness.assertNotInHand(player2, "Squire");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addBounceMana(Player player) {
         harness.addMana(player, ManaColor.WHITE, 2);
         harness.addMana(player, ManaColor.COLORLESS, 1);
