@@ -103,6 +103,36 @@ class VigilantDrakeTest extends BaseCardTest {
     }
 
     @Test
+    void genericCostCanBePaidWithColorlessMana() {
+        Permanent drake = addCreatureReady(player1, new VigilantDrake());
+        drake.tap();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(drake.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(drake.isTapped()).isFalse();
+    }
+
+    @Test
+    void canUntapWhileSummoningSick() {
+        Permanent drake = harness.addToBattlefieldAndReturn(player1, new VigilantDrake());
+        drake.tap();
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(drake.isTapped()).isFalse();
+        assertThat(drake.isSummoningSick()).isTrue();
+    }
+
+    @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
         addCreatureReady(player1, new VigilantDrake());
