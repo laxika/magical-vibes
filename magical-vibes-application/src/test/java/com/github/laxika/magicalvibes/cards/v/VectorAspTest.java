@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.m.MoriokReaver;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -7,7 +9,9 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VectorAsp.class, MoriokReaver.class})
 class VectorAspTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Vector Asp puts it on the stack")
@@ -45,8 +48,6 @@ class VectorAspTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Vector Asp");
     }
-
-    // ===== Infect ability =====
 
     @Test
     @DisplayName("Activating infect ability puts it on the stack")
@@ -94,8 +95,6 @@ class VectorAspTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, asp, Keyword.INFECT)).isFalse();
     }
 
-    // ===== Activation constraints =====
-
     @Test
     @DisplayName("Activating ability does NOT tap Vector Asp")
     void activatingAbilityDoesNotTap() {
@@ -133,8 +132,7 @@ class VectorAspTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability with summoning sickness")
     void canActivateWithSummoningSickness() {
-        Permanent asp = new Permanent(new VectorAsp());
-        gd.playerBattlefields.get(player1.getId()).add(asp);
+        harness.addToBattlefield(player1, new VectorAsp());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -142,8 +140,6 @@ class VectorAspTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Vector Asp");
     }
-
-    // ===== Combat with infect =====
 
     @Test
     @DisplayName("Vector Asp with infect deals poison counters to defending player when unblocked")
@@ -157,10 +153,7 @@ class VectorAspTest extends BaseCardTest {
 
         asp.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(1);
         // Infect does not deal regular damage to players
@@ -174,20 +167,15 @@ class VectorAspTest extends BaseCardTest {
         Permanent asp = addAspReady(player1);
         asp.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(0);
     }
 
-    // ===== Fizzle =====
-
     @Test
-    @DisplayName("Ability fizzles if Vector Asp is removed before resolution")
-    void abilityFizzlesIfSourceRemoved() {
+    @DisplayName("Ability resolves without granting infect if Vector Asp has left the battlefield")
+    void abilityHasNoEffectIfSourceRemoved() {
         addAspReady(player1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -200,12 +188,53 @@ class VectorAspTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Infect combat damage leaves permanent minus counters on a surviving blocker")
+    void infectDamageToCreaturePersistsAfterCleanup() {
+        Permanent asp = addAspReady(player1);
+        Permanent blocker = addCreatureReady(player2, new MoriokReaver());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        asp.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(blocker.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Moriok Reaver");
+        harness.assertInGraveyard(player1, "Vector Asp");
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Repeated infect activations do not multiply poison counters")
+    void repeatedActivationsDoNotMultiplyPoison() {
+        Permanent asp = addAspReady(player1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gqs.hasKeyword(gd, asp, Keyword.INFECT)).isFalse();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, asp, Keyword.INFECT)).isTrue();
+        asp.setAttacking(true);
+
+        resolveCombat();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        harness.assertLife(player2, 20);
+    }
 
     private Permanent addAspReady(Player player) {
-        Permanent perm = new Permanent(new VectorAsp());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new VectorAsp());
     }
 }
