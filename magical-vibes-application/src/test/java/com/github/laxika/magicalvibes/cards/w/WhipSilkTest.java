@@ -74,15 +74,8 @@ class WhipSilkTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, kavu.getId());
         harness.passBothPriorities();
 
-        int auraIndex = -1;
-        var battlefield = gd.playerBattlefields.get(player1.getId());
-        for (int i = 0; i < battlefield.size(); i++) {
-            if (battlefield.get(i).getCard().getName().equals("Whip Silk")) {
-                auraIndex = i;
-                break;
-            }
-        }
-        assertThat(auraIndex).isGreaterThanOrEqualTo(0);
+        int auraIndex = gd.playerBattlefields.get(player1.getId())
+                .indexOf(findPermanent(player1, "Whip Silk"));
 
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.activateAbility(player1, auraIndex, null, null);
@@ -102,6 +95,33 @@ class WhipSilkTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Whip Silk can enchant an opponent's creature and return without bouncing it")
+    void enchantsOpponentCreatureAndReturnsOnlyAura() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player2, new KavuTitan());
+        harness.setHand(player1, List.of(new WhipSilk()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0, kavu.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Whip Silk");
+        assertThat(aura.getAttachedTo()).isEqualTo(kavu.getId());
+        assertThat(gqs.hasKeyword(gd, kavu, Keyword.REACH)).isTrue();
+        aura.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null);
+
+        harness.assertOnBattlefield(player1, "Whip Silk");
+        assertThat(gqs.hasKeyword(gd, kavu, Keyword.REACH)).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Whip Silk");
+        harness.assertInHand(player1, "Whip Silk");
+        harness.assertOnBattlefield(player2, "Kavu Titan");
+        assertThat(gqs.hasKeyword(gd, kavu, Keyword.REACH)).isFalse();
     }
 
     private Permanent attachWhipSilk() {
