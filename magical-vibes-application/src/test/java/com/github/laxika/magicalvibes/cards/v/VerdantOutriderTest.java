@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.g.GrandBallGuest;
+import com.github.laxika.magicalvibes.cards.h.HollowScavenger;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,13 +15,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VerdantOutrider.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({VerdantOutrider.class, GrandBallGuest.class, HollowScavenger.class})
 class VerdantOutriderTest extends BaseCardTest {
 
     @Test
     void activatedAbilityPreventsPowerTwoOrLessCreaturesFromBlockingThisTurn() {
         Permanent outrider = addCreatureReady(player1, new VerdantOutrider());
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent guest = addCreatureReady(player2, new GrandBallGuest());
 
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -30,7 +30,7 @@ class VerdantOutriderTest extends BaseCardTest {
 
         prepareBlockerDeclaration(outrider);
 
-        assertThatThrownBy(() -> declareBlock(bears, outrider))
+        assertThatThrownBy(() -> declareBlock(guest, outrider))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("power 3 or greater");
     }
@@ -38,7 +38,7 @@ class VerdantOutriderTest extends BaseCardTest {
     @Test
     void activatedAbilityAllowsPowerThreeOrGreaterCreaturesToBlockThisTurn() {
         Permanent outrider = addCreatureReady(player1, new VerdantOutrider());
-        Permanent hillGiant = addCreatureReady(player2, new HillGiant());
+        Permanent scavenger = addCreatureReady(player2, new HollowScavenger());
 
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -46,17 +46,73 @@ class VerdantOutriderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         prepareBlockerDeclaration(outrider);
-        declareBlock(hillGiant, outrider);
+        declareBlock(scavenger, outrider);
 
-        assertThat(hillGiant.isBlocking()).isTrue();
+        assertThat(scavenger.isBlocking()).isTrue();
+    }
+
+    @Test
+    void restrictionExpiresAfterTheTurn() {
+        Permanent outrider = addCreatureReady(player1, new VerdantOutrider());
+        Permanent guest = addCreatureReady(player2, new GrandBallGuest());
+        activateOutrider();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        prepareBlockerDeclaration(outrider);
+        declareBlock(guest, outrider);
+        assertThat(guest.isBlocking()).isTrue();
+    }
+
+    @Test
+    void blockerPowerIsCheckedAtDeclarationRatherThanResolution() {
+        Permanent outrider = addCreatureReady(player1, new VerdantOutrider());
+        Permanent guest = addCreatureReady(player2, new GrandBallGuest());
+        activateOutrider();
+
+        guest.setPowerModifier(1);
+        prepareBlockerDeclaration(outrider);
+        declareBlock(guest, outrider);
+        assertThat(guest.isBlocking()).isTrue();
+    }
+
+    @Test
+    void blockerThatDropsBelowThreePowerCannotBlock() {
+        Permanent outrider = addCreatureReady(player1, new VerdantOutrider());
+        Permanent scavenger = addCreatureReady(player2, new HollowScavenger());
+        activateOutrider();
+
+        scavenger.setPowerModifier(-1);
+        prepareBlockerDeclaration(outrider);
+        assertThatThrownBy(() -> declareBlock(scavenger, outrider))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("power 3 or greater");
+    }
+
+    @Test
+    void activationDoesNotRestrictBlockersOfAnotherOutrider() {
+        addCreatureReady(player1, new VerdantOutrider());
+        Permanent other = addCreatureReady(player1, new VerdantOutrider());
+        Permanent guest = addCreatureReady(player2, new GrandBallGuest());
+        activateOutrider();
+
+        prepareBlockerDeclaration(other);
+        declareBlock(guest, other);
+        assertThat(guest.isBlocking()).isTrue();
+    }
+
+    private void activateOutrider() {
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
     }
 
     private void prepareBlockerDeclaration(Permanent attacker) {
         attacker.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
     }
 
     private void declareBlock(Permanent blocker, Permanent attacker) {
