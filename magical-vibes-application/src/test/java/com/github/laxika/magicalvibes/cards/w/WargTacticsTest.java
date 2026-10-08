@@ -81,6 +81,66 @@ class WargTacticsTest extends BaseCardTest {
                 .hasMessageContaining("creature you control");
     }
 
+    @Test
+    @DisplayName("The destroy mode can destroy your own flying creature")
+    void destroysOwnFlyingCreature() {
+        Permanent angel = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
+
+        cast(0, angel.getId());
+
+        harness.assertNotOnBattlefield(player1, "Serra Angel");
+        harness.assertInGraveyard(player1, "Serra Angel");
+    }
+
+    @Test
+    @DisplayName("The counter mode affects only its target and does not destroy a flying target")
+    void counterModeAffectsOnlyItsTarget() {
+        Permanent angel = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        cast(1, angel.getId());
+
+        harness.assertOnBattlefield(player1, "Serra Angel");
+        assertThat(angel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(angel.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(angel.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(bear.hasKeyword(Keyword.HEXPROOF)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Hexproof granted in response makes an opponent's destroy mode fail to resolve")
+    void hexproofProtectsAgainstPendingDestroyMode() {
+        Permanent angel = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
+        harness.setHand(player2, List.of(new WargTactics()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castModalInstant(player2, 0, 0, List.of(angel.getId()));
+
+        prepareCard();
+        harness.castModalInstant(player1, 0, 1, List.of(angel.getId()));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Serra Angel");
+        assertThat(angel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(angel.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        harness.assertInGraveyard(player2, "Warg Tactics");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hexproof does not stop its controller from targeting the creature again")
+    void controllerCanTargetHexproofCreatureAgain() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        cast(1, bear.getId());
+        cast(1, bear.getId());
+
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(bear.hasKeyword(Keyword.HEXPROOF)).isTrue();
+    }
     private void cast(int mode, java.util.UUID targetId) {
         prepareCard();
         harness.castModalInstant(player1, 0, mode, List.of(targetId));
