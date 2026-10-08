@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -11,7 +12,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({YavimayaGnats.class, BalduvianBears.class})
 class YavimayaGnatsTest extends BaseCardTest {
@@ -77,6 +81,76 @@ class YavimayaGnatsTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Yavimaya Gnats");
         harness.assertInGraveyard(player1, "Yavimaya Gnats");
+    }
+
+    @Test
+    @DisplayName("Regeneration can be activated while tapped and summoning sick")
+    void regeneratesWhileTappedAndSummoningSick() {
+        Permanent gnats = harness.addToBattlefieldAndReturn(player1, new YavimayaGnats());
+        gnats.setSummoningSick(true);
+        gnats.tap();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(gnats.getRegenerationShield()).isEqualTo(1);
+        assertThat(gnats.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Each activation creates a shield only on its source without tapping it")
+    void repeatedActivationsShieldOnlySource() {
+        Permanent gnats = addCreatureReady(player1, new YavimayaGnats());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gnats.getRegenerationShield()).isEqualTo(2);
+        assertThat(gnats.isTapped()).isFalse();
+        assertThat(bears.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("An activated regeneration shield saves the source and removes its damage")
+    void activatedShieldSavesFromCombatDamage() {
+        Permanent gnats = addCreatureReady(player1, new YavimayaGnats());
+        Permanent attacker = addCreatureReady(player2, new BalduvianBears());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        gnats.setBlocking(true);
+        gnats.addBlockingTarget(0);
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Yavimaya Gnats");
+        harness.assertNotInGraveyard(player1, "Yavimaya Gnats");
+        assertThat(gnats.getRegenerationShield()).isZero();
+        assertThat(gnats.getMarkedDamage()).isZero();
+        assertThat(gnats.isTapped()).isTrue();
+        assertThat(gnats.isBlocking()).isFalse();
+        assertThat(gnats.getBlockingTargets()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature without flying or reach cannot block Yavimaya Gnats")
+    void nonFlyingCreatureCannotBlock() {
+        addCreatureReady(player1, new YavimayaGnats());
+        addCreatureReady(player2, new BalduvianBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("(flying)");
     }
 
     private Permanent addCreatureReady(Player player, int power, int toughness) {
