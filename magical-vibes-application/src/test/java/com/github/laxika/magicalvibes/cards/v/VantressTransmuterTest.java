@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.c.CroakingCurse;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,12 +14,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VantressTransmuter.class, CroakingCurse.class, GrizzlyBears.class, Plains.class})
+@CardUsed({VantressTransmuter.class, CroakingCurse.class, Plains.class})
 class VantressTransmuterTest extends BaseCardTest {
 
     @Test
     void adventureTapsTargetAndCreatesCursedRoleAttachedToIt() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new VantressTransmuter());
         VantressTransmuter card = new VantressTransmuter();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -41,7 +40,7 @@ class VantressTransmuterTest extends BaseCardTest {
 
     @Test
     void adventureCannotTargetNonCreature() {
-        Plains target = new Plains();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Plains());
         VantressTransmuter card = new VantressTransmuter();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -53,7 +52,7 @@ class VantressTransmuterTest extends BaseCardTest {
 
     @Test
     void creatureFaceCanBeCastFromExileAfterAdventure() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new VantressTransmuter());
         VantressTransmuter card = new VantressTransmuter();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -69,5 +68,47 @@ class VantressTransmuterTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Vantress Transmuter");
         assertThat(gd.findExiledCard(card.getId())).isNull();
+    }
+
+    @Test
+    void adventureCreatesRoleOnAlreadyTappedCreatureYouControl() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new VantressTransmuter());
+        target.setTapped(true);
+        VantressTransmuter card = new VantressTransmuter();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAdventure(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(findPermanents(player1, "Cursed"))
+                .singleElement().extracting(Permanent::getAttachedTo).isEqualTo(target.getId());
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+    }
+
+    @Test
+    void secondCursedRoleFromSameControllerReplacesFirst() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new VantressTransmuter());
+        harness.setHand(player1, List.of(new VantressTransmuter(), new VantressTransmuter()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAdventure(player1, 0, target.getId());
+        harness.passBothPriorities();
+        Permanent firstRole = findPermanents(player1, "Cursed").getFirst();
+
+        harness.castAdventure(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Cursed")).singleElement().satisfies(role -> {
+            assertThat(role.getId()).isNotEqualTo(firstRole.getId());
+            assertThat(role.getAttachedTo()).isEqualTo(target.getId());
+        });
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 }
