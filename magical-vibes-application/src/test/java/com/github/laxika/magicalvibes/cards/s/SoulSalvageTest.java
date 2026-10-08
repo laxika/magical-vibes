@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SoulSalvage.class, GrizzlyBears.class, LlanowarElves.class, LeoninScimitar.class})
 class SoulSalvageTest extends BaseCardTest {
 
     // ===== Casting with creature cards in graveyard =====
@@ -205,5 +207,64 @@ class SoulSalvageTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(3);
         // But max selectable is 2
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Opponent graveyard cards are not offered as targets")
+    void opponentGraveyardCardsAreNotTargets() {
+        Card ownCreature = new LlanowarElves();
+        Card opposingCreature = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(ownCreature));
+        harness.setGraveyard(player2, List.of(opposingCreature));
+        harness.setHand(player1, List.of(new SoulSalvage()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
+                .validCardIds()).containsExactly(ownCreature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(ownCreature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(ownCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingCreature);
+    }
+
+    @Test
+    @DisplayName("A remaining legal target returns when the other target leaves the graveyard")
+    void returnsRemainingLegalTarget() {
+        Card removedCreature = new LlanowarElves();
+        Card remainingCreature = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(removedCreature, remainingCreature));
+        harness.setHand(player1, List.of(new SoulSalvage()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1,
+                List.of(removedCreature.getId(), remainingCreature.getId()));
+        harness.setGraveyard(player1, List.of(remainingCreature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(remainingCreature);
+        harness.assertInGraveyard(player1, "Soul Salvage");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("No cards return when all chosen targets leave the graveyard")
+    void returnsNothingWhenAllTargetsLeave() {
+        Card creature = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new SoulSalvage()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Soul Salvage");
+        assertThat(gd.stack).isEmpty();
     }
 }
