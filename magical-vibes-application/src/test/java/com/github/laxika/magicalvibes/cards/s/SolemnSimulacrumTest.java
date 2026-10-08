@@ -26,6 +26,8 @@ class SolemnSimulacrumTest extends BaseCardTest {
 
     @Nested
     @DisplayName("ETB land search")
+    @CardUsed({SolemnSimulacrum.class, Forest.class, Island.class, Plains.class,
+            AncientDen.class, CopperMyr.class})
     class EnterTheBattlefield {
 
         @Test
@@ -107,10 +109,29 @@ class SolemnSimulacrumTest extends BaseCardTest {
 
             assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         }
+
+        @Test
+        @DisplayName("Accepting the search with an empty library finishes without putting a land onto the battlefield")
+        void emptyLibrarySearchCompletes() {
+            castSolemnSimulacrum();
+            harness.setLibrary(player1, List.of());
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            harness.handleMayAbilityChosen(player1, true);
+
+            assertThat(gd.interaction.activeInteraction()).isNull();
+            assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+            assertThat(gd.playerBattlefields.get(player1.getId()))
+                    .noneMatch(p -> p.getCard().hasType(CardType.LAND));
+            harness.assertOnBattlefield(player1, "Solemn Simulacrum");
+            assertThat(gd.stack).isEmpty();
+        }
     }
 
     @Nested
     @DisplayName("Death draw")
+    @CardUsed({SolemnSimulacrum.class, Shatter.class, Forest.class})
     class Death {
 
         @Test
@@ -123,8 +144,7 @@ class SolemnSimulacrumTest extends BaseCardTest {
 
             int handBefore = gd.playerHands.get(player1.getId()).size();
 
-            harness.castInstant(player1, 0, harness.getPermanentId(player1, "Solemn Simulacrum"));
-            harness.passBothPriorities(); // Shatter resolves, Solemn dies → death trigger on stack
+            harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Solemn Simulacrum"));
 
             harness.assertInGraveyard(player1, "Solemn Simulacrum");
 
@@ -144,12 +164,41 @@ class SolemnSimulacrumTest extends BaseCardTest {
 
             int handBefore = gd.playerHands.get(player1.getId()).size();
 
-            harness.castInstant(player1, 0, harness.getPermanentId(player1, "Solemn Simulacrum"));
-            harness.passBothPriorities();
+            harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Solemn Simulacrum"));
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, false);
 
             assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore - 1);
+        }
+
+        @Test
+        @DisplayName("Death trigger draws for the dying creature's controller even after its card leaves the graveyard")
+        void deathDrawUsesControllerAndSurvivesSourceLeavingGraveyard() {
+            SolemnSimulacrum solemn = new SolemnSimulacrum();
+            harness.addToBattlefield(player2, solemn);
+            harness.setHand(player2, List.of());
+            harness.setLibrary(player2, List.of(new Forest()));
+            harness.setHand(player1, List.of(new Shatter()));
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+            harness.castAndResolveInstant(player1, 0,
+                    harness.getPermanentId(player2, "Solemn Simulacrum"));
+            harness.assertInGraveyard(player2, "Solemn Simulacrum");
+            harness.setGraveyard(player2, List.of());
+            harness.setExile(player2, List.of(solemn));
+
+            harness.passBothPriorities();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                    .isEqualTo(player2.getId());
+            harness.handleMayAbilityChosen(player2, true);
+
+            harness.assertInHand(player2, "Forest");
+            assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+            assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+            assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+            assertThat(gd.interaction.activeInteraction()).isNull();
+            assertThat(gd.stack).isEmpty();
         }
     }
 
