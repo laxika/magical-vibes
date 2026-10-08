@@ -6,10 +6,7 @@ import com.github.laxika.magicalvibes.cards.m.Mistwalker;
 import com.github.laxika.magicalvibes.cards.r.RavenousLindwurm;
 import com.github.laxika.magicalvibes.cards.s.SnakeskinVeil;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -21,12 +18,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TheBearsOfLittjara.class, Mistwalker.class, LittjaraKinseekers.class,
-        RavenousLindwurm.class, SnakeskinVeil.class, BattleMammoth.class})
+        RavenousLindwurm.class, SnakeskinVeil.class, BattleMammoth.class, TyvarKell.class})
 class TheBearsOfLittjaraTest extends BaseCardTest {
 
     @Test
@@ -38,10 +34,7 @@ class TheBearsOfLittjaraTest extends BaseCardTest {
         advanceToNextChapter();
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Shapeshifter"))
-                .findFirst()
-                .orElseThrow();
+        Permanent token = findPermanent(player1, "Shapeshifter");
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLUE);
         assertThat(token.getEffectivePower()).isEqualTo(2);
         assertThat(token.getEffectiveToughness()).isEqualTo(2);
@@ -52,9 +45,9 @@ class TheBearsOfLittjaraTest extends BaseCardTest {
     @DisplayName("Chapter II sets any number of your Shapeshifters to 4/4 indefinitely")
     void chapterIISetsChosenShapeshiftersIndefinitely() {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheBearsOfLittjara());
-        Permanent first = harness.addToBattlefieldAndReturn(player1, shapeshifter("First", 1, 1));
-        Permanent second = harness.addToBattlefieldAndReturn(player1, shapeshifter("Second", 2, 3));
-        Permanent other = harness.addToBattlefieldAndReturn(player1, creature("Other", 6, 6));
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Mistwalker());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new LittjaraKinseekers());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new RavenousLindwurm());
         saga.setCounterCount(CounterType.LORE, 1);
 
         advanceToNextChapter();
@@ -82,8 +75,8 @@ class TheBearsOfLittjaraTest extends BaseCardTest {
     @DisplayName("Chapter III lets creatures with power 4 or greater damage a creature or planeswalker")
     void chapterIIIDamagesPlaneswalkerWithLargeCreatures() {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheBearsOfLittjara());
-        harness.addToBattlefield(player1, creature("Large Creature", 6, 6));
-        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, planeswalker(8));
+        harness.addToBattlefield(player1, new RavenousLindwurm());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new TyvarKell());
         planeswalker.setCounterCount(CounterType.LOYALTY, 8);
         saga.setCounterCount(CounterType.LORE, 2);
 
@@ -225,6 +218,54 @@ class TheBearsOfLittjaraTest extends BaseCardTest {
         assertThat(target.getMarkedDamage()).isEqualTo(4);
     }
 
+    @Test
+    void enteringSagaTriggersChapterIWithoutWaitingForDrawStep() {
+        harness.setHand(player1, List.of(new TheBearsOfLittjara()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Shapeshifter")).isEqualTo(1);
+        assertThat(findPermanent(player1, "The Bears of Littjara").getCounterCount(CounterType.LORE))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void chapterIIIDoesNotDamageTargetThatGainsHexproofInResponse() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheBearsOfLittjara());
+        harness.addToBattlefield(player1, new RavenousLindwurm());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RavenousLindwurm());
+        harness.setHand(player2, List.of(new SnakeskinVeil()));
+        saga.setCounterCount(CounterType.LORE, 2);
+
+        advanceToNextChapter();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertNotOnBattlefield(player1, "The Bears of Littjara");
+    }
+
+    @Test
+    void chapterIIICanTargetYourOwnCreatureAndItDealsDamageToItself() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheBearsOfLittjara());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new RavenousLindwurm());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        saga.setCounterCount(CounterType.LORE, 2);
+
+        advanceToNextChapter();
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Ravenous Lindwurm");
+        harness.assertNotOnBattlefield(player1, "The Bears of Littjara");
+    }
+
     private void advanceToNextChapter() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -232,28 +273,4 @@ class TheBearsOfLittjaraTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private static Card shapeshifter(String name, int power, int toughness) {
-        Card card = creature(name, power, toughness);
-        card.setSubtypes(List.of(CardSubtype.SHAPESHIFTER));
-        card.setKeywords(Set.of(Keyword.CHANGELING));
-        return card;
-    }
-
-    private static Card creature(String name, int power, int toughness) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setColor(CardColor.GREEN);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
-
-    private static Card planeswalker(int loyalty) {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        card.setLoyalty(loyalty);
-        return card;
-    }
 }
