@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CrawlingChorus;
+import com.github.laxika.magicalvibes.cards.d.DuneMover;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.PropheticPrism;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VanishIntoEternity.class, GrizzlyBears.class, Plains.class})
+@CardUsed({VanishIntoEternity.class, GrizzlyBears.class, Plains.class,
+        CrawlingChorus.class, DuneMover.class, PropheticPrism.class})
 class VanishIntoEternityTest extends BaseCardTest {
 
     @Test
@@ -27,8 +31,7 @@ class VanishIntoEternityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
         assertThat(gd.findExiledCard(creature.getOriginalCard().getId())).isNotNull();
@@ -45,8 +48,7 @@ class VanishIntoEternityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0, artifact.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, artifact.getId());
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
         assertThat(gd.findExiledCard(artifact.getOriginalCard().getId())).isNotNull();
@@ -61,8 +63,9 @@ class VanishIntoEternityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creature.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Card is not playable");
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -76,5 +79,50 @@ class VanishIntoEternityTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, plains.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a nonland permanent");
+    }
+
+    @Test
+    @DisplayName("An artifact creature still requires the creature surcharge")
+    void artifactCreatureRequiresIncreasedCost() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DuneMover());
+        harness.setHand(player1, List.of(new VanishIntoEternity()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.findExiledCard(creature.getOriginalCard().getId())).isNotNull();
+        harness.assertNotOnBattlefield(player2, "Dune Mover");
+    }
+
+    @Test
+    @DisplayName("Can exile your own noncreature permanent without the surcharge")
+    void exilesOwnArtifactAtNormalCost() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new PropheticPrism());
+        harness.setHand(player1, List.of(new VanishIntoEternity()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, artifact.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.findExiledCard(artifact.getOriginalCard().getId())).isNotNull();
+        harness.assertNotOnBattlefield(player1, "Prophetic Prism");
+    }
+
+    @Test
+    @DisplayName("Exiling a creature does not trigger its dies ability")
+    void exileDoesNotTriggerDeathAbility() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CrawlingChorus());
+        harness.setHand(player1, List.of(new VanishIntoEternity()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gd.findExiledCard(creature.getOriginalCard().getId())).isNotNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }
