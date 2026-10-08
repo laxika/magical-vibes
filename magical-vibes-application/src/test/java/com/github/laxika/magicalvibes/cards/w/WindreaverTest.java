@@ -98,6 +98,74 @@ class WindreaverTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Windreaver");
     }
 
+    @Test
+    @DisplayName("A toughness boost increases power while power and toughness are switched")
+    void toughnessBoostAfterSwitchIncreasesPower() {
+        addWindreaver();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        Permanent windreaver = findWindreaver();
+        assertThat(gqs.getEffectivePower(gd, windreaver)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, windreaver)).isEqualTo(1);
+
+        endTurn();
+
+        assertThat(gqs.getEffectivePower(gd, windreaver)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, windreaver)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Two power and toughness switches cancel each other")
+    void twoSwitchesCancelEachOther() {
+        addWindreaver();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        Permanent windreaver = findWindreaver();
+        assertThat(gqs.getEffectivePower(gd, windreaver)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, windreaver)).isEqualTo(4);
+
+        endTurn();
+
+        assertThat(gqs.getEffectivePower(gd, windreaver)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, windreaver)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A pending self boost does not affect another Windreaver after its source returns to hand")
+    void pendingBoostDoesNotAffectAnotherWindreaver() {
+        addWindreaver();
+        addWindreaver();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 3, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Windreaver");
+        assertThat(countPermanents(player1, "Windreaver")).isEqualTo(1);
+        Permanent remaining = findWindreaver();
+        assertThat(gqs.getEffectivePower(gd, remaining)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, remaining)).isEqualTo(3);
+    }
+
     private void addWindreaver() {
         harness.addToBattlefield(player1, new Windreaver());
     }
