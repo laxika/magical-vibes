@@ -85,10 +85,63 @@ class WanderingFumaroleTest extends BaseCardTest {
         assertThat(fumarole.getTransientSubtypes()).doesNotContain(CardSubtype.ELEMENTAL);
     }
 
+    @Test
+    void addsRedManaWithoutUsingTheStack() {
+        Permanent fumarole = addReadyFumarole(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(fumarole.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void twoSwitchesRestoreOriginalPowerAndToughnessEvenWhenTapped() {
+        Permanent fumarole = addReadyFumarole(player1);
+        fumarole.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, fumarole)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, fumarole)).isEqualTo(1);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, fumarole)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, fumarole)).isEqualTo(4);
+        assertThat(fumarole.isTapped()).isTrue();
+    }
+
+    @Test
+    void reanimatingDoesNotUndoAnEarlierSwitch() {
+        Permanent fumarole = addReadyFumarole(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, fumarole)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, fumarole)).isEqualTo(1);
+        assertThat(gqs.isLand(gd, fumarole)).isTrue();
+    }
+
     private Permanent addReadyFumarole(Player player) {
-        Permanent permanent = new Permanent(new WanderingFumarole());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new WanderingFumarole());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
