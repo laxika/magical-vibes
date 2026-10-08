@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BatheInDragonfire;
 import com.github.laxika.magicalvibes.cards.f.FlickACoin;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -120,6 +121,24 @@ class TangledColonyTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Tangled Colony");
+        assertThat(findPermanents(player2, "Rat")).isEmpty();
+    }
+
+    @Test
+    void countsCombatDamageReceivedRatherThanDamageDealt() {
+        addCreatureReady(player1, new TangledColony());
+        addCreatureReady(player2, new GrizzlyBears());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> gs.declareBlockers(
+                gd, player2, List.of(new BlockerAssignment(0, 0))));
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Tangled Colony");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Rat")).hasSize(2);
         assertThat(findPermanents(player2, "Rat")).isEmpty();
     }
 }
