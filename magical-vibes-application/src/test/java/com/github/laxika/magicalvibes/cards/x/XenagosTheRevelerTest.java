@@ -1,11 +1,15 @@
 package com.github.laxika.magicalvibes.cards.x;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GrafdiggersCage;
+import com.github.laxika.magicalvibes.cards.n.NyleasEmissary;
+import com.github.laxika.magicalvibes.cards.b.BronzeSable;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.l.LightningStrike;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,6 +17,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,14 +25,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({XenagosTheReveler.class, BronzeSable.class, Forest.class, Mountain.class,
+        LightningStrike.class, GrafdiggersCage.class, NyleasEmissary.class})
 class XenagosTheRevelerTest extends BaseCardTest {
 
     @Test
     @DisplayName("+1 adds one mana per creature in any combination of red and green")
     void plusOneAddsManaPerCreature() {
         Permanent xenagos = addReadyXenagos(3);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BronzeSable());
+        harness.addToBattlefield(player1, new BronzeSable());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
@@ -65,13 +72,13 @@ class XenagosTheRevelerTest extends BaseCardTest {
     void minusSixPutsChosenCreaturesAndLandsOntoBattlefield() {
         Permanent xenagos = addReadyXenagos(6);
         Card forest = new Forest();
-        Card bears = new GrizzlyBears();
-        Card shock = new Shock();
+        Card sable = new BronzeSable();
+        Card strike = new LightningStrike();
         Card mountain = new Mountain();
-        Card shock2 = new Shock();
+        Card strike2 = new LightningStrike();
         Card forest2 = new Forest();
-        Card bears2 = new GrizzlyBears();
-        setLibrary(forest, bears, shock, mountain, shock2, forest2, bears2);
+        Card sable2 = new BronzeSable();
+        setLibrary(forest, sable, strike, mountain, strike2, forest2, sable2);
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
@@ -80,16 +87,16 @@ class XenagosTheRevelerTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validCardIds()).containsExactlyInAnyOrder(
-                forest.getId(), bears.getId(), mountain.getId(), forest2.getId(), bears2.getId());
+                forest.getId(), sable.getId(), mountain.getId(), forest2.getId(), sable2.getId());
         assertThat(choice.remainingToExile()).isTrue();
 
-        harness.handleMultipleCardsChosen(player1, List.of(forest.getId(), bears.getId(), mountain.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId(), sable.getId(), mountain.getId()));
 
         harness.assertOnBattlefield(player1, "Forest");
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Bronze Sable");
         harness.assertOnBattlefield(player1, "Mountain");
         assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getName)
-                .containsExactlyInAnyOrder("Shock", "Shock", "Forest", "Grizzly Bears");
+                .containsExactlyInAnyOrder("Lightning Strike", "Lightning Strike", "Forest", "Bronze Sable");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(xenagos.getCounterCount(CounterType.LOYALTY)).isZero();
     }
@@ -98,8 +105,8 @@ class XenagosTheRevelerTest extends BaseCardTest {
     @DisplayName("-6 may put nothing onto the battlefield and exiles all seven cards")
     void minusSixMayPutNothing() {
         addReadyXenagos(6);
-        Card shock = new Shock();
-        setLibrary(shock, new Shock(), new Shock(), new Shock(), new Shock(), new Shock(), new Shock());
+        Card strike = new LightningStrike();
+        setLibrary(strike, new LightningStrike(), new LightningStrike(), new LightningStrike(), new LightningStrike(), new LightningStrike(), new LightningStrike());
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
@@ -107,23 +114,166 @@ class XenagosTheRevelerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getCard().isToken());
         assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getName)
-                .containsExactly("Shock", "Shock", "Shock", "Shock", "Shock", "Shock", "Shock");
+                .containsExactly("Lightning Strike", "Lightning Strike", "Lightning Strike", "Lightning Strike", "Lightning Strike", "Lightning Strike", "Lightning Strike");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    void plusOneWithNoCreaturesAddsNoMana() {
+        Permanent xenagos = addReadyXenagos(3);
+        harness.addToBattlefield(player2, new BronzeSable());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(xenagos.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+    }
+
+    @Test
+    void plusOneCountsCreaturesOnResolutionAndAllowsOnlyGreen() {
+        addReadyXenagos(3);
+        harness.addToBattlefield(player1, new BronzeSable());
+        harness.addToBattlefield(player2, new BronzeSable());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        harness.addToBattlefield(player1, new BronzeSable());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void minusSixExilesAllCardsBeforeChoosing() {
+        addReadyXenagos(6);
+        Card creature = new BronzeSable();
+        Card land = new Forest();
+        Card instant = new LightningStrike();
+        setLibrary(creature, land, instant);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .containsExactlyInAnyOrder(creature, land, instant);
+    }
+
+    @Test
+    void minusSixCanDeclineEligibleCardsWithShortLibrary() {
+        addReadyXenagos(6);
+        Card creature = new BronzeSable();
+        Card land = new Forest();
+        setLibrary(creature, land);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(creature, land);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void minusSixPutsCreatureOntoBattlefieldFromExileDespiteGrafdiggersCage() {
+        addReadyXenagos(6);
+        harness.addToBattlefield(player2, new GrafdiggersCage());
+        Card creature = new BronzeSable();
+        Card land = new Forest();
+        setLibrary(creature, land);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId(), land.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard).containsExactlyInAnyOrder(creature, land);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .allSatisfy(permanent -> assertThat(permanent.getEnteredFromZone()).isEqualTo(Zone.EXILE));
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void minusSixPutsBestowCardOntoBattlefieldAsCreature() {
+        addReadyXenagos(6);
+        Card emissary = new NyleasEmissary();
+        setLibrary(emissary);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(emissary.getId()));
+
+        Permanent permanent = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(permanent.getCard()).isSameAs(emissary);
+        assertThat(gqs.isCreature(gd, permanent)).isTrue();
+        assertThat(permanent.getCard().isAura()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void zeroCreatesExactlyOneRedAndGreenTokenForController() {
+        addReadyXenagos(3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList();
+        assertThat(tokens).hasSize(1);
+        assertThat(tokens.getFirst().getCard().getColors())
+                .containsExactlyInAnyOrder(CardColor.RED, CardColor.GREEN);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void minusSixLeavesEighthCardInLibrary() {
+        addReadyXenagos(6);
+        Card eighth = new Forest();
+        setLibrary(new LightningStrike(), new LightningStrike(), new LightningStrike(),
+                new LightningStrike(), new LightningStrike(), new LightningStrike(),
+                new LightningStrike(), eighth);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(7).doesNotContain(eighth);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(eighth);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void minusSixWithEmptyLibraryDoesNotRequestChoice() {
+        addReadyXenagos(6);
+        setLibrary();
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
     private Permanent addReadyXenagos(int loyalty) {
-        Permanent perm = new Permanent(new XenagosTheReveler());
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new XenagosTheReveler());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
     }
 
     private void setLibrary(Card... cards) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
     }
 }
