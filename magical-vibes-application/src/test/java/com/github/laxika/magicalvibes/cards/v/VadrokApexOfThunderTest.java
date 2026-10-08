@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.c.Concentrate;
+import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -16,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VadrokApexOfThunder.class, Concentrate.class, Divination.class, Forest.class, GrizzlyBears.class})
+@CardUsed({VadrokApexOfThunder.class, CatharticReunion.class, Concentrate.class, Divination.class,
+        Forest.class, GrizzlyBears.class})
 class VadrokApexOfThunderTest extends BaseCardTest {
 
     @Test
@@ -94,6 +96,59 @@ class VadrokApexOfThunderTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactly(forest.getId());
+    }
+
+    @Test
+    @DisplayName("A free cast still requires payable additional costs")
+    void cannotCastWhenRequiredDiscardCannotBePaid() {
+        Permanent vadrok = addCreatureReady(player1, new VadrokApexOfThunder());
+        Card reunion = new CatharticReunion();
+        harness.setGraveyard(player1, List.of(reunion));
+        harness.setHand(player1, List.of());
+
+        triggerMutation(vadrok);
+        harness.handleMultipleCardsChosen(player1, List.of(reunion.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(reunion.getId());
+    }
+
+    @Test
+    @DisplayName("A target removed from the graveyard before resolution cannot be cast")
+    void removedTargetDoesNotOfferACast() {
+        Permanent vadrok = addCreatureReady(player1, new VadrokApexOfThunder());
+        Card divination = new Divination();
+        harness.setGraveyard(player1, List.of(divination));
+
+        triggerMutation(vadrok);
+        harness.handleMultipleCardsChosen(player1, List.of(divination.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(divination));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the trigger controller's graveyard supplies targets")
+    void opponentGraveyardCardsAreNotOffered() {
+        Permanent vadrok = addCreatureReady(player1, new VadrokApexOfThunder());
+        Card ownForest = new Forest();
+        Card opponentForest = new Forest();
+        harness.setGraveyard(player1, List.of(ownForest));
+        harness.setGraveyard(player2, List.of(opponentForest));
+
+        triggerMutation(vadrok);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(ownForest.getId());
     }
 
     private void triggerMutation(Permanent vadrok) {
