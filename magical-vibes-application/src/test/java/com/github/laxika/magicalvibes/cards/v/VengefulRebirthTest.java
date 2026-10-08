@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VengefulRebirth.class, Forest.class, GoblinPiker.class, GrizzlyBears.class})
 class VengefulRebirthTest extends BaseCardTest {
 
     private void giveMana() {
@@ -51,14 +53,12 @@ class VengefulRebirthTest extends BaseCardTest {
     @DisplayName("Deals mana value damage to a target creature")
     void nonlandReturnDamagesCreature() {
         Card graveyardCreature = new GrizzlyBears(); // mana value 2
-        harness.addToBattlefield(player2, new GoblinPiker()); // dies to 2 damage
+        UUID victimId = harness.addToBattlefieldAndReturn(player2, new GoblinPiker()).getId();
         harness.setGraveyard(player1, List.of(graveyardCreature));
         harness.setHand(player1, List.of(new VengefulRebirth()));
         giveMana();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-
-        UUID victimId = harness.getPermanentId(player2, "Goblin Piker");
 
         harness.castSorcery(player1, 0, graveyardCreature.getId(), List.of(victimId));
         harness.passBothPriorities();
@@ -96,8 +96,9 @@ class VengefulRebirthTest extends BaseCardTest {
     @DisplayName("Graveyard target removed before resolution — no return and no damage")
     void graveyardTargetRemovedNoDamage() {
         Card graveyardCreature = new GrizzlyBears();
+        Card spell = new VengefulRebirth();
         harness.setGraveyard(player1, List.of(graveyardCreature));
-        harness.setHand(player1, List.of(new VengefulRebirth()));
+        harness.setHand(player1, List.of(spell));
         giveMana();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -112,6 +113,8 @@ class VengefulRebirthTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(graveyardCreature.getId()));
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+        harness.assertNotInGraveyard(player1, "Vengeful Rebirth");
     }
 
     @Test
@@ -128,5 +131,68 @@ class VengefulRebirthTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, opponentCard.getId(), List.of(player2.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Returns the card and exiles the spell when only the damage target becomes illegal")
+    void illegalDamageTargetStillReturnsCard() {
+        Card returnedCard = new GrizzlyBears();
+        Card spell = new VengefulRebirth();
+        UUID victimId = harness.addToBattlefieldAndReturn(player2, new GoblinPiker()).getId();
+        harness.setGraveyard(player1, List.of(returnedCard));
+        harness.setHand(player1, List.of(spell));
+        giveMana();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castSorcery(player1, 0, returnedCard.getId(), List.of(victimId));
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(returnedCard);
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Goes to the graveyard without resolving when both targets become illegal")
+    void bothTargetsIllegalDoesNotExileSpell() {
+        Card returnedCard = new GrizzlyBears();
+        Card spell = new VengefulRebirth();
+        UUID victimId = harness.addToBattlefieldAndReturn(player2, new GoblinPiker()).getId();
+        harness.setGraveyard(player1, List.of(returnedCard));
+        harness.setHand(player1, List.of(spell));
+        giveMana();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castSorcery(player1, 0, returnedCard.getId(), List.of(victimId));
+        gd.playerGraveyards.get(player1.getId()).clear();
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(returnedCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(spell);
+    }
+
+    @Test
+    @DisplayName("Returns a noncreature card and can damage its controller")
+    void returnsSorceryAndDamagesController() {
+        Card returnedCard = new VengefulRebirth();
+        Card spell = new VengefulRebirth();
+        harness.setGraveyard(player1, List.of(returnedCard));
+        harness.setHand(player1, List.of(spell));
+        giveMana();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castSorcery(player1, 0, returnedCard.getId(), List.of(player1.getId()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 14);
+        assertThat(gd.playerHands.get(player1.getId())).contains(returnedCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell).doesNotContain(returnedCard);
     }
 }
