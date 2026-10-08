@@ -74,6 +74,67 @@ class VolcanicAwakeningTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Can destroy a land controlled by its caster")
+    void destroysCastersLand() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        castVolcanicAwakening(forest.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Storm creates no copies when no earlier spells were cast")
+    void noPriorSpellsCreatesNoCopies() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        castVolcanicAwakening(forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).isEmpty();
+        resolveAllTriggers();
+        harness.assertInGraveyard(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Declining new targets keeps the copy's original land target")
+    void stormCopyKeepsOriginalTargetWhenDeclined() {
+        Permanent originalTarget = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent otherLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        gd.recordSpellCast(player1.getId(), new BenalishCavalry());
+
+        castVolcanicAwakening(originalTarget.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(otherLand);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactly(originalTarget.getCard());
+        harness.assertInGraveyard(player1, "Volcanic Awakening");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Spells cast after Volcanic Awakening do not increase its storm count")
+    void laterSpellsDoNotIncreaseStormCount() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        gd.recordSpellCast(player2.getId(), new BenalishCavalry());
+
+        castVolcanicAwakening(forest.getId());
+        gd.recordSpellCast(player2.getId(), new BenalishCavalry());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+        harness.assertInGraveyard(player2, "Forest");
+    }
+
     private void castVolcanicAwakening(UUID targetId) {
         harness.setHand(player1, List.of(new VolcanicAwakening()));
         addManaForVolcanicAwakening();
