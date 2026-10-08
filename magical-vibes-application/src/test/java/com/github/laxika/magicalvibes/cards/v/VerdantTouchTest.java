@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.c.Capsize;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VerdantTouch.class, Forest.class, TrainedArmodon.class})
+@CardUsed({VerdantTouch.class, Forest.class, TrainedArmodon.class, Capsize.class})
 class VerdantTouchTest extends BaseCardTest {
 
     @Test
@@ -73,8 +74,7 @@ class VerdantTouchTest extends BaseCardTest {
         harness.setHand(player1, List.of(new VerdantTouch()));
         addManaForSpell(player1);
 
-        harness.castSorcery(player1, 0, land.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, land.getId());
 
         assertThat(playerHandNames(player1)).isEmpty();
         assertThat(graveyardNames(player1)).containsExactly("Verdant Touch");
@@ -106,6 +106,54 @@ class VerdantTouchTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, bear.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Buyback does not return Verdant Touch when its target leaves before resolution")
+    void buybackDoesNotReturnSpellWithMissingTarget() {
+        Permanent land = addLand(player1);
+        harness.setHand(player1, List.of(new VerdantTouch()));
+        addManaForSpell(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castSorceryWithBuyback(player1, 0, land.getId());
+
+        harness.setHand(player2, List.of(new Capsize()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, land.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Verdant Touch");
+        harness.assertNotInHand(player1, "Verdant Touch");
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("A newly controlled animated land cannot tap for mana")
+    void newlyControlledAnimatedLandHasSummoningSickness() {
+        Permanent land = addLand(player1);
+        land.setSummoningSick(true);
+
+        castVerdantTouch(land);
+
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(land.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Verdant Touch animates only the targeted land")
+    void leavesOtherLandsUnanimated() {
+        Permanent target = addLand(player1);
+        Permanent otherOwnLand = addLand(player1);
+        Permanent opposingLand = addLand(player2);
+
+        castVerdantTouch(target);
+
+        assertThat(gqs.isCreature(gd, target)).isTrue();
+        assertThat(gqs.isCreature(gd, otherOwnLand)).isFalse();
+        assertThat(gqs.isCreature(gd, opposingLand)).isFalse();
     }
 
     private Permanent addLand(Player player) {
