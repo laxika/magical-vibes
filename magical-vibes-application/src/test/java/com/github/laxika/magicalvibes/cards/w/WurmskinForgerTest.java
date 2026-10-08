@@ -122,6 +122,61 @@ class WurmskinForgerTest extends BaseCardTest {
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("ETB can target the Forger itself when it enters without being cast")
+    void canPutAllCountersOnItself() {
+        Permanent forger = harness.enterBattlefieldAndReturn(player1, new WurmskinForger());
+
+        harness.handlePermanentChosen(player1, forger.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleListChoice(player1, "3");
+        harness.passBothPriorities();
+
+        assertThat(forger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("ETB requires a positive allocation to each target before resolving")
+    void choosesDistributionThroughPlayerInput() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new YotianSoldier());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new YotianSoldier());
+
+        castWurmskinForger();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "0"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "3"))
+                .isInstanceOf(IllegalArgumentException.class);
+        harness.handleListChoice(player1, "2");
+        harness.handleListChoice(player1, "1");
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("ETB resolves even if the Forger leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new YotianSoldier());
+        Permanent forger = harness.enterBattlefieldAndReturn(player1, new WurmskinForger());
+
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleListChoice(player1, "3");
+        gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getId().equals(forger.getId()));
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
     private void chooseAssignments() {
         var targets = java.util.List.copyOf(gd.pendingETBDamageAssignments.keySet());
         for (var target : targets) {
