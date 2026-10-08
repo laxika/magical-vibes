@@ -56,6 +56,26 @@ class ZodiacHorseTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Zodiac Horse cannot be blocked when the defending player's Island is tapped")
+    void cannotBeBlockedWhenDefendersIslandIsTapped() {
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        island.setTapped(true);
+        Permanent blockerPerm = addCreatureReady(player2, new ShuFootSoldiers());
+        Permanent atkPerm = addCreatureReady(player1, new ZodiacHorse());
+        atkPerm.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
     @DisplayName("Zodiac Horse can be blocked when only the attacking player controls an Island")
     void canBeBlockedWhenOnlyAttackerControlsIsland() {
         harness.addToBattlefield(player1, new Island());
