@@ -50,4 +50,35 @@ class UnyaroBeeStingTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Iron Tusk Elephant");
     }
+
+    @Test
+    @DisplayName("Can target its controller")
+    void canDamageItsController() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new UnyaroBeeSting()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player1, "Unyaro Bee Sting");
+    }
+
+    @Test
+    @DisplayName("Damage accumulates on its controller's creature")
+    void damageAccumulatesOnOwnCreature() {
+        harness.addToBattlefield(player1, new IronTuskElephant());
+        harness.setHand(player1, List.of(new UnyaroBeeSting(), new UnyaroBeeSting()));
+        harness.addMana(player1, ManaColor.GREEN, 8);
+
+        UUID targetId = harness.getPermanentId(player1, "Iron Tusk Elephant");
+        harness.castAndResolveSorcery(player1, 0, targetId);
+        harness.assertOnBattlefield(player1, "Iron Tusk Elephant");
+
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Iron Tusk Elephant");
+        harness.assertInGraveyard(player1, "Iron Tusk Elephant");
+    }
+
 }
