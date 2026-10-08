@@ -24,8 +24,7 @@ class VodalianZombieTest extends BaseCardTest {
     @Test
     @DisplayName("Vodalian Zombie has protection from green")
     void hasProtectionFromGreen() {
-        harness.addToBattlefield(player1, new VodalianZombie());
-        Permanent zombie = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new VodalianZombie());
 
         assertThat(gqs.hasProtectionFrom(gd, zombie, CardColor.GREEN)).isTrue();
         assertThat(gqs.hasProtectionFrom(gd, zombie, CardColor.RED)).isFalse();
@@ -79,8 +78,7 @@ class VodalianZombieTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new PincerSpider());
         Permanent zombie = addCreatureReady(player2, new VodalianZombie());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -97,6 +95,33 @@ class VodalianZombieTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, zombie.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("has protection from green");
+    }
+
+    @Test
+    @DisplayName("A nongreen creature can block and deal damage to Vodalian Zombie")
+    void nongreenCreatureCanBlockAndDealDamage() {
+        addCreatureReady(player1, new VodalianZombie());
+        addCreatureReady(player2, new VodalianZombie());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Vodalian Zombie");
+        harness.assertInGraveyard(player2, "Vodalian Zombie");
+    }
+
+    @Test
+    @DisplayName("Protection also prevents targeting by the controller's green spell")
+    void cannotBeTargetedByOwnGreenSpell() {
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new VodalianZombie());
+        harness.setHand(player1, List.of(new AggressiveUrge()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, zombie.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("has protection from green");
     }
