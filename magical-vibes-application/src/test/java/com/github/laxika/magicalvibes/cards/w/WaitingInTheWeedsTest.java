@@ -92,4 +92,34 @@ class WaitingInTheWeedsTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Cat")).isZero();
     }
+
+    @Test
+    @DisplayName("Opponent creates Cats even when the caster controls no Forests")
+    void opponentCreatesCatsWhenCasterHasNoForests() {
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        Permanent tappedForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        tappedForest.tap();
+
+        harness.castFromHand(player1, new WaitingInTheWeeds(), "{1}{G}{G}");
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Cat")).isZero();
+        assertThat(countPermanents(player2, "Cat")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A Forest untapped before resolution contributes a Cat")
+    void countsForestUntappedBeforeResolution() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        forest.tap();
+
+        harness.castFromHand(player1, new WaitingInTheWeeds(), "{1}{G}{G}");
+        forest.untap();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Cat")).isZero();
+        assertThat(countPermanents(player2, "Cat")).isEqualTo(1);
+    }
 }
