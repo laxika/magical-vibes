@@ -138,6 +138,56 @@ class SoltariGuerrillasTest extends BaseCardTest {
                 .hasMessageContaining("cannot block");
     }
 
+    @Test
+    @DisplayName("Multiple redirects require the damaged player to choose before damage is dealt")
+    void multipleRedirectsRequireAChoice() {
+        Permanent guerrillas = addCreatureReady(player1, new SoltariGuerrillas());
+        Permanent firstDestination = addCreatureReady(player2, new HornedTurtle());
+        Permanent secondDestination = addCreatureReady(player1, new HornedTurtle());
+
+        harness.activateAbility(player1, indexOf(player1, guerrillas), null, firstDestination.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, guerrillas), null, secondDestination.getId());
+        harness.passBothPriorities();
+
+        attackUnblocked(guerrillas);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(firstDestination.getMarkedDamage()).isZero();
+        assertThat(secondDestination.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("The ability can redirect combat damage to Soltari Guerrillas itself")
+    void canRedirectDamageToItself() {
+        Permanent guerrillas = addCreatureReady(player1, new SoltariGuerrillas());
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.activateAbility(player1, indexOf(player1, guerrillas), null, guerrillas.getId());
+        harness.passBothPriorities();
+        attackUnblocked(guerrillas);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(guerrillas);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(guerrillas.getCard());
+    }
+
+    @Test
+    @DisplayName("Damage hits the opponent if the redirect destination has left the battlefield")
+    void destinationLeavingAfterResolutionDoesNotPreventDamage() {
+        Permanent guerrillas = addCreatureReady(player1, new SoltariGuerrillas());
+        Permanent destination = addCreatureReady(player2, new HornedTurtle());
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.activateAbility(player1, indexOf(player1, guerrillas), null, destination.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player2.getId()).remove(destination);
+        gd.playerGraveyards.get(player2.getId()).add(destination.getCard());
+        attackUnblocked(guerrillas);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 3);
+    }
+
     private void attackUnblocked(Permanent attacker) {
         attacker.setAttacking(true);
         prepareDeclareBlockers();
@@ -149,10 +199,7 @@ class SoltariGuerrillasTest extends BaseCardTest {
         HornedTurtle card = new HornedTurtle();
         card.setPower(power);
         card.setToughness(toughness);
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, card);
     }
 
     private int indexOf(Player player, Permanent perm) {
