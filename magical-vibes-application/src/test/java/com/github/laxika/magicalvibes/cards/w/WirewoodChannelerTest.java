@@ -9,6 +9,10 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -62,5 +66,36 @@ class WirewoodChannelerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sickness");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    void producesTheEntireBatchInAnyChosenColor(ManaColor chosenColor) {
+        addCreatureReady(player1, new WirewoodChanneler());
+        harness.addToBattlefield(player2, new DefiantElf());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, chosenColor.name());
+
+        for (ManaColor color : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color))
+                    .isEqualTo(color == chosenColor ? 2 : 0);
+        }
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void doesNotCountElvesOutsideTheBattlefield() {
+        addCreatureReady(player1, new WirewoodChanneler());
+        harness.setHand(player1, List.of(new DefiantElf()));
+        harness.setLibrary(player2, List.of(new DefiantElf()));
+        harness.setGraveyard(player1, List.of(new DefiantElf()));
+        harness.setExile(player2, List.of(new DefiantElf()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 }
