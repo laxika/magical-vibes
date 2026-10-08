@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.d.DivingGriffin;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Withdraw.class, DivingGriffin.class})
+@CardUsed({Withdraw.class, DivingGriffin.class, Island.class})
 class WithdrawTest extends BaseCardTest {
 
     @Test
@@ -113,6 +114,56 @@ class WithdrawTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creature.getId(), creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @CardUsed(Island.class)
+    @DisplayName("Offers payment when the controller can produce mana during resolution")
+    void offersPaymentWithUntappedLandAndEmptyManaPool() {
+        Permanent first = addCreatureReady(player2, new DivingGriffin());
+        Permanent second = addCreatureReady(player2, new DivingGriffin());
+        harness.addToBattlefield(player2, new Island());
+        castWithdraw(first, second);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Diving Griffin");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(second);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(second);
+    }
+
+    @Test
+    @DisplayName("Returns the first creature without offering payment when the second target leaves")
+    void resolvesFirstTargetWhenSecondTargetLeaves() {
+        Permanent first = addCreatureReady(player2, new DivingGriffin());
+        Permanent second = addCreatureReady(player2, new DivingGriffin());
+        castWithdraw(first, second);
+        gd.playerBattlefields.get(player2.getId()).remove(second);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(first.getCard());
+        harness.assertInGraveyard(player1, "Withdraw");
+    }
+
+    @Test
+    @DisplayName("Does nothing when both targets leave before resolution")
+    void doesNothingWhenBothTargetsLeave() {
+        Permanent first = addCreatureReady(player2, new DivingGriffin());
+        Permanent second = addCreatureReady(player2, new DivingGriffin());
+        castWithdraw(first, second);
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInHand(player2, "Diving Griffin");
+        harness.assertInGraveyard(player1, "Withdraw");
     }
 
     private void castWithdraw(Permanent first, Permanent second) {
