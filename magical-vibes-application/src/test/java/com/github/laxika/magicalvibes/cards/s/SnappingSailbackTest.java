@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +15,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SnappingSailback.class, Shock.class, FugitiveWizard.class})
 class SnappingSailbackTest extends BaseCardTest {
-
-    // ===== Non-combat damage trigger =====
 
     @Test
     @DisplayName("When dealt non-lethal spell damage, puts a +1/+1 counter on itself")
@@ -26,8 +26,7 @@ class SnappingSailbackTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID sailbackId = harness.getPermanentId(player2, "Snapping Sailback");
-        harness.castInstant(player1, 0, sailbackId);
-        harness.passBothPriorities(); // Resolve Shock — 2 damage to Sailback (non-lethal for 4/4)
+        harness.castAndResolveInstant(player1, 0, sailbackId);
 
         // ON_DEALT_DAMAGE trigger should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -43,15 +42,11 @@ class SnappingSailbackTest extends BaseCardTest {
         assertThat(sailback.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
-    // ===== Combat damage trigger =====
-
     @Test
     @DisplayName("When dealt non-lethal combat damage, puts a +1/+1 counter on itself")
     void combatDamagePutsCounterOnSelf() {
         harness.addToBattlefield(player2, new SnappingSailback());
-        harness.addToBattlefield(player1, new FugitiveWizard()); // 1/1 attacker
-
-        Permanent attacker = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
 
@@ -80,8 +75,6 @@ class SnappingSailbackTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Fugitive Wizard");
     }
 
-    // ===== Multiple damage instances =====
-
     @Test
     @DisplayName("Each damage instance adds a separate +1/+1 counter")
     void multipleDamageInstancesAddMultipleCounters() {
@@ -92,8 +85,7 @@ class SnappingSailbackTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID sailbackId = harness.getPermanentId(player2, "Snapping Sailback");
-        harness.castInstant(player1, 0, sailbackId);
-        harness.passBothPriorities(); // Resolve first Shock
+        harness.castAndResolveInstant(player1, 0, sailbackId);
         harness.passBothPriorities(); // Resolve first trigger
 
         Permanent sailback = findPermanent(player2, "Snapping Sailback");
@@ -104,8 +96,7 @@ class SnappingSailbackTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         sailbackId = harness.getPermanentId(player2, "Snapping Sailback");
-        harness.castInstant(player1, 0, sailbackId);
-        harness.passBothPriorities(); // Resolve second Shock
+        harness.castAndResolveInstant(player1, 0, sailbackId);
         harness.passBothPriorities(); // Resolve second trigger
 
         // Sailback should still be alive (now 6/6 with 2 counters, 4 damage total)
@@ -115,8 +106,6 @@ class SnappingSailbackTest extends BaseCardTest {
         Permanent sailbackAfter = findPermanent(player2, "Snapping Sailback");
         assertThat(sailbackAfter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
-
-    // ===== No damage, no trigger =====
 
     @Test
     @DisplayName("No trigger fires when Snapping Sailback is not dealt damage")
@@ -133,30 +122,41 @@ class SnappingSailbackTest extends BaseCardTest {
         assertThat(sailback.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
-    // ===== Lethal damage — no counter if creature dies =====
+    @Test
+    @DisplayName("Lethal damage triggers enrage but cannot put counters on the dead creature")
+    void lethalDamageStillTriggers() {
+        Permanent sailback = harness.addToBattlefieldAndReturn(player2, new SnappingSailback());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, sailback.getId());
+        assertThat(gd.stack).hasSize(1);
+
+        // Deal the second two damage before the first enrage ability resolves.
+        harness.castAndResolveInstant(player1, 0, sailback.getId());
+        harness.assertNotOnBattlefield(player2, "Snapping Sailback");
+        harness.assertInGraveyard(player2, "Snapping Sailback");
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        assertThat(sailback.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 
     @Test
-    @DisplayName("Enrage still triggers when dealt lethal damage but creature leaves battlefield")
-    void lethalDamageStillTriggers() {
-        harness.addToBattlefield(player2, new SnappingSailback());
-        // Use two Shocks to deal lethal: 2 + 2 = 4 damage to a 4/4
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
+    @DisplayName("Flash allows casting during an opponent's combat")
+    void canBeCastDuringOpponentsCombat() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.setHand(player2, List.of(new SnappingSailback()));
+        harness.addMana(player2, ManaColor.GREEN, 5);
 
-        UUID sailbackId = harness.getPermanentId(player2, "Snapping Sailback");
-        harness.castInstant(player1, 0, sailbackId);
-        harness.passBothPriorities(); // Resolve first Shock (2 damage, non-lethal)
-        harness.passBothPriorities(); // Resolve first trigger — now 5/5 with 2 damage
+        harness.castCreature(player2, 0);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
 
-        // Second Shock
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        sailbackId = harness.getPermanentId(player2, "Snapping Sailback");
-        harness.castInstant(player1, 0, sailbackId);
-        harness.passBothPriorities(); // Resolve second Shock (4 total damage on 5/5 — non-lethal again!)
-
-        // Still alive because it grew from the first counter
         harness.assertOnBattlefield(player2, "Snapping Sailback");
+        harness.assertNotInHand(player2, "Snapping Sailback");
     }
 }
