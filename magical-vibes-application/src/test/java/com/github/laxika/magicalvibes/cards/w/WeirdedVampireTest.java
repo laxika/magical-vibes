@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WeirdedVampire.class, RavensCrime.class})
 class WeirdedVampireTest extends BaseCardTest {
 
     private WeirdedVampire discardViaRavensCrime() {
@@ -69,5 +71,35 @@ class WeirdedVampireTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(vampire.getId()));
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Weirded Vampire can be cast normally without being discarded")
+    void castsNormallyFromHand() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new WeirdedVampire(), "{3}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Weirded Vampire");
+        harness.assertNotInHand(player1, "Weirded Vampire");
+        harness.assertNotInGraveyard(player1, "Weirded Vampire");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Madness cannot be paid with three colorless mana and leaves the mana unspent")
+    void madnessRequiresBlackMana() {
+        WeirdedVampire vampire = discardViaRavensCrime();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Weirded Vampire");
+        harness.assertNotOnBattlefield(player1, "Weirded Vampire");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(vampire.getId()));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
     }
 }
