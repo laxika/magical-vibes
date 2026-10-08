@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SpireMonitor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,19 +12,20 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WhisperingSpecter.class, SpireMonitor.class})
 class WhisperingSpecterTest extends BaseCardTest {
 
-    
-
     @Test
-    @DisplayName("Combat damage trigger presents may ability choice")
-    void combatDamageTriggerPresentsMayChoice() {
+    @DisplayName("Sacrifice choice is made when the combat damage trigger resolves")
+    void sacrificeChoiceWaitsForResolution() {
         Permanent specter = addCreatureReady(player1, new WhisperingSpecter());
         specter.setAttacking(true);
 
         resolveCombat();
 
-        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
@@ -41,13 +40,10 @@ class WhisperingSpecterTest extends BaseCardTest {
 
         // Give player2 enough cards to discard
         harness.setHand(player2, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears()));
+                new SpireMonitor(), new SpireMonitor(), new SpireMonitor(),
+                new SpireMonitor(), new SpireMonitor()));
 
         resolveCombat();
-
-        // Infect deals damage as poison counters, so player2 now has 3 + 1 = 4 poison counters
-        int poisonAfterCombat = gd.playerPoisonCounters.getOrDefault(player2.getId(), 0);
 
         // Accept the may ability
         harness.handleMayAbilityChosen(player1, true);
@@ -82,7 +78,7 @@ class WhisperingSpecterTest extends BaseCardTest {
         // No cards discarded
         assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(handSizeBefore);
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declines"));
+        assertThat(gameLogContains("declines")).isTrue();
     }
 
     @Test
@@ -90,13 +86,12 @@ class WhisperingSpecterTest extends BaseCardTest {
     void noTriggerWhenBlocked() {
         Permanent specter = addCreatureReady(player1, new WhisperingSpecter());
         specter.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new SpireMonitor());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
         resolveCombat();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
@@ -106,7 +101,7 @@ class WhisperingSpecterTest extends BaseCardTest {
         // No prior poison counters — infect combat damage will give 1
         Permanent specter = addCreatureReady(player1, new WhisperingSpecter());
         specter.setAttacking(true);
-        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new SpireMonitor(), new SpireMonitor()));
 
         resolveCombat();
 
@@ -138,5 +133,100 @@ class WhisperingSpecterTest extends BaseCardTest {
         // Specter should be sacrificed even though opponent has no cards
         harness.assertNotOnBattlefield(player1, "Whispering Specter");
         harness.assertInGraveyard(player1, "Whispering Specter");
+    }
+
+    @Test
+    @DisplayName("Discard count uses poison counters at resolution")
+    void discardCountUsesCurrentPoisonCounters() {
+        Permanent specter = addCreatureReady(player1, new WhisperingSpecter());
+        specter.setAttacking(true);
+        harness.setHand(player2, List.of(new SpireMonitor(), new SpireMonitor(),
+                new SpireMonitor(), new SpireMonitor()));
+
+        resolveCombat();
+        gd.playerPoisonCounters.put(player2.getId(), 3);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        for (int i = 0; i < 3; i++) {
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                    .isEqualTo(player2.getId());
+            harness.handleCardChosen(player2, 0);
+        }
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+        harness.assertInGraveyard(player1, "Whispering Specter");
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice a Specter another player now controls")
+    void cannotSacrificeAfterLosingControl() {
+        Permanent specter = addCreatureReady(player1, new WhisperingSpecter());
+        specter.setAttacking(true);
+        harness.setHand(player2, List.of(new SpireMonitor(), new SpireMonitor()));
+
+        resolveCombat();
+        gd.playerBattlefields.get(player1.getId()).remove(specter);
+        gd.playerBattlefields.get(player2.getId()).add(specter);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Whispering Specter");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("No discard if the Specter left the battlefield before resolution")
+    void noDiscardWhenSourceHasLeftBattlefield() {
+        Permanent specter = addCreatureReady(player1, new WhisperingSpecter());
+        specter.setAttacking(true);
+        harness.setHand(player2, List.of(new SpireMonitor(), new SpireMonitor()));
+
+        resolveCombat();
+        gd.playerBattlefields.get(player1.getId()).remove(specter);
+        gd.playerGraveyards.get(player1.getId()).add(specter.getCard());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+    }
+    @Test
+    @DisplayName("Discard as many cards as possible when poison exceeds hand size")
+    void discardStopsWhenHandIsEmpty() {
+        gd.playerPoisonCounters.put(player2.getId(), 3);
+        Permanent specter = addCreatureReady(player1, new WhisperingSpecter());
+        specter.setAttacking(true);
+        harness.setHand(player2, List.of(new SpireMonitor(), new SpireMonitor()));
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+        harness.assertInGraveyard(player1, "Whispering Specter");
+    }
+
+    @Test
+    @DisplayName("Sacrifice still happens when no poison counters remain at resolution")
+    void sacrificeWithZeroPoisonCounters() {
+        Permanent specter = addCreatureReady(player1, new WhisperingSpecter());
+        specter.setAttacking(true);
+        harness.setHand(player2, List.of(new SpireMonitor()));
+
+        resolveCombat();
+        gd.playerPoisonCounters.put(player2.getId(), 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Whispering Specter");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
     }
 }
