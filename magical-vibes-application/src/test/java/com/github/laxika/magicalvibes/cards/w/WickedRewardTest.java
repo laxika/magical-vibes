@@ -100,8 +100,54 @@ class WickedRewardTest extends BaseCardTest {
         harness.castInstantWithSacrifice(player1, 0, target.getId(), target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getId().equals(target.getId()));
+        harness.assertNotOnBattlefield(player1, "Warthog");
         harness.assertInGraveyard(player1, "Warthog");
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid during casting before the boost resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new Breezekeeper());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Warthog());
+
+        harness.setHand(player1, List.of(new WickedReward()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
+
+        harness.assertNotOnBattlefield(player1, "Breezekeeper");
+        harness.assertInGraveyard(player1, "Breezekeeper");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+        harness.assertInGraveyard(player1, "Wicked Reward");
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's creature to pay the additional cost")
+    void cannotSacrificeOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Warthog());
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player2, new Breezekeeper());
+
+        harness.setHand(player1, List.of(new WickedReward()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("control");
+
+        harness.assertOnBattlefield(player2, "Breezekeeper");
+        harness.assertNotInGraveyard(player2, "Breezekeeper");
+        harness.assertInHand(player1, "Wicked Reward");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 }
