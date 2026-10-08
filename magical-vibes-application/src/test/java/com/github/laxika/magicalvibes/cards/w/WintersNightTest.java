@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.r.RealityTwist;
+import com.github.laxika.magicalvibes.cards.j.JuniperOrderDruid;
 import com.github.laxika.magicalvibes.cards.s.SchoolOfTheUnseen;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -16,7 +18,8 @@ import java.util.EnumSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WintersNight.class, SnowCoveredForest.class, SchoolOfTheUnseen.class})
+@CardUsed({WintersNight.class, SnowCoveredForest.class, SchoolOfTheUnseen.class,
+        JuniperOrderDruid.class, RealityTwist.class})
 class WintersNightTest extends BaseCardTest {
 
     private Permanent addSnowCoveredForest(Player player) {
@@ -74,7 +77,7 @@ class WintersNightTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Effect is symmetric — an opponent's snow land also triggers")
+    @DisplayName("Effect is symmetric â€” an opponent's snow land also triggers")
     void opponentSnowLandTriggers() {
         harness.addToBattlefield(player1, new WintersNight());
         Permanent land = addSnowCoveredForest(player2);
@@ -95,5 +98,49 @@ class WintersNightTest extends BaseCardTest {
         harness.handleListChoice(player1, ManaColor.RED.name());
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+    }
+
+    @Test
+    void repeatedTapsBeforeUntapOnlySkipOneUntapStep() {
+        harness.addToBattlefield(player1, new WintersNight());
+        Permanent land = addSnowCoveredForest(player1);
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new JuniperOrderDruid());
+        druid.setSummoningSick(false);
+
+        harness.tapPermanent(player1, 1);
+        harness.activateAbility(player1, 2, null, land.getId());
+        resolveAllTriggers();
+        assertThat(land.isTapped()).isFalse();
+        harness.tapPermanent(player1, 1);
+
+        harness.performUntapStep(player1);
+        assertThat(land.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(land.isTapped()).isFalse();
+    }
+
+    @Test
+    void bonusManaMatchesManaProducedAfterReplacement() {
+        harness.addToBattlefield(player1, new WintersNight());
+        addSnowCoveredForest(player1);
+        harness.addToBattlefield(player1, new RealityTwist());
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void untapRestrictionPersistsAfterEnchantmentLeavesThenExpires() {
+        harness.addToBattlefield(player1, new WintersNight());
+        Permanent land = addSnowCoveredForest(player1);
+        harness.tapPermanent(player1, 1);
+        gd.playerBattlefields.get(player1.getId()).removeFirst();
+
+        harness.performUntapStep(player1);
+        assertThat(land.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(land.isTapped()).isFalse();
     }
 }
