@@ -25,8 +25,7 @@ class WitchMawNephilimTest extends BaseCardTest {
         harness.castFromHand(player1, new WitchMawNephilim(), "{G}{W}{U}{B}");
 
         Permanent nephilim = findPermanent(player1, "Witch-Maw Nephilim");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -42,8 +41,7 @@ class WitchMawNephilimTest extends BaseCardTest {
         harness.castFromHand(player1, new WitchMawNephilim(), "{G}{W}{U}{B}");
 
         Permanent nephilim = findPermanent(player1, "Witch-Maw Nephilim");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
@@ -55,8 +53,7 @@ class WitchMawNephilimTest extends BaseCardTest {
     void doesNotTriggerWhenOpponentCastsSpell() {
         Permanent nephilim = addReadyNephilim();
         harness.castFromHand(player2, new Quicken(), "{U}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction())
                 .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -115,6 +112,49 @@ class WitchMawNephilimTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, nephilim, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not gain trample if power drops below ten before resolution")
+    void powerDropsBeforeAttackTriggerResolves() {
+        Permanent nephilim = addReadyNephilim();
+        nephilim.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 9);
+
+        declareAttackers(player1, List.of(0));
+        nephilim.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 8);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, nephilim, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Trample persists if power drops after the attack trigger resolves")
+    void tramplePersistsAfterPowerDrops() {
+        Permanent nephilim = addReadyNephilim();
+        nephilim.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 9);
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        nephilim.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 8);
+
+        assertThat(gqs.hasKeyword(gd, nephilim, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Only the existing Nephilim gains counters when another Nephilim is cast")
+    void newlyCastNephilimDoesNotTriggerForItself() {
+        Permanent nephilim = addReadyNephilim();
+        harness.castFromHand(player1, new WitchMawNephilim(), "{G}{W}{U}{B}");
+
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(nephilim.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        Permanent newlyEntered = gd.playerBattlefields.get(player1.getId()).get(1);
+        assertThat(newlyEntered.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private Permanent addReadyNephilim() {
