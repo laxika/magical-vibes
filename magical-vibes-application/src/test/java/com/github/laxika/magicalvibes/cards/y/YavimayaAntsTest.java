@@ -99,8 +99,7 @@ class YavimayaAntsTest extends BaseCardTest {
         addCreatureReady(player1, new YavimayaAnts());
         Permanent blocker = addCreatureReady(player2, new AgentOfStromgald());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -123,6 +122,26 @@ class YavimayaAntsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ants);
+    }
+
+    @Test
+    @DisplayName("Paying only one age counter's cost on the second upkeep sacrifices Yavimaya Ants")
+    void secondUpkeepRequiresPaymentForEveryAgeCounter() {
+        Permanent ants = harness.addToBattlefieldAndReturn(player1, new YavimayaAnts());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(ants.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ants);
+        harness.assertInGraveyard(player1, "Yavimaya Ants");
     }
 
     @Test
