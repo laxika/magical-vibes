@@ -45,6 +45,35 @@ class ZhangHeWeiGeneralTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Creatures entering before the attack trigger resolves receive the boost")
+    void creatureEnteringBeforeResolutionGetsBoost() {
+        addCreatureReady(player1, new ZhangHeWeiGeneral());
+
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).isNotEmpty();
+        Permanent newcomer = addCreatureReady(player1, new WeiInfantry());
+        resolveAllTriggers();
+
+        assertThat(newcomer.getPowerModifier()).isEqualTo(1);
+        assertThat(newcomer.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after the attack trigger resolves do not receive the boost")
+    void creatureEnteringAfterResolutionDoesNotGetBoost() {
+        addCreatureReady(player1, new ZhangHeWeiGeneral());
+        Permanent existing = addCreatureReady(player1, new WeiInfantry());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        Permanent newcomer = addCreatureReady(player1, new WeiInfantry());
+
+        assertThat(existing.getPowerModifier()).isEqualTo(1);
+        assertThat(newcomer.getPowerModifier()).isZero();
+        assertThat(newcomer.getToughnessModifier()).isZero();
+    }
+
+    @Test
     @DisplayName("Zhang He does not boost itself")
     void doesNotBoostItself() {
         Permanent zhangHe = addCreatureReady(player1, new ZhangHeWeiGeneral());
