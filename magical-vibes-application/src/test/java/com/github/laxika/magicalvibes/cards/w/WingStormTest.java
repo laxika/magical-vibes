@@ -47,4 +47,47 @@ class WingStormTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
+
+    @Test
+    @DisplayName("Only the opponent takes damage when only they control flyers")
+    void onlyOpponentWithFlyersTakesDamage() {
+        harness.addToBattlefield(player1, new MarshBoa());
+        harness.addToBattlefield(player2, new StormwatchEagle());
+        harness.addToBattlefield(player2, new StormwatchEagle());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        castWingStorm();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Resolves without damage when neither player controls creatures")
+    void emptyBattlefieldDealsNoDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        castWingStorm();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Wing Storm");
+    }
+
+    @Test
+    @DisplayName("Counts flying creatures at resolution rather than when cast")
+    void countsFlyersAtResolution() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.castFromHand(player1, new WingStorm(), "{2}{G}");
+
+        harness.addToBattlefield(player2, new StormwatchEagle());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
 }
