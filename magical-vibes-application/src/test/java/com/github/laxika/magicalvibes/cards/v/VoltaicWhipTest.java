@@ -78,4 +78,67 @@ class VoltaicWhipTest extends BaseCardTest {
 
         assertThat(whip.getAttachedTo()).isEqualTo(creature.getId());
     }
+
+    @Test
+    @DisplayName("The creature's controller draws and loses life even when an opponent controls the Whip")
+    void opponentControlledWhipGrantsAbilityToCreatureController() {
+        Card drawn = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent whip = addCreatureReady(player2, new VoltaicWhip());
+        whip.setAttachedTo(creature.getId());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The attack trigger still resolves after the Whip leaves the battlefield")
+    void attackTriggerSurvivesEquipmentLeavingBattlefield() {
+        Card drawn = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setLife(player1, 20);
+
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent whip = addCreatureReady(player1, new VoltaicWhip());
+        whip.setAttachedTo(creature.getId());
+
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(whip);
+        gd.playerGraveyards.get(player1.getId()).add(whip.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("An unequipped creature attacking alone does not draw a card or lose life")
+    void unequippedCreatureAttackingAloneDoesNotTrigger() {
+        Card drawn = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new VoltaicWhip());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+    }
 }
