@@ -114,6 +114,33 @@ class WorldlyTutorTest extends BaseCardTest {
         assertThat(gameLogContains("it is empty. Library is shuffled.")).isTrue();
     }
 
+    @Test
+    @DisplayName("Choosing the second creature finds exactly one card from your own library")
+    void choosesOneOfMultipleCreaturesFromOwnLibrary() {
+        Card firstCreature = new FeralShadow();
+        Card chosenCreature = new FeralShadow();
+        List<Card> deck = List.of(new Island(), firstCreature, new Disenchant(), chosenCreature);
+        List<Card> opponentDeck = List.of(new FeralShadow(), new Island(), new Disenchant());
+        harness.setLibrary(player1, deck);
+        harness.setLibrary(player2, opponentDeck);
+
+        cast();
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).containsExactly(firstCreature, chosenCreature);
+
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(chosenCreature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(deck);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(opponentDeck);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Worldly Tutor");
+        harness.assertNotInHand(player1, "Feral Shadow");
+        harness.assertNotOnBattlefield(player1, "Feral Shadow");
+    }
+
     private void cast() {
         harness.castFromHand(player1, new WorldlyTutor(), "{G}");
     }
