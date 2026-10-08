@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
 import com.github.laxika.magicalvibes.cards.g.GolemSkinGauntlets;
+import com.github.laxika.magicalvibes.cards.p.PullFromEternity;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SoulFoundry.class, GoldMyr.class, GolemSkinGauntlets.class})
+@CardUsed({SoulFoundry.class, GoldMyr.class, GolemSkinGauntlets.class, Shatter.class, PullFromEternity.class})
 class SoulFoundryTest extends BaseCardTest {
 
     @Test
@@ -104,10 +105,7 @@ class SoulFoundryTest extends BaseCardTest {
         assertThat(token.getCard().getToughness()).isEqualTo(1);
         assertThat(findPermanent(player1, "Soul Foundry").isTapped()).isTrue();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(gameData.playerBattlefields.get(player1.getId()))
                 .contains(token);
@@ -134,5 +132,67 @@ class SoulFoundryTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, 3, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("X must equal the mana value of the imprinted card");
+    }
+
+    @Test
+    void imprintStillExilesCreatureAfterFoundryIsDestroyed() {
+        harness.setHand(player1, List.of(new SoulFoundry(), new GoldMyr()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Soul Foundry"));
+        harness.assertInGraveyard(player1, "Soul Foundry");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertNotInHand(player1, "Gold Myr");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Gold Myr"));
+    }
+
+    @Test
+    void activatedAbilityStillCreatesTokenAfterFoundryIsDestroyed() {
+        SoulFoundry foundryCard = new SoulFoundry();
+        GoldMyr imprintedCard = new GoldMyr();
+        gd.setImprintedCard(foundryCard, imprintedCard);
+        harness.setExile(player1, List.of(imprintedCard));
+        Permanent foundry = harness.addToBattlefieldAndReturn(player1, foundryCard);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 2, null);
+
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, foundry.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Soul Foundry");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().isToken()
+                        && permanent.getCard().getName().equals("Gold Myr"));
+    }
+
+    @Test
+    void createsNoTokenIfImprintedCardLeavesExileInResponse() {
+        SoulFoundry foundryCard = new SoulFoundry();
+        GoldMyr imprintedCard = new GoldMyr();
+        gd.setImprintedCard(foundryCard, imprintedCard);
+        harness.setExile(player1, List.of(imprintedCard));
+        harness.addToBattlefield(player1, foundryCard);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 2, null);
+
+        harness.setHand(player2, List.of(new PullFromEternity()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player2, 0, imprintedCard.getId());
+        harness.assertInGraveyard(player1, "Gold Myr");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Gold Myr");
     }
 }
