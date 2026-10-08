@@ -33,8 +33,7 @@ class SoratamiCloudskaterTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(player1, "Soratami Cloudskater"), null, null);
 
         harness.assertInHand(player1, "Island");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Island"));
+        harness.assertNotOnBattlefield(player1, "Island");
 
         harness.passBothPriorities();
 
@@ -92,6 +91,73 @@ class SoratamiCloudskaterTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.assertInHand(player1, "Plains");
         harness.assertOnBattlefield(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("Can discard the card just drawn with an initially empty hand")
+    void canDiscardNewlyDrawnCard() {
+        harness.addToBattlefield(player1, new SoratamiCloudskater());
+        harness.addToBattlefield(player1, new Island());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, "Soratami Cloudskater"), null, null);
+
+        harness.assertInHand(player1, "Island");
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Forest");
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInHand(player1, "Island");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick, returning a tapped land")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent cloudskater = harness.addToBattlefieldAndReturn(player1, new SoratamiCloudskater());
+        cloudskater.setTapped(true);
+        cloudskater.setSummoningSick(true);
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        island.setTapped(true);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, "Soratami Cloudskater"), null, null);
+
+        harness.assertNotOnBattlefield(player1, "Island");
+        harness.assertInHand(player1, "Island");
+        assertThat(cloudskater.isTapped()).isTrue();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Island");
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Cannot activate with less than two mana, even with a land available")
+    void cannotActivateWithoutEnoughMana() {
+        harness.addToBattlefield(player1, new SoratamiCloudskater());
+        harness.addToBattlefield(player1, new Island());
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(player1, "Soratami Cloudskater"), null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Island");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 
     private int battlefieldIndex(Player owner, String name) {
