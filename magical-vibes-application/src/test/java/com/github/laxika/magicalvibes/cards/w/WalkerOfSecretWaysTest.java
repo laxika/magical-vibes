@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Frostling;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -28,7 +29,14 @@ class WalkerOfSecretWaysTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WalkerOfSecretWays()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of()));
+        harness.clearPriorityPassed();
         harness.activateHandAbility(player1, 0, attacker.getId());
+        harness.assertInHand(player1, "Frostling");
+        harness.assertNotOnBattlefield(player1, "Frostling");
+        harness.assertInHand(player1, "Walker of Secret Ways");
+        harness.assertNotOnBattlefield(player1, "Walker of Secret Ways");
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Frostling");
@@ -132,5 +140,52 @@ class WalkerOfSecretWaysTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, walker.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped Walker can bounce itself during its controller's end step")
+    void tappedWalkerCanBounceItselfAtEndStep() {
+        Permanent walker = addCreatureReady(player1, new WalkerOfSecretWays());
+        walker.tap();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, walker.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Walker of Secret Ways");
+        harness.assertNotOnBattlefield(player1, "Walker of Secret Ways");
+    }
+
+    @Test
+    @DisplayName("Combat damage still causes hand inspection when the damaged player's hand is empty")
+    void combatDamageLooksAtEmptyHand() {
+        Permanent walker = addCreatureReady(player1, new WalkerOfSecretWays());
+        walker.setAttacking(true);
+        harness.setHand(player2, List.of());
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gameLogContains("looks at")).isTrue();
+        assertThat(gameLogContains("It is empty.")).isTrue();
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ninjutsu cannot be activated before blockers are declared")
+    void ninjutsuRejectsAttackerBeforeDeclareBlockers() {
+        Permanent attacker = addCreatureReady(player1, new Frostling());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0)));
+        harness.setHand(player1, List.of(new WalkerOfSecretWays()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Frostling");
+        harness.assertInHand(player1, "Walker of Secret Ways");
     }
 }
