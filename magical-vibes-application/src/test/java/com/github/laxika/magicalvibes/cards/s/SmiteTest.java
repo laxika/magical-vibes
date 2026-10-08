@@ -73,13 +73,54 @@ class SmiteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, blocker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, blocker.getId());
 
-        harness.castInstant(player1, 0, attacker.getId());
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+
+        harness.assertNotOnBattlefield(player1, "Skyshroud Falcon");
+    }
+
+    @Test
+    @DisplayName("The defending player can destroy an opponent's blocked attacker")
+    void defenderCanDestroyBlockedAttacker() {
+        Permanent attacker = addCreatureReady(player1, new SkyshroudFalcon());
+        addCreatureReady(player2, new SkyshroudFalcon());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.setHand(player2, List.of(new Smite()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
+
+        harness.assertNotOnBattlefield(player1, "Skyshroud Falcon");
+        harness.assertInGraveyard(player1, "Skyshroud Falcon");
+        harness.assertOnBattlefield(player2, "Skyshroud Falcon");
+        harness.assertInGraveyard(player2, "Smite");
+    }
+
+    @Test
+    @DisplayName("Smite still resolves when the blocker dies in response")
+    void resolvesAfterBlockerDiesInResponse() {
+        Permanent attacker = addCreatureReady(player1, new SkyshroudFalcon());
+        Permanent blocker = addCreatureReady(player2, new SkyshroudFalcon());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        castSmite(attacker.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, blocker.getId());
+        harness.assertInGraveyard(player2, "Skyshroud Falcon");
+
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Skyshroud Falcon");
+        harness.assertInGraveyard(player1, "Skyshroud Falcon");
+        harness.assertInGraveyard(player1, "Smite");
     }
 
     private void castSmite(java.util.UUID targetId) {
