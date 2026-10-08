@@ -106,6 +106,38 @@ class AgnaQelaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A tapped basic land still allows this land to enter untapped")
+    void tappedBasicLandSatisfiesCheck() {
+        harness.addToBattlefieldAndReturn(player1, new Island()).tap();
+
+        playAgnaQela(player1);
+
+        assertThat(findPermanent(player1, "Agna Qel'a").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The controller may discard the newly drawn card instead of a card already in hand")
+    void mayDiscardNewlyDrawnCard() {
+        addReadyAgnaQela(player1);
+        Card retained = new Forest();
+        Card drawn = new Island();
+        harness.setHand(player1, List.of(retained));
+        harness.setLibrary(player1, List.of(drawn, new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retained, drawn);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retained);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
     @DisplayName("With an empty hand, the drawn card is discarded after paying the activation costs")
     void emptyHandDiscardsDrawnCard() {
         Permanent land = addReadyAgnaQela(player1);
