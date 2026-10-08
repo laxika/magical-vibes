@@ -133,6 +133,75 @@ class SoratamiMirrorMageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick, returning tapped lands")
+    void canActivateWithTappedSourceAndTappedLands() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new SoratamiMirrorMage());
+        source.setTapped(true);
+        source.setSummoningSick(true);
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefieldAndReturn(player1, new Island()).setTapped(true);
+        }
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WanderingOnes());
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, "Soratami Mirror-Mage"), 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Island");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Wandering Ones");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(source);
+        assertThat(source.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opponent's lands cannot pay the return cost")
+    void cannotUseOpponentsLandsForCost() {
+        harness.addToBattlefield(player1, new SoratamiMirrorMage());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        Permanent opposingLand = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WanderingOnes());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(player1, "Soratami Mirror-Mage"), 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Island"))
+                .hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingLand, target);
+    }
+
+    @Test
+    @DisplayName("Returns an opponent-owned creature to its owner's hand rather than its controller's")
+    void returnsStolenCreatureToOwner() {
+        harness.addToBattlefield(player1, new SoratamiMirrorMage());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new WanderingOnes());
+        gd.stolenCreatures.put(target.getId(), player2.getId());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, "Soratami Mirror-Mage"), 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        harness.assertInHand(player2, "Wandering Ones");
+        harness.assertNotInHand(player1, "Wandering Ones");
+    }
+
     private int battlefieldIndex(Player owner, String name) {
         return gd.playerBattlefields.get(owner.getId()).indexOf(findPermanent(owner, name));
     }
