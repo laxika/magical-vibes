@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.a.AlexiosDeimosOfKosmos;
+import com.github.laxika.magicalvibes.cards.l.LastGasp;
+import com.github.laxika.magicalvibes.cards.y.YasharnImplacableEarth;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -15,7 +18,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WoebringerDemon.class, Watchwolf.class, AlexiosDeimosOfKosmos.class})
+@CardUsed({WoebringerDemon.class, Watchwolf.class, AlexiosDeimosOfKosmos.class,
+        LastGasp.class, YasharnImplacableEarth.class})
 class WoebringerDemonTest extends BaseCardTest {
 
     @Test
@@ -111,5 +115,50 @@ class WoebringerDemonTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Woebringer Demon");
         harness.assertOnBattlefield(player1, "Watchwolf");
+    }
+
+    @Test
+    @DisplayName("A lone Woebringer Demon is sacrificed during its controller's upkeep")
+    void soleDemonIsSacrificedOnOwnUpkeep() {
+        harness.addToBattlefield(player1, new WoebringerDemon());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Woebringer Demon");
+        harness.assertInGraveyard(player1, "Woebringer Demon");
+    }
+
+    @Test
+    @DisplayName("Creature availability is checked when the upkeep ability resolves")
+    void removingOnlyCreatureInResponseSacrificesDemon() {
+        harness.addToBattlefield(player1, new WoebringerDemon());
+        Permanent wolf = harness.addToBattlefieldAndReturn(player2, new Watchwolf());
+        harness.setHand(player2, List.of(new LastGasp()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        advanceToUpkeep(player2);
+        harness.castAndResolveInstant(player2, 0, wolf.getId());
+        harness.assertInGraveyard(player2, "Watchwolf");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Woebringer Demon");
+        harness.assertInGraveyard(player1, "Woebringer Demon");
+    }
+
+    @Test
+    @DisplayName("Yasharn does not prevent sacrifice during resolution of the upkeep ability")
+    void yasharnDoesNotPreventUpkeepSacrifice() {
+        harness.addToBattlefield(player1, new WoebringerDemon());
+        harness.addToBattlefield(player1, new YasharnImplacableEarth());
+        harness.addToBattlefield(player2, new Watchwolf());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Watchwolf");
+        harness.assertInGraveyard(player2, "Watchwolf");
+        harness.assertOnBattlefield(player1, "Woebringer Demon");
+        harness.assertOnBattlefield(player1, "Yasharn, Implacable Earth");
     }
 }
