@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(ViridianAcolyte.class)
+@CardUsed({ViridianAcolyte.class})
 class ViridianAcolyteTest extends BaseCardTest {
 
     @Test
@@ -39,8 +39,7 @@ class ViridianAcolyteTest extends BaseCardTest {
 
             GameData gameData = harness.getGameData();
             gd = gameData;
-            Permanent acolyte = harness.addToBattlefieldAndReturn(player1, new ViridianAcolyte());
-            acolyte.setSummoningSick(false);
+            Permanent acolyte = addCreatureReady(player1, new ViridianAcolyte());
             ManaColor manaColor = ManaColor.valueOf(color);
             harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -61,8 +60,7 @@ class ViridianAcolyteTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate Viridian Acolyte without paying its generic activation cost")
     void cannotActivateWithoutMana() {
-        Permanent acolyte = harness.addToBattlefieldAndReturn(player1, new ViridianAcolyte());
-        acolyte.setSummoningSick(false);
+        addCreatureReady(player1, new ViridianAcolyte());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -71,8 +69,7 @@ class ViridianAcolyteTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate Viridian Acolyte when it is already tapped")
     void cannotActivateWhileTapped() {
-        Permanent acolyte = harness.addToBattlefieldAndReturn(player1, new ViridianAcolyte());
-        acolyte.setSummoningSick(false);
+        addCreatureReady(player1, new ViridianAcolyte());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -80,5 +77,22 @@ class ViridianAcolyteTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay the generic cost and is converted into the chosen color")
+    void coloredManaPaysGenericCost() {
+        Permanent acolyte = addCreatureReady(player1, new ViridianAcolyte());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(acolyte.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
