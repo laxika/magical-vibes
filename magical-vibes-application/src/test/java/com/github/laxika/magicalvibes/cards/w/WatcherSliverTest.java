@@ -57,4 +57,42 @@ class WatcherSliverTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, cavalry)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, cavalry)).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Multiple Watcher Slivers stack across both battlefields")
+    void multipleWatchersStack() {
+        Permanent friendlyWatcher = addCreatureReady(player1, new WatcherSliver());
+        Permanent opposingWatcher = addCreatureReady(player2, new WatcherSliver());
+        Permanent lateSliver = addCreatureReady(player2, new SidewinderSliver());
+        Permanent nonSliver = addCreatureReady(player2, new BenalishCavalry());
+
+        assertThat(gqs.getEffectivePower(gd, friendlyWatcher)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, friendlyWatcher)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, opposingWatcher)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingWatcher)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, lateSliver)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, lateSliver)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, nonSliver)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nonSliver)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Watcher Sliver's bonus ends immediately when it leaves the battlefield")
+    void bonusEndsWhenWatcherLeaves() {
+        Permanent watcher = addCreatureReady(player1, new WatcherSliver());
+        Permanent friendlySliver = addCreatureReady(player1, new SidewinderSliver());
+        Permanent opposingSliver = addCreatureReady(player2, new SidewinderSliver());
+
+        assertThat(gqs.getEffectiveToughness(gd, friendlySliver)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposingSliver)).isEqualTo(3);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, watcher));
+
+        harness.assertInHand(player1, "Watcher Sliver");
+        harness.assertNotOnBattlefield(player1, "Watcher Sliver");
+        assertThat(gqs.getEffectivePower(gd, friendlySliver)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, friendlySliver)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposingSliver)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingSliver)).isEqualTo(1);
+    }
 }
