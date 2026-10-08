@@ -19,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Waylay")
-@CardUsed(Waylay.class)
+@CardUsed({Waylay.class, ClawsOfGix.class})
 class WaylayTest extends BaseCardTest {
 
     private void castWaylay() {
@@ -54,7 +54,6 @@ class WaylayTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(ClawsOfGix.class)
     @DisplayName("Leaves the tokens available to respond before the cleanup exile resolves")
     void cleanupExileWaitsForPriority() {
         harness.addToBattlefield(player1, new ClawsOfGix());
@@ -98,5 +97,24 @@ class WaylayTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()).stream()
                 .filter(Card::isToken)
                 .count()).isZero();
+    }
+
+    @Test
+    @DisplayName("Waylay cast during cleanup loses its tokens in another cleanup before the next turn")
+    void tokensCreatedDuringCleanupAreExiledBeforeNextTurn() {
+        castWaylay();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+
+        castWaylay();
+        assertThat(findPermanents(player1, "Knight")).hasSize(6);
+
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Knight")).hasSize(3);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(findPermanents(player1, "Knight")).isEmpty();
     }
 }
