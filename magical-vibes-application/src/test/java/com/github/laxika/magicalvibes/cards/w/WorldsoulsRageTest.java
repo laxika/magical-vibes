@@ -71,6 +71,145 @@ class WorldsoulsRageTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(island, rage).hasSize(2);
     }
 
+    @Test
+    @DisplayName("Can decline to put any lands onto the battlefield after dealing damage")
+    void canDeclineAllLands() {
+        WorldsoulsRage rage = new WorldsoulsRage();
+        Forest forest = new Forest();
+        Island island = new Island();
+        harness.setHand(player1, List.of(rage, forest));
+        harness.setGraveyard(player1, List.of(island));
+        addManaForX(2);
+
+        harness.castSorcery(player1, 0, 2, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(island, rage);
+    }
+
+    @Test
+    @DisplayName("Can choose fewer than X lands while leaving unchosen lands in their zones")
+    void canChooseFewerThanXLands() {
+        WorldsoulsRage rage = new WorldsoulsRage();
+        Forest forest = new Forest();
+        Island island = new Island();
+        Mountain mountain = new Mountain();
+        harness.setHand(player1, List.of(rage, forest));
+        harness.setGraveyard(player1, List.of(island, mountain));
+        addManaForX(3);
+
+        harness.castSorcery(player1, 0, 3, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(island.getId()));
+
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getCard)
+                .containsExactly(island);
+        assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(Permanent::isTapped);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(mountain, rage);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Still deals damage when there are no lands to put onto the battlefield")
+    void dealsDamageWithoutAvailableLands() {
+        WorldsoulsRage rage = new WorldsoulsRage();
+        harness.setHand(player1, List.of(rage));
+        addManaForX(2);
+
+        harness.castSorcery(player1, 0, 2, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(rage);
+    }
+
+    @Test
+    @DisplayName("Does not put lands onto the battlefield if its only target has left the battlefield")
+    void illegalTargetPreventsLandPlacement() {
+        WorldsoulsRage rage = new WorldsoulsRage();
+        Forest forest = new Forest();
+        Island island = new Island();
+        GrizzlyBears bears = new GrizzlyBears();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, bears);
+        harness.setHand(player1, List.of(rage, forest));
+        harness.setGraveyard(player1, List.of(island));
+        addManaForX(2);
+
+        harness.castSorcery(player1, 0, 2, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setGraveyard(player2, List.of(bears));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(island, rage);
+    }
+
+    @Test
+    @DisplayName("Deals lethal damage to a creature and still puts a land from hand onto the battlefield")
+    void lethalCreatureDamageDoesNotPreventLandPlacement() {
+        WorldsoulsRage rage = new WorldsoulsRage();
+        Forest forest = new Forest();
+        GrizzlyBears bears = new GrizzlyBears();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, bears);
+        harness.setHand(player1, List.of(rage, forest));
+        addManaForX(2);
+
+        harness.castSorcery(player1, 0, 2, target.getId());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getCard)
+                .containsExactly(forest);
+        assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(Permanent::isTapped);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(bears);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(rage);
+    }
+
+    @Test
+    @DisplayName("Only the controller's lands can be chosen, with a combined limit of X across both zones")
+    void limitsChoicesToControllersLandsAndX() {
+        WorldsoulsRage rage = new WorldsoulsRage();
+        Forest forest = new Forest();
+        Island island = new Island();
+        Mountain opponentHandLand = new Mountain();
+        Forest opponentGraveyardLand = new Forest();
+        harness.setHand(player1, List.of(rage, forest));
+        harness.setGraveyard(player1, List.of(island));
+        harness.setHand(player2, List.of(opponentHandLand));
+        harness.setGraveyard(player2, List.of(opponentGraveyardLand));
+        addManaForX(1);
+
+        harness.castSorcery(player1, 0, 1, player2.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(forest.getId(), island.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getCard)
+                .containsExactly(forest);
+        assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(Permanent::isTapped);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(island, rage);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentHandLand);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentGraveyardLand);
+    }
+
     private void addManaForX(int xValue) {
         harness.addMana(player1, ManaColor.COLORLESS, xValue);
         harness.addMana(player1, ManaColor.RED, 1);
