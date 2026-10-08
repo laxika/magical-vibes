@@ -108,4 +108,33 @@ class VoiceOfTruthTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
     }
+
+    @Test
+    @DisplayName("Protection also prevents targeting by its controller's white spells")
+    void cannotBeTargetedByOwnWhiteSpell() {
+        Permanent voice = addCreatureReady(player1, new VoiceOfTruth());
+        harness.setHand(player1, List.of(new Topple()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, voice.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from white");
+    }
+
+    @Test
+    @DisplayName("Protection from white does not prevent black spell damage")
+    void blackSpellDealsLethalDamage() {
+        Permanent voice = addCreatureReady(player2, new VoiceOfTruth());
+        harness.setHand(player1, List.of(new ViciousHunger()));
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castSorcery(player1, 0, 0, voice.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Voice of Truth");
+        harness.assertInGraveyard(player2, "Voice of Truth");
+        harness.assertLife(player1, 22);
+    }
 }
