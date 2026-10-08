@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -24,6 +24,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VoldarenBloodcaster.class, GrizzlyBears.class, WrathOfGod.class})
 class VoldarenBloodcasterTest extends BaseCardTest {
 
     @Test
@@ -35,9 +36,7 @@ class VoldarenBloodcasterTest extends BaseCardTest {
         // Kill only the bear so Voldaren stays on the battlefield to watch
         bear.setMarkedDamage(2);
         harness.runStateBasedActions();
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(bloodTokenCount(player1)).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Voldaren Bloodcaster");
@@ -48,13 +47,9 @@ class VoldarenBloodcasterTest extends BaseCardTest {
     void selfDeathCreatesBlood() {
         harness.addToBattlefield(player1, new VoldarenBloodcaster());
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(bloodTokenCount(player1)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Voldaren Bloodcaster");
@@ -74,9 +69,7 @@ class VoldarenBloodcasterTest extends BaseCardTest {
 
         sap.setMarkedDamage(1);
         harness.runStateBasedActions();
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(bloodTokenCount(player1)).isZero();
         harness.assertOnBattlefield(player1, "Voldaren Bloodcaster");
@@ -94,9 +87,7 @@ class VoldarenBloodcasterTest extends BaseCardTest {
 
         bear.setMarkedDamage(2);
         harness.runStateBasedActions();
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(caster.isTransformed()).isTrue();
         assertThat(caster.getCard().getName()).isEqualTo("Bloodbat Summoner");
@@ -113,9 +104,7 @@ class VoldarenBloodcasterTest extends BaseCardTest {
 
         bear.setMarkedDamage(2);
         harness.runStateBasedActions();
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(caster.isTransformed()).isFalse();
         assertThat(bloodTokenCount(player1)).isEqualTo(3);
@@ -158,6 +147,87 @@ class VoldarenBloodcasterTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, blood)).isFalse();
     }
 
+    @Test
+    void simultaneousDeathsCreateBloodForSelfAndEachNontokenAlly() {
+        harness.addToBattlefield(player1, new VoldarenBloodcaster());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        resolveAllTriggers();
+
+        assertThat(bloodTokenCount(player1)).isEqualTo(3);
+        assertThat(bloodTokenCount(player2)).isZero();
+    }
+
+    @Test
+    void opponentCreatureDeathDoesNotCreateBlood() {
+        harness.addToBattlefield(player1, new VoldarenBloodcaster());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bear.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(bloodTokenCount(player1)).isZero();
+    }
+
+    @Test
+    void transformConditionIsCheckedAgainOnResolution() {
+        Permanent caster = harness.addToBattlefieldAndReturn(player1, new VoldarenBloodcaster());
+        for (int i = 0; i < 4; i++) {
+            addBloodToken(player1);
+        }
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bear.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        assertThat(bloodTokenCount(player1)).isEqualTo(5);
+        assertThat(gd.stack).isNotEmpty();
+
+        Permanent blood = findPermanent(player1, "Blood");
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, blood);
+        resolveAllTriggers();
+
+        assertThat(bloodTokenCount(player1)).isEqualTo(4);
+        assertThat(caster.isTransformed()).isFalse();
+    }
+
+    @Test
+    void backFaceDoesNotTriggerDuringOpponentsCombat() {
+        transformCaster();
+        Permanent blood = findPermanent(player1, "Blood");
+
+        advanceToCombat(player2);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.isCreature(gd, blood)).isFalse();
+    }
+
+    @Test
+    void bloodAnimationPersistsAfterTurnAndSourceDies() {
+        Permanent caster = transformCaster();
+        Permanent blood = findPermanent(player1, "Blood");
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, blood.getId());
+        resolveAllTriggers();
+        caster.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, blood)).isTrue();
+        assertThat(gqs.isArtifact(gd, blood)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, blood)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blood)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, blood, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, blood, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasColor(gd, blood, CardColor.BLACK)).isTrue();
+        assertThat(bloodTokenCount(player1)).isEqualTo(5);
+    }
+
     private Permanent transformCaster() {
         Permanent caster = harness.addToBattlefieldAndReturn(player1, new VoldarenBloodcaster());
         addBloodToken(player1);
@@ -167,9 +237,7 @@ class VoldarenBloodcasterTest extends BaseCardTest {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bear.setMarkedDamage(2);
         harness.runStateBasedActions();
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
         assertThat(caster.isTransformed()).isTrue();
         return caster;
     }
