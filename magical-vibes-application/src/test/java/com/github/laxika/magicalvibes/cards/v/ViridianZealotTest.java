@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.a.AetherVial;
+import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.cards.s.ScreamsFromWithin;
+import com.github.laxika.magicalvibes.cards.s.SpireGolem;
 import com.github.laxika.magicalvibes.cards.t.TelJiladWolf;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +15,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ViridianZealot.class, AetherVial.class, ScreamsFromWithin.class, TelJiladWolf.class})
+@CardUsed({ViridianZealot.class, AetherVial.class, ScreamsFromWithin.class, TelJiladWolf.class,
+        DarksteelCitadel.class, SpireGolem.class})
 class ViridianZealotTest extends BaseCardTest {
 
     @Test
@@ -108,6 +111,64 @@ class ViridianZealotTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
 
         harness.assertInGraveyard(player1, "Viridian Zealot");
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped")
+    void canActivateWhileTapped() {
+        Permanent zealot = addReadyZealot(player1);
+        zealot.tap();
+        Permanent target = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.assertInGraveyard(player1, "Viridian Zealot");
+        harness.assertOnBattlefield(player2, "Aether Vial");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Aether Vial");
+    }
+
+    @Test
+    @DisplayName("Can destroy an artifact creature")
+    void destroysArtifactCreature() {
+        addReadyZealot(player1);
+        Permanent target = addCreatureReady(player2, new SpireGolem());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Spire Golem");
+        harness.assertInGraveyard(player2, "Spire Golem");
+    }
+
+    @Test
+    @DisplayName("Indestructible artifact survives but Zealot is still sacrificed")
+    void indestructibleTargetSurvives() {
+        addReadyZealot(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DarksteelCitadel());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.assertInGraveyard(player1, "Viridian Zealot");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Darksteel Citadel");
+        harness.assertNotInGraveyard(player2, "Darksteel Citadel");
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice Zealot without choosing a target")
+    void cannotActivateWithoutTarget() {
+        addReadyZealot(player1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Viridian Zealot");
+        harness.assertNotInGraveyard(player1, "Viridian Zealot");
     }
 
     private Permanent addReadyZealot(Player player) {
