@@ -63,13 +63,67 @@ class WebUpTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 2);
         UUID sourceId = harness.getPermanentId(player1, "Web Up");
 
-        harness.passPriority(player1);
-        harness.castInstant(player2, 0, sourceId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, sourceId);
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getCard() instanceof GrizzlyBears);
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exiles an opposing enchantment as well as creatures")
+    void exilesOpposingEnchantment() {
+        harness.addToBattlefield(player2, new WebUp());
+        UUID targetId = harness.getPermanentId(player2, "Web Up");
+
+        castAndResolve(targetId);
+
+        harness.assertNotOnBattlefield(player2, "Web Up");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card instanceof WebUp);
+        harness.assertOnBattlefield(player1, "Web Up");
+    }
+
+    @Test
+    @DisplayName("Does not exile the target if Web Up leaves before its trigger resolves")
+    void sourceLeavesBeforeTriggerResolves() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        prepareToCast();
+        harness.castEnchantment(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        UUID sourceId = harness.getPermanentId(player1, "Web Up");
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player2, 0, sourceId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Web Up");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(targetId));
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not exile a target that leaves before the trigger resolves")
+    void targetLeavesBeforeTriggerResolves() {
+        harness.addToBattlefield(player2, new WebUp());
+        UUID targetId = harness.getPermanentId(player2, "Web Up");
+        prepareToCast();
+        harness.castEnchantment(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player2, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Web Up");
+        harness.assertOnBattlefield(player1, "Web Up");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
