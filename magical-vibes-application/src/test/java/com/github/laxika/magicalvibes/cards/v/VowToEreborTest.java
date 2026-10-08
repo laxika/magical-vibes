@@ -24,8 +24,6 @@ class VowToEreborTest extends BaseCardTest {
         target.tap();
         castVow(target);
 
-        harness.passBothPriorities();
-
         assertThat(target.isTapped()).isFalse();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
@@ -37,8 +35,6 @@ class VowToEreborTest extends BaseCardTest {
         target.tap();
         Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
         castVow(target);
-
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isTapped()).isFalse();
@@ -52,16 +48,14 @@ class VowToEreborTest extends BaseCardTest {
         Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
         castVow(target);
 
-        harness.passBothPriorities();
-
         assertThat(equipment.getAttachedTo()).isNull();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
     void boostWearsOffAtEndOfTurn() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         castVow(target);
-        harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -82,10 +76,84 @@ class VowToEreborTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void dwarfCanDeclineAttachmentAndStillUntapAndGetBoosted() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LiberatedDwarf());
+        target.tap();
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+
+        castVow(target);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        assertThat(equipment.getAttachedTo()).isNull();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void choosesOnlyOneControlledEquipment() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LiberatedDwarf());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+
+        castVow(target);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, second.getId());
+
+        assertThat(first.getAttachedTo()).isNull();
+        assertThat(second.getAttachedTo()).isEqualTo(target.getId());
+        assertThat(opposing.getAttachedTo()).isNull();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void dwarfWithNoControlledEquipmentStillUntapsAndGetsBoosted() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LiberatedDwarf());
+        target.tap();
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+
+        castVow(target);
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        assertThat(opposing.getAttachedTo()).isNull();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void attachedEquipmentStaysAttachedAfterEndOfTurn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LiberatedDwarf());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        castVow(target);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(equipment.getAttachedTo()).isEqualTo(target.getId());
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(target.getId());
+
+        harness.passBothPriorities();
+        assertThat(equipment.getAttachedTo()).isEqualTo(target.getId());
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
     private void castVow(Permanent target) {
         harness.setHand(player1, List.of(new VowToErebor()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
