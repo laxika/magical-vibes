@@ -141,8 +141,7 @@ class WarpArtifactTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.passPriority(player2);
-        harness.castInstant(player1, 0, stealArtifactPermanent.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, stealArtifactPermanent.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(artifact.getId()));
@@ -153,6 +152,59 @@ class WarpArtifactTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(player1LifeBefore);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(player2LifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Warp Artifact damages its own controller when they control the enchanted artifact")
+    void damagesOwnControllerWhenTheyControlArtifact() {
+        attachWarpArtifact(addArtifact(player1));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore - 1);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Removing Warp Artifact in response does not stop its upkeep damage")
+    void triggerResolvesAfterAuraIsDestroyed() {
+        Permanent artifact = addArtifact(player2);
+        attachWarpArtifact(artifact);
+        Permanent aura = findPermanent(player1, "Warp Artifact");
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player2, 0, aura.getId());
+
+        harness.assertInGraveyard(player1, "Warp Artifact");
+        harness.assertLife(player2, lifeBefore);
+        harness.passBothPriorities();
+        harness.assertLife(player2, lifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Removing the enchanted artifact in response does not stop upkeep damage")
+    void triggerResolvesAfterArtifactIsDestroyed() {
+        Permanent artifact = addArtifact(player2);
+        attachWarpArtifact(artifact);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player2, 0, artifact.getId());
+
+        harness.assertInGraveyard(player2, "Ornithopter");
+        harness.assertInGraveyard(player1, "Warp Artifact");
+        harness.assertLife(player2, lifeBefore);
+        harness.passBothPriorities();
+        harness.assertLife(player2, lifeBefore - 1);
     }
 
     private void attachWarpArtifact(Permanent artifact) {
