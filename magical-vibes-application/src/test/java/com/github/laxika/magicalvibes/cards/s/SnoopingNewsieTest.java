@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.m.Murder;
-import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -55,9 +54,7 @@ class SnoopingNewsieTest extends BaseCardTest {
         Card topCard = new Island();
         Card secondCard = new Mountain();
         Card remainingCard = new Forest();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(
-                topCard, secondCard, remainingCard));
+        harness.setLibrary(player1, List.of(topCard, secondCard, remainingCard));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new SnoopingNewsie()));
@@ -71,5 +68,75 @@ class SnoopingNewsieTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(
                 topCard, secondCard);
+    }
+
+    @Test
+    @DisplayName("Bonus updates as distinct mana values enter and leave the graveyard")
+    void bonusUpdatesWithGraveyardContents() {
+        harness.setGraveyard(player1, List.of(
+                new Forest(), new Shock(), new GrizzlyBears(), new Murder()));
+        Permanent newsie = harness.addToBattlefieldAndReturn(player1, new SnoopingNewsie());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, newsie)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, newsie, Keyword.LIFELINK)).isFalse();
+
+        harness.setGraveyard(player1, List.of(
+                new Forest(), new Shock(), new GrizzlyBears(), new Murder(), new HillGiant()));
+
+        assertThat(gqs.getEffectivePower(gd, newsie)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, newsie)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, newsie, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.LIFELINK)).isFalse();
+
+        harness.setGraveyard(player1, List.of(
+                new Forest(), new Shock(), new GrizzlyBears(), new Murder()));
+
+        assertThat(gqs.getEffectivePower(gd, newsie)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, newsie)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, newsie, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Opponent graveyard mana values do not count toward the bonus")
+    void ignoresOpponentGraveyard() {
+        harness.setGraveyard(player1, List.of(new Forest(), new Shock()));
+        harness.setGraveyard(player2, List.of(
+                new Forest(), new Shock(), new GrizzlyBears(), new Murder(), new HillGiant()));
+        Permanent newsie = harness.addToBattlefieldAndReturn(player1, new SnoopingNewsie());
+
+        assertThat(gqs.getEffectivePower(gd, newsie)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, newsie)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, newsie, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Mills the available card from a short library and enables the bonus")
+    void millsShortLibraryAndEnablesBonus() {
+        Card milledCard = new HillGiant();
+        Card opponentCard = new Island();
+        harness.setGraveyard(player1, List.of(
+                new Forest(), new Shock(), new GrizzlyBears(), new Murder()));
+        harness.setLibrary(player1, List.of(milledCard));
+        harness.setLibrary(player2, List.of(opponentCard));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new SnoopingNewsie()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(5).contains(milledCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        Permanent newsie = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gqs.getEffectivePower(gd, newsie)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, newsie)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, newsie, Keyword.LIFELINK)).isTrue();
     }
 }
