@@ -69,4 +69,55 @@ class WhirlwindKillerCycloneTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid permanent");
     }
+
+    @Test
+    @DisplayName("Whirlwind can trigger its own ability on the turn it enters")
+    void whirlwindEnteringAndAttackingTriggers() {
+        harness.enterBattlefieldAndReturn(player1, new WhirlwindKillerCyclone());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
+
+        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Multiple creatures entering this turn and attacking the same player produce one trigger")
+    void multipleQualifyingAttackersTriggerOnce() {
+        harness.addToBattlefield(player1, new WhirlwindKillerCyclone());
+        Permanent first = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        first.setSummoningSick(false);
+        second.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent otherBlocker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(1, 2));
+        harness.handlePermanentChosen(player1, blocker.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(otherBlocker.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The trigger still resolves after the qualifying creature stops attacking")
+    void attackerLeavingCombatDoesNotPreventResolution() {
+        harness.addToBattlefield(player1, new WhirlwindKillerCyclone());
+        Permanent attacker = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(1));
+        harness.handlePermanentChosen(player1, blocker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+    }
 }
