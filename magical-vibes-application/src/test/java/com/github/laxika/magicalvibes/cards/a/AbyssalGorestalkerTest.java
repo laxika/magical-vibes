@@ -62,6 +62,68 @@ class AbyssalGorestalkerTest extends BaseCardTest {
         assertThat(creatureCount(player2)).isZero();
     }
 
+    @Test
+    @DisplayName("Players with only one creature sacrifice it without needing a second creature")
+    void playersWithOneCreatureSacrificeIt() {
+        harness.addToBattlefield(player2, new AbyssalGorestalker());
+
+        castGorestalker();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(creatureCount(player1)).isZero();
+        assertThat(creatureCount(player2)).isZero();
+        harness.assertInGraveyard(player1, "Abyssal Gorestalker");
+        harness.assertInGraveyard(player2, "Abyssal Gorestalker");
+    }
+
+    @Test
+    @DisplayName("An opponent with no creatures does not prevent the controller's sacrifice")
+    void opponentWithNoCreaturesDoesNotPreventSacrifice() {
+        castGorestalker();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Abyssal Gorestalker");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both players choose before any creatures are sacrificed")
+    void bothPlayersChooseBeforeSacrifices() {
+        for (int i = 0; i < 2; i++) {
+            harness.addToBattlefield(player1, new AbyssalGorestalker());
+        }
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player2, new AbyssalGorestalker());
+        }
+
+        castGorestalker();
+
+        PendingInteraction.MultiPermanentChoice firstChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(firstChoice).isNotNull();
+        assertThat(firstChoice.playerId()).isEqualTo(player1.getId());
+        List<UUID> firstIds = creatureIds(player1).stream().limit(2).toList();
+        List<UUID> secondIds = creatureIds(player2).stream().limit(2).toList();
+        harness.handleMultiplePermanentsChosen(player1, firstIds);
+
+        PendingInteraction.MultiPermanentChoice secondChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(secondChoice).isNotNull();
+        assertThat(secondChoice.playerId()).isEqualTo(player2.getId());
+        assertThat(creatureCount(player1)).isEqualTo(3);
+        assertThat(creatureCount(player2)).isEqualTo(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+
+        harness.handleMultiplePermanentsChosen(player2, secondIds);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(creatureIds(player1)).doesNotContainAnyElementsOf(firstIds).hasSize(1);
+        assertThat(creatureIds(player2)).doesNotContainAnyElementsOf(secondIds).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
     private void castGorestalker() {
         harness.setHand(player1, List.of(new AbyssalGorestalker()));
         harness.addMana(player1, ManaColor.BLACK, 2);
