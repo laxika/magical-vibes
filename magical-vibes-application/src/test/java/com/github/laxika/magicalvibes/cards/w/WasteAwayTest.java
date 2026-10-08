@@ -42,7 +42,6 @@ class WasteAwayTest extends BaseCardTest {
         harness.castInstantWithDiscard(player1, 0, target.getId(), 1);
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getEffectivePower()).isEqualTo(6);
@@ -87,6 +86,69 @@ class WasteAwayTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
         harness.assertInHand(player1, "Waste Away");
         harness.assertInHand(player1, "Cabal Surgeon");
+    }
+
+    @Test
+    void discardsALandBeforeResolutionWhenSpellIsNotFirstInHand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Gurzigost());
+        harness.setHand(player1, List.of(new CabalCoffers(), new WasteAway(), new CabalSurgeon()));
+        addMana();
+
+        harness.castInstantWithDiscard(player1, 1, target.getId(), 0);
+
+        harness.assertInGraveyard(player1, "Cabal Coffers");
+        harness.assertNotInHand(player1, "Cabal Coffers");
+        harness.assertInHand(player1, "Cabal Surgeon");
+        harness.assertNotInGraveyard(player1, "Waste Away");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(target.getEffectivePower()).isEqualTo(6);
+        assertThat(target.getEffectiveToughness()).isEqualTo(8);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Waste Away");
+        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    void canTargetOwnCreatureAndKillItWithNegativeToughness() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CabalSurgeon());
+        harness.setHand(player1, List.of(new WasteAway(), new CabalCoffers()));
+        addMana();
+
+        harness.castInstantWithDiscard(player1, 0, target.getId(), 1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Cabal Surgeon");
+        harness.assertInGraveyard(player1, "Cabal Surgeon");
+        harness.assertInGraveyard(player1, "Cabal Coffers");
+        harness.assertInGraveyard(player1, "Waste Away");
+    }
+
+    @Test
+    void discardCostIsNotRefundedWhenTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AngelOfRetribution());
+        harness.setHand(player1, List.of(new WasteAway(), new CabalCoffers(),
+                new WasteAway(), new CabalSurgeon()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.castInstantWithDiscard(player1, 0, target.getId(), 1);
+        harness.castInstantWithDiscard(player1, 0, target.getId(), 1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Angel of Retribution");
+        harness.assertNotOnBattlefield(player2, "Angel of Retribution");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Cabal Coffers");
+        harness.assertInGraveyard(player1, "Cabal Surgeon");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Waste Away"))
+                .hasSize(2);
     }
 
     private void addMana() {
