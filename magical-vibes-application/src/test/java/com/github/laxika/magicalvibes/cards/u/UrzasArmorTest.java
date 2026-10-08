@@ -100,4 +100,56 @@ class UrzasArmorTest extends BaseCardTest {
         // Each Hill Giant deals 3; 1 is prevented from each source, so player1 takes 4 total.
         harness.assertLife(player1, 16);
     }
+
+    @Test
+    @DisplayName("Prevention applies again to later damage from the same permanent")
+    void preventsEachDamageEventFromSameSource() {
+        harness.addToBattlefield(player1, new UrzasArmor());
+        var rod = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.setLife(player1, 20);
+        harness.addMana(player2, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+
+        rod.setTapped(false);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A tapped Armor still prevents damage from its controller's own source")
+    void tappedArmorPreventsSelfInflictedDamage() {
+        var armor = harness.addToBattlefieldAndReturn(player1, new UrzasArmor());
+        armor.setTapped(true);
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Armor does not prevent damage to its controller's creatures")
+    void doesNotProtectControlledCreature() {
+        harness.addToBattlefield(player1, new UrzasArmor());
+        var giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        harness.addToBattlefield(player2, new RodOfRuin());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player2, 0, giant.getId());
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.activateAbility(player2, 0, null, giant.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Hill Giant");
+    }
 }
