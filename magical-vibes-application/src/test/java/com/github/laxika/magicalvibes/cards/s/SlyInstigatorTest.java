@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,8 +32,7 @@ class SlyInstigatorTest extends BaseCardTest {
         assertThat(instigator.isTapped()).isTrue();
         assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
-        beginAttackers(player2);
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of()))
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
     }
@@ -62,8 +62,7 @@ class SlyInstigatorTest extends BaseCardTest {
     void cannotTargetOwnCreatureOrOpponentLand() {
         addCreatureReady(player1, new SlyInstigator());
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent opponentLand = new Permanent(new Forest());
-        gd.playerBattlefields.get(player2.getId()).add(opponentLand);
+        Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new Forest());
         addBlueMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, ownCreature.getId()))
@@ -77,10 +76,81 @@ class SlyInstigatorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
     }
 
-    private void beginAttackers(com.github.laxika.magicalvibes.model.Player player) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+    @Test
+    @DisplayName("A goaded creature can attack the goading player in a two-player game and cannot be blocked")
+    void goadedCreatureCanAttackGoadingPlayerButCannotBeBlocked() {
+        addCreatureReady(player1, new SlyInstigator());
+        addCreatureReady(player1, new SlyInstigator());
+        Permanent target = addCreatureReady(player2, new SlyInstigator());
+        addBlueMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, Map.of(1, 0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Both effects remain after Sly Instigator leaves the battlefield")
+    void effectsRemainAfterSourceLeaves() {
+        Permanent source = addCreatureReady(player1, new SlyInstigator());
+        Permanent target = addCreatureReady(player2, new SlyInstigator());
+        addBlueMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
+        assertThat(gqs.isGoaded(gd, target)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Both effects expire when the ability controller's next turn begins")
+    void goadAlsoExpiresOnControllerNextTurn() {
+        addCreatureReady(player1, new SlyInstigator());
+        Permanent target = addCreatureReady(player2, new SlyInstigator());
+        addBlueMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.isGoaded(gd, target)).isTrue();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
+        assertThat(gqs.isGoaded(gd, target)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Sly Instigator cannot pay the tap cost")
+    void summoningSicknessPreventsActivation() {
+        harness.addToBattlefield(player1, new SlyInstigator());
+        Permanent target = addCreatureReady(player2, new SlyInstigator());
+        addBlueMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
+        assertThat(gqs.isGoaded(gd, target)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The activation requires one blue mana")
+    void activationRequiresBlueMana() {
+        Permanent source = addCreatureReady(player1, new SlyInstigator());
+        Permanent target = addCreatureReady(player2, new SlyInstigator());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(source.isTapped()).isFalse();
+        assertThat(gqs.isGoaded(gd, target)).isFalse();
     }
 }
