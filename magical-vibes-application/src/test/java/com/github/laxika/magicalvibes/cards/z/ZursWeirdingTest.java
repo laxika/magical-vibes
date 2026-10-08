@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
 import com.github.laxika.magicalvibes.cards.p.Prosperity;
+import com.github.laxika.magicalvibes.cards.t.ThoughtReflection;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +21,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ZursWeirding.class, AirElemental.class, Forest.class, GrizzlyBears.class})
+@CardUsed({ZursWeirding.class, AirElemental.class, Forest.class, GrizzlyBears.class,
+        Prosperity.class, FontOfAgonies.class, PlatinumEmperion.class, ThoughtReflection.class})
 class ZursWeirdingTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent pays 2 life to send the drawn card to its owner's graveyard")
@@ -73,6 +75,83 @@ class ZursWeirdingTest extends BaseCardTest {
         // No payment is possible — the drawing player simply draws, opponent's life is untouched.
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertLife(player2, 1);
+    }
+
+    @Test
+    @CardUsed(ThoughtReflection.class)
+    @DisplayName("Other draw replacements still apply when nobody can pay for Zur's Weirding")
+    void unableToPayDoesNotBypassDrawDoubling() {
+        harness.addToBattlefield(player1, new ZursWeirding());
+        harness.addToBattlefield(player1, new ThoughtReflection());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new AirElemental(), new Forest()));
+        harness.setLife(player2, 1);
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Air Elemental");
+        harness.assertLife(player2, 1);
+    }
+
+    @Test
+    @CardUsed(ThoughtReflection.class)
+    @DisplayName("The drawing player chooses the replacement before the opponent chooses whether to pay")
+    void drawingPlayerChoosesBetweenApplicableReplacements() {
+        harness.addToBattlefield(player1, new ZursWeirding());
+        harness.addToBattlefield(player1, new ThoughtReflection());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new AirElemental(), new Forest()));
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        PendingInteraction.MayAbilityChoice mayChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        if (mayChoice != null) {
+            assertThat(mayChoice.playerId()).isEqualTo(player1.getId());
+        }
+        harness.assertLife(player2, 20);
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A player with exactly 2 life may pay even though the payment makes them lose")
+    void opponentMayPayTheirLastTwoLife() {
+        harness.addToBattlefield(player1, new ZursWeirding());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
+        harness.setLife(player2, 2);
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 0);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("The controller may pay to deny an opponent's draw")
+    void controllerCanDenyOpponentsDraw() {
+        harness.addToBattlefield(player1, new ZursWeirding());
+        harness.setLibrary(player2, List.of(new AirElemental(), new Forest()));
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player2, "Air Elemental");
+        harness.assertNotInHand(player2, "Air Elemental");
     }
 
     @Test
