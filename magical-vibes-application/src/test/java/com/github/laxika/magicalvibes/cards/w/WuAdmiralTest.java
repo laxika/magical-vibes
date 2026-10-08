@@ -75,6 +75,29 @@ class WuAdmiralTest extends BaseCardTest {
         assertStats(4, 4);
     }
 
+    @Test
+    @DisplayName("Gains the boost immediately when an opponent's Island enters")
+    void gainsBoostWhenOpponentIslandEnters() {
+        harness.addToBattlefield(player1, new WuAdmiral());
+        assertStats(3, 3);
+
+        harness.addToBattlefield(player2, new Island());
+
+        assertStats(4, 4);
+    }
+
+    @Test
+    @DisplayName("Each Admiral checks Islands controlled by its own opponent")
+    void admiralsCheckTheirRespectiveOpponents() {
+        harness.addToBattlefield(player1, new WuAdmiral());
+        Permanent opposingAdmiral = harness.addToBattlefieldAndReturn(player2, new WuAdmiral());
+        harness.addToBattlefield(player1, new Island());
+
+        assertStats(3, 3);
+        assertThat(gqs.getEffectivePower(gd, opposingAdmiral)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opposingAdmiral)).isEqualTo(4);
+    }
+
     private void assertStats(int power, int toughness) {
         Permanent admiral = findPermanent(player1, "Wu Admiral");
         assertThat(gqs.getEffectivePower(gd, admiral)).isEqualTo(power);
