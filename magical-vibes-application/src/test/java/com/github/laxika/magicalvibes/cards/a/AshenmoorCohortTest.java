@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({AshenmoorCohort.class, AshenmoorGouger.class, BoggartRamGang.class, WoundReflection.class})
@@ -97,5 +99,22 @@ class AshenmoorCohortTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Black creatures outside the battlefield do not count; entering grants the boost immediately")
+    void gainsBoostOnlyWhenBlackCreatureEntersBattlefield() {
+        Permanent cohort = harness.addToBattlefieldAndReturn(player1, new AshenmoorCohort());
+        harness.setHand(player1, List.of(new AshenmoorGouger()));
+        harness.setGraveyard(player1, List.of(new AshenmoorCohort()));
+
+        assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(3);
+
+        harness.enterBattlefieldAndReturn(player1, new AshenmoorGouger());
+
+        assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
     }
 }
