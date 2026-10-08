@@ -74,4 +74,51 @@ class WeightOfSpiresTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("cannot target players");
     }
+    @Test
+    @DisplayName("Can target your own creature and counts only your nonbasic lands")
+    void canDamageOwnCreature() {
+        harness.addToBattlefield(player1, new BreedingPool());
+        harness.addToBattlefield(player2, new BreedingPool());
+        harness.addToBattlefield(player2, new BreedingPool());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AssaultZeppelid());
+        harness.setHand(player1, List.of(new WeightOfSpires()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Assault Zeppelid");
+    }
+
+    @Test
+    @DisplayName("Nonland permanents do not increase damage")
+    void ignoresNonlandPermanents() {
+        harness.addToBattlefield(player2, new BreedingPool());
+        harness.addToBattlefield(player2, new AssaultZeppelid());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AssaultZeppelid());
+        harness.setHand(player1, List.of(new WeightOfSpires()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Assault Zeppelid");
+    }
+
+    @Test
+    @DisplayName("Lethal damage puts the creature into its owner's graveyard")
+    void lethalDamageDestroysCreature() {
+        harness.addToBattlefield(player2, new BreedingPool());
+        harness.addToBattlefield(player2, new BreedingPool());
+        harness.addToBattlefield(player2, new BreedingPool());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AssaultZeppelid());
+        harness.setHand(player1, List.of(new WeightOfSpires()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Assault Zeppelid");
+        harness.assertInGraveyard(player2, "Assault Zeppelid");
+        harness.assertInGraveyard(player1, "Weight of Spires");
+    }
 }
