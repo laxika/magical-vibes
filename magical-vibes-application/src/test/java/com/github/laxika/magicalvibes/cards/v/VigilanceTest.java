@@ -26,7 +26,7 @@ class VigilanceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Vigilance()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        gs.playCard(gd, player1, 0, 0, creature.getId(), null);
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -41,9 +41,8 @@ class VigilanceTest extends BaseCardTest {
     void enchantedCreatureHasVigilance() {
         Permanent creature = addCreatureReady(player1, new KamiOfOldStone());
 
-        Permanent auraPerm = new Permanent(new Vigilance());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new Vigilance());
         auraPerm.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
     }
@@ -53,9 +52,8 @@ class VigilanceTest extends BaseCardTest {
     void vigilanceStopsWhenRemoved() {
         Permanent creature = addCreatureReady(player1, new KamiOfOldStone());
 
-        Permanent auraPerm = new Permanent(new Vigilance());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new Vigilance());
         auraPerm.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
 
@@ -86,9 +84,8 @@ class VigilanceTest extends BaseCardTest {
 
         Permanent otherCreature = addCreatureReady(player1, new KamiOfOldStone());
 
-        Permanent auraPerm = new Permanent(new Vigilance());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new Vigilance());
         auraPerm.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.VIGILANCE)).isFalse();
     }
@@ -135,5 +132,22 @@ class VigilanceTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Vigilance");
         harness.assertNotOnBattlefield(player1, "Vigilance");
+    }
+
+    @Test
+    @DisplayName("Vigilance goes to its owner's graveyard when the enchanted opposing creature leaves")
+    void auraGoesToGraveyardWhenEnchantedCreatureLeaves() {
+        Permanent creature = addCreatureReady(player2, new KamiOfOldStone());
+        harness.setHand(player1, List.of(new Vigilance()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Vigilance");
+        harness.assertInGraveyard(player1, "Vigilance");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 }
