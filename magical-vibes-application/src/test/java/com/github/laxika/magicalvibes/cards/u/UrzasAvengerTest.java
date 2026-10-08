@@ -99,4 +99,90 @@ class UrzasAvengerTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, avenger, Keyword.BANDING)).isTrue();
     }
+    @Test
+    @DisplayName("Repeated activations accumulate penalties and different chosen abilities")
+    void repeatedActivationsAccumulateAndExpireTogether() {
+        Permanent avenger = addCreatureReady(player1, new UrzasAvenger());
+        int power = gqs.getEffectivePower(gd, avenger);
+        int toughness = gqs.getEffectiveToughness(gd, avenger);
+
+        for (String choice : new String[]{"FLYING", "FIRST_STRIKE", "TRAMPLE"}) {
+            harness.activateAbility(player1, 0, 0, null, null);
+            harness.passBothPriorities();
+            harness.handleListChoice(player1, choice);
+        }
+
+        assertThat(gqs.getEffectivePower(gd, avenger)).isEqualTo(power - 3);
+        assertThat(gqs.getEffectiveToughness(gd, avenger)).isEqualTo(toughness - 3);
+        assertThat(gqs.hasKeyword(gd, avenger, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, avenger, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, avenger, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, avenger, Keyword.BANDING)).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, avenger)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, avenger)).isEqualTo(toughness);
+        assertThat(gqs.hasKeyword(gd, avenger, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, avenger, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, avenger, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The same keyword can be chosen repeatedly and each activation still gives -1/-1")
+    void canChooseSameKeywordRepeatedly() {
+        Permanent avenger = addCreatureReady(player1, new UrzasAvenger());
+        int power = gqs.getEffectivePower(gd, avenger);
+        int toughness = gqs.getEffectiveToughness(gd, avenger);
+
+        for (int activation = 0; activation < 2; activation++) {
+            harness.activateAbility(player1, 0, 0, null, null);
+            harness.passBothPriorities();
+            harness.handleListChoice(player1, "BANDING");
+        }
+
+        assertThat(gqs.getEffectivePower(gd, avenger)).isEqualTo(power - 2);
+        assertThat(gqs.getEffectiveToughness(gd, avenger)).isEqualTo(toughness - 2);
+        assertThat(gqs.hasKeyword(gd, avenger, Keyword.BANDING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, avenger, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Avenger can activate its zero-cost ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent avenger = harness.addToBattlefieldAndReturn(player1, new UrzasAvenger());
+        avenger.setSummoningSick(true);
+        avenger.setTapped(true);
+        int power = gqs.getEffectivePower(gd, avenger);
+        int toughness = gqs.getEffectiveToughness(gd, avenger);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "FLYING");
+
+        assertThat(gqs.getEffectivePower(gd, avenger)).isEqualTo(power - 1);
+        assertThat(gqs.getEffectiveToughness(gd, avenger)).isEqualTo(toughness - 1);
+        assertThat(gqs.hasKeyword(gd, avenger, Keyword.FLYING)).isTrue();
+        assertThat(avenger.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations kill the Avenger when its toughness reaches zero")
+    void repeatedActivationsCanReduceToughnessToZero() {
+        Permanent avenger = addCreatureReady(player1, new UrzasAvenger());
+        int toughness = gqs.getEffectiveToughness(gd, avenger);
+
+        for (int activation = 0; activation < toughness; activation++) {
+            harness.activateAbility(player1, 0, 0, null, null);
+            harness.passBothPriorities();
+            harness.handleListChoice(player1, "FLYING");
+        }
+
+        harness.assertNotOnBattlefield(player1, "Urza's Avenger");
+        harness.assertInGraveyard(player1, "Urza's Avenger");
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(gd.deferPlayerLossCheck).isFalse();
+    }
 }
