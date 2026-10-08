@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DarksteelRelic.class, GrizzlyBears.class, Spellbook.class, UrzasChalice.class})
+@CardUsed({DarksteelRelic.class, GrizzlyBears.class, Ornithopter.class, Spellbook.class, UrzasChalice.class})
 class UrzasChaliceTest extends BaseCardTest {
 
     @Test
@@ -30,9 +31,7 @@ class UrzasChaliceTest extends BaseCardTest {
                 .isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
@@ -47,9 +46,7 @@ class UrzasChaliceTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
@@ -162,5 +159,57 @@ class UrzasChaliceTest extends BaseCardTest {
                 && e.getCard().getName().equals("Urza's Chalice"));
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    void artifactCreatureTriggersBeforeResolvingAndAcceptsColoredMana() {
+        harness.addToBattlefield(player1, new UrzasChalice());
+        harness.setHand(player1, List.of(new Ornithopter()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
+        harness.assertLife(player1, lifeBefore);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, lifeBefore + 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        harness.assertLife(player1, lifeBefore + 1);
+    }
+
+    @Test
+    void castingChaliceDoesNotTriggerItself() {
+        harness.setHand(player1, List.of(new UrzasChalice()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castArtifact(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Urza's Chalice");
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void artifactEnteringWithoutBeingCastDoesNotTrigger() {
+        harness.addToBattlefield(player1, new UrzasChalice());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.addToBattlefield(player1, new Ornithopter());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 }
