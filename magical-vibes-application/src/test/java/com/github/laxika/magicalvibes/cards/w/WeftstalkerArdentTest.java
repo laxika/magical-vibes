@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IchorWellspring;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -25,7 +26,7 @@ class WeftstalkerArdentTest extends BaseCardTest {
         int opponentLifeBefore = gd.getLife(player2.getId());
 
         harness.castCreature(player1, 0);
-        resolveSpellAndTriggers();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - 1);
     }
@@ -39,7 +40,7 @@ class WeftstalkerArdentTest extends BaseCardTest {
         int opponentLifeBefore = gd.getLife(player2.getId());
 
         harness.castArtifact(player1, 0);
-        resolveSpellAndTriggers();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - 1);
     }
@@ -52,7 +53,7 @@ class WeftstalkerArdentTest extends BaseCardTest {
         int opponentLifeBefore = gd.getLife(player2.getId());
 
         harness.castCreature(player1, 0);
-        resolveSpellAndTriggers();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - 1);
     }
@@ -85,12 +86,75 @@ class WeftstalkerArdentTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore);
     }
 
-    private void addArdent() {
-        harness.addToBattlefield(player1, new WeftstalkerArdent());
+    @Test
+    void anotherArdentTriggersOnlyTheExistingArdent() {
+        addArdent();
+        harness.setHand(player1, List.of(new WeftstalkerArdent()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        int opponentLifeBefore = gd.getLife(player2.getId());
+        int controllerLifeBefore = gd.getLife(player1.getId());
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - 1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(controllerLifeBefore);
     }
 
-    private void resolveSpellAndTriggers() {
+    @Test
+    void queuedDamageStillResolvesAfterArdentLeavesTheBattlefield() {
+        var source = harness.addToBattlefieldAndReturn(player1, new WeftstalkerArdent());
+        harness.setHand(player1, List.of(new WeftstalkerArdent()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        int opponentLifeBefore = gd.getLife(player2.getId());
+
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, source));
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - 1);
+    }
+
+    @Test
+    void warpExilesAtNextEndStepAndAllowsNormalCostCastingOnALaterTurn() {
+        WeftstalkerArdent ardent = new WeftstalkerArdent();
+        harness.setHand(player1, List.of(ardent));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Weftstalker Ardent");
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Weftstalker Ardent");
+        assertThat(gd.findExiledCard(ardent.getId())).isNull();
+
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Weftstalker Ardent");
+        assertThat(gd.findExiledCard(ardent.getId())).isNotNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(ardent.getId());
+
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castFromExile(player1, ardent.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Weftstalker Ardent");
+        assertThat(gd.findExiledCard(ardent.getId())).isNull();
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Weftstalker Ardent");
+    }
+
+    private void addArdent() {
+        harness.addToBattlefield(player1, new WeftstalkerArdent());
     }
 }
