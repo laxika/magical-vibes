@@ -56,7 +56,6 @@ class WindDancerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, turtle, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, turtle, Keyword.FLYING)).isFalse();
@@ -82,5 +81,38 @@ class WindDancerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, turtle, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        Permanent dancer = harness.addToBattlefieldAndReturn(player1, new WindDancer());
+        dancer.setSummoningSick(true);
+        Permanent turtle = addCreatureReady(player1, new HornedTurtle());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, turtle.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(dancer.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, turtle, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flying is granted only to the target and only when the ability resolves")
+    void grantsFlyingOnlyToTargetOnResolution() {
+        addCreatureReady(player1, new WindDancer());
+        Permanent target = addCreatureReady(player1, new HornedTurtle());
+        Permanent other = addCreatureReady(player1, new HornedTurtle());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
     }
 }
