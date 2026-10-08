@@ -62,17 +62,50 @@ class VenomEddieBrockTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player1, 0, venom.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, venom.getId());
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("A Villain death resolves the counter and draw as one ability")
+    void villainDeathResolvesAsOneAbility() {
+        Permanent venom = harness.addToBattlefieldAndReturn(player1, new VenomEddieBrock());
+        harness.addToBattlefield(player2, new GrendelSpawnOfKnull());
+        harness.setHand(player1, List.of(new FlameSlash()));
+        harness.setLibrary(player1, List.of(new VenomEddieBrock(), new GrendelSpawnOfKnull()));
+
+        killWithFlameSlash(player1, player2, "Grendel, Spawn of Knull");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(venom.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An allied Villain dying gives a counter and draws for Venom's controller")
+    void alliedVillainDeathDrawsForController() {
+        Permanent venom = harness.addToBattlefieldAndReturn(player1, new VenomEddieBrock());
+        harness.addToBattlefield(player1, new GrendelSpawnOfKnull());
+        harness.setHand(player1, List.of(new FlameSlash()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new VenomEddieBrock(), new GrendelSpawnOfKnull()));
+
+        killWithFlameSlash(player1, player1, "Grendel, Spawn of Knull");
+        resolveAllTriggers();
+
+        assertThat(venom.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
     private void killWithFlameSlash(Player caster, Player targetController, String targetName) {
         UUID targetId = harness.getPermanentId(targetController, targetName);
         harness.addMana(caster, ManaColor.RED, 1);
-        harness.castInstant(caster, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(caster, 0, targetId);
     }
 }
