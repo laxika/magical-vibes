@@ -42,7 +42,6 @@ class MerrowWavebreakersTest extends BaseCardTest {
         assertThat(wavebreakers.hasKeyword(Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(wavebreakers.hasKeyword(Keyword.FLYING)).isFalse();
@@ -87,5 +86,55 @@ class MerrowWavebreakersTest extends BaseCardTest {
 
         assertThat(wavebreakers.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Untapping is paid immediately, but flying waits for resolution")
+    void untapsBeforeFlyingIsGranted() {
+        Permanent wavebreakers = addCreatureReady(player1, new MerrowWavebreakers());
+        wavebreakers.tap();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(wavebreakers.isTapped()).isFalse();
+        assertThat(wavebreakers.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(wavebreakers.hasKeyword(Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Only the activating source gains flying")
+    void grantsFlyingOnlyToSource() {
+        Permanent wavebreakers = addCreatureReady(player1, new MerrowWavebreakers());
+        Permanent ally = addCreatureReady(player1, new MerrowWavebreakers());
+        Permanent opponent = addCreatureReady(player2, new MerrowWavebreakers());
+        wavebreakers.tap();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wavebreakers.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(ally.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(opponent.hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The generic mana cost can be paid with another color")
+    void acceptsNonblueManaForGenericCost() {
+        Permanent wavebreakers = addCreatureReady(player1, new MerrowWavebreakers());
+        wavebreakers.tap();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wavebreakers.isTapped()).isFalse();
+        assertThat(wavebreakers.hasKeyword(Keyword.FLYING)).isTrue();
     }
 }
