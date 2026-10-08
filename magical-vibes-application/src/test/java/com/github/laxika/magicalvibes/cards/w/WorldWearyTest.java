@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MishrasFactory;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WorldWeary.class, ColossalDreadmaw.class, Forest.class, GrizzlyBears.class})
+@CardUsed({WorldWeary.class, ColossalDreadmaw.class, Forest.class, GrizzlyBears.class, MishrasFactory.class})
 class WorldWearyTest extends BaseCardTest {
 
     @Test
@@ -61,5 +62,98 @@ class WorldWearyTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .extracting(Card::getName)
                 .containsExactly("Forest");
+    }
+
+    @Test
+    void killsOpponentsCreatureAndAuraGoesToOwnersGraveyard() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WorldWeary()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "World-Weary");
+        harness.assertInGraveyard(player1, "World-Weary");
+    }
+
+    @Test
+    void basicLandcyclingDiscardsAsCostAndPutsOnlyBasicLandIntoHand() {
+        Forest forest = new Forest();
+        MishrasFactory factory = new MishrasFactory();
+        harness.setHand(player1, List.of(new WorldWeary()));
+        harness.setLibrary(player1, List.of(factory, forest));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertNotInHand(player1, "World-Weary");
+        harness.assertInGraveyard(player1, "World-Weary");
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(forest);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotInHand(player1, "Mishra's Factory");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(factory);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void basicLandcyclingMayFindNothingEvenWhenBasicLandExists() {
+        Forest forest = new Forest();
+        harness.setHand(player1, List.of(new WorldWeary()));
+        harness.setLibrary(player1, List.of(forest));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertInGraveyard(player1, "World-Weary");
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void basicLandcyclingWithEmptyLibraryStillDiscardsCard() {
+        harness.setHand(player1, List.of(new WorldWeary()));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "World-Weary");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotBasicLandcycleWithoutBlackMana() {
+        harness.setHand(player1, List.of(new WorldWeary()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "World-Weary");
+        harness.assertNotInGraveyard(player1, "World-Weary");
+        assertThat(gd.stack).isEmpty();
     }
 }
