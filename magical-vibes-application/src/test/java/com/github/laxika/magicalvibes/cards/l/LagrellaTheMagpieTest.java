@@ -62,18 +62,73 @@ class LagrellaTheMagpieTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new Unsummon()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, lagrellaId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, lagrellaId);
         harness.passBothPriorities();
 
-        Permanent returnedOwnBear = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
-        Permanent returnedOpposingBear = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent returnedOwnBear = findPermanent(player1, "Grizzly Bears");
+        Permanent returnedOpposingBear = findPermanent(player2, "Grizzly Bears");
         assertThat(returnedOwnBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(returnedOpposingBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Choosing no targets leaves other creatures on the battlefield")
+    void canChooseNoTargets() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castLagrella(List.of());
+
+        harness.assertOnBattlefield(player1, "Lagrella, the Magpie");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Targets are not exiled if Lagrella leaves before its enter trigger resolves")
+    void sourceLeavingBeforeTriggerResolvesPreventsExile() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareLagrellaCast();
+        harness.castCreature(player1, 0, List.of(bear.getId()));
+        harness.passBothPriorities();
+
+        UUID lagrellaId = harness.getPermanentId(player1, "Lagrella, the Magpie");
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.ensurePriority(player1);
+        harness.castAndResolveInstant(player1, 0, lagrellaId);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Lagrella, the Magpie");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Counters are added by a separate trigger after the creature returns")
+    void returnedCreatureCanBeRemovedBeforeCounterTriggerResolves() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castLagrella(List.of(bear.getId()));
+        UUID lagrellaId = harness.getPermanentId(player1, "Lagrella, the Magpie");
+        harness.setHand(player1, List.of(new Unsummon(), new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.ensurePriority(player1);
+        harness.castAndResolveInstant(player1, 0, lagrellaId);
+
+        UUID returnedId = harness.getPermanentId(player1, "Grizzly Bears");
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.ensurePriority(player1);
+        harness.castAndResolveInstant(player1, 0, returnedId);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castLagrella(List<UUID> targetIds) {
