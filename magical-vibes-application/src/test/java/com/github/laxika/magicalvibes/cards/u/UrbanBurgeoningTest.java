@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,14 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({UrbanBurgeoning.class, Forest.class, GrizzlyBears.class})
 class UrbanBurgeoningTest extends BaseCardTest {
 
     @Test
     @DisplayName("Cannot enchant a creature")
     void cannotEnchantCreature() {
         addLand(player1);
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new UrbanBurgeoning()));
         harness.addMana(player1, ManaColor.GREEN, 3);
@@ -87,16 +88,57 @@ class UrbanBurgeoningTest extends BaseCardTest {
         assertThat(land.isTapped()).isTrue();
     }
 
-    private void attachAura(Permanent land) {
-        Permanent aura = new Permanent(new UrbanBurgeoning());
+    @Test
+    @DisplayName("An opponent's enchanted land untaps during the aura controller's untap step")
+    void opponentsLandUntapsDuringAuraControllersStep() {
+        Permanent land = addLand(player2);
+        Permanent other = addLand(player2);
+        attachAura(land);
+        land.tap();
+        other.tap();
+
+        harness.performUntapStep(player1);
+
+        assertThat(land.isTapped()).isFalse();
+        assertThat(other.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing the aura stops the additional untaps")
+    void removingAuraStopsAdditionalUntaps() {
+        Permanent land = addLand(player1);
+        Permanent aura = attachAura(land);
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
+        land.tap();
+
+        harness.performUntapStep(player2);
+
+        assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The enchanted land still untaps normally during its controller's turn")
+    void enchantedLandUntapsDuringItsControllersStep() {
+        Permanent land = addLand(player1);
+        attachAura(land);
+        land.tap();
+
+        harness.performUntapStep(player1);
+
+        assertThat(land.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private Permanent attachAura(Permanent land) {
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new UrbanBurgeoning());
         aura.setAttachedTo(land.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
+        return aura;
     }
 
     private Permanent addLand(Player player) {
-        Permanent perm = new Permanent(new Forest());
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Forest());
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
