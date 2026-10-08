@@ -23,7 +23,7 @@ function node(tag, attrs = {}, ...children) {
     else if (key === 'class') element.className = value;
     else element.setAttribute(key, value === true ? '' : value);
   }
-  for (const child of children.flat()) {
+  for (const child of children.flat(Infinity)) {
     if (child !== null && child !== undefined && child !== false) element.append(child instanceof Node ? child : document.createTextNode(String(child)));
   }
   return element;
@@ -293,8 +293,8 @@ async function runPage(id, params) {
       tile('Estimated cost', run.estimatedCostUsd == null ? '—' : money(run.estimatedCostUsd),
         node('span', {}, run.pricedCards && run.estimatedCostUsd != null ? `≈ ${money(run.estimatedCostUsd / run.pricedCards)} per card` : 'no cost data yet',
           run.missingCostCount ? node('span', {class: 'subline'}, `${plural(run.missingCostCount, 'attempt')} without cost data`) : null), null, 'cost')),
-    runningPanel(running, run),
     recoveryPanel(run),
+    runningPanel(running, run),
     sectionHeading('Cards'),
     node('div', {class: 'filter-bar'}, statusChips(path, params, run), searchForm(path, params, 'Filter cards…'))];
   result.push(tasks.items.length ? table(['Card', 'Printing', 'Review', 'Worker', 'Estimated cost', 'Publication', ''], tasks.items.map(task => [
