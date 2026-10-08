@@ -214,6 +214,63 @@ class WhispersilkCloakTest extends BaseCardTest {
         assertThat(gqs.hasCantBeBlocked(gd, creature2)).isTrue();
     }
 
+    @Test
+    @DisplayName("Shroud prevents an opponent's spell from targeting the equipped creature")
+    void shroudPreventsOpponentsSpell() {
+        Permanent creature = addCreatureReady(player1, new ChitteringRats());
+        Permanent cloak = addCloakReady(player1);
+        cloak.setAttachedTo(creature.getId());
+        harness.setHand(player2, List.of(new EchoingDecay()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
+    @Test
+    @DisplayName("Shroud does not prevent Echoing Decay's untargeted effect")
+    void shroudDoesNotPreventUntargetedEffect() {
+        Permanent equipped = addCreatureReady(player1, new ChitteringRats());
+        Permanent cloak = addCloakReady(player1);
+        cloak.setAttachedTo(equipped.getId());
+        Permanent target = addCreatureReady(player2, new ChitteringRats());
+        harness.setHand(player2, List.of(new EchoingDecay()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Chittering Rats");
+        harness.assertNotOnBattlefield(player2, "Chittering Rats");
+        harness.assertInGraveyard(player1, "Chittering Rats");
+        harness.assertInGraveyard(player2, "Chittering Rats");
+        assertThat(cloak.isAttached()).isFalse();
+        harness.assertOnBattlefield(player1, "Whispersilk Cloak");
+    }
+
+    @Test
+    @DisplayName("Equip does not attach when its target dies in response")
+    void equipTargetDiesInResponse() {
+        Permanent cloak = addCloakReady(player1);
+        Permanent target = addCreatureReady(player1, new ChitteringRats());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.setHand(player2, List.of(new EchoingDecay()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(cloak.isAttached()).isFalse();
+        harness.assertOnBattlefield(player1, "Whispersilk Cloak");
+        harness.assertInGraveyard(player1, "Chittering Rats");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
     private Permanent addCloakReady(Player player) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new WhispersilkCloak());
         perm.setSummoningSick(false);
