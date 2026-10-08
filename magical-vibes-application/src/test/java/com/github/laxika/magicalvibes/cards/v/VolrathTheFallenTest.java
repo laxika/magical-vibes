@@ -108,6 +108,74 @@ class VolrathTheFallenTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, volrath)).isEqualTo(basePower);
     }
 
+    @Test
+    @DisplayName("Discard is paid immediately while the boost waits for resolution")
+    void discardIsPaidBeforeResolution() {
+        Permanent volrath = addReadyVolrath(player1);
+        int basePower = gqs.getEffectivePower(gd, volrath);
+        int baseToughness = gqs.getEffectiveToughness(gd, volrath);
+        harness.setHand(player1, List.of(new SpinelessThug()));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, 0, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Spineless Thug");
+        harness.assertNotInHand(player1, "Spineless Thug");
+        assertThat(gqs.getEffectivePower(gd, volrath)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, volrath)).isEqualTo(baseToughness);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, volrath)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, volrath)).isEqualTo(baseToughness + 2);
+    }
+
+    @Test
+    @DisplayName("Pending activations retain their own discarded mana values")
+    void stackedActivationsRetainSeparateManaValues() {
+        Permanent volrath = addReadyVolrath(player1);
+        int basePower = gqs.getEffectivePower(gd, volrath);
+        int baseToughness = gqs.getEffectiveToughness(gd, volrath);
+        harness.setHand(player1, List.of(new SpinelessThug(), new SkyshroudBehemoth()));
+        addActivationMana();
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, 0, null);
+        harness.handleCardChosen(player1, 0);
+        harness.ensurePriority(player1);
+        harness.activateAbility(player1, 0, 0, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, volrath)).isEqualTo(basePower + 7);
+        assertThat(gqs.getEffectiveToughness(gd, volrath)).isEqualTo(baseToughness + 7);
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, volrath)).isEqualTo(basePower + 9);
+        assertThat(gqs.getEffectiveToughness(gd, volrath)).isEqualTo(baseToughness + 9);
+    }
+
+    @Test
+    @DisplayName("Volrath can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent volrath = addReadyVolrath(player1);
+        volrath.setSummoningSick(true);
+        volrath.setTapped(true);
+        int basePower = gqs.getEffectivePower(gd, volrath);
+        int baseToughness = gqs.getEffectiveToughness(gd, volrath);
+        harness.setHand(player1, List.of(new SpinelessThug()));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, 0, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, volrath)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, volrath)).isEqualTo(baseToughness + 2);
+        assertThat(volrath.isTapped()).isTrue();
+    }
+
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -117,8 +185,6 @@ class VolrathTheFallenTest extends BaseCardTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        Permanent volrath = harness.addToBattlefieldAndReturn(player, new VolrathTheFallen());
-        volrath.setSummoningSick(false);
-        return volrath;
+        return addCreatureReady(player, new VolrathTheFallen());
     }
 }
