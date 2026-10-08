@@ -61,6 +61,66 @@ class Vault75MiddleSchoolTest extends BaseCardTest {
         return saga;
     }
 
+    @Test
+    void chapterIChecksModifiedPowerWhenItResolves() {
+        addSagaWithLore(0);
+        Permanent belowThreshold = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        belowThreshold.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent reachesThreshold = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        triggerChapter();
+        reachesThreshold.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(belowThreshold);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(reachesThreshold);
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId())
+                .containsExactly(reachesThreshold.getCard().getId());
+    }
+
+    @Test
+    void laterChaptersCounterEveryOwnCreatureAndSacrificeOnlyAfterFinalResolution() {
+        Permanent saga = addSagaWithLore(1);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        triggerChapter();
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(saga.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertOnBattlefield(player1, "Vault 75: Middle School");
+
+        triggerChapter();
+        harness.assertOnBattlefield(player1, "Vault 75: Middle School");
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(saga.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertNotOnBattlefield(player1, "Vault 75: Middle School");
+        harness.assertInGraveyard(player1, "Vault 75: Middle School");
+    }
+
+    @Test
+    void enteringTriggersChapterIWithoutWaitingForNextDrawStep() {
+        harness.addToBattlefield(player2, new AirElemental());
+        harness.castFromHand(player1, new Vault75MiddleSchool(), "{2}{W}{W}");
+        harness.passBothPriorities();
+
+        Permanent saga = findPermanent(player1, "Vault 75: Middle School");
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Air Elemental");
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getName())
+                .containsExactly("Air Elemental");
+    }
+
     private void triggerChapter() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
