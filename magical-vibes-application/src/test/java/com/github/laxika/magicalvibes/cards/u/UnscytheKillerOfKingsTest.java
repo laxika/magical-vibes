@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WallOfDenial;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UnscytheKillerOfKings.class, GrizzlyBears.class})
+@CardUsed({UnscytheKillerOfKings.class, GrizzlyBears.class, WallOfDenial.class})
 class UnscytheKillerOfKingsTest extends BaseCardTest {
 
     @Test
@@ -143,11 +145,92 @@ class UnscytheKillerOfKingsTest extends BaseCardTest {
         assertThat(zombieTokens(player1)).isEmpty();
     }
 
+    @Test
+    void triggersForDamageDealtBeforeEquipmentWasAttached() {
+        Permanent blocker = setUpEquippedKill(player1, player2, new WallOfDenial());
+        Permanent equipment = findPermanent(player1, "Unscythe, Killer of Kings");
+        var equippedId = equipment.getAttachedTo();
+        equipment.setAttachedTo(null);
+        harness.resolveCombatDamage();
+        assertThat(blocker.getMarkedDamage()).isEqualTo(2);
+        equipment.setAttachedTo(equippedId);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .sacrificePermanentToGraveyard(gd, blocker));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCards).anyMatch(e -> e.card().getId().equals(blocker.getCard().getId()));
+        assertThat(zombieTokens(player1)).hasSize(1);
+    }
+
+    @Test
+    void doesNotTriggerForDamageByPreviouslyEquippedCreature() {
+        Permanent blocker = setUpEquippedKill(player1, player2, new WallOfDenial());
+        Permanent equipment = findPermanent(player1, "Unscythe, Killer of Kings");
+        harness.resolveCombatDamage();
+        assertThat(blocker.getMarkedDamage()).isEqualTo(5);
+        Permanent replacement = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        equipment.setAttachedTo(replacement.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .sacrificePermanentToGraveyard(gd, blocker));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(zombieTokens(player1)).isEmpty();
+    }
+
+    @Test
+    void triggersWhenEquipmentAndPreviouslyDamagedCreatureDieSimultaneously() {
+        Permanent blocker = setUpEquippedKill(player1, player2, new WallOfDenial());
+        Permanent equipment = findPermanent(player1, "Unscythe, Killer of Kings");
+        harness.resolveCombatDamage();
+        assertThat(blocker.getMarkedDamage()).isEqualTo(5);
+        assertThat(gd.stack).isEmpty();
+
+        var removal = harness.getPermanentRemovalService();
+        harness.inMutationScope(() -> removal.performSimultaneousRemovals(
+                gd, java.util.List.of(equipment, blocker), () -> {
+                    removal.destroyPermanentToGraveyard(gd, equipment);
+                    removal.destroyPermanentToGraveyard(gd, blocker);
+                }));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        assertThat(gd.exiledCards).anyMatch(e -> e.card().getId().equals(blocker.getCard().getId()));
+        assertThat(zombieTokens(player1)).hasSize(1);
+    }
+
+    @Test
+    void doesNotTriggerWhileEquipmentHasLostItsAbilities() {
+        Permanent blocker = setUpEquippedKill(player1, player2, new WallOfDenial());
+        Permanent equipment = findPermanent(player1, "Unscythe, Killer of Kings");
+        equipment.setLosesAllAbilitiesUntilEndOfTurn(true);
+        harness.resolveCombatDamage();
+        assertThat(blocker.getMarkedDamage()).isEqualTo(2);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .sacrificePermanentToGraveyard(gd, blocker));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(zombieTokens(player1)).isEmpty();
+    }
+
     /**
      * Puts a Grizzly Bears equipped with Unscythe (a 5/5) on {@code attacker}'s battlefield attacking,
      * and a 2/2 Grizzly Bears on {@code defender}'s battlefield blocking it. Returns the blocker.
      */
     private Permanent setUpEquippedKill(Player attacker, Player defender) {
+        return setUpEquippedKill(attacker, defender, new GrizzlyBears());
+    }
+
+    private Permanent setUpEquippedKill(Player attacker, Player defender, Card blockerCard) {
         Permanent equipped = harness.addToBattlefieldAndReturn(attacker, new GrizzlyBears());
         equipped.setSummoningSick(false);
         equipped.setAttacking(true);
@@ -155,7 +238,7 @@ class UnscytheKillerOfKingsTest extends BaseCardTest {
         Permanent unscythe = harness.addToBattlefieldAndReturn(attacker, new UnscytheKillerOfKings());
         unscythe.setAttachedTo(equipped.getId());
 
-        Permanent blocker = harness.addToBattlefieldAndReturn(defender, new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(defender, blockerCard);
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
