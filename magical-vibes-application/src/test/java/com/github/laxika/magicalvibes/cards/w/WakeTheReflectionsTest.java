@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WakeTheReflections.class, GrizzlyBears.class})
 class WakeTheReflectionsTest extends BaseCardTest {
 
     @Test
@@ -26,8 +29,7 @@ class WakeTheReflectionsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WakeTheReflections()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countOf(player1, "Soldier Token")).isEqualTo(2);
@@ -40,8 +42,7 @@ class WakeTheReflectionsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WakeTheReflections()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countOf(player1, "Grizzly Bears")).isEqualTo(1);
@@ -56,15 +57,10 @@ class WakeTheReflectionsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WakeTheReflections()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        Permanent elephant = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elephant Token"))
-                .findFirst()
-                .orElseThrow();
-        harness.handlePermanentChosen(player1, elephant.getId());
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Elephant Token"));
 
         assertThat(countOf(player1, "Elephant Token")).isEqualTo(2);
         assertThat(countOf(player1, "Soldier Token")).isEqualTo(1);
@@ -77,12 +73,49 @@ class WakeTheReflectionsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WakeTheReflections()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(countOf(player2, "Soldier Token")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Populate does not copy counters or tapped status")
+    void doesNotCopyCountersOrTappedStatus() {
+        harness.addToBattlefield(player1, token("Soldier Token"));
+        Permanent original = gd.playerBattlefields.get(player1.getId()).getFirst();
+        original.tap();
+        original.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setHand(player1, List.of(new WakeTheReflections()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> !p.getId().equals(original.getId()))
+                .findFirst().orElseThrow();
+        assertThat(copy.isTapped()).isFalse();
+        assertThat(copy.getPlusOnePlusOneCounters()).isZero();
+        assertThat(original.isTapped()).isTrue();
+        assertThat(original.getPlusOnePlusOneCounters()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Noncreature tokens cannot be populated")
+    void doesNotCopyNoncreatureTokens() {
+        Card artifactToken = token("Artifact Token");
+        artifactToken.setType(CardType.ARTIFACT);
+        harness.addToBattlefield(player1, artifactToken);
+        harness.setHand(player1, List.of(new WakeTheReflections()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Wake the Reflections");
     }
 
     private long countOf(Player player, String name) {
