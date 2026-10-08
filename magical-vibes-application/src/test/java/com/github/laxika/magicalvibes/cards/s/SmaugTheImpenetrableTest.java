@@ -23,8 +23,7 @@ class SmaugTheImpenetrableTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, smaug.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, smaug.getId());
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(2);
@@ -36,12 +35,30 @@ class SmaugTheImpenetrableTest extends BaseCardTest {
         Permanent smaug = addCreatureReady(player1, new SmaugTheImpenetrable());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
         assertThat(smaug.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Repeated damage from its controller creates Treasures even after lethal damage")
+    void repeatedSelfControlledDamageCreatesTreasuresAndSmaugSurvives() {
+        Permanent smaug = addCreatureReady(player1, new SmaugTheImpenetrable());
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        for (int i = 0; i < 4; i++) {
+            harness.castAndResolveInstant(player1, 0, smaug.getId());
+            resolveAllTriggers();
+
+            assertThat(findPermanents(player1, "Treasure")).hasSize((i + 1) * 2);
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(smaug);
+        assertThat(smaug.getMarkedDamage()).isEqualTo(8);
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
     }
 }
