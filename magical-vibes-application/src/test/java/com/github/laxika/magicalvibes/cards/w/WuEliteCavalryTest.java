@@ -43,4 +43,17 @@ class WuEliteCavalryTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Wu Elite Cavalry can block a creature without horsemanship")
+    void canBlockCreatureWithoutHorsemanship() {
+        Permanent blocker = addCreatureReady(player2, new WuEliteCavalry());
+        addCreatureReady(player1, new ShuFootSoldiers());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 }
