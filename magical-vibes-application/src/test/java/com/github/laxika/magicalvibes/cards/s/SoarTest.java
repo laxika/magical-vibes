@@ -8,10 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Soar.class, FemerefScouts.class, ManaPrism.class, DarkRitual.class})
+@CardUsed({Soar.class, FemerefScouts.class, ManaPrism.class, DarkRitual.class, VernalEquinox.class})
 class SoarTest extends BaseCardTest {
 
     private Permanent enchant(Permanent host) {
@@ -76,7 +74,7 @@ class SoarTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, scouts.getId());
         harness.passBothPriorities();
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         harness.assertOnBattlefield(player1, "Soar");
     }
@@ -95,7 +93,7 @@ class SoarTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Soar");
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         harness.assertNotOnBattlefield(player1, "Soar");
         harness.assertInGraveyard(player1, "Soar");
@@ -114,7 +112,7 @@ class SoarTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Soar");
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         harness.assertNotOnBattlefield(player1, "Soar");
         harness.assertInGraveyard(player1, "Soar");
@@ -136,9 +134,33 @@ class SoarTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Soar");
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         harness.assertOnBattlefield(player1, "Soar");
+    }
+
+    @Test
+    @DisplayName("Casting in the opponent's main phase still causes the cleanup sacrifice")
+    void castDuringOpponentsMainPhaseIsSacrificedAtCleanup() {
+        Permanent scouts = addCreatureReady(player2, new FemerefScouts());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Soar()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.ensurePriority(player1);
+
+        harness.castEnchantment(player1, 0, scouts.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Soar");
+        assertThat(gqs.getEffectiveToughness(gd, scouts)).isEqualTo(5);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+
+        harness.assertNotOnBattlefield(player1, "Soar");
+        harness.assertInGraveyard(player1, "Soar");
+        assertThat(gqs.getEffectiveToughness(gd, scouts)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, scouts, Keyword.FLYING)).isFalse();
+        harness.assertOnBattlefield(player2, "Femeref Scouts");
     }
 
     @Test
