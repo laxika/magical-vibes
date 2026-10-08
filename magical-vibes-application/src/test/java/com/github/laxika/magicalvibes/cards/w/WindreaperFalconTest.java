@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BayFalcon;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.e.EkunduGriffin;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
+import com.github.laxika.magicalvibes.cards.m.MindHarness;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WindreaperFalcon.class, BayFalcon.class, Boomerang.class, EkunduGriffin.class,
-        Incinerate.class})
+        Incinerate.class, MindHarness.class})
 class WindreaperFalconTest extends BaseCardTest {
 
     @Test
@@ -88,5 +89,43 @@ class WindreaperFalconTest extends BaseCardTest {
         assertThat(falcon.getMarkedDamage()).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(falcon);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blueAttacker);
+    }
+
+    @Test
+    @DisplayName("Cannot be enchanted by a blue Aura")
+    void cannotBeTargetedByBlueAura() {
+        Permanent falcon = addCreatureReady(player2, new WindreaperFalcon());
+        harness.setHand(player1, List.of(new MindHarness()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, falcon.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from blue");
+    }
+
+    @Test
+    @DisplayName("Protection also prevents targeting by its controller's blue spells")
+    void cannotBeTargetedByOwnBlueInstant() {
+        Permanent falcon = addCreatureReady(player1, new WindreaperFalcon());
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, falcon.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from blue");
+    }
+
+    @Test
+    @DisplayName("Protection from blue does not prevent red spell damage")
+    void redSpellDamageKillsFalcon() {
+        Permanent falcon = addCreatureReady(player2, new WindreaperFalcon());
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, falcon.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(falcon);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(falcon.getCard());
     }
 }
