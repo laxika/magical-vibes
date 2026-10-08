@@ -81,6 +81,39 @@ class VanquishTest extends BaseCardTest {
         assertThat(gameLogContains("fizzles")).isTrue();
     }
 
+    @Test
+    @DisplayName("Cannot target an attacking creature")
+    void cannotTargetAttackingCreature() {
+        Permanent attacker = addCreatureReady(player1, new Arachnoid());
+        addCreatureReady(player2, new Arachnoid());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThatThrownBy(() -> castVanquish(attacker))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("blocking creature");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(attacker);
+    }
+
+    @Test
+    @DisplayName("Can destroy a blocking creature controlled by the caster")
+    void destroysOwnBlockingCreature() {
+        Permanent attacker = addCreatureReady(player2, new Arachnoid());
+        Permanent blocker = addCreatureReady(player1, new Arachnoid());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        castVanquish(blocker);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(attacker);
+        harness.assertInGraveyard(player1, "Arachnoid");
+    }
+
     private void castVanquish(Permanent target) {
         harness.setHand(player1, List.of(new Vanquish()));
         harness.addMana(player1, ManaColor.WHITE, 1);
