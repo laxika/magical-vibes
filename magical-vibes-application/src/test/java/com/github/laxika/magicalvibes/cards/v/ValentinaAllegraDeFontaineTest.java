@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.c.CaptainAmericaSuperSoldier;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MODOK;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ValentinaAllegraDeFontaine.class, MODOK.class, GrizzlyBears.class,
-        CaptainAmericaSuperSoldier.class})
+        CaptainAmericaSuperSoldier.class, Swamp.class})
 class ValentinaAllegraDeFontaineTest extends BaseCardTest {
 
     @Test
@@ -76,5 +77,49 @@ class ValentinaAllegraDeFontaineTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+    @Test
+    void discardingALandDoesNotAddACounter() {
+        Permanent valentina = addCreatureReady(player1, new ValentinaAllegraDeFontaine());
+        Permanent target = addCreatureReady(player1, new MODOK());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Swamp()));
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        assertThat(valentina.isTapped()).isTrue();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Swamp");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void naturalHeroCanConniveAndDiscardAnExistingHandCard() {
+        Permanent valentina = addCreatureReady(player1, new ValentinaAllegraDeFontaine());
+        Permanent target = addCreatureReady(player1, new CaptainAmericaSuperSoldier());
+        harness.setHand(player1, List.of(new Swamp()));
+        harness.setLibrary(player1, List.of(new MODOK()));
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Swamp");
+        harness.assertInHand(player1, "M.O.D.O.K.");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(valentina.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void summoningSickValentinaCannotActivateTapAbility() {
+        harness.addToBattlefield(player1, new ValentinaAllegraDeFontaine());
+        Permanent target = addCreatureReady(player1, new MODOK());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 }
