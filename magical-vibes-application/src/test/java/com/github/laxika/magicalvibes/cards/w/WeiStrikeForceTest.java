@@ -43,4 +43,32 @@ class WeiStrikeForceTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Wei Strike Force can block a creature without horsemanship")
+    void canBlockCreatureWithoutHorsemanship() {
+        Permanent blocker = addCreatureReady(player2, new WeiStrikeForce());
+        addCreatureReady(player1, new WeiInfantry());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker), 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Wei Strike Force can block a creature with horsemanship")
+    void canBlockCreatureWithHorsemanship() {
+        Permanent blocker = addCreatureReady(player2, new WeiStrikeForce());
+        addCreatureReady(player1, new WeiScout());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker), 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 }
