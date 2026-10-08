@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.a.Annul;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.w.WornPowerstone;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -54,15 +55,12 @@ class VeiledSerpentTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         WornPowerstone powerstone = new WornPowerstone();
-        harness.setHand(player2, List.of(powerstone));
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
-        harness.castArtifact(player2, 0);
+        harness.castFromHand(player2, powerstone, "{3}");
         harness.passPriority(player2);
 
         harness.setHand(player1, List.of(new Annul()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, powerstone.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, powerstone.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, serpent)).isTrue();
@@ -105,6 +103,81 @@ class VeiledSerpentTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Veiled Serpent");
         harness.assertInHand(player1, "Worn Powerstone");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The transformation resolves before the opponent's spell")
+    void transformsBeforeOpponentSpellResolves() {
+        Permanent serpent = harness.addToBattlefieldAndReturn(player1, new VeiledSerpent());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new WornPowerstone(), "{3}");
+
+        assertThat(gqs.isEnchantment(gd, serpent)).isTrue();
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, serpent)).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player2, "Worn Powerstone");
+    }
+
+    @Test
+    @DisplayName("An already transformed Serpent does not trigger for later spells")
+    void doesNotTriggerAfterBecomingCreature() {
+        Permanent serpent = transformSerpent();
+        harness.passBothPriorities();
+        harness.castFromHand(player2, new WornPowerstone(), "{3}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.isCreature(gd, serpent)).isTrue();
+        assertThat(gqs.isEnchantment(gd, serpent)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An Island controlled only by the attacker does not permit attacking")
+    void controllersIslandDoesNotPermitAttack() {
+        Permanent serpent = transformSerpent();
+        serpent.setSummoningSick(false);
+        harness.addToBattlefield(player1, new Island());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cycling by an opponent does not trigger the transformation")
+    void opponentsCyclingDoesNotTrigger() {
+        Permanent serpent = harness.addToBattlefieldAndReturn(player1, new VeiledSerpent());
+        harness.setHand(player2, List.of(new VeiledSerpent()));
+        harness.setLibrary(player2, List.of(new WornPowerstone()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateHandAbility(player2, 0, null);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertInGraveyard(player2, "Veiled Serpent");
+        harness.passBothPriorities();
+
+        assertThat(gqs.isEnchantment(gd, serpent)).isTrue();
+        assertThat(gqs.isCreature(gd, serpent)).isFalse();
+        harness.assertInHand(player2, "Worn Powerstone");
+    }
+
+    @Test
+    @CardUsed(Opalescence.class)
+    @DisplayName("Animation by Opalescence does not grant the Serpent's Island attack restriction")
+    void externalAnimationDoesNotGrantAttackRestriction() {
+        Permanent serpent = harness.addToBattlefieldAndReturn(player1, new VeiledSerpent());
+        harness.addToBattlefield(player1, new Opalescence());
+        serpent.setSummoningSick(false);
+
+        assertThat(gqs.isCreature(gd, serpent)).isTrue();
+        assertThat(gqs.isEnchantment(gd, serpent)).isTrue();
+        declareAttackers(List.of(0));
+
+        assertThat(serpent.isAttacking()).isTrue();
     }
 
     private Permanent transformSerpent() {
