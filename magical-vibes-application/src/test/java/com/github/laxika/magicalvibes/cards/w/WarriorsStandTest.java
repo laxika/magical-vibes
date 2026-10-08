@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -92,12 +94,52 @@ class WarriorsStandTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.ensurePriority(player1);
-        harness.clearPriorityPassed();
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntil(player1, TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not receive the boost")
+    void doesNotBoostCreaturesEnteringLater() {
+        Permanent existing = addCreatureReady(player2, new WuInfantry());
+        harness.forceActivePlayer(player1);
+        addAttacker(player1, player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.castFromHand(player2, new WarriorsStand(), "{1}{W}");
+        Permanent beforeResolution = addCreatureReady(player2, new WuInfantry());
+        harness.passBothPriorities();
+        Permanent afterResolution = addCreatureReady(player2, new WuInfantry());
+
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can cast after the declared attacker has left combat during the same step")
+    void canCastAfterAttackerLeavesCombat() {
+        Permanent attacker = addCreatureReady(player1, new WuInfantry());
+        Permanent defender = addCreatureReady(player2, new WuInfantry());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(0));
+        attacker.setAttacking(false);
+        attacker.setAttackTarget(null);
+
+        harness.castFromHand(player2, new WarriorsStand(), "{1}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, defender)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, defender)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(1);
     }
 
     private Permanent addAttacker(Player attackerController, Player defender) {
