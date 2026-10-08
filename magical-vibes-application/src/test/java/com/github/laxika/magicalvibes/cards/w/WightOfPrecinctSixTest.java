@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WightOfPrecinctSix.class, GrizzlyBears.class, Forest.class})
 class WightOfPrecinctSixTest extends BaseCardTest {
 
     @Test
@@ -64,10 +66,33 @@ class WightOfPrecinctSixTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, wight)).isEqualTo(4);
     }
 
+    @Test
+    @DisplayName("Bonus shrinks when creature cards leave the opponent's graveyard")
+    void boostShrinksAsGraveyardEmpties() {
+        Permanent wight = addWight();
+        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        assertThat(gqs.getEffectivePower(gd, wight)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wight)).isEqualTo(3);
+
+        harness.setGraveyard(player2, List.of(new Forest()));
+
+        assertThat(gqs.getEffectivePower(gd, wight)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, wight)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's Wight counts our graveyard rather than theirs")
+    void opponentControlledWightCountsOurGraveyard() {
+        Permanent wight = harness.addToBattlefieldAndReturn(player2, new WightOfPrecinctSix());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+
+        assertThat(gqs.getEffectivePower(gd, wight)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wight)).isEqualTo(3);
+    }
+
     private Permanent addWight() {
-        Permanent permanent = new Permanent(new WightOfPrecinctSix());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player1, new WightOfPrecinctSix());
     }
 }
