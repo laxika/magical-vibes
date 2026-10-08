@@ -60,6 +60,54 @@ class SmashingSpreeTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an attacking creature");
     }
 
+    @Test
+    @DisplayName("Can boost an opponent's attacking creature")
+    void canTargetOpponentsAttacker() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        castResolve(attacker);
+
+        assertThat(attacker.getEffectivePower()).isEqualTo(5);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(5);
+        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not resolve if the target stops attacking before resolution")
+    void targetMustStillBeAttackingAtResolution() {
+        Permanent attacker = addAttacker();
+        harness.setHand(player1, List.of(new SmashingSpree()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, attacker.getId());
+
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        harness.assertInGraveyard(player1, "Smashing Spree");
+    }
+
+    @Test
+    @DisplayName("Resolved effects persist after the creature stops attacking")
+    void effectsPersistAfterCombat() {
+        Permanent attacker = addAttacker();
+        castResolve(attacker);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        attacker.setAttacking(false);
+
+        assertThat(attacker.getEffectivePower()).isEqualTo(5);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(5);
+        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
     private Permanent addAttacker() {
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         attacker.setSummoningSick(false);
@@ -73,7 +121,6 @@ class SmashingSpreeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SmashingSpree()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
