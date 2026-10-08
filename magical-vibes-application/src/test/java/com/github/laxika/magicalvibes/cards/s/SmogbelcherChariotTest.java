@@ -1,27 +1,30 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SmogbelcherChariot.class, SerraAngel.class, GrizzlyBears.class})
+@CardUsed({SmogbelcherChariot.class, SerraAngel.class, GrizzlyBears.class, Unsummon.class})
 class SmogbelcherChariotTest extends BaseCardTest {
 
     @Test
     void attackTriggerTargetsOnlyCreatureThatCrewedItAndGrantsChosenKeywordIndefinitely() {
         addReadyChariot();
-        Permanent crewer = addReadyCreature(new SerraAngel());
-        Permanent bystander = addReadyCreature(new GrizzlyBears());
+        Permanent crewer = addCreatureReady(player1, new SerraAngel());
+        Permanent bystander = addCreatureReady(player1, new GrizzlyBears());
 
         crewChariot(crewer);
         declareAttackers(List.of(0));
@@ -47,7 +50,7 @@ class SmogbelcherChariotTest extends BaseCardTest {
     @Test
     void attackTriggerDoesNotExistWithoutAValidCrewer() {
         addReadyChariot();
-        Permanent crewer = addReadyCreature(new SerraAngel());
+        Permanent crewer = addCreatureReady(player1, new SerraAngel());
         crewChariot(crewer);
         gd.playerBattlefields.get(player1.getId()).remove(crewer);
         declareAttackers(List.of(0));
@@ -56,16 +59,35 @@ class SmogbelcherChariotTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    private Permanent addReadyChariot() {
-        Permanent chariot = harness.addToBattlefieldAndReturn(player1, new SmogbelcherChariot());
-        chariot.setSummoningSick(false);
-        return chariot;
+    @ParameterizedTest
+    @EnumSource(value = Keyword.class, names = {"MENACE", "DEATHTOUCH", "LIFELINK"})
+    void chosenKeywordPersistsAfterReturningToHandAndBeingRecast(Keyword keyword) {
+        addReadyChariot();
+        Permanent crewer = addCreatureReady(player1, new SerraAngel());
+        crewChariot(crewer);
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, crewer.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, keyword.name());
+
+        assertThat(gqs.hasKeyword(gd, crewer, keyword)).isTrue();
+
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, crewer.getId());
+        assertThat(gd.playerHands.get(player1.getId())).contains(crewer.getCard());
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, crewer.getCard(), "{3}{W}{W}");
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player1, "Serra Angel");
+        assertThat(returned.getId()).isNotEqualTo(crewer.getId());
+        assertThat(gqs.hasKeyword(gd, returned, keyword)).isTrue();
     }
 
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Card card) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, card);
-        creature.setSummoningSick(false);
-        return creature;
+    private Permanent addReadyChariot() {
+        return addCreatureReady(player1, new SmogbelcherChariot());
     }
 
     private void crewChariot(Permanent crewer) {
