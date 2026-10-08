@@ -80,12 +80,57 @@ class YavimayaBarbarianTest extends BaseCardTest {
         addCreatureReady(player2, new ShorelineRaider());
         addCreatureReady(player1, new YavimayaBarbarian());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player2);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Protection also prevents a friendly blue spell from targeting Yavimaya Barbarian")
+    void cannotBeTargetedByFriendlyBlueInstant() {
+        Permanent barbarian = addCreatureReady(player1, new YavimayaBarbarian());
+        harness.setHand(player1, List.of(new Repulse()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, barbarian.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from blue");
+    }
+
+    @Test
+    @DisplayName("An attached blue Aura is put into its owner's graveyard")
+    void attachedBlueAuraIsRemovedByStateBasedActions() {
+        Permanent barbarian = addCreatureReady(player1, new YavimayaBarbarian());
+        ShimmeringWings wings = new ShimmeringWings();
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, wings);
+        aura.setAttachedTo(barbarian.getId());
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(barbarian);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(aura);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(wings);
+    }
+
+    @Test
+    @DisplayName("A nonblue creature can block and deal lethal damage to Yavimaya Barbarian")
+    void nonblueCreatureCanBlockAndDealDamage() {
+        YavimayaBarbarian attacker = new YavimayaBarbarian();
+        YavimayaBarbarian blocker = new YavimayaBarbarian();
+        addCreatureReady(player1, attacker);
+        addCreatureReady(player2, blocker);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker);
     }
 }
