@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.n.NobleElephant;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SoulEcho.class, Incinerate.class, NobleElephant.class})
+@CardUsed({SoulEcho.class, Incinerate.class, NobleElephant.class, Disenchant.class})
 class SoulEchoTest extends BaseCardTest {
 
     /**
@@ -197,5 +198,98 @@ class SoulEchoTest extends BaseCardTest {
 
         harness.assertLife(player1, -2);
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Accepted damage replacement survives Soul Echo leaving the battlefield")
+    void replacementSurvivesSourceLeavingBattlefield() {
+        Permanent echo = echoAtUpkeep(5);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player2, 0, echo.getId());
+        harness.assertInGraveyard(player1, "Soul Echo");
+
+        incinerateController();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Replacement expires at the original controller's next upkeep after destruction")
+    void replacementExpiresAfterSourceLeavesBattlefield() {
+        Permanent echo = echoAtUpkeep(5);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player2, 0, echo.getId());
+
+        advanceToUpkeep(player1);
+        incinerateController();
+
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("An opponent's upkeep does not expire the accepted replacement")
+    void replacementLastsThroughOpponentsUpkeep() {
+        Permanent echo = echoAtUpkeep(5);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player2);
+        incinerateController();
+
+        harness.assertLife(player1, 20);
+        assertThat(echo.getCounterCount(CounterType.ECHO)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Running out of echo counters sacrifices Soul Echo only at the next upkeep")
+    void emptyEchoIsSacrificedAtNextUpkeep() {
+        echoAtUpkeep(1);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.setLife(player1, 20);
+        incinerateController();
+        harness.assertOnBattlefield(player1, "Soul Echo");
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Soul Echo");
+        harness.assertInGraveyard(player1, "Soul Echo");
+        assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The damaged player chooses between multiple accepted Soul Echo replacements")
+    void damagedPlayerChoosesBetweenEchoReplacements() {
+        Permanent firstEcho = harness.addToBattlefieldAndReturn(player1, new SoulEcho());
+        Permanent secondEcho = harness.addToBattlefieldAndReturn(player1, new SoulEcho());
+        firstEcho.setCounterCount(CounterType.ECHO, 5);
+        secondEcho.setCounterCount(CounterType.ECHO, 1);
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        if (gd.pendingMayAbilities.isEmpty()) {
+            harness.passBothPriorities();
+        }
+        harness.handleMayAbilityChosen(player2, true);
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new Incinerate()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(firstEcho.getCounterCount(CounterType.ECHO)).isEqualTo(5);
+        assertThat(secondEcho.getCounterCount(CounterType.ECHO)).isEqualTo(1);
+        harness.assertLife(player1, 20);
     }
 }
