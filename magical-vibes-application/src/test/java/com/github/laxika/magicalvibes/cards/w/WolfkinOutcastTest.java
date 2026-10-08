@@ -21,11 +21,7 @@ class WolfkinOutcastTest extends BaseCardTest {
     @Test
     void costsTwoLessWithWolfOrWerewolf() {
         harness.addToBattlefield(player1, new BoundingWolf());
-        harness.setHand(player1, List.of(new WolfkinOutcast()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new WolfkinOutcast(), "{3}{G}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
@@ -101,6 +97,105 @@ class WolfkinOutcastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
+    }
+
+    @Test
+    void costsTwoLessWithAnotherWerewolf() {
+        harness.enterBattlefieldAndReturn(player1, new WolfkinOutcast());
+
+        harness.castFromHand(player1, new WolfkinOutcast(), "{3}{G}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void opponentsWerewolfDoesNotReduceCost() {
+        harness.enterBattlefieldAndReturn(player2, new WolfkinOutcast());
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new WolfkinOutcast(), "{3}{G}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void multipleWerewolvesDoNotMultiplyReduction() {
+        harness.enterBattlefieldAndReturn(player1, new WolfkinOutcast());
+        harness.enterBattlefieldAndReturn(player1, new WolfkinOutcast());
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new WolfkinOutcast(), "{1}{G}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void fullCostWorksWithoutAnotherWolfOrWerewolf() {
+        harness.castFromHand(player1, new WolfkinOutcast(), "{5}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Wolfkin Outcast");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+    }
+
+    @Test
+    void entersTransformedAtNight() {
+        Permanent outcast = addWeddingCrasher();
+
+        assertThat(outcast.isTransformed()).isTrue();
+        assertThat(outcast.getCard()).isInstanceOf(WeddingCrasher.class);
+        assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
+    }
+
+    @Test
+    void backFaceDoesNotDrawForOpponentsWerewolf() {
+        addWeddingCrasher();
+        Permanent opponent = harness.enterBattlefieldAndReturn(player2, new WolfkinOutcast());
+        Card drawn = new WolfkinOutcast();
+        harness.setLibrary(player1, List.of(drawn));
+
+        opponent.setMarkedDamage(5);
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2.getId());
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawn);
+    }
+
+    @Test
+    void frontFaceDoesNotDrawWhenAnotherWerewolfDies() {
+        harness.enterBattlefieldAndReturn(player1, new WolfkinOutcast());
+        Permanent other = harness.enterBattlefieldAndReturn(player1, new WolfkinOutcast());
+        Card drawn = new WolfkinOutcast();
+        harness.setLibrary(player1, List.of(drawn));
+
+        other.setMarkedDamage(4);
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    void simultaneousWerewolfDeathsEachTriggerBothCrashers() {
+        Permanent first = addWeddingCrasher();
+        Permanent second = addWeddingCrasher();
+        List<Card> draws = List.of(new WolfkinOutcast(), new WolfkinOutcast(),
+                new WolfkinOutcast(), new WolfkinOutcast());
+        harness.setLibrary(player1, draws);
+
+        first.setMarkedDamage(5);
+        second.setMarkedDamage(5);
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(4);
+        for (int i = 0; i < 4; i++) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrderElementsOf(draws);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private Permanent addWeddingCrasher() {
