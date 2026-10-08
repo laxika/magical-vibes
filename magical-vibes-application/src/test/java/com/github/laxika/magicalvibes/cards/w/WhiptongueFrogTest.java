@@ -69,4 +69,23 @@ class WhiptongueFrogTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, frog, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, otherFrog, Keyword.FLYING)).isFalse();
     }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Frog gains flying only when its ability resolves")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent frog = harness.addToBattlefieldAndReturn(player1, new WhiptongueFrog());
+        frog.setSummoningSick(true);
+        frog.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.hasKeyword(gd, frog, Keyword.FLYING)).isFalse();
+        assertThat(frog.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, frog, Keyword.FLYING)).isTrue();
+        assertThat(frog.isTapped()).isTrue();
+    }
 }
