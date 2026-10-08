@@ -3,9 +3,12 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.Dehydration;
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
+import com.github.laxika.magicalvibes.cards.c.CurseOfThePiercedHeart;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.n.NyxbornCourser;
 import com.github.laxika.magicalvibes.cards.o.OrbOfDreams;
+import com.github.laxika.magicalvibes.cards.o.OmenOfTheSun;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Persuasion;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -13,6 +16,8 @@ import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.r.RootMaze;
 import com.github.laxika.magicalvibes.cards.r.RemoveSoul;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
+import com.github.laxika.magicalvibes.cards.s.SoulWarden;
+import com.github.laxika.magicalvibes.cards.y.YukoraThePrisoner;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -34,7 +39,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({WarpWorld.class, RodOfRuin.class, Plains.class, GloriousAnthem.class,
         RagingGoblin.class, Pacifism.class, Persuasion.class, Dehydration.class,
-        RemoveSoul.class, RootMaze.class, NyxbornCourser.class, OrbOfDreams.class})
+        RemoveSoul.class, RootMaze.class, NyxbornCourser.class, OrbOfDreams.class,
+        AngelicChorus.class, SoulWarden.class, YukoraThePrisoner.class, OmenOfTheSun.class,
+        CurseOfThePiercedHeart.class})
 class WarpWorldTest extends BaseCardTest {
 
     @Test
@@ -78,8 +85,7 @@ class WarpWorldTest extends BaseCardTest {
         harness.setLibrary(player1, List.of());
         harness.setLibrary(player2, List.of());
 
-        harness.addToBattlefield(player2, new RagingGoblin());
-        Permanent stolenPermanent = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent stolenPermanent = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
         gd.stolenCreatures.put(stolenPermanent.getId(), player1.getId());
 
         harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
@@ -96,10 +102,9 @@ class WarpWorldTest extends BaseCardTest {
         harness.setLibrary(player1, List.of());
         harness.setLibrary(player2, List.of());
 
-        harness.addToBattlefield(player1, new RagingGoblin());
-        harness.addToBattlefield(player1, new Pacifism());
-        List<Permanent> startBattlefield = gd.playerBattlefields.get(player1.getId());
-        startBattlefield.get(1).setAttachedTo(startBattlefield.get(0).getId());
+        Permanent originalCreature = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        Permanent originalAura = harness.addToBattlefieldAndReturn(player1, new Pacifism());
+        originalAura.setAttachedTo(originalCreature.getId());
 
         harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
         harness.passBothPriorities();
@@ -125,11 +130,10 @@ class WarpWorldTest extends BaseCardTest {
         harness.setLibrary(player1, List.of());
         harness.setLibrary(player2, List.of());
 
+        Permanent originalCreature = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
         harness.addToBattlefield(player1, new RagingGoblin());
-        harness.addToBattlefield(player1, new RagingGoblin());
-        harness.addToBattlefield(player1, new Pacifism());
-        List<Permanent> startBattlefield = gd.playerBattlefields.get(player1.getId());
-        startBattlefield.get(2).setAttachedTo(startBattlefield.get(0).getId());
+        Permanent originalAura = harness.addToBattlefieldAndReturn(player1, new Pacifism());
+        originalAura.setAttachedTo(originalCreature.getId());
 
         harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
         harness.passBothPriorities();
@@ -152,11 +156,10 @@ class WarpWorldTest extends BaseCardTest {
         harness.setLibrary(player1, List.of());
         harness.setLibrary(player2, List.of());
 
-        harness.addToBattlefield(player1, new RagingGoblin());
-        harness.addToBattlefield(player1, new Persuasion());
+        Permanent originalCreature = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        Permanent originalAura = harness.addToBattlefieldAndReturn(player1, new Persuasion());
         harness.addToBattlefield(player2, new RagingGoblin());
-        List<Permanent> p1Start = gd.playerBattlefields.get(player1.getId());
-        p1Start.get(1).setAttachedTo(p1Start.get(0).getId());
+        originalAura.setAttachedTo(originalCreature.getId());
 
         harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
         harness.passBothPriorities();
@@ -182,12 +185,11 @@ class WarpWorldTest extends BaseCardTest {
         harness.setLibrary(player1, List.of());
         harness.setLibrary(player2, List.of());
 
+        Permanent originalCreature = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
         harness.addToBattlefield(player1, new RagingGoblin());
-        harness.addToBattlefield(player1, new RagingGoblin());
-        harness.addToBattlefield(player1, new Pacifism());
+        Permanent originalAura = harness.addToBattlefieldAndReturn(player1, new Pacifism());
         harness.addToBattlefield(player1, new GloriousAnthem());
-        List<Permanent> startBattlefield = gd.playerBattlefields.get(player1.getId());
-        startBattlefield.get(2).setAttachedTo(startBattlefield.get(0).getId());
+        originalAura.setAttachedTo(originalCreature.getId());
 
         harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
         harness.passBothPriorities();
@@ -209,15 +211,15 @@ class WarpWorldTest extends BaseCardTest {
         harness.setLibrary(player2, List.of());
         harness.forceActivePlayer(player2);
 
+        Permanent p1Creature = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
         harness.addToBattlefield(player1, new RagingGoblin());
-        harness.addToBattlefield(player1, new RagingGoblin());
-        harness.addToBattlefield(player1, new Pacifism());
+        Permanent p1Aura = harness.addToBattlefieldAndReturn(player1, new Pacifism());
+        Permanent p2Creature = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
         harness.addToBattlefield(player2, new RagingGoblin());
-        harness.addToBattlefield(player2, new RagingGoblin());
-        harness.addToBattlefield(player2, new Pacifism());
+        Permanent p2Aura = harness.addToBattlefieldAndReturn(player2, new Pacifism());
 
-        gd.playerBattlefields.get(player1.getId()).get(2).setAttachedTo(gd.playerBattlefields.get(player1.getId()).get(0).getId());
-        gd.playerBattlefields.get(player2.getId()).get(2).setAttachedTo(gd.playerBattlefields.get(player2.getId()).get(0).getId());
+        p1Aura.setAttachedTo(p1Creature.getId());
+        p2Aura.setAttachedTo(p2Creature.getId());
 
         harness.castFromHand(player2, new WarpWorld(), "{5}{R}{R}{R}");
         harness.passBothPriorities();
@@ -341,18 +343,15 @@ class WarpWorldTest extends BaseCardTest {
         harness.addToBattlefield(player1, token);
 
         RemoveSoul removeSoul = new RemoveSoul();
-        Plains plains = new Plains();
-        harness.setLibrary(player1, List.of(removeSoul, plains));
+        harness.setLibrary(player1, List.of(removeSoul));
         harness.setLibrary(player2, List.of());
-        gd.playerBattlefields.get(player2.getId()).clear();
 
         harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
         harness.passBothPriorities();
 
         // Token was moved away by Warp World and does not get shuffled into the library.
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
-        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
-                .containsExactly("Plains", "Remove Soul");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(removeSoul);
     }
 
     @Test
@@ -424,6 +423,124 @@ class WarpWorldTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getName())
                 .containsExactlyInAnyOrder("Root Maze", "Test Artifact Enchantment");
+    }
+
+    @Test
+    @DisplayName("A token supplies a reveal even when no permanent cards are shuffled back")
+    void tokenSuppliesRevealOfPermanentCard() {
+        Card token = new Card();
+        token.setName("Goblin Token");
+        token.setType(CardType.CREATURE);
+        token.setColor(CardColor.RED);
+        token.setPower(1);
+        token.setToughness(1);
+        token.setToken(true);
+        harness.addToBattlefield(player1, token);
+        harness.setLibrary(player1, List.of(new Plains()));
+        harness.setLibrary(player2, List.of());
+
+        harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        harness.assertOnBattlefield(player1, "Plains");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Enchantments entering after creatures do not trigger for those creatures")
+    void laterEnchantmentDoesNotSeeEarlierCreatureEntry() {
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player1, new RagingGoblin());
+        harness.addToBattlefield(player1, new AngelicChorus());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, lifeBefore);
+        harness.assertOnBattlefield(player1, "Angelic Chorus");
+        harness.assertOnBattlefield(player1, "Raging Goblin");
+    }
+
+    @Test
+    @DisplayName("Creatures entering together see each other's entry triggers")
+    void simultaneouslyEnteringCreaturesSeeEachOther() {
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player1, new SoulWarden());
+        harness.addToBattlefield(player2, new RagingGoblin());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Shuffling Yukora away triggers its leaves-the-battlefield ability")
+    void shuffledPermanentTriggersLeavesBattlefieldAbility() {
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player1, new YukoraThePrisoner());
+        harness.addToBattlefield(player1, new RagingGoblin());
+
+        harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Yukora, the Prisoner");
+        harness.assertInGraveyard(player1, "Raging Goblin");
+    }
+
+    @Test
+    @DisplayName("Noncreature enchantments retain their own enters-the-battlefield triggers")
+    void enteringEnchantmentTriggersItsOwnAbility() {
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player1, new OmenOfTheSun());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore + 2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Auras with enchant player can enter attached to a chosen player")
+    void playerAuraCanEnterWithoutAnyPermanentsToEnchant() {
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        Permanent originalCurse = harness.addToBattlefieldAndReturn(player1, new CurseOfThePiercedHeart());
+        originalCurse.setAttachedTo(player2.getId());
+
+        harness.castFromHand(player1, new WarpWorld(), "{5}{R}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactlyInAnyOrder(player1.getId(), player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(findPermanent(player1, "Curse of the Pierced Heart").getAttachedTo())
+                .isEqualTo(player2.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private void addAuraAttachedToToken(Player player, Card auraCard) {
