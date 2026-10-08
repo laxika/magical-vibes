@@ -84,6 +84,95 @@ class VanguardOfTheRestlessTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(vanguard);
     }
 
+    @Test
+    void opponentSpiritEnteringDoesNotTriggerReturn() {
+        VanguardOfTheRestless vanguard = new VanguardOfTheRestless();
+        harness.setGraveyard(player1, List.of(vanguard));
+
+        harness.enterBattlefieldAndReturn(player2, new VanguardOfTheRestless());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(vanguard);
+    }
+
+    @Test
+    void mayDeclineReturnEvenWithEnoughMana() {
+        VanguardOfTheRestless vanguard = new VanguardOfTheRestless();
+        harness.setGraveyard(player1, List.of(vanguard));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.enterBattlefieldAndReturn(player1, new VanguardOfTheRestless());
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(vanguard);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(vanguard.getId()));
+    }
+
+    @Test
+    void returnDoesNotReturnOtherCopiesInGraveyard() {
+        VanguardOfTheRestless first = new VanguardOfTheRestless();
+        VanguardOfTheRestless second = new VanguardOfTheRestless();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.enterBattlefieldAndReturn(player1, new VanguardOfTheRestless());
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, false);
+            resolveAllTriggers();
+        }
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void oldTriggerCannotReturnVanguardAfterItLeavesAndReentersGraveyard() {
+        VanguardOfTheRestless vanguard = new VanguardOfTheRestless();
+        harness.setGraveyard(player1, List.of(vanguard));
+        gd.markGraveyardEntry(vanguard);
+        harness.enterBattlefieldAndReturn(player1, new VanguardOfTheRestless());
+
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(vanguard));
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(vanguard));
+        gd.markGraveyardEntry(vanguard);
+
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(vanguard);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(vanguard.getId()));
+    }
+
+    @Test
+    void boostExcludesNonSpiritsAndOpponentSpiritsAndOpponentCommanderCasts() {
+        Permanent vanguard = addCreatureReady(player1, new VanguardOfTheRestless());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingSpirit = addCreatureReady(player2, new VanguardOfTheRestless());
+        gd.commanderCastsFromCommandZoneThisGame.put(player1.getId(), 2);
+        gd.commanderCastsFromCommandZoneThisGame.put(player2.getId(), 3);
+
+        assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, vanguard)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingSpirit)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, opposingSpirit)).isEqualTo(5);
+    }
     private Card addCommanderToCommandZone() {
         Card commander = new Card();
         commander.setName("Test Commander");
