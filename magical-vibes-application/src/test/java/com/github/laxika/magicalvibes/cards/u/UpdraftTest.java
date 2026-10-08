@@ -31,8 +31,7 @@ class UpdraftTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         GameData gd = harness.getGameData();
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
 
@@ -64,14 +63,11 @@ class UpdraftTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         GameData gd = harness.getGameData();
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
@@ -102,8 +98,7 @@ class UpdraftTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         GameData gd = harness.getGameData();
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -111,5 +106,65 @@ class UpdraftTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Drawing is delayed, uses the stack, and survives the opposing target leaving")
+    void delayedDrawSurvivesTargetLeavingAfterResolution() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        harness.setLibrary(player1, List.of(new BalduvianBears(), new BalduvianBears()));
+        harness.setLibrary(player2, List.of(new BalduvianBears(), new BalduvianBears()));
+        harness.setHand(player1, List.of(new Updraft()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        gd.playerBattlefields.get(player2.getId()).remove(bears);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A draw registered during upkeep waits for a new turn, including an extra turn")
+    void drawWaitsForNextTurnWithSameActivePlayer() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        harness.setLibrary(player1, List.of(new BalduvianBears()));
+        harness.setHand(player1, List.of(new Updraft()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        gd.turnNumber++;
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
 }
