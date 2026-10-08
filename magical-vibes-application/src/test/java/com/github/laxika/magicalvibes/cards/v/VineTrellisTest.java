@@ -59,4 +59,33 @@ class VineTrellisTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(perm.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("Mana is available immediately without using the stack")
+    void manaAbilityResolvesImmediately() {
+        addCreatureReady(player1, new VineTrellis());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Vine Trellis can produce mana again after untapping")
+    void canProduceManaAgainAfterUntapping() {
+        Permanent perm = addCreatureReady(player1, new VineTrellis());
+        harness.tapPermanent(player1, 0);
+
+        harness.performUntapStep(player1);
+        assertThat(perm.isTapped()).isFalse();
+        int manaBeforeSecondActivation = gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN);
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN))
+                .isEqualTo(manaBeforeSecondActivation + 1);
+        assertThat(perm.isTapped()).isTrue();
+    }
 }
