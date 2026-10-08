@@ -1,21 +1,22 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DiregrafCaptain;
+import com.github.laxika.magicalvibes.cards.f.FlayerOfTheHatebound;
 import com.github.laxika.magicalvibes.cards.l.LilianaOfTheVeil;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -25,24 +26,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SorinLordOfInnistrad.class, GrizzlyBears.class, LilianaOfTheVeil.class,
+        DiregrafCaptain.class, FlayerOfTheHatebound.class})
 class SorinLordOfInnistradTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has three loyalty abilities")
-    void hasThreeAbilities() {
-        SorinLordOfInnistrad card = new SorinLordOfInnistrad();
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-    }
-
-    
-
-    
-
-    
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Resolving puts planeswalker on battlefield with 3 loyalty")
@@ -58,8 +44,6 @@ class SorinLordOfInnistradTest extends BaseCardTest {
         Permanent sorin = findPermanent(player1, "Sorin, Lord of Innistrad");
         assertThat(sorin.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
-
-    // ===== +1 ability =====
 
     @Test
     @DisplayName("+1 creates a 1/1 black Vampire token with lifelink")
@@ -84,13 +68,13 @@ class SorinLordOfInnistradTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
     }
 
-    // ===== -2 ability =====
-
     @Test
     @DisplayName("-2 creates an emblem with +1/+0 for creatures you control")
     void minusTwoCreatesEmblem() {
         Permanent sorin = addReadySorin(player1);
         sorin.setCounterCount(CounterType.LOYALTY, 3);
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
@@ -99,10 +83,10 @@ class SorinLordOfInnistradTest extends BaseCardTest {
         assertThat(sorin.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
         assertThat(gd.emblems).hasSize(1);
 
-        Emblem emblem = gd.emblems.getFirst();
-        assertThat(emblem.controllerId()).isEqualTo(player1.getId());
-        assertThat(emblem.staticEffects()).hasSize(1);
-        assertThat(emblem.staticEffects().getFirst()).isEqualTo(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES));
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(2);
     }
 
     @Test
@@ -134,8 +118,6 @@ class SorinLordOfInnistradTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
-    // ===== -6 ability =====
-
     @Test
     @DisplayName("-6 destroys up to three creatures and returns them under your control")
     void minusSixDestroysAndReturnsCreatures() {
@@ -146,8 +128,7 @@ class SorinLordOfInnistradTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        List<UUID> targetIds = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
+        List<UUID> targetIds = findPermanents(player2, "Grizzly Bears").stream()
                 .map(Permanent::getId)
                 .toList();
 
@@ -211,12 +192,8 @@ class SorinLordOfInnistradTest extends BaseCardTest {
     void minusSixDoesNotReturnIndestructiblePermanent() {
         Permanent sorin = addReadySorin(player1);
         sorin.setCounterCount(CounterType.LOYALTY, 7);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        UUID bearsId = findPermanent(player2, "Grizzly Bears").getId();
-        Permanent bears = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getId().equals(bearsId))
-                .findFirst().orElseThrow();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        UUID bearsId = bears.getId();
         bears.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
 
         harness.activateAbilityWithMultiTargets(player1, 0, 2, List.of(bearsId));
@@ -248,14 +225,104 @@ class SorinLordOfInnistradTest extends BaseCardTest {
                 .hasMessageContaining("Not enough loyalty");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Creatures destroyed together see each other's deaths")
+    void minusSixDestroysTargetsSimultaneously() {
+        Permanent sorin = addReadySorin(player1);
+        sorin.setCounterCount(CounterType.LOYALTY, 7);
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new DiregrafCaptain());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new DiregrafCaptain());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 2, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        for (int i = 0; i < 2; i++) {
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player2, player1.getId());
+            resolveAllTriggers();
+        }
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(countPermanents(player1, "Diregraf Captain")).isEqualTo(2);
+        harness.assertNotOnBattlefield(player2, "Diregraf Captain");
+    }
+
+    @Test
+    @DisplayName("Flayer returned together with another creature sees both entries")
+    void minusSixReturnsTargetsSimultaneously() {
+        Permanent sorin = addReadySorin(player1);
+        sorin.setCounterCount(CounterType.LOYALTY, 7);
+        Permanent captain = harness.addToBattlefieldAndReturn(player1, new DiregrafCaptain());
+        Permanent flayer = harness.addToBattlefieldAndReturn(player1, new FlayerOfTheHatebound());
+        flayer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 2, List.of(captain.getId(), flayer.getId()));
+        harness.passBothPriorities();
+
+        for (int i = 0; i < 2; i++) {
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player1, player2.getId());
+            resolveAllTriggers();
+        }
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 6);
+        harness.assertOnBattlefield(player1, "Diregraf Captain");
+        harness.assertOnBattlefield(player1, "Flayer of the Hatebound");
+    }
+
+    @Test
+    @DisplayName("Stolen Flayer does not trigger for entering from an opponent's graveyard")
+    void minusSixPreservesActualGraveyardOwner() {
+        Permanent sorin = addReadySorin(player1);
+        sorin.setCounterCount(CounterType.LOYALTY, 7);
+        Permanent flayer = harness.addToBattlefieldAndReturn(player2, new FlayerOfTheHatebound());
+        flayer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 2, List.of(flayer.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Flayer of the Hatebound");
+        harness.assertNotOnBattlefield(player2, "Flayer of the Hatebound");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ultimate still resolves when paying six loyalty puts Sorin in the graveyard")
+    void minusSixResolvesAfterSourceDies() {
+        Permanent sorin = addReadySorin(player1);
+        sorin.setCounterCount(CounterType.LOYALTY, 6);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DiregrafCaptain());
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 2, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Sorin, Lord of Innistrad");
+        harness.assertOnBattlefield(player1, "Diregraf Captain");
+        harness.assertNotOnBattlefield(player2, "Diregraf Captain");
+    }
+
+    @Test
+    @DisplayName("Emblem continues to boost creatures entering after Sorin leaves")
+    void emblemPersistsWithoutSorin() {
+        Permanent sorin = addReadySorin(player1);
+        sorin.setCounterCount(CounterType.LOYALTY, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Sorin, Lord of Innistrad");
+
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DiregrafCaptain());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
 
     private Permanent addReadySorin(Player player) {
-        SorinLordOfInnistrad card = new SorinLordOfInnistrad();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new SorinLordOfInnistrad());
         perm.setCounterCount(CounterType.LOYALTY, 3);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
