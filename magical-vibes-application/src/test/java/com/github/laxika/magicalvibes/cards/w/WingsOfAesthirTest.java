@@ -121,6 +121,47 @@ class WingsOfAesthirTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Multiple copies stack their power boosts and remaining copies keep granting keywords")
+    void multipleCopiesStackAndRemainingCopyKeepsKeywords() {
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        Permanent firstAura = harness.addToBattlefieldAndReturn(player1, new WingsOfAesthir());
+        firstAura.setAttachedTo(bears.getId());
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player2, new WingsOfAesthir());
+        secondAura.setAttachedTo(bears.getId());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstAura);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Aura goes to its owner's graveyard when the enchanted opponent's creature dies")
+    void auraGoesToOwnersGraveyardWhenEnchantedCreatureDies() {
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
+        harness.setHand(player1, List.of(new WingsOfAesthir()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        bears.setMarkedDamage(2);
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+        harness.assertInGraveyard(player1, "Wings of Aesthir");
+        harness.assertNotInGraveyard(player2, "Wings of Aesthir");
+        harness.assertNotOnBattlefield(player1, "Wings of Aesthir");
+    }
+
+    @Test
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotTargetNonCreature() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new BarbedSextant());
