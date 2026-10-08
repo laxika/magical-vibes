@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BearCub;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,13 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VampireGourmand.class, BearCub.class, Forest.class})
 class VampireGourmandTest extends BaseCardTest {
 
     @Test
     @DisplayName("Attacking offers sacrificing another creature")
     void attackingOffersSacrifice() {
         Permanent vampire = addCreatureReady(player1, new VampireGourmand());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new BearCub());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -37,8 +39,8 @@ class VampireGourmandTest extends BaseCardTest {
     @DisplayName("Sacrificing another creature draws a card and makes Vampire Gourmand unblockable")
     void sacrificingAnotherCreatureDrawsAndMakesUnblockable() {
         Permanent vampire = addCreatureReady(player1, new VampireGourmand());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new BearCub());
+        harness.addToBattlefield(player2, new BearCub());
         harness.setLibrary(player1, List.of(new Forest()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -57,7 +59,7 @@ class VampireGourmandTest extends BaseCardTest {
     @DisplayName("Declining the sacrifice does nothing")
     void decliningSacrificeDoesNothing() {
         Permanent vampire = addCreatureReady(player1, new VampireGourmand());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new BearCub());
         harness.setLibrary(player1, List.of(new Forest()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -67,8 +69,7 @@ class VampireGourmandTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
-        Permanent currentVampire = findPermanent(player1, "Vampire Gourmand");
-        assertThat(currentVampire.isCantBeBlocked()).isFalse();
+        assertThat(vampire.isCantBeBlocked()).isFalse();
     }
 
     @Test
@@ -91,8 +92,9 @@ class VampireGourmandTest extends BaseCardTest {
     @DisplayName("The unblockable effect expires at end of turn")
     void unblockableExpiresAtEndOfTurn() {
         Permanent vampire = addCreatureReady(player1, new VampireGourmand());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new BearCub());
         harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -108,5 +110,43 @@ class VampireGourmandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(vampire.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Drawing and becoming unblockable happen during the attack trigger's resolution")
+    void sacrificeFollowUpResolvesWithoutAnotherPriorityRound() {
+        Permanent vampire = addCreatureReady(player1, new VampireGourmand());
+        Permanent bears = addCreatureReady(player1, new BearCub());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(vampire.isCantBeBlocked()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opposing creature and a controlled land cannot be sacrificed")
+    void opponentCreatureAndLandAreIneligible() {
+        Permanent vampire = addCreatureReady(player1, new VampireGourmand());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new BearCub());
+        harness.setLibrary(player1, List.of(new Forest()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        assertThat(vampire.isCantBeBlocked()).isFalse();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
