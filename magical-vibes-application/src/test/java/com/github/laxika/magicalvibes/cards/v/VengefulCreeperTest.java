@@ -55,6 +55,39 @@ class VengefulCreeperTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
+    @Test
+    void turningFaceUpDestroysAnOpponentEnchantment() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+        Permanent creeper = castFaceDown();
+
+        turnFaceUp(creeper);
+        harness.handlePermanentChosen(player1, enchantment.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+        harness.assertInGraveyard(player2, "Glorious Anthem");
+        harness.assertOnBattlefield(player1, "Vengeful Creeper");
+        assertThat(creeper.isFaceDown()).isFalse();
+    }
+
+    @Test
+    void castingFaceUpDoesNotTriggerDestruction() {
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new GloriousAnthem());
+        harness.setHand(player1, List.of(new VengefulCreeper()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Vengeful Creeper");
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
+        harness.assertOnBattlefield(player2, "Glorious Anthem");
+    }
+
     private Permanent castFaceDown() {
         harness.setHand(player1, List.of(new VengefulCreeper()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
