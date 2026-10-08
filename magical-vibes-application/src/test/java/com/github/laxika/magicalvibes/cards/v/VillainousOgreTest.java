@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GutwrencherOni;
 import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
+import com.github.laxika.magicalvibes.cards.n.NecroticOoze;
 import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VillainousOgre.class, GutwrencherOni.class, HumbleBudoka.class})
+@CardUsed({VillainousOgre.class, GutwrencherOni.class, HumbleBudoka.class,
+        WoodlandChangeling.class, NecroticOoze.class})
 class VillainousOgreTest extends BaseCardTest {
 
     @Test
@@ -113,7 +115,6 @@ class VillainousOgreTest extends BaseCardTest {
 
     @Test
     @DisplayName("A Changeling you control enables the regeneration ability")
-    @CardUsed(WoodlandChangeling.class)
     void changelingEnablesRegeneration() {
         Permanent ogre = addCreatureReady(player1, new VillainousOgre());
         addCreatureReady(player1, new WoodlandChangeling());
@@ -123,5 +124,53 @@ class VillainousOgreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(ogre.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Losing the last Demon prevents further activations but preserves an existing shield")
+    void losingLastDemonPreventsFurtherActivations() {
+        Permanent ogre = addCreatureReady(player1, new VillainousOgre());
+        Permanent demon = addCreatureReady(player1, new GutwrencherOni());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, demon));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(ogre.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The regeneration ability can be activated repeatedly while the Ogre is tapped")
+    void tappedOgreCanCreateMultipleRegenerationShields() {
+        Permanent ogre = addCreatureReady(player1, new VillainousOgre());
+        ogre.setTapped(true);
+        addCreatureReady(player1, new GutwrencherOni());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(ogre.getRegenerationShield()).isEqualTo(2);
+        assertThat(ogre.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Necrotic Ooze cannot gain regeneration from Villainous Ogre in a graveyard")
+    void graveyardOgreDoesNotGrantRegenerationToNecroticOoze() {
+        Permanent ooze = addCreatureReady(player1, new NecroticOoze());
+        addCreatureReady(player1, new GutwrencherOni());
+        harness.setGraveyard(player1, List.of(new VillainousOgre()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(ooze.getRegenerationShield()).isZero();
     }
 }
