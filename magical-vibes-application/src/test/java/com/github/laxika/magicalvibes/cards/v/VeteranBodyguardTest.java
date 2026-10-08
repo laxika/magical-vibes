@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.b.BlueWard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
@@ -16,7 +17,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VeteranBodyguard.class, GrizzlyBears.class, WhiteKnight.class, ProdigalSorcerer.class})
+@CardUsed({VeteranBodyguard.class, GrizzlyBears.class, WhiteKnight.class, ProdigalSorcerer.class, BlueWard.class})
 class VeteranBodyguardTest extends BaseCardTest {
 
     @Test
@@ -144,6 +145,116 @@ class VeteranBodyguardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(bodyguard.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("All simultaneous unblocked damage is absorbed even when lethal to the Bodyguard")
+    void absorbsAllSimultaneousDamageBeforeDying() {
+        Permanent bodyguard = addBodyguard();
+        addAttacker();
+        addAttacker();
+        addAttacker();
+
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bodyguard);
+        harness.assertInGraveyard(player2, "Veteran Bodyguard");
+    }
+
+    @Test
+    @DisplayName("A nonattacking creature's damage is not absorbed")
+    void nonattackingCreatureDamageIsNotAbsorbed() {
+        Permanent bodyguard = addBodyguard();
+        addCreatureReady(player1, new ProdigalSorcerer());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.activateAbility(player1, 0, null, player2.getId());
+            harness.passBothPriorities();
+        });
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(bodyguard.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("An attacker is not unblocked before blockers are declared")
+    void damageBeforeBlockersAreDeclaredIsNotAbsorbed() {
+        Permanent bodyguard = addBodyguard();
+        Permanent sorcerer = addCreatureReady(player1, new ProdigalSorcerer());
+        sorcerer.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.activateAbility(player1, 0, null, player2.getId());
+            harness.passBothPriorities();
+        });
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(bodyguard.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("The affected player chooses between multiple Bodyguard replacement effects")
+    void multipleBodyguardsRequireReplacementChoice() {
+        Permanent first = addBodyguard();
+        Permanent second = addBodyguard();
+        Permanent sorcerer = addCreatureReady(player1, new ProdigalSorcerer());
+        sorcerer.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.activateAbility(player1, 0, null, player2.getId());
+            harness.passBothPriorities();
+        });
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(first.getMarkedDamage()).isZero();
+        assertThat(second.getMarkedDamage()).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Protection from blue prevents redirected combat damage from a blue creature")
+    void protectionPreventsRedirectedCombatDamage() {
+        Permanent bodyguard = addBodyguard();
+        Permanent ward = harness.addToBattlefieldAndReturn(player2, new BlueWard());
+        ward.setAttachedTo(bodyguard.getId());
+        Permanent sorcerer = addCreatureReady(player1, new ProdigalSorcerer());
+        sorcerer.setAttacking(true);
+
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(bodyguard.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Protection from blue prevents redirected noncombat damage from a blue creature")
+    void protectionPreventsRedirectedNoncombatDamage() {
+        Permanent bodyguard = addBodyguard();
+        Permanent ward = harness.addToBattlefieldAndReturn(player2, new BlueWard());
+        ward.setAttachedTo(bodyguard.getId());
+        Permanent sorcerer = addCreatureReady(player1, new ProdigalSorcerer());
+        sorcerer.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.activateAbility(player1, 0, null, player2.getId());
+            harness.passBothPriorities();
+        });
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(bodyguard.getMarkedDamage()).isZero();
     }
 
