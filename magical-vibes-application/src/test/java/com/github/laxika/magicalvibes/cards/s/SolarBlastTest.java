@@ -110,6 +110,76 @@ class SolarBlastTest extends BaseCardTest {
         harness.assertInHand(player1, "Glory Seeker");
     }
 
+    @Test
+    @DisplayName("Cycling can damage its controller and chooses whether to deal damage before drawing")
+    void cyclingCanDamageControllerBeforeDrawing() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new SolarBlast()));
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
+        addCyclingMana(player1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.assertInGraveyard(player1, "Solar Blast");
+        harness.assertNotInHand(player1, "Glory Seeker");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.assertNotInHand(player1, "Glory Seeker");
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        harness.assertInHand(player1, "Glory Seeker");
+    }
+
+    @Test
+    @DisplayName("Losing the cycling trigger's target does not stop the cycling draw")
+    void cyclingDrawsWhenDamageTargetBecomesIllegal() {
+        harness.addToBattlefield(player2, new GlorySeeker());
+        harness.setHand(player1, List.of(new SolarBlast()));
+        harness.setHand(player2, List.of(new SolarBlast()));
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
+        addCyclingMana(player1);
+        addSpellMana(player2);
+        UUID targetId = harness.getPermanentId(player2, "Glory Seeker");
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, targetId);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Glory Seeker");
+        harness.assertInGraveyard(player2, "Glory Seeker");
+        harness.assertInGraveyard(player1, "Solar Blast");
+        harness.assertInHand(player1, "Glory Seeker");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cycling marks exactly 1 damage on a creature")
+    void cyclingMarksOneDamage() {
+        harness.addToBattlefield(player2, new GlorySeeker());
+        harness.setHand(player1, List.of(new SolarBlast()));
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
+        addCyclingMana(player1);
+        UUID targetId = harness.getPermanentId(player2, "Glory Seeker");
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player2, "Glory Seeker").getMarkedDamage()).isEqualTo(1);
+        harness.assertInHand(player1, "Glory Seeker");
+    }
     private void addSpellMana(com.github.laxika.magicalvibes.model.Player player) {
         harness.addMana(player, ManaColor.RED, 1);
         harness.addMana(player, ManaColor.COLORLESS, 3);
