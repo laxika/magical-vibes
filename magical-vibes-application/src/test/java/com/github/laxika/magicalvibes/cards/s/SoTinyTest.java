@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -75,9 +76,7 @@ class SoTinyTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("So Tiny")
-                        && creature.getId().equals(permanent.getAttachedTo()));
+        assertThat(findPermanent(player1, "So Tiny").getAttachedTo()).isEqualTo(creature.getId());
     }
 
     @Test
@@ -92,14 +91,75 @@ class SoTinyTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Flash allows casting during the opponent's combat")
+    void canCastDuringOpponentsCombat() {
+        Permanent creature = addCreature(player2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new SoTiny()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "So Tiny").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Reaching seven noncreature cards immediately strengthens the penalty")
+    void thresholdCountsNonCreatureCardsAndUpdatesWhenReached() {
+        List<Card> cards = List.of(new FountainOfYouth(), new FountainOfYouth(),
+                new FountainOfYouth(), new FountainOfYouth(), new FountainOfYouth(),
+                new FountainOfYouth(), new FountainOfYouth());
+        harness.setGraveyard(player2, cards.subList(0, 6));
+        Permanent creature = addCreature(player2);
+        attachAura(player1, creature);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(0);
+
+        harness.setGraveyard(player2, cards);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Seven cards in the Aura controller's graveyard do not strengthen the penalty")
+    void ignoresAuraControllersGraveyard() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent creature = addCreature(player2);
+        attachAura(player1, creature);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple copies each apply their penalty only to the enchanted creature")
+    void multipleCopiesStackWithoutAffectingOtherCreatures() {
+        harness.setGraveyard(player2, graveyardWithSevenCards());
+        Permanent creature = addCreature(player2);
+        Permanent otherCreature = addCreature(player2);
+        attachAura(player1, creature);
+        attachAura(player1, creature);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-10);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
+    }
+
     private Permanent addCreature(Player player) {
         return harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
     }
 
     private void attachAura(Player controller, Permanent creature) {
-        Permanent aura = new Permanent(new SoTiny());
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new SoTiny());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
     }
 
     private List<Card> graveyardWithSevenCards() {
