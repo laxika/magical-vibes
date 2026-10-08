@@ -57,4 +57,59 @@ class YurikoTheTigersShadowTest extends BaseCardTest {
         assertThat(yuriko.isAttacking()).isTrue();
         assertThat(yuriko.getAttackTarget()).isEqualTo(player2.getId());
     }
+
+    @Test
+    @DisplayName("An empty library causes no additional life loss and is not a failed draw")
+    void emptyLibraryDoesNotCauseLifeLossOrGameLoss() {
+        addCreatureReady(player1, new YurikoTheTigersShadow());
+        harness.setLibrary(player1, List.of());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isNotEqualTo(com.github.laxika.magicalvibes.model.GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("A non-Ninja dealing combat damage does not reveal a card")
+    void nonNinjaDoesNotTriggerYuriko() {
+        addCreatureReady(player1, new YurikoTheTigersShadow());
+        addCreatureReady(player1, new GrizzlyBears());
+        Card topCard = new HillGiant();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(1));
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(topCard);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("An opponent's Ninja does not trigger your Yuriko")
+    void opponentNinjaDoesNotTriggerYourYuriko() {
+        addCreatureReady(player1, new YurikoTheTigersShadow());
+        addCreatureReady(player2, new YurikoTheTigersShadow());
+        Card topCard = new HillGiant();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setLibrary(player2, List.of());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, java.util.Map.of());
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
 }
