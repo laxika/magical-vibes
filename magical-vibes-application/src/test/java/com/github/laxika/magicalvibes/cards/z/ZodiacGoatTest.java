@@ -38,6 +38,26 @@ class ZodiacGoatTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Zodiac Goat cannot be blocked when the defending player's Mountain is tapped")
+    void cannotBeBlockedWhenDefenderControlsTappedMountain() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        mountain.setTapped(true);
+
+        Permanent blockerPerm = addCreatureReady(player2, new ShuFootSoldiers());
+        Permanent atkPerm = addCreatureReady(player1, new ZodiacGoat());
+        atkPerm.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
     @DisplayName("Zodiac Goat can be blocked when defending player does not control a Mountain")
     void canBeBlockedWhenDefenderDoesNotControlMountain() {
         Permanent blockerPerm = addCreatureReady(player2, new ShuFootSoldiers());
