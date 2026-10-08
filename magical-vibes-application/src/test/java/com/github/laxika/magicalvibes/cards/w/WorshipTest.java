@@ -15,7 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GrizzlyBears.class, HillGiant.class, Shock.class, Worship.class})
+@CardUsed({GrizzlyBears.class, HillGiant.class, PlatinumAngel.class, Shock.class, Worship.class})
 class WorshipTest extends BaseCardTest {
 
     @Test
@@ -90,6 +90,55 @@ class WorshipTest extends BaseCardTest {
         harness.assertLife(player1, 0);
     }
 
+    @Test
+    @DisplayName("Damage at 1 life is still dealt without reducing life")
+    void damageAtOneLifeStillCountsAsDamage() {
+        harness.addToBattlefield(player1, new Worship());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setLife(player1, 1);
+
+        shockPlayer1();
+
+        harness.assertLife(player1, 1);
+        assertThat(gd.damageDealtToPlayersThisTurn.get(player1.getId())).isEqualTo(2);
+        assertThat(gd.noncombatDamageDealtToPlayersThisTurn.get(player1.getId())).isEqualTo(2);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Nonlethal damage reduces life normally")
+    void nonlethalDamageIsNotChanged() {
+        harness.addToBattlefield(player1, new Worship());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setLife(player1, 5);
+
+        shockPlayer1();
+
+        harness.assertLife(player1, 3);
+    }
+
+    @Test
+    @DisplayName("Killing the last creature disables Worship for subsequent damage")
+    void losingLastCreatureDisablesProtection() {
+        harness.addToBattlefield(player1, new Worship());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLife(player1, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+
+        shockPlayer1();
+
+        harness.assertLife(player1, 0);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
     private void shockPlayer1() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -116,7 +165,6 @@ class WorshipTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(PlatinumAngel.class)
     @DisplayName("Damage does not raise life from below 1")
     void damageDoesNotRaiseLifeFromBelowOne() {
         harness.addToBattlefield(player1, new Worship());
