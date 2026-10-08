@@ -24,8 +24,7 @@ class WillowGeistTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Reminisce()));
         addReminisceMana();
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
 
         assertThat(geist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -37,8 +36,7 @@ class WillowGeistTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DiabolicEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(21);
@@ -51,11 +49,69 @@ class WillowGeistTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DiabolicEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+    }
+
+    @Test
+    void doesNotTriggerWhenOpponentsCardsLeaveTheirGraveyard() {
+        Permanent geist = addReadyGeist();
+        harness.setGraveyard(player2, List.of(new Shock(), new Shock()));
+        harness.setHand(player1, List.of(new Reminisce()));
+        addReminisceMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(geist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerWhenAnEmptyGraveyardIsShuffled() {
+        Permanent geist = addReadyGeist();
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new Reminisce()));
+        addReminisceMana();
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        assertThat(geist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void triggersAgainForASeparateGraveyardDeparture() {
+        Permanent geist = addReadyGeist();
+        harness.setGraveyard(player1, List.of(new Shock()));
+        harness.setHand(player1, List.of(new Reminisce(), new Reminisce()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.passBothPriorities();
+        assertThat(geist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(geist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void deathTriggerGainsLifeForItsControllerOnly() {
+        addCreatureReady(player2, new WillowGeist());
+        harness.setHand(player1, List.of(new DiabolicEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 21);
+        harness.assertNotOnBattlefield(player2, "Willow Geist");
     }
 
     private Permanent addReadyGeist() {
