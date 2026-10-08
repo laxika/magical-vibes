@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.a.ArcboundWorker;
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GenesisChamber;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WakeThePast.class, ArcboundWorker.class, DarksteelRelic.class, GrizzlyBears.class})
+@CardUsed({WakeThePast.class, ArcboundWorker.class, DarksteelRelic.class, GrizzlyBears.class,
+        GenesisChamber.class})
 class WakeThePastTest extends BaseCardTest {
 
     @Test
@@ -32,8 +34,7 @@ class WakeThePastTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WakeThePast()));
         addWakeThePastMana();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(Permanent::getCard)
@@ -52,8 +53,7 @@ class WakeThePastTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WakeThePast()));
         addWakeThePastMana();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         Permanent returnedWorker = findPermanent(player1, "Arcbound Worker");
         assertThat(returnedWorker.hasKeyword(Keyword.HASTE)).isTrue();
@@ -63,6 +63,39 @@ class WakeThePastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(returnedWorker.hasKeyword(Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Returning artifacts enter simultaneously and see each other's entry")
+    void returnedChamberSeesSimultaneouslyReturnedCreature() {
+        harness.setGraveyard(player1, List.of(new ArcboundWorker(), new GenesisChamber()));
+        harness.setHand(player1, List.of(new WakeThePast()));
+        addWakeThePastMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+        Permanent myr = findPermanent(player1, "Myr");
+        assertThat(myr.hasKeyword(Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Resolves with no artifacts in the graveyard")
+    void resolvesWithoutArtifacts() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new WakeThePast()));
+        addWakeThePastMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature)
+                .anyMatch(card -> card instanceof WakeThePast);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addWakeThePastMana() {
