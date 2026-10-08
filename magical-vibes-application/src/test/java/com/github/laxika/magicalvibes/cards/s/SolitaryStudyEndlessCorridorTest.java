@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -54,6 +55,67 @@ class SolitaryStudyEndlessCorridorTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    void castingEndlessCorridorConjuresBeforeChoosingTheReflexiveTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castRoom(1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1)
+                .allMatch(SolitaryStudyEndlessCorridor.class::isInstance);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+        harness.handlePermanentChosen(player1, target.getId());
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    void castingEndlessCorridorDoesNotEnableLockedSolitaryStudy() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castRoom(1);
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    void roomEnteringWithoutBeingCastHasNoActiveBoostOrUnlockTrigger() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new SolitaryStudyEndlessCorridor());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void firstStrikeExpiresAfterTheTurnWhileTheDuplicateRemainsInHand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castRoom(1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1)
+                .allMatch(SolitaryStudyEndlessCorridor.class::isInstance);
+    }
+
+    @Test
+    void endlessCorridorConjuresEvenWithoutACreatureToTarget() {
+        castRoom(1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1)
+                .allMatch(SolitaryStudyEndlessCorridor.class::isInstance);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private Permanent castRoom(int doorIndex) {
