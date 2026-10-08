@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VeilbornGhoul.class, WalkingCorpse.class, Island.class, Swamp.class})
 class VeilbornGhoulTest extends BaseCardTest {
 
     private void prepareMain(Player active) {
@@ -28,14 +30,12 @@ class VeilbornGhoulTest extends BaseCardTest {
     @Test
     @DisplayName("Veilborn Ghoul cannot be declared as a blocker")
     void cannotBeDeclaredAsBlocker() {
-        Permanent ghoul = new Permanent(new VeilbornGhoul());
+        Permanent ghoul = harness.addToBattlefieldAndReturn(player2, new VeilbornGhoul());
         ghoul.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(ghoul);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -55,7 +55,7 @@ class VeilbornGhoulTest extends BaseCardTest {
         prepareMain(player1);
 
         harness.setHand(player1, List.of(new Swamp()));
-        harness.castCreature(player1, 0); // play the Swamp
+        harness.playLand(player1, 0);
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         assertThat(gd.stack).hasSize(1);
@@ -77,7 +77,7 @@ class VeilbornGhoulTest extends BaseCardTest {
         prepareMain(player1);
 
         harness.setHand(player1, List.of(new Swamp()));
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -93,7 +93,7 @@ class VeilbornGhoulTest extends BaseCardTest {
         prepareMain(player1);
 
         harness.setHand(player1, List.of(new Island()));
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(gd.stack).isEmpty();
     }
@@ -105,8 +105,70 @@ class VeilbornGhoulTest extends BaseCardTest {
         prepareMain(player2);
 
         harness.setHand(player2, List.of(new Swamp()));
-        harness.castCreature(player2, 0);
+        harness.playLand(player2, 0);
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each graveyard copy triggers independently and returns only itself")
+    void multipleCopiesHaveIndependentChoices() {
+        VeilbornGhoul first = new VeilbornGhoul();
+        VeilbornGhoul second = new VeilbornGhoul();
+        WalkingCorpse other = new WalkingCorpse();
+        harness.setGraveyard(player1, List.of(first, second, other));
+        prepareMain(player1);
+        harness.setHand(player1, List.of(new Swamp()));
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId()).getFirst().getId())
+                .isIn(first.getId(), second.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2).contains(other);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2).contains(other);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Ghoul on the battlefield or in hand does not trigger when a Swamp enters")
+    void doesNotTriggerOutsideGraveyard() {
+        harness.addToBattlefield(player1, new VeilbornGhoul());
+        harness.setHand(player1, List.of(new Swamp(), new VeilbornGhoul()));
+        prepareMain(player1);
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Veilborn Ghoul");
+        harness.assertOnBattlefield(player1, "Veilborn Ghoul");
+    }
+
+    @Test
+    @DisplayName("A Ghoul removed from the graveyard before resolution cannot be returned")
+    void exiledGhoulIsNotReturned() {
+        VeilbornGhoul ghoul = new VeilbornGhoul();
+        harness.setGraveyard(player1, List.of(ghoul));
+        prepareMain(player1);
+        harness.setHand(player1, List.of(new Swamp()));
+        harness.playLand(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(ghoul));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(ghoul);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 }
