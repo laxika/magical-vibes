@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.e.EssenceFlux;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,14 +14,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RagefireHellkite.class, GrizzlyBears.class, EssenceFlux.class})
+@CardUsed({RagefireHellkite.class, EssenceFlux.class})
 class RagefireHellkiteTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing another creature gives Ragefire Hellkite double strike")
     void sacrificingAnotherCreatureGrantsDoubleStrike() {
         Permanent hellkite = addCreatureReady(player1, new RagefireHellkite());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new RagefireHellkite());
 
         attackAndAcceptMay();
         harness.handlePermanentChosen(player1, bears.getId());
@@ -35,7 +34,7 @@ class RagefireHellkiteTest extends BaseCardTest {
     @DisplayName("Declining the sacrifice does not give Ragefire Hellkite double strike")
     void decliningSacrificeDoesNothing() {
         Permanent hellkite = addCreatureReady(player1, new RagefireHellkite());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new RagefireHellkite());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -49,7 +48,7 @@ class RagefireHellkiteTest extends BaseCardTest {
     @DisplayName("Granted double strike wears off at end of turn")
     void doubleStrikeWearsOffAtEndOfTurn() {
         Permanent hellkite = addCreatureReady(player1, new RagefireHellkite());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new RagefireHellkite());
 
         attackAndAcceptMay();
         harness.handlePermanentChosen(player1, bears.getId());
@@ -71,7 +70,7 @@ class RagefireHellkiteTest extends BaseCardTest {
     @Test
     void cannotSacrificeItselfOrAnOpponentsCreature() {
         Permanent hellkite = addCreatureReady(player1, new RagefireHellkite());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new RagefireHellkite());
         Permanent opposingHellkite = addCreatureReady(player2, new RagefireHellkite());
 
         attackAndAcceptMay();
