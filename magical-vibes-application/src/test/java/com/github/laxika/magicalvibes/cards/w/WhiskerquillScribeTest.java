@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.b.BraveKinDuo;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,15 +15,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WhiskerquillScribe.class, Forest.class, GiantGrowth.class})
+@CardUsed({WhiskerquillScribe.class, Forest.class, GiantGrowth.class, BraveKinDuo.class})
 class WhiskerquillScribeTest extends BaseCardTest {
 
     @Test
     void valiantMayDiscardThenDraw() {
         Forest discarded = new Forest();
         Forest drawn = new Forest();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(drawn);
+        harness.setLibrary(player1, List.of(drawn));
         Permanent scribe = harness.addToBattlefieldAndReturn(player1, new WhiskerquillScribe());
         harness.setHand(player1, new ArrayList<>(List.of(new GiantGrowth(), discarded)));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -41,8 +41,7 @@ class WhiskerquillScribeTest extends BaseCardTest {
     void valiantCanBeDeclined() {
         Forest discarded = new Forest();
         Forest drawn = new Forest();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(drawn);
+        harness.setLibrary(player1, List.of(drawn));
         Permanent scribe = harness.addToBattlefieldAndReturn(player1, new WhiskerquillScribe());
         harness.setHand(player1, new ArrayList<>(List.of(new GiantGrowth(), discarded)));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -86,5 +85,61 @@ class WhiskerquillScribeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    void ownActivatedAbilityTriggersValiant() {
+        Forest discarded = new Forest();
+        Forest drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+        Permanent scribe = harness.addToBattlefieldAndReturn(player1, new WhiskerquillScribe());
+        Permanent duo = harness.addToBattlefieldAndReturn(player1, new BraveKinDuo());
+        duo.setSummoningSick(false);
+        harness.setHand(player1, List.of(discarded));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 1, null, scribe.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    void acceptingWithEmptyHandDoesNotDraw() {
+        Forest drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+        Permanent scribe = harness.addToBattlefieldAndReturn(player1, new WhiskerquillScribe());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0, scribe.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void opponentsTargetingDoesNotUseOwnFirstTargetingTrigger() {
+        Permanent scribe = harness.addToBattlefieldAndReturn(player1, new WhiskerquillScribe());
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.setHand(player1, List.of(new GiantGrowth(), new Forest()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player2, 0, scribe.getId());
+        harness.castInstant(player1, 0, scribe.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
     }
 }
