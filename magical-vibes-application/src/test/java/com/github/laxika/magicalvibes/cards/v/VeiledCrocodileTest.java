@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
+import com.github.laxika.magicalvibes.cards.e.EnchantedEvening;
 import com.github.laxika.magicalvibes.cards.t.TolarianWinds;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VeiledCrocodile.class, GorillaWarrior.class, TolarianWinds.class})
+@CardUsed({VeiledCrocodile.class, GorillaWarrior.class, TolarianWinds.class, EnchantedEvening.class})
 class VeiledCrocodileTest extends BaseCardTest {
 
     @Test
@@ -52,16 +53,54 @@ class VeiledCrocodileTest extends BaseCardTest {
     @Test
     @DisplayName("Triggers when a hand is empty momentarily during a spell's resolution")
     void triggersWhenHandIsMomentarilyEmptyDuringResolution() {
-        Permanent crocodile = harness.addToBattlefieldAndReturn(player1, new VeiledCrocodile());
         harness.setHand(player1, List.of(new TolarianWinds(), new GorillaWarrior()));
+        harness.setHand(player2, List.of(new GorillaWarrior()));
         harness.setLibrary(player1, List.of(new GorillaWarrior()));
+        Permanent crocodile = harness.addToBattlefieldAndReturn(player1, new VeiledCrocodile());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0);
+        harness.castAndResolveInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, crocodile)).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Becomes a creature when its controller has an empty hand")
+    void becomesCreatureWhenControllerHasNoCardsInHand() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new GorillaWarrior()));
+        Permanent crocodile = harness.addToBattlefieldAndReturn(player1, new VeiledCrocodile());
+
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, crocodile)).isTrue();
+        assertThat(gqs.isEnchantment(gd, crocodile)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An animated Crocodile triggers again when Enchanted Evening makes it an enchantment")
+    void triggersAgainWhenItsEffectiveTypeIncludesEnchantment() {
+        harness.setHand(player1, List.of(new GorillaWarrior()));
+        harness.setHand(player2, List.of());
+        Permanent crocodile = harness.addToBattlefieldAndReturn(player1, new VeiledCrocodile());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, crocodile)).isTrue();
+        assertThat(gd.stack).isEmpty();
+
+        harness.setHand(player2, List.of(new GorillaWarrior()));
+        harness.addToBattlefield(player1, new EnchantedEvening());
+        assertThat(gqs.isEnchantment(gd, crocodile)).isTrue();
+        harness.setHand(player2, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).anySatisfy(entry ->
+                assertThat(entry.getSourcePermanentId()).isEqualTo(crocodile.getId()));
     }
 }
