@@ -18,4 +18,28 @@ class WinterSoldierBuckyBarnesTest extends BaseCardTest {
 
         assertThat(winterSoldier.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("Enters tapped when its creature spell resolves")
+    void entersTappedWhenCast() {
+        harness.castFromHand(player1, new WinterSoldierBuckyBarnes(), "{W}");
+        harness.passBothPriorities();
+
+        Permanent winterSoldier = findPermanent(player1, "Winter Soldier, Bucky Barnes");
+        assertThat(winterSoldier.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering tapped does not prevent untapping during its controller's untap step")
+    void untapsNormallyAfterEnteringTapped() {
+        Permanent winterSoldier = harness.enterBattlefieldAndReturn(player1, new WinterSoldierBuckyBarnes());
+        assertThat(winterSoldier.isTapped()).isTrue();
+
+        harness.performUntapStep(player2);
+        assertThat(winterSoldier.isTapped()).isTrue();
+
+        harness.performUntapStep(player1);
+        assertThat(winterSoldier.isTapped()).isFalse();
+    }
 }
