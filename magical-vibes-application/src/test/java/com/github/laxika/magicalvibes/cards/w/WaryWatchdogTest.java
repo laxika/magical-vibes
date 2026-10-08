@@ -64,11 +64,89 @@ class WaryWatchdogTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("An enters trigger can leave the top card in the library")
+    void entersCanKeepTopCard() {
+        Card topCard = new GrizzlyBears();
+        Card secondCard = new WaryWatchdog();
+        harness.setLibrary(player1, List.of(topCard, secondCard));
+
+        harness.enterBattlefieldAndReturn(player1, new WaryWatchdog());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, secondCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A death trigger can leave the top card in the library")
+    void diesCanKeepTopCard() {
+        Permanent watchdog = addReadyWatchdog(player1);
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+
+        killWithShock(player2, watchdog.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(watchdog.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(topCard);
+    }
+
+    @Test
+    @DisplayName("Entering with an empty library finishes without a choice")
+    void entersWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        Permanent watchdog = harness.enterBattlefieldAndReturn(player1, new WaryWatchdog());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(watchdog);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Dying with an empty library finishes without a choice")
+    void diesWithEmptyLibrary() {
+        Permanent watchdog = addReadyWatchdog(player1);
+        harness.setLibrary(player1, List.of());
+
+        killWithShock(player2, watchdog.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(watchdog.getCard());
+    }
+
+    @Test
+    @DisplayName("Player two's Watchdog surveils player two's library when it dies")
+    void opponentWatchdogSurveilsItsControllersLibrary() {
+        Permanent watchdog = addReadyWatchdog(player2);
+        Card ownTop = new GrizzlyBears();
+        Card opponentTop = new GrizzlyBears();
+        Card opponentSecond = new WaryWatchdog();
+        harness.setLibrary(player1, List.of(ownTop));
+        harness.setLibrary(player2, List.of(opponentTop, opponentSecond));
+
+        killWithShock(player1, watchdog.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownTop);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(ownTop, opponentTop);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentSecond);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentTop, watchdog.getCard());
+    }
+
     private Permanent addReadyWatchdog(Player player) {
-        WaryWatchdog card = new WaryWatchdog();
-        Permanent watchdog = new Permanent(card);
+        Permanent watchdog = harness.addToBattlefieldAndReturn(player, new WaryWatchdog());
         watchdog.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(watchdog);
         return watchdog;
     }
 
@@ -78,7 +156,6 @@ class WaryWatchdogTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(caster, List.of(new Shock()));
         harness.addMana(caster, ManaColor.RED, 1);
-        harness.castInstant(caster, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, targetId);
     }
 }
