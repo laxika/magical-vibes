@@ -203,6 +203,62 @@ class AltarOfBhaalTest extends BaseCardTest {
         assertThat(gd.findExiledCard(target.getId())).isNotNull();
     }
 
+    @Test
+    void choosesWhichCreatureToExileWhenSeveralAreAvailable() {
+        LurkingRoper target = prepareActivation();
+        Permanent unchosen = findPermanent(player1, "Lurking Roper");
+        Permanent chosen = harness.addToBattlefieldAndReturn(player1, new LurkingRoper());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD);
+        harness.handlePermanentChosen(player1, chosen.getId());
+
+        assertThat(gd.findExiledCard(chosen.getCard().getId())).isNotNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(unchosen).doesNotContain(chosen);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard).contains(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(target);
+    }
+
+    @Test
+    void abilityStillReturnsCreatureAfterAltarLeavesBattlefield() {
+        LurkingRoper target = prepareActivation();
+        Permanent altar = findPermanent(player1, "Altar of Bhaal");
+        harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD);
+        gd.playerBattlefields.get(player1.getId()).remove(altar);
+        harness.setGraveyard(player1, List.of(target, altar.getCard()));
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Altar of Bhaal");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard).contains(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(altar.getCard()).doesNotContain(target);
+    }
+
+    @Test
+    void insufficientManaDoesNotExileCreatureOrTapAltar() {
+        Permanent altar = harness.addToBattlefieldAndReturn(player1, new AltarOfBhaal());
+        Permanent costCreature = harness.addToBattlefieldAndReturn(player1, new LurkingRoper());
+        LurkingRoper target = new LurkingRoper();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 0, null, target.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(altar.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(costCreature);
+        assertThat(gd.findExiledCard(costCreature.getCard().getId())).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(target);
+    }
+
     private LurkingRoper prepareActivation() {
         harness.addToBattlefield(player1, new AltarOfBhaal());
         harness.addToBattlefield(player1, new LurkingRoper());
