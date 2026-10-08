@@ -69,4 +69,34 @@ class WoollyMammothsTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, mammoths, Keyword.TRAMPLE)).isFalse();
     }
+
+    @Test
+    @DisplayName("Gains trample immediately when you gain a snow land")
+    void gainsTrampleWhenSnowLandEnters() {
+        Permanent mammoths = mammoths();
+
+        assertThat(gqs.hasKeyword(gd, mammoths, Keyword.TRAMPLE)).isFalse();
+
+        addSnowLand(player1);
+
+        assertThat(gqs.hasKeyword(gd, mammoths, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Retains trample until the last snow land leaves")
+    void retainsTrampleWhileAnotherSnowLandRemains() {
+        Permanent mammoths = mammoths();
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new SnowCoveredPlains());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new SnowCoveredPlains());
+
+        assertThat(gqs.hasKeyword(gd, mammoths, Keyword.TRAMPLE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstLand);
+
+        assertThat(gqs.hasKeyword(gd, mammoths, Keyword.TRAMPLE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(secondLand);
+
+        assertThat(gqs.hasKeyword(gd, mammoths, Keyword.TRAMPLE)).isFalse();
+    }
 }
