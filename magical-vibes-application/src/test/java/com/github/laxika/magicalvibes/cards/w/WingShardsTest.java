@@ -25,8 +25,7 @@ class WingShardsTest extends BaseCardTest {
         Permanent secondAttacker = addCreatureReady(player2, new SilverKnight());
         Permanent nonattacker = addCreatureReady(player2, new SilverKnight());
         castWingShards(player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -44,7 +43,7 @@ class WingShardsTest extends BaseCardTest {
     @DisplayName("Storm copies Wing Shards for each spell cast before it")
     void stormCreatesAdditionalSacrificeChoices() {
         Permanent firstAttacker = addCreatureReady(player2, new SilverKnight());
-        Permanent secondAttacker = addCreatureReady(player2, new SilverKnight());
+        addCreatureReady(player2, new SilverKnight());
         gd.recordSpellCast(player1.getId(), new SilverKnight());
 
         castWingShards(player2.getId());
@@ -63,8 +62,7 @@ class WingShardsTest extends BaseCardTest {
     void doesNothingWithoutAnAttackingCreature() {
         Permanent nonattacker = addCreatureReady(player2, new SilverKnight());
         castWingShards(player2.getId(), player2, List.of());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(nonattacker);
         assertThat(gd.stack).isEmpty();
@@ -82,12 +80,68 @@ class WingShardsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player1.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(nonattacker);
         harness.assertInGraveyard(player1, "Silver Knight");
+    }
+
+    @Test
+    @DisplayName("Storm counts earlier spells from both players but not spells cast after Wing Shards")
+    void stormCountsOnlyEarlierSpellsFromBothPlayers() {
+        Permanent firstAttacker = addCreatureReady(player2, new SilverKnight());
+        Permanent secondAttacker = addCreatureReady(player2, new SilverKnight());
+        Permanent thirdAttacker = addCreatureReady(player2, new SilverKnight());
+        Permanent fourthAttacker = addCreatureReady(player2, new SilverKnight());
+        gd.recordSpellCast(player1.getId(), new SilverKnight());
+        gd.recordSpellCast(player2.getId(), new SilverKnight());
+
+        castWingShards(player2.getId(), player2, List.of(0, 1, 2, 3));
+        gd.recordSpellCast(player2.getId(), new SilverKnight());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of(firstAttacker.getId()));
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of(secondAttacker.getId()));
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of(thirdAttacker.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(fourthAttacker);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The original Wing Shards can target its controller")
+    void originalCanTargetItsController() {
+        addCreatureReady(player1, new SilverKnight());
+        Permanent nonattacker = addCreatureReady(player1, new SilverKnight());
+
+        castWingShards(player1.getId(), player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(nonattacker);
+        harness.assertInGraveyard(player1, "Silver Knight");
+        harness.assertInGraveyard(player1, "Wing Shards");
+    }
+
+    @Test
+    @DisplayName("Sacrifice eligibility is checked at resolution after a creature leaves combat")
+    void checksAttackingStatusAtResolution() {
+        Permanent removedFromCombat = addCreatureReady(player2, new SilverKnight());
+        addCreatureReady(player2, new SilverKnight());
+
+        castWingShards(player2.getId());
+        removedFromCombat.setAttacking(false);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(removedFromCombat);
+        harness.assertInGraveyard(player2, "Silver Knight");
+        harness.assertInGraveyard(player1, "Wing Shards");
     }
 
     private void castWingShards(UUID targetPlayerId) {
