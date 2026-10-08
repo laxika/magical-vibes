@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.e.EnormousBaloth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WitherbloomCharm.class, EnormousBaloth.class, GrizzlyBears.class})
+@CardUsed({WitherbloomCharm.class, EnormousBaloth.class, GrizzlyBears.class, Swamp.class})
 class WitherbloomCharmTest extends BaseCardTest {
 
     private void addBG() {
@@ -23,10 +24,9 @@ class WitherbloomCharmTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
     }
 
-    
-
     @Nested
     @DisplayName("Mode 0: You may sacrifice a permanent, if you do draw two")
+    @CardUsed({WitherbloomCharm.class, GrizzlyBears.class, Swamp.class})
     class SacrificeDrawMode {
 
         @Test
@@ -51,6 +51,27 @@ class WitherbloomCharmTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({WitherbloomCharm.class, GrizzlyBears.class, Swamp.class})
+        @DisplayName("Sacrificing a land draws immediately during the spell resolution")
+        void sacrificingLandDrawsWithoutAnotherPriorityRound() {
+            harness.addToBattlefield(player1, new Swamp());
+            harness.setHand(player1, List.of(new WitherbloomCharm()));
+            harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+            addBG();
+
+            UUID landId = harness.getPermanentId(player1, "Swamp");
+            harness.castInstant(player1, 0, 0, null);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handlePermanentChosen(player1, landId);
+
+            harness.assertNotOnBattlefield(player1, "Swamp");
+            harness.assertInGraveyard(player1, "Swamp");
+            assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
         @DisplayName("Declining sacrifices nothing and draws nothing")
         void declineDrawsNothing() {
             harness.addToBattlefield(player1, new GrizzlyBears());
@@ -70,6 +91,7 @@ class WitherbloomCharmTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 1: You gain 5 life")
+    @CardUsed({WitherbloomCharm.class})
     class GainLifeMode {
 
         @Test
@@ -88,6 +110,7 @@ class WitherbloomCharmTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 2: Destroy target nonland permanent with mana value 2 or less")
+    @CardUsed({WitherbloomCharm.class, GrizzlyBears.class, EnormousBaloth.class, Swamp.class})
     class DestroyMode {
 
         @Test
@@ -102,6 +125,21 @@ class WitherbloomCharmTest extends BaseCardTest {
             harness.passBothPriorities();
 
             harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        }
+
+        @Test
+        @CardUsed({WitherbloomCharm.class, GrizzlyBears.class, EnormousBaloth.class, Swamp.class})
+        @DisplayName("Cannot target a land even though its mana value is zero")
+        void cannotTargetLand() {
+            harness.addToBattlefield(player2, new Swamp());
+            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.setHand(player1, List.of(new WitherbloomCharm()));
+            addBG();
+
+            UUID targetId = harness.getPermanentId(player2, "Swamp");
+            assertThatThrownBy(() -> harness.castInstant(player1, 0, 2, targetId))
+                    .isInstanceOf(IllegalStateException.class);
+            harness.assertOnBattlefield(player2, "Swamp");
         }
 
         @Test
