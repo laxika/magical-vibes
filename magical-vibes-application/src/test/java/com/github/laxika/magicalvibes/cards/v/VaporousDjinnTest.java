@@ -98,6 +98,45 @@ class VaporousDjinnTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(djinn);
     }
 
+    @Test
+    @DisplayName("Payment remains optional when enough blue mana is available")
+    void canDeclineWithEnoughMana() {
+        Permanent djinn = addDjinn();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(djinn);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A tapped Djinn phases in before untapping and triggers again that upkeep")
+    void phasesInUntapsAndTriggersAgain() {
+        Permanent djinn = addDjinn();
+
+        advanceToUpkeep(player1);
+        djinn.setTapped(true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(djinn.isTapped()).isTrue();
+
+        harness.performUntapStep(player2);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(djinn);
+        assertThat(djinn.isTapped()).isTrue();
+
+        advanceToUpkeep(player1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(djinn);
+        assertThat(djinn.isTapped()).isFalse();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(djinn);
+    }
+
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
         harness.passUntil(TurnStep.UNTAP);
