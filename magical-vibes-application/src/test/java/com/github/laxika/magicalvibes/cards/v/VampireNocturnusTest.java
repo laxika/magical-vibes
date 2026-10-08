@@ -5,19 +5,19 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.d.Divination;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VampireNocturnus.class, VampireAristocrat.class, RuneclawBear.class, Divination.class})
 class VampireNocturnusTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Vampire Nocturnus puts it on the stack")
@@ -46,14 +46,12 @@ class VampireNocturnusTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Vampire Nocturnus");
     }
 
-    // ===== Conditional static effect: top card is black =====
-
     @Test
     @DisplayName("Buffs self when top card of library is black")
     void buffsSelfWhenTopCardIsBlack() {
         harness.addToBattlefield(player1, new VampireNocturnus());
         // Put a black card on top of library
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new VampireAristocrat())));
+        harness.setLibrary(player1, List.of(new VampireAristocrat()));
 
         Permanent nocturnus = findPermanent(player1, "Vampire Nocturnus");
 
@@ -68,7 +66,7 @@ class VampireNocturnusTest extends BaseCardTest {
     void doesNotBuffSelfWhenTopCardIsNotBlack() {
         harness.addToBattlefield(player1, new VampireNocturnus());
         // Put a green card on top of library
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setLibrary(player1, List.of(new RuneclawBear()));
 
         Permanent nocturnus = findPermanent(player1, "Vampire Nocturnus");
 
@@ -82,7 +80,7 @@ class VampireNocturnusTest extends BaseCardTest {
     @DisplayName("Does not buff self when library is empty")
     void doesNotBuffSelfWhenLibraryIsEmpty() {
         harness.addToBattlefield(player1, new VampireNocturnus());
-        gd.playerDecks.put(player1.getId(), new ArrayList<>());
+        harness.setLibrary(player1, List.of());
 
         Permanent nocturnus = findPermanent(player1, "Vampire Nocturnus");
 
@@ -91,14 +89,12 @@ class VampireNocturnusTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, nocturnus, Keyword.FLYING)).isFalse();
     }
 
-    // ===== Buffs other Vampires =====
-
     @Test
     @DisplayName("Buffs other Vampire creatures when top card is black")
     void buffsOtherVampiresWhenTopCardIsBlack() {
         harness.addToBattlefield(player1, new VampireNocturnus());
         harness.addToBattlefield(player1, new VampireAristocrat());
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new VampireAristocrat())));
+        harness.setLibrary(player1, List.of(new VampireAristocrat()));
 
         Permanent aristocrat = findPermanent(player1, "Vampire Aristocrat");
 
@@ -113,7 +109,7 @@ class VampireNocturnusTest extends BaseCardTest {
     void doesNotBuffOtherVampiresWhenTopCardIsNotBlack() {
         harness.addToBattlefield(player1, new VampireNocturnus());
         harness.addToBattlefield(player1, new VampireAristocrat());
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setLibrary(player1, List.of(new RuneclawBear()));
 
         Permanent aristocrat = findPermanent(player1, "Vampire Aristocrat");
 
@@ -123,16 +119,14 @@ class VampireNocturnusTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, aristocrat, Keyword.FLYING)).isFalse();
     }
 
-    // ===== Does not buff non-Vampires =====
-
     @Test
     @DisplayName("Does not buff non-Vampire creatures even when top card is black")
     void doesNotBuffNonVampires() {
         harness.addToBattlefield(player1, new VampireNocturnus());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new VampireAristocrat())));
+        harness.addToBattlefield(player1, new RuneclawBear());
+        harness.setLibrary(player1, List.of(new VampireAristocrat()));
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = findPermanent(player1, "Runeclaw Bear");
 
         // 2/2 base, no bonus (not a Vampire)
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
@@ -140,14 +134,12 @@ class VampireNocturnusTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
     }
 
-    // ===== Does not buff opponent's Vampires =====
-
     @Test
     @DisplayName("Does not buff opponent's Vampire creatures")
     void doesNotBuffOpponentVampires() {
         harness.addToBattlefield(player1, new VampireNocturnus());
         harness.addToBattlefield(player2, new VampireAristocrat());
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new VampireAristocrat())));
+        harness.setLibrary(player1, List.of(new VampireAristocrat()));
 
         Permanent opponentVampire = findPermanent(player2, "Vampire Aristocrat");
 
@@ -157,8 +149,6 @@ class VampireNocturnusTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, opponentVampire, Keyword.FLYING)).isFalse();
     }
 
-    // ===== Dynamic condition =====
-
     @Test
     @DisplayName("Buff toggles dynamically when top card changes")
     void buffTogglesDynamicallyWhenTopCardChanges() {
@@ -166,7 +156,7 @@ class VampireNocturnusTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VampireAristocrat());
 
         // Start with a black card on top
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new VampireAristocrat(), new GrizzlyBears())));
+        harness.setLibrary(player1, List.of(new VampireAristocrat(), new RuneclawBear()));
 
         Permanent aristocrat = findPermanent(player1, "Vampire Aristocrat");
         Permanent nocturnus = findPermanent(player1, "Vampire Nocturnus");
@@ -187,14 +177,12 @@ class VampireNocturnusTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, nocturnus, Keyword.FLYING)).isFalse();
     }
 
-    // ===== Bonus removed when source leaves =====
-
     @Test
     @DisplayName("Bonus is removed when Vampire Nocturnus leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
         harness.addToBattlefield(player1, new VampireNocturnus());
         harness.addToBattlefield(player1, new VampireAristocrat());
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new VampireAristocrat())));
+        harness.setLibrary(player1, List.of(new VampireAristocrat()));
 
         Permanent aristocrat = findPermanent(player1, "Vampire Aristocrat");
 
@@ -211,14 +199,12 @@ class VampireNocturnusTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, aristocrat, Keyword.FLYING)).isFalse();
     }
 
-    // ===== Static bonus survives end-of-turn reset =====
-
     @Test
     @DisplayName("Static bonus survives end-of-turn modifier reset")
     void staticBonusSurvivesEndOfTurnReset() {
         harness.addToBattlefield(player1, new VampireNocturnus());
         harness.addToBattlefield(player1, new VampireAristocrat());
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new VampireAristocrat())));
+        harness.setLibrary(player1, List.of(new VampireAristocrat()));
 
         Permanent aristocrat = findPermanent(player1, "Vampire Aristocrat");
 
@@ -235,8 +221,6 @@ class VampireNocturnusTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, aristocrat, Keyword.FLYING)).isTrue();
     }
 
-    // ===== Self-buff regardless of creature type (CR 201.5) =====
-
     @Test
     @DisplayName("Buffs self even if Vampire subtype is removed (card names itself)")
     void buffsSelfEvenIfVampireSubtypeRemoved() {
@@ -244,7 +228,7 @@ class VampireNocturnusTest extends BaseCardTest {
         // Remove the Vampire subtype to simulate type-changing effects
         nocturnusCard.setSubtypes(List.of());
         harness.addToBattlefield(player1, nocturnusCard);
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new VampireAristocrat())));
+        harness.setLibrary(player1, List.of(new VampireAristocrat()));
 
         Permanent nocturnus = findPermanent(player1, "Vampire Nocturnus");
 
@@ -253,5 +237,87 @@ class VampireNocturnusTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, nocturnus)).isEqualTo(5); // 3 base + 2
         assertThat(gqs.getEffectiveToughness(gd, nocturnus)).isEqualTo(4); // 3 base + 1
         assertThat(gqs.hasKeyword(gd, nocturnus, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void revealsOnlyControllersTopCardToBothPlayersEvenWhenItIsNotBlack() {
+        harness.addToBattlefield(player1, new VampireNocturnus());
+        harness.setLibrary(player1, List.of(new RuneclawBear()));
+        harness.setLibrary(player2, List.of(new VampireAristocrat()));
+        harness.clearMessages();
+
+        harness.publishState();
+
+        for (var connection : List.of(harness.getConn1(), harness.getConn2())) {
+            assertThat(connection.getSentMessages()).anyMatch(message ->
+                    message.contains("\"revealedLibraryTopCards\":[[{")
+                            && message.contains("Runeclaw Bear")
+                            && message.contains("}],[]]"));
+        }
+    }
+
+    @Test
+    void stopsRevealingTopCardWhenSourceLeaves() {
+        harness.addToBattlefield(player1, new VampireNocturnus());
+        harness.setLibrary(player1, List.of(new VampireAristocrat()));
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.clearMessages();
+
+        harness.publishState();
+
+        for (var connection : List.of(harness.getConn1(), harness.getConn2())) {
+            assertThat(connection.getSentMessages()).anyMatch(message ->
+                    message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+        }
+    }
+
+    @Test
+    void revealsIntermediateTopCardDuringMultipleCardDraw() {
+        harness.addToBattlefield(player1, new VampireNocturnus());
+        VampireAristocrat first = new VampireAristocrat();
+        RuneclawBear second = new RuneclawBear();
+        VampireNocturnus third = new VampireNocturnus();
+        harness.setLibrary(player1, List.of(first, second, third));
+        harness.setHand(player1, List.of(new Divination()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.publishState();
+        harness.clearMessages();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
+        assertThat(harness.getConn2().getSentMessages()).anyMatch(message ->
+                message.contains("Runeclaw Bear"));
+    }
+
+    @Test
+    void multipleNocturnusBonusesStackExactlyOncePerSource() {
+        harness.addToBattlefield(player1, new VampireNocturnus());
+        harness.addToBattlefield(player1, new VampireNocturnus());
+        harness.addToBattlefield(player1, new VampireAristocrat());
+        harness.setLibrary(player1, List.of(new VampireAristocrat()));
+
+        for (Permanent permanent : gd.playerBattlefields.get(player1.getId())) {
+            boolean nocturnus = permanent.getCard() instanceof VampireNocturnus;
+            assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(nocturnus ? 7 : 6);
+            assertThat(gqs.getEffectiveToughness(gd, permanent)).isEqualTo(nocturnus ? 5 : 4);
+            assertThat(gqs.hasKeyword(gd, permanent, Keyword.FLYING)).isTrue();
+        }
+    }
+
+    @Test
+    void otherVampireLosesBonusWhenItLosesItsCreatureTypes() {
+        harness.addToBattlefield(player1, new VampireNocturnus());
+        harness.addToBattlefield(player1, new VampireAristocrat());
+        harness.setLibrary(player1, List.of(new VampireAristocrat()));
+        Permanent aristocrat = findPermanent(player1, "Vampire Aristocrat");
+        assertThat(gqs.getEffectivePower(gd, aristocrat)).isEqualTo(4);
+
+        aristocrat.setLosesAllCreatureTypesUntilEndOfTurn(true);
+
+        assertThat(gqs.getEffectivePower(gd, aristocrat)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, aristocrat)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, aristocrat, Keyword.FLYING)).isFalse();
     }
 }
