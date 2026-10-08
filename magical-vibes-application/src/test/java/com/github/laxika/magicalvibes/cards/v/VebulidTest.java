@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -18,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(Vebulid.class)
+@CardUsed({Vebulid.class, RayOfCommand.class})
 class VebulidTest extends BaseCardTest {
 
     @Test
@@ -108,10 +110,45 @@ class VebulidTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Vebulid");
     }
 
+    @Test
+    @DisplayName("Delayed destruction retains its controller after Vebulid changes control")
+    void delayedDestructionRetainsOriginalController() {
+        Permanent vebulid = addReadyVebulid(player1);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
+
+        harness.setHand(player2, List.of(new RayOfCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            harness.ensurePriority(player2);
+            harness.castAndResolveInstant(player2, 0, vebulid.getId());
+            harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+        });
+
+        harness.assertOnBattlefield(player2, "Vebulid");
+        assertThat(gd.stack).anySatisfy(entry -> {
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(vebulid.getId());
+            assertThat(entry.getControllerId()).isEqualTo(player1.getId());
+        });
+    }
+
+    @Test
+    @DisplayName("Entering without being cast still supplies the counter before state-based actions")
+    void entersWithoutCastingWithCounter() {
+        Permanent vebulid = harness.enterBattlefieldAndReturn(player1, new Vebulid());
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Vebulid");
+        assertThat(vebulid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private Permanent castVebulid(Player player) {
-        harness.setHand(player, List.of(new Vebulid()));
-        harness.addMana(player, ManaColor.BLACK, 1);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new Vebulid(), "{B}");
         harness.passBothPriorities();
         return findPermanent(player, "Vebulid");
     }
