@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.cards.o.ObsidianBattleAxe;
+import com.github.laxika.magicalvibes.cards.s.SaheelisArtistry;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,13 +15,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(ZurgoThundersDecree.class)
+@CardUsed({ZurgoThundersDecree.class, ObsidianBattleAxe.class, SaheelisArtistry.class})
 class ZurgoThundersDecreeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Attacking creates two tapped and attacking Warrior tokens")
     void attackingCreatesTwoMobilizedTokens() {
-        addZurgoReady(player1);
+        addCreatureReady(player1, new ZurgoThundersDecree());
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
@@ -34,7 +37,7 @@ class ZurgoThundersDecreeTest extends BaseCardTest {
     @Test
     @DisplayName("Warrior tokens survive their controller's next end step")
     void warriorTokensSurviveYourEndStep() {
-        addZurgoReady(player1);
+        addCreatureReady(player1, new ZurgoThundersDecree());
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
@@ -46,7 +49,7 @@ class ZurgoThundersDecreeTest extends BaseCardTest {
     @Test
     @DisplayName("Warrior tokens are sacrificed at an opponent's end step")
     void warriorTokensAreSacrificedAtOpponentsEndStep() {
-        addZurgoReady(player1);
+        addCreatureReady(player1, new ZurgoThundersDecree());
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
@@ -55,11 +58,73 @@ class ZurgoThundersDecreeTest extends BaseCardTest {
         assertThat(warriorTokens(player1)).isEmpty();
     }
 
-    private Permanent addZurgoReady(Player player) {
-        Permanent permanent = new Permanent(new ZurgoThundersDecree());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void protectedMobilizeTokensAreNotSacrificedAtLaterEndSteps() {
+        Permanent zurgo = addCreatureReady(player1, new ZurgoThundersDecree());
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        List<Permanent> tokens = warriorTokens(player1);
+        assertThat(tokens).hasSize(2);
+
+        advanceToEndStep(player1);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, zurgo);
+        advanceToEndStep(player2);
+
+        assertThat(warriorTokens(player1)).containsExactlyInAnyOrderElementsOf(tokens);
+    }
+
+    @Test
+    void mobilizeTokensAreSacrificedIfZurgoLeavesBeforeYourEndStep() {
+        Permanent zurgo = addCreatureReady(player1, new ZurgoThundersDecree());
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        assertThat(warriorTokens(player1)).hasSize(2);
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, zurgo);
+        advanceToEndStep(player1);
+
+        assertThat(warriorTokens(player1)).isEmpty();
+    }
+
+    @Test
+    void sacrificeProtectionAppliesOnlyDuringYourEndStepAndOnlyToTokens() {
+        Permanent zurgo = addCreatureReady(player1, new ZurgoThundersDecree());
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        List<Permanent> tokens = warriorTokens(player1);
+        assertThat(tokens).hasSize(2);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        assertThat(tokens).allSatisfy(token -> assertThat(gqs.cantBeSacrificed(gd, token)).isFalse());
+        advanceToEndStep(player1);
+        assertThat(tokens).allSatisfy(token -> assertThat(gqs.cantBeSacrificed(gd, token)).isTrue());
+        assertThat(gqs.cantBeSacrificed(gd, zurgo)).isFalse();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        assertThat(tokens).allSatisfy(token -> assertThat(gqs.cantBeSacrificed(gd, token)).isFalse());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.CLEANUP);
+        assertThat(tokens).allSatisfy(token -> assertThat(gqs.cantBeSacrificed(gd, token)).isFalse());
+    }
+
+    @Test
+    @CardUsed({ZurgoThundersDecree.class, ObsidianBattleAxe.class, SaheelisArtistry.class})
+    void noncreatureWarriorTokensCannotBeSacrificedDuringYourEndStep() {
+        addCreatureReady(player1, new ZurgoThundersDecree());
+        Permanent axe = harness.addToBattlefieldAndReturn(player1, new ObsidianBattleAxe());
+        harness.setHand(player1, List.of(new SaheelisArtistry()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{0},
+                List.of(axe.getId()), null);
+        harness.passBothPriorities();
+        Permanent token = findPermanents(player1, "Obsidian Battle-Axe").stream()
+                .filter(permanent -> permanent.getCard().isToken()).findFirst().orElseThrow();
+
+        advanceToEndStep(player1);
+
+        assertThat(gqs.cantBeSacrificed(gd, token)).isTrue();
+        assertThat(gqs.cantBeSacrificed(gd, axe)).isFalse();
     }
 
     private List<Permanent> warriorTokens(Player player) {
