@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -16,8 +17,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(AbundantCountryside.class)
+@CardUsed({AbundantCountryside.class, SolRing.class})
 class AbundantCountrysideTest extends BaseCardTest {
 
     @Test
@@ -64,6 +66,71 @@ class AbundantCountrysideTest extends BaseCardTest {
         assertThat(token.getCard().getColor()).isNull();
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.SHAPESHIFTER);
         assertThat(token.getCard().getKeywords()).contains(Keyword.CHANGELING);
+    }
+
+
+    @Test
+    void restrictedManaCannotCastNoncreatureSpell() {
+        harness.addToBattlefield(player1, new AbundantCountryside());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+        harness.setHand(player1, List.of(new SolRing()));
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getCreatureSpellOnlyManaTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Sol Ring");
+    }
+
+    @Test
+    void restrictedManaCannotPayForTokenAbility() {
+        harness.addToBattlefield(player1, new AbundantCountryside());
+        harness.addToBattlefield(player1, new AbundantCountryside());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 2, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Shapeshifter")).isZero();
+    }
+
+    @Test
+    void tokenAbilityUsesStackAndPaysManaAndTapCosts() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new AbundantCountryside());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(countPermanents(player1, "Shapeshifter")).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Shapeshifter")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Shapeshifter").isTapped()).isFalse();
+        assertThat(countPermanents(player2, "Shapeshifter")).isZero();
+    }
+
+    @Test
+    void tokenAbilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new AbundantCountryside());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.activateAbility(player1, 0, 2, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(land);
+        gd.playerGraveyards.get(player1.getId()).add(land.getCard());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Shapeshifter")).isEqualTo(1);
     }
 
     private static Card createCreature(String name, String manaCost, CardColor color) {
