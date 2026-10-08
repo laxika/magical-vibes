@@ -59,10 +59,7 @@ class WildWurmTest extends BaseCardTest {
         harness.castFromHand(player1, wildWurm, "{3}{R}");
         harness.passBothPriorities();
 
-        Permanent wildWurmPermanent = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard() == wildWurm)
-                .findFirst()
-                .orElseThrow();
+        Permanent wildWurmPermanent = findPermanent(player1, "Wild Wurm");
 
         DarkBanishing darkBanishing = new DarkBanishing();
         harness.setHand(player2, List.of(darkBanishing));
@@ -79,5 +76,26 @@ class WildWurmTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c == wildWurm);
         assertThat(gameLogContains("coin flip")).isTrue();
+    }
+
+    @Test
+    @DisplayName("A lost flip returns only the triggering Wurm, not another copy")
+    void coinFlipAffectsOnlyItsSource() {
+        WildWurm otherWurm = new WildWurm();
+        harness.addToBattlefield(player1, otherWurm);
+        WildWurm enteringWurm = new WildWurm();
+        harness.castFromHand(player1, enteringWurm, "{3}{R}");
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard() == otherWurm);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(c -> c == otherWurm);
+        boolean lostFlip = gameLogContains("loses the coin flip for Wild Wurm");
+        assertThat(gameLogContains("wins the coin flip for Wild Wurm")).isEqualTo(!lostFlip);
+        assertThat(gd.playerHands.get(player1.getId()).contains(enteringWurm)).isEqualTo(lostFlip);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .anyMatch(p -> p.getCard() == enteringWurm)).isEqualTo(!lostFlip);
     }
 }
