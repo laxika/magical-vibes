@@ -82,4 +82,89 @@ class UrzasBaubleTest extends BaseCardTest {
         assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND")).isEmpty();
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
     }
+
+    @Test
+    @DisplayName("The sacrifice is paid before resolution and the draw is not immediate")
+    void sacrificeIsACostAndDrawIsDelayed() {
+        harness.addToBattlefield(player1, new UrzasBauble());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        harness.assertNotOnBattlefield(player1, "Urza's Bauble");
+        harness.assertInGraveyard(player1, "Urza's Bauble");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND")).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The controller may target their own hand")
+    void canTargetOwnHand() {
+        harness.addToBattlefield(player1, new UrzasBauble());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
+                .anyMatch(message -> message.contains("Grizzly Bears"));
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Only one card is shown from a hand containing multiple cards")
+    void looksAtExactlyOneCardWithoutMovingIt() {
+        harness.addToBattlefield(player1, new UrzasBauble());
+        GrizzlyBears bears = new GrizzlyBears();
+        UrzasBauble bauble = new UrzasBauble();
+        harness.setHand(player2, List.of(bears, bauble));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
+                .singleElement()
+                .satisfies(message -> assertThat(message.contains(bears.getId().toString())
+                        ^ message.contains(bauble.getId().toString())).isTrue());
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(bears, bauble);
+    }
+
+    @Test
+    @DisplayName("Activation during upkeep waits for the next turn and the draw uses the stack")
+    void upkeepActivationWaitsForNextTurn() {
+        advanceToUpkeep(player1);
+        harness.addToBattlefield(player1, new UrzasBauble());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
 }
