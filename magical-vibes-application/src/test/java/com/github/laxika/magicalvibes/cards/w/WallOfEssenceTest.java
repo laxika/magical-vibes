@@ -24,8 +24,7 @@ class WallOfEssenceTest extends BaseCardTest {
         addCreatureReady(player1, new WarriorEnKor());
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
         resolveAllTriggers();
@@ -41,8 +40,7 @@ class WallOfEssenceTest extends BaseCardTest {
         addCreatureReady(player1, new SpinedWurm());
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
         resolveAllTriggers();
@@ -59,11 +57,34 @@ class WallOfEssenceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
-        harness.castInstant(player1, 0,
+        harness.castAndResolveInstant(player1, 0,
                 harness.getPermanentId(player2, "Wall of Essence"));
-        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Earlier noncombat damage is excluded from life gained for lethal combat damage")
+    void gainsLifeOnlyForCombatDamageAfterEarlierNoncombatDamage() {
+        addCreatureReady(player2, new WallOfEssence());
+        addCreatureReady(player1, new WarriorEnKor());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player2, "Wall of Essence"));
+        harness.assertLife(player2, lifeBefore);
+        harness.assertOnBattlefield(player2, "Wall of Essence");
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, lifeBefore + 2);
+        harness.assertInGraveyard(player2, "Wall of Essence");
+        harness.assertNotOnBattlefield(player2, "Wall of Essence");
     }
 }
