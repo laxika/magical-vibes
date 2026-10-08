@@ -40,6 +40,26 @@ class WakingNightmareTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The target can discard later cards and keep the first card")
+    void targetCanChooseLaterCards() {
+        harness.setHand(player2, List.of(new WanderingOnes(), new HumbleBudoka(), new Forest()));
+        harness.setHand(player1, List.of(new WakingNightmare()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInHand(player2, "Wandering Ones");
+        harness.assertNotInGraveyard(player2, "Wandering Ones");
+        harness.assertInGraveyard(player2, "Humble Budoka");
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertInGraveyard(player1, "Waking Nightmare");
+    }
+
+    @Test
     @DisplayName("Target with a single card discards only that card")
     void targetWithOneCard() {
         harness.setHand(player2, List.of(new WanderingOnes()));
