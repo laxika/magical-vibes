@@ -1,18 +1,17 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VengefulRebel.class, GrizzlyBears.class})
 class VengefulRebelTest extends BaseCardTest {
 
     @Test
@@ -93,12 +92,61 @@ class VengefulRebelTest extends BaseCardTest {
         assertThat(opponentBears.getEffectiveToughness()).isEqualTo(5);
     }
 
+    @Test
+    @DisplayName("An opponent's permanent leaving does not enable Revolt")
+    void opponentsPermanentLeavingDoesNotEnableRevolt() {
+        Permanent leaving = harness.addToBattlefieldAndReturn(player2, new VengefulRebel());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, leaving));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new VengefulRebel());
+
+        castRebel();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Revolt sends a creature with zero or less toughness to the graveyard")
+    void revoltKillsSmallCreature() {
+        Permanent leaving = harness.addToBattlefieldAndReturn(player1, new VengefulRebel());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, leaving));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new VengefulRebel());
+
+        castRebel();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Vengeful Rebel");
+        harness.assertInGraveyard(player2, "Vengeful Rebel");
+    }
+
+    @Test
+    @DisplayName("The Revolt trigger resolves even after its source leaves")
+    void triggerResolvesAfterSourceLeaves() {
+        Permanent leaving = harness.addToBattlefieldAndReturn(player1, new VengefulRebel());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, leaving));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new VengefulRebel());
+
+        castRebel();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        Permanent source = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, source));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Vengeful Rebel");
+        harness.assertNotOnBattlefield(player2, "Vengeful Rebel");
+        harness.assertInGraveyard(player2, "Vengeful Rebel");
+    }
+
     private void castRebel() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new VengefulRebel()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VengefulRebel(), "{2}{B}");
     }
 }
