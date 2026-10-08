@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Abu Ja'far")
+@CardUsed({AbuJafar.class, GrizzlyBears.class})
 class AbuJafarTest extends BaseCardTest {
 
     @Test
@@ -23,8 +25,8 @@ class AbuJafarTest extends BaseCardTest {
         Permanent blockerTwo = addCreatureReady(player2, new GrizzlyBears());
         Permanent bystander = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(abu)));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1,
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(abu)));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(gd.playerBattlefields.get(player2.getId()).indexOf(blockerOne),
                         gd.playerBattlefields.get(player1.getId()).indexOf(abu)),
@@ -46,8 +48,8 @@ class AbuJafarTest extends BaseCardTest {
         Permanent abu = addCreatureReady(player2, new AbuJafar());
         Permanent bystander = addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1,
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(gd.playerBattlefields.get(player2.getId()).indexOf(abu),
                         gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
@@ -58,5 +60,48 @@ class AbuJafarTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Abu Ja'far");
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bystander);
+    }
+
+    @Test
+    @DisplayName("Dying outside combat does not destroy unrelated creatures")
+    void deathOutsideCombatLeavesOtherCreaturesAlive() {
+        Permanent abu = addCreatureReady(player1, new AbuJafar());
+        Permanent friendly = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposing = addCreatureReady(player2, new GrizzlyBears());
+
+        abu.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Abu Ja'far");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(friendly);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposing);
+    }
+
+    @Test
+    @DisplayName("Dying after regeneration does not destroy a former blocker")
+    void deathAfterRegenerationLeavesFormerBlockerAlive() {
+        Permanent abu = addCreatureReady(player1, new AbuJafar());
+        abu.setRegenerationShield(1);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(player1,
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(abu)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(abu))));
+
+        abu.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(abu);
+        assertThat(abu.isAttacking()).isFalse();
+        assertThat(gd.stack).isEmpty();
+
+        abu.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Abu Ja'far");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
     }
 }
