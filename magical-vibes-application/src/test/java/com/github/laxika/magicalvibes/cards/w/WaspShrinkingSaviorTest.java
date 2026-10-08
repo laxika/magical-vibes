@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -21,9 +19,9 @@ class WaspShrinkingSaviorTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking shrinks another creature and draws for creatures with negative power")
     void attackTriggerShrinksAndDrawsForNegativePower() {
-        addReady(player1, new WaspShrinkingSavior());
-        Permanent target = addReady(player2, new GrizzlyBears());
-        Permanent zeroPowerCreature = addReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new WaspShrinkingSavior());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent zeroPowerCreature = addCreatureReady(player1, new GrizzlyBears());
         zeroPowerCreature.setPowerModifier(-2);
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
@@ -39,8 +37,8 @@ class WaspShrinkingSaviorTest extends BaseCardTest {
     @Test
     @DisplayName("The shrink lasts through cleanup and ends on the controller's next turn")
     void shrinkLastsUntilNextTurn() {
-        addReady(player1, new WaspShrinkingSavior());
-        Permanent target = addReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new WaspShrinkingSavior());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of());
 
         declareAttackers(List.of(0));
@@ -62,8 +60,8 @@ class WaspShrinkingSaviorTest extends BaseCardTest {
     @Test
     @DisplayName("The attack trigger may resolve without choosing a target")
     void mayChooseNoTarget() {
-        addReady(player1, new WaspShrinkingSavior());
-        Permanent target = addReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new WaspShrinkingSavior());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -78,8 +76,8 @@ class WaspShrinkingSaviorTest extends BaseCardTest {
     @Test
     @DisplayName("The attack trigger cannot target Wasp itself")
     void cannotTargetSourceCreature() {
-        Permanent wasp = addReady(player1, new WaspShrinkingSavior());
-        addReady(player2, new GrizzlyBears());
+        Permanent wasp = addCreatureReady(player1, new WaspShrinkingSavior());
+        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(List.of(0));
 
@@ -87,7 +85,57 @@ class WaspShrinkingSaviorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReady(Player player, Card card) {
-        return addCreatureReady(player, card);
+    @Test
+    @DisplayName("Choosing no target still draws for negative-power creatures on both battlefields, including Wasp")
+    void noTargetDrawsForAllNegativePowerCreatures() {
+        Permanent wasp = addCreatureReady(player1, new WaspShrinkingSavior());
+        wasp.setPowerModifier(-2);
+        Permanent opposingWasp = addCreatureReady(player2, new WaspShrinkingSavior());
+        opposingWasp.setPowerModifier(-2);
+        harness.setLibrary(player1, List.of(new WaspShrinkingSavior(), new WaspShrinkingSavior()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
+        assertThat(gqs.getEffectivePower(gd, opposingWasp)).isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("A creature reduced to exactly zero power does not count for drawing")
+    void zeroPowerAfterShrinkDoesNotDraw() {
+        addCreatureReady(player1, new WaspShrinkingSavior());
+        Permanent target = addCreatureReady(player2, new WaspShrinkingSavior());
+        target.setPowerModifier(2);
+        harness.setLibrary(player1, List.of(new WaspShrinkingSavior()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+    }
+
+    @Test
+    @DisplayName("Losing the only chosen target prevents drawing even with a negative-power creature remaining")
+    void removedTargetPreventsDraw() {
+        Permanent wasp = addCreatureReady(player1, new WaspShrinkingSavior());
+        wasp.setPowerModifier(-2);
+        Permanent target = addCreatureReady(player2, new WaspShrinkingSavior());
+        harness.setLibrary(player1, List.of(new WaspShrinkingSavior()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerHands.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
     }
 }
