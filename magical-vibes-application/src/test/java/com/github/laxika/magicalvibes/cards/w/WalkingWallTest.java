@@ -91,4 +91,78 @@ class WalkingWallTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("Activation limit applies while the first activation is still on the stack")
+    void cannotActivateAgainBeforeResolution() {
+        Permanent wall = addCreatureReady(player1, new WalkingWall());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(wall.getPowerModifier()).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(wall.getEffectivePower()).isEqualTo(3);
+        assertThat(wall.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Each Walking Wall has its own activation limit")
+    void separateCopiesCanEachActivate() {
+        Permanent first = addCreatureReady(player1, new WalkingWall());
+        Permanent second = addCreatureReady(player1, new WalkingWall());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getPowerModifier()).isEqualTo(3);
+        assertThat(second.getPowerModifier()).isEqualTo(3);
+        assertThat(first.getToughnessModifier()).isEqualTo(-1);
+        assertThat(second.getToughnessModifier()).isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("The ability can be activated again on the opponent's next turn")
+    void activationLimitResetsOnNextTurn() {
+        Permanent wall = addCreatureReady(player1, new WalkingWall());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(wall.getPowerModifier()).isZero();
+        assertThat(wall.getToughnessModifier()).isZero();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wall.getEffectivePower()).isEqualTo(3);
+        assertThat(wall.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick wall can activate but still cannot attack")
+    void attackPermissionDoesNotGrantHaste() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WalkingWall());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wall.getPowerModifier()).isEqualTo(3);
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
 }
