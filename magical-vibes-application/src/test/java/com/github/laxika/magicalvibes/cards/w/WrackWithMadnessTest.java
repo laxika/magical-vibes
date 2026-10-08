@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.d.DrogskolReaver;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.PyromancersSwath;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WrackWithMadness.class, GrizzlyBears.class, Plains.class, WallOfSwords.class, WallOfVines.class})
+@CardUsed({WrackWithMadness.class, GrizzlyBears.class, Plains.class, WallOfSwords.class, WallOfVines.class, DrogskolReaver.class, PyromancersSwath.class})
 class WrackWithMadnessTest extends BaseCardTest {
 
 
@@ -50,8 +53,7 @@ class WrackWithMadnessTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -65,8 +67,7 @@ class WrackWithMadnessTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Wall of Swords");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         Permanent wall = findPermanent(player2, "Wall of Swords");
         assertThat(wall.getMarkedDamage()).isEqualTo(3);
@@ -80,8 +81,7 @@ class WrackWithMadnessTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Wall of Vines");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         Permanent wall = findPermanent(player2, "Wall of Vines");
         assertThat(wall.getMarkedDamage()).isZero();
@@ -143,5 +143,51 @@ class WrackWithMadnessTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Wrack with Madness");
+    }
+
+    @Test
+    @DisplayName("Damage uses the creature's power at resolution")
+    void usesPowerAtResolution() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfSwords());
+        harness.setHand(player1, List.of(new WrackWithMadness()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castSorcery(player1, 0, wall.getId());
+
+        wall.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Wall of Swords");
+        assertThat(wall.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The creature's controller gains life from its lifelink")
+    void selfDamageUsesCreatureLifelink() {
+        Permanent reaver = harness.addToBattlefieldAndReturn(player2, new DrogskolReaver());
+        harness.setLibrary(player2, List.of(new Plains()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new WrackWithMadness()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, reaver.getId());
+
+        assertThat(reaver.getMarkedDamage()).isEqualTo(3);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 23);
+    }
+
+    @Test
+    @DisplayName("Pyromancer's Swath does not increase damage dealt by the target creature")
+    void spellDamageBonusDoesNotApplyToCreatureSelfDamage() {
+        harness.addToBattlefield(player1, new PyromancersSwath());
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfSwords());
+        harness.setHand(player1, List.of(new WrackWithMadness()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, wall.getId());
+
+        harness.assertOnBattlefield(player2, "Wall of Swords");
+        assertThat(wall.getMarkedDamage()).isEqualTo(3);
     }
 }
