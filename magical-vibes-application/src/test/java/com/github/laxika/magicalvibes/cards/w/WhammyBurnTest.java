@@ -21,8 +21,7 @@ class WhammyBurnTest extends BaseCardTest {
     void continuingStopsOnIslandWithoutDamage() {
         harness.setHand(player1, List.of(new WhammyBurn()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         while (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
             harness.handleMayAbilityChosen(player1, true);
@@ -40,8 +39,7 @@ class WhammyBurnTest extends BaseCardTest {
         for (int attempt = 0; attempt < 50 && !stopped; attempt++) {
             harness.setHand(player1, List.of(new WhammyBurn()));
             harness.addMana(player1, ManaColor.RED, 1);
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            harness.castAndResolveInstant(player1, 0, player2.getId());
 
             if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
                 harness.handleMayAbilityChosen(player1, false);
@@ -51,6 +49,36 @@ class WhammyBurnTest extends BaseCardTest {
 
         assertThat(stopped).isTrue();
         harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Stopping after four non-Islands deals four damage to the controller")
+    void stoppingAfterFourRevealsCanDamageController() {
+        boolean stopped = false;
+        for (int attempt = 0; attempt < 100 && !stopped; attempt++) {
+            harness.setHand(player1, List.of(new WhammyBurn()));
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.castAndResolveInstant(player1, 0, player1.getId());
+
+            int revealedCount = 1;
+            while (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+                if (revealedCount == 4) {
+                    harness.handleMayAbilityChosen(player1, false);
+                    stopped = true;
+                } else {
+                    harness.handleMayAbilityChosen(player1, true);
+                    revealedCount++;
+                }
+            }
+
+            harness.assertLife(player1, stopped ? 16 : 20);
+            harness.assertLife(player2, 20);
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        }
+
+        assertThat(stopped).isTrue();
+        harness.assertInGraveyard(player1, "Whammy Burn");
     }
 
     @Test
