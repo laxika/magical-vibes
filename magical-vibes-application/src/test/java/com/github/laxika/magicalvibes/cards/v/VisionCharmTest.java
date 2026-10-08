@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -23,12 +24,28 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VisionCharm.class, Forest.class, GrizzlyBears.class, Island.class, Millstone.class})
+@CardUsed({VisionCharm.class, Desert.class, Forest.class, GrizzlyBears.class, Island.class, Millstone.class})
 class VisionCharmTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 0: Target player mills four cards")
+    @CardUsed({VisionCharm.class})
     class MillMode {
+
+        @Test
+        void canTargetControllerAndMillFewerThanFourRemainingCards() {
+            Card first = new VisionCharm();
+            Card second = new VisionCharm();
+            harness.setLibrary(player1, List.of(first, second));
+            harness.setHand(player1, List.of(new VisionCharm()));
+            harness.addMana(player1, ManaColor.BLUE, 1);
+
+            harness.castInstant(player1, 0, 0, player1.getId());
+            harness.passBothPriorities();
+
+            assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+            assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+        }
 
         @Test
         @DisplayName("Mills four cards from the targeted player")
@@ -54,6 +71,7 @@ class VisionCharmTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 1: Lands of chosen type become chosen basic type until end of turn")
+    @CardUsed({VisionCharm.class, Forest.class, Island.class, Desert.class})
     class LandTypeMode {
 
         @Test
@@ -79,7 +97,6 @@ class VisionCharmTest extends BaseCardTest {
         }
 
         @Test
-        @CardUsed(Desert.class)
         @DisplayName("Offers nonbasic land types for the first choice")
         void offersNonBasicLandTypesForFirstChoice() {
             harness.addToBattlefield(player1, new Desert());
@@ -135,11 +152,27 @@ class VisionCharmTest extends BaseCardTest {
             castLandModeAndChoose("FOREST", "ISLAND");
             assertThat(forest.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
 
-            forest.resetModifiers();
+            harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
             assertThat(forest.getTransientLandTypeOverride()).isNull();
         }
 
+        @Test
+        void convertsDesertsToIslandsAndReplacesTheirManaAbility() {
+            harness.addToBattlefield(player1, new Desert());
+            harness.addToBattlefield(player2, new Desert());
+            harness.setHand(player1, List.of(new VisionCharm()));
+            harness.addMana(player1, ManaColor.BLUE, 1);
+
+            castLandModeAndChoose("DESERT", "ISLAND");
+
+            harness.tapPermanent(player1, 0);
+            harness.tapPermanent(player2, 0);
+            assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+            assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+            assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+            assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
+        }
         private void castLandModeAndChoose(String fromType, String toType) {
             harness.castModalInstant(player1, 0, 1, List.of());
             harness.passBothPriorities();
@@ -150,7 +183,26 @@ class VisionCharmTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 2: Target artifact phases out")
+    @CardUsed({VisionCharm.class, Millstone.class, GrizzlyBears.class})
     class PhaseOutMode {
+
+        @Test
+        void phasesInBeforeControllersNextUntapAndKeepsItsIdentity() {
+            Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Millstone());
+            artifact.setTapped(true);
+            UUID artifactId = artifact.getId();
+            harness.setHand(player1, List.of(new VisionCharm()));
+            harness.addMana(player1, ManaColor.BLUE, 1);
+
+            harness.castInstant(player1, 0, 2, artifactId);
+            harness.passBothPriorities();
+            harness.assertNotInGraveyard(player2, "Millstone");
+            harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+            assertThat(harness.getPermanentId(player2, "Millstone")).isEqualTo(artifactId);
+            assertThat(artifact.isTapped()).isFalse();
+            assertThat(gd.phasedOutPermanents.get(player2.getId())).doesNotContain(artifact);
+        }
 
         @Test
         @DisplayName("Phases out the targeted artifact")
