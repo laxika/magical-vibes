@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SwordsToPlowshares;
+import com.github.laxika.magicalvibes.cards.s.SugarCoat;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -34,8 +35,7 @@ class VrenTheRelentlessTest extends BaseCardTest {
         harness.setHand(player2, List.of(new DoomBlade()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getName().equals("Grizzly Bears"));
@@ -55,8 +55,7 @@ class VrenTheRelentlessTest extends BaseCardTest {
                 new SwordsToPlowshares(), new SwordsToPlowshares()));
         harness.addMana(player1, ManaColor.WHITE, 4);
         for (var target : List.of(opponentBearsOne, opponentBearsTwo, opponentToken, ownBears)) {
-            harness.castInstant(player1, 0, target.getId());
-            harness.passBothPriorities();
+            harness.castAndResolveInstant(player1, 0, target.getId());
         }
 
         advanceToEndStep(player2);
@@ -81,13 +80,135 @@ class VrenTheRelentlessTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0);
 
         harness.assertNotOnBattlefield(player1, "Vren, the Relentless");
         harness.assertInGraveyard(player1, "Vren, the Relentless");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    void wardCountersOpponentSpellWhenTheyCannotPay() {
+        Permanent vren = harness.addToBattlefieldAndReturn(player1, new VrenTheRelentless());
+        harness.setHand(player2, List.of(new SwordsToPlowshares()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player2, 0, vren.getId());
+
+        harness.assertOnBattlefield(player1, "Vren, the Relentless");
+        harness.assertInGraveyard(player2, "Swords to Plowshares");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void payingWardAllowsOpponentSpellToResolve() {
+        Permanent vren = harness.addToBattlefieldAndReturn(player1, new VrenTheRelentless());
+        harness.setHand(player2, List.of(new SwordsToPlowshares()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castInstant(player2, 0, vren.getId());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Vren, the Relentless");
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(vren.getCard().getId()));
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @CardUsed({SugarCoat.class})
+    void losingAbilitiesStopsDeathReplacement() {
+        Permanent vren = harness.addToBattlefieldAndReturn(player1, new VrenTheRelentless());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SugarCoat(), new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, vren.getId());
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.exiledCards).noneMatch(entry -> entry.card().getId().equals(bears.getCard().getId()));
+    }
+
+    @Test
+    void ownCreaturesStillDieNormallyAndDoNotMakeRats() {
+        harness.addToBattlefield(player1, new VrenTheRelentless());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Rat")).isEmpty();
+    }
+
+    @Test
+    void countsCreaturesExiledBeforeVrenEntered() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SwordsToPlowshares()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.addToBattlefield(player1, new VrenTheRelentless());
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Rat")).hasSize(1);
+    }
+
+    @Test
+    void replacementExilesMakeRatsButDoNotCarryOverToNextTurn() {
+        harness.addToBattlefield(player1, new VrenTheRelentless());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Rat")).hasSize(1);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Rat")).hasSize(1);
+    }
+
+    @Test
+    void countsExilesAtResolutionAndTokensKeepTheirAbilityAfterVrenLeaves() {
+        Permanent vren = harness.addToBattlefieldAndReturn(player1, new VrenTheRelentless());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SwordsToPlowshares(), new SwordsToPlowshares()));
+        advanceToEndStep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        List<Permanent> rats = findPermanents(player1, "Rat");
+        assertThat(rats).hasSize(1);
+        Permanent rat = rats.getFirst();
+        assertThat(gqs.getEffectivePower(gd, rat)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, rat)).isEqualTo(2);
+
+        harness.castAndResolveInstant(player1, 0, vren.getId());
+
+        assertThat(gqs.getEffectivePower(gd, rat)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, rat)).isEqualTo(1);
+        harness.addToBattlefield(player1, new VrenTheRelentless());
+        assertThat(gqs.getEffectivePower(gd, rat)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, rat)).isEqualTo(2);
     }
 
     private Permanent addTokenCreature(Player owner) {
@@ -107,7 +228,6 @@ class VrenTheRelentlessTest extends BaseCardTest {
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 }
