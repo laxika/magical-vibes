@@ -86,8 +86,7 @@ class SoltariEmissaryTest extends BaseCardTest {
     @Test
     @DisplayName("Activating does not tap Soltari Emissary and works with summoning sickness")
     void activatingDoesNotTapAndIgnoresSummoningSickness() {
-        Permanent emissary = new Permanent(new SoltariEmissary());
-        gd.playerBattlefields.get(player1.getId()).add(emissary);
+        Permanent emissary = harness.addToBattlefieldAndReturn(player1, new SoltariEmissary());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -104,6 +103,72 @@ class SoltariEmissaryTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Shadow is granted only to the source and only on resolution")
+    void shadowIsGrantedOnlyToSourceOnResolution() {
+        Permanent emissary = addEmissaryReady(player1);
+        Permanent other = addEmissaryReady(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gqs.hasKeyword(gd, emissary, Keyword.SHADOW)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, emissary, Keyword.SHADOW)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.SHADOW)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Soltari Emissary can gain shadow")
+    void tappedEmissaryCanGainShadow() {
+        Permanent emissary = addEmissaryReady(player1);
+        emissary.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(emissary.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, emissary, Keyword.SHADOW)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature with granted shadow cannot block a creature without shadow")
+    void grantedShadowCannotBlockNonShadowCreature() {
+        addEmissaryReady(player1);
+        addEmissaryReady(player2);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shadow");
+    }
+
+    @Test
+    @DisplayName("Creatures with granted shadow can block each other")
+    void creaturesWithGrantedShadowCanBlockEachOther() {
+        addEmissaryReady(player1);
+        Permanent blocker = addEmissaryReady(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlockedThisTurn()).isTrue();
     }
 
     private Permanent addEmissaryReady(Player player) {
