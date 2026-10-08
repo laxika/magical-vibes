@@ -124,4 +124,51 @@ class IcingdeathFrostTyrantTest extends BaseCardTest {
         harness.addMana(caster, ManaColor.BLACK, 2);
         harness.castAndResolveInstant(caster, 0, harness.getPermanentId(targetController, targetName));
     }
+
+    @Test
+    void generatedEquipmentDoesNotTriggerWhileUnattached() {
+        Permanent token = createFrostTongue();
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+
+        assertThat(token.isAttached()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(victim.isTapped()).isFalse();
+    }
+
+    @Test
+    void generatedEquipmentAttackTriggerResolvesAfterTokenLeavesBattlefield() {
+        Permanent token = createFrostTongue();
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        token.setAttachedTo(attacker.getId());
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        harness.handlePermanentChosen(player1, victim.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(token);
+        harness.passBothPriorities();
+
+        assertThat(victim.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+    }
+
+    @Test
+    void generatedEquipmentCanTargetAnAlreadyTappedCreature() {
+        Permanent token = createFrostTongue();
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        token.setAttachedTo(attacker.getId());
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+        victim.tap();
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
+
+        assertThat(victim.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
