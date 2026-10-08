@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 @CardUsed({SoulScourge.class, FieryTemper.class})
 class SoulScourgeTest extends BaseCardTest {
@@ -44,7 +45,49 @@ class SoulScourgeTest extends BaseCardTest {
         harness.assertLife(player2, 20);
     }
 
-    private void castSoulScourgeWithTarget(java.util.UUID targetId) {
+    @Test
+    void controllerCanBeTargetedAndRegainsLifeOnLeave() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        castSoulScourgeWithTarget(player1.getId());
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+
+        removeSoulScourge();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void eachSoulScourgeRemembersItsOwnPlayer() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        castSoulScourgeWithTarget(player2.getId());
+        UUID firstScourgeId = harness.getPermanentId(player1, "Soul Scourge");
+        castSoulScourgeWithTarget(player1.getId());
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+
+        removeSoulScourge(firstScourgeId);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Soul Scourge");
+
+        removeSoulScourge();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player1, "Soul Scourge");
+    }
+
+    private void castSoulScourgeWithTarget(UUID targetId) {
         harness.setHand(player1, List.of(new SoulScourge()));
         addSoulScourgeMana();
         harness.castCreature(player1, 0, 0, targetId);
@@ -58,13 +101,16 @@ class SoulScourgeTest extends BaseCardTest {
     }
 
     private void removeSoulScourge() {
+        removeSoulScourge(harness.getPermanentId(player1, "Soul Scourge"));
+    }
+
+    private void removeSoulScourge(UUID permanentId) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new FieryTemper()));
         harness.addMana(player2, ManaColor.RED, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castAndResolveInstant(player2, 0,
-                harness.getPermanentId(player1, "Soul Scourge"));
+        harness.castAndResolveInstant(player2, 0, permanentId);
     }
 }
