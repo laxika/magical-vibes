@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AltarOfBone.class, Aurochs.class, BalduvianBears.class, Plains.class})
+@CardUsed({AltarOfBone.class, Aurochs.class, BalduvianBears.class, Counterspell.class, Plains.class})
 class AltarOfBoneTest extends BaseCardTest {
 
     @Test
@@ -172,6 +173,51 @@ class AltarOfBoneTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Altar of Bone");
         harness.assertNotOnBattlefield(player1, "Balduvian Bears");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Countering the spell does not refund the sacrificed creature or search the library")
+    void counteredSpellKeepsSacrificePaid() {
+        castWithSacrifice();
+        Aurochs creatureInLibrary = new Aurochs();
+        Plains landInLibrary = new Plains();
+        harness.setLibrary(player1, List.of(creatureInLibrary, landInLibrary));
+
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castInstant(player2, 0, gd.stack.getFirst().getCard().getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Altar of Bone");
+        harness.assertInGraveyard(player1, "Balduvian Bears");
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+        harness.assertNotInHand(player1, "Aurochs");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creatureInLibrary, landInLibrary);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Searching takes exactly one creature from the caster's library into their hand")
+    void searchUsesOnlyCastersLibraryAndHand() {
+        castWithSacrifice();
+        Aurochs chosenCreature = new Aurochs();
+        BalduvianBears remainingCreature = new BalduvianBears();
+        BalduvianBears opponentCreature = new BalduvianBears();
+        harness.setLibrary(player1, List.of(chosenCreature, remainingCreature));
+        harness.setLibrary(player2, List.of(opponentCreature));
+        harness.setHand(player2, List.of());
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosenCreature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCreature);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCreature);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Altar of Bone");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
