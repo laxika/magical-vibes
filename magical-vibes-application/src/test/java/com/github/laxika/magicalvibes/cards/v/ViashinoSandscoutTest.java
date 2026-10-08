@@ -35,9 +35,7 @@ class ViashinoSandscoutTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
@@ -59,9 +57,7 @@ class ViashinoSandscoutTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
@@ -80,9 +76,7 @@ class ViashinoSandscoutTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
 
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).remove(sandscout);
@@ -90,6 +84,69 @@ class ViashinoSandscoutTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotInHand(player1, "Viashino Sandscout");
+    }
+
+    @Test
+    @DisplayName("Returns to its owner's hand rather than its controller's hand")
+    void returnsToOwnersHandUnderAnotherPlayersControl() {
+        ViashinoSandscout card = new ViashinoSandscout();
+        card.setOwnerId(player1.getId());
+        harness.addToBattlefield(player2, card);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Viashino Sandscout");
+        harness.assertInHand(player1, "Viashino Sandscout");
+        harness.assertNotInHand(player2, "Viashino Sandscout");
+    }
+
+    @Test
+    @DisplayName("An old trigger does not return the same card after it re-enters")
+    void doesNotReturnNewPermanentAfterReentry() {
+        ViashinoSandscout card = new ViashinoSandscout();
+        Permanent original = harness.addToBattlefieldAndReturn(player1, card);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(original);
+        Permanent returned = harness.enterBattlefieldAndReturn(player1, card);
+        assertThat(returned.getId()).isNotEqualTo(original.getId());
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Viashino Sandscout");
+        harness.assertNotInHand(player1, "Viashino Sandscout");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering after the end step begins waits until the next end step")
+    void enteringDuringEndStepDoesNotTriggerImmediately() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        harness.enterBattlefieldAndReturn(player1, new ViashinoSandscout());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Viashino Sandscout");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Viashino Sandscout");
+        harness.assertInHand(player1, "Viashino Sandscout");
     }
 }
 
