@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MoriokReaver;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,39 +18,38 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VulshokHeartstoker.class, MoriokReaver.class})
 class VulshokHeartstokerTest extends BaseCardTest {
 
-    // ===== Casting and resolving =====
-
     @Test
-    @DisplayName("Casting with a target puts it on the stack")
-    void castingWithTargetPutsOnStack() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+    @DisplayName("Creature spell has no target")
+    void creatureSpellHasNoTarget() {
+        harness.addToBattlefield(player2, new MoriokReaver());
         harness.setHand(player1, List.of(new VulshokHeartstoker()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Vulshok Heartstoker");
-        assertThat(entry.getTargetId()).isEqualTo(targetId);
+        assertThat(entry.getTargetId()).isNull();
     }
 
     @Test
     @DisplayName("Resolving creature spell puts ETB trigger on stack")
     void resolvingPutsEtbOnStack() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new MoriokReaver());
         harness.setHand(player1, List.of(new VulshokHeartstoker()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "Moriok Reaver");
+        harness.castCreature(player1, 0);
 
-        // Resolve creature spell — enters battlefield, ETB triggers
+        // Resolve the creature spell.
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
 
         harness.assertOnBattlefield(player1, "Vulshok Heartstoker");
 
@@ -63,108 +63,96 @@ class VulshokHeartstokerTest extends BaseCardTest {
     @Test
     @DisplayName("ETB resolves and gives target creature +2/+0")
     void etbBoostsTargetCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new MoriokReaver());
         harness.setHand(player1, List.of(new VulshokHeartstoker()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "Moriok Reaver");
+        harness.castCreature(player1, 0);
 
-        // Resolve creature spell
+        // Resolve the creature spell.
         harness.passBothPriorities();
-        // Resolve ETB triggered ability
+        harness.handlePermanentChosen(player1, targetId);
+        // Resolve the triggered ability.
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getId().equals(targetId))
-                .findFirst().orElseThrow();
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        Permanent target = gqs.findPermanentById(gd, targetId);
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
     }
-
-    // ===== Boost wears off =====
 
     @Test
     @DisplayName("Boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new MoriokReaver());
         harness.setHand(player1, List.of(new VulshokHeartstoker()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "Moriok Reaver");
+        harness.castCreature(player1, 0);
 
         harness.passBothPriorities(); // Resolve creature
+        harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities(); // Resolve ETB
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getId().equals(targetId))
-                .findFirst().orElseThrow();
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
+        Permanent target = gqs.findPermanentById(gd, targetId);
+        assertThat(target.getPowerModifier()).isEqualTo(2);
 
-        // Advance to end step — modifiers reset
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        // Advance through cleanup to the next turn.
+        harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(target.getPowerModifier()).isEqualTo(0);
+        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
     }
-
-    // ===== Can target own creature =====
 
     @Test
     @DisplayName("Can target own creature")
     void canTargetOwnCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new MoriokReaver());
         harness.setHand(player1, List.of(new VulshokHeartstoker()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player1, "Moriok Reaver");
+        harness.castCreature(player1, 0);
 
         harness.passBothPriorities(); // Resolve creature
+        harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities(); // Resolve ETB
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getId().equals(targetId))
-                .findFirst().orElseThrow();
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        Permanent target = gqs.findPermanentById(gd, targetId);
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
     }
-
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("ETB fizzles if target creature is removed before resolution")
     void etbFizzlesIfTargetRemoved() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new MoriokReaver());
         harness.setHand(player1, List.of(new VulshokHeartstoker()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "Moriok Reaver");
+        harness.castCreature(player1, 0);
 
-        // Resolve creature spell — ETB on stack
+        // Resolve the creature spell.
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
 
         // Remove target before ETB resolves
         gd.playerBattlefields.get(player2.getId()).clear();
 
-        // Resolve ETB — fizzles
+        // Resolve the triggered ability.
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
-
-    // ===== No target scenarios =====
 
     @Test
     @DisplayName("Can cast without a target when no creatures on battlefield")
@@ -179,17 +167,73 @@ class VulshokHeartstokerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB does not trigger when cast without a target")
-    void etbDoesNotTriggerWithoutTarget() {
+    @DisplayName("ETB can target itself on an empty battlefield")
+    void etbCanTargetItselfOnEmptyBattlefield() {
         harness.setHand(player1, List.of(new VulshokHeartstoker()));
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castCreature(player1, 0);
 
-        // Resolve creature spell
+        // Resolve the creature spell.
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Vulshok Heartstoker");
+        UUID selfId = harness.getPermanentId(player1, "Vulshok Heartstoker");
+        harness.handlePermanentChosen(player1, selfId);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gqs.findPermanentById(gd, selfId).getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.findPermanentById(gd, selfId).getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A stale cast-time selection must not replace choosing the ETB target")
+    void choosesEtbTargetAfterEnteringDespiteStaleCastTimeSelection() {
+        Permanent oldTarget = harness.addToBattlefieldAndReturn(player2, new MoriokReaver());
+        harness.setHand(player1, List.of(new VulshokHeartstoker()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castCreature(player1, 0, oldTarget.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(oldTarget);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Vulshok Heartstoker");
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        UUID selfId = harness.getPermanentId(player1, "Vulshok Heartstoker");
+        harness.handlePermanentChosen(player1, selfId);
+        harness.passBothPriorities();
+
+        assertThat(gqs.findPermanentById(gd, selfId).getEffectivePower()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Entering without being cast still triggers the boost")
+    void enteringWithoutBeingCastTriggersBoost() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MoriokReaver());
+        harness.enterBattlefieldAndReturn(player1, new VulshokHeartstoker());
+
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Removing Heartstoker does not stop its triggered ability")
+    void triggerResolvesAfterSourceLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MoriokReaver());
+        harness.setHand(player1, List.of(new VulshokHeartstoker()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 }
