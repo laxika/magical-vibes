@@ -53,4 +53,67 @@ class ZephyrimTest extends BaseCardTest {
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
+    @Test
+    @DisplayName("Casting without squad payments creates no copies")
+    void castingWithoutSquadCreatesNoCopies() {
+        harness.setHand(player1, List.of(new Zephyrim()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Zephyrim")).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Entering without being cast creates no squad copies")
+    void enteringWithoutCastingCreatesNoCopies() {
+        harness.enterBattlefieldAndReturn(player1, new Zephyrim());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Zephyrim")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Accepting miracle casts Zephyrim for one generic and one white mana")
+    void miracleCastsForReducedCost() {
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.setLibrary(player1, List.of(new Zephyrim()));
+            harness.addMana(player1, ManaColor.WHITE, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+            harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+            harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            resolveAllTriggers();
+
+            assertThat(findPermanents(player1, "Zephyrim")).hasSize(1);
+            harness.assertNotInHand(player1, "Zephyrim");
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        });
+    }
+
+    @Test
+    @DisplayName("Declining miracle casting leaves Zephyrim in hand and spends no mana")
+    void decliningMiracleCastLeavesCardInHand() {
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.setLibrary(player1, List.of(new Zephyrim()));
+            harness.addMana(player1, ManaColor.WHITE, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+            harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+            harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, false);
+
+            harness.assertInHand(player1, "Zephyrim");
+            harness.assertNotOnBattlefield(player1, "Zephyrim");
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        });
+    }
 }
