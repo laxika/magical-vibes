@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -16,7 +18,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Taniwha.class, Island.class, Forest.class, IronTuskElephant.class})
+@CardUsed({Taniwha.class, Island.class, Forest.class, IronTuskElephant.class, Boomerang.class})
 class TaniwhaTest extends BaseCardTest {
 
     @Test
@@ -130,5 +132,47 @@ class TaniwhaTest extends BaseCardTest {
     private void advanceToUpkeepWithTaniwhaPhasedIn() {
         advanceToUpkeep(player1);
         advanceToUpkeep(player1);
+    }
+
+    @Test
+    @DisplayName("Tapped lands return before untapping while Taniwha phases out simultaneously")
+    void tappedLandReturnsUntapped() {
+        Permanent taniwha = harness.addToBattlefieldAndReturn(player1, new Taniwha());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+
+        advanceToUpkeepWithTaniwhaPhasedIn();
+        island.setTapped(true);
+        harness.passBothPriorities();
+
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(island);
+        assertThat(island.isTapped()).isTrue();
+
+        harness.performUntapStep(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(island).doesNotContain(taniwha);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(taniwha).doesNotContain(island);
+        assertThat(island.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The upkeep ability still phases out lands after Taniwha leaves the battlefield")
+    void triggerResolvesAfterSourceLeaves() {
+        Permanent taniwha = harness.addToBattlefieldAndReturn(player1, new Taniwha());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.setHand(player1, List.of(new Boomerang()));
+
+        advanceToUpkeepWithTaniwhaPhasedIn();
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, taniwha.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(taniwha);
+        assertThat(gd.playerHands.get(player1.getId())).contains(taniwha.getCard());
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(island);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(island);
     }
 }
