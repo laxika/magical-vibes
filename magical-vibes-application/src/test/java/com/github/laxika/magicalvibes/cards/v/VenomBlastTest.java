@@ -37,8 +37,7 @@ class VenomBlastTest extends BaseCardTest {
         harness.setHand(player1, List.of(new VenomBlast()));
         addMana();
 
-        harness.castSorcery(player1, 0, List.of(source.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(source.getId()));
 
         assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
@@ -65,11 +64,56 @@ class VenomBlastTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castVenomBlast(Permanent source, Permanent target) {
+    @Test
+    @DisplayName("Can deal damage to another creature you control")
+    void canDamageAnotherCreatureYouControl() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+
+        castVenomBlast(source, target);
+
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(source.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Still puts counters on the source when the damage target leaves")
+    void putsCountersWhenDamageTargetLeaves() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         harness.setHand(player1, List.of(new VenomBlast()));
         addMana();
         harness.castSorcery(player1, 0, List.of(source.getId(), target.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
         harness.passBothPriorities();
+
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Venom Blast");
+    }
+
+    @Test
+    @DisplayName("Deals no damage when the source creature leaves")
+    void dealsNoDamageWhenSourceLeaves() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new VenomBlast()));
+        addMana();
+        harness.castSorcery(player1, 0, List.of(source.getId(), target.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player1, "Venom Blast");
+    }
+
+    private void castVenomBlast(Permanent source, Permanent target) {
+        harness.setHand(player1, List.of(new VenomBlast()));
+        addMana();
+        harness.castAndResolveSorcery(player1, 0, List.of(source.getId(), target.getId()));
     }
 
     private void addMana() {
