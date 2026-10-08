@@ -2,12 +2,13 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,10 +17,10 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MirrorOfFate.class, RuneclawBear.class, LlanowarElves.class, LightningBolt.class})
 class MirrorOfFateTest extends BaseCardTest {
-
-    // ===== No exiled cards: library gets exiled entirely =====
 
     @Test
     @DisplayName("With no exiled cards, entire library is exiled and library is empty")
@@ -29,11 +30,9 @@ class MirrorOfFateTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MirrorOfFate());
 
         // Set up a library with some cards
-        Card bears = new GrizzlyBears();
+        Card bears = new RuneclawBear();
         Card elves = new LlanowarElves();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(bears);
-        gd.playerDecks.get(player1.getId()).add(elves);
+        harness.setLibrary(player1, List.of(bears, elves));
         harness.setHand(player1, List.of());
 
         // Ensure no exiled cards (already empty by default)
@@ -46,15 +45,13 @@ class MirrorOfFateTest extends BaseCardTest {
 
         // Exiled cards should include the library cards
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
+                .anyMatch(c -> c.getName().equals("Runeclaw Bear"))
                 .anyMatch(c -> c.getName().equals("Llanowar Elves"));
 
         // Mirror of Fate should be sacrificed
         harness.assertNotOnBattlefield(player1, "Mirror of Fate");
         harness.assertInGraveyard(player1, "Mirror of Fate");
     }
-
-    // ===== With exiled cards: player chooses which to put on top =====
 
     @Test
     @DisplayName("With exiled cards, player is prompted to choose up to 7")
@@ -65,7 +62,7 @@ class MirrorOfFateTest extends BaseCardTest {
         harness.setHand(player1, List.of());
 
         // Put a card in exile
-        Card exiledBears = new GrizzlyBears();
+        Card exiledBears = new RuneclawBear();
         gd.addToExile(player1.getId(), exiledBears);
 
         harness.activateAbility(player1, 0, null, null);
@@ -84,12 +81,11 @@ class MirrorOfFateTest extends BaseCardTest {
         harness.setHand(player1, List.of());
 
         // Set up library
-        Card libraryCard = new Shock();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(libraryCard);
+        Card libraryCard = new LightningBolt();
+        harness.setLibrary(player1, List.of(libraryCard));
 
         // Put one card in exile
-        Card exiledBears = new GrizzlyBears();
+        Card exiledBears = new RuneclawBear();
         gd.addToExile(player1.getId(), exiledBears);
 
         harness.activateAbility(player1, 0, null, null);
@@ -101,11 +97,11 @@ class MirrorOfFateTest extends BaseCardTest {
         // No reorder step needed for single card — library should have the card on top
         List<Card> library = gd.playerDecks.get(player1.getId());
         assertThat(library).hasSize(1);
-        assertThat(library.getFirst().getName()).isEqualTo("Grizzly Bears");
+        assertThat(library.getFirst().getName()).isEqualTo("Runeclaw Bear");
 
         // The original library card should be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+                .anyMatch(c -> c.getName().equals("Lightning Bolt"));
 
         // Chosen card should no longer be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -121,12 +117,11 @@ class MirrorOfFateTest extends BaseCardTest {
         harness.setHand(player1, List.of());
 
         // Set up library with a card
-        Card libraryCard = new Shock();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(libraryCard);
+        Card libraryCard = new LightningBolt();
+        harness.setLibrary(player1, List.of(libraryCard));
 
         // Put cards in exile
-        Card exiledBears = new GrizzlyBears();
+        Card exiledBears = new RuneclawBear();
         Card exiledElves = new LlanowarElves();
         gd.addToExile(player1.getId(), exiledBears);
         gd.addToExile(player1.getId(), exiledElves);
@@ -148,7 +143,7 @@ class MirrorOfFateTest extends BaseCardTest {
 
         // The original library card should be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+                .anyMatch(c -> c.getName().equals("Lightning Bolt"));
 
         // Complete reorder: put Elves on top, Bears second (order: [1, 0])
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
@@ -157,7 +152,7 @@ class MirrorOfFateTest extends BaseCardTest {
         List<Card> library = gd.playerDecks.get(player1.getId());
         assertThat(library).hasSize(2);
         assertThat(library.get(0).getName()).isEqualTo("Llanowar Elves");
-        assertThat(library.get(1).getName()).isEqualTo("Grizzly Bears");
+        assertThat(library.get(1).getName()).isEqualTo("Runeclaw Bear");
     }
 
     @Test
@@ -168,11 +163,10 @@ class MirrorOfFateTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MirrorOfFate());
         harness.setHand(player1, List.of());
 
-        Card libraryCard = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(libraryCard);
+        Card libraryCard = new RuneclawBear();
+        harness.setLibrary(player1, List.of(libraryCard));
 
-        Card exiledCard = new Shock();
+        Card exiledCard = new LightningBolt();
         gd.addToExile(player1.getId(), exiledCard);
 
         harness.activateAbility(player1, 0, null, null);
@@ -186,11 +180,9 @@ class MirrorOfFateTest extends BaseCardTest {
 
         // All cards should be in exile (original library card + original exiled card)
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Shock"));
+                .anyMatch(c -> c.getName().equals("Runeclaw Bear"))
+                .anyMatch(c -> c.getName().equals("Lightning Bolt"));
     }
-
-    // ===== Mirror of Fate is sacrificed =====
 
     @Test
     @DisplayName("Mirror of Fate goes to graveyard after activation (sacrifice cost)")
@@ -209,8 +201,6 @@ class MirrorOfFateTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Mirror of Fate");
     }
 
-    // ===== Max 7 cards =====
-
     @Test
     @DisplayName("Cannot choose more than 7 exiled cards even if more exist")
     void maxSevenCards() {
@@ -218,12 +208,12 @@ class MirrorOfFateTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addToBattlefield(player1, new MirrorOfFate());
         harness.setHand(player1, List.of());
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         // Put 10 cards in exile
         List<Card> exiledCards = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            Card c = new GrizzlyBears();
+            Card c = new RuneclawBear();
             gd.addToExile(player1.getId(), c);
             exiledCards.add(c);
         }
@@ -250,8 +240,6 @@ class MirrorOfFateTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
     }
 
-    // ===== Does not affect opponent's exile or library =====
-
     @Test
     @DisplayName("Mirror of Fate only affects controller's library and exile zone")
     void doesNotAffectOpponent() {
@@ -261,23 +249,171 @@ class MirrorOfFateTest extends BaseCardTest {
         harness.setHand(player1, List.of());
 
         // Set up player2's library and exile
-        Card opponentLibraryCard = new GrizzlyBears();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(opponentLibraryCard);
+        Card opponentLibraryCard = new RuneclawBear();
+        harness.setLibrary(player2, List.of(opponentLibraryCard));
 
-        Card opponentExiledCard = new Shock();
+        Card opponentExiledCard = new LightningBolt();
         gd.addToExile(player2.getId(), opponentExiledCard);
 
         // Player1 has no exiled cards (already empty by default)
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         // Opponent's library and exile should be unchanged
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
-        assertThat(gd.playerDecks.get(player2.getId()).get(0).getName()).isEqualTo("Grizzly Bears");
+        assertThat(gd.playerDecks.get(player2.getId()).get(0).getName()).isEqualTo("Runeclaw Bear");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+                .anyMatch(c -> c.getName().equals("Lightning Bolt"));
+    }
+
+    @Test
+    @DisplayName("Face-down exiled cards cannot be selected alongside face-up cards")
+    void cannotChooseFaceDownCard() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new MirrorOfFate());
+        harness.setHand(player1, List.of());
+        Card libraryCard = new LightningBolt();
+        harness.setLibrary(player1, List.of(libraryCard));
+        Card faceUp = new RuneclawBear();
+        Card faceDown = new LlanowarElves();
+        gd.addToExile(player1.getId(), faceUp);
+        gd.addToExile(player1.getId(), faceDown, null, true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(faceDown.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        harness.handleMultipleCardsChosen(player1, List.of(faceUp.getId()));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(faceUp);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(faceDown, libraryCard);
+    }
+
+    @Test
+    @DisplayName("With only face-down exiled cards, library is exiled without a choice")
+    void onlyFaceDownCardsExilesLibraryWithoutChoice() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new MirrorOfFate());
+        harness.setHand(player1, List.of());
+        Card libraryCard = new LightningBolt();
+        harness.setLibrary(player1, List.of(libraryCard));
+        Card faceDown = new RuneclawBear();
+        gd.addToExile(player1.getId(), faceDown, null, true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(faceDown, libraryCard);
+    }
+
+    @Test
+    @DisplayName("Selecting the same exiled card twice is rejected without changing zones")
+    void rejectsDuplicateChosenCard() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new MirrorOfFate());
+        harness.setHand(player1, List.of());
+        Card libraryCard = new LightningBolt();
+        harness.setLibrary(player1, List.of(libraryCard));
+        Card first = new RuneclawBear();
+        Card second = new LlanowarElves();
+        gd.addToExile(player1.getId(), first);
+        gd.addToExile(player1.getId(), second);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(first.getId(), first.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(first, second);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first);
+    }
+
+    @Test
+    @DisplayName("Selecting eight cards is rejected and a legal choice remains possible")
+    void rejectsEightChosenCards() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new MirrorOfFate());
+        harness.setHand(player1, List.of());
+        Card libraryCard = new LightningBolt();
+        harness.setLibrary(player1, List.of(libraryCard));
+        List<Card> exiled = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            Card card = new RuneclawBear();
+            gd.addToExile(player1.getId(), card);
+            exiled.add(card);
+        }
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, exiled.stream().map(Card::getId).toList()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyElementsOf(exiled);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cards in the library and cards owned by opponents cannot be selected")
+    void rejectsCardsOutsideOwnedExile() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new MirrorOfFate());
+        harness.setHand(player1, List.of());
+        Card libraryCard = new LightningBolt();
+        harness.setLibrary(player1, List.of(libraryCard));
+        Card owned = new RuneclawBear();
+        Card opponentOwned = new LlanowarElves();
+        gd.addToExile(player1.getId(), owned);
+        gd.addToExile(player2.getId(), opponentOwned);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(libraryCard.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(opponentOwned.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(owned.getId()));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(owned);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(opponentOwned);
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately and exiled cards are chosen only at resolution")
+    void paysSacrificeBeforeChoosingCardsAtResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new MirrorOfFate());
+        harness.setHand(player1, List.of());
+        Card libraryCard = new LightningBolt();
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Mirror of Fate");
+        harness.assertInGraveyard(player1, "Mirror of Fate");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        Card newlyExiled = new RuneclawBear();
+        gd.addToExile(player1.getId(), newlyExiled);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(newlyExiled.getId()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(newlyExiled);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(libraryCard);
     }
 }
