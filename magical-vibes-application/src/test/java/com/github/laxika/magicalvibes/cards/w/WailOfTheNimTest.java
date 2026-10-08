@@ -55,8 +55,8 @@ class WailOfTheNimTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(survivingCreature);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(dyingCreature);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -71,8 +71,8 @@ class WailOfTheNimTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opponentCreature);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 
@@ -86,6 +86,56 @@ class WailOfTheNimTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castModalInstantWithModes(
                 player1, 0, 1, 2, new int[]{0, 1}, List.of()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Entwine resolves regeneration first even when modes are submitted in reverse order")
+    void entwineUsesPrintedModeOrder() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+        Permanent survivingCreature = harness.addToBattlefieldAndReturn(player1, new LumengridWarden());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+
+        cast(new int[]{1, 0}, 2);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature, survivingCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opponentCreature);
+        assertThat(ownCreature.isTapped()).isTrue();
+        assertThat(ownCreature.getMarkedDamage()).isZero();
+        assertThat(ownCreature.getRegenerationShield()).isZero();
+        assertThat(survivingCreature.isTapped()).isFalse();
+        assertThat(survivingCreature.getMarkedDamage()).isEqualTo(1);
+        assertThat(survivingCreature.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Damage mode still damages players when there are no creatures")
+    void damageModeWithEmptyBattlefields() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        cast(new int[]{1}, 1);
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Wail of the Nim");
+    }
+
+    @Test
+    @DisplayName("Regeneration shields cover creatures present at resolution rather than casting")
+    void regenerationUsesResolutionBattlefield() {
+        harness.setHand(player1, List.of(new WailOfTheNim()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0}, List.of());
+
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+        harness.passBothPriorities();
+
+        assertThat(ownCreature.getRegenerationShield()).isEqualTo(1);
+        assertThat(opponentCreature.getRegenerationShield()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     private void cast(int[] modes, int blackMana) {
