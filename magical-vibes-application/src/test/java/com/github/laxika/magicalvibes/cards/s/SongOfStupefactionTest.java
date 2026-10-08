@@ -55,9 +55,8 @@ class SongOfStupefactionTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Shock()));
         harness.setGraveyard(player2, List.of(new GrizzlyBears()));
 
-        Permanent aura = new Permanent(new SongOfStupefaction());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SongOfStupefaction());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -85,14 +84,66 @@ class SongOfStupefactionTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature or Vehicle");
     }
 
+    @Test
+    @DisplayName("Power reduction updates as permanent cards enter and leave the graveyard")
+    void powerReductionUpdatesWithGraveyard() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castAndResolveAura(bears);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new FountainOfYouth(),
+                new SleekSchooner(), new Shock()));
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+
+        harness.setGraveyard(player1, List.of(new Shock()));
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Accepting the mill with one library card mills only that card")
+    void millsRemainingCardFromShortLibrary() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        FountainOfYouth remainingCard = new FountainOfYouth();
+        harness.setLibrary(player1, List.of(remainingCard));
+
+        castAndResolveAura(bears);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Aura resolves attached to an uncrewed Vehicle and triggers its mill")
+    void resolvesOnUncrewedVehicle() {
+        Permanent vehicle = harness.addToBattlefieldAndReturn(player2, new SleekSchooner());
+        GrizzlyBears milledCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(milledCard, new Shock()));
+
+        castAndResolveAura(vehicle);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findPermanent(player1, "Song of Stupefaction").getAttachedTo())
+                .isEqualTo(vehicle.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2).contains(milledCard);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(vehicle);
+    }
+
     private void castAndResolveAura(Permanent target) {
         harness.setHand(player1, List.of(new SongOfStupefaction()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castEnchantment(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
