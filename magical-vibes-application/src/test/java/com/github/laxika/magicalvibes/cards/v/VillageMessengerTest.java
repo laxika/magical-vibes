@@ -1,29 +1,28 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VillageMessenger.class})
 class VillageMessengerTest extends BaseCardTest {
-
-    // ===== Werewolf transform: front → back (no spells cast last turn) =====
 
     @Test
     @DisplayName("Transforms to Moonrise Intruder when no spells were cast last turn")
     void transformsWhenNoSpellsCastLastTurn() {
-        harness.addToBattlefield(player1, new VillageMessenger());
-        Permanent messenger = findPermanent(player1, "Village Messenger");
+        Permanent messenger = harness.addToBattlefieldAndReturn(player1, new VillageMessenger());
 
         gd.spellsCastLastTurn.clear();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger goes on stack
+        advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve triggered ability
 
         assertThat(messenger.isTransformed()).isTrue();
@@ -35,34 +34,24 @@ class VillageMessengerTest extends BaseCardTest {
     @Test
     @DisplayName("Does not transform when a spell was cast last turn")
     void doesNotTransformWhenSpellCastLastTurn() {
-        harness.addToBattlefield(player1, new VillageMessenger());
-        Permanent messenger = findPermanent(player1, "Village Messenger");
+        Permanent messenger = harness.addToBattlefieldAndReturn(player1, new VillageMessenger());
 
         gd.spellsCastLastTurn.put(player1.getId(), 1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep — no trigger
+        advanceToUpkeep(player1);
 
         assertThat(messenger.isTransformed()).isFalse();
         assertThat(messenger.getCard().getName()).isEqualTo("Village Messenger");
     }
 
-    // ===== Werewolf transform: back → front (two or more spells cast last turn) =====
-
     @Test
     @DisplayName("Moonrise Intruder transforms back when a player cast two or more spells last turn")
     void intruderTransformsBackWhenTwoSpellsCast() {
-        harness.addToBattlefield(player1, new VillageMessenger());
-        Permanent messenger = findPermanent(player1, "Village Messenger");
+        Permanent messenger = harness.addToBattlefieldAndReturn(player1, new VillageMessenger());
 
         // Transform to Moonrise Intruder first
         gd.spellsCastLastTurn.clear();
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
         assertThat(messenger.isTransformed()).isTrue();
 
@@ -70,10 +59,7 @@ class VillageMessengerTest extends BaseCardTest {
         gd.spellsCastLastTurn.clear();
         gd.spellsCastLastTurn.put(player2.getId(), 2);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, back-face trigger goes on stack
+        advanceToUpkeep(player2);
         harness.passBothPriorities(); // resolve transform back
 
         assertThat(messenger.isTransformed()).isFalse();
@@ -85,15 +71,11 @@ class VillageMessengerTest extends BaseCardTest {
     @Test
     @DisplayName("Moonrise Intruder does not transform back when only one spell was cast last turn")
     void intruderDoesNotTransformWhenOneSpellCast() {
-        harness.addToBattlefield(player1, new VillageMessenger());
-        Permanent messenger = findPermanent(player1, "Village Messenger");
+        Permanent messenger = harness.addToBattlefieldAndReturn(player1, new VillageMessenger());
 
         // Transform to Moonrise Intruder first
         gd.spellsCastLastTurn.clear();
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
         assertThat(messenger.isTransformed()).isTrue();
 
@@ -102,32 +84,78 @@ class VillageMessengerTest extends BaseCardTest {
         gd.spellsCastLastTurn.put(player1.getId(), 1);
         gd.spellsCastLastTurn.put(player2.getId(), 1);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep — no trigger
+        advanceToUpkeep(player2);
 
         assertThat(messenger.isTransformed()).isTrue();
         assertThat(messenger.getCard().getName()).isEqualTo("Moonrise Intruder");
     }
 
-    // ===== Transform triggers on every upkeep (not just controller's) =====
-
     @Test
     @DisplayName("Transform triggers on opponent's upkeep too")
     void transformTriggersOnOpponentUpkeep() {
-        harness.addToBattlefield(player1, new VillageMessenger());
-        Permanent messenger = findPermanent(player1, "Village Messenger");
+        Permanent messenger = harness.addToBattlefieldAndReturn(player1, new VillageMessenger());
 
         gd.spellsCastLastTurn.clear();
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger fires
+        advanceToUpkeep(player2);
         harness.passBothPriorities(); // resolve
 
         assertThat(messenger.isTransformed()).isTrue();
         assertThat(messenger.getCard().getName()).isEqualTo("Moonrise Intruder");
+    }
+
+    @Test
+    void opponentsSpellPreventsTransformation() {
+        Permanent messenger = harness.addToBattlefieldAndReturn(player1, new VillageMessenger());
+        gd.spellsCastLastTurn.put(player2.getId(), 1);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(messenger.isTransformed()).isFalse();
+    }
+
+    @Test
+    void backFaceRemainsTransformedAfterSpelllessTurn() {
+        Permanent messenger = harness.addToBattlefieldAndReturn(player1, new VillageMessenger());
+        gd.spellsCastLastTurn.clear();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(messenger.isTransformed()).isTrue();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(messenger.isTransformed()).isTrue();
+    }
+
+    @Test
+    void hasteAllowsAttackingImmediately() {
+        Permanent messenger = harness.addToBattlefieldAndReturn(player1, new VillageMessenger());
+        assertThat(messenger.isSummoningSick()).isTrue();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(messenger.isAttacking()).isTrue();
+    }
+
+    @Test
+    void transformedCreatureRequiresTwoBlockers() {
+        Permanent messenger = harness.addToBattlefieldAndReturn(player1, new VillageMessenger());
+        gd.spellsCastLastTurn.clear();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(messenger.isTransformed()).isTrue();
+        messenger.setSummoningSick(false);
+        addCreatureReady(player2, new VillageMessenger());
+        addCreatureReady(player2, new VillageMessenger());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked except by two or more creatures");
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
     }
 }
