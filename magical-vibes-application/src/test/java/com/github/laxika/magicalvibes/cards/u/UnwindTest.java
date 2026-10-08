@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,9 +23,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Unwind.class, GrizzlyBears.class, Island.class, LlanowarElves.class, MightOfOaks.class})
 class UnwindTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting puts it on the stack targeting a noncreature spell")
@@ -68,8 +68,6 @@ class UnwindTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Resolving =====
-
     private List<UUID> tappedIslandIds(int limit) {
         return harness.getGameData().playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Island"))
@@ -108,10 +106,8 @@ class UnwindTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, might.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, might.getId());
 
-        gd = harness.getGameData();
         // Countered spell goes to owner's graveyard
         harness.assertInGraveyard(player1, "Might of Oaks");
 
@@ -151,8 +147,7 @@ class UnwindTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, might.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, might.getId());
 
         PendingInteraction.MultiPermanentChoice choice = harness.getGameData()
                 .interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -199,8 +194,7 @@ class UnwindTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, might.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, might.getId());
 
         // Only the land is offered as an untap choice; the tapped creature is not.
         PendingInteraction.MultiPermanentChoice choice = harness.getGameData()
@@ -229,15 +223,62 @@ class UnwindTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, might.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, might.getId());
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player2, "Unwind");
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Fizzle =====
+    @Test
+    @DisplayName("Can untap an opponent's land")
+    void canUntapOpponentsLand() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent opposingLand = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player2, new Island());
+        opposingLand.tap();
+        ownLand.tap();
+        MightOfOaks might = new MightOfOaks();
+        harness.setHand(player1, List.of(might));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.setHand(player2, List.of(new Unwind()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, might.getId());
+
+        PendingInteraction.MultiPermanentChoice choice = harness.getGameData()
+                .interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(opposingLand.getId(), ownLand.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(opposingLand.getId()));
+        assertThat(opposingLand.isTapped()).isFalse();
+        assertThat(ownLand.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Might of Oaks");
+    }
+
+    @Test
+    @DisplayName("Can choose no lands to untap")
+    void canChooseNoLands() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Island());
+        land.tap();
+        MightOfOaks might = new MightOfOaks();
+        harness.setHand(player1, List.of(might));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.setHand(player2, List.of(new Unwind()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, might.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of());
+
+        assertThat(land.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Might of Oaks");
+        harness.assertInGraveyard(player2, "Unwind");
+    }
 
     @Test
     @DisplayName("Fizzles if target spell is no longer on the stack")
@@ -265,5 +306,36 @@ class UnwindTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Unwind still goes to graveyard
         harness.assertInGraveyard(player2, "Unwind");
+    }
+
+    @Test
+    @DisplayName("Does not untap lands when its only target becomes illegal")
+    void doesNotUntapLandsWhenTargetBecomesIllegal() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent otherLand = harness.addToBattlefieldAndReturn(player1, new Island());
+        otherLand.tap();
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Island());
+        land.tap();
+        MightOfOaks might = new MightOfOaks();
+        harness.setHand(player1, List.of(might, new Unwind()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.setHand(player2, List.of(new Unwind()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, might.getId());
+        harness.passPriority(player2);
+        harness.castAndResolveInstant(player1, 0, might.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(harness.getGameData().interaction
+                .activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        harness.assertInGraveyard(player1, "Might of Oaks");
+        harness.assertInGraveyard(player2, "Unwind");
+        assertThat(harness.getGameData().stack).isEmpty();
     }
 }
