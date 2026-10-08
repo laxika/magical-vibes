@@ -66,4 +66,66 @@ class WeldingJarTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Welding Jar");
         harness.assertNotInGraveyard(player1, "Welding Jar");
     }
+
+    @Test
+    @DisplayName("Welding Jar can regenerate a tapped noncreature artifact")
+    void regeneratesTappedNoncreatureArtifact() {
+        harness.addToBattlefield(player1, new WeldingJar());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WeldingJar());
+        target.tap();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player2, "Welding Jar");
+        harness.assertNotInGraveyard(player2, "Welding Jar");
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Welding Jar can target itself but sacrifice is not prevented by regeneration")
+    void canTargetItselfButCannotRegenerateItsSacrifice() {
+        Permanent jar = harness.addToBattlefieldAndReturn(player1, new WeldingJar());
+
+        harness.activateAbility(player1, 0, null, jar.getId());
+        harness.assertNotOnBattlefield(player1, "Welding Jar");
+        harness.assertInGraveyard(player1, "Welding Jar");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Welding Jar");
+        harness.assertInGraveyard(player1, "Welding Jar");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A regeneration shield waits for destruction and protects only once")
+    void shieldWaitsForDestructionAndProtectsOnlyOnce() {
+        harness.addToBattlefield(player1, new WeldingJar());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        target.setMarkedDamage(1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.setHand(player1, List.of(new Shatter(), new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
+        harness.assertInGraveyard(player1, "Ornithopter");
+    }
 }
