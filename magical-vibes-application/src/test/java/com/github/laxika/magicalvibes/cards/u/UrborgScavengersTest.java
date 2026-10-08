@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UrborgScavengers.class, SerraAngel.class, DarksteelCitadel.class})
+@CardUsed({UrborgScavengers.class, SerraAngel.class, DarksteelCitadel.class, WhiteKnight.class})
 class UrborgScavengersTest extends BaseCardTest {
 
     @Test
@@ -26,11 +27,7 @@ class UrborgScavengersTest extends BaseCardTest {
     void enteringExilesCardPutsCounterAndGrantsKeyword() {
         Card card = new DarksteelCitadel();
         harness.setGraveyard(player2, new ArrayList<>(List.of(card)));
-        harness.setHand(player1, List.of(new UrborgScavengers()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new UrborgScavengers(), "{2}{B}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
@@ -65,11 +62,7 @@ class UrborgScavengersTest extends BaseCardTest {
     void missingTargetDoesNotProduceCounter() {
         Card card = new SerraAngel();
         harness.setGraveyard(player2, new ArrayList<>(List.of(card)));
-        harness.setHand(player1, List.of(new UrborgScavengers()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new UrborgScavengers(), "{2}{B}");
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
         gd.playerGraveyards.get(player2.getId()).clear();
@@ -90,5 +83,54 @@ class UrborgScavengersTest extends BaseCardTest {
         assertThat(gqs.computeStaticBonus(gd, scavengers).keywords())
                 .contains(Keyword.FLYING, Keyword.VIGILANCE, Keyword.INDESTRUCTIBLE)
                 .doesNotContain(Keyword.DEFENDER);
+    }
+
+    @Test
+    @DisplayName("Exiling White Knight grants first strike but not protection from black")
+    void exilingOwnCardDoesNotGrantProtection() {
+        Card card = new WhiteKnight();
+        harness.setGraveyard(player1, List.of(card));
+        harness.castFromHand(player1, new UrborgScavengers(), "{2}{B}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
+        harness.passBothPriorities();
+
+        Permanent scavengers = findPermanent(player1, "Urborg Scavengers");
+        assertThat(scavengers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.computeStaticBonus(gd, scavengers).keywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(gqs.hasProtectionFrom(gd, scavengers, CardColor.BLACK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Keywords disappear when the linked card leaves exile and do not affect other Scavengers")
+    void keywordsTrackOnlyCardsStillExiledWithThisPermanent() {
+        Permanent scavengers = addCreatureReady(player1, new UrborgScavengers());
+        Permanent other = addCreatureReady(player1, new UrborgScavengers());
+        Card card = new SerraAngel();
+        gd.addToExile(player2.getId(), card, scavengers.getId());
+
+        assertThat(gqs.computeStaticBonus(gd, scavengers).keywords())
+                .contains(Keyword.FLYING, Keyword.VIGILANCE);
+        assertThat(gqs.computeStaticBonus(gd, other).keywords())
+                .doesNotContain(Keyword.FLYING, Keyword.VIGILANCE);
+
+        gd.removeFromExile(card.getId());
+
+        assertThat(gqs.computeStaticBonus(gd, scavengers).keywords())
+                .doesNotContain(Keyword.FLYING, Keyword.VIGILANCE);
+    }
+
+    @Test
+    @DisplayName("Entering with empty graveyards does not put a counter on Scavengers")
+    void emptyGraveyardsDoNotProduceCounter() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.castFromHand(player1, new UrborgScavengers(), "{2}{B}");
+        harness.passBothPriorities();
+
+        Permanent scavengers = findPermanent(player1, "Urborg Scavengers");
+        assertThat(scavengers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(scavengers.getId())).isEmpty();
     }
 }
