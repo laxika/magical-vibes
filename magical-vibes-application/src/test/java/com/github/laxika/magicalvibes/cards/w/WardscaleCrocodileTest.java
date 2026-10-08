@@ -31,11 +31,23 @@ class WardscaleCrocodileTest extends BaseCardTest {
         Permanent crocodile = addCreatureReady(player1, new WardscaleCrocodile());
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.forceActivePlayer(player2);
-        harness.clearPriorityPassed();
 
-        assertThatThrownBy(() -> gs.playCard(gd, player2, 0, 0, crocodile.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, crocodile.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("hexproof");
+    }
+
+    @Test
+    @DisplayName("Its controller can target Wardscale Crocodile with Shock")
+    void controllerCanTargetWithShock() {
+        Permanent crocodile = addCreatureReady(player1, new WardscaleCrocodile());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, crocodile.getId());
+
+        assertThat(crocodile.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Wardscale Crocodile");
+        assertThat(gd.stack).isEmpty();
     }
 }
