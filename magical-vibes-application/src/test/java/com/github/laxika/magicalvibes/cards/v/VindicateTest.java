@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.c.CavesOfKoilos;
+import com.github.laxika.magicalvibes.cards.d.DragonArch;
 import com.github.laxika.magicalvibes.cards.g.GerrardCapashen;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianArena;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +14,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Vindicate.class, GerrardCapashen.class, CavesOfKoilos.class})
+@CardUsed({Vindicate.class, GerrardCapashen.class, CavesOfKoilos.class,
+        DragonArch.class, PhyrexianArena.class})
 class VindicateTest extends BaseCardTest {
 
     @Test
@@ -33,6 +36,28 @@ class VindicateTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Caves of Koilos");
         harness.assertInGraveyard(player2, "Caves of Koilos");
+    }
+
+    @Test
+    void destroysTargetArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DragonArch());
+
+        castVindicate(target);
+
+        harness.assertNotOnBattlefield(player2, "Dragon Arch");
+        harness.assertInGraveyard(player2, "Dragon Arch");
+    }
+
+    @Test
+    void destroysTargetEnchantmentWithoutAffectingOtherPermanents() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PhyrexianArena());
+        harness.addToBattlefield(player2, new CavesOfKoilos());
+
+        castVindicate(target);
+
+        harness.assertNotOnBattlefield(player2, "Phyrexian Arena");
+        harness.assertInGraveyard(player2, "Phyrexian Arena");
+        harness.assertOnBattlefield(player2, "Caves of Koilos");
     }
 
     @Test
@@ -63,7 +88,6 @@ class VindicateTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 }
