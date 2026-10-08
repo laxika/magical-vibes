@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -146,6 +147,133 @@ class VarchildsWarRidersTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Ivory Gargoyle");
         harness.passBothPriorities();
 
+        assertThat(riders.getPowerModifier()).isZero();
+        assertThat(riders.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The opponent's upkeep does not add an age counter or create Survivors")
+    void opponentsUpkeepDoesNotTrigger() {
+        Permanent riders = harness.addToBattlefieldAndReturn(player1, new VarchildsWarRiders());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(riders.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(survivorCount(player1)).isZero();
+        assertThat(survivorCount(player2)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(riders);
+    }
+
+    @Test
+    @DisplayName("Declining the second upkeep leaves the previously created Survivor")
+    void decliningSecondUpkeepCreatesNoAdditionalSurvivors() {
+        Permanent riders = harness.addToBattlefieldAndReturn(player1, new VarchildsWarRiders());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(riders);
+        harness.assertInGraveyard(player1, "Varchild's War-Riders");
+        assertThat(survivorCount(player2)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Three blockers grant +2/+2 from a single Rampage trigger")
+    void threeBlockersGivePlusTwo() {
+        Permanent riders = addReadyRiders(player1);
+        riders.setAttacking(true);
+        addReadyBlocker(player2);
+        addReadyBlocker(player2);
+        addReadyBlocker(player2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(2, 0)
+        ));
+        harness.passBothPriorities();
+
+        assertThat(riders.getPowerModifier()).isEqualTo(2);
+        assertThat(riders.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Rampage counts the blockers still present when its trigger resolves")
+    void removingOneOfTwoBlockersBeforeRampageResolvesGivesNoBonus() {
+        Permanent riders = addReadyRiders(player1);
+        riders.setAttacking(true);
+        addReadyGargoyle(player2);
+        addReadyBlocker(player2);
+        harness.addMana(player2, ManaColor.WHITE, 5);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)
+        ));
+
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Ivory Gargoyle");
+        harness.passBothPriorities();
+
+        assertThat(riders.getPowerModifier()).isZero();
+        assertThat(riders.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Trample deals excess damage through a single blocker")
+    void trampleDealsExcessDamage() {
+        addReadyRiders(player1);
+        Permanent blocker = addCreatureReady(player2, new StormCrow());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2,
+                player2.getId(), 1
+        ));
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        harness.assertOnBattlefield(player1, "Varchild's War-Riders");
+    }
+
+    @Test
+    @DisplayName("Rampage's bonus wears off at the end of the turn")
+    void rampageBonusExpiresAtEndOfTurn() {
+        Permanent riders = addReadyRiders(player1);
+        Permanent firstBlocker = addCreatureReady(player2, new StormCrow());
+        Permanent secondBlocker = addCreatureReady(player2, new StormCrow());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)
+        ));
+        harness.passBothPriorities();
+        assertThat(riders.getPowerModifier()).isEqualTo(1);
+        assertThat(riders.getToughnessModifier()).isEqualTo(1);
+
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                firstBlocker.getId(), 2,
+                secondBlocker.getId(), 2
+        ));
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(riders);
         assertThat(riders.getPowerModifier()).isZero();
         assertThat(riders.getToughnessModifier()).isZero();
     }
