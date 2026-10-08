@@ -89,8 +89,108 @@ class XuIfitOsteoharmonistTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Cannot target a creature in an opponent's graveyard")
+    void cannotTargetOpponentsGraveyard() {
+        addReadyXuIfit();
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
+    }
+
+    @Test
+    @DisplayName("The tap cost cannot be paid with a summoning-sick Xu-Ifit")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new XuIfitOsteoharmonist());
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The tap cost cannot be paid with a tapped Xu-Ifit")
+    void cannotActivateWhileTapped() {
+        addReadyXuIfit();
+        findPermanent(player1, "Xu-Ifit, Osteoharmonist").tap();
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate during an opponent's main phase")
+    void cannotActivateOnOpponentsTurn() {
+        addReadyXuIfit();
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The ability resolves after Xu-Ifit leaves and preserves the creature's other types")
+    void resolvesAfterSourceLeavesBattlefield() {
+        addReadyXuIfit();
+        Permanent source = findPermanent(player1, "Xu-Ifit, Osteoharmonist");
+        Card creature = new ZuranSpellcaster();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, creature.getId(), Zone.GRAVEYARD);
+        assertThat(source.isTapped()).isTrue();
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, source);
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player1, "Zuran Spellcaster");
+        assertThat(gqs.effectiveCreatureSubtypes(gd, returned))
+                .contains(CardSubtype.SKELETON, CardSubtype.HUMAN, CardSubtype.WIZARD);
+        assertThat(returned.isTapped()).isFalse();
+        harness.assertNotInGraveyard(player1, "Zuran Spellcaster");
+        returned.setSummoningSick(false);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
+    }
+
+    @Test
+    @DisplayName("Does not return a target that has left the graveyard before resolution")
+    void doesNotReturnMissingTarget() {
+        addReadyXuIfit();
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, creature.getId(), Zone.GRAVEYARD);
+        harness.getPermanentRemovalService().removeCardFromGraveyardById(gd, creature.getId());
+        harness.setHand(player1, List.of(creature));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addReadyXuIfit() {
-        Permanent xuIfit = harness.addToBattlefieldAndReturn(player1, new XuIfitOsteoharmonist());
-        xuIfit.setSummoningSick(false);
+        addCreatureReady(player1, new XuIfitOsteoharmonist());
     }
 }
