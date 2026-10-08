@@ -13,6 +13,69 @@ import static org.assertj.core.api.Assertions.assertThat;
 class WakeOfVulturesTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The sacrifice is paid before the regeneration ability resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent vultures = addCreatureReady(player1, new WakeOfVultures());
+        Permanent fodder = addCreatureReady(player1, new WakeOfVultures());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, fodder.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(vultures);
+        harness.assertInGraveyard(player1, "Wake of Vultures");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(vultures.getRegenerationShield()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(vultures.getRegenerationShield()).isEqualTo(1);
+        assertThat(vultures.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Wake of Vultures can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        harness.addToBattlefield(player1, new WakeOfVultures());
+        Permanent vultures = findPermanent(player1, "Wake of Vultures");
+        vultures.setSummoningSick(true);
+        vultures.tap();
+        Permanent fodder = addCreatureReady(player1, new WakeOfVultures());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.passBothPriorities();
+
+        assertThat(vultures.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(vultures);
+    }
+
+    @Test
+    @DisplayName("An existing regeneration shield cannot prevent sacrificing Wake of Vultures itself")
+    void regenerationDoesNotPreventSelfSacrifice() {
+        Permanent vultures = addCreatureReady(player1, new WakeOfVultures());
+        Permanent fodder = addCreatureReady(player1, new WakeOfVultures());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.passBothPriorities();
+        assertThat(vultures.getRegenerationShield()).isEqualTo(1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, vultures.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Wake of Vultures");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Sacrificing a creature regenerates Wake of Vultures")
     void sacrificingCreatureRegenerates() {
         Permanent vultures = addCreatureReady(player1, new WakeOfVultures());
