@@ -43,11 +43,7 @@ class SlumberingKeepguardTest extends BaseCardTest {
     @DisplayName("A non-enchantment entering under your control does not trigger")
     void nonEnchantmentEntryDoesNotTrigger() {
         harness.addToBattlefield(player1, new SlumberingKeepguard());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -93,9 +89,63 @@ class SlumberingKeepguardTest extends BaseCardTest {
     }
 
     private void castGloriousAnthem(com.github.laxika.magicalvibes.model.Player player) {
-        harness.setHand(player, List.of(new GloriousAnthem()));
-        harness.addMana(player, ManaColor.WHITE, 2);
-        harness.addMana(player, ManaColor.COLORLESS, 1);
-        harness.castEnchantment(player, 0);
+        harness.castFromHand(player, new GloriousAnthem(), "{1}{W}{W}");
+    }
+
+    @Test
+    @DisplayName("Opponent enchantments do not contribute to the activated ability")
+    void noControlledEnchantmentsMeansNoBoost() {
+        Permanent keepguard = harness.addToBattlefieldAndReturn(player1, new SlumberingKeepguard());
+        harness.addToBattlefield(player2, new AuraOfSilence());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, keepguard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, keepguard)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Enchantments are counted at resolution, not activation")
+    void enchantmentSacrificedInResponseDoesNotContribute() {
+        Permanent keepguard = harness.addToBattlefieldAndReturn(player1, new SlumberingKeepguard());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new AuraOfSilence());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.sacrificePermanent(player1, 1, aura.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
+        assertThat(gqs.getEffectivePower(gd, keepguard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, keepguard)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Repeated activations work while tapped and summoning sick and keep their resolved bonus")
+    void repeatedActivationsStackAndDoNotRecountAfterResolution() {
+        Permanent keepguard = harness.addToBattlefieldAndReturn(player1, new SlumberingKeepguard());
+        keepguard.setTapped(true);
+        keepguard.setSummoningSick(true);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new AuraOfSilence());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, keepguard)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, keepguard)).isEqualTo(3);
+
+        harness.sacrificePermanent(player1, 1, aura.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
+        assertThat(gqs.getEffectivePower(gd, keepguard)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, keepguard)).isEqualTo(3);
     }
 }
