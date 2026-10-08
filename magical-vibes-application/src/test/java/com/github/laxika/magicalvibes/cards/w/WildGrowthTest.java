@@ -189,4 +189,42 @@ class WildGrowthTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Wild Growth adds mana immediately without using the stack")
+    void addsManaImmediatelyToColorlessProduction() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new KarplusanForest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new WildGrowth());
+        aura.setAttachedTo(land.getId());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Wild Growth triggers again after enchanted land is untapped")
+    void addsBonusAgainAfterUntapping() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new WildGrowth());
+        aura.setAttachedTo(forest.getId());
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.tapPermanent(player1, 0);
+        harness.castAndResolveInstant(player1, 0, forest.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
 }
