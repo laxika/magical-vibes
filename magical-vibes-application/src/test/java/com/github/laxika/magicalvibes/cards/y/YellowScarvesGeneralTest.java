@@ -33,6 +33,21 @@ class YellowScarvesGeneralTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Yellow Scarves General cannot block even an attacker with horsemanship")
+    void cannotBlockAttackerWithHorsemanship() {
+        Permanent general = addCreatureReady(player2, new YellowScarvesGeneral());
+        addCreatureReady(player1, new ShuCavalry());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(general);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid blocker index");
+    }
+
+    @Test
     @DisplayName("Yellow Scarves General cannot be blocked by a creature without horsemanship")
     void cannotBeBlockedByCreatureWithoutHorsemanship() {
         Permanent blocker = addCreatureReady(player2, new ShuFootSoldiers());
