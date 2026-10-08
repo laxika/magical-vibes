@@ -28,6 +28,10 @@ class WoebearerTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         resolveAllTriggers();
 
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getId().equals(target.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card.getId().equals(target.getId()));
@@ -42,7 +46,11 @@ class WoebearerTest extends BaseCardTest {
         attackWithWoebearerDealingDamage();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -96,6 +104,21 @@ class WoebearerTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
+    @Test
+    @DisplayName("A creature card that leaves the graveyard before resolution is not returned")
+    void targetLeavingGraveyardIsNotReturned() {
+        Card target = new AlphaMyr();
+        harness.setGraveyard(player1, List.of(target));
+        attackWithWoebearerDealingDamage();
+
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(target.getId()));
+    }
     private void attackWithWoebearerDealingDamage() {
         Permanent woebearer = addCreatureReady(player1, new Woebearer());
         woebearer.setAttacking(true);
