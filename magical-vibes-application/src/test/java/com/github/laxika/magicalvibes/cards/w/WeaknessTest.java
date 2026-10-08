@@ -112,8 +112,7 @@ class WeaknessTest extends BaseCardTest {
     @Test
     @DisplayName("Weakness kills a creature with 1 toughness")
     void killsCreatureWithOneToughness() {
-        harness.addToBattlefield(player1, new WillOTheWisp());
-        Permanent vanguard = findPermanent(player1, "Will-o'-the-Wisp");
+        Permanent vanguard = harness.addToBattlefieldAndReturn(player1, new WillOTheWisp());
 
         harness.setHand(player1, List.of(new Weakness()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -151,5 +150,48 @@ class WeaknessTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Multiple Weakness Auras stack and go to the graveyard when their creature dies")
+    void multipleAurasStackAndDieWithCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Weakness(), new Weakness()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Weakness");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Weakness"))
+                .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Weakness affects only its enchanted creature")
+    void affectsOnlyEnchantedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Weakness()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(2);
     }
 }
