@@ -25,13 +25,11 @@ class SpectralDenialTest extends BaseCardTest {
         harness.addToBattlefield(player2, new AirElemental());
 
         GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.setHand(player2, List.of(new SpectralDenial()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, bears, "{1}{G}");
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 2, bears.getId());
 
@@ -47,13 +45,11 @@ class SpectralDenialTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.setHand(player2, List.of(new SpectralDenial()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, bears, "{1}{G}");
         harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, 2, bears.getId()))
@@ -65,13 +61,11 @@ class SpectralDenialTest extends BaseCardTest {
     @DisplayName("Counters a spell when its controller cannot pay X")
     void countersWhenControllerCannotPayX() {
         GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.setHand(player2, List.of(new SpectralDenial()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, bears, "{1}{G}");
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 1, bears.getId());
         harness.passBothPriorities();
@@ -132,12 +126,10 @@ class SpectralDenialTest extends BaseCardTest {
         creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.setHand(player2, List.of(new SpectralDenial()));
         harness.addMana(player2, ManaColor.BLUE, 1);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, bears, "{1}{G}");
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 1, bears.getId());
         harness.passBothPriorities();
@@ -153,12 +145,10 @@ class SpectralDenialTest extends BaseCardTest {
         creature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
 
         GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.setHand(player2, List.of(new SpectralDenial()));
         harness.addMana(player2, ManaColor.BLUE, 1);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, bears, "{1}{G}");
         harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, 1, bears.getId()))
@@ -191,12 +181,10 @@ class SpectralDenialTest extends BaseCardTest {
         harness.addToBattlefield(player2, new AirElemental());
 
         GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.setHand(player2, List.of(new SpectralDenial()));
         harness.addMana(player2, ManaColor.BLUE, 1);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, bears, "{1}{G}");
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 0, bears.getId());
         harness.passBothPriorities();
@@ -215,15 +203,49 @@ class SpectralDenialTest extends BaseCardTest {
         harness.addToBattlefield(player2, new AirElemental());
 
         GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.setHand(player2, List.of(new SpectralDenial()));
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, bears, "{1}{G}");
         harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, 1, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The controller may decline a zero-mana payment and let the spell be countered")
+    void zeroPaymentCanBeDeclined() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
+        harness.setHand(player2, List.of(new SpectralDenial()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Tapped creatures with power four still reduce the casting cost")
+    void tappedCreatureStillGrantsDiscount() {
+        var creature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        creature.setTapped(true);
+
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
+        harness.setHand(player2, List.of(new SpectralDenial()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 1, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(harness.getGameData().playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 }
