@@ -73,4 +73,37 @@ class SoulOfMagmaTest extends BaseCardTest {
 
         assertThat(target.getMarkedDamage()).isZero();
     }
+
+    @Test
+    @DisplayName("The mandatory trigger can target Soul of Magma itself")
+    void canTargetItself() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new SoulOfMagma());
+        harness.setHand(player1, List.of(new DampenThought()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Soul of Magma");
+    }
+
+    @Test
+    @DisplayName("The trigger still deals damage after Soul of Magma leaves the battlefield")
+    void triggerResolvesWithoutSource() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new SoulOfMagma());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IsamaruHoundOfKonda());
+        harness.setHand(player1, List.of(new DampenThought()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Soul of Magma");
+    }
 }
