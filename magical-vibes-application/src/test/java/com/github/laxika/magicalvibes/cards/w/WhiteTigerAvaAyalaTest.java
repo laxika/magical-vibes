@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(WhiteTigerAvaAyala.class)
+@CardUsed({WhiteTigerAvaAyala.class})
 class WhiteTigerAvaAyalaTest extends BaseCardTest {
 
     @Test
@@ -38,5 +41,52 @@ class WhiteTigerAvaAyalaTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once");
+    }
+    @Test
+    void powerUpRequiresGreenManaAfterEntryTurn() {
+        addCreatureReady(player1, new WhiteTigerAvaAyala());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanents(player1, "The Tiger God")).isEmpty();
+    }
+
+    @Test
+    void powerUpResolvesForFullCostAfterEntryTurn() {
+        Permanent whiteTiger = addCreatureReady(player1, new WhiteTigerAvaAyala());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(whiteTiger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanents(player1, "The Tiger God")).hasSize(1);
+        assertThat(findPermanents(player2, "The Tiger God")).isEmpty();
+        Permanent tigerGod = findPermanent(player1, "The Tiger God");
+        assertThat(tigerGod.getCard().isToken()).isTrue();
+        assertThat(tigerGod.getCard().getPower()).isEqualTo(4);
+        assertThat(tigerGod.getCard().getToughness()).isEqualTo(4);
+        assertThat(tigerGod.getCard().getColor()).isEqualTo(CardColor.GREEN);
+        assertThat(tigerGod.getCard().getSubtypes()).containsExactlyInAnyOrder(
+                CardSubtype.CAT,
+                CardSubtype.GOD);
+        assertThat(tigerGod.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);
+        assertThat(gqs.getMaxBlockersAllowed(gd, tigerGod)).isEqualTo(1);
+    }
+
+    @Test
+    void removingWhiteTigerDoesNotStopTokenCreation() {
+        Permanent whiteTiger = harness.enterBattlefieldAndReturn(player1, new WhiteTigerAvaAyala());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(whiteTiger);
+        gd.playerGraveyards.get(player1.getId()).add(whiteTiger.getCard());
+        harness.passBothPriorities();
+
+        assertThat(whiteTiger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanents(player1, "The Tiger God")).hasSize(1);
     }
 }
