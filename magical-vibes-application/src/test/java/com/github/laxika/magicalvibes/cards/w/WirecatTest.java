@@ -111,6 +111,63 @@ class WirecatTest extends BaseCardTest {
         assertThat(wirecat.isAttacking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Enchantments in hands and graveyards do not prevent Wirecat attacking")
+    void enchantmentsOutsideBattlefieldDoNotRestrictAttacking() {
+        Permanent wirecat = addReadyWirecat(player1);
+        addReadyCreature(player2);
+        harness.setHand(player1, List.of(new ArcaneLaboratory()));
+        harness.setGraveyard(player2, List.of(new ArcaneLaboratory()));
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(wirecat.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Wirecat still cannot attack when one of two enchantments leaves")
+    void restrictionPersistsUntilLastEnchantmentLeaves() {
+        addReadyWirecat(player1);
+        Permanent enchantment = addEnchantment(player1);
+        addEnchantment(player2);
+        gd.playerBattlefields.get(player1.getId()).remove(enchantment);
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Wirecat cannot block while its own controller controls an enchantment")
+    void cannotBlockWhileControllerControlsEnchantment() {
+        Permanent attacker = addReadyCreature(player1);
+        attacker.setAttacking(true);
+        addReadyWirecat(player2);
+        addEnchantment(player2);
+        prepareDeclareBlockers(player1);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Wirecat can block with an enchantment present after losing its abilities")
+    void canBlockAfterLosingAbilities() {
+        Permanent attacker = addReadyCreature(player1);
+        Permanent wirecat = addReadyWirecat(player2);
+        addEnchantment(player2);
+        harness.setHand(player2, List.of(new Humble()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, wirecat.getId());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers(player1);
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+    }
+
     private Permanent addReadyWirecat(Player player) {
         return addCreatureReady(player, new Wirecat());
     }
