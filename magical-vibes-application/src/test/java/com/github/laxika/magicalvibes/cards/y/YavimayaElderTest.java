@@ -113,8 +113,7 @@ class YavimayaElderTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Slay()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
-        harness.castInstant(player2, 0, elder.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, elder.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Yavimaya Elder");
@@ -126,6 +125,36 @@ class YavimayaElderTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(forest);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The search may find zero cards even when basic lands are available")
+    void deathTriggerMayChooseZeroAvailableBasicLands() {
+        harness.addToBattlefield(player1, new YavimayaElder());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Forest forest = new Forest();
+        Plains plains = new Plains();
+        harness.setLibrary(player1, List.of(forest, plains));
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Yavimaya Elder");
+        harness.assertInGraveyard(player1, "Yavimaya Elder");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(forest, plains);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
     @Test
