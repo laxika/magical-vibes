@@ -18,6 +18,40 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({Forest.class, GloriousAnthem.class, GrizzlyBears.class, VerduranEnchantress.class})
 class VerduranEnchantressTest extends BaseCardTest {
 
+    @Test
+    @DisplayName("Putting an enchantment onto the battlefield without casting it does not trigger")
+    void enchantmentEnteringWithoutBeingCastDoesNotTrigger() {
+        harness.addToBattlefield(player1, new VerduranEnchantress());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.enterBattlefieldAndReturn(player1, new GloriousAnthem());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The optional draw resolves before the enchantment spell")
+    void drawsBeforeEnchantmentResolves() {
+        harness.addToBattlefield(player1, new VerduranEnchantress());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Glorious Anthem");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Glorious Anthem");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
     // ===== Trigger fires on enchantment cast =====
 
     @Test
