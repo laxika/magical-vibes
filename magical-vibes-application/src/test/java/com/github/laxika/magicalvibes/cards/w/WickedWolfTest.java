@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GildedGoose;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.Gingerbrute;
+import com.github.laxika.magicalvibes.cards.t.TuinvaleTreefolk;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,8 +18,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WickedWolf.class, GildedGoose.class, GrizzlyBears.class})
+@CardUsed({WickedWolf.class, GildedGoose.class, GrizzlyBears.class, Gingerbrute.class, TuinvaleTreefolk.class})
 class WickedWolfTest extends BaseCardTest {
 
     @Test
@@ -63,6 +66,98 @@ class WickedWolfTest extends BaseCardTest {
         assertThat(wolf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
+    @Test
+    void canDeclineFightWithLegalTargetAvailable() {
+        Permanent opponentCreature = addCreatureReady(player2, new TuinvaleTreefolk());
+        Permanent wolf = castWolf();
+
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(wolf);
+        assertThat(opponentCreature.getMarkedDamage()).isZero();
+        assertThat(wolf.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void neitherCreatureDealsFightDamageIfWolfLeavesBeforeResolution() {
+        Permanent opponentCreature = addCreatureReady(player2, new TuinvaleTreefolk());
+        Permanent wolf = castWolf();
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(wolf);
+        gd.playerGraveyards.get(player1.getId()).add(wolf.getCard());
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
+        assertThat(opponentCreature.getMarkedDamage()).isZero();
+        assertThat(wolf.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent wolf = castGooseAndWolf();
+        wolf.tap();
+
+        harness.activateAbility(player1, battlefieldIndex(player1, wolf), null, null);
+        harness.passBothPriorities();
+
+        assertThat(wolf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(wolf.isTapped()).isTrue();
+        assertThat(countPermanents(player1, "Food")).isZero();
+    }
+
+    @Test
+    void canSacrificeNontokenFoodAndCostIsPaidBeforeResolution() {
+        Permanent wolf = addCreatureReady(player1, new WickedWolf());
+        Permanent food = addCreatureReady(player1, new Gingerbrute());
+
+        harness.activateAbility(player1, battlefieldIndex(player1, wolf), null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(food);
+        assertThat(wolf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(wolf.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(wolf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(wolf.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotActivateWithoutFood() {
+        Permanent wolf = addCreatureReady(player1, new WickedWolf());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(player1, wolf), null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(wolf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(wolf.isTapped()).isFalse();
+    }
+
+    @Test
+    void foodAbilityCanResolveBeforeFightAndTappedWolfStillFights() {
+        Permanent opponentCreature = addCreatureReady(player2, new TuinvaleTreefolk());
+        harness.addToBattlefield(player1, new Gingerbrute());
+        Permanent wolf = castWolf();
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+
+        harness.activateAbility(player1, battlefieldIndex(player1, wolf), null, null);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(wolf);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
+        assertThat(wolf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(wolf.isTapped()).isTrue();
+        assertThat(opponentCreature.getMarkedDamage()).isEqualTo(4);
+        assertThat(wolf.getMarkedDamage()).isEqualTo(6);
+    }
+
     private Permanent castWolf() {
         harness.setHand(player1, List.of(new WickedWolf()));
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -76,8 +171,7 @@ class WickedWolfTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GildedGoose()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         return castWolf();
     }
