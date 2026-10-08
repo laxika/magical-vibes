@@ -24,7 +24,7 @@ class ZabazTheGlimmerwaspTest extends BaseCardTest {
 
     @Test
     void modularDeathTriggerGetsAnAdditionalCounter() {
-        Permanent replacementSource = addReadyZabaz();
+        addReadyZabaz();
         Permanent dyingModularCreature = harness.addToBattlefieldAndReturn(player1, new ArcboundWorker());
         dyingModularCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         Permanent recipient = addCreatureReady(player1, new CopperMyr());
@@ -100,14 +100,71 @@ class ZabazTheGlimmerwaspTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, zabaz, Keyword.FLYING)).isFalse();
     }
 
+    @Test
+    void ownModularTriggerDoesNotGetItsReplacementBonus() {
+        Permanent zabaz = addReadyZabaz();
+        zabaz.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        Permanent recipient = addCreatureReady(player1, new CopperMyr());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, zabaz.getId());
+        harness.passBothPriorities();
+        chooseDeathTriggerTarget(recipient, true);
+
+        harness.assertInGraveyard(player1, "Zabaz, the Glimmerwasp");
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void replacementDoesNotIncreaseCountersOnAnOpponentsCreature() {
+        addReadyZabaz();
+        Permanent worker = harness.addToBattlefieldAndReturn(player1, new ArcboundWorker());
+        worker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent recipient = addCreatureReady(player2, new CopperMyr());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, worker.getId());
+        harness.passBothPriorities();
+        chooseDeathTriggerTarget(recipient, true);
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void modularTransferCanBeDeclinedWithoutPlacingAnyCounters() {
+        addReadyZabaz();
+        Permanent worker = harness.addToBattlefieldAndReturn(player1, new ArcboundWorker());
+        worker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent recipient = addCreatureReady(player1, new CopperMyr());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, worker.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void redAbilityCannotTargetANonartifactCreature() {
+        addReadyZabaz();
+        Permanent servant = harness.addToBattlefieldAndReturn(player1, new ServantOfTheScale());
+        servant.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, servant.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void destroyWithShock(Permanent target) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
     }
 
     private Permanent addReadyZabaz() {
