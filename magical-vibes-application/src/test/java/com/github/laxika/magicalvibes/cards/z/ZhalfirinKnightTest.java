@@ -51,8 +51,7 @@ class ZhalfirinKnightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, knight, Keyword.FIRST_STRIKE)).isFalse();
     }
@@ -109,5 +108,65 @@ class ZhalfirinKnightTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(blocker.getEffectivePower()).isEqualTo(2);
         assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Flanking affects each blocker independently and wears off at end of turn")
+    void flankingAffectsEachBlockerUntilEndOfTurn() {
+        Permanent knight = addCreatureReady(player1, new ZhalfirinKnight());
+        knight.setAttacking(true);
+        Permanent firstBlocker = addCreatureReady(player2, new FemerefScouts());
+        Permanent secondBlocker = addCreatureReady(player2, new FemerefScouts());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(firstBlocker.getEffectivePower()).isZero();
+        assertThat(firstBlocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(secondBlocker.getEffectivePower()).isZero();
+        assertThat(secondBlocker.getEffectiveToughness()).isEqualTo(3);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.UPKEEP);
+
+        assertThat(firstBlocker.getEffectivePower()).isEqualTo(1);
+        assertThat(firstBlocker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(secondBlocker.getEffectivePower()).isEqualTo(1);
+        assertThat(secondBlocker.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Flanking does not trigger when the knight blocks")
+    void flankingDoesNotTriggerWhenBlocking() {
+        Permanent attacker = addCreatureReady(player1, new FemerefScouts());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new ZhalfirinKnight());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.getEffectivePower()).isEqualTo(1);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Activated first strike kills an opposing knight before it deals combat damage")
+    void activatedFirstStrikeWinsCombat() {
+        Permanent knight = addCreatureReady(player1, new ZhalfirinKnight());
+        knight.setAttacking(true);
+        addCreatureReady(player2, new ZhalfirinKnight());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertOnBattlefield(player1, "Zhalfirin Knight");
+        harness.assertInGraveyard(player2, "Zhalfirin Knight");
+        assertThat(knight.getMarkedDamage()).isZero();
     }
 }
