@@ -22,10 +22,7 @@ class ValeriaRichardsPrecociousTest extends BaseCardTest {
     @DisplayName("Noncreature spells you cast cost {1} less")
     void reducesNoncreatureSpellCosts() {
         harness.addToBattlefield(player1, new ValeriaRichardsPrecocious());
-        harness.setHand(player1, List.of(new MindStone()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new MindStone(), "{1}");
 
         assertThat(gd.stack).isNotEmpty();
     }
@@ -58,5 +55,63 @@ class ValeriaRichardsPrecociousTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         resolveAllTriggers();
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(secondDraw);
+    }
+
+    @Test
+    @DisplayName("Creature spells do not consume the first noncreature spell trigger")
+    void creatureSpellBeforeNoncreatureStillAllowsDraw() {
+        Card draw = new SerraAngel();
+        harness.addToBattlefield(player1, new ValeriaRichardsPrecocious());
+        harness.setLibrary(player1, List.of(draw));
+        harness.setHand(player1, List.of(new GrizzlyBears(), new MindStone()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(draw);
+
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(draw);
+    }
+
+    @Test
+    @DisplayName("A noncreature spell cast before Valeria enters still counts as the first")
+    void earlierNoncreatureSpellPreventsDraw() {
+        Card draw = new SerraAngel();
+        harness.setLibrary(player1, List.of(draw));
+        harness.setHand(player1, List.of(new MindStone(), new MindStone()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+        harness.addToBattlefield(player1, new ValeriaRichardsPrecocious());
+
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
+    }
+
+    @Test
+    @DisplayName("Opponent spells receive no discount and do not trigger a draw")
+    void opponentSpellsAreUnaffected() {
+        Card draw = new SerraAngel();
+        harness.addToBattlefield(player1, new ValeriaRichardsPrecocious());
+        harness.setLibrary(player1, List.of(draw));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new MindStone()));
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castArtifact(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player2, 0);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
     }
 }
