@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
 import com.github.laxika.magicalvibes.cards.b.BasalThrull;
 import com.github.laxika.magicalvibes.cards.r.RiverMerfolk;
+import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,8 +19,143 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SoulExchange.class, BasalThrull.class, RiverMerfolk.class})
+@CardUsed({SoulExchange.class, BasalThrull.class, RiverMerfolk.class, WoodlandChangeling.class, AmoeboidChangeling.class})
 class SoulExchangeTest extends BaseCardTest {
+    @Test
+    @DisplayName("A creature that gained all creature types counts as a Thrull when exiled")
+    void gainedThrullTypeQualifiesForCounter() {
+        addCreatureReady(player1, new AmoeboidChangeling());
+        Card exiledCreature = new RiverMerfolk();
+        Card returnedCreature = new BasalThrull();
+        Permanent exiledPermanent = harness.addToBattlefieldAndReturn(player1, exiledCreature);
+        harness.setGraveyard(player1, List.of(returnedCreature));
+        harness.setHand(player1, List.of(new SoulExchange()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 0, null, exiledPermanent.getId());
+        harness.passBothPriorities();
+        harness.castSorceryWithSacrifice(player1, 0, returnedCreature.getId(), exiledPermanent.getId());
+        harness.passBothPriorities();
+
+        Permanent permanent = findPermanent(player1, returnedCreature.getName());
+        assertThat(permanent.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isEqualTo(1);
+        assertThat(gd.findExiledCard(exiledCreature.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("A Thrull that lost its creature types does not qualify for the counter")
+    void lostThrullTypeDoesNotQualifyForCounter() {
+        addCreatureReady(player1, new AmoeboidChangeling());
+        Card exiledCreature = new BasalThrull();
+        Card returnedCreature = new RiverMerfolk();
+        Permanent exiledPermanent = harness.addToBattlefieldAndReturn(player1, exiledCreature);
+        harness.setGraveyard(player1, List.of(returnedCreature));
+        harness.setHand(player1, List.of(new SoulExchange()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 1, null, exiledPermanent.getId());
+        harness.passBothPriorities();
+        harness.castSorceryWithSacrifice(player1, 0, returnedCreature.getId(), exiledPermanent.getId());
+        harness.passBothPriorities();
+
+        Permanent permanent = findPermanent(player1, returnedCreature.getName());
+        assertThat(permanent.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
+        assertThat(gd.findExiledCard(exiledCreature.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Exiling a changeling qualifies as exiling a Thrull")
+    void exiledChangelingAddsThrullCounter() {
+        Card exiledCreature = new WoodlandChangeling();
+        Card returnedCreature = new RiverMerfolk();
+        Permanent exiledPermanent = harness.addToBattlefieldAndReturn(player1, exiledCreature);
+        harness.setGraveyard(player1, List.of(returnedCreature));
+        harness.setHand(player1, List.of(new SoulExchange()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castSorceryWithSacrifice(player1, 0, returnedCreature.getId(), exiledPermanent.getId());
+        harness.passBothPriorities();
+
+        Permanent permanent = findPermanent(player1, returnedCreature.getName());
+        assertThat(permanent.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isEqualTo(1);
+        assertThat(permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.findExiledCard(exiledCreature.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("The creature is exiled when the spell is cast, before resolution")
+    void exilesCreatureAsCastingCost() {
+        Card exiledCreature = new BasalThrull();
+        Card returnedCreature = new RiverMerfolk();
+        Permanent exiledPermanent = harness.addToBattlefieldAndReturn(player1, exiledCreature);
+        harness.setGraveyard(player1, List.of(returnedCreature));
+        harness.setHand(player1, List.of(new SoulExchange()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castSorceryWithSacrifice(player1, 0, returnedCreature.getId(), exiledPermanent.getId());
+
+        harness.assertNotOnBattlefield(player1, exiledCreature.getName());
+        harness.assertNotInGraveyard(player1, exiledCreature.getName());
+        assertThat(gd.findExiledCard(exiledCreature.getId())).isNotNull();
+        harness.assertInGraveyard(player1, returnedCreature.getName());
+        harness.assertNotOnBattlefield(player1, returnedCreature.getName());
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, returnedCreature.getName());
+        harness.assertNotInGraveyard(player1, returnedCreature.getName());
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot pay the exile cost")
+    void cannotExileOpponentsCreatureForCost() {
+        Card exiledCreature = new BasalThrull();
+        Card returnedCreature = new RiverMerfolk();
+        Permanent exiledPermanent = harness.addToBattlefieldAndReturn(player2, exiledCreature);
+        harness.setGraveyard(player1, List.of(returnedCreature));
+        harness.setHand(player1, List.of(new SoulExchange()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(
+                player1, 0, returnedCreature.getId(), exiledPermanent.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, exiledCreature.getName());
+        assertThat(gd.findExiledCard(exiledCreature.getId())).isNull();
+    }
+
+    @Test
+    @DisplayName("An invalidated graveyard target does not refund the exiled creature")
+    void missingTargetDoesNotRefundExileCost() {
+        Card exiledCreature = new BasalThrull();
+        Card returnedCreature = new RiverMerfolk();
+        Permanent exiledPermanent = harness.addToBattlefieldAndReturn(player1, exiledCreature);
+        harness.setGraveyard(player1, List.of(returnedCreature));
+        harness.setHand(player1, List.of(new SoulExchange()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castSorceryWithSacrifice(player1, 0, returnedCreature.getId(), exiledPermanent.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, returnedCreature.getName());
+        harness.assertNotOnBattlefield(player1, exiledCreature.getName());
+        assertThat(gd.findExiledCard(exiledCreature.getId())).isNotNull();
+        harness.assertInGraveyard(player1, "Soul Exchange");
+        assertThat(gd.stack).isEmpty();
+    }
+
 
     @Test
     @DisplayName("Exiling a Thrull returns a creature with a +2/+2 counter")
