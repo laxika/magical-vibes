@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AltarOfDementia.class, EliteVanguard.class, GrizzlyBears.class, SerraAngel.class})
+@CardUsed({AltarOfDementia.class, Disenchant.class, EliteVanguard.class, GrizzlyBears.class, SerraAngel.class})
 class AltarOfDementiaTest extends BaseCardTest {
 
     @Test
@@ -196,6 +199,73 @@ class AltarOfDementiaTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Queued activations retain their own sacrificed power and target")
+    void queuedActivationsKeepSeparatePowerAndTargets() {
+        harness.addToBattlefield(player1, new AltarOfDementia());
+        Permanent boostedBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        boostedBears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        trimDeck(player1, 10);
+        trimDeck(player2, 10);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, boostedBears.getId());
+        harness.activateAbility(player1, 0, null, player1.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(8);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(7);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Targeting an empty library is legal and does not cause a loss")
+    void canMillAnEmptyLibrary() {
+        harness.addToBattlefield(player1, new AltarOfDementia());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setLibrary(player2, List.of());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The mill ability resolves after Altar of Dementia is destroyed")
+    void resolvesAfterAltarIsDestroyed() {
+        harness.addToBattlefield(player1, new AltarOfDementia());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        bears.setTapped(true);
+        trimDeck(player2, 10);
+        UUID altarId = harness.getPermanentId(player1, "Altar of Dementia");
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.castAndResolveInstant(player2, 0, altarId);
+
+        harness.assertNotOnBattlefield(player1, "Altar of Dementia");
+        harness.assertInGraveyard(player1, "Altar of Dementia");
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(7);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .filteredOn(card -> !(card instanceof Disenchant)).hasSize(3);
         assertThat(gd.stack).isEmpty();
     }
 
