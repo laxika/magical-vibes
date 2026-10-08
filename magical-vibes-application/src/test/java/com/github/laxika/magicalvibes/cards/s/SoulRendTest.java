@@ -20,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SoulRend.class, MtendaGriffin.class, FeralShadow.class})
+@CardUsed({SoulRend.class, MtendaGriffin.class, FeralShadow.class, PrismaticLace.class, Forest.class})
 class SoulRendTest extends BaseCardTest {
 
     @Test
@@ -30,8 +30,7 @@ class SoulRendTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SoulRend()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0, griffin.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, griffin.getId());
 
         assertThat(findPermanents(player2, "Mtenda Griffin")).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -46,8 +45,7 @@ class SoulRendTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SoulRend()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0, griffin.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, griffin.getId());
 
         assertThat(findPermanents(player2, "Mtenda Griffin")).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -61,8 +59,7 @@ class SoulRendTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SoulRend()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0, shadow.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, shadow.getId());
 
         assertThat(findPermanents(player2, "Feral Shadow")).hasSize(1);
     }
@@ -74,8 +71,7 @@ class SoulRendTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SoulRend()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0, shadow.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, shadow.getId());
 
         List<DrawCardsAtNextUpkeep> scheduled = gd.getDelayedActions(DrawCardsAtNextUpkeep.class);
         assertThat(scheduled).hasSize(1);
@@ -127,5 +123,69 @@ class SoulRendTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+    @Test
+    @DisplayName("Destroys a creature that becomes white before resolution")
+    void destroysCreatureThatBecomesWhite() {
+        Permanent shadow = harness.addToBattlefieldAndReturn(player2, new FeralShadow());
+        harness.setHand(player1, List.of(new SoulRend()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castInstant(player1, 0, shadow.getId());
+        harness.passPriority(player1);
+
+        harness.setHand(player2, List.of(new PrismaticLace()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, shadow.getId());
+        harness.handleListChoice(player2, "WHITE");
+        harness.handleListChoice(player2, "BLUE");
+        harness.handleListChoice(player2, "DONE");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Feral Shadow");
+        assertThat(findPermanents(player2, "Feral Shadow")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not schedule a draw when its only target leaves the battlefield")
+    void illegalTargetPreventsDelayedDraw() {
+        Permanent griffin = harness.addToBattlefieldAndReturn(player2, new MtendaGriffin());
+        harness.setHand(player1, List.of(new SoulRend(), new SoulRend()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castInstant(player1, 0, griffin.getId());
+        harness.castAndResolveInstant(player1, 0, griffin.getId());
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+        harness.assertInGraveyard(player2, "Mtenda Griffin");
+    }
+    @Test
+    @DisplayName("The delayed draw waits until the next turn and triggers only once")
+    void delayedDrawWaitsUntilNextTurnAndOccursOnce() {
+        Permanent shadow = harness.addToBattlefieldAndReturn(player2, new FeralShadow());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new SoulRend()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, shadow.getId());
+        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
+
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+
+        gd.turnNumber++;
+        gd.activePlayerId = player2.getId();
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        gd.turnNumber++;
+        gd.activePlayerId = player1.getId();
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }
