@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Vesperlark.class, LlanowarElves.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({Vesperlark.class, LlanowarElves.class, GrizzlyBears.class, HillGiant.class, Ornithopter.class})
 class VesperlarkTest extends BaseCardTest {
 
     @Test
@@ -79,6 +80,97 @@ class VesperlarkTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Llanowar Elves");
     }
 
+    @Test
+    @DisplayName("Casting normally does not sacrifice Vesperlark or return a creature")
+    void normalCastDoesNotSacrificeOrReturnCreature() {
+        harness.setGraveyard(player1, List.of(new LlanowarElves()));
+        harness.castFromHand(player1, new Vesperlark(), "{2}{W}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Vesperlark");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Returning Vesperlark to hand also triggers its creature return")
+    void returnsCreatureWhenBounced() {
+        LlanowarElves target = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(target));
+        Permanent vesperlark = harness.addToBattlefieldAndReturn(player1, new Vesperlark());
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToHand(gd, vesperlark));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Vesperlark");
+        harness.assertNotInGraveyard(player1, "Vesperlark");
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Only the controller's graveyard supplies targets and exactly one is required")
+    void requiresOneTargetFromControllersGraveyard() {
+        LlanowarElves ownTarget = new LlanowarElves();
+        LlanowarElves opponentTarget = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(ownTarget));
+        harness.setGraveyard(player2, List.of(opponentTarget));
+        Permanent vesperlark = harness.addToBattlefieldAndReturn(player1, new Vesperlark());
+
+        removeVesperlark(vesperlark);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(ownTarget.getId());
+        assertThat(choice.minCount()).isEqualTo(1);
+        assertThat(choice.maxCount()).isEqualTo(1);
+        harness.handleMultipleCardsChosen(player1, List.of(ownTarget.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("A target removed before resolution is not returned and is not replaced")
+    void missingTargetDoesNotReturnAnotherCreature() {
+        LlanowarElves target = new LlanowarElves();
+        LlanowarElves other = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(target, other));
+        Permanent vesperlark = harness.addToBattlefieldAndReturn(player1, new Vesperlark());
+        removeVesperlark(vesperlark);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removeCardFromGraveyardByIdForExile(gd, target.getId()));
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(other).doesNotContain(target);
+        assertThat(gd.playerExiledCards.get(player1.getId())).contains(target);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+    @Test
+    @DisplayName("A creature card with zero power can be returned")
+    void returnsZeroPowerCreature() {
+        Ornithopter target = new Ornithopter();
+        harness.setGraveyard(player1, List.of(target));
+        Permanent vesperlark = harness.addToBattlefieldAndReturn(player1, new Vesperlark());
+
+        removeVesperlark(vesperlark);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        harness.assertNotInGraveyard(player1, "Ornithopter");
+    }
     private void removeVesperlark(Permanent vesperlark) {
         harness.inMutationScope(
                 () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, vesperlark));
