@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.b.BogWraith;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.r.RequiemAngel;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,8 +16,10 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WickedPact.class, BogWraith.class, GrizzlyBears.class, HillGiant.class, Swamp.class})
+@CardUsed({WickedPact.class, BogWraith.class, GrizzlyBears.class, HillGiant.class, Swamp.class,
+        RequiemAngel.class})
 class WickedPactTest extends BaseCardTest {
 
     @Test
@@ -130,5 +133,77 @@ class WickedPactTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(bearsId, bearsId)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Requires two targets rather than allowing just one")
+    void cannotCastWithOnlyOneTarget() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WickedPact()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(bearsId)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Destroys the first target and loses life when only the second target becomes illegal")
+    void resolvesWhenSecondTargetIsRemoved() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setHand(player1, List.of(new WickedPact()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.setLife(player1, 20);
+
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID giantId = harness.getPermanentId(player2, "Hill Giant");
+        harness.castSorcery(player1, 0, List.of(bearsId, giantId));
+        gd.playerBattlefields.get(player2.getId()).removeIf(p -> p.getId().equals(giantId));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player1, 15);
+    }
+
+    @Test
+    @DisplayName("Can destroy creatures controlled by both players; only the caster loses life")
+    void canTargetOwnCreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setHand(player1, List.of(new WickedPact()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(
+                harness.getPermanentId(player1, "Grizzly Bears"),
+                harness.getPermanentId(player2, "Hill Giant")));
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Hill Giant");
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A creature destroyed with another creature sees its simultaneous death")
+    void destroyedAngelSeesOtherTargetDie() {
+        harness.addToBattlefield(player2, new RequiemAngel());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WickedPact()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(
+                harness.getPermanentId(player2, "Requiem Angel"),
+                harness.getPermanentId(player2, "Grizzly Bears")));
+
+        harness.assertInGraveyard(player2, "Requiem Angel");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(p -> p.getCard().isToken() && p.getCard().getName().equals("Spirit"))
+                .hasSize(1);
     }
 }
