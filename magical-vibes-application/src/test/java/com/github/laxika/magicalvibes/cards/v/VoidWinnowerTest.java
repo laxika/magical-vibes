@@ -1,9 +1,13 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.EndlessOne;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -15,11 +19,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VoidWinnower.class, GrizzlyBears.class, LlanowarElves.class, Hurricane.class})
+@CardUsed({VoidWinnower.class, GrizzlyBears.class, LlanowarElves.class, Hurricane.class,
+        EndlessOne.class, TurnToFrog.class})
 class VoidWinnowerTest extends BaseCardTest {
 
     @Test
@@ -118,10 +124,66 @@ class VoidWinnowerTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    protected void prepareDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+    @Test
+    void losingAbilitiesRemovesCastingRestriction() {
+        Permanent winnower = harness.addToBattlefieldAndReturn(player1, new VoidWinnower());
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        prepareMainPhase(player1);
+        harness.castAndResolveInstant(player1, 0, winnower.getId());
+
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        prepareMainPhase(player2);
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void zeroManaValueCreatureWithCountersCannotBlock() {
+        harness.addToBattlefield(player1, new VoidWinnower());
+        Permanent attacker = addCreatureReady(player1, new LlanowarElves());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new EndlessOne());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("even mana values");
+    }
+
+    @Test
+    void faceDownOddManaValueCreatureCannotBlock() {
+        harness.addToBattlefield(player1, new VoidWinnower());
+        Permanent attacker = addCreatureReady(player1, new LlanowarElves());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new LlanowarElves());
+        blocker.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("even mana values");
+    }
+
+    @Test
+    void controllerEvenManaValueCreatureCanBlock() {
+        harness.addToBattlefield(player1, new VoidWinnower());
+        Permanent attacker = addCreatureReady(player2, new LlanowarElves());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player1, new GrizzlyBears());
+        prepareDeclareBlockers(player2);
+
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player1.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player2.getId()).indexOf(attacker))));
+
+        assertThat(gd.gameLog).anyMatch(log -> log.plainText().contains("declares 1 blocker"));
     }
 }
