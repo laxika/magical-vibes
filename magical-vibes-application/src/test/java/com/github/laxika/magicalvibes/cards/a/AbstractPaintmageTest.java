@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FlowState;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +15,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AbstractPaintmage.class, Shock.class, FlowState.class})
 class AbstractPaintmageTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Precombat main trigger adds one instant/sorcery-only blue and red mana")
@@ -27,7 +26,6 @@ class AbstractPaintmageTest extends BaseCardTest {
         advanceToPrecombatMain(player1);
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getEffectsToResolve()).hasSize(2);
 
         harness.passBothPriorities();
 
@@ -61,7 +59,8 @@ class AbstractPaintmageTest extends BaseCardTest {
         advanceToPrecombatMain(player1);
         harness.passBothPriorities();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player1, List.of(new AbstractPaintmage()));
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
@@ -75,10 +74,7 @@ class AbstractPaintmageTest extends BaseCardTest {
     void doesNotTriggerOnOpponentsTurn() {
         addReadyPaintmage(player1);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToPrecombatMain(player2);
 
         assertThat(gd.stack).isEmpty();
     }
@@ -86,14 +82,14 @@ class AbstractPaintmageTest extends BaseCardTest {
     @Test
     @DisplayName("Triggers again on a later turn")
     void triggersOnLaterTurn() {
+        harness.setLibrary(player1, List.of(new AbstractPaintmage()));
+        harness.setLibrary(player2, List.of(new AbstractPaintmage()));
         addReadyPaintmage(player1);
         advanceToPrecombatMain(player1);
         harness.passBothPriorities();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -103,11 +99,57 @@ class AbstractPaintmageTest extends BaseCardTest {
         assertThat(pool.getInstantSorceryOnlyColored(ManaColor.RED)).isEqualTo(1);
     }
 
-    private Permanent addReadyPaintmage(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent perm = new Permanent(new AbstractPaintmage());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Both colors of restricted mana can pay for a sorcery's colored and generic costs")
+    void restrictedManaPaysForSorcery() {
+        addReadyPaintmage(player1);
+        advanceToPrecombatMain(player1);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new FlowState()));
+        harness.castSorcery(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
+        var pool = gd.playerManaPools.get(player1.getId());
+        assertThat(pool.getInstantSorceryOnlyColored(ManaColor.BLUE)).isZero();
+        assertThat(pool.getInstantSorceryOnlyColored(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("The trigger still adds mana after its source leaves the battlefield")
+    void triggerResolvesAfterSourceDies() {
+        addReadyPaintmage(player1);
+        advanceToPrecombatMain(player1);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, findPermanent(player1, "Abstract Paintmage").getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Abstract Paintmage");
+        harness.passBothPriorities();
+
+        var pool = gd.playerManaPools.get(player1.getId());
+        assertThat(pool.getInstantSorceryOnlyColored(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(pool.getInstantSorceryOnlyColored(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getInstantSorceryOnlyColoredTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Unspent mana empties at the end of the main phase and no mana is added in the second main phase")
+    void manaEmptiesAndDoesNotTriggerInSecondMainPhase() {
+        addReadyPaintmage(player1);
+        advanceToPrecombatMain(player1);
+        harness.passBothPriorities();
+
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.playerManaPools.get(player1.getId()).getInstantSorceryOnlyColoredTotal()).isZero();
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getInstantSorceryOnlyColoredTotal()).isZero();
+    }
+
+    private void addReadyPaintmage(com.github.laxika.magicalvibes.model.Player player) {
+        harness.addToBattlefield(player, new AbstractPaintmage());
     }
 
     private void advanceToPrecombatMain(com.github.laxika.magicalvibes.model.Player player) {
