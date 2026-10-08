@@ -41,6 +41,50 @@ class YoungBlueDragonTest extends BaseCardTest {
     }
 
     @Test
+    void adventureDrawsTheNextCardAfterBottomingTheScryCard() {
+        YoungBlueDragon card = new YoungBlueDragon();
+        Island topCard = new Island();
+        Island nextCard = new Island();
+        harness.setHand(player1, List.of(card));
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(nextCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+    }
+
+    @Test
+    void creatureCanBeCastFromHandWithoutResolvingTheAdventure() {
+        YoungBlueDragon card = new YoungBlueDragon();
+        Island topCard = new Island();
+        harness.setHand(player1, List.of(card));
+        harness.setLibrary(player1, List.of(topCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Young Blue Dragon");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+    }
+
+    @Test
     void creatureFaceCanBeCastFromExileAfterAdventure() {
         YoungBlueDragon card = new YoungBlueDragon();
         harness.setHand(player1, List.of(card));
