@@ -26,9 +26,7 @@ class YavimayaGrangerTest extends BaseCardTest {
     void enteringTheBattlefieldCreatesMayPrompt() {
         setupAndCast();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -42,9 +40,7 @@ class YavimayaGrangerTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithBasicLands();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         GameData gd = harness.getGameData();
@@ -65,9 +61,7 @@ class YavimayaGrangerTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithBasicLands();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         GameData gd = harness.getGameData();
@@ -123,15 +117,115 @@ class YavimayaGrangerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
+    @Test
+    @DisplayName("Entering creates only the land-search trigger, not an echo-registration trigger")
+    void enteringCreatesOnlyTheLandSearchTrigger() {
+        harness.enterBattlefieldAndReturn(player1, new YavimayaGranger());
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Yavimaya Granger");
+    }
+
+    @Test
+    @DisplayName("A paid echo cost is deducted and the following upkeep has no echo ability to resolve")
+    void paidEchoDoesNotAskForPaymentAtFollowingUpkeep() {
+        castAndDeclineLandSearch();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Yavimaya Granger");
+    }
+
+    @Test
+    @DisplayName("The basic-land search may fail to find even when a basic land is available")
+    void mayFailToFindAnAvailableBasicLand() {
+        setupAndCast();
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Yavimaya Granger");
+    }
+
+    @Test
+    @DisplayName("Accepting the search with no basic lands completes without finding a card")
+    void searchWithNoBasicLandsCompletes() {
+        setupAndCast();
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bears));
+        resolveAllTriggers();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bears);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Accepting the search with an empty library completes normally")
+    void searchWithEmptyLibraryCompletes() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+        resolveAllTriggers();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Yavimaya Granger");
+    }
+
+    @Test
+    @DisplayName("An opponent's Granger searches its controller's library")
+    void opponentGrangerSearchesItsControllersLibrary() {
+        Forest forest = new Forest();
+        Plains plains = new Plains();
+        harness.setLibrary(player1, List.of(plains));
+        harness.setLibrary(player2, List.of(forest));
+        harness.enterBattlefieldAndReturn(player2, new YavimayaGranger());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(findPermanent(player2, "Forest").isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains);
+        harness.assertNotOnBattlefield(player1, "Forest");
+    }
+
     private void setupAndCast() {
         harness.castFromHand(player1, new YavimayaGranger(), "{2}{G}");
     }
 
     private void castAndDeclineLandSearch() {
         setupAndCast();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
     }
 
