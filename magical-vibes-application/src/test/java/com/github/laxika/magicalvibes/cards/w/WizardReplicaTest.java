@@ -18,6 +18,44 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class WizardReplicaTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Can sacrifice a tapped Replica to counter its controller's own spell")
+    void countersOwnSpellWhileTapped() {
+        var replica = harness.addToBattlefieldAndReturn(player1, new WizardReplica());
+        replica.tap();
+        YotianSoldier soldier = new YotianSoldier();
+        harness.castFromHand(player1, soldier, "{3}");
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, soldier.getId());
+        harness.assertInGraveyard(player1, "Wizard Replica");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Yotian Soldier");
+        harness.assertNotOnBattlefield(player1, "Yotian Soldier");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("One available mana is insufficient to prevent the counter")
+    void countersWhenControllerHasOnlyOneMana() {
+        harness.addToBattlefield(player1, new WizardReplica());
+        YotianSoldier soldier = new YotianSoldier();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, soldier, "{3}");
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, soldier.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Wizard Replica");
+        harness.assertInGraveyard(player2, "Yotian Soldier");
+        harness.assertNotOnBattlefield(player2, "Yotian Soldier");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Counters a creature spell unless its controller pays {2}")
     void countersCreatureSpell() {
         WizardReplica replica = new WizardReplica();
