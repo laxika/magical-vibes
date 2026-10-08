@@ -143,4 +143,37 @@ class RagingGorillaTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Raging Gorilla");
         harness.assertOnBattlefield(player2, "Phyrexian Walker");
     }
+
+    @Test
+    @DisplayName("Opposing Raging Gorillas each trigger and deal their boosted combat damage")
+    void opposingGorillasBothTriggerAndDieInCombat() {
+        Permanent attacker = addCreatureReady(player1, new RagingGorilla());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new RagingGorilla());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(blocker.getPowerModifier()).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(2);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(-2);
+        assertThat(blocker.getPowerModifier()).isEqualTo(2);
+        assertThat(blocker.getToughnessModifier()).isEqualTo(-2);
+        harness.assertOnBattlefield(player1, "Raging Gorilla");
+        harness.assertOnBattlefield(player2, "Raging Gorilla");
+
+        resolveCombat();
+
+        harness.assertNotOnBattlefield(player1, "Raging Gorilla");
+        harness.assertNotOnBattlefield(player2, "Raging Gorilla");
+        harness.assertInGraveyard(player1, "Raging Gorilla");
+        harness.assertInGraveyard(player2, "Raging Gorilla");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 }
