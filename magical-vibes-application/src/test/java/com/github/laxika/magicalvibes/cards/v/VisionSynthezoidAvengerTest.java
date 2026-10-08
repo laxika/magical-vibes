@@ -57,6 +57,64 @@ class VisionSynthezoidAvengerTest extends BaseCardTest {
         assertThat(gd.pendingInteractions).isEmpty();
     }
 
+    @Test
+    @DisplayName("An opponent casting during Vision's controller's turn also triggers Vision")
+    void opponentCastingDuringControllerTurnTriggers() {
+        Permanent vision = addVision();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.handleListChoice(player1, "Put a +1/+1 counter on Vision.");
+        harness.passBothPriorities();
+
+        assertThat(vision.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Vision phases in only on its controller's untap step and keeps its counters")
+    void phasesInOnControllerUntapWithCountersIntact() {
+        Permanent vision = addVision();
+        castShockAsNonActivePlayer();
+        harness.handleListChoice(player1, "Put a +1/+1 counter on Vision.");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        castShockAsNonActivePlayer();
+        harness.handleListChoice(player1, "Vision phases out.");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player2);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(vision);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(vision);
+
+        harness.performUntapStep(player1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(vision);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).doesNotContain(vision);
+        assertThat(vision.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Vision does not trigger for spells cast while it is phased out")
+    void phasedOutVisionDoesNotTrigger() {
+        Permanent vision = addVision();
+        castShockAsNonActivePlayer();
+        harness.handleListChoice(player1, "Vision phases out.");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        castShockAsNonActivePlayer();
+
+        assertThat(gd.pendingInteractions).isEmpty();
+        harness.passBothPriorities();
+        assertThat(vision.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(vision);
+    }
+
     private Permanent addVision() {
         return harness.addToBattlefieldAndReturn(player1, new VisionSynthezoidAvenger());
     }
