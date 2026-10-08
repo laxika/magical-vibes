@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.f.FanningTheFlames;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.StonecoilSerpent;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ZimoneInfiniteAnalyst.class, FanningTheFlames.class, GrizzlyBears.class})
+@CardUsed({ZimoneInfiniteAnalyst.class, FanningTheFlames.class, GrizzlyBears.class, StonecoilSerpent.class})
 class ZimoneInfiniteAnalystTest extends BaseCardTest {
 
     @Test
@@ -70,10 +71,83 @@ class ZimoneInfiniteAnalystTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 1, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(findZimone().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(findPermanent(player1, "Zimone, Infinite Analyst").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
 
         harness.passBothPriorities();
         harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void zeroXStillTriggersAndConsumesTheFirstSpell() {
+        Permanent zimone = addZimoneWithCounters(0);
+        harness.setHand(player1, List.of(new StonecoilSerpent(), new StonecoilSerpent()));
+
+        harness.castArtifact(player1, 0, 0);
+        harness.passBothPriorities();
+        assertThat(zimone.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Stonecoil Serpent");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player1, 0, 1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        assertThat(zimone.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void reductionDoesNotChangeTheChosenXValue() {
+        Permanent zimone = addZimoneWithCounters(3);
+        harness.setHand(player1, List.of(new StonecoilSerpent()));
+
+        harness.castArtifact(player1, 0, 3);
+        harness.passBothPriorities();
+        assertThat(zimone.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Stonecoil Serpent")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void enteringAfterTheFirstXSpellDoesNotRestartTheCount() {
+        harness.setHand(player1, List.of(new StonecoilSerpent(), new StonecoilSerpent()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player1, 0, 1);
+        harness.passBothPriorities();
+
+        Permanent zimone = addZimoneWithCounters(2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player1, 0, 1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(zimone.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void opponentsXSpellDoesNotTriggerOrConsumeTheReduction() {
+        Permanent zimone = addZimoneWithCounters(2);
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new StonecoilSerpent()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castArtifact(player2, 0, 1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        assertThat(zimone.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new StonecoilSerpent()));
+        harness.castArtifact(player1, 0, 2);
+        harness.passBothPriorities();
+        assertThat(zimone.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        harness.passBothPriorities();
+        assertThat(findPermanent(player1, "Stonecoil Serpent")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     private Permanent addZimoneWithCounters(int counters) {
@@ -82,10 +156,4 @@ class ZimoneInfiniteAnalystTest extends BaseCardTest {
         return zimone;
     }
 
-    private Permanent findZimone() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Zimone, Infinite Analyst"))
-                .findFirst()
-                .orElseThrow();
-    }
 }
