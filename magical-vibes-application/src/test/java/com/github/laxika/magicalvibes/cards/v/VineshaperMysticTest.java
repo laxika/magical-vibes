@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.cards.m.MerrowCommerce;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MerfolkSpy;
+import com.github.laxika.magicalvibes.cards.r.RaptorCompanion;
+import com.github.laxika.magicalvibes.cards.d.DeeprootWarrior;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -19,22 +21,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({VineshaperMystic.class, DeeprootWarrior.class, RaptorCompanion.class, MerrowCommerce.class})
 class VineshaperMysticTest extends BaseCardTest {
-
-    
 
     @Nested
     @DisplayName("ETB — put a +1/+1 counter on each of up to two target Merfolk you control")
+    @CardUsed({VineshaperMystic.class, DeeprootWarrior.class, RaptorCompanion.class, MerrowCommerce.class})
     class EtbTests {
 
         @Test
         @DisplayName("Puts a +1/+1 counter on one target Merfolk you control")
         void putsCounterOnOneTargetMerfolk() {
-            harness.addToBattlefield(player1, new MerfolkSpy());
+            Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new DeeprootWarrior());
             harness.setHand(player1, List.of(new VineshaperMystic()));
             harness.addMana(player1, ManaColor.GREEN, 3);
 
-            UUID merfolkId = harness.getPermanentId(player1, "Merfolk Spy");
+            UUID merfolkId = merfolk.getId();
             harness.castCreature(player1, 0, List.of(merfolkId));
 
             // Resolve creature spell — ETB triggers
@@ -44,25 +46,19 @@ class VineshaperMysticTest extends BaseCardTest {
 
             assertThat(gd.stack).isEmpty();
 
-            Permanent merfolk = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getId().equals(merfolkId))
-                    .findFirst().orElseThrow();
             assertThat(merfolk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         }
 
         @Test
         @DisplayName("Puts a +1/+1 counter on each of two target Merfolk you control")
         void putsCounterOnTwoTargetMerfolk() {
-            MerfolkSpy spy1 = new MerfolkSpy();
-            MerfolkSpy spy2 = new MerfolkSpy();
-            harness.addToBattlefield(player1, spy1);
-            harness.addToBattlefield(player1, spy2);
+            Permanent merfolk1 = harness.addToBattlefieldAndReturn(player1, new DeeprootWarrior());
+            Permanent merfolk2 = harness.addToBattlefieldAndReturn(player1, new DeeprootWarrior());
             harness.setHand(player1, List.of(new VineshaperMystic()));
             harness.addMana(player1, ManaColor.GREEN, 3);
 
-            List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
-            UUID merfolk1Id = bf.get(0).getId();
-            UUID merfolk2Id = bf.get(1).getId();
+            UUID merfolk1Id = merfolk1.getId();
+            UUID merfolk2Id = merfolk2.getId();
             harness.castCreature(player1, 0, List.of(merfolk1Id, merfolk2Id));
 
             // Resolve creature spell — ETB triggers
@@ -72,12 +68,6 @@ class VineshaperMysticTest extends BaseCardTest {
 
             assertThat(gd.stack).isEmpty();
 
-            Permanent merfolk1 = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getId().equals(merfolk1Id))
-                    .findFirst().orElseThrow();
-            Permanent merfolk2 = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getId().equals(merfolk2Id))
-                    .findFirst().orElseThrow();
             assertThat(merfolk1.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
             assertThat(merfolk2.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         }
@@ -85,11 +75,11 @@ class VineshaperMysticTest extends BaseCardTest {
         @Test
         @DisplayName("Resolving creature spell puts ETB trigger on stack")
         void resolvingPutsEtbOnStack() {
-            harness.addToBattlefield(player1, new MerfolkSpy());
+            Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new DeeprootWarrior());
             harness.setHand(player1, List.of(new VineshaperMystic()));
             harness.addMana(player1, ManaColor.GREEN, 3);
 
-            UUID merfolkId = harness.getPermanentId(player1, "Merfolk Spy");
+            UUID merfolkId = merfolk.getId();
             harness.castCreature(player1, 0, List.of(merfolkId));
 
             // Resolve creature spell — enters battlefield, ETB triggers
@@ -105,11 +95,11 @@ class VineshaperMysticTest extends BaseCardTest {
         @Test
         @DisplayName("Cannot target a non-Merfolk creature you control")
         void cannotTargetNonMerfolk() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
+            harness.addToBattlefield(player1, new RaptorCompanion());
             harness.setHand(player1, List.of(new VineshaperMystic()));
             harness.addMana(player1, ManaColor.GREEN, 3);
 
-            UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+            UUID bearsId = harness.getPermanentId(player1, "Raptor Companion");
 
             assertThatThrownBy(() -> harness.castCreature(player1, 0, List.of(bearsId)))
                     .isInstanceOf(IllegalStateException.class)
@@ -119,11 +109,11 @@ class VineshaperMysticTest extends BaseCardTest {
         @Test
         @DisplayName("Cannot target opponent's Merfolk")
         void cannotTargetOpponentMerfolk() {
-            harness.addToBattlefield(player2, new MerfolkSpy());
+            harness.addToBattlefield(player2, new DeeprootWarrior());
             harness.setHand(player1, List.of(new VineshaperMystic()));
             harness.addMana(player1, ManaColor.GREEN, 3);
 
-            UUID opponentMerfolkId = harness.getPermanentId(player2, "Merfolk Spy");
+            UUID opponentMerfolkId = harness.getPermanentId(player2, "Deeproot Warrior");
 
             assertThatThrownBy(() -> harness.castCreature(player1, 0, List.of(opponentMerfolkId)))
                     .isInstanceOf(IllegalStateException.class)
@@ -143,8 +133,8 @@ class VineshaperMysticTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("ETB does not trigger when cast without targets")
-        void etbDoesNotTriggerWithoutTargets() {
+        @DisplayName("ETB can choose zero targets even though the Mystic is a legal target")
+        void etbCanChooseZeroTargets() {
             harness.setHand(player1, List.of(new VineshaperMystic()));
             harness.addMana(player1, ManaColor.GREEN, 3);
 
@@ -154,47 +144,40 @@ class VineshaperMysticTest extends BaseCardTest {
             harness.passBothPriorities();
 
             harness.assertOnBattlefield(player1, "Vineshaper Mystic");
+            harness.handlePermanentChosen(player1, player1.getId());
+            assertThat(gd.stack).hasSize(1);
+            harness.passBothPriorities();
             assertThat(gd.stack).isEmpty();
+            assertThat(findPermanent(player1, "Vineshaper Mystic")
+                    .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         }
 
         @Test
         @DisplayName("Can target itself since Vineshaper Mystic is a Merfolk")
         void canTargetItself() {
-            harness.addToBattlefield(player1, new MerfolkSpy());
             harness.setHand(player1, List.of(new VineshaperMystic()));
             harness.addMana(player1, ManaColor.GREEN, 3);
-
-            UUID merfolkId = harness.getPermanentId(player1, "Merfolk Spy");
-            harness.castCreature(player1, 0, List.of(merfolkId));
-
-            // Resolve creature spell — ETB triggers
+            harness.castCreature(player1, 0);
             harness.passBothPriorities();
 
-            // Get Vineshaper Mystic's permanent ID
-            UUID vineshaperId = findPermanent(player1, "Vineshaper Mystic").getId();
-
-            // The ETB already chose Merfolk Spy as target before entering, resolve it
+            Permanent mystic = findPermanent(player1, "Vineshaper Mystic");
+            harness.handlePermanentChosen(player1, mystic.getId());
             harness.passBothPriorities();
 
-            Permanent merfolk = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getId().equals(merfolkId))
-                    .findFirst().orElseThrow();
-            assertThat(merfolk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+            assertThat(gd.stack).isEmpty();
+            assertThat(mystic.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         }
 
         @Test
         @DisplayName("ETB partially resolves if one of two targets is removed")
         void etbPartiallyResolvesIfOneTargetRemoved() {
-            MerfolkSpy spy1 = new MerfolkSpy();
-            MerfolkSpy spy2 = new MerfolkSpy();
-            harness.addToBattlefield(player1, spy1);
-            harness.addToBattlefield(player1, spy2);
+            Permanent merfolk1 = harness.addToBattlefieldAndReturn(player1, new DeeprootWarrior());
+            Permanent merfolk2 = harness.addToBattlefieldAndReturn(player1, new DeeprootWarrior());
             harness.setHand(player1, List.of(new VineshaperMystic()));
             harness.addMana(player1, ManaColor.GREEN, 3);
 
-            List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
-            UUID merfolk1Id = bf.get(0).getId();
-            UUID merfolk2Id = bf.get(1).getId();
+            UUID merfolk1Id = merfolk1.getId();
+            UUID merfolk2Id = merfolk2.getId();
             harness.castCreature(player1, 0, List.of(merfolk1Id, merfolk2Id));
 
             // Resolve creature spell — ETB triggers
@@ -208,20 +191,17 @@ class VineshaperMysticTest extends BaseCardTest {
 
             assertThat(gd.stack).isEmpty();
 
-            Permanent merfolk2 = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getId().equals(merfolk2Id))
-                    .findFirst().orElseThrow();
             assertThat(merfolk2.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         }
 
         @Test
         @DisplayName("ETB fizzles if all targets are removed before resolution")
         void etbFizzlesIfAllTargetsRemoved() {
-            harness.addToBattlefield(player1, new MerfolkSpy());
+            Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new DeeprootWarrior());
             harness.setHand(player1, List.of(new VineshaperMystic()));
             harness.addMana(player1, ManaColor.GREEN, 3);
 
-            UUID merfolkId = harness.getPermanentId(player1, "Merfolk Spy");
+            UUID merfolkId = merfolk.getId();
             harness.castCreature(player1, 0, List.of(merfolkId));
 
             // Resolve creature spell — ETB on stack
@@ -236,5 +216,21 @@ class VineshaperMysticTest extends BaseCardTest {
             assertThat(gd.stack).isEmpty();
             assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         }
+
+        @Test
+        @CardUsed({VineshaperMystic.class, MerrowCommerce.class})
+        @DisplayName("Can put a counter on a noncreature Merfolk permanent")
+        void canTargetNoncreatureMerfolk() {
+            Permanent commerce = harness.addToBattlefieldAndReturn(player1, new MerrowCommerce());
+            harness.setHand(player1, List.of(new VineshaperMystic()));
+            harness.addMana(player1, ManaColor.GREEN, 3);
+
+            harness.castCreature(player1, 0, List.of(commerce.getId()));
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            assertThat(commerce.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        }
+
     }
 }
