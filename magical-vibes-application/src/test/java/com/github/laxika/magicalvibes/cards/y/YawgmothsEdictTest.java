@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.e.EagerCadet;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.cards.w.Worship;
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EagerCadet.class, GrizzlyBears.class, LlanowarElves.class, Watchwolf.class, Worship.class, YawgmothsEdict.class})
+@CardUsed({Disenchant.class, EagerCadet.class, LlanowarElves.class, Watchwolf.class, Worship.class, YawgmothsEdict.class})
 class YawgmothsEdictTest extends BaseCardTest {
 
     /** Player1 controls Yawgmoth's Edict; it is player2's (the opponent's) turn. */
@@ -156,5 +156,72 @@ class YawgmothsEdictTest extends BaseCardTest {
 
         harness.assertLife(player2, opponentLifeBefore - 1);
         harness.assertLife(player1, controllerLifeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Each Edict triggers independently for the same white spell")
+    void multipleEdictsEachDrain() {
+        setUpOpponentTurn();
+        harness.addToBattlefield(player1, new YawgmothsEdict());
+        harness.setHand(player2, List.of(new EagerCadet()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.stack).hasSize(3);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 22);
+        harness.assertOnBattlefield(player2, "Eager Cadet");
+    }
+
+    @Test
+    @DisplayName("A drain trigger resolves after its source is destroyed")
+    void triggerSurvivesSourceRemoval() {
+        setUpOpponentTurn();
+        harness.setHand(player2, List.of(new EagerCadet()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castCreature(player2, 0);
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Yawgmoth's Edict"));
+        assertThat(gd.stack).hasSize(3);
+
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Yawgmoth's Edict");
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 21);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Worship does not prevent the Edict's life loss")
+    void lifeLossIsNotDamage() {
+        setUpOpponentTurn();
+        harness.addToBattlefield(player2, new Worship());
+        harness.addToBattlefield(player2, new EagerCadet());
+        harness.setLife(player2, 2);
+        harness.setHand(player2, List.of(new EagerCadet()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 1);
+        harness.assertLife(player1, 21);
+
+        resolveAllTriggers();
+        harness.setHand(player2, List.of(new EagerCadet()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 0);
+        harness.assertLife(player1, 22);
     }
 }
