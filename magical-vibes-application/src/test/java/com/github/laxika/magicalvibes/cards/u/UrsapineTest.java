@@ -91,4 +91,50 @@ class UrsapineTest extends BaseCardTest {
     private Permanent addUrsapineReady(Player player) {
         return addCreatureReady(player, new Ursapine());
     }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Ursapine can boost itself")
+    void canBoostItselfWhileTappedAndSummoningSick() {
+        Permanent ursapine = harness.addToBattlefieldAndReturn(player1, new Ursapine());
+        ursapine.setSummoningSick(true);
+        ursapine.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, ursapine.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, ursapine)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ursapine)).isEqualTo(4);
+        assertThat(ursapine.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ursapine's ability requires green mana")
+    void cannotPayWithOtherColoredMana() {
+        Permanent ursapine = addUrsapineReady(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, ursapine.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, ursapine)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ursapine)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Ursapine's ability resolves after its source leaves the battlefield")
+    void boostResolvesAfterSourceLeavesBattlefield() {
+        Permanent ursapine = addUrsapineReady(player1);
+        Permanent wolf = addCreatureReady(player1, new Watchwolf());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, wolf.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(ursapine);
+        gd.playerGraveyards.get(player1.getId()).add(ursapine.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(4);
+    }
 }
