@@ -85,8 +85,7 @@ class VodalianKnightsTest extends BaseCardTest {
         Permanent knights = addCreatureReady(player1, new VodalianKnights());
         Permanent blocker = addCreatureReady(player2, new Homarid());
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(knights)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(knights)));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(knights))));
@@ -159,5 +158,45 @@ class VodalianKnightsTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(knights);
+    }
+
+    @Test
+    @DisplayName("A pending sacrifice trigger still resolves after gaining an Island")
+    void gainingIslandDoesNotStopPendingSacrifice() {
+        Permanent knights = addCreatureReady(player1, new VodalianKnights());
+        Permanent aquitects = addCreatureReady(player1, new StreambedAquitects());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new HavenwoodBattleground());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aquitects),
+                1, null, land.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.effectiveBasicLandTypes(gd, land)).contains(CardSubtype.ISLAND);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(knights);
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Vodalian Knights");
+        harness.assertInGraveyard(player1, "Vodalian Knights");
+    }
+
+    @Test
+    @DisplayName("Losing the last Island triggers sacrifice after entering safely")
+    void losingLastIslandTriggersSacrifice() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent knights = addCreatureReady(player1, new VodalianKnights());
+        Permanent orb = harness.addToBattlefieldAndReturn(player1, new ZuranOrb());
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(orb), null, null);
+        harness.handlePermanentChosen(player1, island.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(knights);
+        harness.assertInGraveyard(player1, "Vodalian Knights");
     }
 }
