@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WarCadence.class, FreshVolunteers.class})
+@CardUsed({WarCadence.class, FreshVolunteers.class, PalaceGuard.class})
 class WarCadenceTest extends BaseCardTest {
 
     @Test
@@ -109,7 +109,6 @@ class WarCadenceTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(PalaceGuard.class)
     @DisplayName("Charges only once when one creature blocks multiple attackers")
     void chargesOnceForEachUniqueBlocker() {
         harness.addToBattlefield(player1, new WarCadence());
@@ -134,6 +133,51 @@ class WarCadenceTest extends BaseCardTest {
         assertThat(blocker.getBlockingTargetIds())
                 .containsExactlyInAnyOrder(firstAttacker.getId(), secondAttacker.getId());
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Multiple activations add their chosen X values")
+    void multipleActivationsAddTheirTaxes() {
+        harness.addToBattlefield(player1, new WarCadence());
+        Permanent attacker = addCreatureReady(player1, new FreshVolunteers());
+        Permanent blocker = addCreatureReady(player2, new FreshVolunteers());
+        attacker.setAttacking(true);
+
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 1, null);
+        harness.activateAbility(player1, 0, 2, null);
+        resolveAllTriggers();
+
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(blockerIndex(blocker), attackerIndex(attacker))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The tax also applies to its controller's creatures entering after resolution")
+    void taxesControllersNewCreatures() {
+        harness.addToBattlefield(player1, new WarCadence());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 2, null);
+        harness.passBothPriorities();
+
+        Permanent attacker = addCreatureReady(player2, new FreshVolunteers());
+        Permanent blocker = addCreatureReady(player1, new FreshVolunteers());
+        attacker.setAttacking(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player1.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player2.getId()).indexOf(attacker))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     private int blockerIndex(Permanent blocker) {
