@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BullsStrength;
+import com.github.laxika.magicalvibes.cards.b.BurningHands;
+import com.github.laxika.magicalvibes.cards.d.DireWolfProwler;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,16 +18,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WerewolfPackLeader.class, GrizzlyBears.class})
+@CardUsed({WerewolfPackLeader.class, DireWolfProwler.class, BullsStrength.class, BurningHands.class})
 class WerewolfPackLeaderTest extends BaseCardTest {
 
     @Test
     @DisplayName("Pack tactics draws a card when attacking creatures have total power at least six")
     void packTacticsDrawsAtThreshold() {
         addCreatureReady(player1, new WerewolfPackLeader());
-        addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player1, new GrizzlyBears());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        addCreatureReady(player1, new DireWolfProwler());
+        addCreatureReady(player1, new DireWolfProwler());
+        harness.setLibrary(player1, List.of(new DireWolfProwler()));
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         declareAttackers(List.of(0, 1, 2));
@@ -38,8 +40,8 @@ class WerewolfPackLeaderTest extends BaseCardTest {
     @DisplayName("Pack tactics does not draw when the attacking power is below six")
     void packTacticsRequiresSixPower() {
         addCreatureReady(player1, new WerewolfPackLeader());
-        addCreatureReady(player1, new GrizzlyBears());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        addCreatureReady(player1, new DireWolfProwler());
+        harness.setLibrary(player1, List.of(new DireWolfProwler()));
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         declareAttackers(List.of(0, 1));
@@ -52,10 +54,10 @@ class WerewolfPackLeaderTest extends BaseCardTest {
     @DisplayName("Pack tactics requires the Pack Leader to attack")
     void packTacticsRequiresSourceToAttack() {
         addCreatureReady(player1, new WerewolfPackLeader());
-        addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player1, new GrizzlyBears());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        addCreatureReady(player1, new DireWolfProwler());
+        addCreatureReady(player1, new DireWolfProwler());
+        addCreatureReady(player1, new DireWolfProwler());
+        harness.setLibrary(player1, List.of(new DireWolfProwler()));
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         declareAttackers(List.of(1, 2, 3));
@@ -90,5 +92,98 @@ class WerewolfPackLeaderTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, leader)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, leader, Keyword.TRAMPLE)).isFalse();
         assertThat(GameQueryService.permanentHasSubtype(leader, CardSubtype.HUMAN)).isTrue();
+    }
+
+    @Test
+    void eachLeaderDrawsAtExactlySixAttackingPower() {
+        addCreatureReady(player1, new WerewolfPackLeader());
+        addCreatureReady(player1, new WerewolfPackLeader());
+        harness.setLibrary(player1, List.of(new DireWolfProwler(), new DireWolfProwler()));
+
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
+    }
+
+    @Test
+    void nonattackingCreaturesDoNotCountTowardPackTactics() {
+        addCreatureReady(player1, new WerewolfPackLeader());
+        addCreatureReady(player1, new DireWolfProwler());
+        addCreatureReady(player1, new DireWolfProwler());
+        addCreatureReady(player2, new DireWolfProwler());
+        harness.setLibrary(player1, List.of(new DireWolfProwler()));
+
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+    }
+
+    @Test
+    void packTacticsStillDrawsAfterItsSourceDiesInResponse() {
+        Permanent leader = addCreatureReady(player1, new WerewolfPackLeader());
+        addCreatureReady(player1, new DireWolfProwler());
+        addCreatureReady(player1, new DireWolfProwler());
+        harness.setLibrary(player1, List.of(new DireWolfProwler()));
+        harness.setHand(player2, List.of(new BurningHands()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        declareAttackers(List.of(0, 1, 2));
+        harness.castAndResolveInstant(player2, 0, leader.getId());
+        harness.assertInGraveyard(player1, "Werewolf Pack Leader");
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+    }
+
+    @Test
+    void boostingPowerAfterDeclarationDoesNotEnablePackTactics() {
+        Permanent leader = addCreatureReady(player1, new WerewolfPackLeader());
+        addCreatureReady(player1, new DireWolfProwler());
+        harness.setLibrary(player1, List.of(new DireWolfProwler()));
+        harness.setHand(player1, List.of(new BullsStrength()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1));
+            harness.castAndResolveInstant(player1, 0, leader.getId());
+            resolveAllTriggers();
+
+            assertThat(gqs.getEffectivePower(gd, leader)).isEqualTo(5);
+            assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+            assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        });
+    }
+
+    @Test
+    void activatedAbilityPreservesPowerModifiersAndCanBeActivatedAgain() {
+        Permanent leader = addCreatureReady(player1, new WerewolfPackLeader());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new BullsStrength()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.castAndResolveInstant(player1, 0, leader.getId());
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, leader)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, leader)).isEqualTo(5);
+        assertThat(GameQueryService.permanentHasSubtype(leader, CardSubtype.WEREWOLF)).isTrue();
+        assertThat(GameQueryService.permanentHasSubtype(leader, CardSubtype.HUMAN)).isFalse();
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, leader)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, leader)).isEqualTo(5);
     }
 }
