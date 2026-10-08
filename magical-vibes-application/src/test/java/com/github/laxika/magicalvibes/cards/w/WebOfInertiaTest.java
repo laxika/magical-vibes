@@ -119,6 +119,70 @@ class WebOfInertiaTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
     }
 
+    @Test
+    @DisplayName("An opponent may decline even when a graveyard card is available")
+    void decliningLeavesAvailableCardInGraveyard() {
+        Card graveyardCard = new SuntailHawk();
+        harness.setGraveyard(player2, List.of(graveyardCard));
+        harness.addToBattlefield(player1, new WebOfInertia());
+        addCreatureReady(player2, new SuntailHawk());
+
+        resolveCombatTrigger(player2);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(graveyardCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThatThrownBy(this::declareAttackers)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Exiling a noncreature card also permits attacks")
+    void mayExileNoncreatureCard() {
+        Card graveyardCard = new WebOfInertia();
+        harness.setGraveyard(player2, List.of(graveyardCard));
+        harness.addToBattlefield(player1, new WebOfInertia());
+        addCreatureReady(player2, new SuntailHawk());
+
+        resolveCombatTrigger(player2);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(graveyardCard);
+        declareAttackers(player2, List.of(0));
+    }
+
+    @Test
+    @DisplayName("The restriction applies to creatures entering after the ability resolves")
+    void restrictionAppliesToLaterCreatures() {
+        harness.addToBattlefield(player1, new WebOfInertia());
+
+        resolveCombatTrigger(player2);
+        harness.handleMayAbilityChosen(player2, false);
+        addCreatureReady(player2, new SuntailHawk());
+
+        assertThatThrownBy(this::declareAttackers)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("The resolved restriction persists after Web of Inertia leaves the battlefield")
+    void restrictionPersistsWithoutSource() {
+        Permanent web = harness.addToBattlefieldAndReturn(player1, new WebOfInertia());
+        addCreatureReady(player2, new SuntailHawk());
+
+        resolveCombatTrigger(player2);
+        harness.handleMayAbilityChosen(player2, false);
+        gd.playerBattlefields.get(player1.getId()).remove(web);
+        gd.playerGraveyards.get(player1.getId()).add(web.getCard());
+
+        assertThatThrownBy(this::declareAttackers)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
     private void resolveCombatTrigger(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -139,20 +203,12 @@ class WebOfInertiaTest extends BaseCardTest {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
         planeswalker.setCounterCount(CounterType.LOYALTY, 6);
 
-        resolveCombatTriggerForJudReview(player2);
+        resolveCombatTrigger(player2);
         harness.handleMayAbilityChosen(player2, false);
 
         declareAttackerAtTargetForJudReview(player2, attacker, planeswalker);
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
-    }
-
-    private void resolveCombatTriggerForJudReview(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
     }
 
     private void declareAttackerAtTargetForJudReview(Player attacker, Permanent creature, Permanent target) {
