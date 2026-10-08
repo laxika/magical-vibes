@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.p.Pongify;
 import com.github.laxika.magicalvibes.cards.s.SerraSphinx;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VolcanoHellion.class, SerraSphinx.class})
+@CardUsed({VolcanoHellion.class, SerraSphinx.class, Pongify.class})
 class VolcanoHellionTest extends BaseCardTest {
 
     @Test
@@ -109,6 +110,78 @@ class VolcanoHellionTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Volcano Hellion");
     }
 
+    @Test
+    @DisplayName("Echo cost decreases when life is lost after it triggers")
+    void echoCostTracksLifeLostInResponse() {
+        castAndChooseDamage(0);
+        harness.setLife(player1, 10);
+        advanceToUpkeep(player1);
+
+        harness.setLife(player1, 5);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Volcano Hellion");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Echo cost increases when life is gained after it triggers")
+    void echoCostTracksLifeGainedInResponse() {
+        castAndChooseDamage(0);
+        harness.setLife(player1, 5);
+        advanceToUpkeep(player1);
+
+        harness.setLife(player1, 10);
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Volcano Hellion");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("An illegal entry target prevents damage but does not remove echo")
+    void echoStillTriggersWhenEntryTargetBecomesIllegal() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SerraSphinx());
+        castVolcanoHellionWithTriggerPending(target);
+        harness.setHand(player2, List.of(new Pongify()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Volcano Hellion");
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Volcano Hellion");
+        harness.assertNotOnBattlefield(player1, "Volcano Hellion");
+    }
+
+    @Test
+    @DisplayName("The entry ability still deals chosen damage after Hellion leaves the battlefield")
+    void entryAbilityResolvesWithoutItsSource() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SerraSphinx());
+        castVolcanoHellionWithTriggerPending(target);
+        harness.setHand(player2, List.of(new Pongify()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Volcano Hellion"));
+        harness.assertInGraveyard(player1, "Volcano Hellion");
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
+        harness.handleXValueChosen(player1, 3);
+
+        harness.assertLife(player1, 17);
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
     private Permanent castVolcanoHellion() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SerraSphinx());
         castVolcanoHellion(target);
@@ -121,11 +194,15 @@ class VolcanoHellionTest extends BaseCardTest {
     }
 
     private void castVolcanoHellion(Permanent target) {
+        castVolcanoHellionWithTriggerPending(target);
+        resolveAllTriggers();
+    }
+
+    private void castVolcanoHellionWithTriggerPending(Permanent target) {
         harness.setHand(player1, List.of(new VolcanoHellion()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castCreature(player1, 0, 0, target.getId());
-        harness.passBothPriorities();
         harness.passBothPriorities();
     }
 }
