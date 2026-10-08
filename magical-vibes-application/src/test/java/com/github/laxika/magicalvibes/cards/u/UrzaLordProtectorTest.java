@@ -35,10 +35,7 @@ class UrzaLordProtectorTest extends BaseCardTest {
     @DisplayName("Reduces artifact spells by {1}")
     void reducesArtifactSpells() {
         harness.addToBattlefield(player1, new UrzaLordProtector());
-        harness.setHand(player1, List.of(new EnergyRefractor()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new EnergyRefractor(), "{1}");
 
         assertThat(gd.stack).hasSize(1);
     }
@@ -465,6 +462,72 @@ class UrzaLordProtectorTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Urza, Planeswalker");
         assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof UrzaLordProtector)
+                .anyMatch(card -> card instanceof TheMightstoneAndWeakstone)
+                .noneMatch(card -> card instanceof UrzaPlaneswalker);
+    }
+
+    @Test
+    void plusTwoReductionPersistsAfterUrzaExilesItself() {
+        Permanent urza = addReadyUrza(7);
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+        harness.activateAbility(player1, 0, 3, null, urza.getId());
+        resolveAllTriggers();
+        harness.setHand(player1, List.of(new EnergyRefractor()));
+
+        harness.castArtifact(player1, 0);
+
+        harness.assertNotOnBattlefield(player1, "Urza, Planeswalker");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void minusTenDoesNotProtectArtifactsEnteringLater() {
+        addReadyUrza(11);
+        harness.activateAbility(player1, 0, 4, null, null);
+        resolveAllTriggers();
+
+        Permanent artifact = harness.enterBattlefieldAndReturn(player1, new EnergyRefractor());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    void tokenCopyOfUrzaCannotMeld() {
+        UrzaLordProtector token = new UrzaLordProtector();
+        token.setToken(true);
+        harness.addToBattlefield(player1, token);
+        harness.addToBattlefield(player1, new TheMightstoneAndWeakstone());
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        prepareMainPhase();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Urza, Planeswalker");
+        harness.assertNotOnBattlefield(player1, "Urza, Lord Protector");
+        harness.assertNotOnBattlefield(player1, "The Mightstone and Weakstone");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card instanceof TheMightstoneAndWeakstone);
+    }
+
+    @Test
+    void minusThreeExilingMeldedUrzaExilesBothFrontFaces() {
+        harness.addToBattlefield(player1, new UrzaLordProtector());
+        harness.addToBattlefield(player1, new TheMightstoneAndWeakstone());
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        prepareMainPhase();
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+        Permanent urza = findPermanent(player1, "Urza, Planeswalker");
+
+        harness.activateAbility(player1, 0, 3, null, urza.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Urza, Planeswalker");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card instanceof UrzaLordProtector)
                 .anyMatch(card -> card instanceof TheMightstoneAndWeakstone)
                 .noneMatch(card -> card instanceof UrzaPlaneswalker);
