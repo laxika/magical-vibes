@@ -212,4 +212,29 @@ class UnsummonTest extends BaseCardTest {
         // Unsummon still goes to graveyard
         harness.assertInGraveyard(player1, "Unsummon");
     }
+
+    @Test
+    @DisplayName("Does not return a creature that left and reentered before resolution")
+    void doesNotReturnReenteredCreature() {
+        GrizzlyBears bears = new GrizzlyBears();
+        Permanent original = harness.addToBattlefieldAndReturn(player2, bears);
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, original.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, original));
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+
+        // Set up the same card reentering while the original spell is still on the stack.
+        harness.setHand(player2, List.of());
+        Permanent returned = harness.addToBattlefieldAndReturn(player2, bears);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(returned);
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Unsummon");
+    }
 }
