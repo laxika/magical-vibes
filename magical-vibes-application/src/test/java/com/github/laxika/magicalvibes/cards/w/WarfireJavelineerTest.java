@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,10 +16,11 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WarfireJavelineer.class, GrizzlyBears.class, Shock.class, Divination.class})
 class WarfireJavelineerTest extends BaseCardTest {
 
     private Permanent targetOf(UUID id) {
-        return gd.playerBattlefields.get(player2.getId()).stream()
+        return findPermanents(player2, "Grizzly Bears").stream()
                 .filter(p -> p.getId().equals(id))
                 .findFirst().orElseThrow();
     }
@@ -28,10 +30,9 @@ class WarfireJavelineerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, targetId);
 
-        harness.passBothPriorities(); // Resolve creature → ETB triggers
-        harness.passBothPriorities(); // Resolve ETB
+        resolveAllTriggers();
         return targetId;
     }
 
@@ -43,9 +44,7 @@ class WarfireJavelineerTest extends BaseCardTest {
         harness.addToBattlefield(player2, bear);
 
         // 2 instants + 1 sorcery = 3 damage
-        gd.playerGraveyards.get(player1.getId()).add(new Shock());
-        gd.playerGraveyards.get(player1.getId()).add(new Shock());
-        gd.playerGraveyards.get(player1.getId()).add(new Divination());
+        harness.setGraveyard(player1, List.of(new Shock(), new Shock(), new Divination()));
 
         UUID targetId = castAtOpponentBear();
 
@@ -62,8 +61,7 @@ class WarfireJavelineerTest extends BaseCardTest {
 
         gd.playerGraveyards.get(player1.getId()).add(new Shock());
         // Opponent's instants/sorceries must not contribute
-        gd.playerGraveyards.get(player2.getId()).add(new Shock());
-        gd.playerGraveyards.get(player2.getId()).add(new Divination());
+        harness.setGraveyard(player2, List.of(new Shock(), new Divination()));
 
         UUID targetId = castAtOpponentBear();
 
@@ -77,9 +75,7 @@ class WarfireJavelineerTest extends BaseCardTest {
         bear.setToughness(8);
         harness.addToBattlefield(player2, bear);
 
-        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerGraveyards.get(player1.getId()).add(new Shock());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new Shock()));
 
         UUID targetId = castAtOpponentBear();
 
@@ -111,5 +107,88 @@ class WarfireJavelineerTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, targetId, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("opponent controls");
+    }
+
+    @Test
+    @DisplayName("An instant cast in response contributes to damage at resolution")
+    void countsInstantThatResolvesInResponse() {
+        GrizzlyBears bear = new GrizzlyBears();
+        bear.setToughness(8);
+        harness.addToBattlefield(player2, bear);
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setHand(player1, List.of(new WarfireJavelineer(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castCreature(player1, 0, targetId);
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(targetOf(targetId).getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Shock");
+    }
+
+    @Test
+    @DisplayName("Removing cards from the graveyard before resolution reduces damage")
+    void countsCurrentGraveyardAtResolution() {
+        GrizzlyBears bear = new GrizzlyBears();
+        bear.setToughness(8);
+        harness.addToBattlefield(player2, bear);
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setGraveyard(player1, List.of(new Shock(), new Divination()));
+        harness.setHand(player1, List.of(new WarfireJavelineer()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castCreature(player1, 0, targetId);
+        harness.passBothPriorities();
+        harness.setGraveyard(player1, List.of());
+        resolveAllTriggers();
+
+        assertThat(targetOf(targetId).getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The damage trigger resolves after Javelineer is killed in response")
+    void triggerResolvesAfterSourceDies() {
+        GrizzlyBears bear = new GrizzlyBears();
+        bear.setToughness(8);
+        harness.addToBattlefield(player2, bear);
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setGraveyard(player1, List.of(new Divination()));
+        harness.setHand(player1, List.of(new WarfireJavelineer()));
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castCreature(player1, 0, targetId);
+        harness.passBothPriorities();
+        UUID sourceId = harness.getPermanentId(player1, "Warfire Javelineer");
+        harness.castAndResolveInstant(player2, 0, sourceId);
+        harness.castAndResolveInstant(player2, 0, sourceId);
+        harness.assertInGraveyard(player1, "Warfire Javelineer");
+        resolveAllTriggers();
+
+        assertThat(targetOf(targetId).getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The trigger has no effect if its target dies in response")
+    void triggerDoesNotDamagePlayerWhenTargetDies() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setGraveyard(player1, List.of(new Divination()));
+        harness.setHand(player1, List.of(new WarfireJavelineer(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castCreature(player1, 0, targetId);
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }
