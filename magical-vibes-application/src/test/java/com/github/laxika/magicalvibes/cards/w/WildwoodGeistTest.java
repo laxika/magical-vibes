@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WildwoodGeist.class})
 class WildwoodGeistTest extends BaseCardTest {
 
     @Test
@@ -44,5 +47,27 @@ class WildwoodGeistTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         assertThat(gqs.getEffectivePower(gd, ownGeist)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, enemyGeist)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Bonus applies in every step of its controller's turn and returns without accumulating")
+    void bonusAppliesThroughoutTurnAndReturnsOnNextTurn() {
+        Permanent geist = harness.addToBattlefieldAndReturn(player1, new WildwoodGeist());
+
+        harness.forceActivePlayer(player1);
+        for (TurnStep step : TurnStep.values()) {
+            harness.forceStep(step);
+            assertThat(gqs.getEffectivePower(gd, geist)).as("power during %s", step).isEqualTo(5);
+            assertThat(gqs.getEffectiveToughness(gd, geist)).as("toughness during %s", step).isEqualTo(5);
+        }
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UNTAP);
+        assertThat(gqs.getEffectivePower(gd, geist)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, geist)).isEqualTo(3);
+
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.getEffectivePower(gd, geist)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, geist)).isEqualTo(5);
     }
 }
