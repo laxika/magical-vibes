@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.r.RoyalAssassin;
+import com.github.laxika.magicalvibes.cards.r.Regeneration;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AngelicPage.class, GloriousAnthem.class, GlorySeeker.class, GrizzlyBears.class,
-        HillGiant.class, RoyalAssassin.class, WesternPaladin.class})
+        HillGiant.class, Regeneration.class, RoyalAssassin.class, WesternPaladin.class})
 class WesternPaladinTest extends BaseCardTest {
 
     @Test
@@ -228,6 +229,45 @@ class WesternPaladinTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Angelic Page");
         harness.assertInGraveyard(player2, "Angelic Page");
         assertThat(findPermanent(player1, "Western Paladin").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after Western Paladin is destroyed")
+    void resolvesAfterSourceIsDestroyed() {
+        Permanent paladin = setupPaladin();
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
+        addCreatureReady(player2, new RoyalAssassin());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player2, 1, null, paladin.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Western Paladin");
+        harness.assertOnBattlefield(player2, "Glory Seeker");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Glory Seeker");
+        harness.assertInGraveyard(player2, "Glory Seeker");
+    }
+
+    @Test
+    @DisplayName("A white creature can regenerate from the destruction")
+    void targetCanRegenerate() {
+        setupPaladin();
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Regeneration());
+        aura.setAttachedTo(target.getId());
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player2, 1, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Glory Seeker");
+        harness.assertNotInGraveyard(player2, "Glory Seeker");
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getRegenerationShield()).isZero();
     }
 
     private Permanent setupPaladin(int blackMana) {
