@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.cards.p.PlanarCleansing;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WickedVisitor.class, GloriousAnthem.class, Naturalize.class})
+@CardUsed({WickedVisitor.class, GloriousAnthem.class, Naturalize.class, PlanarCleansing.class})
 class WickedVisitorTest extends BaseCardTest {
 
     @Test
@@ -32,8 +33,7 @@ class WickedVisitorTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, anthemId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, anthemId);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -58,11 +58,56 @@ class WickedVisitorTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player1, 0, anthemId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, anthemId);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Sees each controlled enchantment die simultaneously with Wicked Visitor")
+    void simultaneousDestructionStillTriggersForEveryEnchantment() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new WickedVisitor());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.addToBattlefield(player2, new GloriousAnthem());
+        harness.setHand(player1, List.of(new PlanarCleansing()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Each Wicked Visitor triggers independently for the same enchantment")
+    void multipleVisitorsEachTrigger() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new WickedVisitor());
+        harness.addToBattlefield(player1, new WickedVisitor());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        UUID anthemId = harness.getPermanentId(player1, "Glorious Anthem");
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player1, 0, anthemId);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 }
