@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VeteransReflexes.class, GrizzlyBears.class, Pacifism.class})
 class VeteransReflexesTest extends BaseCardTest {
 
     @Test
@@ -46,8 +48,7 @@ class VeteransReflexesTest extends BaseCardTest {
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         addTappedCreature(player1);
-        Permanent enchantment = new Permanent(new Pacifism());
-        gd.playerBattlefields.get(player2.getId()).add(enchantment);
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new Pacifism());
         harness.setHand(player1, List.of(new VeteransReflexes()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -72,18 +73,44 @@ class VeteransReflexesTest extends BaseCardTest {
         assertThat(target.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("An already untapped creature still gets the boost")
+    void boostsUntappedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castVeteransReflexes(target);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Only the chosen creature is boosted and untapped")
+    void affectsOnlyChosenCreature() {
+        Permanent target = addTappedCreature(player1);
+        Permanent other = addTappedCreature(player2);
+
+        castVeteransReflexes(target);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(other.isTapped()).isTrue();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+    }
+
     private void castVeteransReflexes(Permanent target) {
         harness.setHand(player1, List.of(new VeteransReflexes()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private Permanent addTappedCreature(Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         creature.setSummoningSick(false);
         creature.tap();
-        gd.playerBattlefields.get(player.getId()).add(creature);
         return creature;
     }
 }
