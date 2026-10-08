@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.a.AtomicMicrosizer;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GravpackMonoist;
+import com.github.laxika.magicalvibes.cards.t.TapestryWarden;
+import com.github.laxika.magicalvibes.cards.t.TerritorialBruntar;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,13 +19,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WarmakerGunship.class, AtomicMicrosizer.class, GrizzlyBears.class})
+@CardUsed({WarmakerGunship.class, AtomicMicrosizer.class, GravpackMonoist.class, TerritorialBruntar.class, TapestryWarden.class})
 class WarmakerGunshipTest extends BaseCardTest {
 
     @Test
     @DisplayName("When Warmaker Gunship enters, it deals damage equal to the artifacts its controller controls")
     void enteringDealsDamageEqualToControlledArtifacts() {
-        Permanent target = addOpponentBear();
+        Permanent target = addOpponentCreature();
         harness.addToBattlefield(player1, new AtomicMicrosizer());
         harness.addToBattlefield(player2, new AtomicMicrosizer());
 
@@ -34,7 +37,7 @@ class WarmakerGunshipTest extends BaseCardTest {
     @Test
     @DisplayName("Warmaker Gunship cannot target a creature its controller controls")
     void cannotTargetOwnCreature() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GravpackMonoist());
         harness.setHand(player1, List.of(new WarmakerGunship()));
         addCastingMana();
 
@@ -47,13 +50,13 @@ class WarmakerGunshipTest extends BaseCardTest {
     @DisplayName("Station puts counters equal to the tapped creature's power on Warmaker Gunship")
     void stationUsesTappedCreaturePower() {
         Permanent gunship = harness.addToBattlefieldAndReturn(player1, new WarmakerGunship());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new GravpackMonoist());
 
         harness.activateAbility(player1, battlefieldIndex(gunship), null, null);
-        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.passBothPriorities();
 
-        assertThat(bears.isTapped()).isTrue();
+        assertThat(creature.isTapped()).isTrue();
         assertThat(gunship.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
@@ -75,18 +78,128 @@ class WarmakerGunshipTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, gunship, Keyword.FLYING)).isFalse();
     }
 
-    private Permanent addOpponentBear() {
-        GrizzlyBears bear = new GrizzlyBears();
-        bear.setToughness(8);
-        return harness.addToBattlefieldAndReturn(player2, bear);
+    @Test
+    void enteringCountsArtifactsAtResolution() {
+        Permanent target = addOpponentCreature();
+        harness.setHand(player1, List.of(new WarmakerGunship()));
+        addCastingMana();
+        harness.castArtifact(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new AtomicMicrosizer());
+        resolveAllTriggers();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void canEnterWithoutAnOpposingCreature() {
+        harness.castFromHand(player1, new WarmakerGunship(), "{2}{R}");
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Warmaker Gunship");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void stationCanTapASummoningSickCreatureAndContinueAboveThreshold() {
+        Permanent gunship = harness.addToBattlefieldAndReturn(player1, new WarmakerGunship());
+        gunship.setCounterCount(CounterType.CHARGE, 6);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new TerritorialBruntar());
+        creature.setSummoningSick(true);
+
+        harness.activateAbility(player1, battlefieldIndex(gunship), null, null);
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gunship.getCounterCount(CounterType.CHARGE)).isEqualTo(6);
+        resolveAllTriggers();
+
+        assertThat(gunship.getCounterCount(CounterType.CHARGE)).isEqualTo(12);
+        assertThat(gqs.hasKeyword(gd, gunship, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void stationCannotTapTheGunshipItselfOrAnOpposingCreature() {
+        Permanent gunship = harness.addToBattlefieldAndReturn(player1, new WarmakerGunship());
+        gunship.setCounterCount(CounterType.CHARGE, 6);
+        harness.addToBattlefield(player2, new TerritorialBruntar());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(gunship), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gunship.isTapped()).isFalse();
+        assertThat(gunship.getCounterCount(CounterType.CHARGE)).isEqualTo(6);
+    }
+
+    @Test
+    void stationCannotTapAnAlreadyTappedCreature() {
+        Permanent gunship = harness.addToBattlefieldAndReturn(player1, new WarmakerGunship());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new TerritorialBruntar());
+        creature.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(gunship), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gunship.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    void stationCannotBeActivatedDuringCombat() {
+        Permanent gunship = harness.addToBattlefieldAndReturn(player1, new WarmakerGunship());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new TerritorialBruntar());
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(gunship), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    void stationUsesLastKnownPowerWhenTappedCreatureDies() {
+        Permanent gunship = harness.addToBattlefieldAndReturn(player1, new WarmakerGunship());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new TerritorialBruntar());
+
+        harness.activateAbility(player1, battlefieldIndex(gunship), null, null);
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        creature.setMarkedDamage(7);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Territorial Bruntar");
+        assertThat(gunship.getCounterCount(CounterType.CHARGE)).isEqualTo(7);
+    }
+
+    @Test
+    void stationUsesToughnessWithTapestryWarden() {
+        Permanent gunship = harness.addToBattlefieldAndReturn(player1, new WarmakerGunship());
+        Permanent warden = harness.addToBattlefieldAndReturn(player1, new TapestryWarden());
+
+        harness.activateAbility(player1, battlefieldIndex(gunship), null, null);
+        resolveAllTriggers();
+
+        assertThat(warden.isTapped()).isTrue();
+        assertThat(gunship.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
+    }
+
+    @Test
+    void negativePowerDoesNotRemoveChargeCounters() {
+        Permanent gunship = harness.addToBattlefieldAndReturn(player1, new WarmakerGunship());
+        gunship.setCounterCount(CounterType.CHARGE, 2);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GravpackMonoist());
+        creature.setPowerModifier(-3);
+
+        harness.activateAbility(player1, battlefieldIndex(gunship), null, null);
+        resolveAllTriggers();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gunship.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+    }
+
+    private Permanent addOpponentCreature() {
+        return harness.addToBattlefieldAndReturn(player2, new TerritorialBruntar());
     }
 
     private void castWarmakerGunship(java.util.UUID targetId) {
         harness.setHand(player1, List.of(new WarmakerGunship()));
         addCastingMana();
         harness.castArtifact(player1, 0, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void addCastingMana() {
