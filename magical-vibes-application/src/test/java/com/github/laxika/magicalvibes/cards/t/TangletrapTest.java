@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -94,8 +95,7 @@ class TangletrapTest extends BaseCardTest {
 
     @Test
     void marksExactlyFiveDamageOnSurvivingFlyer() {
-        harness.addToBattlefield(player2, new AirElemental());
-        var flyer = gd.playerBattlefields.get(player2.getId()).getFirst();
+        var flyer = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         flyer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.setHand(player1, List.of(new Tangletrap()));
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -144,5 +144,37 @@ class TangletrapTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 0,
                 harness.getPermanentId(player2, "Cogwork Archivist")))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @CardUsed({Tangletrap.class, BiblioplexAssistant.class})
+    void destroysFlyingArtifactEvenWhenFiveDamageWouldNotKillIt() {
+        var artifact = harness.addToBattlefieldAndReturn(player2, new BiblioplexAssistant());
+        artifact.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        harness.setHand(player1, List.of(new Tangletrap()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, 1, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Biblioplex Assistant");
+        harness.assertInGraveyard(player2, "Biblioplex Assistant");
+        assertThat(artifact.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @CardUsed({Tangletrap.class, BiblioplexAssistant.class})
+    void damageModeDoesNotDestroyArtifactThatLosesFlyingBeforeResolution() {
+        var artifact = harness.addToBattlefieldAndReturn(player2, new BiblioplexAssistant());
+        harness.setHand(player1, List.of(new Tangletrap()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, 0, artifact.getId());
+        artifact.getRemovedKeywords().add(Keyword.FLYING);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Biblioplex Assistant");
+        assertThat(artifact.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Tangletrap");
     }
 }
