@@ -95,4 +95,66 @@ class VerdantEidolonTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(eidolon);
     }
+
+    @Test
+    @DisplayName("Verdant Eidolon on the battlefield does not trigger when a multicolored spell is cast")
+    void battlefieldEidolonDoesNotTriggerReturn() {
+        harness.addToBattlefield(player1, new VerdantEidolon());
+        harness.castFromHand(player1, new AzoriusFirstWing(), "{W}{U}");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Verdant Eidolon");
+        harness.assertNotInHand(player1, "Verdant Eidolon");
+    }
+
+    @Test
+    @DisplayName("A sacrificed Verdant Eidolon can return when its controller casts a multicolored spell")
+    void sacrificedEidolonReturnsOnLaterMulticoloredCast() {
+        VerdantEidolon eidolon = new VerdantEidolon();
+        harness.addToBattlefield(player1, eidolon);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Verdant Eidolon");
+        harness.assertInGraveyard(player1, "Verdant Eidolon");
+        assertThat(gd.stack).isEmpty();
+        harness.handleListChoice(player1, "BLUE");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+
+        harness.castFromHand(player1, new AzoriusFirstWing(), "{W}{U}");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(eidolon);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(eidolon);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each Verdant Eidolon in the graveyard has an independently optional return trigger")
+    void multipleEidolonsHaveIndependentReturnChoices() {
+        VerdantEidolon first = new VerdantEidolon();
+        VerdantEidolon second = new VerdantEidolon();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.castFromHand(player1, new AzoriusFirstWing(), "{W}{U}");
+
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId()).getFirst()).isIn(first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()).getFirst()).isIn(first, second);
+        assertThat(gd.playerHands.get(player1.getId()).getFirst())
+                .isNotSameAs(gd.playerGraveyards.get(player1.getId()).getFirst());
+        assertThat(gd.stack).hasSize(1);
+    }
 }
