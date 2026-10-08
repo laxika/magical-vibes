@@ -23,11 +23,8 @@ class ZimoneAllQuestioningTest extends BaseCardTest {
 
         resolveControllerEndStep();
 
-        Permanent primo = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken()
-                        && "Primo, the Indivisible".equals(permanent.getCard().getName()))
-                .findFirst()
-                .orElseThrow();
+        Permanent primo = findPermanent(player1, "Primo, the Indivisible");
+        assertThat(primo.getCard().isToken()).isTrue();
         assertThat(primo.getCard().hasType(CardType.CREATURE)).isTrue();
         assertThat(primo.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);
         assertThat(primo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -44,9 +41,7 @@ class ZimoneAllQuestioningTest extends BaseCardTest {
 
         resolveControllerEndStep();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().isToken()
-                        && "Primo, the Indivisible".equals(permanent.getCard().getName()));
+        harness.assertNotOnBattlefield(player1, "Primo, the Indivisible");
     }
 
     @Test
@@ -56,17 +51,81 @@ class ZimoneAllQuestioningTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
 
         gd.playerBattlefields.get(player1.getId())
                 .removeIf(permanent -> permanent.getCard().hasType(CardType.LAND));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().isToken()
-                        && "Primo, the Indivisible".equals(permanent.getCard().getName()));
+        harness.assertNotOnBattlefield(player1, "Primo, the Indivisible");
+    }
+
+    @Test
+    void doesNotTriggerWithoutALandEnteringThisTurn() {
+        harness.addToBattlefield(player1, new ZimoneAllQuestioning());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+
+        resolveControllerEndStep();
+
+        harness.assertNotOnBattlefield(player1, "Primo, the Indivisible");
+    }
+
+    @Test
+    void opponentLandEntryDoesNotSatisfyCondition() {
+        harness.addToBattlefield(player1, new ZimoneAllQuestioning());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+
+        resolveControllerEndStep();
+
+        harness.assertNotOnBattlefield(player1, "Primo, the Indivisible");
+    }
+
+    @Test
+    void oneLandIsNotPrime() {
+        harness.addToBattlefield(player1, new ZimoneAllQuestioning());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        resolveControllerEndStep();
+
+        harness.assertNotOnBattlefield(player1, "Primo, the Indivisible");
+    }
+
+    @Test
+    void usesLandCountAtResolutionWhenItChangesToAnotherPrime() {
+        harness.addToBattlefield(player1, new ZimoneAllQuestioning());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Primo, the Indivisible")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsEndStep() {
+        harness.addToBattlefield(player1, new ZimoneAllQuestioning());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Primo, the Indivisible");
     }
 
     private void resolveControllerEndStep() {
