@@ -18,6 +18,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ViashinoOutriderTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Echo does not create an enters-the-battlefield trigger")
+    void enteringBattlefieldDoesNotCreateTrigger() {
+        harness.castFromHand(player1, new ViashinoOutrider(), "{2}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Viashino Outrider");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Echo cannot be paid with only generic mana")
+    void echoRequiresRedMana() {
+        castAndResolveViashinoOutrider();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Viashino Outrider");
+        harness.assertInGraveyard(player1, "Viashino Outrider");
+    }
+
+    @Test
     @DisplayName("Declining echo sacrifices Viashino Outrider at its next upkeep")
     void decliningEchoSacrificesViashinoOutrider() {
         castAndResolveViashinoOutrider();
