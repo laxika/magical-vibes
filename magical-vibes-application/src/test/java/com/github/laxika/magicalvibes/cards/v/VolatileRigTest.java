@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.e.Electrickery;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -7,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VolatileRig.class, GrizzlyBears.class, Murder.class, Electrickery.class})
 class VolatileRigTest extends BaseCardTest {
 
     @Test
@@ -70,8 +73,7 @@ class VolatileRigTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Murder()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castInstant(player1, 0, rig.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, rig.getId());
         harness.passBothPriorities();
 
         int player1Life = gd.playerLifeTotals.get(player1.getId());
@@ -87,15 +89,91 @@ class VolatileRigTest extends BaseCardTest {
         assertThat(bearOnBattlefield).isEqualTo(flipWon);
     }
 
+    @Test
+    @DisplayName("Noncombat damage flips a coin and sacrifices the Rig only on a loss")
+    void noncombatDamageSacrificesOnlyOnLostFlip() {
+        Permanent rig = harness.addToBattlefieldAndReturn(player2, new VolatileRig());
+        harness.setHand(player1, List.of(new Electrickery()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, rig.getId());
+        harness.passBothPriorities();
+
+        List<String> flips = gd.gameLog.stream().map(GameLogEntry::plainText)
+                .filter(log -> log.contains("coin flip for Volatile Rig")).toList();
+        assertThat(flips).hasSize(1);
+        boolean lost = flips.getFirst().contains("loses the coin flip");
+        assertThat(gd.playerBattlefields.get(player2.getId()).contains(rig)).isEqualTo(!lost);
+        assertThat(gd.playerGraveyards.get(player2.getId()).contains(rig.getCard())).isEqualTo(lost);
+    }
+
+    @Test
+    @DisplayName("Lethal damage still causes both damage and death coin flips")
+    void lethalDamageStillFlipsTwice() {
+        Permanent rig = harness.addToBattlefieldAndReturn(player2, new VolatileRig());
+        rig.setMarkedDamage(3);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Electrickery()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, rig.getId());
+        harness.assertNotOnBattlefield(player2, "Volatile Rig");
+        harness.assertInGraveyard(player2, "Volatile Rig");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        int lifeAfterFirstFlip = gd.playerLifeTotals.get(player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)
+                .filter(log -> log.contains("coin flip for Volatile Rig"))).hasSize(2);
+        int finalLife = gd.playerLifeTotals.get(player1.getId());
+        assertThat(finalLife).isIn(16, 20);
+        harness.assertLife(player2, finalLife);
+        assertThat(lifeAfterFirstFlip - finalLife).isIn(0, 4);
+        harness.assertInGraveyard(player2, "Volatile Rig");
+    }
+
+    @Test
+    @DisplayName("A tapped Volatile Rig is not required to attack")
+    void tappedRigNeedNotAttack() {
+        Permanent rig = addReadyRig(player1);
+        rig.setTapped(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        gs.declareAttackers(gd, player1, List.of());
+
+        assertThat(rig.isAttacking()).isFalse();
+        harness.assertOnBattlefield(player1, "Volatile Rig");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Volatile Rig is not required to attack")
+    void summoningSickRigNeedNotAttack() {
+        Permanent rig = harness.addToBattlefieldAndReturn(player1, new VolatileRig());
+        rig.setSummoningSick(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        gs.declareAttackers(gd, player1, List.of());
+
+        assertThat(rig.isAttacking()).isFalse();
+        harness.assertOnBattlefield(player1, "Volatile Rig");
+    }
+
     private Permanent addReadyRig(com.github.laxika.magicalvibes.model.Player player) {
         return addReadyCreature(player, new VolatileRig());
     }
 
     private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player,
                                        com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
