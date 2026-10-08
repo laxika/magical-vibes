@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.k.KjeldoranEscort;
+import com.github.laxika.magicalvibes.cards.w.WitchbaneOrb;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SoldeviSteamBeast.class, KjeldoranEscort.class})
+@CardUsed({SoldeviSteamBeast.class, KjeldoranEscort.class, WitchbaneOrb.class})
 class SoldeviSteamBeastTest extends BaseCardTest {
 
     @Test
@@ -46,13 +46,12 @@ class SoldeviSteamBeastTest extends BaseCardTest {
     @Test
     @DisplayName("{2} regenerates the Beast from lethal combat damage")
     void regeneratesFromLethalDamage() {
-        addCreatureReady(player1, new SoldeviSteamBeast());
+        Permanent beast = addCreatureReady(player1, new SoldeviSteamBeast());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent beast = findPermanent(player1, "Soldevi Steam Beast");
         assertThat(beast.getRegenerationShield()).isEqualTo(1);
         harness.setLife(player2, 20);
 
@@ -86,5 +85,58 @@ class SoldeviSteamBeastTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertInGraveyard(player1, "Soldevi Steam Beast");
+    }
+
+    @Test
+    @DisplayName("An opponent with hexproof cannot receive the targeted tap trigger")
+    void hexproofOpponentCannotBeTargeted() {
+        addCreatureReady(player1, new SoldeviSteamBeast());
+        harness.addToBattlefield(player2, new WitchbaneOrb());
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Creating a regeneration shield does not tap the Beast or give life")
+    void creatingShieldDoesNotTriggerLifeGain() {
+        Permanent beast = addCreatureReady(player1, new SoldeviSteamBeast());
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(beast.isTapped()).isFalse();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Regenerating an already tapped Beast does not trigger another life gain")
+    void regeneratingTappedBeastDoesNotTriggerLifeGain() {
+        Permanent beast = addCreatureReady(player1, new SoldeviSteamBeast());
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        beast.setTapped(true);
+        beast.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new KjeldoranEscort());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Soldevi Steam Beast");
+        assertThat(beast.isTapped()).isTrue();
+        assertThat(beast.isAttacking()).isFalse();
+        assertThat(beast.getMarkedDamage()).isZero();
+        assertThat(beast.getRegenerationShield()).isZero();
+        harness.assertLife(player2, 20);
     }
 }
