@@ -76,6 +76,28 @@ class RagnarokDivineDeliveranceTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).contains(destroyed.getCard());
     }
 
+    @Test
+    void destroysPermanentWhenGraveyardTargetLeavesBeforeResolution() {
+        Forest returned = new Forest();
+        harness.setGraveyard(player1, List.of(returned));
+        Permanent destroyed = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent ragnarok = harness.addToBattlefieldAndReturn(player1, new RagnarokDivineDeliverance());
+
+        kill(ragnarok);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, destroyed.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(returned.getId()));
+        assertThat(gd.stack).hasSize(1);
+        harness.setGraveyard(player1, List.of(ragnarok.getCard()));
+        harness.setExile(player1, List.of(returned));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(destroyed.getCard());
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(returned.getId()));
+    }
+
     private void kill(Permanent ragnarok) {
         harness.inMutationScope(() ->
                 harness.getPermanentRemovalService().removePermanentToGraveyard(gd, ragnarok));
