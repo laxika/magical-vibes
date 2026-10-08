@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.b.BorealDruid;
+import com.github.laxika.magicalvibes.cards.v.ValorMadeReal;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,8 +16,48 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WoollyRazorback.class, BorealDruid.class})
+@CardUsed({WoollyRazorback.class, BorealDruid.class, ValorMadeReal.class})
 class WoollyRazorbackTest extends BaseCardTest {
+
+    @Test
+    void iceCountersPreventAttacking() {
+        Permanent razorback = addRazorback();
+        razorback.setSummoningSick(false);
+
+        assertThat(als.canAttackDefender(gd, razorback, player2.getId())).isFalse();
+        razorback.setCounterCount(CounterType.ICE, 0);
+        assertThat(als.canAttackDefender(gd, razorback, player2.getId())).isTrue();
+        razorback.setCounterCount(CounterType.ICE, 1);
+        assertThat(als.canAttackDefender(gd, razorback, player2.getId())).isFalse();
+    }
+
+    @Test
+    void attacksForFullDamageWithoutIceCounters() {
+        Permanent razorback = addRazorback();
+        razorback.setSummoningSick(false);
+        razorback.setCounterCount(CounterType.ICE, 0);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 13);
+    }
+
+    @Test
+    void blockingMultipleCreaturesRemovesOnlyOneIceCounter() {
+        Permanent razorback = addRazorback();
+        harness.setHand(player1, List.of(new ValorMadeReal()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, razorback.getId());
+        Permanent attackerOne = addAttacker();
+        Permanent attackerTwo = addAttacker();
+
+        declareBlocks(razorback, List.of(attackerOne, attackerTwo));
+
+        assertThat(razorback.getCounterCount(CounterType.ICE)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .contains(attackerOne, attackerTwo);
+    }
 
     @Test
     @DisplayName("Woolly Razorback enters with ice counters and has defender while it has one")
@@ -64,10 +105,7 @@ class WoollyRazorbackTest extends BaseCardTest {
     }
 
     private Permanent addRazorback() {
-        harness.setHand(player1, List.of(new WoollyRazorback()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new WoollyRazorback(), "{2}{W}{W}");
         harness.passBothPriorities();
         return findPermanent(player1, "Woolly Razorback");
     }
