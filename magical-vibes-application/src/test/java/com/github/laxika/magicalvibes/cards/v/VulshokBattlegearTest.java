@@ -120,9 +120,53 @@ class VulshokBattlegearTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Re-equipping moves the boost only when the ability resolves")
+    void reEquipMovesBoostOnResolution() {
+        Permanent battlegear = addBattlegearReady(player1);
+        Permanent original = addCreatureReady(player1, new AlphaMyr());
+        Permanent replacement = addCreatureReady(player1, new AlphaMyr());
+        battlegear.setAttachedTo(original.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, replacement.getId());
+
+        assertThat(battlegear.getAttachedTo()).isEqualTo(original.getId());
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, replacement)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, replacement)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(battlegear.getAttachedTo()).isEqualTo(replacement.getId());
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, replacement)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, replacement)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("An illegal new equip target leaves the original attachment intact")
+    void failedReEquipKeepsOriginalAttachment() {
+        Permanent battlegear = addBattlegearReady(player1);
+        Permanent original = addCreatureReady(player1, new AlphaMyr());
+        Permanent replacement = addCreatureReady(player1, new AlphaMyr());
+        battlegear.setAttachedTo(original.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, replacement.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(replacement);
+        harness.passBothPriorities();
+
+        assertThat(battlegear.getAttachedTo()).isEqualTo(original.getId());
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addBattlegearReady(Player player) {
-        Permanent battlegear = harness.addToBattlefieldAndReturn(player, new VulshokBattlegear());
-        battlegear.setSummoningSick(false);
-        return battlegear;
+        return addCreatureReady(player, new VulshokBattlegear());
     }
 }
