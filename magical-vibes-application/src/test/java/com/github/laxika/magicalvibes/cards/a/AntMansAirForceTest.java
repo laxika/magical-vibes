@@ -120,4 +120,24 @@ class AntMansAirForceTest extends BaseCardTest {
         assertThat(target.getPowerModifier()).isEqualTo(-1);
         assertThat(target.getToughnessModifier()).isZero();
     }
+
+    @Test
+    void returningTargetIsANewObjectAndIsNotAffected() {
+        Permanent attacker = addCreatureReady(player1, new AntMansAirForce());
+        AntMansAirForce targetCard = new AntMansAirForce();
+        Permanent originalTarget = addCreatureReady(player2, targetCard);
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, originalTarget.getId());
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player2.getId()).remove(originalTarget);
+        Permanent returnedTarget = harness.addToBattlefieldAndReturn(player2, targetCard);
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(returnedTarget.getPowerModifier()).isZero();
+        assertThat(returnedTarget.getToughnessModifier()).isZero();
+        assertThat(attacker.getPowerModifier()).isZero();
+    }
 }
