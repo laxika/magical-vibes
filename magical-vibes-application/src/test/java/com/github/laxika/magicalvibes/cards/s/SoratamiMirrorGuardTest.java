@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
+import com.github.laxika.magicalvibes.cards.k.KodamasMight;
 import com.github.laxika.magicalvibes.cards.m.MossKami;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SoratamiMirrorGuard.class, Island.class, IsamaruHoundOfKonda.class, MossKami.class})
+@CardUsed({SoratamiMirrorGuard.class, Island.class, IsamaruHoundOfKonda.class, MossKami.class, KodamasMight.class})
 class SoratamiMirrorGuardTest extends BaseCardTest {
 
     @Test
@@ -31,8 +32,7 @@ class SoratamiMirrorGuardTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(player1, "Soratami Mirror-Guard"), 0, hound.getId());
 
         harness.assertInHand(player1, "Island");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Island"));
+        harness.assertNotOnBattlefield(player1, "Island");
 
         harness.passBothPriorities();
 
@@ -126,6 +126,70 @@ class SoratamiMirrorGuardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hound.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Target becoming too powerful before resolution is not made unblockable")
+    void rechecksPowerOnResolution() {
+        harness.addToBattlefield(player1, new SoratamiMirrorGuard());
+        harness.addToBattlefield(player1, new Island());
+        Permanent hound = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        harness.setHand(player1, List.of(new KodamasMight()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, "Soratami Mirror-Guard"), 0, hound.getId());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, hound.getId());
+        assertThat(gqs.getEffectivePower(gd, hound)).isEqualTo(4);
+        harness.passBothPriorities();
+
+        assertThat(hound.isCantBeBlocked()).isFalse();
+        harness.assertInHand(player1, "Island");
+        harness.assertNotOnBattlefield(player1, "Island");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Power increasing after resolution does not remove unblockability")
+    void powerIncreaseAfterResolutionDoesNotRemoveEffect() {
+        harness.addToBattlefield(player1, new SoratamiMirrorGuard());
+        harness.addToBattlefield(player1, new Island());
+        Permanent hound = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        harness.setHand(player1, List.of(new KodamasMight()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, "Soratami Mirror-Guard"), 0, hound.getId());
+        harness.passBothPriorities();
+        harness.ensurePriority(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, hound.getId());
+
+        assertThat(gqs.getEffectivePower(gd, hound)).isEqualTo(4);
+        assertThat(hound.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped land controlled by the activator returns to its actual owner")
+    void returnsBorrowedTappedLandToOwner() {
+        Permanent guard = harness.addToBattlefieldAndReturn(player1, new SoratamiMirrorGuard());
+        guard.setTapped(true);
+        guard.setSummoningSick(true);
+        Island borrowedIsland = new Island();
+        borrowedIsland.setOwnerId(player2.getId());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, borrowedIsland);
+        land.setTapped(true);
+        Permanent hound = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, "Soratami Mirror-Guard"), 0, hound.getId());
+
+        harness.assertInHand(player2, "Island");
+        harness.assertNotInHand(player1, "Island");
+        harness.assertNotOnBattlefield(player1, "Island");
+        harness.passBothPriorities();
+        assertThat(hound.isCantBeBlocked()).isTrue();
     }
 
     private int battlefieldIndex(Player owner, String name) {
