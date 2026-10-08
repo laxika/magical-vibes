@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WildgrowthArchaic.class, GrizzlyBears.class, Divination.class, Cancel.class})
 class WildgrowthArchaicTest extends BaseCardTest {
 
     @Test
@@ -55,8 +57,7 @@ class WildgrowthArchaicTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Divination()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.castSorcery(player1, 0, 0);
-        resolveAllTriggers();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(findPermanent(player1, "Wildgrowth Archaic")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -77,8 +78,7 @@ class WildgrowthArchaicTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         gd.playerGraveyards.get(player1.getId()).remove(bears);
         harness.setHand(player1, List.of(bears));
@@ -91,10 +91,75 @@ class WildgrowthArchaicTest extends BaseCardTest {
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Colorless payment gives no converge counters and the Archaic dies")
+    void colorlessPaymentGivesNoCounters() {
+        harness.setHand(player1, List.of(new WildgrowthArchaic()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Wildgrowth Archaic");
+        harness.assertInGraveyard(player1, "Wildgrowth Archaic");
+    }
+
+    @Test
+    @DisplayName("An existing Archaic adds counters to a second Archaic in addition to converge")
+    void secondArchaicGetsConvergeAndTriggeredCounters() {
+        castWildgrowthArchaic();
+        WildgrowthArchaic second = new WildgrowthArchaic();
+        harness.setHand(player1, List.of(second));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getId().equals(second.getId()))
+                .singleElement()
+                .satisfies(permanent -> assertThat(permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                        .isEqualTo(2));
+    }
+
+    @Test
+    @DisplayName("Each Archaic grants its own additional counters")
+    void multipleArchaicsStackTheirGrants() {
+        castWildgrowthArchaic();
+        castWildgrowthArchaic();
+        WildgrowthArchaic third = new WildgrowthArchaic();
+        harness.setHand(player1, List.of(third));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getId().equals(third.getId()))
+                .singleElement()
+                .satisfies(permanent -> assertThat(permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                        .isEqualTo(3));
+    }
+
+    @Test
+    @DisplayName("An opponent's creature spell gets only its own converge counters")
+    void opponentsCreatureDoesNotReceiveGrant() {
+        castWildgrowthArchaic();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new WildgrowthArchaic()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player2, "Wildgrowth Archaic")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private void castWildgrowthArchaic() {
         harness.setHand(player1, List.of(new WildgrowthArchaic()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
