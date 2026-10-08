@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -11,8 +12,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(VindictiveWarden.class)
+@CardUsed({VindictiveWarden.class})
 class VindictiveWardenTest extends BaseCardTest {
 
     @Test
@@ -42,6 +44,56 @@ class VindictiveWardenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLife - 1);
+    }
+
+    @Test
+    @DisplayName("Menace rejects a single blocker")
+    void menaceRejectsSingleBlocker() {
+        addReadyWarden();
+        addCreatureReady(player2, new VindictiveWarden());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("two or more creatures");
+    }
+
+    @Test
+    @DisplayName("Menace permits two blockers")
+    void menacePermitsTwoBlockers() {
+        addReadyWarden();
+        Permanent first = addCreatureReady(player2, new VindictiveWarden());
+        Permanent second = addCreatureReady(player2, new VindictiveWarden());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(first.isBlocking()).isTrue();
+        assertThat(second.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Warden can activate repeatedly without damaging its controller")
+    void activatedAbilityWorksRepeatedlyWhileTappedAndSummoningSick() {
+        Permanent warden = addReadyWarden();
+        warden.setSummoningSick(true);
+        warden.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        int controllerLife = gd.playerLifeTotals.get(player1.getId());
+        int opponentLife = gd.playerLifeTotals.get(player2.getId());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(controllerLife);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLife - 2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(warden.isTapped()).isTrue();
     }
 
     private Permanent addReadyWarden() {
