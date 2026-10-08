@@ -128,6 +128,58 @@ class VigeanGraftmageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Untap does not resolve if the target loses its last +1/+1 counter")
+    void doesNotUntapTargetThatLosesLastCounter() {
+        Permanent scout = addCreatureReady(player2, new SilkwingScout());
+        scout.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        scout.tap();
+        Permanent graftmage = castGraftmage();
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(graftmage),
+                null, scout.getId());
+        scout.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.passBothPriorities();
+
+        assertThat(scout.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Graftmage can untap itself")
+    void canUntapItselfWhileTappedAndSummoningSick() {
+        Permanent graftmage = castGraftmage();
+        graftmage.tap();
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(graftmage),
+                null, graftmage.getId());
+        harness.passBothPriorities();
+
+        assertThat(graftmage.isTapped()).isFalse();
+        assertThat(graftmage.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Moving the final graft counter puts the Graftmage into the graveyard")
+    void movingFinalCounterKillsGraftmage() {
+        Permanent graftmage = castGraftmage();
+        graftmage.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent scout = castSilkwingScout(player1);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(scout.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Vigean Graftmage");
+        harness.assertInGraveyard(player1, "Vigean Graftmage");
+    }
+
     private Permanent castGraftmage() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
