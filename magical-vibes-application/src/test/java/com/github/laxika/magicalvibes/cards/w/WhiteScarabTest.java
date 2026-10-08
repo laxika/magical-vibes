@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionWhite;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranWarrior;
@@ -25,9 +25,8 @@ class WhiteScarabTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new BalduvianBears());
         attacker.setAttacking(true);
 
-        Permanent aura = new Permanent(new WhiteScarab());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new WhiteScarab());
         aura.setAttachedTo(attacker.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         Permanent blocker = addCreatureReady(player2, new KjeldoranWarrior());
 
@@ -46,9 +45,8 @@ class WhiteScarabTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new BalduvianBears());
         attacker.setAttacking(true);
 
-        Permanent aura = new Permanent(new WhiteScarab());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new WhiteScarab());
         aura.setAttachedTo(attacker.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         Permanent blocker = addCreatureReady(player2, new BalduvianBears());
 
@@ -67,9 +65,8 @@ class WhiteScarabTest extends BaseCardTest {
     void noBoostWithoutOpponentWhitePermanent() {
         Permanent bears = addCreatureReady(player1, new BalduvianBears());
 
-        Permanent aura = new Permanent(new WhiteScarab());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new WhiteScarab());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -80,9 +77,8 @@ class WhiteScarabTest extends BaseCardTest {
     void boostedWhenOpponentControlsWhitePermanent() {
         Permanent bears = addCreatureReady(player1, new BalduvianBears());
 
-        Permanent aura = new Permanent(new WhiteScarab());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new WhiteScarab());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.addToBattlefield(player2, new KjeldoranWarrior());
 
@@ -95,9 +91,8 @@ class WhiteScarabTest extends BaseCardTest {
     void notBoostedWhenOpponentControlsNonWhitePermanent() {
         Permanent bears = addCreatureReady(player1, new BalduvianBears());
 
-        Permanent aura = new Permanent(new WhiteScarab());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new WhiteScarab());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.addToBattlefield(player2, new BalduvianBears());
 
@@ -110,9 +105,8 @@ class WhiteScarabTest extends BaseCardTest {
     void boostUsesAuraControllerForOpponentCondition() {
         Permanent bears = addCreatureReady(player1, new BalduvianBears());
 
-        Permanent aura = new Permanent(new WhiteScarab());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new WhiteScarab());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player2.getId()).add(aura);
 
         harness.addToBattlefield(player1, new KjeldoranWarrior());
 
@@ -125,9 +119,8 @@ class WhiteScarabTest extends BaseCardTest {
     void boostEndsWhenOpponentWhitePermanentLeavesBattlefield() {
         Permanent bears = addCreatureReady(player1, new BalduvianBears());
 
-        Permanent aura = new Permanent(new WhiteScarab());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new WhiteScarab());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         Permanent whitePermanent = harness.addToBattlefieldAndReturn(player2, new KjeldoranWarrior());
 
@@ -145,9 +138,8 @@ class WhiteScarabTest extends BaseCardTest {
     void boostedWhenOpponentControlsWhiteNoncreaturePermanent() {
         Permanent bears = addCreatureReady(player1, new BalduvianBears());
 
-        Permanent aura = new Permanent(new WhiteScarab());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new WhiteScarab());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.addToBattlefield(player2, new CircleOfProtectionWhite());
 
@@ -160,9 +152,8 @@ class WhiteScarabTest extends BaseCardTest {
     void ownWhitePermanentDoesNotBoost() {
         Permanent bears = addCreatureReady(player1, new BalduvianBears());
 
-        Permanent aura = new Permanent(new WhiteScarab());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new WhiteScarab());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.addToBattlefield(player1, new KjeldoranWarrior());
 
@@ -170,10 +161,34 @@ class WhiteScarabTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
-    private void beginDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+    @Test
+    @DisplayName("Casting the Aura attaches it to an opponent's creature")
+    void canEnchantOpponentsCreature() {
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
+        harness.addToBattlefield(player2, new KjeldoranWarrior());
+        harness.setHand(player1, List.of(new WhiteScarab()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "White Scarab").getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Two Scarabs each grant one boost regardless of the number of white permanents")
+    void multipleScarabsStackButWhitePermanentsDoNotMultiplyBoost() {
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new WhiteScarab());
+        first.setAttachedTo(bears.getId());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new WhiteScarab());
+        second.setAttachedTo(bears.getId());
+        harness.addToBattlefield(player2, new KjeldoranWarrior());
+        harness.addToBattlefield(player2, new CircleOfProtectionWhite());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
     }
 }
