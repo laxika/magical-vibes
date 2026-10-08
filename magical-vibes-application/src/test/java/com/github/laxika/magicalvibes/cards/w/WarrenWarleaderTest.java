@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.z.RoostOfDrakes;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WarrenWarleader.class, GrizzlyBears.class})
+@CardUsed({WarrenWarleader.class, GrizzlyBears.class, RoostOfDrakes.class})
 class WarrenWarleaderTest extends BaseCardTest {
 
     private static final String TOKEN_MODE =
@@ -28,8 +29,7 @@ class WarrenWarleaderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castKickedCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -75,5 +75,71 @@ class WarrenWarleaderTest extends BaseCardTest {
 
         assertThat(attacker.getEffectivePower()).isEqualTo(2);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    void noOffspringCopyWithoutPayingAdditionalCost() {
+        harness.setHand(player1, List.of(new WarrenWarleader()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    void triggersWhenOtherCreaturesAttackWhileWarleaderStaysBack() {
+        Permanent warleader = addCreatureReady(player1, new WarrenWarleader());
+        Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(1, 2));
+        resolveAllTriggers();
+        harness.handleListChoice(player1, BOOST_MODE);
+
+        assertThat(firstAttacker.getEffectivePower()).isEqualTo(3);
+        assertThat(secondAttacker.getEffectivePower()).isEqualTo(3);
+        assertThat(warleader.getEffectivePower()).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void offspringCopyAlsoTriggersWhenOnlyAnotherCreatureAttacks() {
+        harness.setHand(player1, List.of(new WarrenWarleader()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castKickedCreature(player1, 0);
+        resolveAllTriggers();
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(2));
+        resolveAllTriggers();
+        harness.handleListChoice(player1, BOOST_MODE);
+        resolveAllTriggers();
+        harness.handleListChoice(player1, BOOST_MODE);
+
+        assertThat(attacker.getEffectivePower()).isEqualTo(4);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void payingOffspringDoesNotTriggerKickedSpellAbilities() {
+        harness.addToBattlefield(player1, new RoostOfDrakes());
+        harness.setHand(player1, List.of(new WarrenWarleader()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castKickedCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Drake")).isZero();
+        assertThat(findPermanents(player1, "Warren Warleader")).hasSize(2);
     }
 }
