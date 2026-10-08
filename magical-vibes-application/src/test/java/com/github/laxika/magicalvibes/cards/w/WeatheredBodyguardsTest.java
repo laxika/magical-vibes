@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.p.PsionicSliver;
+import com.github.laxika.magicalvibes.cards.p.PentarchWard;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +18,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WeatheredBodyguards.class, PsionicSliver.class})
+@CardUsed({WeatheredBodyguards.class, PsionicSliver.class, PentarchWard.class})
 class WeatheredBodyguardsTest extends BaseCardTest {
 
     @Test
@@ -129,6 +131,80 @@ class WeatheredBodyguardsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bodyguards.isFaceDown()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Face-down Bodyguards do not redirect combat damage")
+    void faceDownBodyguardsDoNotRedirectDamage() {
+        Permanent bodyguards = harness.addToBattlefieldAndReturn(player2, new WeatheredBodyguards());
+        bodyguards.setFaceDown(true);
+        addUnblockedAttacker(player1);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+        assertThat(bodyguards.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Turning Bodyguards face up before damage enables redirection immediately")
+    void turningFaceUpEnablesRedirection() {
+        Permanent bodyguards = harness.addToBattlefieldAndReturn(player2, new WeatheredBodyguards());
+        bodyguards.setFaceDown(true);
+        addUnblockedAttacker(player1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.turnFaceUp(player2, 0);
+        resolveCombat();
+
+        harness.assertLife(player2, 20);
+        assertThat(bodyguards.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("All simultaneous unblocked damage is redirected even when it is lethal")
+    void redirectsAllSimultaneousDamage() {
+        harness.addToBattlefield(player2, new WeatheredBodyguards());
+        addUnblockedAttacker(player1);
+        addUnblockedAttacker(player1);
+        addUnblockedAttacker(player1);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player2, "Weathered Bodyguards");
+        harness.assertInGraveyard(player2, "Weathered Bodyguards");
+    }
+
+    @Test
+    @DisplayName("Defending player chooses which Bodyguards redirect damage")
+    void multipleBodyguardsRequireReplacementChoice() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new WeatheredBodyguards());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new WeatheredBodyguards());
+        addUnblockedAttacker(player1);
+
+        resolveCombat();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(first.getMarkedDamage()).isZero();
+        assertThat(second.getMarkedDamage()).isZero();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Protection prevents redirected damage from a matching source")
+    void protectionPreventsRedirectedDamage() {
+        Permanent bodyguards = harness.addToBattlefieldAndReturn(player2, new WeatheredBodyguards());
+        Permanent ward = harness.addToBattlefieldAndReturn(player2, new PentarchWard());
+        ward.setAttachedTo(bodyguards.getId());
+        ward.setChosenColor(CardColor.WHITE);
+        addUnblockedAttacker(player1);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 20);
+        assertThat(bodyguards.getMarkedDamage()).isZero();
     }
 
     private Permanent addUnblockedAttacker(Player player) {
