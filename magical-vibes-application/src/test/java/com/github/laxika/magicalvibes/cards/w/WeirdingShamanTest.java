@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.b.BoggartShenanigans;
 import com.github.laxika.magicalvibes.cards.p.PricklyBoggart;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WeirdingShaman.class, PricklyBoggart.class})
+@CardUsed({WeirdingShaman.class, PricklyBoggart.class, BoggartShenanigans.class})
 class WeirdingShamanTest extends BaseCardTest {
 
     // ===== {3}{B}, Sacrifice a Goblin: Create two 1/1 black Goblin Rogue tokens =====
@@ -75,5 +76,63 @@ class WeirdingShamanTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Goblin Rogue")).hasSize(2);
         harness.assertInGraveyard(player1, "Prickly Boggart");
         harness.assertNotInGraveyard(player1, "Weirding Shaman");
+    }
+
+    @Test
+    @DisplayName("A noncreature Goblin permanent can pay the sacrifice cost")
+    void canSacrificeNoncreatureGoblin() {
+        Permanent shaman = harness.addToBattlefieldAndReturn(player1, new WeirdingShaman());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new BoggartShenanigans());
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, enchantment.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(shaman).doesNotContain(enchantment);
+        harness.assertInGraveyard(player1, "Boggart Shenanigans");
+        assertThat(findPermanents(player1, "Goblin Rogue")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A summoning sick and tapped Shaman can activate, paying sacrifice before resolution")
+    void canActivateWhileSummoningSickAndTapped() {
+        Permanent shaman = harness.addToBattlefieldAndReturn(player1, new WeirdingShaman());
+        shaman.setSummoningSick(true);
+        shaman.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Weirding Shaman");
+        assertThat(findPermanents(player1, "Goblin Rogue")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Goblin Rogue")).hasSize(2);
+        assertThat(findPermanents(player2, "Goblin Rogue")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Created Goblin tokens can pay for another activation in the same turn")
+    void canSacrificeCreatedTokenForAnotherActivation() {
+        Permanent shaman = harness.addToBattlefieldAndReturn(player1, new WeirdingShaman());
+        Permanent boggart = harness.addToBattlefieldAndReturn(player1, new PricklyBoggart());
+        harness.addMana(player1, ManaColor.BLACK, 8);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, boggart.getId());
+        harness.passBothPriorities();
+
+        Permanent token = findPermanent(player1, "Goblin Rogue");
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, token.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(shaman);
+        assertThat(findPermanents(player1, "Goblin Rogue")).hasSize(3);
     }
 }
