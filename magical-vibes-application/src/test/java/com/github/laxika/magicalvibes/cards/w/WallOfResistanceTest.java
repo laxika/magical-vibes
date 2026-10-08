@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(WallOfResistance.class)
+@CardUsed({WallOfResistance.class, UnyaroBeeSting.class})
 class WallOfResistanceTest extends BaseCardTest {
 
     /** Simulates the Wall having been dealt damage this turn. */
@@ -34,8 +34,7 @@ class WallOfResistanceTest extends BaseCardTest {
     @Test
     @DisplayName("Gets a +0/+1 counter at end step after being dealt damage")
     void getsCounterAfterBeingDamaged() {
-        Permanent wall = new Permanent(new WallOfResistance());
-        gd.playerBattlefields.get(player1.getId()).add(wall);
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfResistance());
 
         recordDamageDealtTo(wall);
 
@@ -63,8 +62,7 @@ class WallOfResistanceTest extends BaseCardTest {
     @Test
     @DisplayName("Gets no counter when it wasn't dealt damage this turn")
     void noCounterWithoutDamage() {
-        Permanent wall = new Permanent(new WallOfResistance());
-        gd.playerBattlefields.get(player1.getId()).add(wall);
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfResistance());
 
         advanceToEndStepAndResolve(player1);
 
@@ -75,13 +73,54 @@ class WallOfResistanceTest extends BaseCardTest {
     @Test
     @DisplayName("Triggers at each end step, including an opponent's")
     void triggersOnOpponentEndStep() {
-        Permanent wall = new Permanent(new WallOfResistance());
-        gd.playerBattlefields.get(player1.getId()).add(wall);
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfResistance());
 
         recordDamageDealtTo(wall);
 
         advanceToEndStepAndResolve(player2);
 
+        assertThat(wall.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple damage events produce only one counter at the end step")
+    void multipleDamageEventsGiveOneCounter() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfResistance());
+
+        recordDamageDealtTo(wall);
+        recordDamageDealtTo(wall);
+        advanceToEndStepAndResolve(player1);
+
+        assertThat(wall.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Only the Wall that was dealt damage gets a counter")
+    void damageHistoryIsTrackedSeparatelyForEachWall() {
+        Permanent damagedWall = harness.addToBattlefieldAndReturn(player1, new WallOfResistance());
+        Permanent undamagedWall = harness.addToBattlefieldAndReturn(player1, new WallOfResistance());
+        harness.setHand(player1, List.of(new UnyaroBeeSting()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, damagedWall.getId());
+        advanceToEndStepAndResolve(player1);
+
+        assertThat(damagedWall.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isEqualTo(1);
+        assertThat(undamagedWall.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Damage from the previous turn does not trigger another counter")
+    void previousTurnDamageDoesNotCount() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfResistance());
+        harness.setHand(player1, List.of(new UnyaroBeeSting()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, wall.getId());
+        advanceToEndStepAndResolve(player1);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
         assertThat(wall.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isEqualTo(1);
     }
 }
