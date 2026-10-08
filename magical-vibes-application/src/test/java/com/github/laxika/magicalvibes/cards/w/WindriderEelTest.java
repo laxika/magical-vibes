@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WindriderEel.class, Forest.class})
 class WindriderEelTest extends BaseCardTest {
 
     @Test
@@ -51,10 +53,56 @@ class WindriderEelTest extends BaseCardTest {
         assertThat(eel.getEffectivePower()).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(eel.getEffectivePower()).isEqualTo(2);
         assertThat(eel.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each land entering without being played creates a separate landfall boost")
+    void multipleLandEntriesStackTheirBoosts() {
+        Permanent eel = harness.addToBattlefieldAndReturn(player1, new WindriderEel());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(eel.getEffectivePower()).isEqualTo(2);
+        assertThat(eel.getEffectiveToughness()).isEqualTo(2);
+
+        harness.passBothPriorities();
+        assertThat(eel.getEffectivePower()).isEqualTo(4);
+        assertThat(eel.getEffectiveToughness()).isEqualTo(4);
+
+        harness.passBothPriorities();
+        assertThat(eel.getEffectivePower()).isEqualTo(6);
+        assertThat(eel.getEffectiveToughness()).isEqualTo(6);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        assertThat(eel.getEffectivePower()).isEqualTo(2);
+        assertThat(eel.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each Windrider Eel boosts itself when its controller's land enters")
+    void eachEelBoostsOnlyItself() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new WindriderEel());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new WindriderEel());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new WindriderEel());
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(4);
+        assertThat(first.getEffectiveToughness()).isEqualTo(4);
+        assertThat(second.getEffectivePower()).isEqualTo(4);
+        assertThat(second.getEffectiveToughness()).isEqualTo(4);
+        assertThat(opposing.getEffectivePower()).isEqualTo(2);
+        assertThat(opposing.getEffectiveToughness()).isEqualTo(2);
     }
 }
