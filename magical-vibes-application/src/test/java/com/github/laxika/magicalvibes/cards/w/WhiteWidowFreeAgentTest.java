@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,15 +39,79 @@ class WhiteWidowFreeAgentTest extends BaseCardTest {
     void counterModeCannotTargetNoncreaturePermanent() {
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
 
-        assertThatThrownBy(() -> castCounterMode(List.of(island.getId())))
+        harness.enterBattlefieldAndReturn(player1, new WhiteWidowFreeAgent());
+        harness.handleListChoice(player1, "Put a +1/+1 counter on each of up to two target creatures");
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(island.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void counterModeCanTargetOneOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castCounterMode(List.of(creature.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void counterModeStillAffectsRemainingTargetWhenOtherTargetLeaves() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castCounterMode(List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        harness.passBothPriorities();
+
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void enteringWithoutBeingCastAllowsChoosingReturnMode() {
+        Card artifact = new FountainOfYouth();
+        harness.setGraveyard(player1, List.of(artifact));
+
+        harness.enterBattlefieldAndReturn(player1, new WhiteWidowFreeAgent());
+        harness.handleListChoice(player1,
+                "Return target artifact or enchantment card from your graveyard to your hand");
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Fountain of Youth");
+        harness.assertNotInGraveyard(player1, "Fountain of Youth");
+    }
+
+    @Test
+    void counterModeCanTargetWhiteWidowItself() {
+        Permanent widow = harness.enterBattlefieldAndReturn(player1, new WhiteWidowFreeAgent());
+        harness.handleListChoice(player1, "Put a +1/+1 counter on each of up to two target creatures");
+        harness.handleMultiplePermanentsChosen(player1, List.of(widow.getId()));
+        harness.passBothPriorities();
+
+        assertThat(widow.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void counterModeCanChooseNoTargets() {
+        Permanent widow = harness.enterBattlefieldAndReturn(player1, new WhiteWidowFreeAgent());
+        harness.handleListChoice(player1, "Put a +1/+1 counter on each of up to two target creatures");
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(widow.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertOnBattlefield(player1, "White Widow, Free Agent");
     }
 
     @Test
     void returnModeReturnsArtifactCard() {
         Card artifact = new FountainOfYouth();
         Card creature = new GrizzlyBears();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(creature, artifact)));
+        harness.setGraveyard(player1, List.of(creature, artifact));
 
         castReturnMode();
         harness.passBothPriorities();
@@ -67,7 +130,7 @@ class WhiteWidowFreeAgentTest extends BaseCardTest {
     void returnModeReturnsEnchantmentCard() {
         Card enchantment = new GloriousAnthem();
         Card creature = new GrizzlyBears();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(creature, enchantment)));
+        harness.setGraveyard(player1, List.of(creature, enchantment));
 
         castReturnMode();
         harness.passBothPriorities();
