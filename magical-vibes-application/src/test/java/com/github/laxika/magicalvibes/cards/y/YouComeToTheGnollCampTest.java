@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.y;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DireWolfProwler;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({YouComeToTheGnollCamp.class, GrizzlyBears.class, Island.class})
+@CardUsed({YouComeToTheGnollCamp.class, DireWolfProwler.class, Island.class})
 class YouComeToTheGnollCampTest extends BaseCardTest {
 
     private static final int INTIMIDATE_THEM = 0;
@@ -23,9 +23,9 @@ class YouComeToTheGnollCampTest extends BaseCardTest {
 
     @Test
     void intimidateThemStopsUpToTwoCreaturesFromBlocking() {
-        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent third = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new DireWolfProwler());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new DireWolfProwler());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new DireWolfProwler());
 
         cast(INTIMIDATE_THEM, List.of(first.getId(), second.getId()));
 
@@ -43,7 +43,7 @@ class YouComeToTheGnollCampTest extends BaseCardTest {
 
     @Test
     void fendThemOffBoostsTargetCreatureUntilEndOfTurn() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DireWolfProwler());
 
         cast(FEND_THEM_OFF, List.of(target.getId()));
 
@@ -75,6 +75,66 @@ class YouComeToTheGnollCampTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
+    @Test
+    void intimidateThemCanTargetOneCreatureAndExpiresAtEndOfTurn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DireWolfProwler());
+
+        cast(INTIMIDATE_THEM, List.of(target.getId()));
+
+        assertThat(target.isCantBlockThisTurn()).isTrue();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(target.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    void intimidateThemRejectsThreeTargets() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new DireWolfProwler());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new DireWolfProwler());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new DireWolfProwler());
+
+        prepareSpell();
+        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, INTIMIDATE_THEM,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void intimidateThemStillAffectsRemainingTargetWhenOtherTargetLeaves() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new DireWolfProwler());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new DireWolfProwler());
+
+        prepareSpell();
+        harness.castModalInstant(player1, 0, INTIMIDATE_THEM, List.of(first.getId(), second.getId()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, first));
+        harness.passBothPriorities();
+
+        assertThat(second.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void fendThemOffCanBoostAnOpponentsCreatureWithoutAffectingOtherCreatures() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DireWolfProwler());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new DireWolfProwler());
+
+        cast(FEND_THEM_OFF, List.of(target.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+        assertThat(target.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    void fendThemOffRequiresATarget() {
+        prepareSpell();
+
+        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, FEND_THEM_OFF, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
     private void cast(int modeIndex, List<UUID> targetIds) {
         prepareSpell();
         harness.castModalInstant(player1, 0, modeIndex, targetIds);
