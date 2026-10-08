@@ -24,8 +24,7 @@ class ZedruuTheGreatheartedTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Donate()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, List.of(player2.getId(), donated.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(player2.getId(), donated.getId()));
 
         harness.addToBattlefield(player1, new ZedruuTheGreathearted());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
@@ -83,6 +82,83 @@ class ZedruuTheGreatheartedTest extends BaseCardTest {
                 List.of(player1.getId(), target.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
+    }
+
+    @Test
+    @DisplayName("Counts donations made in response to the upkeep trigger")
+    void countsDonationAtResolution() {
+        Permanent zedruu = harness.addToBattlefieldAndReturn(player1, new ZedruuTheGreathearted());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbilityWithMultiTargets(player1, battlefieldIndex(zedruu), 0,
+                List.of(player2.getId(), target.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Donating Zedruu does not change the controller of its pending upkeep trigger")
+    void canDonateItselfInResponseToUpkeep() {
+        Permanent zedruu = harness.addToBattlefieldAndReturn(player1, new ZedruuTheGreathearted());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbilityWithMultiTargets(player1, battlefieldIndex(zedruu), 0,
+                List.of(player2.getId(), zedruu.getId()));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Zedruu the Greathearted");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Cannot donate a permanent controlled by an opponent")
+    void cannotTargetOpponentsPermanent() {
+        Permanent zedruu = harness.addToBattlefieldAndReturn(player1, new ZedruuTheGreathearted());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, battlefieldIndex(zedruu), 0,
+                List.of(player2.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent zedruu = harness.addToBattlefieldAndReturn(player1, new ZedruuTheGreathearted());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbilityWithMultiTargets(player1, battlefieldIndex(zedruu), 0,
+                List.of(player2.getId(), target.getId()));
+        harness.passBothPriorities();
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }
 
     private int battlefieldIndex(Permanent permanent) {
