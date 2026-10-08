@@ -20,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Void.class, AncientKavu.class, Forest.class, NomadicElf.class, SterlingGrove.class, TsabosWeb.class})
+@CardUsed({Void.class, AncientKavu.class, Forest.class, NomadicElf.class, RielleTheEverwise.class, SterlingGrove.class, TsabosWeb.class})
 class VoidTest extends BaseCardTest {
 
     @Test
@@ -72,7 +72,6 @@ class VoidTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(RielleTheEverwise.class)
     @DisplayName("Counts all cards discarded by one resolution as one discard event")
     void countsAllCardsDiscardedInOneEvent() {
         harness.addToBattlefield(player2, new RielleTheEverwise());
@@ -113,6 +112,74 @@ class VoidTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Allows choosing a number above all relevant mana values")
+    void allowsChoosingArbitraryLargeNumber() {
+        harness.addToBattlefield(player2, new NomadicElf());
+        harness.setHand(player2, List.of(new AncientKavu(), new Forest()));
+
+        castVoid(player2.getId());
+        harness.handleListChoice(player1, "100");
+
+        harness.assertOnBattlefield(player2, "Nomadic Elf");
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Ancient Kavu", "Forest");
+        assertThat(gameLogContains("reveals their hand")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not reveal hidden hand information through the number choices")
+    void numberChoicesDoNotDependOnHiddenHand() {
+        harness.setHand(player2, List.of(new NomadicElf()));
+        castVoid(player2.getId());
+        List<String> firstChoices = gd.interaction
+                .activeInteraction(PendingInteraction.ColorChoice.class).options();
+        harness.handleListChoice(player1, "0");
+
+        harness.setHand(player2, List.of(new AncientKavu()));
+        castVoid(player2.getId());
+        List<String> secondChoices = gd.interaction
+                .activeInteraction(PendingInteraction.ColorChoice.class).options();
+
+        assertThat(secondChoices).containsExactlyElementsOf(firstChoices);
+    }
+
+    @Test
+    @DisplayName("Can target its controller and still destroys the opponent's matching permanents")
+    void canTargetController() {
+        harness.addToBattlefield(player2, new NomadicElf());
+        harness.setHand(player1, List.of(new Void(), new NomadicElf(), new Forest()));
+        harness.setHand(player2, List.of(new NomadicElf()));
+        addVoidMana();
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleListChoice(player1, "2");
+
+        harness.assertNotOnBattlefield(player2, "Nomadic Elf");
+        harness.assertNotInHand(player1, "Nomadic Elf");
+        harness.assertInHand(player1, "Forest");
+        harness.assertInHand(player2, "Nomadic Elf");
+    }
+
+    @Test
+    @DisplayName("Reveals the entire hand only after the number is chosen, including retained cards")
+    void revealsHandAfterNumberChoice() {
+        harness.setHand(player2, List.of(new NomadicElf(), new AncientKavu(), new Forest()));
+        castVoid(player2.getId());
+
+        assertThat(gameLogContains("reveals their hand")).isFalse();
+        harness.handleListChoice(player1, "2");
+
+        assertThat(gd.gameLog.stream().map(entry -> entry.plainText())
+                .filter(text -> text.contains("reveals their hand")))
+                .anySatisfy(text -> assertThat(text)
+                        .contains("Nomadic Elf", "Ancient Kavu", "Forest"));
+        harness.assertNotInHand(player2, "Nomadic Elf");
+        harness.assertInHand(player2, "Ancient Kavu");
+        harness.assertInHand(player2, "Forest");
     }
 
     private void castVoid(java.util.UUID targetPlayerId) {
