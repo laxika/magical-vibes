@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.m.MoxDiamond;
 import com.github.laxika.magicalvibes.cards.t.TidalWarrior;
+import com.github.laxika.magicalvibes.cards.s.SpittingHydra;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({VolrathsShapeshifter.class, Clone.class, MoxDiamond.class, TidalWarrior.class,
-        VolrathsStronghold.class, VenerableMonk.class})
+        VolrathsStronghold.class, VenerableMonk.class, SpittingHydra.class})
 class VolrathsShapeshifterTest extends BaseCardTest {
 
     @Test
@@ -131,14 +133,87 @@ class VolrathsShapeshifterTest extends BaseCardTest {
     void triggersCreatureEnterTheBattlefieldAbilityOnEntry() {
         harness.setLife(player1, 20);
         harness.setGraveyard(player1, List.of(new VenerableMonk()));
-        harness.setHand(player1, List.of(new VolrathsShapeshifter()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VolrathsShapeshifter(), "{1}{U}{U}");
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A copy made while it has creature text reverts when the graveyard top is noncreature")
+    void copyDoesNotRetainNoncopiableCreatureText() {
+        Permanent shapeshifter = addCreatureReady(player1, new VolrathsShapeshifter());
+        Permanent stronghold = harness.addToBattlefieldAndReturn(player1, new VolrathsStronghold());
+        harness.setGraveyard(player1, List.of(new TidalWarrior()));
+        harness.activateAbility(player1, 0, 0, null, stronghold.getId());
+        harness.passBothPriorities();
+
+        Clone clone = new Clone();
+        harness.castFromHand(player1, clone, "{3}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, shapeshifter.getId());
+
+        Permanent copiedShapeshifter = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard().getId().equals(clone.getId()))
+                .findFirst().orElseThrow();
+        copiedShapeshifter.setSummoningSick(false);
+        harness.setGraveyard(player1, List.of(new MoxDiamond()));
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(copiedShapeshifter);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, index, 0, null, stronghold.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Inherits the top creature's enters-with-counters replacement")
+    void entersWithCountersFromTopCreature() {
+        harness.setGraveyard(player1, List.of(new SpittingHydra()));
+        VolrathsShapeshifter card = new VolrathsShapeshifter();
+        harness.castFromHand(player1, card, "{1}{U}{U}");
+        resolveAllTriggers();
+
+        Permanent shapeshifter = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard().getId().equals(card.getId()))
+                .findFirst().orElseThrow();
+        assertThat(shapeshifter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Discarding a creature changes its text without triggering an enters ability")
+    void changingFormsDoesNotTriggerEntersAbility() {
+        addCreatureReady(player1, new VolrathsShapeshifter());
+        harness.setLife(player1, 20);
+        harness.setGraveyard(player1, List.of(new MoxDiamond()));
+        VenerableMonk discarded = new VenerableMonk();
+        harness.setHand(player1, List.of(discarded));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Its discard ability works with an empty graveyard and an empty hand")
+    void discardAbilityWorksWithEmptyZones() {
+        Permanent shapeshifter = addCreatureReady(player1, new VolrathsShapeshifter());
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(shapeshifter.isTapped()).isFalse();
     }
 }
