@@ -34,12 +34,14 @@ class WineOfBloodAndIronTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(wine);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Wine of Blood and Iron");
         harness.assertInGraveyard(player1, "Wine of Blood and Iron");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
     }
 
@@ -73,5 +75,87 @@ class WineOfBloodAndIronTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, otherWine.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Repeated activations each use the power at their own resolution")
+    void repeatedActivationsCompoundPower() {
+        harness.addToBattlefield(player1, new WineOfBloodAndIron());
+        Permanent creature = addCreatureReady(player1, new HandOfHonor());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.assertInGraveyard(player1, "Wine of Blood and Iron");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Can boost an opponent's creature during their turn")
+    void boostsOpposingCreatureAndSacrificesDuringOpponentsEndStep() {
+        harness.addToBattlefield(player1, new WineOfBloodAndIron());
+        Permanent creature = addCreatureReady(player2, new HandOfHonor());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Wine of Blood and Iron");
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents the delayed sacrifice from being created")
+    void illegalTargetDoesNotScheduleSacrifice() {
+        harness.addToBattlefield(player1, new WineOfBloodAndIron());
+        Permanent creature = addCreatureReady(player1, new HandOfHonor());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerGraveyards.get(player1.getId()).add(creature.getCard());
+        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        harness.assertOnBattlefield(player1, "Wine of Blood and Iron");
+        harness.assertNotInGraveyard(player1, "Wine of Blood and Iron");
+    }
+
+    @Test
+    @DisplayName("Activation during the end step waits for the following end step")
+    void endStepActivationWaitsForNextEndStep() {
+        harness.addToBattlefield(player1, new WineOfBloodAndIron());
+        Permanent creature = addCreatureReady(player1, new HandOfHonor());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.assertOnBattlefield(player1, "Wine of Blood and Iron");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Wine of Blood and Iron");
     }
 }
