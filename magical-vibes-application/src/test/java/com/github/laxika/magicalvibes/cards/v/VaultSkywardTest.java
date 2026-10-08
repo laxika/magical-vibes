@@ -2,14 +2,15 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.c.CopperMyr;
+import com.github.laxika.magicalvibes.cards.d.DarksteelAxe;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VaultSkyward.class, CopperMyr.class, DarksteelAxe.class})
 class VaultSkywardTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Resolving Vault Skyward grants flying and untaps target creature")
@@ -73,12 +73,11 @@ class VaultSkywardTest extends BaseCardTest {
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         addTappedCreature(player1); // valid target so spell is playable
-        Permanent enchantment = new Permanent(new Pacifism());
-        gd.playerBattlefields.get(player2.getId()).add(enchantment);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new DarksteelAxe());
         harness.setHand(player1, List.of(new VaultSkyward()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, enchantment.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
@@ -99,11 +98,27 @@ class VaultSkywardTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
+    @Test
+    @DisplayName("An untapped creature can gain flying without affecting other creatures")
+    void untappedCreatureGainsFlyingAndOtherCreaturesAreUnaffected() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CopperMyr());
+        Permanent other = addTappedCreature(player2);
+        harness.setHand(player1, List.of(new VaultSkyward()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(other.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(other.isTapped()).isTrue();
+    }
+
     private Permanent addTappedCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new CopperMyr());
         perm.setSummoningSick(false);
         perm.tap();
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
