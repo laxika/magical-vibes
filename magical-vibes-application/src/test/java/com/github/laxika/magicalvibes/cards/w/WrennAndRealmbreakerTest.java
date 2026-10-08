@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,8 +21,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WrennAndRealmbreaker.class, Forest.class, GrizzlyBears.class, Shock.class})
+@CardUsed({WrennAndRealmbreaker.class, Forest.class, GrizzlyBears.class, Shock.class, RestInPeace.class})
 class WrennAndRealmbreakerTest extends BaseCardTest {
 
     @Test
@@ -57,7 +58,7 @@ class WrennAndRealmbreakerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, forest, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasKeyword(gd, forest, Keyword.HEXPROOF)).isTrue();
         assertThat(gqs.hasKeyword(gd, forest, Keyword.HASTE)).isTrue();
-        assertThat(forest.getCard().hasType(CardType.LAND)).isTrue();
+        assertThat(gqs.isLand(gd, forest)).isTrue();
     }
 
     @Test
@@ -117,20 +118,157 @@ class WrennAndRealmbreakerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
+    @Test
+    void animationLastsThroughOpponentsTurnAndExpiresOnActivatorsNextTurn() {
+        addReadyWrenn(player1, 4);
+        Permanent forest = addLand(player1);
+
+        harness.activateAbility(player1, 0, 0, forest.getId(), null);
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.HEXPROOF)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.isCreature(gd, forest)).isFalse();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    void changingLandControllerDoesNotShortenAnimationDuration() {
+        addReadyWrenn(player1, 4);
+        Permanent forest = addLand(player1);
+        harness.activateAbility(player1, 0, 0, forest.getId(), null);
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).remove(forest);
+        gd.playerBattlefields.get(player2.getId()).add(forest);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.HASTE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gqs.isCreature(gd, forest)).isFalse();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.HEXPROOF)).isFalse();
+    }
+
+    @Test
+    void minusTwoCanDeclineReturningPermanentFromShortLibrary() {
+        addReadyWrenn(player1, 4);
+        Card forest = new Forest();
+        Card oldPermanent = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(oldPermanent));
+        harness.setLibrary(player1, List.of(forest));
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(oldPermanent, forest);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void minusTwoReturnsOnlyOneOfMultipleMilledPermanents() {
+        addReadyWrenn(player1, 4);
+        Card first = new Forest();
+        Card second = new Forest();
+        Card third = new Forest();
+        harness.setLibrary(player1, List.of(first, second, third));
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, third);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void minusTwoDoesNotOfferOldPermanentsWhenOnlyInstantsAreMilled() {
+        addReadyWrenn(player1, 4);
+        Card oldPermanent = new Forest();
+        harness.setGraveyard(player1, List.of(oldPermanent));
+        harness.setLibrary(player1, List.of(new Shock(), new Shock(), new Shock()));
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4).contains(oldPermanent);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void emblemDoesNotAllowInstantsOrAdditionalLandPlays() {
+        addReadyWrenn(player1, 7);
+        Card firstLand = new Forest();
+        Card secondLand = new Forest();
+        Card shock = new Shock();
+        harness.setGraveyard(player1, List.of(firstLand, secondLand, shock));
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 2))
+                .isInstanceOf(IllegalStateException.class);
+        harness.playGraveyardLand(player1, 0);
+        assertThatThrownBy(() -> harness.playGraveyardLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(secondLand, shock);
+    }
+
+    @Test
+    void minusTwoCanReturnPermanentMilledIntoExile() {
+        addReadyWrenn(player1, 4);
+        harness.addToBattlefield(player2, new RestInPeace());
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest, new Shock(), new Shock()));
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
     private Permanent addReadyWrenn(Player player, int loyalty) {
-        Permanent permanent = new Permanent(new WrennAndRealmbreaker());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new WrennAndRealmbreaker());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return permanent;
     }
 
     private Permanent addLand(Player player) {
-        Permanent permanent = new Permanent(new Forest());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new Forest());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
