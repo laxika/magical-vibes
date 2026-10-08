@@ -80,12 +80,82 @@ class VisionOfLoveTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onTop);
     }
 
+    @Test
+    @DisplayName("Sacrifice draws during the spell resolution without a separate trigger")
+    void sacrificeDrawsWithoutAnotherPriorityPass() {
+        Shock firstDraw = new Shock();
+        GrizzlyBears secondDraw = new GrizzlyBears();
+        harness.setHand(player1, List.of(new VisionOfLove()));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+
+        castVisionOfLove();
+        acceptMay();
+        harness.handleListChoice(player1, "Sacrifice an artifact. If you do, draw two cards");
+        harness.handlePermanentChosen(player1, artifact.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Discard draws during the spell resolution without a separate trigger")
+    void discardDrawsWithoutAnotherPriorityPass() {
+        Shock firstDraw = new Shock();
+        GrizzlyBears secondDraw = new GrizzlyBears();
+        harness.setHand(player1, List.of(new VisionOfLove(), new Ornithopter()));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+
+        castVisionOfLove();
+        acceptMay();
+        harness.handleListChoice(player1, "Discard a card. If you do, draw two cards");
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty hand cannot pay for drawing cards")
+    void cannotDrawWithoutDiscarding() {
+        Shock onTop = new Shock();
+        harness.setHand(player1, List.of(new VisionOfLove()));
+        harness.setLibrary(player1, List.of(onTop));
+
+        castVisionOfLove();
+        acceptMay();
+        harness.handleListChoice(player1, "Discard a card. If you do, draw two cards");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onTop);
+    }
+
+    @Test
+    @DisplayName("A nonartifact and an opponent's artifact cannot be sacrificed for the draw")
+    void cannotDrawWithoutSacrificingOwnArtifact() {
+        Shock onTop = new Shock();
+        harness.setHand(player1, List.of(new VisionOfLove()));
+        harness.setLibrary(player1, List.of(onTop));
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Ornithopter());
+
+        castVisionOfLove();
+        acceptMay();
+        harness.handleListChoice(player1, "Sacrifice an artifact. If you do, draw two cards");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onTop);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Ornithopter");
+    }
+
     private void castVisionOfLove() {
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
                 .isNotNull();
     }
