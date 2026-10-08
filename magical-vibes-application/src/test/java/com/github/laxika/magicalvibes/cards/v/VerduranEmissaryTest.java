@@ -20,10 +20,7 @@ class VerduranEmissaryTest extends BaseCardTest {
     @Test
     void withoutKickerDoesNotDestroy() {
         harness.addToBattlefield(player2, new PhyrexianLens());
-        harness.setHand(player1, List.of(new VerduranEmissary()));
-        addBaseMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VerduranEmissary(), "{2}{G}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Verduran Emissary");
@@ -62,14 +59,22 @@ class VerduranEmissaryTest extends BaseCardTest {
     }
 
     @Test
-    void cannotKickTargetNonArtifact() {
+    void triggeredAbilityCannotTargetNonArtifact() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new YavimayaBarbarian());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new PhyrexianLens());
         harness.setHand(player1, List.of(new VerduranEmissary()));
         addKickedMana();
 
-        assertThatThrownBy(() -> harness.castKickedCreature(player1, 0, target.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("artifact");
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Yavimaya Barbarian");
+        harness.assertInGraveyard(player2, "Phyrexian Lens");
     }
 
     @Test
@@ -107,6 +112,49 @@ class VerduranEmissaryTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Verduran Emissary");
         harness.assertOnBattlefield(player2, "Yavimaya Barbarian");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void kickedCanDestroyArtifactControlledByCaster() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new PhyrexianLens());
+        harness.setHand(player1, List.of(new VerduranEmissary()));
+        addKickedMana();
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Verduran Emissary");
+        harness.assertNotOnBattlefield(player1, "Phyrexian Lens");
+        harness.assertInGraveyard(player1, "Phyrexian Lens");
+    }
+
+    @Test
+    void kickedCanTargetArtifactThatEnteredAfterCasting() {
+        harness.setHand(player1, List.of(new VerduranEmissary()));
+        addKickedMana();
+
+        harness.castKickedCreature(player1, 0);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new PhyrexianLens());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Verduran Emissary");
+        harness.assertInGraveyard(player2, "Phyrexian Lens");
+    }
+
+    @Test
+    void enteringWithoutBeingCastDoesNotDestroyArtifact() {
+        harness.addToBattlefield(player2, new PhyrexianLens());
+
+        harness.enterBattlefieldAndReturn(player1, new VerduranEmissary());
+
+        harness.assertOnBattlefield(player1, "Verduran Emissary");
+        harness.assertOnBattlefield(player2, "Phyrexian Lens");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
