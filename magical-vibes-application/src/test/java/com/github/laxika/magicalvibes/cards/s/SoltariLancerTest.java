@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -11,8 +12,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SoltariLancer.class)
+@CardUsed({SoltariLancer.class, TrainedArmodon.class})
 class SoltariLancerTest extends BaseCardTest {
 
     private Permanent addLancer() {
@@ -43,8 +45,7 @@ class SoltariLancerTest extends BaseCardTest {
         Permanent attacker = addLancer();
         Permanent blocker = addCreatureReady(player2, new SoltariLancer());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
@@ -64,5 +65,33 @@ class SoltariLancerTest extends BaseCardTest {
         lancer.setAttacking(false);
 
         assertThat(gqs.hasKeyword(gd, lancer, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature without shadow cannot block Soltari Lancer")
+    void cannotBeBlockedByCreatureWithoutShadow() {
+        addLancer();
+        addCreatureReady(player2, new TrainedArmodon());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shadow");
+    }
+
+    @Test
+    @DisplayName("Soltari Lancer cannot block a creature without shadow")
+    void cannotBlockCreatureWithoutShadow() {
+        addCreatureReady(player1, new TrainedArmodon());
+        addCreatureReady(player2, new SoltariLancer());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shadow");
     }
 }
