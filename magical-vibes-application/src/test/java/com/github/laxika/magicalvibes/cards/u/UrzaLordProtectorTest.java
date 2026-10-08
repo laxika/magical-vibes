@@ -334,4 +334,58 @@ class UrzaLordProtectorTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(artifact);
     }
+
+    @Test
+    void meldAbilityWithoutPartnerStillPaysManaAndDoesNothing() {
+        addCreatureReady(player1, new UrzaLordProtector());
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        prepareMainPhase();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Urza, Lord Protector");
+        harness.assertNotOnBattlefield(player1, "Urza, Planeswalker");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void meldAbilityCannotUseAnArtifactOwnedByOpponent() {
+        addCreatureReady(player1, new UrzaLordProtector());
+        TheMightstoneAndWeakstone stolenArtifact = new TheMightstoneAndWeakstone();
+        stolenArtifact.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, stolenArtifact);
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        prepareMainPhase();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Urza, Lord Protector");
+        harness.assertOnBattlefield(player1, "The Mightstone and Weakstone");
+        harness.assertNotOnBattlefield(player1, "Urza, Planeswalker");
+    }
+
+    @Test
+    void frontFaceDoesNotReduceOpponentsArtifactSpells() {
+        harness.addToBattlefield(player2, new UrzaLordProtector());
+        harness.setHand(player1, List.of(new EnergyRefractor()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void frontFaceCannotPayColoredManaWithItsReduction() {
+        harness.addToBattlefield(player1, new UrzaLordProtector());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new EnergyRefractor());
+        harness.setHand(player1, List.of(new ShootDown()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.castAndResolveSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
