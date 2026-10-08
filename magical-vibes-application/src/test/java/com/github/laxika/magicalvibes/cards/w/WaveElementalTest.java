@@ -133,6 +133,58 @@ class WaveElementalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot choose the same creature twice")
+    void cannotChooseDuplicateTargets() {
+        Permanent elemental = addCreatureReady(player1, new WaveElemental());
+        Permanent creature = addCreatureReady(player2, new FemerefScouts());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(elemental);
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot choose more than three creatures")
+    void cannotChooseFourTargets() {
+        Permanent elemental = addCreatureReady(player1, new WaveElemental());
+        Permanent first = addCreatureReady(player2, new FemerefScouts());
+        Permanent second = addCreatureReady(player2, new FemerefScouts());
+        Permanent third = addCreatureReady(player2, new FemerefScouts());
+        Permanent fourth = addCreatureReady(player2, new FemerefScouts());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(first.getId(), second.getId(), third.getId(), fourth.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(elemental);
+    }
+
+    @Test
+    @DisplayName("Can target itself before sacrificing itself and still tap another target")
+    void canTargetItselfAlongsideAnotherCreature() {
+        Permanent elemental = addCreatureReady(player1, new WaveElemental());
+        Permanent creature = addCreatureReady(player2, new FemerefScouts());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(elemental.getId(), creature.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(elemental);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(elemental.getCard());
+        assertThat(creature.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("A target that gains flying before resolution is not tapped")
     void targetMustStillNotHaveFlyingAtResolution() {
         addCreatureReady(player1, new WaveElemental());
