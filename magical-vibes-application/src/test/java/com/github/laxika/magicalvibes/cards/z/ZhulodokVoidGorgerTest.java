@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.d.DarksteelColossus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.k.KrosanColossus;
+import com.github.laxika.magicalvibes.cards.m.MeteorGolem;
 import com.github.laxika.magicalvibes.cards.w.WurmcoilEngine;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ZhulodokVoidGorger.class, DarksteelColossus.class, GrizzlyBears.class,
-        HillGiant.class, KrosanColossus.class, WurmcoilEngine.class})
+        HillGiant.class, KrosanColossus.class, WurmcoilEngine.class, MeteorGolem.class})
 class ZhulodokVoidGorgerTest extends BaseCardTest {
 
     @Test
@@ -36,7 +36,7 @@ class ZhulodokVoidGorgerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
                 .params().cards()).extracting("name").containsExactly("Hill Giant");
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
@@ -84,6 +84,38 @@ class ZhulodokVoidGorgerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("The two cascade abilities trigger separately and belong to the cast spell")
+    void cascadeAbilitiesAreSeparateTriggersOfTheSpell() {
+        setupWithZhulodok(player1);
+        DarksteelColossus spell = new DarksteelColossus();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.COLORLESS, 11);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(3);
+        assertThat(gd.stack).allSatisfy(entry ->
+                assertThat(entry.getCard().getId()).isEqualTo(spell.getId()));
+    }
+
+    @Test
+    @DisplayName("Mana value seven qualifies, but cascade skips cards of equal mana value")
+    void sevenManaSpellCascadesIntoStrictlyCheaperCard() {
+        setupWithZhulodok(player1);
+        MeteorGolem equalManaValue = new MeteorGolem();
+        WurmcoilEngine cheaper = new WurmcoilEngine();
+        harness.setLibrary(player1, List.of(equalManaValue, cheaper));
+        harness.setHand(player1, List.of(new MeteorGolem()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards()).containsExactly(cheaper);
     }
 
     private void setupWithZhulodok(com.github.laxika.magicalvibes.model.Player controller) {
