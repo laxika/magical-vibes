@@ -31,7 +31,6 @@ class VerazolTheSplitCurrentTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
         resolveAllTriggers();
 
         List<Permanent> elites = findPermanents(player1, "Llanowar Elite");
@@ -47,12 +46,80 @@ class VerazolTheSplitCurrentTest extends BaseCardTest {
         castKickedElite();
 
         harness.handleMayAbilityChosen(player1, false);
-        harness.passBothPriorities();
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Llanowar Elite")).hasSize(1);
         assertThat(findPermanent(player1, "Verazol, the Split Current")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void createsCopyDuringCounterRemovalAbilityResolution() {
+        castVerazol();
+        castKickedElite();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Verazol, the Split Current")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack).anyMatch(entry -> entry.isCopy()
+                && entry.getCard().getName().equals("Llanowar Elite"));
+    }
+
+    @Test
+    void copiedPermanentRetainsKickedEntryCounters() {
+        castVerazol();
+        castKickedElite();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Llanowar Elite"))
+                .hasSize(2)
+                .allSatisfy(permanent -> assertThat(permanent
+                        .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5));
+    }
+
+    @Test
+    void insufficientCountersCannotPayForCopy() {
+        castVerazol();
+        findPermanent(player1, "Verazol, the Split Current")
+                .setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        castKickedElite();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Llanowar Elite")).hasSize(1);
+        assertThat(findPermanent(player1, "Verazol, the Split Current")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void unkickedSpellDoesNotTriggerCopyAbility() {
+        castVerazol();
+        harness.setHand(player1, List.of(new LlanowarElite()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Llanowar Elite")).hasSize(1);
+        assertThat(findPermanent(player1, "Verazol, the Split Current")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void zeroXStillCountsTheColoredManaSpent() {
+        harness.setHand(player1, List.of(new VerazolTheSplitCurrent()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castCreature(player1, 0, 0);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Verazol, the Split Current")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     private void castVerazol() {
@@ -61,7 +128,6 @@ class VerazolTheSplitCurrentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castCreature(player1, 0, 1);
-        harness.passBothPriorities();
         resolveAllTriggers();
     }
 
