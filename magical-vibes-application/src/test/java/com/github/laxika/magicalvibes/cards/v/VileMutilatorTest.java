@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.f.FearOfFalling;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GroundSeal;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VileMutilator.class, GrizzlyBears.class, GroundSeal.class, FountainOfYouth.class})
+@CardUsed({VileMutilator.class, GrizzlyBears.class, GroundSeal.class, FountainOfYouth.class, FearOfFalling.class})
 class VileMutilatorTest extends BaseCardTest {
 
     @Test
@@ -71,6 +72,102 @@ class VileMutilatorTest extends BaseCardTest {
                 .contains("Ground Seal", "Grizzly Bears");
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .doesNotContain(enchantment, creature);
+    }
+
+    @Test
+    void canSacrificeTokenAsAdditionalCost() {
+        Permanent cost = harness.addToBattlefieldAndReturn(player1, tokenCopy(new FearOfFalling()));
+        prepareCast();
+
+        harness.castSorceryWithSacrifice(player1, 0, cost.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(cost);
+        harness.assertOnBattlefield(player1, "Vile Mutilator");
+    }
+
+    @Test
+    void cannotCastWithoutPayingSacrificeCost() {
+        prepareCast();
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Vile Mutilator");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotSacrificeOpponentsPermanentAsAdditionalCost() {
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new VileMutilator());
+        prepareCast();
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
+        harness.assertInHand(player1, "Vile Mutilator");
+    }
+
+    @Test
+    void sacrificesCreatureEvenWhenOpponentHasNoEnchantment() {
+        harness.addToBattlefield(player2, new VileMutilator());
+
+        harness.enterBattlefieldAndReturn(player1, new VileMutilator());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Vile Mutilator");
+        harness.assertOnBattlefield(player1, "Vile Mutilator");
+    }
+
+    @Test
+    void doesNotSacrificeTokensWhenOpponentHasOnlyTokens() {
+        Permanent enchantmentCreature = harness.addToBattlefieldAndReturn(player2, tokenCopy(new FearOfFalling()));
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, tokenCopy(new VileMutilator()));
+
+        harness.enterBattlefieldAndReturn(player1, new VileMutilator());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(enchantmentCreature, creature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void enchantmentCreatureSacrificedFirstCannotAlsoSatisfyCreatureSacrifice() {
+        Permanent enchantmentCreature = harness.addToBattlefieldAndReturn(player2, new FearOfFalling());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new VileMutilator());
+        Permanent controllerEnchantment = harness.addToBattlefieldAndReturn(player1, new FearOfFalling());
+
+        harness.enterBattlefieldAndReturn(player1, new VileMutilator());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(enchantmentCreature, creature);
+        harness.assertInGraveyard(player2, "Fear of Falling");
+        harness.assertInGraveyard(player2, "Vile Mutilator");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(controllerEnchantment);
+        harness.assertOnBattlefield(player1, "Vile Mutilator");
+    }
+
+    @Test
+    void opponentChoosesEnchantmentThenChoosesFromRemainingCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new FearOfFalling());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new FearOfFalling());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new VileMutilator());
+
+        harness.enterBattlefieldAndReturn(player1, new VileMutilator());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(first, second, creature);
+        harness.handleMultiplePermanentsChosen(player2, List.of(second.getId()));
+
+        harness.assertInGraveyard(player2, "Fear of Falling");
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(first, creature);
+        harness.handleMultiplePermanentsChosen(player2, List.of(creature.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(first);
+        harness.assertInGraveyard(player2, "Vile Mutilator");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void prepareCast() {
