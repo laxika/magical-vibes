@@ -21,8 +21,7 @@ class WoodlandAcolyteTest extends BaseCardTest {
     @Test
     void entersTheBattlefieldAndDrawsACard() {
         Forest draw = new Forest();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(draw);
+        harness.setLibrary(player1, List.of(draw));
         harness.setHand(player1, List.of(new WoodlandAcolyte()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -64,5 +63,66 @@ class WoodlandAcolyteTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castAdventure(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void adventureCannotTargetAnOpponentsGraveyard() {
+        Forest target = new Forest();
+        harness.setHand(player1, List.of(new WoodlandAcolyte()));
+        harness.setGraveyard(player2, List.of(target));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castAdventure(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void adventureReturnsLandAndCreatureDrawsItWhenCastFromExile() {
+        WoodlandAcolyte card = new WoodlandAcolyte();
+        Forest target = new Forest();
+        harness.setHand(player1, List.of(card));
+        harness.setGraveyard(player1, List.of(target));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAdventure(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Woodland Acolyte");
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromExile(player1, card.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Woodland Acolyte");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+    }
+
+    @Test
+    void adventureWithRemovedTargetGoesToGraveyardInsteadOfExile() {
+        WoodlandAcolyte card = new WoodlandAcolyte();
+        Forest target = new Forest();
+        Forest oldTop = new Forest();
+        harness.setHand(player1, List.of(card));
+        harness.setGraveyard(player1, List.of(target));
+        harness.setLibrary(player1, List.of(oldTop));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAdventure(player1, 0, target.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(target));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(oldTop);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
     }
 }
