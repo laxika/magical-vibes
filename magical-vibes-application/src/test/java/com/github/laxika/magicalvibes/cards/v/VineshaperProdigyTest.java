@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,8 +13,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VineshaperProdigy.class, Forest.class, GrizzlyBears.class, Shock.class})
+@CardUsed({VineshaperProdigy.class, Forest.class, Island.class})
 class VineshaperProdigyTest extends BaseCardTest {
 
     @Test
@@ -35,8 +35,8 @@ class VineshaperProdigyTest extends BaseCardTest {
     @Test
     void kickedLooksAtTopThreePutsOneIntoHandAndOrdersTheRestOnBottom() {
         Card top1 = new Forest();
-        Card top2 = new GrizzlyBears();
-        Card top3 = new Shock();
+        Card top2 = new VineshaperProdigy();
+        Card top3 = new Island();
         harness.setLibrary(player1, List.of(top1, top2, top3));
         harness.setHand(player1, List.of(new VineshaperProdigy()));
         addBaseMana();
@@ -44,8 +44,7 @@ class VineshaperProdigyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castKickedCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.LibraryRevealChoice reveal =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
@@ -56,6 +55,84 @@ class VineshaperProdigyTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(top2);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top3, top1);
+    }
+
+    @Test
+    void kickedMovesTheUnchosenCardsBelowTheUntouchedLibrary() {
+        Card top1 = new Forest();
+        Card top2 = new Island();
+        Card top3 = new VineshaperProdigy();
+        Card untouched = new Forest();
+        harness.setLibrary(player1, List.of(top1, top2, top3, untouched));
+        castKickedProdigy();
+
+        harness.handleMultipleCardsChosen(player1, List.of(top1.getId()));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, top3, top2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void kickedWithTwoCardsRequiresExactlyOneChoiceAndBottomsTheOther() {
+        Card top1 = new Forest();
+        Card top2 = new Island();
+        harness.setLibrary(player1, List.of(top1, top2));
+        castKickedProdigy();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(top1.getId(), top2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(top2.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top2);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void kickedWithOneCardPutsItIntoHandWithoutAChoice() {
+        Card top = new Forest();
+        harness.setLibrary(player1, List.of(top));
+        castKickedProdigy();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void kickedWithEmptyLibraryDoesNothing() {
+        harness.setLibrary(player1, List.of());
+        castKickedProdigy();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void enteringWithoutBeingCastDoesNotTriggerTheKickedAbility() {
+        Card top = new Forest();
+        harness.setLibrary(player1, List.of(top));
+
+        harness.enterBattlefieldAndReturn(player1, new VineshaperProdigy());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    private void castKickedProdigy() {
+        harness.setHand(player1, List.of(new VineshaperProdigy()));
+        addBaseMana();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castKickedCreature(player1, 0);
+        resolveAllTriggers();
     }
 
     private void addBaseMana() {
