@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.a.AuraGraft;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -7,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Waterknot.class, GrizzlyBears.class, FountainOfYouth.class, AuraGraft.class})
 class WaterknotTest extends BaseCardTest {
 
     @Test
@@ -79,6 +82,7 @@ class WaterknotTest extends BaseCardTest {
     @Test
     @DisplayName("Waterknot cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
+        addCreatureReady(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new Waterknot()));
         harness.addMana(player1, ManaColor.BLUE, 4);
@@ -106,6 +110,29 @@ class WaterknotTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Waterknot");
     }
 
+    @Test
+    @DisplayName("Entry trigger taps the creature Waterknot enchants after Aura Graft moves it")
+    void entryTriggerFollowsMovedAura() {
+        Permanent originalCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent newCreature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Waterknot(), new AuraGraft()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castEnchantment(player1, 0, originalCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(originalCreature.isTapped()).isFalse();
+        Permanent aura = findPermanent(player1, "Waterknot");
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        harness.handlePermanentChosen(player1, newCreature.getId());
+        assertThat(aura.getAttachedTo()).isEqualTo(newCreature.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(originalCreature.isTapped()).isFalse();
+        assertThat(newCreature.isTapped()).isTrue();
+    }
+
     private Permanent attachWaterknot(Permanent creature) {
         Permanent aura = new Permanent(new Waterknot());
         aura.setAttachedTo(creature.getId());
@@ -118,9 +145,6 @@ class WaterknotTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
     }
 }
