@@ -4,14 +4,18 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WitherbloomCampus.class, Forest.class})
 class WitherbloomCampusTest extends BaseCardTest {
 
     @Test
@@ -20,7 +24,7 @@ class WitherbloomCampusTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WitherbloomCampus()));
         harness.forceActivePlayer(player1);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent campus = findPermanent(player1, "Witherbloom Campus");
         assertThat(campus.isTapped()).isTrue();
@@ -46,9 +50,7 @@ class WitherbloomCampusTest extends BaseCardTest {
     @Test
     @DisplayName("Paying four mana and tapping scries one")
     void paidAbilityScriesOne() {
-        Permanent campus = new Permanent(new WitherbloomCampus());
-        campus.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(campus);
+        Permanent campus = addReadyCampus();
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
@@ -61,9 +63,104 @@ class WitherbloomCampusTest extends BaseCardTest {
     }
 
     private Permanent addReadyCampus() {
-        Permanent campus = new Permanent(new WitherbloomCampus());
+        Permanent campus = harness.addToBattlefieldAndReturn(player1, new WitherbloomCampus());
         campus.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(campus);
         return campus;
+    }
+
+    @Test
+    void scryCanKeepTopCard() {
+        addReadyCampus();
+        WitherbloomCampus top = new WitherbloomCampus();
+        WitherbloomCampus second = new WitherbloomCampus();
+        harness.setLibrary(player1, List.of(top, second));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).containsExactly(top);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, second);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void scryCanBottomTopCard() {
+        addReadyCampus();
+        WitherbloomCampus top = new WitherbloomCampus();
+        WitherbloomCampus second = new WitherbloomCampus();
+        harness.setLibrary(player1, List.of(top, second));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, top);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void scryWithEmptyLibraryResolvesWithoutAChoice() {
+        Permanent campus = addReadyCampus();
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(campus.isTapped()).isTrue();
+    }
+
+    @Test
+    void scryCannotActivateWithOnlyThreeMana() {
+        Permanent campus = addReadyCampus();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(campus.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedCampusCannotActivateEitherAbility() {
+        Permanent campus = addReadyCampus();
+        campus.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void noncreatureCampusCanProduceManaOnTurnItEntersAfterUntapping() {
+        Permanent campus = harness.enterBattlefieldAndReturn(player1, new WitherbloomCampus());
+        assertThat(campus.isTapped()).isTrue();
+        campus.untap();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(campus.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }
