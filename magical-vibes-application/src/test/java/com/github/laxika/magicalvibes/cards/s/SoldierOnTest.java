@@ -33,14 +33,44 @@ class SoldierOnTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         addTappedCreature(player1);
-        Permanent artifact = new Permanent(new FountainOfYouth());
-        gd.playerBattlefields.get(player2.getId()).add(artifact);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         harness.setHand(player1, List.of(new SoldierOn()));
         addMana();
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can put counters on an untapped creature you control")
+    void putsCountersOnUntappedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castSoldierOn(target);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not affect another creature when its target leaves before resolution")
+    void doesNotResolveWhenTargetLeaves() {
+        Permanent target = addTappedCreature(player2);
+        Permanent other = addTappedCreature(player2);
+        harness.setHand(player1, List.of(new SoldierOn()));
+        addMana();
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(other.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(SoldierOn.class::isInstance);
     }
 
     private void castSoldierOn(Permanent target) {
@@ -56,10 +86,9 @@ class SoldierOnTest extends BaseCardTest {
     }
 
     private Permanent addTappedCreature(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         permanent.setSummoningSick(false);
         permanent.tap();
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
