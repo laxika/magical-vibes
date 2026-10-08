@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.b.BlinkmothNexus;
 import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.cards.d.DarksteelGargoyle;
 import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Tanglewalker.class, DarksteelCitadel.class, DarksteelGargoyle.class, DarksteelIngot.class,
-        EchoingTruth.class})
+        EchoingTruth.class, BlinkmothNexus.class})
 class TanglewalkerTest extends BaseCardTest {
 
     @Test
@@ -164,6 +165,42 @@ class TanglewalkerTest extends BaseCardTest {
                         battlefieldIndex(player1, tanglewalker))));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Separate artifact and land permanents do not enable Tanglewalker's ability")
+    void separateArtifactAndLandDoNotEnableAbility() {
+        harness.addToBattlefield(player2, new BlinkmothNexus());
+        harness.addToBattlefield(player2, new DarksteelIngot());
+        Permanent blocker = addCreatureReady(player2, new DarksteelGargoyle());
+        Permanent tanglewalker = addAttackingCreature(player1, new Tanglewalker());
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(battlefieldIndex(player2, blocker),
+                        battlefieldIndex(player1, tanglewalker))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A land that becomes an artifact enables Tanglewalker's ability")
+    void animatedBlinkmothNexusEnablesAbility() {
+        Permanent nexus = harness.addToBattlefieldAndReturn(player1, new BlinkmothNexus());
+        Permanent blocker = addCreatureReady(player1, new DarksteelGargoyle());
+        Permanent tanglewalker = addAttackingCreature(player2, new Tanglewalker());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, nexus), 0, null, null);
+        harness.passBothPriorities();
+        prepareDeclareBlockers(player2);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1,
+                List.of(new BlockerAssignment(battlefieldIndex(player1, blocker),
+                        battlefieldIndex(player2, tanglewalker)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
     }
 
     private Permanent addAttackingCreature(Player player, Card card) {
