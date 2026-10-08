@@ -8,23 +8,25 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WretchedThrong.class, GrizzlyBears.class, Terminate.class})
 class WretchedThrongTest extends BaseCardTest {
 
     private void terminate(Player caster, UUID targetId) {
         harness.setHand(caster, List.of(new Terminate()));
         harness.addMana(caster, ManaColor.BLACK, 1);
         harness.addMana(caster, ManaColor.RED, 1);
-        harness.castInstant(caster, 0, targetId);
+        harness.castAndResolveInstant(caster, 0, targetId);
     }
 
     private void killThrongAndResolveTrigger() {
@@ -34,18 +36,17 @@ class WretchedThrongTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         terminate(player1, harness.getPermanentId(player1, "Wretched Throng"));
-        harness.passBothPriorities(); // resolve Terminate → dies → trigger on stack
-        harness.passBothPriorities(); // resolve trigger → MayEffect prompt
+        harness.passBothPriorities(); // Resolve the death trigger.
     }
 
     private void setupLibraryWithThrongs(int throngCount) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
+        List<Card> deck = new ArrayList<>();
         for (int i = 0; i < throngCount; i++) {
             deck.add(new WretchedThrong());
         }
         deck.add(new GrizzlyBears());
         deck.add(new GrizzlyBears());
+        harness.setLibrary(player1, deck);
     }
 
     @Test
@@ -94,7 +95,7 @@ class WretchedThrongTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
         harness.assertInHand(player1, "Wretched Throng");
@@ -103,9 +104,7 @@ class WretchedThrongTest extends BaseCardTest {
     @Test
     @DisplayName("No copies in library finds nothing and shuffles")
     void noCopiesInLibraryFindsNothing() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
         killThrongAndResolveTrigger();
         harness.handleMayAbilityChosen(player1, true);
@@ -113,5 +112,37 @@ class WretchedThrongTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(entry -> entry.contains("finds no cards named Wretched Throng"));
+    }
+
+    @Test
+    @DisplayName("A named-card search may find nothing even when matching cards exist")
+    void mayFailToFindAnExistingCopy() {
+        setupLibraryWithThrongs(2);
+        killThrongAndResolveTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("chooses not to take a card. Library is shuffled."));
+    }
+
+    @Test
+    @DisplayName("Searching an empty library completes without adding a card")
+    void emptyLibrarySearchCompletes() {
+        harness.setLibrary(player1, List.of());
+        killThrongAndResolveTrigger();
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("library but it is empty. Library is shuffled."));
     }
 }
