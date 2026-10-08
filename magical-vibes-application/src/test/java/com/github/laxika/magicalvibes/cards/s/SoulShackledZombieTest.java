@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SoulShackledZombie.class, Forest.class, GrizzlyBears.class})
 class SoulShackledZombieTest extends BaseCardTest {
 
     @Test
@@ -70,10 +71,98 @@ class SoulShackledZombieTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
+    @Test
+    void choosingZeroCardsDoesNotChangeLifeOrGraveyard() {
+        Card creature = new SoulShackledZombie();
+        harness.setGraveyard(player2, List.of(creature));
+        castAndResolveCreatureToTargetingPrompt();
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void twoCreaturesFromOwnGraveyardApplyLifeRiderOnlyOnce() {
+        Card firstCreature = new SoulShackledZombie();
+        Card secondCreature = new SoulShackledZombie();
+        harness.setGraveyard(player1, List.of(firstCreature, secondCreature));
+        castAndResolveCreatureToTargetingPrompt();
+
+        harness.handleMultipleCardsChosen(player1, List.of(firstCreature.getId(), secondCreature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(firstCreature, secondCreature);
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void creatureRemovedBeforeResolutionDoesNotApplyLifeRiderForRemainingLand() {
+        Card creature = new SoulShackledZombie();
+        Card land = new Forest();
+        harness.setGraveyard(player2, List.of(creature, land));
+        castAndResolveCreatureToTargetingPrompt();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId(), land.getId()));
+
+        harness.setGraveyard(player2, List.of(land));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(land);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void landRemovedBeforeResolutionStillAllowsCreatureLifeRider() {
+        Card creature = new SoulShackledZombie();
+        Card land = new Forest();
+        harness.setGraveyard(player2, List.of(creature, land));
+        castAndResolveCreatureToTargetingPrompt();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId(), land.getId()));
+
+        harness.setGraveyard(player2, List.of(creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(creature);
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void emptyGraveyardsDoNotPreventCreatureEnteringOrChangeLife() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.castFromHand(player1, new SoulShackledZombie(), "{3}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Soul-Shackled Zombie");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void allTargetsRemovedBeforeResolutionDoNotApplyLifeRider() {
+        Card creature = new SoulShackledZombie();
+        harness.setGraveyard(player2, List.of(creature));
+        castAndResolveCreatureToTargetingPrompt();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+
+        harness.setGraveyard(player2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
     private void castAndResolveCreatureToTargetingPrompt() {
-        harness.setHand(player1, List.of(new SoulShackledZombie()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SoulShackledZombie(), "{3}{B}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
