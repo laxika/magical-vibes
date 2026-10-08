@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,10 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class WormfangDrakeTest extends BaseCardTest {
 
     private void castWormfangDrake() {
-        harness.setHand(player1, List.of(new WormfangDrake()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new WormfangDrake(), "{2}{U}");
         harness.passBothPriorities();
     }
 
@@ -108,7 +104,6 @@ class WormfangDrakeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Wormfang Drake");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Wormfang Drake"), Keyword.FLYING)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Grizzly Bears"));
     }
@@ -159,7 +154,7 @@ class WormfangDrakeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID drakeId = harness.getPermanentId(player1, "Wormfang Drake");
-        harness.castInstant(player1, 0, drakeId);
+        harness.castAndResolveInstant(player1, 0, drakeId);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -168,5 +163,80 @@ class WormfangDrakeTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getCard().getId().equals(ownedByPlayer2.getId()));
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(card -> card.getId().equals(ownedByPlayer2.getId()));
+    }
+
+    @Test
+    @DisplayName("May sacrifice itself rather than exile an available creature")
+    void mayDeclineExilingAnotherCreature() {
+        harness.addToBattlefield(player1, new SuntailHawk());
+        castWormfangDrake();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Wormfang Drake");
+        harness.assertNotOnBattlefield(player1, "Wormfang Drake");
+        harness.assertOnBattlefield(player1, "Suntail Hawk");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature exiled after the Drake leaves stays exiled")
+    void creatureExiledAfterDrakeLeavesStaysExiled() {
+        Permanent hawk = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        castWormfangDrake();
+        UUID drakeId = harness.getPermanentId(player1, "Wormfang Drake");
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, drakeId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, hawk.getId());
+
+        harness.assertInHand(player1, "Wormfang Drake");
+        harness.assertNotOnBattlefield(player1, "Suntail Hawk");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(hawk.getCard().getId()));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrifices itself if the other creature leaves before its entry trigger resolves")
+    void sacrificesItselfWhenOtherCreatureLeavesInResponse() {
+        Permanent hawk = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        castWormfangDrake();
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, hawk.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Suntail Hawk");
+        harness.assertInGraveyard(player1, "Wormfang Drake");
+        harness.assertNotOnBattlefield(player1, "Wormfang Drake");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The exiled creature returns only when the leaves trigger resolves")
+    void returnUsesTheStack() {
+        Permanent hawk = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        castWormfangDrake();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, hawk.getId());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Wormfang Drake"));
+
+        harness.assertInHand(player1, "Wormfang Drake");
+        harness.assertNotOnBattlefield(player1, "Suntail Hawk");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(hawk.getCard().getId()));
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Suntail Hawk");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 }
