@@ -6,15 +6,16 @@ import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Gridlock.class, GrizzlyBears.class, RodOfRuin.class, Forest.class})
 class GridlockTest extends BaseCardTest {
 
     @Test
@@ -48,14 +49,94 @@ class GridlockTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a land")
     void cannotTargetLand() {
-        harness.addToBattlefield(player2, new Forest());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.setHand(player1, List.of(new Gridlock()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        UUID forestId = harness.getPermanentId(player2, "Forest");
-
-        assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 1, List.of(forestId)))
+        assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 1, List.of(forest.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("nonland permanent");
+    }
+
+    @Test
+    @DisplayName("Cannot choose fewer than X targets")
+    void cannotChooseFewerThanXTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Gridlock()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 2, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Positive X requires targets")
+    void positiveXRequiresTargets() {
+        harness.setHand(player1, List.of(new Gridlock()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot choose more than X targets")
+    void cannotChooseMoreThanXTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.setHand(player1, List.of(new Gridlock()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 1,
+                List.of(creature.getId(), artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same permanent twice")
+    void cannotChooseDuplicateTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Gridlock()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 2,
+                List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can target your own permanents and already tapped permanents")
+    void canTargetOwnAndAlreadyTappedPermanents() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent tappedArtifact = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        Permanent unchosenCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        tappedArtifact.setTapped(true);
+        harness.setHand(player1, List.of(new Gridlock()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castInstantForX(player1, 0, 2, List.of(ownCreature.getId(), tappedArtifact.getId()));
+        harness.passBothPriorities();
+
+        assertThat(ownCreature.isTapped()).isTrue();
+        assertThat(tappedArtifact.isTapped()).isTrue();
+        assertThat(unchosenCreature.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Gridlock");
+    }
+
+    @Test
+    @DisplayName("Still taps the remaining target when another target leaves the battlefield")
+    void resolvesWithOneRemainingTarget() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.setHand(player1, List.of(new Gridlock()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castInstantForX(player1, 0, 2, List.of(creature.getId(), artifact.getId()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+
+        assertThat(artifact.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Gridlock");
     }
 }
