@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.d.DurkwoodBaloth;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.m.MagusOfTheScroll;
 import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WordOfSeizing.class, DurkwoodBaloth.class, Mountain.class, ThinkTwice.class})
+@CardUsed({WordOfSeizing.class, DurkwoodBaloth.class, Mountain.class, ThinkTwice.class, MagusOfTheScroll.class})
 class WordOfSeizingTest extends BaseCardTest {
 
     @Test
@@ -96,11 +97,71 @@ class WordOfSeizingTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castWordOfSeizing(Permanent target) {
+    @Test
+    @DisplayName("Can untap and grant haste to a permanent already under your control")
+    void canTargetOwnPermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DurkwoodBaloth());
+        target.tap();
+
+        castWordOfSeizing(target);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        harness.assertOnBattlefield(player1, "Durkwood Baloth");
+        harness.assertNotOnBattlefield(player2, "Durkwood Baloth");
+    }
+
+    @Test
+    @DisplayName("Split second permits tapping a land for mana before resolution")
+    void splitSecondAllowsManaAbility() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Mountain());
         harness.setHand(player1, List.of(new WordOfSeizing()));
         addMana(player1);
         harness.castInstant(player1, 0, target.getId());
+
+        harness.tapPermanent(player2, 0);
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
+        assertThat(target.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Granted haste allows using a stolen creature's tap ability immediately")
+    void hasteAllowsStolenCreaturesTapAbility() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MagusOfTheScroll());
+        castWordOfSeizing(target);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Split second blocks a nonmana activated ability without paying its costs")
+    void splitSecondBlocksNonManaAbility() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MagusOfTheScroll());
+        target.setSummoningSick(false);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.setHand(player1, List.of(new WordOfSeizing()));
+        addMana(player1);
+        harness.castInstant(player1, 0, target.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("split second");
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    private void castWordOfSeizing(Permanent target) {
+        harness.setHand(player1, List.of(new WordOfSeizing()));
+        addMana(player1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void addMana(Player player) {
