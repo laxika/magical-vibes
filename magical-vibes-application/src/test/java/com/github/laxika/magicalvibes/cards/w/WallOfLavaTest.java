@@ -81,4 +81,43 @@ class WallOfLavaTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Wall can activate its ability")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfLava());
+        wall.setSummoningSick(true);
+        wall.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(4);
+        assertThat(wall.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The boost applies on resolution and only to the source Wall")
+    void boostsOnlySourceOnResolution() {
+        Permanent source = addCreatureReady(player1, new WallOfLava());
+        Permanent other = addCreatureReady(player1, new WallOfLava());
+        Permanent opponent = addCreatureReady(player2, new WallOfLava());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(3);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(3);
+    }
 }
