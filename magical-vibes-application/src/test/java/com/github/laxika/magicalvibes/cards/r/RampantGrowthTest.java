@@ -133,6 +133,26 @@ class RampantGrowthTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Rampant Growth");
     }
 
+    @Test
+    @DisplayName("Rampant Growth puts a land onto the battlefield after the normal land play is used")
+    void putsLandOntoBattlefieldAfterLandPlay() {
+        harness.setHand(player1, List.of(new Plains()));
+        harness.playLand(player1, 0);
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        setupAndCast();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2)
+                .anyMatch(p -> p.getCard().getId().equals(forest.getId()) && p.isTapped());
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Rampant Growth");
+    }
+
     private void setupAndCast() {
         harness.castFromHand(player1, new RampantGrowth(), "{1}{G}");
     }
