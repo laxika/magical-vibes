@@ -308,8 +308,7 @@ class MishraClaimedByGixTest extends BaseCardTest {
 
         Permanent melded = findPermanent(player1, "Mishra, Lost to Phyrexia");
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
 
         assertThat(gqs.findPermanentById(gd, melded.getId())).isSameAs(melded);

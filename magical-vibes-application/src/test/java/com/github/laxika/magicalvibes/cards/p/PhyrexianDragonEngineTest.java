@@ -130,8 +130,7 @@ class PhyrexianDragonEngineTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, engine, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Phyrexian Dragon Engine");
