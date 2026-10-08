@@ -105,4 +105,53 @@ class UtopiaVowTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Resolving Utopia Vow on an opposing creature grants mana to that creature's controller")
+    void resolvedAuraGrantsManaToCreatureController() {
+        Permanent creature = addCreatureReady(player2, new EssenceWarden());
+        harness.setHand(player1, List.of(new UtopiaVow()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Utopia Vow").getAttachedTo()).isEqualTo(creature.getId());
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleListChoice(player2, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents activating the granted tap ability")
+    void summoningSicknessPreventsGrantedManaAbility() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new EssenceWarden());
+        creature.setSummoningSick(true);
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new UtopiaVow());
+        aura.setAttachedTo(creature.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped enchanted creature cannot activate the granted mana ability again")
+    void tappedCreatureCannotActivateGrantedManaAbility() {
+        Permanent creature = addCreatureReady(player1, new EssenceWarden());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new UtopiaVow());
+        aura.setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+    }
 }
