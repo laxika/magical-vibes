@@ -203,6 +203,50 @@ class GeneralsKabutoTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, secondCreature, Keyword.SHROUD)).isTrue();
     }
 
+    @Test
+    @DisplayName("Combat damage to an equipped attacker is prevented")
+    void combatDamageToEquippedAttackerIsPrevented() {
+        Permanent attacker = addCreatureReady(player1, new KamiOfAncientLaw());
+        addKabutoAttached(player1, attacker);
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new KamiOfThePaintedRoad());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat(player1);
+
+        harness.assertOnBattlefield(player1, "Kami of Ancient Law");
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Shroud prevents equipping the already equipped creature again")
+    void equipCannotTargetAlreadyEquippedCreature() {
+        Permanent creature = addCreatureReady(player1, new KamiOfAncientLaw());
+        Permanent kabuto = addKabutoAttached(player1, creature);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(kabuto.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated during combat")
+    void equipCannotBeActivatedDuringCombat() {
+        Permanent kabuto = addKabutoReady(player1);
+        Permanent creature = addCreatureReady(player1, new KamiOfAncientLaw());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        assertThat(kabuto.getAttachedTo()).isNull();
+    }
+
     private Permanent addKabutoReady(Player player) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new GeneralsKabuto());
         perm.setSummoningSick(false);
