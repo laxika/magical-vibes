@@ -121,4 +121,44 @@ class VerdantFieldTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid ability index");
     }
+
+    @Test
+    @DisplayName("The granted ability uses the stack and resolves after the land and Aura leave")
+    void activatedAbilitySurvivesSourceRemoval() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        Permanent target = addCreatureReady(player2, new HollowWarrior());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new VerdantField());
+        aura.setAttachedTo(land.getId());
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+
+        gd.playerBattlefields.get(player1.getId()).remove(land);
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("A tapped enchanted land cannot pay the granted ability's tap cost")
+    void tappedLandCannotActivateGrantedAbility() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        Permanent target = addCreatureReady(player2, new HollowWarrior());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new VerdantField());
+        aura.setAttachedTo(land.getId());
+        land.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
 }
