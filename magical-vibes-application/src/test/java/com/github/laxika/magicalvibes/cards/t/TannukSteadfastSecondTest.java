@@ -43,7 +43,6 @@ class TannukSteadfastSecondTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getCard().getId().equals(relic.getId()));
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
         resolveAllTriggers();
 
@@ -66,7 +65,6 @@ class TannukSteadfastSecondTest extends BaseCardTest {
         harness.assertLife(player2, 17);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
         resolveAllTriggers();
 
@@ -128,7 +126,6 @@ class TannukSteadfastSecondTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Cryogen Relic");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
         resolveAllTriggers();
 
@@ -146,7 +143,6 @@ class TannukSteadfastSecondTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
         resolveAllTriggers();
 
@@ -164,7 +160,6 @@ class TannukSteadfastSecondTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
         resolveAllTriggers();
         assertThat(gd.findExiledCard(relic.getId())).isNotNull();
@@ -177,10 +172,36 @@ class TannukSteadfastSecondTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Cryogen Relic");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
         resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Cryogen Relic");
         assertThat(gd.findExiledCard(relic.getId())).isNull();
+    }
+
+    @Test
+    void warpedRedCreatureCanAttackImmediately() {
+        harness.addToBattlefield(player1, new TannukSteadfastSecond());
+        harness.setHand(player1, List.of(new NebulaDragon()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0, player2.getId());
+        resolveAllTriggers();
+        declareAttackers(List.of(1));
+        resolveCombat();
+
+        harness.assertLife(player2, 13);
+    }
+
+    @Test
+    void grantedWarpStillRequiresRedMana() {
+        harness.addToBattlefield(player1, new TannukSteadfastSecond());
+        harness.setHand(player1, List.of(new CryogenRelic()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castCreatureWithAlternateCost(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }
