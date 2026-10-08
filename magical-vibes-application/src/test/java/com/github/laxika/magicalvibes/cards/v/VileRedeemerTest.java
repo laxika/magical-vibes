@@ -45,9 +45,68 @@ class VileRedeemerTest extends BaseCardTest {
     }
 
     private void castVileRedeemer(int colorlessMana) {
-        harness.setHand(player1, List.of(new VileRedeemer()));
+        harness.addMana(player1, ManaColor.COLORLESS, colorlessMana - 2);
+        harness.castFromHand(player1, new VileRedeemer(), "{2}{G}");
+    }
+
+    @Test
+    void payingWithNoDeathsCreatesNoTokens() {
+        castVileRedeemer(3);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findPermanents(player1, "Eldrazi Scion")).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void enteringWithoutBeingCastDoesNotCreateTokens() {
+        gd.nontokenCreatureDeathCountThisTurn.put(player1.getId(), 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addToBattlefield(player1, new VileRedeemer());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(findPermanents(player1, "Eldrazi Scion")).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    void coloredManaCannotPayTheColorlessCost() {
+        gd.nontokenCreatureDeathCountThisTurn.put(player1.getId(), 1);
+        castVileRedeemer(2);
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, colorlessMana);
-        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findPermanents(player1, "Eldrazi Scion")).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    void countsRealDeathsIncludingDeathsAfterCastingButNotOpponentsOrTokens() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new VileRedeemer());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new VileRedeemer());
+        harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, ownCreature);
+        harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, opposingCreature);
+
+        castVileRedeemer(3);
+        Permanent laterDeath = harness.addToBattlefieldAndReturn(player1, new VileRedeemer());
+        harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, laterDeath);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Vile Redeemer");
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(findPermanents(player1, "Eldrazi Scion")).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Vile Redeemer");
+        Permanent scion = findPermanents(player1, "Eldrazi Scion").getFirst();
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(scion), null, null);
+        assertThat(findPermanents(player1, "Eldrazi Scion")).hasSize(1);
+
+        castVileRedeemer(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(findPermanents(player1, "Eldrazi Scion")).hasSize(3);
     }
 }
