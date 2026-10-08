@@ -3,12 +3,14 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Persecute;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +25,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Wear // Tear is one card whose two halves (and their fusion) are the three modes of a single
  * modal instant, each paying its own total cost.
  */
+@CardUsed({WearTear.class, FountainOfYouth.class, AngelicChorus.class, GrizzlyBears.class,
+        Persecute.class})
 class WearTearTest extends BaseCardTest {
 
     private static final int WEAR = 0;
@@ -172,6 +176,98 @@ class WearTearTest extends BaseCardTest {
         UUID artifactId = harness.getPermanentId(player2, "Fountain of Youth");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, TEAR, artifactId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Fuse is unavailable when casting from exile")
+    void cannotFuseFromExile() {
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new AngelicChorus());
+        WearTear spell = new WearTear();
+        harness.setExile(player1, List.of(spell));
+
+        List<UUID> targets = List.of(
+                harness.getPermanentId(player2, "Fountain of Youth"),
+                harness.getPermanentId(player2, "Angelic Chorus"));
+
+        assertThatThrownBy(() -> harness.inMutationScope(() ->
+                harness.getSpellCastingService().playCardFromExileAsResolutionCast(
+                        gd, player1, spell.getId(), FUSE, targets)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
+        harness.assertOnBattlefield(player2, "Angelic Chorus");
+    }
+
+    @Test
+    @DisplayName("Wear can be cast alone from exile without paying its mana cost")
+    void canCastWearAloneFromExile() {
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        WearTear spell = new WearTear();
+        harness.setExile(player1, List.of(spell));
+        UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
+
+        harness.inMutationScope(() -> harness.getSpellCastingService()
+                .playCardFromExileAsResolutionCast(gd, player1, spell.getId(), WEAR, targetId));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        harness.assertInGraveyard(player2, "Fountain of Youth");
+    }
+
+    @Test
+    @DisplayName("Fuse still destroys the enchantment when its artifact target leaves")
+    void fuseResolvesWithOnlyEnchantmentTargetLegal() {
+        assertFuseResolvesWithOneLegalTarget(WEAR);
+    }
+
+    @Test
+    @DisplayName("Fuse still destroys the artifact when its enchantment target leaves")
+    void fuseResolvesWithOnlyArtifactTargetLegal() {
+        assertFuseResolvesWithOneLegalTarget(TEAR);
+    }
+
+    private void assertFuseResolvesWithOneLegalTarget(int responseMode) {
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new AngelicChorus());
+        harness.setHand(player1, List.of(new WearTear()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        UUID artifactId = harness.getPermanentId(player2, "Fountain of Youth");
+        UUID enchantmentId = harness.getPermanentId(player2, "Angelic Chorus");
+        harness.castModalInstant(player1, 0, FUSE, List.of(artifactId, enchantmentId));
+
+        harness.setHand(player2, List.of(new WearTear()));
+        if (responseMode == WEAR) {
+            harness.addMana(player2, ManaColor.RED, 1);
+            harness.addMana(player2, ManaColor.COLORLESS, 1);
+        } else {
+            harness.addMana(player2, ManaColor.WHITE, 1);
+        }
+        harness.castInstant(player2, 0, responseMode, responseMode == WEAR ? artifactId : enchantmentId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Fountain of Youth");
+        harness.assertInGraveyard(player2, "Angelic Chorus");
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertInGraveyard(player1, "Wear // Tear");
+    }
+
+    @Test
+    @DisplayName("Wear // Tear is white as well as red in hand")
+    void whiteDiscardEffectDiscardsWearTear() {
+        harness.setHand(player2, List.of(new WearTear()));
+        harness.setHand(player1, List.of(new Persecute()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleListChoice(player1, "WHITE");
+
+        harness.assertNotInHand(player2, "Wear // Tear");
+        harness.assertInGraveyard(player2, "Wear // Tear");
     }
 
     private Permanent addArtifactEnchantment(Player player, String name) {
