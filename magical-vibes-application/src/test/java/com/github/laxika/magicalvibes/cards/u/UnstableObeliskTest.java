@@ -68,4 +68,80 @@ class UnstableObeliskTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Mana ability resolves immediately without using the stack")
+    void manaAbilityDoesNotUseStack() {
+        harness.addToBattlefield(player1, new UnstableObelisk());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A tapped Obelisk cannot produce mana")
+    void tappedObeliskCannotProduceMana() {
+        Permanent obelisk = harness.addToBattlefieldAndReturn(player1, new UnstableObelisk());
+        obelisk.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped Obelisk cannot pay the destruction ability's tap cost")
+    void tappedObeliskCannotDestroyPermanent() {
+        Permanent obelisk = harness.addToBattlefieldAndReturn(player1, new UnstableObelisk());
+        obelisk.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Unstable Obelisk");
+        harness.assertNotInGraveyard(player1, "Unstable Obelisk");
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(7);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can destroy a permanent controlled by the ability's controller")
+    void canDestroyOwnPermanent() {
+        harness.addToBattlefield(player1, new UnstableObelisk());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 7);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Unstable Obelisk");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Can target itself even though sacrificing it makes the target illegal")
+    void canTargetItself() {
+        Permanent obelisk = harness.addToBattlefieldAndReturn(player1, new UnstableObelisk());
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.activateAbility(player1, 0, 1, null, obelisk.getId());
+
+        harness.assertNotOnBattlefield(player1, "Unstable Obelisk");
+        harness.assertInGraveyard(player1, "Unstable Obelisk");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
 }
