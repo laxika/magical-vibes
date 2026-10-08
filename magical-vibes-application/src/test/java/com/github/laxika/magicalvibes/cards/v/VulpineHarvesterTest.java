@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class VulpineHarvesterTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Returns an artifact whose mana value is no greater than the attacking Phyrexians' total power")
+    @DisplayName("Targets any artifact and returns it when its mana value is within the total power")
     void returnsEligibleArtifact() {
         Card eligible = new DarksteelRelic();
         Card eligibleCreature = new MyrRetriever();
@@ -35,7 +35,7 @@ class VulpineHarvesterTest extends BaseCardTest {
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validCardIds()).containsExactly(eligible.getId(), eligibleCreature.getId());
+        assertThat(choice.validCardIds()).containsExactly(eligible.getId(), eligibleCreature.getId(), tooExpensive.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of(eligibleCreature.getId()));
         harness.passBothPriorities();
@@ -62,5 +62,74 @@ class VulpineHarvesterTest extends BaseCardTest {
 
     private void addReadyVulpineHarvester() {
         addCreatureReady(player1, new VulpineHarvester());
+    }
+
+    @Test
+    void expensiveArtifactCanBeTargetedButStaysInGraveyard() {
+        Card artifact = new SolemnSimulacrum();
+        harness.setGraveyard(player1, List.of(artifact));
+        addReadyVulpineHarvester();
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(artifact.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Solemn Simulacrum");
+        harness.assertNotOnBattlefield(player1, "Solemn Simulacrum");
+    }
+
+    @Test
+    void stillCountsPhyrexianThatIsNoLongerAttacking() {
+        Card artifact = new MyrRetriever();
+        harness.setGraveyard(player1, List.of(artifact));
+        var attacker = addCreatureReady(player1, new VulpineHarvester());
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Myr Retriever");
+        harness.assertNotInGraveyard(player1, "Myr Retriever");
+    }
+
+    @Test
+    void usesPowerAtResolution() {
+        Card artifact = new MyrRetriever();
+        harness.setGraveyard(player1, List.of(artifact));
+        var attacker = addCreatureReady(player1, new VulpineHarvester());
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
+        attacker.setPowerModifier(-2);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Myr Retriever");
+        harness.assertNotOnBattlefield(player1, "Myr Retriever");
+    }
+
+    @Test
+    void multiplePhyrexiansProduceOneReturnPerHarvester() {
+        Card first = new MyrRetriever();
+        Card second = new MyrRetriever();
+        harness.setGraveyard(player1, List.of(first, second));
+        addReadyVulpineHarvester();
+        addReadyVulpineHarvester();
+
+        declareAttackers(player1, List.of(0, 1));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Myr Retriever")).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 }
