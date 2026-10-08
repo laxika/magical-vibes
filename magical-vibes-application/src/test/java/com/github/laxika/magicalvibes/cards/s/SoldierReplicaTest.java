@@ -126,6 +126,60 @@ class SoldierReplicaTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent replica = harness.addToBattlefieldAndReturn(player1, new SoldierReplica());
+        replica.setSummoningSick(true);
+        replica.setTapped(true);
+        Permanent target = addCreatureReady(player2, new FangrenHunter());
+        target.setAttacking(true);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Soldier Replica");
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Can target itself in combat but sacrifice makes the target illegal")
+    void canTargetItselfButDoesNotResolveAfterSacrifice() {
+        Permanent replica = addReadySoldierReplica(player1);
+        replica.setAttacking(true);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, replica.getId());
+
+        harness.assertInGraveyard(player1, "Soldier Replica");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(replica.getMarkedDamage()).isZero();
+        harness.assertNotOnBattlefield(player1, "Soldier Replica");
+    }
+
+    @Test
+    @DisplayName("Ability does not resolve if the target stops blocking")
+    void fizzlesIfTargetStopsBlockingBeforeResolution() {
+        addReadySoldierReplica(player1);
+        Permanent target = addCreatureReady(player2, new FangrenHunter());
+        target.setBlocking(true);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        target.setBlocking(false);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Soldier Replica");
+        harness.assertOnBattlefield(player2, "Fangren Hunter");
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
