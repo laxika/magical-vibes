@@ -127,6 +127,65 @@ class ZoologistTest extends BaseCardTest {
                 .hasMessageContaining("summoning sick");
     }
 
+    @Test
+    @DisplayName("Only the top card moves and the remaining library order is preserved")
+    void onlyTopCardMoves() {
+        addReadyZoologist();
+        Card top = new Forest();
+        Card second = new DuskImp();
+        Card third = new Forest();
+        harness.setLibrary(player1, List.of(top, second, third));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(top);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, third);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An activated ability still resolves after Zoologist leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent zoologist = addReadyZoologist();
+        Card creature = new DuskImp();
+        harness.setLibrary(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(zoologist);
+        harness.setGraveyard(player1, List.of(zoologist.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard).containsExactly(creature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(zoologist.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability uses its controller's library and puts the creature under their control")
+    void usesAbilityControllersLibrary() {
+        addCreatureReady(player2, new Zoologist());
+        Card creature = new DuskImp();
+        Card otherTop = new Forest();
+        harness.setLibrary(player1, List.of(otherTop));
+        harness.setLibrary(player2, List.of(creature));
+        harness.addMana(player2, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getCard().getId().equals(creature.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(otherTop);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        Permanent entered = findPermanent(player2, "Dusk Imp");
+        assertThat(entered.isTapped()).isFalse();
+        assertThat(entered.isSummoningSick()).isTrue();
+    }
     private Permanent addReadyZoologist() {
         return addCreatureReady(player1, new Zoologist());
     }
