@@ -67,6 +67,104 @@ class WillOfTheAllHunterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cycling pays the discard immediately and draws only on resolution")
+    void cyclingDiscardIsAnActivationCost() {
+        harness.setHand(player1, List.of(new WillOfTheAllHunter()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Will of the All-Hunter");
+        harness.assertNotInHand(player1, "Will of the All-Hunter");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cycling requires two mana and leaves the card in hand if payment fails")
+    void cyclingRequiresFullManaPayment() {
+        harness.setHand(player1, List.of(new WillOfTheAllHunter()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Will of the All-Hunter");
+        harness.assertNotInGraveyard(player1, "Will of the All-Hunter");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The nonblocking boost expires at the end of the turn")
+    void boostExpires() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castResolve(target);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("An opposing attacking creature gets the temporary boost, not counters")
+    void boostsOpposingAttacker() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setAttacking(true);
+
+        castResolve(target);
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Checks blocking status at resolution, after the creature stops blocking")
+    void checksBlockingStatusAtResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setBlocking(true);
+        harness.setHand(player1, List.of(new WillOfTheAllHunter()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, target.getId());
+        target.setBlocking(false);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not affect a creature that leaves the battlefield before resolution")
+    void removedTargetIsNotAffected() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WillOfTheAllHunter()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, target.getId());
+        target.setMarkedDamage(2);
+        harness.runStateBasedActions();
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Will of the All-Hunter");
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
     @DisplayName("Rejects a noncreature target")
     void rejectsNoncreatureTarget() {
         harness.setHand(player1, List.of(new WillOfTheAllHunter()));
@@ -82,7 +180,6 @@ class WillOfTheAllHunterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WillOfTheAllHunter()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
