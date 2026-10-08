@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WuSpy.class, Island.class, Forest.class})
 class WuSpyTest extends BaseCardTest {
@@ -96,5 +97,49 @@ class WuSpyTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Choosing the second card preserves the top card and the rest of the library in order")
+    void choosingSecondCardPreservesRemainingLibraryOrder() {
+        Card top = new Island();
+        Card second = new Forest();
+        Card third = new Island();
+        Card fourth = new Forest();
+        harness.setLibrary(player2, List.of(top, second, third, fourth));
+
+        castWuSpy(player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(top, third, fourth);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The controller must choose a card and the targeted player cannot choose instead")
+    void choiceIsMandatoryAndBelongsToController() {
+        Card top = new Island();
+        Card second = new Forest();
+        harness.setLibrary(player2, List.of(top, second));
+
+        castWuSpy(player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(top);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(second);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
