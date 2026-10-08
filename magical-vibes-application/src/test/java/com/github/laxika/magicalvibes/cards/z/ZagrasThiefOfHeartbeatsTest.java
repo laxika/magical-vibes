@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.b.BoggartBrute;
 import com.github.laxika.magicalvibes.cards.f.FaerieMiscreant;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JaceMirrorMage;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.s.StoneworkPackbeast;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -26,7 +26,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ZagrasThiefOfHeartbeats.class, BoggartBrute.class, FaerieMiscreant.class,
-        FugitiveWizard.class, GrizzlyBears.class, ProdigalPyromancer.class, SoulWarden.class})
+        FugitiveWizard.class, GrizzlyBears.class, ProdigalPyromancer.class, SoulWarden.class,
+        JaceMirrorMage.class, StoneworkPackbeast.class})
 class ZagrasThiefOfHeartbeatsTest extends BaseCardTest {
 
     @Test
@@ -98,6 +99,108 @@ class ZagrasThiefOfHeartbeatsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(planeswalker);
     }
 
+    @Test
+    void oneCreatureWithAllPartyTypesReducesCostOnlyByOne() {
+        harness.addToBattlefield(player1, new StoneworkPackbeast());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        ZagrasThiefOfHeartbeats zagras = new ZagrasThiefOfHeartbeats();
+        harness.setHand(player1, List.of(zagras));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == zagras);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void fourMultitypeCreaturesCanFillDifferentPartyRoles() {
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new StoneworkPackbeast());
+        }
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        ZagrasThiefOfHeartbeats zagras = new ZagrasThiefOfHeartbeats();
+        harness.setHand(player1, List.of(zagras));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == zagras);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void fullPartyDoesNotReduceRequiredColoredMana() {
+        addFullParty();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new ZagrasThiefOfHeartbeats()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void zagrasOwnCombatDamageDestroysPlaneswalkerWithRemainingLoyalty() {
+        Permanent attacker = addCreatureReady(player1, new ZagrasThiefOfHeartbeats());
+        Permanent planeswalker = addPlaneswalker(player2, 8);
+
+        declareAttackerAtPlaneswalker(attacker, planeswalker);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(planeswalker);
+        harness.assertInGraveyard(player2, "Jace, Mirror Mage");
+    }
+
+    @Test
+    void opposingCreatureCombatDamageDoesNotTriggerZagras() {
+        addCreatureReady(player1, new ZagrasThiefOfHeartbeats());
+        Permanent attacker = addCreatureReady(player2, new StoneworkPackbeast());
+        Permanent planeswalker = addPlaneswalker(player1, 4);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        int attackerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(attacker);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player2, List.of(attackerIndex),
+                        Map.of(attackerIndex, planeswalker.getId())));
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of());
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(planeswalker);
+    }
+
+    @Test
+    void otherCreaturesLoseGrantedDeathtouchWhenZagrasLeaves() {
+        Permanent zagras = addCreatureReady(player1, new ZagrasThiefOfHeartbeats());
+        Permanent creature = addCreatureReady(player1, new StoneworkPackbeast());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(zagras);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isFalse();
+    }
+
     private void addFullParty() {
         harness.addToBattlefield(player1, new SoulWarden());
         harness.addToBattlefield(player1, new FaerieMiscreant());
@@ -115,12 +218,8 @@ class ZagrasThiefOfHeartbeatsTest extends BaseCardTest {
     }
 
     private Permanent addPlaneswalker(Player player, int loyalty) {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new JaceMirrorMage());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
