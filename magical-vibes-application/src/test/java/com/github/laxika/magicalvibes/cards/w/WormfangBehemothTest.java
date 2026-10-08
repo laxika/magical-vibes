@@ -107,8 +107,7 @@ class WormfangBehemothTest extends BaseCardTest {
         harness.setHand(player1, hand);
         addBehemothMana();
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         return findPermanent(player1, "Wormfang Behemoth");
     }
 
@@ -142,9 +141,7 @@ class WormfangBehemothTest extends BaseCardTest {
     @DisplayName("The enters-the-battlefield ability exiles the hand when its trigger resolves")
     void entersTheBattlefieldUsesHandAtResolution() {
         Card late = new BorderPatrol();
-        harness.setHand(player1, List.of(new WormfangBehemoth()));
-        addBehemothMana();
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new WormfangBehemoth(), "{3}{U}{U}");
         harness.passBothPriorities();
 
         Permanent behemoth = findPermanent(player1, "Wormfang Behemoth");
@@ -197,5 +194,53 @@ class WormfangBehemothTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
         return findPermanent(player1, "Wormfang Behemoth");
+    }
+
+    @Test
+    @DisplayName("An empty hand exiles nothing and leaves the opponent's hand untouched")
+    void emptyHandDoesNotAffectOpponent() {
+        Card opponentCard = new BorderPatrol();
+        harness.setHand(player2, List.of(opponentCard));
+        Permanent behemoth = castBehemoth();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.getCardsExiledByPermanent(behemoth.getId())).isEmpty();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, behemoth));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentCard);
+    }
+
+    @Test
+    @DisplayName("Each Wormfang Behemoth returns only the cards exiled by its own enter ability")
+    void separateBehemothsKeepTheirExiledCardsSeparate() {
+        Card firstCard = new SuntailHawk();
+        Card secondCard = new GiantWarthog();
+        Permanent first = castBehemoth(firstCard);
+        harness.setHand(player1, List.of(secondCard));
+        Permanent second = harness.enterBattlefieldAndReturn(player1, new WormfangBehemoth());
+        resolveAllTriggers();
+
+        assertThat(gd.getCardsExiledByPermanent(first.getId())).containsExactly(firstCard);
+        assertThat(gd.getCardsExiledByPermanent(second.getId())).containsExactly(secondCard);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, first));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstCard);
+        assertThat(gd.getCardsExiledByPermanent(second.getId())).containsExactly(secondCard);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, second));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(firstCard, secondCard);
+        assertThat(gd.getCardsExiledByPermanent(first.getId())).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(second.getId())).isEmpty();
     }
 }
