@@ -32,8 +32,8 @@ class WelcomeTheDeadTest extends BaseCardTest {
         harness.setHand(player1, new ArrayList<>(List.of(
                 new Millstone(), new WelcomeTheDead(), discarded)));
         harness.setLibrary(player1, List.of(firstMilled, secondMilled, firstDraw, secondDraw));
-        addMana(player1, ManaColor.BLACK, 1);
-        addMana(player1, ManaColor.COLORLESS, 7);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
@@ -65,8 +65,8 @@ class WelcomeTheDeadTest extends BaseCardTest {
         harness.setHand(player1, new ArrayList<>(List.of(discarded)));
         harness.setGraveyard(player1, List.of(card));
         harness.setLibrary(player1, List.of(new Forest(), new Island()));
-        addMana(player1, ManaColor.BLACK, 1);
-        addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.castFlashback(player1, 0);
         harness.passBothPriorities();
@@ -81,7 +81,50 @@ class WelcomeTheDeadTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
     }
 
-    private void addMana(com.github.laxika.magicalvibes.model.Player player, ManaColor color, int amount) {
-        harness.addMana(player, color, amount);
+    @Test
+    void countsTheMilledSpellEvenAfterItLeavesTheGraveyardForFlashback() {
+        WelcomeTheDead card = new WelcomeTheDead();
+        Forest milledLand = new Forest();
+        harness.setHand(player1, List.of(new Millstone()));
+        harness.setLibrary(player1, List.of(card, milledLand, new Island(), new Plains()));
+        harness.addMana(player1, ManaColor.COLORLESS, 9);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.castFlashback(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()))
+                .hasSize(3)
+                .allMatch(Permanent::isTapped);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+    }
+
+    @Test
+    void canDiscardADrawnCardWhenCastingWithNoOtherCardsInHand() {
+        WelcomeTheDead card = new WelcomeTheDead();
+        Forest discarded = new Forest();
+        Island kept = new Island();
+        harness.setHand(player1, List.of(card));
+        harness.setLibrary(player1, List.of(discarded, kept));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded, card);
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .hasSize(1)
+                .allMatch(Permanent::isTapped);
     }
 }
