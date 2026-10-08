@@ -23,8 +23,7 @@ class WildElephantTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new WildElephant());
         Permanent blocker = addCreatureReady(player2, new FeralShadow());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -35,5 +34,50 @@ class WildElephantTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+    }
+
+    @Test
+    @DisplayName("Trample permits assigning all combat damage to the blocker")
+    void canAssignAllDamageToBlocker() {
+        harness.setLife(player2, 20);
+        Permanent attacker = addCreatureReady(player1, new WildElephant());
+        Permanent blocker = addCreatureReady(player2, new FeralShadow());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 3));
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        harness.assertInGraveyard(player2, "Feral Shadow");
+    }
+
+    @Test
+    @DisplayName("Trample assigns lethal damage to each blocker before excess reaches the player")
+    void tramplesOverMultipleBlockers() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new WildElephant());
+        Permanent firstBlocker = addCreatureReady(player2, new FeralShadow());
+        Permanent secondBlocker = addCreatureReady(player2, new FeralShadow());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveCombat();
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                firstBlocker.getId(), 1,
+                secondBlocker.getId(), 1,
+                player2.getId(), 1));
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Wild Elephant");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .doesNotContain(firstBlocker, secondBlocker);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(card -> card.getName()).containsExactly("Feral Shadow", "Feral Shadow");
     }
 }
