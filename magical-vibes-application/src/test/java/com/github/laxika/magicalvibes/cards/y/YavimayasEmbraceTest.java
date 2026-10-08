@@ -51,8 +51,7 @@ class YavimayasEmbraceTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.castSorcery(player2, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, aura.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getId().equals(creature.getId()));
@@ -73,6 +72,74 @@ class YavimayasEmbraceTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, noncreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Enchanting your own creature grants bonuses without making it summoning sick")
+    void canEnchantOwnCreature() {
+        Permanent creature = addCreatureReady(player1, new Dodecapod());
+
+        castAuraOn(creature);
+
+        harness.assertOnBattlefield(player1, "Dodecapod");
+        assertThat(creature.isSummoningSick()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The newest Embrace controls the creature and removing it restores the older Embrace")
+    void overlappingEmbracesUseNewestControlAndStackBonuses() {
+        Permanent creature = addCreatureReady(player2, new Dodecapod());
+        castAuraOn(creature);
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new YavimayasEmbrace()));
+        addEmbraceMana(player2);
+        harness.castEnchantment(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Dodecapod");
+        harness.assertNotOnBattlefield(player1, "Dodecapod");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+
+        Permanent newestAura = findPermanent(player2, "Yavimaya's Embrace");
+        harness.setHand(player2, List.of(new Vindicate()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.castAndResolveSorcery(player2, 0, newestAura.getId());
+
+        harness.assertOnBattlefield(player1, "Dodecapod");
+        harness.assertNotOnBattlefield(player2, "Dodecapod");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Destroying the enchanted creature sends it to its owner's graveyard and removes the Aura")
+    void enchantedCreatureDiesToOwnersGraveyard() {
+        Permanent creature = addCreatureReady(player2, new Dodecapod());
+        castAuraOn(creature);
+
+        harness.setHand(player1, List.of(new Vindicate()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
+
+        harness.assertInGraveyard(player2, "Dodecapod");
+        harness.assertNotInGraveyard(player1, "Dodecapod");
+        harness.assertInGraveyard(player1, "Yavimaya's Embrace");
+        harness.assertNotOnBattlefield(player1, "Dodecapod");
+        harness.assertNotOnBattlefield(player1, "Yavimaya's Embrace");
+        harness.assertNotOnBattlefield(player2, "Dodecapod");
     }
 
     private void castAuraOn(Permanent target) {
