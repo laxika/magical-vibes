@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,17 +16,67 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WhiteWard.class, GrizzlyBears.class, Plains.class})
+@CardUsed({WhiteWard.class, GrizzlyBears.class, Plains.class, HolyStrength.class})
 class WhiteWardTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("White Ward removes another white Aura but remains attached itself")
+    void removesOtherWhiteAura() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HolyStrength(), new WhiteWard()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        Permanent strength = findPermanent(player1, "Holy Strength");
+        assertThat(strength.getAttachedTo()).isEqualTo(bears.getId());
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Holy Strength");
+        harness.assertInGraveyard(player1, "Holy Strength");
+        assertThat(findPermanent(player1, "White Ward").getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(gqs.hasProtectionFrom(gd, bears, CardColor.WHITE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("White Ward cannot target a creature already protected by White Ward")
+    void cannotTargetCreatureAlreadyProtectedFromWhite() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WhiteWard(), new WhiteWard()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+        assertThat(findPermanent(player1, "White Ward").getAttachedTo()).isEqualTo(bears.getId());
+    }
+
+    @Test
+    @DisplayName("White Ward can enchant an opponent's creature")
+    void enchantsOpponentsCreature() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WhiteWard()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "White Ward").getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(gqs.hasProtectionFrom(gd, bears, CardColor.WHITE)).isTrue();
+    }
 
     @Test
     @DisplayName("Enchanted creature has protection from white")
     void enchantedCreatureHasProtectionFromWhite() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent auraPerm = new Permanent(new WhiteWard());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new WhiteWard());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         assertThat(gqs.hasProtectionFrom(gd, bearsPerm, CardColor.WHITE)).isTrue();
     }
@@ -35,9 +86,8 @@ class WhiteWardTest extends BaseCardTest {
     void noProtectionFromOtherColors() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent auraPerm = new Permanent(new WhiteWard());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new WhiteWard());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         assertThat(gqs.hasProtectionFrom(gd, bearsPerm, CardColor.RED)).isFalse();
         assertThat(gqs.hasProtectionFrom(gd, bearsPerm, CardColor.GREEN)).isFalse();
@@ -48,9 +98,8 @@ class WhiteWardTest extends BaseCardTest {
     void protectionLostWhenRemoved() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent auraPerm = new Permanent(new WhiteWard());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new WhiteWard());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         assertThat(gqs.hasProtectionFrom(gd, bearsPerm, CardColor.WHITE)).isTrue();
 
