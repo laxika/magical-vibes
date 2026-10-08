@@ -54,6 +54,8 @@ class WanderwineProphetsTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, prophets));
 
+        harness.assertNotOnBattlefield(player1, "Deeptread Merrow");
+        harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Deeptread Merrow");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(card -> card.getName().equals("Deeptread Merrow"));
@@ -99,7 +101,6 @@ class WanderwineProphetsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         harness.handlePermanentChosen(player1, prophets.getId());
-        harness.passBothPriorities(); // resolve the "take an extra turn" effect
 
         harness.assertInGraveyard(player1, "Wanderwine Prophets");
         assertThat(gd.extraTurns).contains(player1.getId());
@@ -116,7 +117,6 @@ class WanderwineProphetsTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, otherProphets.getId());
-        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Wanderwine Prophets");
         harness.assertInGraveyard(player1, "Wanderwine Prophets");
@@ -135,5 +135,35 @@ class WanderwineProphetsTest extends BaseCardTest {
 
         assertThat(gd.extraTurns).doesNotContain(player1.getId());
         harness.assertOnBattlefield(player1, "Wanderwine Prophets");
+    }
+
+    @Test
+    @DisplayName("Champion excludes Merfolk controlled by the opponent")
+    void cannotChampionOpponentsMerfolk() {
+        harness.addToBattlefield(player2, new DeeptreadMerrow());
+
+        castWanderwineProphets();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Wanderwine Prophets");
+        harness.assertOnBattlefield(player2, "Deeptread Merrow");
+    }
+
+    @Test
+    @DisplayName("Champion can be declined even with an eligible Merfolk")
+    void mayDeclineChampionWithEligibleMerfolk() {
+        harness.addToBattlefield(player1, new DeeptreadMerrow());
+
+        castWanderwineProphets();
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, false);
+        } else {
+            harness.handlePermanentChosen(player1, null);
+        }
+
+        harness.assertInGraveyard(player1, "Wanderwine Prophets");
+        harness.assertOnBattlefield(player1, "Deeptread Merrow");
+        assertThat(gd.extraTurns).isEmpty();
     }
 }
