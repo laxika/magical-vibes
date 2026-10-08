@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -35,6 +37,38 @@ class YouLineUpTheShotTest extends BaseCardTest {
         cast(2);
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card instanceof Forest);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    void conjuringCreatesOnlyTheChosenCardWithoutDrawing(int modeIndex) {
+        Forest libraryCard = new Forest();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player2, List.of());
+
+        cast(modeIndex);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, modeIndex == 0 ? "Plummet" : "Naturalize");
+        assertThat(gd.playerHands.get(player1.getId()).getFirst().getOwnerId()).isEqualTo(player1.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "You Line Up the Shot");
+    }
+
+    @Test
+    void warningShotDrawsExactlyTheTopCardWithoutConjuring() {
+        Forest topCard = new Forest();
+        Forest secondCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard, secondCard));
+        harness.setHand(player2, List.of());
+
+        cast(2);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "You Line Up the Shot");
     }
 
     private void cast(int modeIndex) {
