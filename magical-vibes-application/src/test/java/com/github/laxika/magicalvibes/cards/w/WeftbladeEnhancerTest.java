@@ -27,7 +27,7 @@ class WeftbladeEnhancerTest extends BaseCardTest {
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.castCreature(player1, 0, List.of(targetId));
-        resolveCreatureAndEtb();
+        resolveAllTriggers();
 
         assertThat(findPermanentById(targetId).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
                 .isEqualTo(1);
@@ -44,7 +44,7 @@ class WeftbladeEnhancerTest extends BaseCardTest {
         UUID firstId = battlefield.get(0).getId();
         UUID secondId = battlefield.get(1).getId();
         harness.castCreature(player1, 0, List.of(firstId, secondId));
-        resolveCreatureAndEtb();
+        resolveAllTriggers();
 
         assertThat(findPermanentById(firstId).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
                 .isEqualTo(1);
@@ -60,7 +60,12 @@ class WeftbladeEnhancerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
         harness.assertOnBattlefield(player1, "Weftblade Enhancer");
+        assertThat(findPermanent(player1, "Weftblade Enhancer")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -85,25 +90,116 @@ class WeftbladeEnhancerTest extends BaseCardTest {
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player1.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Weftblade Enhancer");
+        resolveAllTriggers();
 
         assertThat(gd.findExiledCard(enhancer.getId())).isNotNull();
+    }
+
+    @Test
+    @CardUsed(WeftbladeEnhancer.class)
+    void canTargetItselfAfterEntering() {
+        harness.setHand(player1, List.of(new WeftbladeEnhancer()));
+        addMana();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        UUID enhancerId = harness.getPermanentId(player1, "Weftblade Enhancer");
+        harness.handlePermanentChosen(player1, enhancerId);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Weftblade Enhancer")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(WeftbladeEnhancer.class)
+    void canPutCountersOnCreaturesControlledByDifferentPlayers() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new WeftbladeEnhancer());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new WeftbladeEnhancer());
+        harness.setHand(player1, List.of(new WeftbladeEnhancer()));
+        addMana();
+
+        harness.castCreature(player1, 0, List.of(own.getId(), opposing.getId()));
+        resolveAllTriggers();
+
+        assertThat(own.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opposing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(WeftbladeEnhancer.class)
+    void normalCastRemainsOnBattlefieldAtEndStep() {
+        harness.setHand(player1, List.of(new WeftbladeEnhancer()));
+        addMana();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Weftblade Enhancer");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed(WeftbladeEnhancer.class)
+    void warpRecastOnLaterTurnPaysNormalCostAndTriggersAgain() {
+        WeftbladeEnhancer enhancer = new WeftbladeEnhancer();
+        harness.setLibrary(player1, List.of(new WeftbladeEnhancer(), new WeftbladeEnhancer()));
+        harness.setLibrary(player2, List.of(new WeftbladeEnhancer(), new WeftbladeEnhancer()));
+        harness.setHand(player1, List.of(enhancer));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1,
+                harness.getPermanentId(player1, "Weftblade Enhancer"));
+        resolveAllTriggers();
+        assertThat(findPermanent(player1, "Weftblade Enhancer")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Weftblade Enhancer");
+        resolveAllTriggers();
+        assertThat(gd.findExiledCard(enhancer.getId())).isNotNull();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        assertThatThrownBy(() -> harness.castFromExile(player1, enhancer.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        assertThatThrownBy(() -> harness.castFromExile(player1, enhancer.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromExile(player1, enhancer.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1,
+                harness.getPermanentId(player1, "Weftblade Enhancer"));
+        resolveAllTriggers();
+
+        assertThat(gd.findExiledCard(enhancer.getId())).isNull();
+        assertThat(findPermanent(player1, "Weftblade Enhancer")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Weftblade Enhancer");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addMana() {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
-    }
-
-    private void resolveCreatureAndEtb() {
-        harness.passBothPriorities();
-        harness.passBothPriorities();
     }
 
     private Permanent findPermanentById(UUID id) {
