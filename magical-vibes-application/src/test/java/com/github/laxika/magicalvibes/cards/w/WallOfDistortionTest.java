@@ -132,6 +132,46 @@ class WallOfDistortionTest extends BaseCardTest {
                 .hasMessageContaining("sorcery speed");
     }
 
+    @Test
+    @DisplayName("Cannot activate with another spell on the stack")
+    void cannotActivateWithNonemptyStack() {
+        Permanent wall = addCreatureReady(player1, new WallOfDistortion());
+        harness.castFromHand(player1, new AlabasterWall(), "{2}{W}");
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        assertThat(wall.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent wall = addCreatureReady(player1, new WallOfDistortion());
+        wall.setSummoningSick(true);
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(wall.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without the required black mana")
+    void cannotActivateWithoutBlackMana() {
+        Permanent wall = addCreatureReady(player1, new WallOfDistortion());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(wall.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
