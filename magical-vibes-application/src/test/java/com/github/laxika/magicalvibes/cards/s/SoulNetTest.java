@@ -32,8 +32,7 @@ class SoulNetTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2); // to pay {1} after casting Terror
 
         harness.castAndResolveInstant(player1, 0, bearsId);
-        harness.passBothPriorities(); // Resolve Terror; bears die; death trigger placed
-        harness.passBothPriorities(); // Resolve Soul Net trigger → may-pay prompt
+        harness.passBothPriorities(); // Resolve Soul Net trigger.
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -56,7 +55,6 @@ class SoulNetTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bearsId);
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -76,7 +74,6 @@ class SoulNetTest extends BaseCardTest {
         // No spare mana to pay {1}.
 
         harness.castAndResolveInstant(player1, 0, bearsId);
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
@@ -101,7 +98,6 @@ class SoulNetTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.castAndResolveInstant(player2, 0, bearsId);
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -168,6 +164,32 @@ class SoulNetTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A death trigger still resolves after Soul Net is destroyed")
+    void triggerSurvivesSourceRemoval() {
+        var net = harness.addToBattlefieldAndReturn(player1, new SoulNet());
+        var bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Terror(), new Shatter()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.castAndResolveInstant(player1, 0, net.getId());
+        harness.assertNotOnBattlefield(player1, "Soul Net");
+        harness.assertInGraveyard(player1, "Soul Net");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
     void noncreatureArtifactDoesNotTrigger() {
         harness.addToBattlefield(player1, new SoulNet());
         var ring = harness.addToBattlefieldAndReturn(player2, new SolRing());
@@ -181,9 +203,7 @@ class SoulNetTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertLife(player1, 20);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof SolRing);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card instanceof SolRing);
+        harness.assertNotOnBattlefield(player2, "Sol Ring");
+        harness.assertInGraveyard(player2, "Sol Ring");
     }
 }
