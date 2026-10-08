@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,8 +17,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ZackFair.class, GrizzlyBears.class, LeoninScimitar.class})
+@CardUsed({ZackFair.class, GrizzlyBears.class, LeoninScimitar.class, Unsummon.class})
 class ZackFairTest extends BaseCardTest {
 
     @Test
@@ -28,10 +31,7 @@ class ZackFairTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent zack = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof ZackFair)
-                .findFirst()
-                .orElseThrow();
+        Permanent zack = findPermanent(player1, "Zack Fair");
         assertThat(zack.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -87,5 +87,108 @@ class ZackFairTest extends BaseCardTest {
 
         assertThat(first.getAttachedTo()).isNull();
         assertThat(second.getAttachedTo()).isEqualTo(target.getId());
+    }
+
+    @Test
+    void cannotTargetOpponentsCreature() {
+        Permanent zack = addCreatureReady(player1, new ZackFair());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(zack);
+    }
+
+    @Test
+    void cannotTargetNoncreature() {
+        Permanent zack = addCreatureReady(player1, new ZackFair());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(zack);
+    }
+
+    @Test
+    void indestructibleExpiresButCountersRemain() {
+        Permanent zack = addCreatureReady(player1, new ZackFair());
+        zack.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void canTargetItselfButAbilityDoesNotResolveAfterSacrifice() {
+        Permanent zack = addCreatureReady(player1, new ZackFair());
+        zack.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        equipment.setAttachedTo(zack.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, zack.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Zack Fair");
+        assertThat(equipment.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void attachesOpponentsEquipmentButIgnoresEquipmentNotAttachedToZack() {
+        Permanent zack = addCreatureReady(player1, new ZackFair());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attached = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        Permanent unrelated = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        attached.setAttachedTo(zack.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(attached.getAttachedTo()).isEqualTo(target.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attached);
+        assertThat(unrelated.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void targetLeavingBattlefieldPreventsAllEffects() {
+        Permanent zack = addCreatureReady(player1, new ZackFair());
+        zack.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        equipment.setAttachedTo(zack.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Zack Fair");
+        assertThat(equipment.getAttachedTo()).isNull();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
