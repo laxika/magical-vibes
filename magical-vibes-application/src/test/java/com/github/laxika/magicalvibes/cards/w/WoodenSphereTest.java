@@ -20,6 +20,38 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({AirElemental.class, BogImp.class, Forest.class, GiantGrowth.class, GrizzlyBears.class, WoodenSphere.class})
 class WoodenSphereTest extends BaseCardTest {
     @Test
+    @DisplayName("A tapped Wooden Sphere still triggers for a green spell")
+    void tappedSphereStillTriggers() {
+        Permanent sphere = harness.addToBattlefieldAndReturn(player1, new WoodenSphere());
+        sphere.tap();
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, lifeBefore + 1);
+        assertThat(sphere.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("One trigger permits only one payment even with extra mana")
+    void cannotPayMultipleTimesForOneSpell() {
+        harness.addToBattlefield(player1, new WoodenSphere());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, lifeBefore + 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
     @DisplayName("Controller casts green spell, pays {1}, gains 1 life")
     void controllerCastsGreenSpellAndPays() {
         harness.addToBattlefield(player1, new WoodenSphere());
