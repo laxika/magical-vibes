@@ -100,11 +100,61 @@ class WeeDragonautsTest extends BaseCardTest {
 
         assertThat(dragonauts.getPowerModifier()).isEqualTo(2);
 
+        resolveAllTriggers();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(dragonauts.getPowerModifier()).isEqualTo(0);
         assertThat(dragonauts.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Multiple spells give cumulative boosts until end of turn")
+    void boostsAccumulateForMultipleSpells() {
+        Permanent dragonauts = addDragonauts();
+
+        harness.setHand(player1, List.of(new Pyromatics()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        harness.setHand(player1, List.of(new PrimevalLight()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castSorcery(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(dragonauts.getPowerModifier()).isEqualTo(4);
+        assertThat(dragonauts.getToughnessModifier()).isEqualTo(0);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(dragonauts.getPowerModifier()).isEqualTo(0);
+        assertThat(dragonauts.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Each controlled copy boosts itself independently")
+    void eachDragonautsBoostsItself() {
+        Permanent first = addDragonauts();
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new WeeDragonauts());
+        Permanent opponents = harness.addToBattlefieldAndReturn(player2, new WeeDragonauts());
+
+        harness.setHand(player1, List.of(new PrimevalLight()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castSorcery(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(first.getPowerModifier()).isEqualTo(2);
+        assertThat(first.getToughnessModifier()).isEqualTo(0);
+        assertThat(second.getPowerModifier()).isEqualTo(2);
+        assertThat(second.getToughnessModifier()).isEqualTo(0);
+        assertThat(opponents.getPowerModifier()).isEqualTo(0);
+        assertThat(opponents.getToughnessModifier()).isEqualTo(0);
     }
 }
