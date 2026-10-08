@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.m.MetathranZombie;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -68,9 +69,64 @@ class UrborgDrakeTest extends BaseCardTest {
         assertThat(drake.isAttacking()).isFalse();
     }
 
+    @Test
+    @DisplayName("An untapped Urborg Drake must attack again in a later combat")
+    void mustAttackAgainInLaterCombat() {
+        Permanent drake = addDrake(false);
+        declareAttackers(List.of(0));
+        resolveCombat();
+        drake.untap();
+
+        assertThatThrownBy(() -> declareAttackers(List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+    }
+
+    @Test
+    @DisplayName("A nonflying creature cannot block Urborg Drake")
+    void nonflyingCreatureCannotBlock() {
+        addDrake(false);
+        addCreatureReady(player2, new MetathranZombie());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(
+                gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("(flying)");
+    }
+
+    @Test
+    @DisplayName("A flying creature can block Urborg Drake")
+    void flyingCreatureCanBlock() {
+        addDrake(false);
+        Permanent blocker = addCreatureReady(player2, new UrborgDrake());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Urborg Drake can block a nonflying attacker")
+    void summoningSickDrakeCanBlock() {
+        addCreatureReady(player1, new MetathranZombie());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new UrborgDrake());
+        blocker.setSummoningSick(true);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
     private Permanent addDrake(boolean summoningSick) {
+        if (!summoningSick) {
+            return addCreatureReady(player1, new UrborgDrake());
+        }
         Permanent drake = harness.addToBattlefieldAndReturn(player1, new UrborgDrake());
-        drake.setSummoningSick(summoningSick);
+        drake.setSummoningSick(true);
         return drake;
     }
 }
