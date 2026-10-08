@@ -76,6 +76,34 @@ class WildMightTest extends BaseCardTest {
     }
 
     @Test
+    void canBoostAnOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DivingGriffin());
+
+        castWildMight(creature);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(creature.getEffectivePower()).isEqualTo(7);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void insufficientManaDoesNotPreventAdditionalBonusOrConsumeMana() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DivingGriffin());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        castWildMight(creature);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(creature.getEffectivePower()).isEqualTo(7);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
     void cannotTargetNonCreaturePermanent() {
         Permanent nonCreature = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
         harness.setHand(player1, List.of(new WildMight()));
