@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VibratingSphere.class, BalduvianBears.class})
+@CardUsed({VibratingSphere.class, BalduvianBears.class, MarchOfTheMachines.class})
 class VibratingSphereTest extends BaseCardTest {
 
     @Test
@@ -71,13 +71,10 @@ class VibratingSphereTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(MarchOfTheMachines.class)
     @DisplayName("Also affects itself when it is a creature")
     void affectsItselfWhenItIsACreature() {
-        harness.addToBattlefield(player1, new VibratingSphere());
+        Permanent sphere = harness.addToBattlefieldAndReturn(player1, new VibratingSphere());
         harness.addToBattlefield(player1, new MarchOfTheMachines());
-
-        Permanent sphere = findPermanent(player1, "Vibrating Sphere");
 
         harness.forceActivePlayer(player1);
 
@@ -89,5 +86,73 @@ class VibratingSphereTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, sphere)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, sphere)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Resolving Sphere immediately boosts existing and subsequently entering creatures")
+    void boostsCreaturesWhenItResolvesAndWhenTheyEnterLater() {
+        harness.forceActivePlayer(player1);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+
+        harness.castFromHand(player1, new VibratingSphere(), "{4}");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Vibrating Sphere");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+
+        Permanent laterBears = harness.enterBattlefieldAndReturn(player1, new BalduvianBears());
+        assertThat(gqs.getEffectivePower(gd, laterBears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, laterBears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Two-toughness creatures die during another player's turn")
+    void zeroToughnessCreaturesArePutIntoGraveyard() {
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player1, new VibratingSphere());
+        harness.addToBattlefield(player1, new BalduvianBears());
+        harness.addToBattlefield(player2, new BalduvianBears());
+
+        harness.runStateBasedActions();
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+
+        harness.forceActivePlayer(player2);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+        harness.assertInGraveyard(player1, "Balduvian Bears");
+        harness.assertOnBattlefield(player1, "Vibrating Sphere");
+        harness.assertOnBattlefield(player2, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("Multiple Spheres cumulatively modify power and toughness")
+    void multipleSpheresStack() {
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player1, new VibratingSphere());
+        harness.addToBattlefield(player1, new VibratingSphere());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+
+        harness.forceActivePlayer(player2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(-2);
+        for (Permanent sphere : findPermanents(player1, "Vibrating Sphere")) {
+            assertThat(gqs.getEffectivePower(gd, sphere)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, sphere)).isZero();
+        }
+
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player1, "Vibrating Sphere");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Vibrating Sphere"))
+                .hasSize(2);
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+        harness.assertInGraveyard(player1, "Balduvian Bears");
     }
 }
