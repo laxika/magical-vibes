@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({YawningFissure.class, Forest.class, Mountain.class, GrizzlyBears.class})
 class YawningFissureTest extends BaseCardTest {
 
     @Test
@@ -26,8 +28,7 @@ class YawningFissureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new YawningFissure()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertNotOnBattlefield(player2, "Forest");
     }
@@ -42,8 +43,7 @@ class YawningFissureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new YawningFissure()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // Controller's lands should remain
         long p1Lands = countPermanents(player1, "Mountain");
@@ -62,8 +62,7 @@ class YawningFissureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new YawningFissure()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
 
@@ -92,8 +91,7 @@ class YawningFissureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new YawningFissure()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // Creature is unaffected — only lands are sacrificed
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -108,11 +106,33 @@ class YawningFissureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new YawningFissure()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // Only the land is sacrificed, creature remains
         harness.assertNotOnBattlefield(player2, "Forest");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Opponent chooses a land while their creature remains untouched")
+    void choiceAmongLandsDoesNotSacrificeCreature() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new YawningFissure()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.handleMultiplePermanentsChosen(player2,
+                List.of(harness.getPermanentId(player2, "Mountain")));
+
+        harness.assertNotOnBattlefield(player2, "Mountain");
+        harness.assertInGraveyard(player2, "Mountain");
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Yawning Fissure");
     }
 }
