@@ -56,6 +56,118 @@ class WaytaTrainerProdigyTest extends BaseCardTest {
         assertThat(wayta.isTapped()).isFalse();
     }
 
+    @Test
+    void fullCostFightDoublesOnlyOurDamageTrigger() {
+        Permanent wayta = addCreatureReady(player1, new WaytaTrainerProdigy());
+        Permanent ourRaptor = addCreatureReady(player1, new RipjawRaptor());
+        Permanent opposingRaptor = addCreatureReady(player2, new RipjawRaptor());
+        harness.setLibrary(player1, List.of(new RipjawRaptor(), new RipjawRaptor()));
+        harness.setLibrary(player2, List.of(new RipjawRaptor(), new RipjawRaptor()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        int ourHandBefore = gd.playerHands.get(player1.getId()).size();
+        int opposingHandBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.activateAbilityWithMultiTargets(player1, battlefieldIndex(wayta), 0,
+                List.of(ourRaptor.getId(), opposingRaptor.getId()));
+        harness.passBothPriorities();
+
+        assertThat(wayta.isTapped()).isTrue();
+        assertThat(ourRaptor.getMarkedDamage()).isEqualTo(4);
+        assertThat(opposingRaptor.getMarkedDamage()).isEqualTo(4);
+        assertThat(gd.stack).hasSize(3);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(ourHandBefore + 2);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opposingHandBefore + 1);
+    }
+
+    @Test
+    void doublesEachFriendlyCreaturesDamageTrigger() {
+        Permanent wayta = addCreatureReady(player1, new WaytaTrainerProdigy());
+        Permanent first = addCreatureReady(player1, new RipjawRaptor());
+        Permanent second = addCreatureReady(player1, new RipjawRaptor());
+        harness.setLibrary(player1, List.of(new RipjawRaptor(), new RipjawRaptor(),
+                new RipjawRaptor(), new RipjawRaptor()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbilityWithMultiTargets(player1, battlefieldIndex(wayta), 0,
+                List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        assertThat(first.getMarkedDamage()).isEqualTo(4);
+        assertThat(second.getMarkedDamage()).isEqualTo(4);
+        assertThat(gd.stack).hasSize(4);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 4);
+    }
+
+    @Test
+    void canFightUsingWaytaAsFirstTargetOnItsEntryTurn() {
+        Permanent wayta = addCreatureReady(player1, new WaytaTrainerProdigy());
+        wayta.setSummoningSick(true);
+        Permanent raptor = addCreatureReady(player1, new RipjawRaptor());
+        harness.setLibrary(player1, List.of(new RipjawRaptor(), new RipjawRaptor()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbilityWithMultiTargets(player1, battlefieldIndex(wayta), 0,
+                List.of(wayta.getId(), raptor.getId()));
+        harness.passBothPriorities();
+
+        assertThat(wayta.isTapped()).isTrue();
+        assertThat(wayta.getMarkedDamage()).isEqualTo(4);
+        assertThat(raptor.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+    }
+
+    @Test
+    void rejectsTheSameCreatureForBothTargets() {
+        Permanent wayta = addCreatureReady(player1, new WaytaTrainerProdigy());
+        Permanent raptor = addCreatureReady(player1, new RipjawRaptor());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, battlefieldIndex(wayta), 0, List.of(raptor.getId(), raptor.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(wayta.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void rejectsAnOpposingCreatureAsFirstTarget() {
+        Permanent wayta = addCreatureReady(player1, new WaytaTrainerProdigy());
+        Permanent ourRaptor = addCreatureReady(player1, new RipjawRaptor());
+        Permanent opposingRaptor = addCreatureReady(player2, new RipjawRaptor());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, battlefieldIndex(wayta), 0,
+                List.of(opposingRaptor.getId(), ourRaptor.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(wayta.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void noFightOccursWhenOneTargetLeavesBeforeResolution() {
+        Permanent wayta = addCreatureReady(player1, new WaytaTrainerProdigy());
+        Permanent first = addCreatureReady(player1, new RipjawRaptor());
+        Permanent second = addCreatureReady(player1, new RipjawRaptor());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, battlefieldIndex(wayta), 0,
+                List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+        gd.playerGraveyards.get(player1.getId()).add(second.getCard());
+        harness.passBothPriorities();
+
+        assertThat(first.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(wayta.isTapped()).isTrue();
+    }
+
     private int battlefieldIndex(Permanent permanent) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
     }
