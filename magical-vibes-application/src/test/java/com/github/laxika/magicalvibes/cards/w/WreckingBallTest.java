@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WreckingBall.class, AssaultZeppelid.class, BreedingPool.class, AzoriusSignet.class})
@@ -62,11 +63,45 @@ class WreckingBallTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature or land");
     }
 
+    @Test
+    @DisplayName("Destroys a land you control")
+    void destroysYourOwnLand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BreedingPool());
+
+        castWreckingBall(target);
+
+        harness.assertNotOnBattlefield(player1, "Breeding Pool");
+        harness.assertInGraveyard(player1, "Breeding Pool");
+    }
+
+    @Test
+    @DisplayName("Does not destroy another permanent when its target leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AssaultZeppelid());
+        harness.addToBattlefield(player2, new BreedingPool());
+        harness.setHand(player1, List.of(new WreckingBall()));
+        harness.setHand(player2, List.of(new WreckingBall()));
+        addMana();
+        harness.castInstant(player1, 0, target.getId());
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castInstant(player2, 0, target.getId());
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Assault Zeppelid");
+        harness.assertNotOnBattlefield(player2, "Assault Zeppelid");
+        harness.assertOnBattlefield(player2, "Breeding Pool");
+        harness.assertInGraveyard(player1, "Wrecking Ball");
+        harness.assertInGraveyard(player2, "Wrecking Ball");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castWreckingBall(Permanent target) {
         harness.setHand(player1, List.of(new WreckingBall()));
         addMana();
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void addMana() {
