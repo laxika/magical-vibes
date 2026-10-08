@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.p.PainSeer;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ZealousConscripts.class, GrizzlyBears.class, Mountain.class, PainSeer.class})
 class ZealousConscriptsTest extends BaseCardTest {
 
     private void castZealousConscripts(UUID targetId) {
@@ -28,8 +31,7 @@ class ZealousConscriptsTest extends BaseCardTest {
     @Test
     @DisplayName("ETB trigger goes on the stack targeting the permanent")
     void etbTriggersOnStack() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
         castZealousConscripts(targetId);
 
         harness.passBothPriorities(); // resolve creature spell
@@ -94,5 +96,85 @@ class ZealousConscriptsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can target your own permanent to untap it and grant haste")
+    void canTargetOwnPermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.tap();
+        castZealousConscripts(target.getId());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The trigger resolves even if Zealous Conscripts leaves the battlefield")
+    void sourceLeavingDoesNotStopTrigger() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.tap();
+        castZealousConscripts(target.getId());
+        harness.passBothPriorities();
+        Permanent source = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof ZealousConscripts).findFirst().orElseThrow();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, source));
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Zealous Conscripts");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The trigger cannot affect a target that left and returned as a new permanent")
+    void targetLeavingAndReturningInvalidatesTrigger() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castZealousConscripts(target.getId());
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, target));
+        harness.setHand(player2, List.of());
+        Permanent returned = harness.addToBattlefieldAndReturn(player2, target.getCard());
+        returned.tap();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(returned.isTapped()).isTrue();
+        assertThat(returned.hasKeyword(Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Gaining control precedes untapping, so the new controller controls inspired")
+    void newControllerControlsUntapTrigger() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PainSeer());
+        target.tap();
+        Mountain topCard = new Mountain();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setLibrary(player2, List.of(new Mountain()));
+        harness.setHand(player2, List.of());
+        castZealousConscripts(target.getId());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Pain Seer");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 }
