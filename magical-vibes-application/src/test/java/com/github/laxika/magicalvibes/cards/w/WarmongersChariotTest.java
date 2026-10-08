@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.a.AngelicWall;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -41,6 +42,7 @@ class WarmongersChariotTest extends BaseCardTest {
                 () -> declareAttackers(List.of(0)));
 
         assertThat(wall.isAttacking()).isTrue();
+        assertThat(gqs.hasKeyword(gd, wall, Keyword.DEFENDER)).isTrue();
     }
 
     @Test
@@ -68,9 +70,57 @@ class WarmongersChariotTest extends BaseCardTest {
         assertThat(chariot.getAttachedTo()).isEqualTo(creature.getId());
     }
 
+    @Test
+    @DisplayName("Moving the Chariot moves both the boost and defender attack permission")
+    void movingChariotMovesBothBenefits() {
+        Permanent chariot = addChariotReady();
+        Permanent first = addCreatureReady(player1, new AngelicWall());
+        Permanent second = addCreatureReady(player1, new AngelicWall());
+        chariot.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(chariot.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(6);
+        assertThatThrownBy(() -> declareAttackers(List.of(1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(2)));
+        assertThat(second.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The Chariot does not let a summoning-sick defender attack")
+    void equippedSummoningSickDefenderCannotAttack() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new AngelicWall());
+        wall.setSummoningSick(true);
+        Permanent chariot = addChariotReady();
+        chariot.setAttachedTo(wall.getId());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void equipCannotTargetOpponentsCreature() {
+        Permanent chariot = addChariotReady();
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponent.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(chariot.getAttachedTo()).isNull();
+    }
+
     private Permanent addChariotReady() {
-        Permanent chariot = new Permanent(new WarmongersChariot());
-        gd.playerBattlefields.get(player1.getId()).add(chariot);
-        return chariot;
+        return harness.addToBattlefieldAndReturn(player1, new WarmongersChariot());
     }
 }
