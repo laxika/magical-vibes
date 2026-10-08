@@ -28,8 +28,7 @@ class VogarNecropolisTyrantTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.forceActivePlayer(player1);
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
         assertThat(vogar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -44,8 +43,8 @@ class VogarNecropolisTyrantTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.forceActivePlayer(player2);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        assertThat(gd.stack).isEmpty();
         harness.passBothPriorities();
 
         assertThat(vogar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -64,11 +63,48 @@ class VogarNecropolisTyrantTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player2);
-        harness.castInstant(player2, 0, vogar.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, vogar.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
         harness.assertInGraveyard(player1, "Vogar, Necropolis Tyrant");
+    }
+
+    @Test
+    @DisplayName("Death ability triggers without counters and draws no cards")
+    void deathAbilityTriggersWithoutCounters() {
+        Permanent vogar = harness.addToBattlefieldAndReturn(player1, new VogarNecropolisTyrant());
+        harness.setLibrary(player1, List.of(new Forest()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+
+        harness.castAndResolveInstant(player2, 0, vogar.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        harness.assertInGraveyard(player1, "Vogar, Necropolis Tyrant");
+    }
+
+    @Test
+    @DisplayName("Death ability counts only +1/+1 counters")
+    void deathAbilityIgnoresOtherCounterTypes() {
+        Permanent vogar = harness.addToBattlefieldAndReturn(player1, new VogarNecropolisTyrant());
+        vogar.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        vogar.setCounterCount(CounterType.CHARGE, 3);
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+
+        harness.castAndResolveInstant(player2, 0, vogar.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 }
