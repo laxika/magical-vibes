@@ -19,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ZhaoZilongTigerGeneral.class, ForestBear.class, ShuCavalry.class})
+@CardUsed({ZhaoZilongTigerGeneral.class, ForestBear.class, ShuCavalry.class, HighGround.class})
 class ZhaoZilongTigerGeneralTest extends BaseCardTest {
 
     @Test
@@ -94,7 +94,6 @@ class ZhaoZilongTigerGeneralTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(HighGround.class)
     @DisplayName("Blocking multiple creatures triggers only once")
     void blockTriggerFiresOnlyOnceWhenBlockingMultipleCreatures() {
         harness.addToBattlefield(player2, new HighGround());
@@ -149,6 +148,23 @@ class ZhaoZilongTigerGeneralTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(zhao.getPowerModifier()).isZero();
         assertThat(zhao.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The block boost remains after combat ends")
+    void blockBoostLastsBeyondCombat() {
+        Permanent zhao = addZhaoReady(player2);
+        addAttackerReady(player1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+        assertThat(zhao.getPowerModifier()).isEqualTo(1);
+        assertThat(zhao.getToughnessModifier()).isEqualTo(1);
     }
 
     private Permanent addZhaoReady(Player player) {
