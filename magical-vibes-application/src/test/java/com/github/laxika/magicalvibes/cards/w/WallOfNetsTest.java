@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.h.HighGround;
+import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WallOfNets.class, HighGround.class, RagingGoblin.class})
+@CardUsed({WallOfNets.class, HighGround.class, RagingGoblin.class, Humble.class})
 class WallOfNetsTest extends BaseCardTest {
 
     @Test
@@ -27,8 +29,8 @@ class WallOfNetsTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getOriginalCard() == attacker.getOriginalCard());
@@ -46,8 +48,8 @@ class WallOfNetsTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(attacker.getOriginalCard());
@@ -71,8 +73,8 @@ class WallOfNetsTest extends BaseCardTest {
                 new BlockerAssignment(defenderBattlefield.indexOf(wall), attackerBattlefield.indexOf(attacker1)),
                 new BlockerAssignment(defenderBattlefield.indexOf(wall), attackerBattlefield.indexOf(attacker2))));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getOriginalCard() == attacker1.getOriginalCard()
@@ -92,12 +94,17 @@ class WallOfNetsTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getOriginalCard() == attacker.getOriginalCard());
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, wall));
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(attacker.getOriginalCard());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getOriginalCard() == attacker.getOriginalCard());
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getOriginalCard() == attacker.getOriginalCard());
@@ -115,8 +122,8 @@ class WallOfNetsTest extends BaseCardTest {
         prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getOriginalCard() == attacker.getOriginalCard());
@@ -124,6 +131,11 @@ class WallOfNetsTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(attacker.getOriginalCard());
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, wall));
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(attacker.getOriginalCard());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getOriginalCard() == attacker.getOriginalCard());
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getOriginalCard() == attacker.getOriginalCard());
@@ -143,8 +155,8 @@ class WallOfNetsTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, wall));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(attacker.getOriginalCard());
@@ -162,10 +174,54 @@ class WallOfNetsTest extends BaseCardTest {
 
         harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, wall));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getOriginalCard() == attacker.getOriginalCard());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(attacker.getOriginalCard());
+    }
+
+    @Test
+    @DisplayName("Exiled creatures stay exiled if Wall of Nets loses its abilities before dying")
+    void doesNotReturnExiledCreatureAfterLosingAbilities() {
+        Permanent attacker = addCreatureReady(player1, new RagingGoblin());
+        attacker.setAttacking(true);
+        Permanent wall = addCreatureReady(player2, new WallOfNets());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(attacker.getOriginalCard());
+
+        harness.setHand(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, wall.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Wall of Nets");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(attacker.getOriginalCard());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getOriginalCard() == attacker.getOriginalCard());
+    }
+
+    @Test
+    @DisplayName("Wall of Nets has no end-of-combat trigger while its abilities are removed")
+    void doesNotTriggerAfterLosingAbilities() {
+        Permanent wall = addCreatureReady(player2, new WallOfNets());
+        harness.setHand(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, wall.getId());
+
+        Permanent attacker = addCreatureReady(player1, new RagingGoblin());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
     }
 }
