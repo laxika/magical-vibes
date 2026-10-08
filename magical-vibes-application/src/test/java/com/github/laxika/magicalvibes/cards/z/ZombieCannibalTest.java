@@ -31,6 +31,9 @@ class ZombieCannibalTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(infestation.getId()));
         resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Zombie Assassin");
         harness.assertNotInGraveyard(player2, "Zombie Infestation");
@@ -45,7 +48,10 @@ class ZombieCannibalTest extends BaseCardTest {
 
         attackDealingDamage();
 
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(assassin.getId()));
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Zombie Assassin");
@@ -91,11 +97,30 @@ class ZombieCannibalTest extends BaseCardTest {
     @DisplayName("An empty graveyard presents no choice")
     void emptyGraveyardPresentsNoChoice() {
         harness.setGraveyard(player2, List.of());
+        Permanent attacker = addCreatureReady(player1, new ZombieCannibal());
+        attacker.setAttacking(true);
+
+        harness.forceActivePlayer(player1);
+        harness.resolveCombatDamage();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A target must be chosen even when the controller intends to decline exile")
+    void targetSelectionIsMandatory() {
+        ZombieAssassin assassin = new ZombieAssassin();
+        harness.setGraveyard(player2, List.of(assassin));
 
         attackDealingDamage();
 
-        assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.minCount()).isEqualTo(1);
+        assertThat(choice.validCardIds()).containsExactly(assassin.getId());
     }
 
     private void attackDealingDamage() {
