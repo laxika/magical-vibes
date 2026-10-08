@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Smallpox")
-@CardUsed({Smallpox.class, AshcoatBear.class, Forest.class})
+@CardUsed({Smallpox.class, RuneclawBear.class, Forest.class})
 class SmallpoxTest extends BaseCardTest {
 
     private List<UUID> landIds(Player player, int limit) {
@@ -50,16 +50,16 @@ class SmallpoxTest extends BaseCardTest {
 
         cast();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 14);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
     @DisplayName("Each player discards a card of their choice")
     void eachPlayerDiscardsACard() {
-        harness.setHand(player1, List.of(new Smallpox(), new AshcoatBear(), new Forest()));
-        harness.setHand(player2, List.of(new AshcoatBear(), new AshcoatBear()));
+        harness.setHand(player1, List.of(new Smallpox(), new RuneclawBear(), new Forest()));
+        harness.setHand(player2, List.of(new RuneclawBear(), new RuneclawBear()));
 
         cast();
 
@@ -79,27 +79,28 @@ class SmallpoxTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Each player sacrifices a creature; a player with one creature loses it without a prompt")
+    @DisplayName("Each player sacrifices a creature after all choices are made")
     void eachPlayerSacrificesACreature() {
         harness.setHand(player1, List.of(new Smallpox()));
         harness.setHand(player2, List.of());
-        harness.addToBattlefield(player1, new AshcoatBear());
-        Permanent p2Bears = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
-        harness.addToBattlefield(player2, new AshcoatBear());
+        harness.addToBattlefield(player1, new RuneclawBear());
+        Permanent p2Bears = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
+        harness.addToBattlefield(player2, new RuneclawBear());
 
         cast();
 
-        // Player1 has a single creature -> auto-sacrificed; player2 has two -> prompted.
-        assertThat(countPermanents(player1, "Ashcoat Bear")).isEqualTo(0);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
+        // The forced choice is collected, but both sacrifices wait for player2.
+        assertThat(countPermanents(player1, "Runeclaw Bear")).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
                 .isEqualTo(player2.getId());
 
-        harness.handlePermanentChosen(player2, p2Bears.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(p2Bears.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(countPermanents(player2, "Ashcoat Bear")).isEqualTo(1);
-        harness.assertInGraveyard(player2, "Ashcoat Bear");
+        harness.assertNotOnBattlefield(player1, "Runeclaw Bear");
+        assertThat(countPermanents(player2, "Runeclaw Bear")).isEqualTo(1);
+        harness.assertInGraveyard(player2, "Runeclaw Bear");
     }
 
     @Test
@@ -157,26 +158,70 @@ class SmallpoxTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Discard choices remain hidden until both players have chosen")
+    void discardsOnlyAfterBothPlayersChoose() {
+        harness.setHand(player1, List.of(new Smallpox(), new RuneclawBear(), new Forest()));
+        harness.setHand(player2, List.of(new RuneclawBear(), new Forest()));
+
+        cast();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.assertInHand(player1, "Runeclaw Bear");
+        harness.assertNotInGraveyard(player1, "Runeclaw Bear");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
+        harness.assertInGraveyard(player2, "Runeclaw Bear");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Empty hands and missing creatures do not prevent land sacrifices")
+    void continuesPastImpossibleDiscardsAndCreatureSacrifices() {
+        harness.setHand(player1, List.of(new Smallpox()));
+        harness.setHand(player2, List.of());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+
+        cast();
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
     @DisplayName("Runs all four steps in order for the caster")
     void runsAllFourStepsInOrder() {
         harness.setLife(player1, 20);
-        harness.setHand(player1, List.of(new Smallpox(), new AshcoatBear(), new Forest()));
+        harness.setHand(player1, List.of(new Smallpox(), new RuneclawBear(), new Forest()));
         harness.setHand(player2, List.of());
-        harness.addToBattlefield(player1, new AshcoatBear());
+        harness.addToBattlefield(player1, new RuneclawBear());
         for (int i = 0; i < 2; i++) {
             harness.addToBattlefield(player1, new Forest());
         }
 
         cast();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
 
         // Only creature -> sacrificed without a prompt; the land choice comes next.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(countPermanents(player1, "Ashcoat Bear")).isEqualTo(0);
+        assertThat(countPermanents(player1, "Runeclaw Bear")).isEqualTo(0);
         harness.handleMultiplePermanentsChosen(player1, landIds(player1, 1));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
