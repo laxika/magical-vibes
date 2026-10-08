@@ -84,6 +84,91 @@ class WickerfolkThresherTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topLand);
     }
 
+    @Test
+    @DisplayName("Losing delirium before resolution leaves the top card in the library")
+    void losingDeliriumBeforeResolutionDoesNothing() {
+        addReadyThresher();
+        Forest topLand = new Forest();
+        harness.setLibrary(player1, List.of(topLand));
+        setDelirium();
+
+        declareAttack();
+        assertThat(gd.stack).hasSize(1);
+        harness.setGraveyard(player1, List.of(new Forest(), new Shock(), new GrizzlyBears()));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topLand);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(topLand);
+    }
+
+    @Test
+    @DisplayName("Three cards can enable delirium when one has two card types")
+    void multipleTypesOnOneCardCountSeparately() {
+        addReadyThresher();
+        GrizzlyBears topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setGraveyard(player1, List.of(new WickerfolkThresher(), new Forest(), new Shock()));
+
+        declareAttack();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Card types in the opponent's graveyard do not enable delirium")
+    void opponentGraveyardDoesNotEnableDelirium() {
+        addReadyThresher();
+        Forest topLand = new Forest();
+        harness.setLibrary(player1, List.of(topLand));
+        harness.setGraveyard(player1, List.of(new Forest(), new Shock(), new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(new Pacifism(), new LeoninScimitar()));
+
+        declareAttack();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topLand);
+    }
+
+    @Test
+    @DisplayName("An empty library causes no choice, draw, or loss")
+    void emptyLibraryDoesNothing() {
+        addReadyThresher();
+        harness.setLibrary(player1, List.of());
+        setDelirium();
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        declareAttack();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("The land enters untapped even after using the turn's land play")
+    void puttingLandOntoBattlefieldDoesNotUseLandPlay() {
+        addReadyThresher();
+        Forest topLand = new Forest();
+        harness.setLibrary(player1, List.of(topLand));
+        setDelirium();
+        gd.landsPlayedThisTurn.put(player1.getId(), 1);
+
+        declareAttack();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        Permanent land = findPermanent(topLand);
+        assertThat(land).isNotNull();
+        assertThat(land.isTapped()).isFalse();
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
     private void addReadyThresher() {
         addCreatureReady(player1, new WickerfolkThresher());
     }
