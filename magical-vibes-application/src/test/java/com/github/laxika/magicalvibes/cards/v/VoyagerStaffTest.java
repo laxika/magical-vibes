@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,8 +61,8 @@ class VoyagerStaffTest extends BaseCardTest {
                 .anyMatch(card -> card.getId().equals(recruitCardId));
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertNotOnBattlefield(player1, "Boros Recruit");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Boros Recruit");
@@ -91,5 +92,67 @@ class VoyagerStaffTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, recruit.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped Staff is sacrificed as a cost before its ability resolves")
+    void tappedStaffPaysSacrificeBeforeResolution() {
+        Permanent staff = harness.addToBattlefieldAndReturn(player1, new VoyagerStaff());
+        staff.tap();
+        Permanent recruit = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, recruit.getId());
+
+        harness.assertNotOnBattlefield(player1, "Voyager Staff");
+        harness.assertInGraveyard(player1, "Voyager Staff");
+        harness.assertOnBattlefield(player2, "Boros Recruit");
+
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Boros Recruit");
+    }
+
+    @Test
+    @DisplayName("Activation during an end step waits until the following turn's end step")
+    void activationDuringEndStepWaitsForNextEndStep() {
+        harness.addToBattlefield(player1, new VoyagerStaff());
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, recruit.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Boros Recruit");
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.POSTCOMBAT_MAIN);
+        harness.assertNotOnBattlefield(player1, "Boros Recruit");
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.assertNotOnBattlefield(player1, "Boros Recruit");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Boros Recruit");
+    }
+
+    @Test
+    @DisplayName("The delayed return cannot find a card that left exile and was exiled again")
+    void doesNotReturnCardThatChangedZonesBeforeEndStep() {
+        harness.addToBattlefield(player1, new VoyagerStaff());
+        BorosRecruit recruitCard = new BorosRecruit();
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, recruitCard);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, recruit.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.removeFromExile(recruitCard.getId())).isTrue();
+        harness.setHand(player1, List.of(recruitCard));
+        harness.setHand(player1, List.of());
+        harness.setExile(player1, List.of(recruitCard));
+
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Boros Recruit");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(recruitCard.getId()));
     }
 }
