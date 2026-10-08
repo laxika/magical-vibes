@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WasteManagement.class, GrizzlyBears.class, Shock.class})
 class WasteManagementTest extends BaseCardTest {
@@ -30,8 +31,7 @@ class WasteManagementTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WasteManagement()));
         addBaseMana();
 
-        harness.castInstant(player1, 0, List.of(creature.getId(), noncreature.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(creature.getId(), noncreature.getId()));
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(Card::getId)
@@ -59,6 +59,127 @@ class WasteManagementTest extends BaseCardTest {
                         firstCreature.getId(), noncreature.getId(), secondCreature.getId());
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertRogues(2);
+    }
+
+    @Test
+    void cannotTargetCardsFromDifferentGraveyards() {
+        Card ownCreature = new GrizzlyBears();
+        Card opposingCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(ownCreature));
+        harness.setGraveyard(player2, List.of(opposingCreature));
+        harness.setHand(player1, List.of(new WasteManagement()));
+        addBaseMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(ownCreature.getId(), opposingCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canChooseZeroTargetsWithoutExilingAnything() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setHand(player1, List.of(new WasteManagement()));
+        addBaseMana();
+
+        harness.castAndResolveInstant(player1, 0, List.of());
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
+        harness.assertInGraveyard(player1, "Waste Management");
+        assertRogues(0);
+    }
+
+    @Test
+    void canExileOneCreatureFromOwnGraveyard() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new WasteManagement()));
+        addBaseMana();
+
+        harness.castAndResolveInstant(player1, 0, List.of(creature.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(creature);
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertRogues(1);
+    }
+
+    @Test
+    void createsNoTokensForNoncreatureCards() {
+        Card noncreature = new Shock();
+        harness.setGraveyard(player2, List.of(noncreature));
+        harness.setHand(player1, List.of(new WasteManagement()));
+        addBaseMana();
+
+        harness.castAndResolveInstant(player1, 0, List.of(noncreature.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(noncreature);
+        assertRogues(0);
+    }
+
+    @Test
+    void countsOnlyRemainingLegalTargetsOnResolution() {
+        Card creature = new GrizzlyBears();
+        Card noncreature = new Shock();
+        harness.setGraveyard(player2, List.of(creature, noncreature));
+        harness.setHand(player1, List.of(new WasteManagement(), new WasteManagement()));
+        addBaseMana();
+        addBaseMana();
+
+        harness.castInstant(player1, 0, List.of(creature.getId(), noncreature.getId()));
+        harness.castAndResolveInstant(player1, 0, List.of(creature.getId()));
+        assertRogues(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .containsExactlyInAnyOrder(creature, noncreature);
+        assertRogues(1);
+    }
+
+    @Test
+    void doesNotCreateTokensWhenAllTargetsBecomeIllegal() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setHand(player1, List.of(new WasteManagement(), new WasteManagement()));
+        addBaseMana();
+        addBaseMana();
+
+        harness.castInstant(player1, 0, List.of(creature.getId()));
+        harness.castAndResolveInstant(player1, 0, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(creature);
+        assertRogues(1);
+    }
+
+    @Test
+    void kickedCanTargetOwnGraveyardAndDoesNotExileResolvingSpell() {
+        Card creature = new GrizzlyBears();
+        Card noncreature = new Shock();
+        harness.setGraveyard(player1, List.of(creature, noncreature));
+        harness.setHand(player1, List.of(new WasteManagement()));
+        addKickedMana();
+
+        harness.castKickedInstant(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .containsExactlyInAnyOrder(creature, noncreature);
+        harness.assertInGraveyard(player1, "Waste Management");
+        assertRogues(1);
+    }
+
+    @Test
+    void kickedCanTargetEmptyGraveyard() {
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player1, List.of(new WasteManagement()));
+        addKickedMana();
+
+        harness.castKickedInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Waste Management");
+        assertRogues(0);
     }
 
     private void addBaseMana() {
