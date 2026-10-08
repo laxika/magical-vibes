@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WhimsOfTheFates.class, GrizzlyBears.class, GiantSpider.class, Forest.class})
 class WhimsOfTheFatesTest extends BaseCardTest {
 
     @Test
@@ -84,12 +86,70 @@ class WhimsOfTheFatesTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).size()).isIn(0, 2);
     }
 
+    @Test
+    @DisplayName("Empty battlefields require no pile choices")
+    void resolvesWithNoPermanents() {
+        castWhimsOfTheFates();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Whims of the Fates");
+    }
+
+    @Test
+    @DisplayName("An empty first pile leaves all permanents available for the second pile")
+    void allowsEmptyFirstAndSecondPiles() {
+        Permanent first = addPermanent(player2, new GrizzlyBears());
+        Permanent second = addPermanent(player2, new Forest());
+
+        castWhimsOfTheFates();
+
+        assertThat(activeMultiChoice().playerId()).isEqualTo(player2.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of());
+        assertThat(activeMultiChoice().maxCount()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(first, second);
+        harness.handleMultiplePermanentsChosen(player2, List.of());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId()).size()).isIn(0, 2);
+        assertThat(gd.playerBattlefields.get(player2.getId()).size()
+                + gd.playerGraveyards.get(player2.getId()).size()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The second seated player chooses first when they control the spell")
+    void startsWithSecondSeatedControllerAndWaitsForAllPiles() {
+        Permanent first = addPermanent(player1, new GrizzlyBears());
+        Permanent second = addPermanent(player2, new Forest());
+        harness.forceActivePlayer(player2);
+
+        castWhimsOfTheFates(player2);
+
+        assertThat(activeMultiChoice().playerId()).isEqualTo(player2.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(second.getId()));
+        assertThat(activeMultiChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId()).size()
+                + gd.playerGraveyards.get(player1.getId()).size()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId()).size()
+                + gd.playerGraveyards.get(player2.getId()).size()).isEqualTo(2);
+    }
+
     private void castWhimsOfTheFates() {
-        harness.setHand(player1, List.of(new WhimsOfTheFates()));
-        harness.addMana(player1, ManaColor.RED, 5);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        castWhimsOfTheFates(player1);
+    }
+
+    private void castWhimsOfTheFates(Player caster) {
+        harness.setHand(caster, List.of(new WhimsOfTheFates()));
+        harness.addMana(caster, ManaColor.RED, 5);
+        harness.addMana(caster, ManaColor.COLORLESS, 1);
+        harness.castAndResolveSorcery(caster, 0, 0);
     }
 
     private Permanent addPermanent(Player player, Card card) {
