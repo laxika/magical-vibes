@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LuxiorGiadasGift;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -9,11 +10,13 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SorinSolemnVisitor.class, GrizzlyBears.class})
 class SorinSolemnVisitorTest extends BaseCardTest {
 
     @Test
@@ -81,12 +84,72 @@ class SorinSolemnVisitorTest extends BaseCardTest {
     }
 
     private Permanent addReadySorin(Player player, int loyalty) {
-        Permanent sorin = new Permanent(new SorinSolemnVisitor());
+        Permanent sorin = harness.addToBattlefieldAndReturn(player, new SorinSolemnVisitor());
         sorin.setCounterCount(CounterType.LOYALTY, loyalty);
         sorin.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(sorin);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return sorin;
+    }
+
+    @Test
+    @CardUsed({LuxiorGiadasGift.class})
+    void plusOneGrantsLifelinkToSorinWhenHeIsACreature() {
+        Permanent sorin = addReadySorin(player1, 4);
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LuxiorGiadasGift());
+        equipment.setAttachedTo(sorin.getId());
+        assertThat(gqs.isCreature(gd, sorin)).isTrue();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, sorin)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, sorin)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, sorin, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    void plusOneOnlyAffectsCreaturesPresentAtResolutionAndSurvivesSorinLeaving() {
+        Permanent sorin = addReadySorin(player1, 4);
+        Permanent earlyCreature = addCreatureReady(player1, new GrizzlyBears());
+        harness.activateAbility(player1, 0, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(sorin);
+        gd.playerGraveyards.get(player1.getId()).add(sorin.getCard());
+        harness.passBothPriorities();
+        Permanent lateCreature = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, earlyCreature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, earlyCreature, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, lateCreature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.LIFELINK)).isFalse();
+
+        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+        assertThat(gqs.getEffectivePower(gd, earlyCreature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, earlyCreature, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    void emblemLetsOpponentChooseAndTriggersAgainWithNoCreatures() {
+        addReadySorin(player1, 6);
+        Permanent first = addCreatureReady(player2, new GrizzlyBears());
+        Permanent second = addCreatureReady(player2, new GrizzlyBears());
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Sorin, Solemn Visitor");
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, second.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(first).doesNotContain(second);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
     }
 }
