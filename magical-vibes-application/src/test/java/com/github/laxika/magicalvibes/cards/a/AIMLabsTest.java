@@ -51,10 +51,57 @@ class AIMLabsTest extends BaseCardTest {
         assertThat(labs.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Life gain waits for the enter trigger to resolve")
+    void lifeGainUsesTheStack() {
+        harness.setHand(player1, List.of(new AIMLabs()));
+
+        harness.playLand(player1, 0);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the entering land's controller gains life")
+    void opponentControllerGainsLife() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new AIMLabs()));
+
+        harness.playLand(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 21);
+    }
+
+    @Test
+    @DisplayName("A newly controlled untapped land produces mana without using the stack")
+    void manaAbilityResolvesImmediatelyWithoutSummoningSicknessRestriction() {
+        Permanent labs = harness.addToBattlefieldAndReturn(player1, new AIMLabs());
+        labs.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(labs.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
     private Permanent addLabsReady() {
-        Permanent labs = new Permanent(new AIMLabs());
+        Permanent labs = harness.addToBattlefieldAndReturn(player1, new AIMLabs());
         labs.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(labs);
         return labs;
     }
 }
