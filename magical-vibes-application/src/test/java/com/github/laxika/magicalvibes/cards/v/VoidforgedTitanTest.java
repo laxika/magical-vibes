@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.StarfieldShepherd;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,13 +14,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VoidforgedTitan.class, Forest.class, GrizzlyBears.class, StarfieldShepherd.class})
+@CardUsed({VoidforgedTitan.class, Forest.class, StarfieldShepherd.class})
 class VoidforgedTitanTest extends BaseCardTest {
 
     @Test
     void drawsAndLosesLifeAfterNonlandPermanentLeaves() {
         addReadyTitan();
-        Permanent departed = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent departed = harness.addToBattlefieldAndReturn(player2, new StarfieldShepherd());
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, departed));
         Card drawn = new Forest();
@@ -87,17 +86,116 @@ class VoidforgedTitanTest extends BaseCardTest {
         harness.assertLife(player1, 20);
     }
 
-    private void addReadyTitan() {
+    @Test
+    void countsDepartureBeforeTitanEnters() {
+        Permanent departed = harness.addToBattlefieldAndReturn(player2, new StarfieldShepherd());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, departed));
+        addReadyTitan();
+        Card drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setLife(player1, 20);
+
+        advanceToEndStep();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    void multipleDeparturesStillDrawOnlyOneCard() {
+        addReadyTitan();
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new StarfieldShepherd());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new StarfieldShepherd());
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, first);
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, second);
+        });
+        Card drawn = new Forest();
+        Card remaining = new Forest();
+        harness.setLibrary(player1, List.of(drawn, remaining));
+        harness.setLife(player1, 20);
+
+        advanceToEndStep();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsEndStep() {
+        addReadyTitan();
+        Permanent departed = harness.addToBattlefieldAndReturn(player2, new StarfieldShepherd());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, departed));
+        Card remaining = new Forest();
+        harness.setLibrary(player1, List.of(remaining));
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void departureAfterEndStepBeginsDoesNotCreateTrigger() {
+        addReadyTitan();
+        Permanent departed = harness.addToBattlefieldAndReturn(player2, new StarfieldShepherd());
+        Card remaining = new Forest();
+        harness.setLibrary(player1, List.of(remaining));
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.stack).isEmpty();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, departed));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void triggerResolvesAfterTitanLeavesBattlefield() {
         harness.setHand(player1, List.of());
         Permanent titan = harness.addToBattlefieldAndReturn(player1, new VoidforgedTitan());
-        titan.setSummoningSick(false);
+        Permanent departed = harness.addToBattlefieldAndReturn(player2, new StarfieldShepherd());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, departed));
+        Card drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, titan));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        harness.assertLife(player1, 19);
+    }
+
+    private void addReadyTitan() {
+        harness.setHand(player1, List.of());
+        harness.addToBattlefield(player1, new VoidforgedTitan());
     }
 
     private void advanceToEndStep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 }
