@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GnarledMass;
 import com.github.laxika.magicalvibes.cards.m.MirrorGallery;
 import com.github.laxika.magicalvibes.cards.n.NinjaOfTheDeepHours;
 import com.github.laxika.magicalvibes.cards.o.OgreMarauder;
+import com.github.laxika.magicalvibes.cards.z.ZulaportCutthroat;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 @DisplayName("Yukora, the Prisoner")
 @CardUsed({YukoraThePrisoner.class, GnarledMass.class, NinjaOfTheDeepHours.class,
-        OgreMarauder.class, MirrorGallery.class})
+        OgreMarauder.class, MirrorGallery.class, ZulaportCutthroat.class})
 class YukoraThePrisonerTest extends BaseCardTest {
 
     @Test
@@ -58,9 +59,7 @@ class YukoraThePrisonerTest extends BaseCardTest {
     @DisplayName("Trigger also fires when Yukora is exiled instead of dying")
     void triggerFiresOnExile() {
         harness.addToBattlefield(player1, new GnarledMass());
-        harness.addToBattlefield(player1, new YukoraThePrisoner());
-
-        Permanent yukora = findPermanent(player1, "Yukora, the Prisoner");
+        Permanent yukora = harness.addToBattlefieldAndReturn(player1, new YukoraThePrisoner());
         harness.inMutationScope(
                 () -> harness.getPermanentRemovalService().removePermanentToExile(harness.getGameData(), yukora));
 
@@ -69,9 +68,56 @@ class YukoraThePrisonerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Gnarled Mass");
     }
 
-    private void killYukora() {
+    @Test
+    @DisplayName("Creatures entering before the leave trigger resolves are also sacrificed")
+    void sacrificesCreaturesPresentAtResolution() {
+        Permanent yukora = harness.addToBattlefieldAndReturn(player1, new YukoraThePrisoner());
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToExile(gd, yukora));
+        harness.addToBattlefield(player1, new GnarledMass());
+        harness.addToBattlefield(player1, new OgreMarauder());
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Gnarled Mass");
+        harness.assertOnBattlefield(player1, "Ogre Marauder");
+    }
+
+    @Test
+    @DisplayName("Another Yukora entering before resolution is also sacrificed")
+    void anotherYukoraIsAlsoSacrificed() {
+        Permanent yukora = harness.addToBattlefieldAndReturn(player1, new YukoraThePrisoner());
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToExile(gd, yukora));
         harness.addToBattlefield(player1, new YukoraThePrisoner());
-        Permanent yukora = findPermanent(player1, "Yukora, the Prisoner");
+        harness.addToBattlefield(player1, new OgreMarauder());
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Yukora, the Prisoner");
+        harness.assertInGraveyard(player1, "Yukora, the Prisoner");
+        harness.assertOnBattlefield(player1, "Ogre Marauder");
+    }
+
+    @Test
+    @DisplayName("Sacrificed creatures see the other creatures die simultaneously")
+    void sacrificesCreaturesSimultaneously() {
+        harness.addToBattlefield(player1, new ZulaportCutthroat());
+        harness.addToBattlefield(player1, new GnarledMass());
+        Permanent yukora = harness.addToBattlefieldAndReturn(player1, new YukoraThePrisoner());
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToExile(gd, yukora));
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Zulaport Cutthroat");
+        harness.assertInGraveyard(player1, "Gnarled Mass");
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    private void killYukora() {
+        Permanent yukora = harness.addToBattlefieldAndReturn(player1, new YukoraThePrisoner());
         harness.inMutationScope(() ->
                 harness.getPermanentRemovalService().removePermanentToGraveyard(harness.getGameData(), yukora));
         resolveAllTriggers();
