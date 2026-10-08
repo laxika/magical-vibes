@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -111,10 +110,82 @@ class WakingTheTrollsTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getCard().isToken());
     }
 
+    @Test
+    @DisplayName("Chapter II offers lands in both graveyards and excludes nonlands")
+    void chapterIITargetsOwnLandAndExcludesNonlands() {
+        Forest ownLand = new Forest();
+        Forest opposingLand = new Forest();
+        harness.setGraveyard(player1, List.of(ownLand, new WakingTheTrolls()));
+        harness.setGraveyard(player2, List.of(opposingLand));
+        addSaga(player1, 1);
+
+        triggerChapter();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
+                .validCardIds()).containsExactlyInAnyOrder(ownLand.getId(), opposingLand.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(ownLand.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).anySatisfy(permanent -> {
+            assertThat(permanent.getCard().getId()).isEqualTo(ownLand.getId());
+            assertThat(permanent.isTapped()).isFalse();
+        });
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opposingLand);
+    }
+
+    @Test
+    @DisplayName("Chapter II does not return a land that leaves the graveyard in response")
+    void chapterIIFizzlesWhenTargetLeavesGraveyard() {
+        Forest land = new Forest();
+        harness.setGraveyard(player2, List.of(land));
+        addSaga(player1, 1);
+        triggerChapter();
+        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
+
+        harness.setGraveyard(player2, List.of());
+        harness.setExile(player2, List.of(land));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(land.getId()));
+        assertThat(gd.findExiledCard(land.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Chapter III creates no tokens with equal land counts and sacrifices the Saga")
+    void chapterIIICreatesNoTokensWithEqualLandCounts() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        Permanent saga = addSaga(player1, 2);
+        triggerChapter();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken())
+                .doesNotContain(saga);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(saga.getCard());
+    }
+
+    @Test
+    @DisplayName("Chapter III uses land counts at resolution")
+    void chapterIIICountsLandsAtResolution() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        addSaga(player1, 2);
+        triggerChapter();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())).hasSize(2);
+    }
     private Permanent addSaga(com.github.laxika.magicalvibes.model.Player player, int loreCounters) {
-        Permanent saga = new Permanent(new WakingTheTrolls());
+        Permanent saga = harness.addToBattlefieldAndReturn(player, new WakingTheTrolls());
         saga.setCounterCount(CounterType.LORE, loreCounters);
-        gd.playerBattlefields.get(player.getId()).add(saga);
         return saga;
     }
 
