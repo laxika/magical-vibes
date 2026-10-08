@@ -61,4 +61,46 @@ class WingedSliverTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, otherSliver, Keyword.FLYING)).isFalse();
     }
+
+    @Test
+    @DisplayName("Flying starts when Winged Sliver resolves, not while it is on the stack")
+    void grantsFlyingOnlyAfterResolving() {
+        Permanent ownSliver = addCreatureReady(player1, new HeartSliver());
+        Permanent opposingSliver = addCreatureReady(player2, new HeartSliver());
+
+        harness.castFromHand(player1, new WingedSliver(), "{1}{U}");
+
+        assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingSliver, Keyword.FLYING)).isFalse();
+
+        harness.passBothPriorities();
+
+        Permanent wingedSliver = findPermanent(player1, "Winged Sliver");
+        assertThat(gqs.hasKeyword(gd, wingedSliver, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingSliver, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opposing Winged Sliver keeps granting flying after the first source leaves")
+    void retainsFlyingWhileAnotherSourceRemains() {
+        Permanent firstSource = addCreatureReady(player1, new WingedSliver());
+        Permanent secondSource = addCreatureReady(player2, new WingedSliver());
+        Permanent ownSliver = addCreatureReady(player1, new HeartSliver());
+        Permanent opposingSliver = addCreatureReady(player2, new HeartSliver());
+
+        assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingSliver, Keyword.FLYING)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstSource);
+
+        assertThat(gqs.hasKeyword(gd, secondSource, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingSliver, Keyword.FLYING)).isTrue();
+
+        gd.playerBattlefields.get(player2.getId()).remove(secondSource);
+
+        assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingSliver, Keyword.FLYING)).isFalse();
+    }
 }
