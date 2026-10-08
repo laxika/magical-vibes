@@ -159,13 +159,35 @@ class RageThrowerTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Darkthicket Wolf");
         harness.handlePermanentChosen(player1, player2.getId());
         harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player2, 16);
         harness.assertLife(player1, 20);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({RageThrower.class, DarkthicketWolf.class, BrimstoneVolley.class})
+    @DisplayName("A death trigger still deals damage after Rage Thrower leaves the battlefield")
+    void triggerResolvesAfterSourceDies() {
+        harness.addToBattlefield(player1, new RageThrower());
+        harness.addToBattlefield(player2, new DarkthicketWolf());
+        harness.setHand(player1, List.of(new BrimstoneVolley(), new BrimstoneVolley()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Darkthicket Wolf"));
+        harness.assertInGraveyard(player2, "Darkthicket Wolf");
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Rage Thrower"));
+        harness.assertInGraveyard(player1, "Rage Thrower");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void setupPlayer2Active() {
