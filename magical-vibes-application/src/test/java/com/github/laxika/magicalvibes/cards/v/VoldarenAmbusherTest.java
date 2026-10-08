@@ -2,21 +2,71 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.c.CaptivatingVampire;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.l.LilianaOfTheVeil;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VoldarenAmbusher.class, CaptivatingVampire.class, GrizzlyBears.class, LilianaOfTheVeil.class})
 class VoldarenAmbusherTest extends BaseCardTest {
+
+    @Test
+    void damagesPlaneswalker() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent liliana = harness.addToBattlefieldAndReturn(player2, new LilianaOfTheVeil());
+        liliana.setCounterCount(CounterType.LOYALTY, 3);
+        gd.lifeLostThisTurn.put(player2.getId(), 1);
+
+        harness.castFromHand(player1, new VoldarenAmbusher(), "{2}{R}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, liliana.getId());
+        harness.passBothPriorities();
+
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Liliana of the Veil");
+    }
+
+    @Test
+    void countsVampiresAtResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        gd.lifeLostThisTurn.put(player2.getId(), 1);
+
+        harness.castFromHand(player1, new VoldarenAmbusher(), "{2}{R}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.addToBattlefield(player1, new CaptivatingVampire());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void controllerLifeLossDoesNotEnableTrigger() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gd.lifeLostThisTurn.put(player1.getId(), 2);
+
+        harness.castFromHand(player1, new VoldarenAmbusher(), "{2}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Voldaren Ambusher");
+    }
 
     @Test
     @DisplayName("No ETB trigger when no opponent lost life this turn")
@@ -24,11 +74,7 @@ class VoldarenAmbusherTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new VoldarenAmbusher()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VoldarenAmbusher(), "{2}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -45,21 +91,15 @@ class VoldarenAmbusherTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears()); // 2/2
         gd.lifeLostThisTurn.put(player2.getId(), 1);
 
-        harness.setHand(player1, List.of(new VoldarenAmbusher()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VoldarenAmbusher(), "{2}{R}");
         harness.passBothPriorities(); // resolve creature — trigger-time target prompt
         harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities(); // resolve ETB
 
         // 1 Vampire (itself) → 1 damage to 2/2 — survives
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getId().equals(targetId))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getMarkedDamage()).isEqualTo(1);
     }
 
@@ -72,12 +112,8 @@ class VoldarenAmbusherTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears()); // 2/2
         gd.lifeLostThisTurn.put(player2.getId(), 1);
 
-        harness.setHand(player1, List.of(new VoldarenAmbusher()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VoldarenAmbusher(), "{2}{R}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
@@ -96,21 +132,15 @@ class VoldarenAmbusherTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         gd.lifeLostThisTurn.put(player2.getId(), 1);
 
-        harness.setHand(player1, List.of(new VoldarenAmbusher()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VoldarenAmbusher(), "{2}{R}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
 
         // Only Ambusher counts → 1 damage
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getId().equals(targetId))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getMarkedDamage()).isEqualTo(1);
     }
 
@@ -122,11 +152,7 @@ class VoldarenAmbusherTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         gd.lifeLostThisTurn.put(player2.getId(), 1);
 
-        harness.setHand(player1, List.of(new VoldarenAmbusher()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VoldarenAmbusher(), "{2}{R}");
         harness.passBothPriorities();
         // Choose yourself to decline
         harness.handlePermanentChosen(player1, player1.getId());
@@ -145,12 +171,8 @@ class VoldarenAmbusherTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         gd.lifeLostThisTurn.put(player2.getId(), 1);
 
-        harness.setHand(player1, List.of(new VoldarenAmbusher()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VoldarenAmbusher(), "{2}{R}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, targetId);
 
@@ -167,12 +189,8 @@ class VoldarenAmbusherTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         gd.lifeLostThisTurn.put(player2.getId(), 1);
 
-        harness.setHand(player1, List.of(new VoldarenAmbusher()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VoldarenAmbusher(), "{2}{R}");
         harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice choice =
