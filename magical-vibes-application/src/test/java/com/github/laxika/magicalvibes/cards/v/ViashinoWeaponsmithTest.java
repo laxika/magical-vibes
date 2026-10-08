@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ViashinoWeaponsmith.class, Guma.class})
+@CardUsed({ViashinoWeaponsmith.class, Guma.class, DazzlingBeauty.class, FlashFoliage.class})
 class ViashinoWeaponsmithTest extends BaseCardTest {
 
     @Test
@@ -61,8 +61,7 @@ class ViashinoWeaponsmithTest extends BaseCardTest {
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
         assertThat(gd.stack).hasSize(2);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(weaponsmith.getPowerModifier()).isEqualTo(4);
         assertThat(weaponsmith.getToughnessModifier()).isEqualTo(4);
@@ -74,9 +73,9 @@ class ViashinoWeaponsmithTest extends BaseCardTest {
     void blockedWithoutCreatureDoesNotTrigger() {
         Permanent weaponsmith = addCreatureReady(player1, new ViashinoWeaponsmith());
         addCreatureReady(player2, new Guma());
-        declareAttackers(List.of(0));
-
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of()));
         harness.setHand(player2, List.of(new DazzlingBeauty()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
@@ -94,7 +93,9 @@ class ViashinoWeaponsmithTest extends BaseCardTest {
     void creatureEnteringAsBlockerTriggers() {
         Permanent weaponsmith = addCreatureReady(player1, new ViashinoWeaponsmith());
         addCreatureReady(player2, new Guma());
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of()));
 
         harness.setHand(player2, List.of(new FlashFoliage()));
         harness.addMana(player2, ManaColor.GREEN, 1);
@@ -104,6 +105,26 @@ class ViashinoWeaponsmithTest extends BaseCardTest {
 
         assertThat(weaponsmith.getPowerModifier()).isEqualTo(2);
         assertThat(weaponsmith.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed(FlashFoliage.class)
+    @DisplayName("An additional creature entering blocking triggers even after the creature is already blocked")
+    void additionalBlockerTriggersAgain() {
+        Permanent weaponsmith = addCreatureReady(player1, new ViashinoWeaponsmith());
+        addCreatureReady(player2, new Guma());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        harness.setHand(player2, List.of(new FlashFoliage()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0, weaponsmith.getId());
+        resolveAllTriggers();
+
+        assertThat(weaponsmith.getPowerModifier()).isEqualTo(4);
+        assertThat(weaponsmith.getToughnessModifier()).isEqualTo(4);
     }
 
     @Test
