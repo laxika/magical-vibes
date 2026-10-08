@@ -181,4 +181,46 @@ class TangleWireTest extends BaseCardTest {
         assertThat(mossdog.isTapped()).isFalse();
         assertThat(wire.getCounterCount(CounterType.FADE)).isEqualTo(4);
     }
+
+    @Test
+    void wireWithoutAbilitiesDoesNotTriggerDuringOpponentsUpkeep() {
+        Permanent wire = harness.enterBattlefieldAndReturn(player1, new TangleWire());
+        wire.setLosesAllAbilitiesUntilEndOfTurn(true);
+        Permanent mossdog = harness.enterBattlefieldAndReturn(player2, new Mossdog());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(mossdog.isTapped()).isFalse();
+        assertThat(wire.getCounterCount(CounterType.FADE)).isEqualTo(4);
+    }
+
+    @Test
+    void faceDownWireDoesNotTriggerDuringOwnUpkeep() {
+        Permanent wire = harness.enterBattlefieldAndReturn(player1, new TangleWire());
+        wire.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent mossdog = harness.enterBattlefieldAndReturn(player1, new Mossdog());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(wire.isTapped()).isFalse();
+        assertThat(mossdog.isTapped()).isFalse();
+        assertThat(wire.getCounterCount(CounterType.FADE)).isEqualTo(4);
+    }
+
+    @Test
+    void tappedWireStillTriggersDuringOpponentsUpkeep() {
+        Permanent wire = harness.enterBattlefieldAndReturn(player1, new TangleWire());
+        wire.tap();
+        Permanent mossdog = harness.enterBattlefieldAndReturn(player2, new Mossdog());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(wire.isTapped()).isTrue();
+        assertThat(mossdog.isTapped()).isTrue();
+        assertThat(mossdog.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(wire.getCounterCount(CounterType.FADE)).isEqualTo(4);
+    }
 }
