@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WordsOfWaste.class, WretchedAnurid.class})
+@CardUsed({WordsOfWaste.class, WretchedAnurid.class, WordsOfWorship.class})
 class WordsOfWasteTest extends BaseCardTest {
 
     @Test
@@ -162,6 +162,73 @@ class WordsOfWasteTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Multiple-card draws resume after the opponent chooses a discard")
+    void multiCardDrawResumesAfterDiscard() {
+        harness.addToBattlefield(player1, new WordsOfWaste());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new WretchedAnurid(), new WretchedAnurid()));
+        harness.setLibrary(player1, List.of(new WretchedAnurid(), new WretchedAnurid()));
+        activateWordsOfWaste();
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 2));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A resolved replacement survives its source leaving the battlefield")
+    void resolvedReplacementSurvivesSourceLeaving() {
+        harness.addToBattlefield(player1, new WordsOfWaste());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new WretchedAnurid()));
+        harness.setLibrary(player1, List.of(new WretchedAnurid()));
+        activateWordsOfWaste();
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        drawAndDiscard(player1, player2);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The drawing player chooses between Words of Waste and Words of Worship")
+    void drawingPlayerChoosesBetweenDifferentReplacements() {
+        harness.addToBattlefield(player1, new WordsOfWaste());
+        harness.addToBattlefield(player1, new WordsOfWorship());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new WretchedAnurid()));
+        harness.setLibrary(player1, List.of(new WretchedAnurid()));
+        activateWordsOfWaste();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        draw(player1);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.DiscardChoice.class);
     }
 
     private void activateWordsOfWaste() {
