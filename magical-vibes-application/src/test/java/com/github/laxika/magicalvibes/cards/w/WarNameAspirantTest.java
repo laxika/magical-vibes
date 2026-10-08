@@ -1,14 +1,13 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.s.SageEyeHarrier;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -16,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WarNameAspirant.class, SageEyeHarrier.class, WetlandSambar.class})
 class WarNameAspirantTest extends BaseCardTest {
 
     @Test
@@ -36,9 +36,7 @@ class WarNameAspirantTest extends BaseCardTest {
 
     @Test
     void cannotBeBlockedByCreatureWithPowerOneOrLess() {
-        Permanent blocker = new Permanent(new FugitiveWizard());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new SageEyeHarrier());
         Permanent attacker = addAttackingAspirant();
 
         assertThatThrownBy(() -> declareBlock(blocker, attacker))
@@ -47,14 +45,52 @@ class WarNameAspirantTest extends BaseCardTest {
 
     @Test
     void canBeBlockedByCreatureWithPowerGreaterThanOne() {
-        Permanent blocker = new Permanent(new HillGiant());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new WetlandSambar());
         Permanent attacker = addAttackingAspirant();
 
         declareBlock(blocker, attacker);
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void opponentsAttackDoesNotEnableRaid() {
+        gd.playersDeclaredAttackersThisTurn.add(player2.getId());
+
+        castAspirant(false);
+
+        assertThat(findAspirant().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void raidAppliesWhenEnteringWithoutBeingCast() {
+        gd.playersDeclaredAttackersThisTurn.add(player1.getId());
+
+        Permanent aspirant = harness.enterBattlefieldAndReturn(player1, new WarNameAspirant());
+
+        assertThat(aspirant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canBeBlockedByPrintedPowerOneCreatureWithCounter() {
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new SageEyeHarrier());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent attacker = addAttackingAspirant();
+
+        declareBlock(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void cannotBeBlockedByCreatureWithZeroPower() {
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new SageEyeHarrier());
+        blocker.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        Permanent attacker = addAttackingAspirant();
+
+        assertThatThrownBy(() -> declareBlock(blocker, attacker))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void castAspirant(boolean raid) {
@@ -70,17 +106,13 @@ class WarNameAspirantTest extends BaseCardTest {
     }
 
     private Permanent findAspirant() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("War-Name Aspirant"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "War-Name Aspirant");
     }
 
     private Permanent addAttackingAspirant() {
-        Permanent attacker = new Permanent(new WarNameAspirant());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new WarNameAspirant());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
         return attacker;
     }
 
