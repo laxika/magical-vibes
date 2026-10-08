@@ -67,6 +67,32 @@ class SorcerousSightTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Looks at the opponent's current hand and draws only for the caster")
+    void usesHandAtResolutionAndDrawsOnlyForCaster() {
+        SorcerousSight drawnCard = new SorcerousSight();
+        SorcerousSight opponentCard = new SorcerousSight();
+        SorcerousSight opponentLibraryCard = new SorcerousSight();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setLibrary(player2, List.of(opponentLibraryCard));
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new SorcerousSight()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.setHand(player2, List.of(opponentCard));
+        harness.clearMessages();
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
+                .anyMatch(message -> message.contains(opponentCard.getId().toString()));
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentLibraryCard);
+    }
+
+    @Test
     @DisplayName("Cannot target self — must target an opponent")
     void cannotTargetSelf() {
         harness.setHand(player1, List.of(new SorcerousSight()));
