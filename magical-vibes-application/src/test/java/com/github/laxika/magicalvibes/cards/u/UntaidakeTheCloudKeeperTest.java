@@ -100,4 +100,52 @@ class UntaidakeTheCloudKeeperTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(1);
         assertThat(pool().getLegendarySpellOnlyColorless()).isZero();
     }
+
+    @Test
+    @DisplayName("Untaidake cannot activate again while tapped")
+    void cannotActivateTwiceWithoutUntapping() {
+        harness.addToBattlefield(player1, new UntaidakeTheCloudKeeper());
+        harness.setLife(player1, 20);
+        activateManaAbility();
+
+        assertThatThrownBy(() -> activateManaAbility())
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 18);
+        assertThat(pool().getLegendarySpellOnlyColorless()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Untaidake cannot activate on the turn it enters tapped")
+    void cannotActivateAfterPlayingLand() {
+        harness.setHand(player1, List.of(new UntaidakeTheCloudKeeper()));
+        harness.setLife(player1, 20);
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> activateManaAbility())
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 20);
+        assertThat(pool().getLegendarySpellOnlyColorless()).isZero();
+    }
+
+    @Test
+    @DisplayName("Legendary-only colorless mana cannot pay colored costs")
+    void cannotPayColoredCostOfLegendarySpell() {
+        harness.addToBattlefield(player1, new UntaidakeTheCloudKeeper());
+        activateManaAbility();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new KodamaOfTheNorthTree()));
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(pool().getLegendarySpellOnlyColorless()).isEqualTo(2);
+        assertThat(pool().get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(pool().get(ManaColor.COLORLESS)).isEqualTo(1);
+        harness.assertInHand(player1, "Kodama of the North Tree");
+    }
 }
