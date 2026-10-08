@@ -117,12 +117,75 @@ class WyluliWolfTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         Permanent wolf = findPermanent(player1, "Wyluli Wolf");
         assertThat(wolf.getPowerModifier()).isEqualTo(0);
         assertThat(wolf.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("The boost waits for resolution rather than applying when the Wolf taps")
+    void boostUsesTheStack() {
+        setupWolf();
+        Permanent wolf = findPermanent(player1, "Wyluli Wolf");
+
+        harness.activateAbility(player1, 0, null, wolf.getId());
+
+        assertThat(wolf.isTapped()).isTrue();
+        assertThat(wolf.getPowerModifier()).isZero();
+        assertThat(wolf.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(wolf.getPowerModifier()).isEqualTo(1);
+        assertThat(wolf.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two Wolves can stack their boosts on the same creature")
+    void boostsFromDifferentWolvesAccumulate() {
+        setupWolf();
+        addCreatureReady(player1, new WyluliWolf());
+        Permanent target = findPermanent(player1, "Wyluli Wolf");
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 1, null, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An activated boost still resolves after its source leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        setupWolf();
+        Permanent source = findPermanent(player1, "Wyluli Wolf");
+        Permanent target = addCreatureReady(player2, new WyluliWolf());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The Wolf can activate during the opponent's turn outside a main phase")
+    void canActivateDuringOpponentsUpkeep() {
+        setupWolf();
+        Permanent wolf = findPermanent(player1, "Wyluli Wolf");
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        harness.activateAbility(player1, 0, null, wolf.getId());
+        harness.passBothPriorities();
+
+        assertThat(wolf.getPowerModifier()).isEqualTo(1);
+        assertThat(wolf.getToughnessModifier()).isEqualTo(1);
     }
 
     private void setupWolf() {
