@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SilverwingSquadron.class, GrizzlyBears.class})
+@CardUsed({SilverwingSquadron.class, SwordsToPlowshares.class})
 class SilverwingSquadronTest extends BaseCardTest {
 
     @Test
@@ -23,8 +24,8 @@ class SilverwingSquadronTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, squadron)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, squadron)).isEqualTo(1);
 
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new SilverwingSquadron());
+        harness.addToBattlefield(player2, new SilverwingSquadron());
 
         assertThat(gqs.getEffectivePower(gd, squadron)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, squadron)).isEqualTo(2);
@@ -81,5 +82,42 @@ class SilverwingSquadronTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, defending)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, attacking)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, attacking)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Power and toughness decrease when another controlled creature leaves")
+    void powerAndToughnessDecreaseWhenCreatureLeaves() {
+        Permanent squadron = addCreatureReady(player1, new SilverwingSquadron());
+        Permanent other = addCreatureReady(player1, new SilverwingSquadron());
+        harness.setHand(player1, List.of(new SwordsToPlowshares()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThat(gqs.getEffectivePower(gd, squadron)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, squadron)).isEqualTo(2);
+
+        harness.castAndResolveInstant(player1, 0, other.getId());
+
+        assertThat(countPermanents(player1, "Silverwing Squadron")).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, squadron)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, squadron)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The attack trigger creates its Knight even after the Squadron is exiled")
+    void attackTriggerSurvivesSourceRemoval() {
+        Permanent squadron = addCreatureReady(player1, new SilverwingSquadron());
+        harness.setHand(player1, List.of(new SwordsToPlowshares()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+        assertThat(gd.stack).hasSize(1);
+        assertThat(countPermanents(player1, "Knight")).isZero();
+
+        harness.castAndResolveInstant(player1, 0, squadron.getId());
+        assertThat(countPermanents(player1, "Silverwing Squadron")).isZero();
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Knight")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Knight")).isZero();
     }
 }
