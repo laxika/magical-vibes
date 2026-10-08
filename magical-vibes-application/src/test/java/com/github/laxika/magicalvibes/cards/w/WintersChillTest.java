@@ -181,6 +181,7 @@ class WintersChillTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new WintersChill()));
         harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 1, List.of(attacker.getId())))
                 .isInstanceOf(IllegalStateException.class);
@@ -195,24 +196,82 @@ class WintersChillTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.setHand(player1, List.of(new WintersChill()));
         harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 1, List.of(bystander.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    @DisplayName("No mana auto-applies pay nothing and destroys at end of combat")
+    void mustChooseExactlyXTargets() {
+        Permanent attacker = addAttacker(player2);
+        addSnowLand(player1);
+        addSnowLand(player1);
+
+        assertThatThrownBy(() -> castAtDeclareAttackers(2, List.of(attacker.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void untappedManaSourceAllowsPaymentDuringResolution() {
+        Permanent attacker = addAttacker(player2);
+        addSnowLand(player1);
+        addSnowLand(player2);
+        castAtDeclareAttackers(1, List.of(attacker.getId()));
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    void destructionUsesDelayedTriggerAtEndOfCombat() {
+        Permanent attacker = addAttacker(player2);
+        addSnowLand(player1);
+        castAtDeclareAttackers(1, List.of(attacker.getId()));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
+
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> gs.advanceStep(gd));
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(attacker);
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+    }
+
+    @Test
+    void ignoresTargetThatStoppedAttackingBeforeResolution() {
+        Permanent removedFromCombat = addAttacker(player2);
+        Permanent legalAttacker = addAttacker(player2);
+        addSnowLand(player1);
+        addSnowLand(player1);
+        castAtDeclareAttackers(2, List.of(removedFromCombat.getId(), legalAttacker.getId()));
+        removedFromCombat.setAttacking(false);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(removedFromCombat)
+                .doesNotContain(legalAttacker);
+    }
+
+    @Test
+    @DisplayName("No mana or mana sources auto-applies pay nothing and destroys at end of combat")
     void noManaAutoDestroys() {
         Permanent attacker = addAttacker(player2);
         addSnowLand(player1);
         castAtDeclareAttackers(1, List.of(attacker.getId()));
 
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(attacker.getId()));
