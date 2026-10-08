@@ -4,18 +4,25 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AncientGrudge;
+import com.github.laxika.magicalvibes.cards.b.BumpInTheNight;
+import com.github.laxika.magicalvibes.cards.c.Conflagrate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SnapcasterMage.class, Shock.class, GrizzlyBears.class, AncientGrudge.class, BumpInTheNight.class, Conflagrate.class})
 class SnapcasterMageTest extends BaseCardTest {
 
     
@@ -26,10 +33,7 @@ class SnapcasterMageTest extends BaseCardTest {
         Shock shock = new Shock();
         harness.setGraveyard(player1, List.of(shock));
 
-        harness.setHand(player1, List.of(new SnapcasterMage()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SnapcasterMage(), "{1}{U}");
         harness.passBothPriorities(); // resolve creature → ETB → graveyard choice
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
@@ -42,10 +46,7 @@ class SnapcasterMageTest extends BaseCardTest {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(shock, bears));
 
-        harness.setHand(player1, List.of(new SnapcasterMage()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SnapcasterMage(), "{1}{U}");
         harness.passBothPriorities();
 
         List<UUID> validIds = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds();
@@ -59,10 +60,7 @@ class SnapcasterMageTest extends BaseCardTest {
         Shock shock = new Shock();
         harness.setGraveyard(player1, List.of(shock));
 
-        harness.setHand(player1, List.of(new SnapcasterMage()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SnapcasterMage(), "{1}{U}");
         harness.passBothPriorities(); // resolve creature → ETB → graveyard choice
 
         // Choose Shock as target
@@ -76,16 +74,13 @@ class SnapcasterMageTest extends BaseCardTest {
     @DisplayName("Granted flashback allows casting the spell from graveyard")
     void grantedFlashbackAllowsCasting() {
         Shock shock = new Shock();
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.setSummoningSick(false);
 
         harness.setGraveyard(player1, List.of(shock));
 
-        harness.setHand(player1, List.of(new SnapcasterMage()));
-        // Snapcaster costs {1}{U}, Shock costs {R}
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SnapcasterMage(), "{1}{U}");
         harness.passBothPriorities(); // resolve creature → ETB → graveyard choice
 
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
@@ -102,15 +97,13 @@ class SnapcasterMageTest extends BaseCardTest {
     @DisplayName("Card cast with granted flashback is exiled after resolution")
     void grantedFlashbackExilesAfterResolution() {
         Shock shock = new Shock();
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.setSummoningSick(false);
 
         harness.setGraveyard(player1, List.of(shock));
 
-        harness.setHand(player1, List.of(new SnapcasterMage()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SnapcasterMage(), "{1}{U}");
         harness.passBothPriorities();
 
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
@@ -130,10 +123,7 @@ class SnapcasterMageTest extends BaseCardTest {
         // Only creature in graveyard — no valid targets
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
-        harness.setHand(player1, List.of(new SnapcasterMage()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SnapcasterMage(), "{1}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
@@ -142,10 +132,7 @@ class SnapcasterMageTest extends BaseCardTest {
     @Test
     @DisplayName("ETB with empty graveyard does not prompt")
     void etbWithEmptyGraveyardDoesNotPrompt() {
-        harness.setHand(player1, List.of(new SnapcasterMage()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SnapcasterMage(), "{1}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
@@ -158,10 +145,7 @@ class SnapcasterMageTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(new Shock()));
         harness.setGraveyard(player1, List.of());
 
-        harness.setHand(player1, List.of(new SnapcasterMage()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SnapcasterMage(), "{1}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
@@ -173,10 +157,7 @@ class SnapcasterMageTest extends BaseCardTest {
         Shock shock = new Shock();
         harness.setGraveyard(player1, List.of(shock));
 
-        harness.setHand(player1, List.of(new SnapcasterMage()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SnapcasterMage(), "{1}{U}");
         harness.passBothPriorities();
 
         // Choose Shock
@@ -193,18 +174,12 @@ class SnapcasterMageTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Does not grant flashback to card that already has native flashback")
+    @DisplayName("Cards with native flashback remain valid targets")
     void doesNotExcludeCardsWithNativeFlashback() {
-        // Snapcaster Mage targets any instant/sorcery — per the rules, it can target
-        // a card that already has flashback (it just won't change the flashback cost).
-        // The card is still a valid target.
         AncientGrudge grudge = new AncientGrudge();
         harness.setGraveyard(player1, List.of(grudge));
 
-        harness.setHand(player1, List.of(new SnapcasterMage()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SnapcasterMage(), "{1}{U}");
         harness.passBothPriorities();
 
         // Cards with native flashback should still be targetable
@@ -212,11 +187,98 @@ class SnapcasterMageTest extends BaseCardTest {
         assertThat(validIds).contains(grudge.getId());
     }
 
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    void grantsSorceryFlashbackAtItsManaCostDespiteHigherNativeCost() {
+        BumpInTheNight bump = new BumpInTheNight();
+        harness.setGraveyard(player1, List.of(bump));
+        harness.castFromHand(player1, new SnapcasterMage(), "{1}{U}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(bump.getId()));
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.castFlashback(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore - 3);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(bump);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
+
+    @Test
+    @CardUsed(Conflagrate.class)
+    void grantedFlashbackDoesNotRequireNativeFlashbackDiscards() {
+        Conflagrate conflagrate = new Conflagrate();
+        harness.setGraveyard(player1, List.of(conflagrate));
+        harness.castFromHand(player1, new SnapcasterMage(), "{1}{U}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(conflagrate.getId()));
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 5);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.castFlashbackForXWithDiscards(
+                player1, 0, 2, Map.of(player2.getId(), 2), List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore - 2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(conflagrate);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    void grantedFlashbackExpiresAfterTheTurn() {
+        Shock shock = new Shock();
+        harness.setGraveyard(player1, List.of(shock));
+        harness.castFromHand(player1, new SnapcasterMage(), "{1}{U}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Shock");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(shock);
+    }
+
+    @Test
+    void flashAllowsCastingDuringOpponentsUpkeep() {
+        Shock shock = new Shock();
+        harness.setGraveyard(player1, List.of(shock));
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.castFromHand(player1, new SnapcasterMage(), "{1}{U}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.castAndResolveFlashback(player1, 0, player2.getId());
+
+        harness.assertOnBattlefield(player1, "Snapcaster Mage");
+        harness.assertLife(player2, lifeBefore - 2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(shock);
+    }
+
+    @Test
+    void grantedFlashbackDoesNotAllowSorceriesDuringCombat() {
+        BumpInTheNight bump = new BumpInTheNight();
+        harness.setGraveyard(player1, List.of(bump));
+        harness.castFromHand(player1, new SnapcasterMage(), "{1}{U}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(bump.getId()));
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Bump in the Night");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(bump);
+    }
+
 }
