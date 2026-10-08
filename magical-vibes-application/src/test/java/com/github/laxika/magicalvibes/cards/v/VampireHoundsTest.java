@@ -46,7 +46,6 @@ class VampireHoundsTest extends BaseCardTest {
         assertThat(hounds.getToughnessModifier()).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(hounds.getPowerModifier()).isZero();
@@ -109,5 +108,82 @@ class VampireHoundsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The creature is discarded as a cost before the boost resolves")
+    void discardIsPaidBeforeResolution() {
+        Permanent hounds = harness.addToBattlefieldAndReturn(player1, new VampireHounds());
+        int basePower = gqs.getEffectivePower(gd, hounds);
+        int baseToughness = gqs.getEffectiveToughness(gd, hounds);
+        harness.setHand(player1, List.of(new VampireHounds()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Vampire Hounds");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, hounds)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, hounds)).isEqualTo(baseToughness);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, hounds)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, hounds)).isEqualTo(baseToughness + 2);
+    }
+
+    @Test
+    @DisplayName("Choosing a noncreature cannot pay the discard cost")
+    void noncreatureChoiceDoesNotPayCost() {
+        Permanent hounds = harness.addToBattlefieldAndReturn(player1, new VampireHounds());
+        int basePower = gqs.getEffectivePower(gd, hounds);
+        int baseToughness = gqs.getEffectiveToughness(gd, hounds);
+        harness.setHand(player1, List.of(new Spellbook(), new VampireHounds()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Spellbook");
+        harness.assertInHand(player1, "Vampire Hounds");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, hounds)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, hounds)).isEqualTo(baseToughness);
+
+        harness.handleCardChosen(player1, 1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Vampire Hounds");
+        harness.assertInHand(player1, "Spellbook");
+        assertThat(gqs.getEffectivePower(gd, hounds)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, hounds)).isEqualTo(baseToughness + 2);
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Hounds can activate on an opponent's turn and boosts only itself")
+    void tappedSummoningSickHoundsCanActivateOnOpponentsTurn() {
+        Permanent hounds = harness.addToBattlefieldAndReturn(player1, new VampireHounds());
+        Permanent otherHounds = harness.addToBattlefieldAndReturn(player1, new VampireHounds());
+        int basePower = gqs.getEffectivePower(gd, hounds);
+        int baseToughness = gqs.getEffectiveToughness(gd, hounds);
+        int otherPower = gqs.getEffectivePower(gd, otherHounds);
+        int otherToughness = gqs.getEffectiveToughness(gd, otherHounds);
+        hounds.setTapped(true);
+        hounds.setSummoningSick(true);
+        harness.setHand(player1, List.of(new VampireHounds()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, hounds)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, hounds)).isEqualTo(baseToughness + 2);
+        assertThat(gqs.getEffectivePower(gd, otherHounds)).isEqualTo(otherPower);
+        assertThat(gqs.getEffectiveToughness(gd, otherHounds)).isEqualTo(otherToughness);
+        harness.assertInGraveyard(player1, "Vampire Hounds");
     }
 }
