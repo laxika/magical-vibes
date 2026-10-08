@@ -1,13 +1,17 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -61,10 +65,9 @@ class WarTaxTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceActivePlayer(player2);
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
+        harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         harness.getGameData().playerManaPools.get(player2.getId()).clear();
         declareAttackers(player2, List.of(0));
@@ -102,6 +105,71 @@ class WarTaxTest extends BaseCardTest {
         harness.passBothPriorities();
 
         declareAttackers(player2, List.of(0));
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Multiple activations add their taxes together")
+    void multipleActivationsAreCumulative() {
+        harness.addToBattlefield(player1, new WarTax());
+        addCreatureReady(player2, new FreshVolunteers());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 1, null);
+        harness.activateAbility(player1, 0, 2, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana to pay attack tax");
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution must also pay the tax")
+    void taxesCreaturesEnteringAfterResolution() {
+        harness.addToBattlefield(player1, new WarTax());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 2, null);
+        harness.passBothPriorities();
+        addCreatureReady(player2, new FreshVolunteers());
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana to pay attack tax");
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @CardUsed(InvasionOfZendikar.class)
+    @DisplayName("Attacking a battle still requires paying War Tax")
+    void taxesAttacksAgainstBattles() {
+        harness.addToBattlefield(player1, new WarTax());
+        var battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfZendikar());
+        battle.setProtectorPlayerId(player1.getId());
+        battle.setCounterCount(CounterType.DEFENSE, 3);
+        addCreatureReady(player2, new FreshVolunteers());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 2, null);
+        harness.passBothPriorities();
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        gs.declareAttackers(gd, player2, List.of(1), Map.of(1, battle.getId()));
 
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
