@@ -243,6 +243,38 @@ class HanweirBattlementsTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Hanweir Garrison");
     }
 
+    @Test
+    void sourceLeavingInResponsePreventsMeld() {
+        Permanent battlements = harness.addToBattlefieldAndReturn(player1, new HanweirBattlements());
+        harness.addToBattlefield(player1, new HanweirGarrison());
+        addMeldMana();
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToExile(gd, battlements));
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hanweir Garrison");
+        harness.assertNotOnBattlefield(player1, "Hanweir, the Writhing Township");
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getName())
+                .containsExactly("Hanweir Battlements");
+    }
+
+    @Test
+    void hasteAbilityResolvesAfterBattlementsLeaves() {
+        Permanent battlements = harness.addToBattlefieldAndReturn(player1, new HanweirBattlements());
+        Permanent garrison = harness.addToBattlefieldAndReturn(player1, new HanweirGarrison());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, 1, null, garrison.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToExile(gd, battlements));
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, garrison, Keyword.HASTE)).isTrue();
+        harness.assertNotOnBattlefield(player1, "Hanweir Battlements");
+    }
+
     private void addMeldMana() {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

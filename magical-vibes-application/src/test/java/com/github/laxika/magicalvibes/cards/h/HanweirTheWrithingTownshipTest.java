@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -20,9 +19,7 @@ class HanweirTheWrithingTownshipTest extends BaseCardTest {
     @Test
     void canAttackImmediatelyAfterMeldingAndCreatesTappedAttackingHorrors() {
         meldTownship();
-        prepareAttack();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -34,8 +31,7 @@ class HanweirTheWrithingTownshipTest extends BaseCardTest {
     @Test
     void attackTriggerStillCreatesTokensAfterTownshipLeaves() {
         Permanent township = meldTownship();
-        prepareAttack();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToExile(gd, township));
 
@@ -50,9 +46,7 @@ class HanweirTheWrithingTownshipTest extends BaseCardTest {
     @Test
     void createsNoTokensWhenNotDeclaredAsAttacker() {
         meldTownship();
-        prepareAttack();
-
-        gs.declareAttackers(gd, player1, List.of());
+        declareAttackers(List.of());
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -77,8 +71,7 @@ class HanweirTheWrithingTownshipTest extends BaseCardTest {
         Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfInnistrad());
         battle.setProtectorPlayerId(player2.getId());
         battle.setCounterCount(CounterType.DEFENSE, 5);
-        prepareAttack();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         harness.passBothPriorities();
 
@@ -103,13 +96,6 @@ class HanweirTheWrithingTownshipTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
         return findPermanent(player1, "Hanweir, the Writhing Township");
-    }
-
-    private void prepareAttack() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
     }
 
     private void assertHorrors() {

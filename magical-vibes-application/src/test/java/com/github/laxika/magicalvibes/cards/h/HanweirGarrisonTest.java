@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -63,12 +62,7 @@ class HanweirGarrisonTest extends BaseCardTest {
     @DisplayName("The melded face creates two colorless 3/2 Eldrazi Horror tokens attacking")
     void townshipAttackCreatesTokens() {
         addCreatureReady(player1, new HanweirTheWrithingTownship());
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
@@ -94,12 +88,7 @@ class HanweirGarrisonTest extends BaseCardTest {
         Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfInnistrad());
         battle.setProtectorPlayerId(player2.getId());
         battle.setCounterCount(CounterType.DEFENSE, 5);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
