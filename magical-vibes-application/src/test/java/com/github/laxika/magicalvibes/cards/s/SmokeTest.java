@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Smoke.class, GrizzlyBears.class, Forest.class})
+@CardUsed({Smoke.class, GrizzlyBears.class, Forest.class, Seasinger.class, Island.class})
 class SmokeTest extends BaseCardTest {
 
     @Test
@@ -82,6 +83,52 @@ class SmokeTest extends BaseCardTest {
 
         assertThat(bearsA.isTapped()).isFalse();
         assertThat(bearsB.isTapped()).isTrue();
+    }
+
+    @Test
+    void multipleCopiesStillAllowOneCreatureToUntap() {
+        addCreatureReady(player1, new Smoke());
+        addCreatureReady(player2, new Smoke());
+        Permanent bearsA = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bearsB = addCreatureReady(player1, new GrizzlyBears());
+        bearsA.tap();
+        bearsB.tap();
+
+        advanceToNextTurn(player2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(bearsB.getId()));
+
+        assertThat(bearsA.isTapped()).isTrue();
+        assertThat(bearsB.isTapped()).isFalse();
+    }
+
+    @Test
+    void alreadyUntappedCreatureDoesNotConsumeTheLimit() {
+        addCreatureReady(player1, new Smoke());
+        Permanent untappedBears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent tappedBears = addCreatureReady(player1, new GrizzlyBears());
+        tappedBears.tap();
+
+        advanceToNextTurn(player2);
+
+        assertThat(untappedBears.isTapped()).isFalse();
+        assertThat(tappedBears.isTapped()).isFalse();
+    }
+
+    @Test
+    void optionalUntapCreaturesAreSubjectToTheLimit() {
+        addCreatureReady(player1, new Smoke());
+        addCreatureReady(player1, new Island());
+        Permanent singerA = addCreatureReady(player1, new Seasinger());
+        Permanent singerB = addCreatureReady(player1, new Seasinger());
+        singerA.tap();
+        singerB.tap();
+
+        advanceToNextTurn(player2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(singerA.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(singerA.isTapped()).isFalse();
+        assertThat(singerB.isTapped()).isTrue();
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
