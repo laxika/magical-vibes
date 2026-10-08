@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.e.EnchantmentAlteration;
 import com.github.laxika.magicalvibes.cards.f.FallenAskari;
 import com.github.laxika.magicalvibes.cards.f.Fireblast;
 import com.github.laxika.magicalvibes.cards.h.HopeCharm;
 import com.github.laxika.magicalvibes.cards.p.PantherWarriors;
+import com.github.laxika.magicalvibes.cards.r.RiverBoa;
 import com.github.laxika.magicalvibes.cards.t.Tremor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MortalWound.class, PantherWarriors.class, MagmaMine.class, Fireblast.class,
-        FallenAskari.class, HopeCharm.class, Tremor.class})
+        FallenAskari.class, HopeCharm.class, Tremor.class, EnchantmentAlteration.class, RiverBoa.class})
 class MortalWoundTest extends BaseCardTest {
 
     @Test
@@ -61,8 +63,7 @@ class MortalWoundTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Tremor()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities(); // Resolve Tremor
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.stack).anyMatch(e -> e.getCard().getName().equals("Mortal Wound"));
         resolveAllTriggers();
@@ -142,8 +143,7 @@ class MortalWoundTest extends BaseCardTest {
         Permanent aura = findPermanent(player1, "Mortal Wound");
         harness.setHand(player1, List.of(new Tremor()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.stack).anyMatch(e -> e.getCard().getName().equals("Mortal Wound"));
         harness.assertOnBattlefield(player1, "Mortal Wound");
@@ -155,5 +155,60 @@ class MortalWoundTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Mortal Wound");
         harness.assertNotOnBattlefield(player2, "Panther Warriors");
+    }
+
+    @Test
+    @DisplayName("Moving Mortal Wound in response does not change which creature its pending trigger destroys")
+    void pendingTriggerDestroysOriginallyDamagedCreatureAfterAuraMoves() {
+        Permanent damaged = addCreatureReady(player2, new PantherWarriors());
+        Permanent destination = addCreatureReady(player1, new PantherWarriors());
+        harness.setHand(player1, List.of(new MortalWound()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0, damaged.getId());
+        harness.passBothPriorities();
+        Permanent aura = findPermanent(player1, "Mortal Wound");
+
+        harness.setHand(player1, List.of(new Tremor()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        assertThat(gd.stack).anyMatch(e -> e.getCard().getName().equals("Mortal Wound"));
+
+        harness.setHand(player1, List.of(new EnchantmentAlteration()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        assertThat(aura.getAttachedTo()).isEqualTo(destination.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Panther Warriors");
+        harness.assertInGraveyard(player2, "Panther Warriors");
+        harness.assertOnBattlefield(player1, "Panther Warriors");
+        harness.assertOnBattlefield(player1, "Mortal Wound");
+    }
+
+    @Test
+    @DisplayName("Regeneration can save a creature from both lethal damage and Mortal Wound's destruction")
+    void twoRegenerationShieldsSaveFromLethalDamageAndTrigger() {
+        Permanent creature = addCreatureReady(player2, new RiverBoa());
+        harness.setHand(player1, List.of(new MortalWound()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Tremor()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        assertThat(gd.stack).anyMatch(e -> e.getCard().getName().equals("Mortal Wound"));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "River Boa");
+        harness.assertOnBattlefield(player1, "Mortal Wound");
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getMarkedDamage()).isZero();
     }
 }
