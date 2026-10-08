@@ -59,8 +59,7 @@ class VaultGuardsmanTest extends BaseCardTest {
         UUID sourceId = harness.getPermanentId(player1, "Vault Guardsman");
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, sourceId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, sourceId);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -87,6 +86,76 @@ class VaultGuardsmanTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("artifact or creature");
+    }
+
+    @Test
+    @DisplayName("Leaving before the enter trigger resolves does not exile the target")
+    void sourceLeavesBeforeTriggerResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareCast();
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Vault Guardsman"));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Vault Guardsman");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An enter trigger with a target that leaves does nothing")
+    void targetLeavesBeforeTriggerResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareCast();
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Vault Guardsman");
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Convoke uses newly entered creatures for white and generic costs")
+    void convokePaysWhiteAndGenericCosts() {
+        Permanent white = harness.addToBattlefieldAndReturn(player1, new VaultGuardsman());
+        Permanent green = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.setHand(player1, List.of(new VaultGuardsman()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castInstantWithConvoke(player1, 0, List.of(target.getId()),
+                List.of(white.getId(), green.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(white.isTapped()).isTrue();
+        assertThat(green.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player2, "Rod of Ruin");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Rod of Ruin"));
+    }
+
+    @Test
+    @DisplayName("Vault Guardsman can enter without an eligible opponent permanent")
+    void entersWithoutEligibleTarget() {
+        prepareCast();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Vault Guardsman");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 
     private void castAndResolve(UUID targetId) {
