@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.t.ThousandLeggedKami;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({VineKami.class, LanternKami.class, KokushoTheEveningStar.class,
         ThousandLeggedKami.class, SakuraTribeElder.class, RendSpirit.class})
@@ -103,5 +105,67 @@ class VineKamiTest extends BaseCardTest {
         destroyKami();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Soulshift returns a Spirit with mana value exactly six")
+    void returnsSpiritAtManaValueLimit() {
+        harness.addToBattlefield(player1, new VineKami());
+        Card spirit = new KokushoTheEveningStar();
+        harness.setGraveyard(player1, List.of(spirit));
+
+        destroyKami();
+
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(spirit);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(spirit);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Menace rejects a single blocker")
+    void menaceRejectsSingleBlocker() {
+        addCreatureReady(player1, new VineKami());
+        addCreatureReady(player2, new SakuraTribeElder());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("two or more creatures");
+    }
+
+    @Test
+    @DisplayName("Menace permits two blockers")
+    void menaceAllowsTwoBlockers() {
+        addCreatureReady(player1, new VineKami());
+        var firstBlocker = addCreatureReady(player2, new SakuraTribeElder());
+        var secondBlocker = addCreatureReady(player2, new SakuraTribeElder());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Menace permits an attack to go unblocked")
+    void menaceAllowsNoBlockers() {
+        addCreatureReady(player1, new VineKami());
+        addCreatureReady(player2, new SakuraTribeElder());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 16);
     }
 }
