@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WanderInDeath.class, GrizzlyBears.class, LlanowarElves.class, LeoninScimitar.class})
 class WanderInDeathTest extends BaseCardTest {
 
     @Test
@@ -68,5 +70,122 @@ class WanderInDeathTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Wander in Death");
         harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("May return only one creature when two are available")
+    void returnsOnlyChosenCreature() {
+        Card chosen = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(chosen, new LlanowarElves()));
+        harness.setHand(player1, List.of(new WanderInDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Wander in Death");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("May choose no targets even with creatures available")
+    void mayChooseZeroTargets() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new LlanowarElves()));
+        harness.setHand(player1, List.of(new WanderInDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Wander in Death");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can be cast with no creatures in your graveyard")
+    void canCastWithoutEligibleTargets() {
+        harness.setGraveyard(player1, List.of(new LeoninScimitar()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new WanderInDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertInGraveyard(player1, "Wander in Death");
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target creatures in an opponent's graveyard")
+    void excludesOpponentsGraveyard() {
+        Card ownCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(ownCreature));
+        harness.setGraveyard(player2, List.of(new LlanowarElves()));
+        harness.setHand(player1, List.of(new WanderInDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
+                .containsExactly(ownCreature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(ownCreature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertNotInHand(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Returns the remaining legal target when another leaves the graveyard")
+    void returnsRemainingLegalTarget() {
+        Card removed = new GrizzlyBears();
+        Card remaining = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(removed, remaining));
+        harness.setHand(player1, List.of(new WanderInDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(removed.getId(), remaining.getId()));
+        harness.setGraveyard(player1, List.of(remaining));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Llanowar Elves");
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Wander in Death");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cycling pays its generic cost and discards before drawing on resolution")
+    void cyclingDiscardsAsCost() {
+        harness.setHand(player1, List.of(new WanderInDeath()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertNotInHand(player1, "Wander in Death");
+        harness.assertInGraveyard(player1, "Wander in Death");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Wander in Death");
+        assertThat(gd.stack).isEmpty();
     }
 }
