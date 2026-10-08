@@ -164,4 +164,76 @@ class VodalianHypnotistTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Cannot activate a tap ability with summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        Permanent hypnotist = readyHypnotist();
+        hypnotist.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(hypnotist.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate during the second main phase")
+    void canActivateDuringSecondMainPhase() {
+        harness.setHand(player2, List.of(new Forest()));
+        readyHypnotist();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Activation pays one black and two generic mana")
+    void paysBlackAndGenericMana() {
+        harness.setHand(player2, List.of());
+        readyHypnotist();
+        gd.playerManaPools.get(player1.getId()).clear();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the activation cost without black mana")
+    void cannotActivateWithoutBlackMana() {
+        Permanent hypnotist = readyHypnotist();
+        gd.playerManaPools.get(player1.getId()).clear();
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(hypnotist.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate with insufficient total mana")
+    void cannotActivateWithInsufficientMana() {
+        Permanent hypnotist = readyHypnotist();
+        gd.playerManaPools.get(player1.getId()).clear();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(hypnotist.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }
