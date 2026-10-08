@@ -158,6 +158,80 @@ class WirewoodSymbioteTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returning the Elf is paid before the untap ability resolves")
+    void returnsElfAsActivationCost() {
+        Permanent symbiote = harness.addToBattlefieldAndReturn(player1, new WirewoodSymbiote());
+        symbiote.tap();
+        harness.addToBattlefield(player1, new KrosanDrover());
+        Permanent targetCreature = harness.addToBattlefieldAndReturn(player1, new ScornfulEgotist());
+        targetCreature.tap();
+
+        harness.activateAbility(player1, 0, null, targetCreature.getId());
+
+        harness.assertInHand(player1, "Krosan Drover");
+        harness.assertNotOnBattlefield(player1, "Krosan Drover");
+        assertThat(targetCreature.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(targetCreature.isTapped()).isFalse();
+        assertThat(symbiote.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target an untapped creature, including Wirewood Symbiote itself")
+    void canTargetUntappedSymbiote() {
+        Permanent symbiote = harness.addToBattlefieldAndReturn(player1, new WirewoodSymbiote());
+        harness.addToBattlefield(player1, new KrosanDrover());
+
+        harness.activateAbility(player1, 0, null, symbiote.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Krosan Drover");
+        assertThat(symbiote.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can return the targeted Elf as the cost even though the ability then has no legal target")
+    void canReturnTargetedElf() {
+        harness.addToBattlefield(player1, new WirewoodSymbiote());
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new KrosanDrover());
+        elf.tap();
+
+        harness.activateAbility(player1, 0, null, elf.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Krosan Drover");
+        harness.assertNotOnBattlefield(player1, "Krosan Drover");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Activation limit applies before resolution and is separate for each Symbiote")
+    void activationLimitIsPerPermanentAndCountsPendingAbility() {
+        harness.addToBattlefield(player1, new WirewoodSymbiote());
+        harness.addToBattlefield(player1, new WirewoodSymbiote());
+        Permanent firstElf = harness.addToBattlefieldAndReturn(player1, new KrosanDrover());
+        harness.addToBattlefield(player1, new KrosanDrover());
+        Permanent targetCreature = harness.addToBattlefieldAndReturn(player1, new ScornfulEgotist());
+        targetCreature.tap();
+
+        harness.activateAbility(player1, 0, null, targetCreature.getId());
+        harness.handlePermanentChosen(player1, firstElf.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.activateAbility(player1, 1, null, targetCreature.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Krosan Drover");
+        assertThat(targetCreature.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Returning an Elf token does not put it into its owner's hand")
     void returningElfTokenDoesNotPutItInHand() {
         harness.addToBattlefield(player1, new WirewoodSymbiote());
