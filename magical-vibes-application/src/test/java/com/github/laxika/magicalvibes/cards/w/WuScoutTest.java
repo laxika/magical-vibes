@@ -37,8 +37,7 @@ class WuScoutTest extends BaseCardTest {
         harness.setHand(player2, List.of(new WuInfantry()));
         castWuScout(player2.getId());
 
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         // Card identity is private: only the controller is told what is in the hand. The public log
         // records that the look happened without naming anything (see CardRevealService#lookAtHand).
@@ -48,6 +47,39 @@ class WuScoutTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(log -> log.contains("looks at") && log.contains("hand"))
                 .noneMatch(log -> log.contains("Wu Infantry"));
+    }
+
+    @Test
+    @DisplayName("ETB trigger looks at the hand as it exists when it resolves")
+    void looksAtCurrentHandOnResolution() {
+        harness.setHand(player2, List.of(new WuInfantry()));
+        castWuScout(player2.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new WuScout()));
+        harness.clearMessages();
+        resolveAllTriggers();
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
+                .anyMatch(message -> message.contains("Wu Scout"))
+                .noneMatch(message -> message.contains("Wu Infantry"));
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        harness.assertInHand(player2, "Wu Scout");
+    }
+
+    @Test
+    @DisplayName("ETB trigger resolves normally when the opponent's hand is empty")
+    void looksAtEmptyHand() {
+        harness.setHand(player2, List.of());
+        castWuScout(player2.getId());
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Wu Scout");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gameLogContains("It is empty.")).isTrue();
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
     }
 
     @Test
