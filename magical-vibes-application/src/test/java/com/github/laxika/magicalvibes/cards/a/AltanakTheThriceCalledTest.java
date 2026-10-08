@@ -34,8 +34,7 @@ class AltanakTheThriceCalledTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, altanakId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, altanakId);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
@@ -98,8 +97,7 @@ class AltanakTheThriceCalledTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, altanak.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, altanak.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
@@ -161,5 +159,76 @@ class AltanakTheThriceCalledTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(altanak);
+    }
+
+    @Test
+    void drawsForEachSeparateOpponentsSpellBeforeThoseSpellsResolve() {
+        Permanent altanak = harness.addToBattlefieldAndReturn(player1, new AltanakTheThriceCalled());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player2, 0, altanak.getId());
+        harness.castInstant(player2, 0, altanak.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(altanak.getMarkedDamage()).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+        assertThat(altanak.getMarkedDamage()).isEqualTo(4);
+        harness.assertOnBattlefield(player1, "Altanak, the Thrice-Called");
+    }
+
+    @Test
+    void doesNotDrawWhenOwnAbilityTargetsAltanak() {
+        Permanent altanak = harness.addToBattlefieldAndReturn(player1, new AltanakTheThriceCalled());
+        harness.addToBattlefield(player1, new ElaborateFirecannon());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 1, null, altanak.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(altanak.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void cannotDiscardAltanakWithoutALandTarget() {
+        AltanakTheThriceCalled altanak = new AltanakTheThriceCalled();
+        harness.setHand(player1, List.of(altanak));
+        harness.setGraveyard(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbilityWithGraveyardTargets(
+                player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(altanak);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotPayTheHandAbilityWithOnlyGenericMana() {
+        AltanakTheThriceCalled altanak = new AltanakTheThriceCalled();
+        Card forest = new Forest();
+        harness.setHand(player1, List.of(altanak));
+        harness.setGraveyard(player1, List.of(forest));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbilityWithGraveyardTargets(
+                player1, 0, List.of(forest.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(altanak);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
     }
 }
