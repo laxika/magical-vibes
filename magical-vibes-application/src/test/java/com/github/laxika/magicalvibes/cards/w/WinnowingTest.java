@@ -21,8 +21,7 @@ class WinnowingTest extends BaseCardTest {
     private void cast() {
         harness.setHand(player1, List.of(new Winnowing()));
         harness.addMana(player1, ManaColor.WHITE, 6);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     @Test
@@ -64,5 +63,61 @@ class WinnowingTest extends BaseCardTest {
                 .containsExactly(chosenBear, changeling)
                 .doesNotContain(giant);
         harness.assertInGraveyard(player1, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Choosing a changeling preserves creatures of different types")
+    void chosenChangelingPreservesAllTypedCreatures() {
+        Permanent changeling = harness.addToBattlefieldAndReturn(player1, new WoodlandChangeling());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+
+        cast();
+        harness.handleMultiplePermanentsChosen(player1, List.of(changeling.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(changeling, bear, giant);
+        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card instanceof GrizzlyBears
+                || card instanceof HillGiant || card instanceof WoodlandChangeling);
+    }
+
+    @Test
+    @DisplayName("A lone creature for each player is preserved without requiring input")
+    void singleCreatureForEachPlayer() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+        cast();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(bear);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(giant);
+        harness.assertInGraveyard(player1, "Winnowing");
+    }
+
+    @Test
+    @DisplayName("An empty battlefield does not require creature choices")
+    void noCreatures() {
+        cast();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Winnowing");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick green creature can convoke one generic mana")
+    void convokePaysGenericMana() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Winnowing()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castInstantWithConvoke(player1, 0, List.of(), List.of(bear.getId()));
+        assertThat(bear.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(bear);
+        harness.assertInGraveyard(player1, "Winnowing");
     }
 }
