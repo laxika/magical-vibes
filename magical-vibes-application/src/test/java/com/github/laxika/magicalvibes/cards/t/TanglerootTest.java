@@ -94,8 +94,7 @@ class TanglerootTest extends BaseCardTest {
         harness.castFromHand(player1, creature, "{2}");
         harness.setHand(player2, List.of(new Annul()));
         harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, creature.getId());
 
         harness.assertInGraveyard(player1, "Myr Retriever");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
@@ -114,8 +113,7 @@ class TanglerootTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shatter()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, tangleroot.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, tangleroot.getId());
 
         harness.assertInGraveyard(player1, "Tangleroot");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
@@ -135,5 +133,33 @@ class TanglerootTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
         harness.assertOnBattlefield(player1, "Myr Retriever");
+    }
+
+    @Test
+    @DisplayName("Tangleroots controlled by different players both award mana to the caster")
+    void tanglerootsWithDifferentControllersAwardManaToCaster() {
+        harness.addToBattlefield(player1, new Tangleroot());
+        harness.addToBattlefield(player2, new Tangleroot());
+        harness.castFromHand(player1, new MyrRetriever(), "{2}");
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+        harness.assertOnBattlefield(player1, "Myr Retriever");
+    }
+
+    @Test
+    @DisplayName("Tangleroot triggers for every creature spell cast in the same turn")
+    void triggersForEveryCreatureSpellInSameTurn() {
+        harness.addToBattlefield(player1, new Tangleroot());
+        harness.castFromHand(player1, new MyrRetriever(), "{2}");
+        resolveAllTriggers();
+
+        harness.castFromHand(player1, new MyrRetriever(), "{2}");
+        resolveAllTriggers();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(countPermanents(player1, "Myr Retriever")).isEqualTo(2);
     }
 }
