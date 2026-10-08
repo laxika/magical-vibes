@@ -20,8 +20,7 @@ class SlipstreamSerpentTest extends BaseCardTest {
     @Test
     void isSacrificedWhenControllerControlsNoIslands() {
         harness.castFromHand(player1, new SlipstreamSerpent(), "{7}{U}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Slipstream Serpent");
         harness.assertInGraveyard(player1, "Slipstream Serpent");
@@ -55,8 +54,7 @@ class SlipstreamSerpentTest extends BaseCardTest {
     void isSacrificedWhenOnlyOpponentControlsAnIsland() {
         harness.addToBattlefield(player2, new Island());
         harness.castFromHand(player1, new SlipstreamSerpent(), "{7}{U}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Slipstream Serpent");
         harness.assertInGraveyard(player1, "Slipstream Serpent");
@@ -68,8 +66,7 @@ class SlipstreamSerpentTest extends BaseCardTest {
         island.setFaceDown(2, 2, Set.of(CardType.CREATURE));
 
         harness.castFromHand(player1, new SlipstreamSerpent(), "{7}{U}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Slipstream Serpent");
         harness.assertInGraveyard(player1, "Slipstream Serpent");
@@ -118,5 +115,52 @@ class SlipstreamSerpentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(serpent.isFaceDown()).isFalse();
+    }
+
+    @Test
+    void faceDownSerpentSurvivesAndAttacksWithoutIslands() {
+        harness.setHand(player1, List.of(new SlipstreamSerpent()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+
+        Permanent serpent = findPermanent(player1, "Slipstream Serpent");
+        serpent.setSummoningSick(false);
+        harness.setLife(player2, 20);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(serpent)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player1, "Slipstream Serpent");
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void turningFaceUpWithoutAnIslandTriggersSacrifice() {
+        harness.setHand(player1, List.of(new SlipstreamSerpent()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+
+        Permanent serpent = findPermanent(player1, "Slipstream Serpent");
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(serpent));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Slipstream Serpent");
+        harness.assertInGraveyard(player1, "Slipstream Serpent");
+    }
+
+    @Test
+    void gainingAnIslandAfterTheTriggerFiresDoesNotPreventSacrifice() {
+        harness.castFromHand(player1, new SlipstreamSerpent(), "{7}{U}");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Slipstream Serpent");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addToBattlefield(player1, new Island());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Slipstream Serpent");
+        harness.assertInGraveyard(player1, "Slipstream Serpent");
     }
 }
