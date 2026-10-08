@@ -22,10 +22,9 @@ class VedalkenEntrancerTest extends BaseCardTest {
         addCreatureReady(player1, new VedalkenEntrancer());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
+        List<Card> originalDeck = gd.playerDecks.get(player2.getId());
+        harness.setLibrary(player2, originalDeck.subList(Math.max(0, originalDeck.size() - 5), originalDeck.size()));
         List<Card> deck = gd.playerDecks.get(player2.getId());
-        while (deck.size() > 5) {
-            deck.removeFirst();
-        }
         int deckSizeBefore = deck.size();
         Card first = deck.get(0);
         Card second = deck.get(1);
@@ -43,10 +42,9 @@ class VedalkenEntrancerTest extends BaseCardTest {
         addCreatureReady(player1, new VedalkenEntrancer());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
+        List<Card> originalDeck = gd.playerDecks.get(player1.getId());
+        harness.setLibrary(player1, originalDeck.subList(Math.max(0, originalDeck.size() - 5), originalDeck.size()));
         List<Card> deck = gd.playerDecks.get(player1.getId());
-        while (deck.size() > 5) {
-            deck.removeFirst();
-        }
         int deckSizeBefore = deck.size();
 
         harness.activateAbility(player1, 0, null, player1.getId());
@@ -62,10 +60,9 @@ class VedalkenEntrancerTest extends BaseCardTest {
         addCreatureReady(player1, new VedalkenEntrancer());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
+        List<Card> originalDeck = gd.playerDecks.get(player2.getId());
+        harness.setLibrary(player2, List.of(originalDeck.getLast()));
         List<Card> deck = gd.playerDecks.get(player2.getId());
-        while (deck.size() > 1) {
-            deck.removeFirst();
-        }
         Card last = deck.getFirst();
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -145,6 +142,28 @@ class VedalkenEntrancerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sick");
+    }
+
+    @Test
+    @DisplayName("The mill ability resolves after its source leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent entrancer = addCreatureReady(player1, new VedalkenEntrancer());
+        Card first = new VedalkenEntrancer();
+        Card second = new VedalkenEntrancer();
+        Card third = new VedalkenEntrancer();
+        harness.setLibrary(player2, List.of(first, second, third));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(first, second, third);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        gd.playerBattlefields.get(player1.getId()).remove(entrancer);
+        gd.playerGraveyards.get(player1.getId()).add(entrancer.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(third);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(first, second);
     }
 
 }
