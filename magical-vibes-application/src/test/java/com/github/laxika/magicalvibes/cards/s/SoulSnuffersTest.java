@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.DuskdaleWurm;
+import com.github.laxika.magicalvibes.cards.n.NipGwyllion;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SoulSnuffers.class, DuskdaleWurm.class, SpringjackPasture.class})
+@CardUsed({SoulSnuffers.class, DuskdaleWurm.class, SpringjackPasture.class, NipGwyllion.class})
 class SoulSnuffersTest extends BaseCardTest {
 
     @Test
@@ -60,6 +61,45 @@ class SoulSnuffersTest extends BaseCardTest {
         assertThat(pasture.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Creatures entering before the ETB resolves also receive a counter")
+    void etbUsesCreaturesPresentAtResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new SoulSnuffers(), "{2}{B}{B}");
+        harness.passBothPriorities();
+
+        Permanent snuffers = findSnuffers(player1);
+        assertThat(snuffers.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        Permanent lateCreature = harness.addToBattlefieldAndReturn(player2, new DuskdaleWurm());
+        harness.passBothPriorities();
+
+        assertThat(lateCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(snuffers.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The counters send one-toughness creatures on both sides to the graveyard")
+    void etbKillsOneToughnessCreaturesWithoutDealingDamage() {
+        harness.addToBattlefield(player1, new NipGwyllion());
+        harness.addToBattlefield(player2, new NipGwyllion());
+        int ownLife = gd.playerLifeTotals.get(player1.getId());
+        int opponentLife = gd.playerLifeTotals.get(player2.getId());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new SoulSnuffers(), "{2}{B}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Nip Gwyllion");
+        harness.assertNotOnBattlefield(player2, "Nip Gwyllion");
+        harness.assertInGraveyard(player1, "Nip Gwyllion");
+        harness.assertInGraveyard(player2, "Nip Gwyllion");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(ownLife);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLife);
+        harness.assertOnBattlefield(player1, "Soul Snuffers");
+    }
     private Permanent findSnuffers(Player player) {
         return findPermanent(player, "Soul Snuffers");
     }
