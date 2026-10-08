@@ -36,11 +36,7 @@ class WatchdogTest extends BaseCardTest {
         Permanent firstAttacker = addCreatureReady(player1, new HornedTurtle());
         Permanent secondAttacker = addCreatureReady(player1, new HornedTurtle());
 
-        firstAttacker.setAttacking(true);
-        firstAttacker.setAttackTarget(player2.getId());
-        secondAttacker.setAttacking(true);
-        secondAttacker.setAttackTarget(player2.getId());
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
 
         assertThat(gqs.getEffectivePower(gd, firstAttacker)).isEqualTo(0);
         assertThat(gqs.getEffectivePower(gd, secondAttacker)).isEqualTo(0);
@@ -61,16 +57,15 @@ class WatchdogTest extends BaseCardTest {
     @Test
     @DisplayName("Creatures attacking a different player are unaffected")
     void doesNotShrinkCreaturesAttackingSomeoneElse() {
-        addCreatureReady(player2, new Watchdog());
+        addCreatureReady(player1, new Watchdog());
         Permanent attacker = addCreatureReady(player1, new HornedTurtle());
-        attacker.setAttacking(true);
-        attacker.setAttackTarget(player1.getId());
+        declareAttackersAndPrepareBlockers(List.of(1));
 
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("Declaring no blockers is illegal — it blocks each combat if able")
+    @DisplayName("Declaring no blockers is illegal because Watchdog blocks each combat if able")
     void mustBlockEachCombat() {
         addCreatureReady(player2, new Watchdog());
         Permanent attacker = addCreatureReady(player1, new HornedTurtle());
@@ -119,9 +114,47 @@ class WatchdogTest extends BaseCardTest {
                 .doesNotThrowAnyException();
     }
 
+    @Test
+    @DisplayName("The reduction updates when Watchdog taps and untaps during combat")
+    void reductionTracksTapStateDuringCombat() {
+        Permanent watchdog = addCreatureReady(player2, new Watchdog());
+        Permanent attacker = addCreatureReady(player1, new WindDrake());
+        beginCombat(attacker);
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(1);
+        watchdog.tap();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        watchdog.untap();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Untapped Watchdogs stack their reductions independently")
+    void multipleWatchdogsStack() {
+        Permanent first = addCreatureReady(player2, new Watchdog());
+        Permanent second = addCreatureReady(player2, new Watchdog());
+        Permanent attacker = addCreatureReady(player1, new WindDrake());
+        beginCombat(attacker);
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isZero();
+        first.tap();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(1);
+        gd.playerBattlefields.get(player2.getId()).remove(second);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Nonattacking opposing creatures are unaffected")
+    void doesNotShrinkNonattackers() {
+        addCreatureReady(player2, new Watchdog());
+        Permanent attacker = addCreatureReady(player1, new HornedTurtle());
+        Permanent nonattacker = addCreatureReady(player1, new HornedTurtle());
+        beginCombat(attacker);
+
+        assertThat(gqs.getEffectivePower(gd, nonattacker)).isEqualTo(1);
+    }
+
     private void beginCombat(Permanent attacker) {
-        attacker.setAttacking(true);
-        attacker.setAttackTarget(player2.getId());
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
     }
 }
