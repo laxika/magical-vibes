@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WallOfWood;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -68,10 +69,69 @@ class SmashToDustTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void artifactModeCanDestroyOwnArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+
+        cast(0, artifact.getId());
+
+        harness.assertNotOnBattlefield(player1, "Fountain of Youth");
+        harness.assertInGraveyard(player1, "Fountain of Youth");
+    }
+
+    @Test
+    void defenderModeCanDestroyOwnDefender() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfWood());
+
+        cast(1, wall.getId());
+
+        harness.assertNotOnBattlefield(player1, "Wall of Wood");
+        harness.assertInGraveyard(player1, "Wall of Wood");
+    }
+
+    @Test
+    void damageModeKillsCreatureWithPreviouslyMarkedDamage() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.setMarkedDamage(1);
+        harness.addToBattlefield(player2, new FountainOfYouth());
+
+        cast(2, null);
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void damageModeResolvesWithoutOpposingCreaturesOrTargets() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        cast(2, null);
+
+        assertThat(ownCreature.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Smash to Dust");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void defenderModeDoesNotDestroyTargetThatLosesDefenderBeforeResolution() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfWood());
+        prepareSpell();
+        harness.castSorcery(player1, 0, 1, wall.getId());
+
+        wall.getRemovedKeywords().add(Keyword.DEFENDER);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Wall of Wood");
+        harness.assertInGraveyard(player1, "Smash to Dust");
+    }
+
     private void cast(int modeIndex, java.util.UUID targetId) {
         prepareSpell();
-        harness.castSorcery(player1, 0, modeIndex, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, modeIndex, targetId);
     }
 
     private void prepareSpell() {
