@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.e.ElvishLyrist;
 import com.github.laxika.magicalvibes.cards.w.WornPowerstone;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -98,5 +99,63 @@ class SoulSculptorTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, powerstone.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Creature subtypes disappear while the target is only an enchantment")
+    void removesCreatureSubtypesUntilCreatureSpellCast() {
+        addCreatureReady(player1, new SoulSculptor());
+        Permanent lyrist = addCreatureReady(player1, new ElvishLyrist());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, lyrist.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isEnchantment(gd, lyrist)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, lyrist, CardSubtype.ELF)).isFalse();
+
+        harness.castFromHand(player1, new ArgothianSwine(), "{3}{G}");
+
+        assertThat(gqs.isCreature(gd, lyrist)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, lyrist, CardSubtype.ELF)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Soul Sculptor can transform itself and regains its ability on a creature cast")
+    void canTransformItselfAndRegainItsAbility() {
+        Permanent sculptor = addCreatureReady(player1, new SoulSculptor());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, sculptor.getId());
+        harness.passBothPriorities();
+
+        assertThat(sculptor.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, sculptor)).isFalse();
+        assertThat(gqs.isEnchantment(gd, sculptor)).isTrue();
+        assertThat(gqs.computeStaticBonus(gd, sculptor).losesAllAbilities()).isTrue();
+
+        harness.castFromHand(player1, new ArgothianSwine(), "{3}{G}");
+
+        assertThat(sculptor.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, sculptor)).isTrue();
+        assertThat(gqs.isEnchantment(gd, sculptor)).isFalse();
+        assertThat(gqs.computeStaticBonus(gd, sculptor).losesAllAbilities()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature entering without being cast does not end the effect")
+    void creatureEnteringWithoutCastDoesNotEndEffect() {
+        addCreatureReady(player1, new SoulSculptor());
+        Permanent lyrist = addCreatureReady(player2, new ElvishLyrist());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, lyrist.getId());
+        harness.passBothPriorities();
+
+        harness.addToBattlefieldAndReturn(player2, new ArgothianSwine());
+
+        assertThat(gqs.isCreature(gd, lyrist)).isFalse();
+        assertThat(gqs.isEnchantment(gd, lyrist)).isTrue();
+        assertThat(gqs.computeStaticBonus(gd, lyrist).losesAllAbilities()).isTrue();
     }
 }
