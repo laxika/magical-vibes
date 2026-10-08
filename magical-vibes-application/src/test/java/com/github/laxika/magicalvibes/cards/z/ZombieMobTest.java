@@ -84,6 +84,59 @@ class ZombieMobTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Zombie Mob");
     }
 
+    @Test
+    @DisplayName("Counters are present before the exile trigger resolves")
+    void countersAreAppliedAsItEnters() {
+        harness.setGraveyard(player1, List.of(new SabertoothCobra()));
+        harness.castFromHand(player1, new ZombieMob(), "{2}{B}{B}");
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Zombie Mob")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Sabertooth Cobra");
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        harness.assertNotInGraveyard(player1, "Sabertooth Cobra");
+    }
+
+    @Test
+    @DisplayName("Exile trigger still exiles Zombie Mob after it dies with no counters")
+    void exileTriggerSurvivesItsSourceDying() {
+        harness.setGraveyard(player1, List.of(new DarkBanishing()));
+
+        castMob();
+
+        harness.assertNotOnBattlefield(player1, "Zombie Mob");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(c -> c.getName())
+                .containsExactly("Dark Banishing");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(c -> c.getName())
+                .containsExactly("Zombie Mob");
+    }
+
+    @Test
+    @DisplayName("Returning a creature in response to the exile trigger does not change entry counters")
+    void graveyardChangesAfterEntryDoNotChangeCounters() {
+        harness.setGraveyard(player1, List.of(new SabertoothCobra()));
+        harness.castFromHand(player1, new ZombieMob(), "{2}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new ShallowGrave(), "{1}{B}");
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Sabertooth Cobra");
+        assertThat(findPermanent(player1, "Zombie Mob")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(c -> c.getName())
+                .containsExactly("Shallow Grave");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
     private void castMob() {
         harness.castFromHand(player1, new ZombieMob(), "{2}{B}{B}");
         resolveAllTriggers();
