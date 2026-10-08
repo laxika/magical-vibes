@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.cards.f.Frostling;
 import com.github.laxika.magicalvibes.cards.f.FrostOgre;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.s.Scour;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfStone;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,8 +22,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WardOfPiety.class, Frostling.class, FrostOgre.class, TorrentOfStone.class,
-        JaceBeleren.class, AwakenedSkyclave.class, InvasionOfZendikar.class})
+@CardUsed({WardOfPiety.class, Frostling.class, FrostOgre.class, TorrentOfStone.class})
 class WardOfPietyTest extends BaseCardTest {
 
     @Test
@@ -98,8 +99,7 @@ class WardOfPietyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.setHand(player1, List.of(new TorrentOfStone()));
-        harness.castInstant(player1, 0, enchanted.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, enchanted.getId());
 
         assertThat(destination.getMarkedDamage()).isEqualTo(1);
         assertThat(enchanted.getMarkedDamage()).isEqualTo(3);
@@ -107,6 +107,7 @@ class WardOfPietyTest extends BaseCardTest {
 
     @Test
     @DisplayName("Damage can be redirected to a planeswalker")
+    @CardUsed(JaceBeleren.class)
     void redirectsDamageToPlaneswalker() {
         Permanent enchanted = addCreatureReady(player1, new FrostOgre());
         Permanent aura = attachWard(player1, enchanted);
@@ -127,6 +128,7 @@ class WardOfPietyTest extends BaseCardTest {
 
     @Test
     @DisplayName("Damage can be redirected to a battle")
+    @CardUsed({InvasionOfZendikar.class, AwakenedSkyclave.class})
     void redirectsDamageToBattle() {
         Permanent enchanted = addCreatureReady(player1, new FrostOgre());
         Permanent aura = attachWard(player1, enchanted);
@@ -187,6 +189,96 @@ class WardOfPietyTest extends BaseCardTest {
         assertThat(destination.getMarkedDamage()).isZero();
     }
 
+    @Test
+    @CardUsed(Scour.class)
+    @DisplayName("The ability uses the Aura's last attachment if it leaves before resolution")
+    void redirectsAfterAuraLeavesBeforeResolution() {
+        Permanent enchanted = addCreatureReady(player1, new FrostOgre());
+        Permanent aura = attachWard(player1, enchanted);
+        Permanent frostling = addCreatureReady(player1, new Frostling());
+        Permanent destination = addCreatureReady(player2, new FrostOgre());
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, indexOf(player1, aura), null, destination.getId());
+        harness.setHand(player2, List.of(new Scour()));
+        harness.addMana(player2, ManaColor.WHITE, 4);
+        harness.castAndResolveInstant(player2, 0, aura.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, indexOf(player1, frostling), null, enchanted.getId());
+        harness.passBothPriorities();
+
+        assertThat(enchanted.getMarkedDamage()).isZero();
+        assertThat(destination.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(Scour.class)
+    @DisplayName("A resolved shield persists after the Aura leaves")
+    void resolvedShieldPersistsAfterAuraLeaves() {
+        Permanent enchanted = addCreatureReady(player1, new FrostOgre());
+        Permanent aura = attachWard(player1, enchanted);
+        Permanent frostling = addCreatureReady(player1, new Frostling());
+        Permanent destination = addCreatureReady(player2, new FrostOgre());
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, indexOf(player1, aura), null, destination.getId());
+        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new Scour()));
+        harness.addMana(player2, ManaColor.WHITE, 4);
+        harness.castAndResolveInstant(player2, 0, aura.getId());
+
+        harness.activateAbility(player1, indexOf(player1, frostling), null, enchanted.getId());
+        harness.passBothPriorities();
+
+        assertThat(enchanted.getMarkedDamage()).isZero();
+        assertThat(destination.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The creature's controller chooses between competing redirect shields")
+    void competingShieldsRequireControllerChoice() {
+        Permanent enchanted = addCreatureReady(player2, new FrostOgre());
+        Permanent aura = attachWard(player1, enchanted);
+        Permanent frostling = addCreatureReady(player2, new Frostling());
+        Permanent firstDestination = addCreatureReady(player1, new FrostOgre());
+        Permanent secondDestination = addCreatureReady(player1, new FrostOgre());
+
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.activateAbility(player1, indexOf(player1, aura), null, firstDestination.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, aura), null, secondDestination.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player2, indexOf(player2, frostling), null, enchanted.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(enchanted.getMarkedDamage()).isZero();
+        assertThat(firstDestination.getMarkedDamage()).isZero();
+        assertThat(secondDestination.getMarkedDamage()).isZero();
+    }
+    @Test
+    @DisplayName("Combat damage to the enchanted creature is redirected")
+    void redirectsCombatDamage() {
+        Permanent enchanted = addCreatureReady(player1, new FrostOgre());
+        Permanent aura = attachWard(player1, enchanted);
+        Permanent attacker = addCreatureReady(player2, new Frostling());
+        Permanent destination = addCreatureReady(player1, new FrostOgre());
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, indexOf(player1, aura), null, destination.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(player2, List.of(indexOf(player2, attacker)));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                indexOf(player1, enchanted), indexOf(player2, attacker))));
+        resolveCombat(player2);
+
+        assertThat(enchanted.getMarkedDamage()).isZero();
+        assertThat(destination.getMarkedDamage()).isEqualTo(1);
+    }
     private Permanent attachWard(Player player, Permanent enchanted) {
         Permanent aura = harness.addToBattlefieldAndReturn(player, new WardOfPiety());
         aura.setAttachedTo(enchanted.getId());
