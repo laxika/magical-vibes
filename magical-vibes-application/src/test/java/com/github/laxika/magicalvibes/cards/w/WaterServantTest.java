@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WaterServant.class})
 class WaterServantTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Water Servant puts it on the stack")
@@ -46,12 +45,10 @@ class WaterServantTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Water Servant");
     }
 
-    // ===== Activate +1/-1 ability =====
-
     @Test
     @DisplayName("Activating +1/-1 ability puts BoostSelf on the stack")
     void activatingFirstAbilityPutsOnStack() {
-        Permanent servantPerm = addWaterServantReady(player1);
+        Permanent servantPerm = addCreatureReady(player1, new WaterServant());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -67,7 +64,7 @@ class WaterServantTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving +1/-1 ability gives +1/-1 to Water Servant")
     void resolvingFirstAbilityBoosts() {
-        addWaterServantReady(player1);
+        addCreatureReady(player1, new WaterServant());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -80,12 +77,10 @@ class WaterServantTest extends BaseCardTest {
         assertThat(servant.getToughnessModifier()).isEqualTo(-1);
     }
 
-    // ===== Activate -1/+1 ability =====
-
     @Test
     @DisplayName("Resolving -1/+1 ability gives -1/+1 to Water Servant")
     void resolvingSecondAbilityBoosts() {
-        addWaterServantReady(player1);
+        addCreatureReady(player1, new WaterServant());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -98,12 +93,10 @@ class WaterServantTest extends BaseCardTest {
         assertThat(servant.getToughnessModifier()).isEqualTo(1);
     }
 
-    // ===== Multiple activations =====
-
     @Test
     @DisplayName("Can activate both abilities to shift power/toughness")
     void canActivateBothAbilities() {
-        addWaterServantReady(player1);
+        addCreatureReady(player1, new WaterServant());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         // Activate +1/-1
@@ -124,7 +117,7 @@ class WaterServantTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate +1/-1 multiple times to become aggressive")
     void canActivateFirstAbilityMultipleTimes() {
-        addWaterServantReady(player1);
+        addCreatureReady(player1, new WaterServant());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbility(player1, 0, null, null);
@@ -143,7 +136,7 @@ class WaterServantTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate -1/+1 multiple times to become defensive")
     void canActivateSecondAbilityMultipleTimes() {
-        addWaterServantReady(player1);
+        addCreatureReady(player1, new WaterServant());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -159,12 +152,10 @@ class WaterServantTest extends BaseCardTest {
         assertThat(servant.getEffectiveToughness()).isEqualTo(7);
     }
 
-    // ===== Boost resets =====
-
     @Test
     @DisplayName("Boost resets at end of turn cleanup")
     void boostResetsAtEndOfTurn() {
-        addWaterServantReady(player1);
+        addCreatureReady(player1, new WaterServant());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -187,25 +178,72 @@ class WaterServantTest extends BaseCardTest {
         assertThat(servant.getEffectiveToughness()).isEqualTo(4);
     }
 
-    // ===== Mana checks =====
-
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
-        addWaterServantReady(player1);
+        addCreatureReady(player1, new WaterServant());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Both abilities can be activated while tapped and summoning sick")
+    void abilitiesWorkWhileTappedAndSummoningSick() {
+        Permanent servant = harness.addToBattlefieldAndReturn(player1, new WaterServant());
+        servant.setSummoningSick(true);
+        servant.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
-    private Permanent addWaterServantReady(Player player) {
-        WaterServant card = new WaterServant();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(servant.getEffectivePower()).isEqualTo(4);
+        assertThat(servant.getEffectiveToughness()).isEqualTo(3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(servant.getEffectivePower()).isEqualTo(3);
+        assertThat(servant.getEffectiveToughness()).isEqualTo(4);
+        assertThat(servant.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated defensive activations allow negative power and expire at cleanup")
+    void negativePowerAndDefensiveBoostExpire() {
+        Permanent servant = addCreatureReady(player1, new WaterServant());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        for (int i = 0; i < 4; i++) {
+            harness.activateAbility(player1, 0, 1, null, null);
+            harness.passBothPriorities();
+        }
+
+        assertThat(servant.getEffectivePower()).isEqualTo(-1);
+        assertThat(servant.getEffectiveToughness()).isEqualTo(8);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(servant.getEffectivePower()).isEqualTo(3);
+        assertThat(servant.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Fourth aggressive activation puts Water Servant into the graveyard")
+    void zeroToughnessCausesDeath() {
+        addCreatureReady(player1, new WaterServant());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        for (int i = 0; i < 4; i++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .hasSize(1)
+                .allMatch(card -> card instanceof WaterServant);
     }
 }
