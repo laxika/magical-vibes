@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JayaFieryNegotiator;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({YotiaDeclaresWar.class, Ornithopter.class, Millstone.class, GrizzlyBears.class})
+@CardUsed({YotiaDeclaresWar.class, Ornithopter.class, Millstone.class, GrizzlyBears.class, JayaFieryNegotiator.class})
 class YotiaDeclaresWarTest extends BaseCardTest {
 
     @Test
@@ -113,6 +114,140 @@ class YotiaDeclaresWarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, artifact)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Read ahead starts at chapter III without triggering earlier chapters")
+    void readAheadStartsAtChapterThree() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        harness.castFromHand(player1, new YotiaDeclaresWar(), "{1}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "3");
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, artifact)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, artifact)).isEqualTo(4);
+        assertThat(artifact.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+        harness.assertInGraveyard(player1, "Yotia Declares War");
+        harness.assertNotOnBattlefield(player1, "Yotia Declares War");
+    }
+
+    @Test
+    @DisplayName("Tapping zero artifacts still triggers chapter II's targeted ability")
+    void chapterIITappingZeroStillTriggers() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addSagaWithLore(1);
+
+        triggerChapter();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(artifact.isTapped()).isFalse();
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Chapter II still triggers its targeted ability without any untapped artifacts")
+    void chapterIIWithoutUntappedArtifactsStillTriggers() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        artifact.tap();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addSagaWithLore(1);
+
+        triggerChapter();
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Chapter II offers only untapped artifacts controlled by its controller")
+    void chapterIIExcludesTappedForeignAndNonartifactPermanents() {
+        Permanent eligible = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        Permanent tapped = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        tapped.tap();
+        harness.addToBattlefield(player2, new Millstone());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        addSagaWithLore(1);
+
+        triggerChapter();
+        harness.passBothPriorities();
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactly(eligible.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(eligible.getId()));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(eligible.isTapped()).isTrue();
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Chapter III changes an artifact creature's base stats and preserves flying")
+    void chapterIIIAnimatesExistingArtifactCreature() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        artifact.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        addSagaWithLore(2);
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, artifact)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, artifact)).isEqualTo(5);
+        assertThat(artifact.hasKeyword(Keyword.FLYING)).isTrue();
+        harness.assertInGraveyard(player1, "Yotia Declares War");
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, artifact)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, artifact)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, artifact)).isEqualTo(3);
+        assertThat(artifact.hasKeyword(Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Chapter II can damage a planeswalker and allows a response to its reflexive ability")
+    void chapterIIDamagesPlaneswalker() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        Permanent jaya = harness.enterBattlefieldAndReturn(player2, new JayaFieryNegotiator());
+        addSagaWithLore(1);
+
+        triggerChapter();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
+        harness.handlePermanentChosen(player1, jaya.getId());
+
+        assertThat(jaya.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        harness.passBothPriorities();
+
+        assertThat(jaya.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(jaya);
     }
 
     private Permanent addSagaWithLore(int loreCounters) {
