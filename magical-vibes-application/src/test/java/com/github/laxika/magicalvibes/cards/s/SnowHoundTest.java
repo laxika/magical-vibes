@@ -16,6 +16,55 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SnowHoundTest extends BaseCardTest {
 
     @Test
+    @DisplayName("An illegal target prevents both returns")
+    void doesNotReturnSelfWhenTargetLeavesBattlefield() {
+        Permanent hound = addCreatureReady(player1, new SnowHound());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.getPermanentRemovalService().removePermanentToHand(gd, bears);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Snow Hound");
+        harness.assertNotInHand(player1, "Snow Hound");
+        assertThat(hound.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The target still returns if Snow Hound leaves before resolution")
+    void returnsTargetWhenSourceLeavesBattlefield() {
+        Permanent hound = addCreatureReady(player1, new SnowHound());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.getPermanentRemovalService().removePermanentToHand(gd, hound);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+        harness.assertInHand(player1, "Balduvian Bears");
+        assertThat(gd.playerHands.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Snow Hound"))
+                .hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate the tap ability while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent hound = addCreatureReady(player1, new SnowHound());
+        hound.setSummoningSick(true);
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+
+    @Test
     @DisplayName("Ability returns Snow Hound and target green creature you control to hand")
     void returnsSelfAndGreenCreature() {
         Permanent hound = addCreatureReady(player1, new SnowHound());
