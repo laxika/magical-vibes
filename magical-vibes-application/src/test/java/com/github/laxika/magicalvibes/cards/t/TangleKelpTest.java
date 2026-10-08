@@ -166,6 +166,37 @@ class TangleKelpTest extends BaseCardTest {
         assertThat(creature.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Tangle Kelp can enchant and tap its controller's own creature")
+    void tapsOwnCreatureOnEnter() {
+        Permanent creature = addCreatureReady(player1, new Squire());
+        harness.setHand(player1, List.of(new TangleKelp()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Tangle Kelp").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Only the enchanted creature that actually attacked stays tapped")
+    void distinguishesAttackingAndNonattackingCreatures() {
+        Permanent attacker = addCreatureReady(player2, new Squire());
+        Permanent idleCreature = addCreatureReady(player2, new Squire());
+        attachTangleKelp(attacker);
+        attachTangleKelp(idleCreature);
+
+        declareAttackers(player2, List.of(0));
+        idleCreature.tap();
+        advanceToNextTurn(player2);
+        advanceToNextTurn(player1);
+
+        assertThat(attacker.isTapped()).isTrue();
+        assertThat(idleCreature.isTapped()).isFalse();
+    }
+
     private void attachTangleKelp(Permanent creature) {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new TangleKelp());
         aura.setAttachedTo(creature.getId());
