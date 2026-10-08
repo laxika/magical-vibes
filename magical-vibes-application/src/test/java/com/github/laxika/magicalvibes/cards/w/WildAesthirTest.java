@@ -92,8 +92,7 @@ class WildAesthirTest extends BaseCardTest {
         addCreatureReady(player1, new WildAesthir());
         addCreatureReady(player2, new ElvishRanger());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -106,8 +105,7 @@ class WildAesthirTest extends BaseCardTest {
         Permanent aesthir = addCreatureReady(player1, new WildAesthir());
         Permanent carrier = addCreatureReady(player2, new CarrierPigeons());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -137,5 +135,55 @@ class WildAesthirTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, aesthir)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The activation limit applies before the first activation resolves")
+    void cannotActivateAgainWhileAbilityIsOnStack() {
+        Permanent aesthir = addCreatureReady(player1, new WildAesthir());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, aesthir)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Each Wild Aesthir has its own activation limit")
+    void separateCopiesCanEachActivate() {
+        Permanent first = addCreatureReady(player1, new WildAesthir());
+        Permanent second = addCreatureReady(player1, new WildAesthir());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Wild Aesthir can activate its pump ability")
+    void tappedSummoningSickCreatureCanActivate() {
+        Permanent aesthir = harness.addToBattlefieldAndReturn(player1, new WildAesthir());
+        aesthir.setSummoningSick(true);
+        aesthir.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, aesthir)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, aesthir)).isEqualTo(1);
+        assertThat(aesthir.isTapped()).isTrue();
     }
 }
