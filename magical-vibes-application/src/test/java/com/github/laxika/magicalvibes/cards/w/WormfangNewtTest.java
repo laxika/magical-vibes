@@ -14,6 +14,45 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class WormfangNewtTest extends BaseCardTest {
 
     @Test
+    void eachNewtReturnsOnlyItsOwnLandWhenItLeaves() {
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new KrosanVerge());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new KrosanVerge());
+
+        harness.castFromHand(player1, new WormfangNewt(), "{1}{U}");
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, firstLand.getId());
+        Permanent firstNewt = findPermanent(player1, "Wormfang Newt");
+
+        harness.castFromHand(player1, new WormfangNewt(), "{1}{U}");
+        resolveAllTriggers();
+        Permanent secondNewt = findPermanents(player1, "Wormfang Newt").stream()
+                .filter(permanent -> !permanent.getId().equals(firstNewt.getId()))
+                .findFirst().orElseThrow();
+        assertThat(gd.exiledCards).hasSize(2);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, firstNewt));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(firstLand.getCard().getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(secondLand.getCard().getId()));
+        assertThat(gd.getCardsExiledByPermanent(secondNewt.getId()))
+                .containsExactly(secondLand.getCard());
+        harness.assertInHand(player1, "Wormfang Newt");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToExile(gd, secondNewt));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(secondLand.getCard().getId()));
+        assertThat(gd.exiledCards)
+                .noneMatch(entry -> entry.card().getId().equals(firstLand.getCard().getId())
+                        || entry.card().getId().equals(secondLand.getCard().getId()));
+    }
+
+    @Test
     void exilesOneLandYouControlAndReturnsItWhenNewtLeaves() {
         Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new KrosanVerge());
         Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new KrosanVerge());
