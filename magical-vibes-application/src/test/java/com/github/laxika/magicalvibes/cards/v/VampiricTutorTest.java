@@ -108,6 +108,25 @@ class VampiricTutorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A single-card library keeps its card on top and only the caster loses life")
+    void singleCardLibraryKeepsCardAndOnlyCasterLosesLife() {
+        Card onlyCard = new JujuBubble();
+        harness.setLibrary(player1, List.of(onlyCard));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        cast();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Vampiric Tutor");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void cast() {
         harness.castFromHand(player1, new VampiricTutor(), "{B}");
     }
