@@ -6,9 +6,10 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.OraclesAttendants;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.ShallowGrave;
+import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -24,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Whippoorwill.class, DrudgeSkeletons.class, Shock.class, OraclesAttendants.class,
         DeathcurseOgre.class,
-        GrizzlyBears.class, FountainOfYouth.class})
+        GrizzlyBears.class, FountainOfYouth.class, TrainedArmodon.class, ShallowGrave.class})
 class WhippoorwillTest extends BaseCardTest {
 
     @Test
@@ -44,8 +45,7 @@ class WhippoorwillTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(card -> card.getName().equals("Drudge Skeletons"));
@@ -67,8 +67,7 @@ class WhippoorwillTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
         harness.assertLife(player1, 17);
@@ -79,9 +78,9 @@ class WhippoorwillTest extends BaseCardTest {
     @DisplayName("The marked creature still receives combat damage that would be redirected")
     void damageCannotBeRedirectedAwayFromMarkedCreature() {
         Permanent attendants = addCreatureReady(player1, new OraclesAttendants());
-        Permanent target = addReadyStats(player1, 3, 3);
+        Permanent target = addCreatureReady(player1, new TrainedArmodon());
         addCreatureReady(player1, new Whippoorwill());
-        Permanent attacker = addReadyStats(player2, 2, 2);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -91,11 +90,8 @@ class WhippoorwillTest extends BaseCardTest {
         harness.activateAbility(player1, 2, null, target.getId());
         harness.passBothPriorities();
 
-        harness.forceActivePlayer(player2);
         attacker.setAttacking(true);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
@@ -119,7 +115,12 @@ class WhippoorwillTest extends BaseCardTest {
 
         assertThat(target.isDamageCantBePreventedOrRedirectedThisTurn()).isFalse();
         assertThat(target.isCantRegenerateThisTurn()).isFalse();
-        assertThat(target.isExileInsteadOfDieThisTurn()).isFalse();
+        target.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(target.getCard());
     }
 
     @Test
@@ -135,10 +136,52 @@ class WhippoorwillTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private Permanent addReadyStats(Player player, int power, int toughness) {
-        GrizzlyBears card = new GrizzlyBears();
-        card.setPower(power);
-        card.setToughness(toughness);
-        return addCreatureReady(player, card);
+    @Test
+    void originalDeathTriggerDoesNotExileCreatureAfterItReturnsAndDiesAgain() {
+        addCreatureReady(player1, new Whippoorwill());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+
+        harness.castFromHand(player2, new ShallowGrave(), "{1}{B}");
+        harness.passBothPriorities();
+        Permanent returned = findPermanent(player2, "Grizzly Bears");
+        assertThat(returned.isCantRegenerateThisTurn()).isFalse();
+        assertThat(returned.isDamageCantBePreventedOrRedirectedThisTurn()).isFalse();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, returned.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(target.getCard());
+    }
+
+    @Test
+    void delayedExileStillWorksAfterWhippoorwillDies() {
+        Permanent source = addCreatureReady(player1, new Whippoorwill());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        source.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        target.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        resolveAllTriggers();
+
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
     }
 }
