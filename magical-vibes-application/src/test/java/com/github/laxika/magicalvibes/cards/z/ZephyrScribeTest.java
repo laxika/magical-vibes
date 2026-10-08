@@ -20,8 +20,7 @@ class ZephyrScribeTest extends BaseCardTest {
     void activatingTheAbilityDrawsThenDiscards() {
         Permanent scribe = addReadyScribe();
         harness.setHand(player1, List.of(new Shock()));
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new Forest());
+        harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -41,7 +40,7 @@ class ZephyrScribeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        resolveStack();
+        resolveAllTriggers();
 
         assertThat(scribe.isTapped()).isFalse();
     }
@@ -54,15 +53,83 @@ class ZephyrScribeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
-        resolveStack();
+        resolveAllTriggers();
 
         assertThat(scribe.isTapped()).isTrue();
     }
 
+    @Test
+    void canActivateWithAnEmptyHandAndDiscardTheDrawnCard() {
+        Permanent scribe = addReadyScribe();
+        Forest drawn = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+        assertThat(scribe.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(drawn);
+    }
+
+    @Test
+    void canDiscardTheCardJustDrawnInsteadOfTheOriginalHandCard() {
+        addReadyScribe();
+        Shock original = new Shock();
+        Forest drawn = new Forest();
+        harness.setHand(player1, List.of(original));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(original);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(drawn);
+    }
+
+    @Test
+    void opponentsNoncreatureSpellDoesNotUntapZephyrScribe() {
+        Permanent scribe = addTappedScribe();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(scribe.isTapped()).isTrue();
+    }
+
+    @Test
+    void untapTriggerResolvesBeforeTheNoncreatureSpell() {
+        Permanent scribe = addTappedScribe();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castInstant(player1, 0, player2.getId());
+        assertThat(scribe.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(scribe.isTapped()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
     private Permanent addReadyScribe() {
-        Permanent scribe = harness.addToBattlefieldAndReturn(player1, new ZephyrScribe());
-        scribe.setSummoningSick(false);
-        return scribe;
+        return addCreatureReady(player1, new ZephyrScribe());
     }
 
     private Permanent addTappedScribe() {
@@ -71,9 +138,4 @@ class ZephyrScribeTest extends BaseCardTest {
         return scribe;
     }
 
-    private void resolveStack() {
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
-    }
 }
