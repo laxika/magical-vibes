@@ -61,8 +61,8 @@ class VampiricLinkTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player1, new ProdigalPyromancer());
         attachVampiricLink(attacker);
 
-        declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2,
+                List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player1.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player2.getId()).indexOf(attacker))));
@@ -73,6 +73,37 @@ class VampiricLinkTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         harness.assertNotOnBattlefield(player1, "Prodigal Pyromancer");
         harness.assertNotOnBattlefield(player2, "Prodigal Pyromancer");
+    }
+
+    @Test
+    @DisplayName("The life gain trigger survives lethal noncombat damage to the enchanted creature itself")
+    void gainsLifeFromLethalNoncombatDamageToItself() {
+        harness.setLife(player1, 10);
+        Permanent creature = addCreatureReady(player2, new ProdigalPyromancer());
+        attachVampiricLink(creature);
+
+        harness.activateAbility(player2, 0, null, creature.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 11);
+        harness.assertInGraveyard(player2, "Prodigal Pyromancer");
+        harness.assertInGraveyard(player1, "Vampiric Link");
+    }
+
+    @Test
+    @DisplayName("Each attached Vampiric Link gains life independently")
+    void multipleLinksEachTrigger() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        Permanent creature = addCreatureReady(player2, new ProdigalPyromancer());
+        attachVampiricLink(creature);
+        attachVampiricLink(creature);
+
+        harness.activateAbility(player2, 0, null, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 12);
+        harness.assertLife(player2, 19);
     }
 
     private void attachVampiricLink(Permanent creature) {
