@@ -2,14 +2,11 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GoblinBrawler;
 import com.github.laxika.magicalvibes.cards.s.SylvokExplorer;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -20,10 +17,7 @@ class VulshokSorcererTest extends BaseCardTest {
     @Test
     @DisplayName("Haste allows activating the tap ability the turn it enters")
     void hasteAllowsActivatingTheTurnItEnters() {
-        harness.setHand(player1, List.of(new VulshokSorcerer()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VulshokSorcerer(), "{1}{R}{R}");
         harness.passBothPriorities();
         harness.setLife(player2, 20);
 
@@ -96,5 +90,51 @@ class VulshokSorcererTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("Can deal damage to its controller")
+    void canTargetItsController() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new VulshokSorcerer());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Can target itself and dies from its own damage")
+    void canTargetItself() {
+        Permanent sorcerer = harness.addToBattlefieldAndReturn(player1, new VulshokSorcerer());
+
+        harness.activateAbility(player1, 0, null, sorcerer.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Vulshok Sorcerer");
+        harness.assertInGraveyard(player1, "Vulshok Sorcerer");
+    }
+
+    @Test
+    @DisplayName("Ability resolves even if the Sorcerer dies in response")
+    void abilityResolvesAfterSourceDies() {
+        harness.setLife(player2, 20);
+        Permanent sorcerer = harness.addToBattlefieldAndReturn(player1, new VulshokSorcerer());
+        harness.addToBattlefield(player2, new VulshokSorcerer());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, null, sorcerer.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Vulshok Sorcerer");
+        harness.assertInGraveyard(player1, "Vulshok Sorcerer");
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.stack).isEmpty();
     }
 }
