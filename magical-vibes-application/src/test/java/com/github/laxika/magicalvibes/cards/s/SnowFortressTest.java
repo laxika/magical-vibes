@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -105,6 +106,60 @@ class SnowFortressTest extends BaseCardTest {
         assertThat(attacker.getMarkedDamage()).isZero();
     }
 
+    @Test
+    @DisplayName("Repeated pumps stack and expire at end of turn even while tapped and summoning sick")
+    void repeatedPumpsExpire() {
+        Permanent fortress = harness.addToBattlefieldAndReturn(player1, new SnowFortress());
+        fortress.setTapped(true);
+        fortress.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        for (int abilityIndex : List.of(0, 0, 1, 1)) {
+            harness.activateAbility(player1, 0, abilityIndex, null, null);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gqs.getEffectivePower(gd, fortress)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, fortress)).isEqualTo(6);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, fortress)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, fortress)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Damage ability resolves after Snow Fortress dies")
+    void damagesAttackerAfterSourceDies() {
+        Permanent fortress = addCreatureReady(player1, new SnowFortress());
+        Permanent attacker = addAttacker(player2, player1, new BalduvianBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 2, null, attacker.getId());
+        fortress.setMarkedDamage(4);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Snow Fortress");
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Repeated damage activations can kill an attacker without tapping the source")
+    void repeatedDamageKillsAttacker() {
+        Permanent fortress = addCreatureReady(player1, new SnowFortress());
+        Permanent attacker = addAttacker(player2, player1, new BalduvianBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, 2, null, attacker.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 2, null, attacker.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Balduvian Bears");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+        assertThat(fortress.isTapped()).isFalse();
+    }
     private Permanent addAttacker(Player controller, Player defender, Card card) {
         Permanent perm = addCreatureReady(controller, card);
         perm.setAttacking(true);
