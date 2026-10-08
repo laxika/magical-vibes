@@ -7,16 +7,20 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.k.KarnScionOfUrza;
+import com.github.laxika.magicalvibes.cards.t.TheAntiquitiesWar;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({UrzasTome.class, GrizzlyBears.class, Millstone.class, Shock.class,
+        KarnScionOfUrza.class, TheAntiquitiesWar.class})
 class UrzasTomeTest extends BaseCardTest {
-
-    // ===== No historic card in graveyard — must discard =====
 
     @Test
     @DisplayName("Without historic card in graveyard, draws then must discard")
@@ -24,7 +28,7 @@ class UrzasTomeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new UrzasTome());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         // Put a non-historic card in graveyard (creature, not legendary/artifact/saga)
-        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
         Card cardInHand = new Shock();
         harness.setHand(player1, List.of(cardInHand));
@@ -68,8 +72,6 @@ class UrzasTomeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
-    // ===== Historic card in graveyard — player chooses to exile =====
-
     @Test
     @DisplayName("With historic card in graveyard, can exile it to avoid discarding")
     void historicInGraveyard_exileToAvoidDiscard() {
@@ -77,7 +79,7 @@ class UrzasTomeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         // Put an artifact (historic) in graveyard
         Millstone millstone = new Millstone();
-        gd.playerGraveyards.get(player1.getId()).add(millstone);
+        harness.setGraveyard(player1, List.of(millstone));
 
         Card cardInHand = new Shock();
         harness.setHand(player1, List.of(cardInHand));
@@ -109,15 +111,13 @@ class UrzasTomeTest extends BaseCardTest {
                 .anyMatch(e -> e.card().getName().equals("Millstone"))).isTrue();
     }
 
-    // ===== Historic card in graveyard — player declines exile, must discard =====
-
     @Test
     @DisplayName("With historic card in graveyard, declining exile requires discard")
     void historicInGraveyard_declineExile_mustDiscard() {
         harness.addToBattlefield(player1, new UrzasTome());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         // Put an artifact (historic) in graveyard
-        gd.playerGraveyards.get(player1.getId()).add(new Millstone());
+        harness.setGraveyard(player1, List.of(new Millstone()));
 
         Card cardInHand = new Shock();
         harness.setHand(player1, List.of(cardInHand));
@@ -140,22 +140,16 @@ class UrzasTomeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
 
         // Millstone should still be in graveyard (+ the discarded card)
-        assertThat(gd.playerGraveyards.get(player1.getId()).stream()
-                .anyMatch(c -> c.getName().equals("Millstone"))).isTrue();
+        harness.assertInGraveyard(player1, "Millstone");
     }
-
-    // ===== Multiple historic cards — only matching shown =====
 
     @Test
     @DisplayName("Only historic cards in graveyard are valid exile choices")
     void onlyHistoricCardsAreValidExileChoices() {
         harness.addToBattlefield(player1, new UrzasTome());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        // Non-historic creature at index 0
-        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
-        // Artifact (historic) at index 1
         Millstone millstone = new Millstone();
-        gd.playerGraveyards.get(player1.getId()).add(millstone);
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), millstone));
 
         harness.setHand(player1, List.of(new Shock()));
 
@@ -173,24 +167,82 @@ class UrzasTomeTest extends BaseCardTest {
 
         // Millstone exiled, GrizzlyBears still in graveyard
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
-
-    // ===== Ability requires tap =====
 
     @Test
     @DisplayName("Ability requires tap — cannot activate when tapped")
     void cannotActivateWhenTapped() {
-        harness.addToBattlefield(player1, new UrzasTome());
+        var tome = harness.addToBattlefieldAndReturn(player1, new UrzasTome());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.setHand(player1, List.of(new Shock()));
 
         harness.activateAbility(player1, 0, null, null);
 
-        boolean isTapped = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Urza's Tome"))
-                .anyMatch(p -> p.isTapped());
-        assertThat(isTapped).isTrue();
+        assertThat(tome.isTapped()).isTrue();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void legendaryNonartifactCanBeExiled() {
+        assertHistoricCanBeExiled(new KarnScionOfUrza());
+    }
+
+    @Test
+    void nonlegendarySagaCanBeExiled() {
+        assertHistoricCanBeExiled(new TheAntiquitiesWar());
+    }
+
+    private void assertHistoricCanBeExiled(Card historic) {
+        harness.addToBattlefield(player1, new UrzasTome());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new UrzasTome()));
+        harness.setGraveyard(player1, List.of(historic));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).anyMatch(e -> e.card().getId().equals(historic.getId()));
+    }
+
+    @Test
+    void opponentsHistoricCardCannotAvoidDiscard() {
+        harness.addToBattlefield(player1, new UrzasTome());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player1, List.of());
+        UrzasTome drawn = new UrzasTome();
+        harness.setLibrary(player1, List.of(drawn));
+        UrzasTome opponentCard = new UrzasTome();
+        harness.setGraveyard(player2, List.of(opponentCard));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithLessThanThreeMana() {
+        var tome = harness.addToBattlefieldAndReturn(player1, new UrzasTome());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(tome.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
