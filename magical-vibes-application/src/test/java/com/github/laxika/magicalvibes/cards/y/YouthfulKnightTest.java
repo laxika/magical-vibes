@@ -120,5 +120,37 @@ class YouthfulKnightTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Youthful Knight");
         harness.assertInGraveyard(player2, "Honor Guard");
     }
+
+    @Test
+    @DisplayName("An unblocked Youthful Knight deals damage only once")
+    void unblockedFirstStrikerDealsDamageOnlyOnce() {
+        harness.setLife(player2, 20);
+        Permanent attacker = addCreatureReady(player1, new YouthfulKnight());
+        attacker.setAttacking(true);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player1, "Youthful Knight");
+    }
+
+    @Test
+    @DisplayName("Two Youthful Knights deal first strike damage simultaneously")
+    void firstStrikersDealDamageSimultaneously() {
+        harness.setLife(player2, 20);
+        Permanent attacker = addCreatureReady(player1, new YouthfulKnight());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new YouthfulKnight());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+
+        harness.assertNotOnBattlefield(player1, "Youthful Knight");
+        harness.assertNotOnBattlefield(player2, "Youthful Knight");
+        harness.assertInGraveyard(player1, "Youthful Knight");
+        harness.assertInGraveyard(player2, "Youthful Knight");
+        harness.assertLife(player2, 20);
+    }
 }
 
