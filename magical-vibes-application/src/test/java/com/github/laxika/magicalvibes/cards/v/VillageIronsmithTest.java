@@ -1,16 +1,19 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VillageIronsmith.class, WalkingCorpse.class})
 class VillageIronsmithTest extends BaseCardTest {
-
-    // ===== Werewolf transform: front -> back (no spells cast last turn) =====
 
     @Test
     @DisplayName("Transforms to Ironfang when no spells were cast last turn")
@@ -20,10 +23,7 @@ class VillageIronsmithTest extends BaseCardTest {
 
         gd.spellsCastLastTurn.clear();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger goes on stack
+        advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve triggered ability
 
         assertThat(ironsmith.isTransformed()).isTrue();
@@ -40,16 +40,11 @@ class VillageIronsmithTest extends BaseCardTest {
 
         gd.spellsCastLastTurn.put(player1.getId(), 1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep — no trigger
+        advanceToUpkeep(player1);
 
         assertThat(ironsmith.isTransformed()).isFalse();
         assertThat(ironsmith.getCard().getName()).isEqualTo("Village Ironsmith");
     }
-
-    // ===== Werewolf transform: back -> front (two or more spells cast last turn) =====
 
     @Test
     @DisplayName("Ironfang transforms back when a player cast two or more spells last turn")
@@ -59,10 +54,7 @@ class VillageIronsmithTest extends BaseCardTest {
 
         // Transform to Ironfang first
         gd.spellsCastLastTurn.clear();
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
         assertThat(ironsmith.isTransformed()).isTrue();
 
@@ -70,10 +62,7 @@ class VillageIronsmithTest extends BaseCardTest {
         gd.spellsCastLastTurn.clear();
         gd.spellsCastLastTurn.put(player2.getId(), 2);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, back-face trigger goes on stack
+        advanceToUpkeep(player2);
         harness.passBothPriorities(); // resolve transform back
 
         assertThat(ironsmith.isTransformed()).isFalse();
@@ -90,10 +79,7 @@ class VillageIronsmithTest extends BaseCardTest {
 
         // Transform to Ironfang first
         gd.spellsCastLastTurn.clear();
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
         assertThat(ironsmith.isTransformed()).isTrue();
 
@@ -102,16 +88,11 @@ class VillageIronsmithTest extends BaseCardTest {
         gd.spellsCastLastTurn.put(player1.getId(), 1);
         gd.spellsCastLastTurn.put(player2.getId(), 1);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep — no trigger
+        advanceToUpkeep(player2);
 
         assertThat(ironsmith.isTransformed()).isTrue();
         assertThat(ironsmith.getCard().getName()).isEqualTo("Ironfang");
     }
-
-    // ===== Transform triggers on every upkeep (not just controller's) =====
 
     @Test
     @DisplayName("Transform triggers on opponent's upkeep too")
@@ -121,14 +102,77 @@ class VillageIronsmithTest extends BaseCardTest {
 
         gd.spellsCastLastTurn.clear();
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger fires
+        advanceToUpkeep(player2);
         harness.passBothPriorities(); // resolve
 
         assertThat(ironsmith.isTransformed()).isTrue();
         assertThat(ironsmith.getCard().getName()).isEqualTo("Ironfang");
     }
 
+    @Test
+    @DisplayName("An opponent's spell prevents transformation to Ironfang")
+    void opponentSpellPreventsTransformation() {
+        harness.addToBattlefield(player1, new VillageIronsmith());
+        Permanent ironsmith = findPermanent(player1, "Village Ironsmith");
+        gd.spellsCastLastTurn.put(player2.getId(), 1);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(ironsmith.isTransformed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Ironfang stays transformed after a turn with no spells")
+    void ironfangStaysTransformedWhenNoSpellsCast() {
+        harness.addToBattlefield(player1, new VillageIronsmith());
+        Permanent ironsmith = findPermanent(player1, "Village Ironsmith");
+        gd.spellsCastLastTurn.clear();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(ironsmith.isTransformed()).isTrue();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(ironsmith.isTransformed()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ironfang transforms back on its controller's upkeep after three spells")
+    void controllerSpellsTransformIronfangBack() {
+        harness.addToBattlefield(player1, new VillageIronsmith());
+        Permanent ironsmith = findPermanent(player1, "Village Ironsmith");
+        gd.spellsCastLastTurn.clear();
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(ironsmith.isTransformed()).isTrue();
+
+        gd.spellsCastLastTurn.put(player1.getId(), 3);
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(ironsmith.isTransformed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Ironfang kills a blocker with first strike before it can deal damage")
+    void ironfangDealsFirstStrikeDamage() {
+        Permanent ironsmith = addCreatureReady(player1, new VillageIronsmith());
+        gd.spellsCastLastTurn.clear();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(ironsmith.isTransformed()).isTrue();
+        addCreatureReady(player2, new WalkingCorpse());
+
+        ironsmith.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player1, "Ironfang");
+        harness.assertInGraveyard(player2, "Walking Corpse");
+        assertThat(ironsmith.getMarkedDamage()).isZero();
+    }
 }
