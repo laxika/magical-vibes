@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.c.CivicGardener;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.ReadyToRumble;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -17,8 +19,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WarmWelcome.class, GrizzlyBears.class, Shock.class})
+@CardUsed({WarmWelcome.class, GrizzlyBears.class, Shock.class, CivicGardener.class, ReadyToRumble.class})
 class WarmWelcomeTest extends BaseCardTest {
 
     @Test
@@ -67,18 +70,117 @@ class WarmWelcomeTest extends BaseCardTest {
         assertCitizenToken();
     }
 
+    @Test
+    @DisplayName("An empty library still produces a Citizen without a choice")
+    void emptyLibraryStillCreatesCitizen() {
+        harness.setLibrary(player1, List.of());
+
+        resolveWarmWelcome();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertCitizenToken();
+    }
+
+    @Test
+    @DisplayName("The only card in a short library can be revealed and taken")
+    void takesOnlyCreatureFromShortLibrary() {
+        Card creature = new CivicGardener();
+        harness.setLibrary(player1, List.of(creature));
+
+        resolveWarmWelcome();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertCitizenToken();
+    }
+
+    @Test
+    @DisplayName("Taking the only creature in a short library is still optional")
+    void declinesOnlyCreatureFromShortLibrary() {
+        Card creature = new CivicGardener();
+        harness.setLibrary(player1, List.of(creature));
+
+        resolveWarmWelcome();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        assertCitizenToken();
+    }
+
+    @Test
+    @DisplayName("Only one creature from the top five may be taken, and the untouched library stays above the rest")
+    void takesOneCreatureAndPreservesUntouchedLibraryOrder() {
+        Card firstCreature = new CivicGardener();
+        Card chosenCreature = new CivicGardener();
+        Card noncreature = new ReadyToRumble();
+        List<Card> topCards = List.of(firstCreature, noncreature, chosenCreature,
+                new ReadyToRumble(), new ReadyToRumble());
+        Card sixthCard = new CivicGardener();
+        Card seventhCard = new ReadyToRumble();
+        harness.setLibrary(player1, List.of(topCards.get(0), topCards.get(1), topCards.get(2),
+                topCards.get(3), topCards.get(4), sixthCard, seventhCard));
+
+        resolveWarmWelcome();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(noncreature.getId()))).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(sixthCard.getId()))).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(firstCreature.getId(), chosenCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.handleMultipleCardsChosen(player1, List.of(chosenCreature.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosenCreature);
+        List<Card> library = gd.playerDecks.get(player1.getId());
+        assertThat(library).hasSize(6);
+        assertThat(library.subList(0, 2)).containsExactly(sixthCard, seventhCard);
+        assertThat(library.subList(2, 6)).containsExactlyInAnyOrder(
+                firstCreature, noncreature, topCards.get(3), topCards.get(4));
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertCitizenToken();
+    }
+
+    @Test
+    @DisplayName("A creature below the top five is not found and the looked-at cards go beneath it")
+    void noCreatureInTopFivePreservesUntouchedLibrary() {
+        List<Card> topCards = List.of(new ReadyToRumble(), new ReadyToRumble(),
+                new ReadyToRumble(), new ReadyToRumble(), new ReadyToRumble());
+        Card sixthCard = new CivicGardener();
+        harness.setLibrary(player1, List.of(topCards.get(0), topCards.get(1), topCards.get(2),
+                topCards.get(3), topCards.get(4), sixthCard));
+
+        resolveWarmWelcome();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        List<Card> library = gd.playerDecks.get(player1.getId());
+        assertThat(library).hasSize(6);
+        assertThat(library.getFirst()).isSameAs(sixthCard);
+        assertThat(library.subList(1, 6)).containsExactlyInAnyOrderElementsOf(topCards);
+        assertCitizenToken();
+    }
+
     private void resolveWarmWelcome() {
         harness.setHand(player1, List.of(new WarmWelcome()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 
     private void assertCitizenToken() {
-        List<Permanent> citizens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken()
-                        && permanent.getCard().getName().equals("Citizen"))
+        List<Permanent> citizens = findPermanents(player1, "Citizen").stream()
+                .filter(permanent -> permanent.getCard().isToken())
                 .toList();
 
         assertThat(citizens).hasSize(1);
