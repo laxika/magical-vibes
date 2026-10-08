@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,13 +11,13 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UnyaroBees.class, GrizzlyBears.class})
+@CardUsed({UnyaroBees.class, AshcoatBear.class})
 class UnyaroBeesTest extends BaseCardTest {
 
     @Test
     @DisplayName("The green ability gives Unyaro Bees +1/+1 until end of turn")
     void boostsUntilEndOfTurn() {
-        Permanent bees = addReadyBees(player1);
+        Permanent bees = addCreatureReady(player1, new UnyaroBees());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -38,7 +37,7 @@ class UnyaroBeesTest extends BaseCardTest {
     @Test
     @DisplayName("The sacrifice ability is paid as a cost and deals 2 damage to a player")
     void sacrificesAsCostAndDealsDamageToPlayer() {
-        addReadyBees(player1);
+        addCreatureReady(player1, new UnyaroBees());
         harness.setLife(player2, 20);
         addSacrificeAbilityMana();
 
@@ -54,23 +53,64 @@ class UnyaroBeesTest extends BaseCardTest {
     @Test
     @DisplayName("The sacrifice ability deals 2 damage to a creature")
     void dealsDamageToCreature() {
-        addReadyBees(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addCreatureReady(player1, new UnyaroBees());
+        harness.addToBattlefield(player2, new AshcoatBear());
         addSacrificeAbilityMana();
 
-        Permanent target = findPermanent(player2, "Grizzly Bears");
+        Permanent target = findPermanent(player2, "Ashcoat Bear");
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Ashcoat Bear");
+        harness.assertInGraveyard(player2, "Ashcoat Bear");
     }
 
-    private Permanent addReadyBees(Player player) {
-        Permanent bees = new Permanent(new UnyaroBees());
-        bees.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(bees);
-        return bees;
+    @Test
+    @DisplayName("Repeated boosts work while summoning sick and tapped")
+    void repeatedBoostsDoNotRequireTappingOrHaste() {
+        Permanent bees = harness.addToBattlefieldAndReturn(player1, new UnyaroBees());
+        bees.setSummoningSick(true);
+        bees.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(bees.getEffectivePower()).isEqualTo(2);
+        assertThat(bees.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The sacrifice ability works while summoning sick and tapped")
+    void sacrificesWhileSummoningSickAndTapped() {
+        Permanent bees = harness.addToBattlefieldAndReturn(player1, new UnyaroBees());
+        bees.setSummoningSick(true);
+        bees.setTapped(true);
+        addSacrificeAbilityMana();
+
+        harness.activateAbility(player1, 0, 1, null, player1.getId());
+        harness.assertInGraveyard(player1, "Unyaro Bees");
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Sacrificing in response to a boost does not stop the damage ability")
+    void sacrificeInResponseToBoost() {
+        addCreatureReady(player1, new UnyaroBees());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        addSacrificeAbilityMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Unyaro Bees");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addSacrificeAbilityMana() {
