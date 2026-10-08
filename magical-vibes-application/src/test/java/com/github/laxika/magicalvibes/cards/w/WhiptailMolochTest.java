@@ -49,8 +49,7 @@ class WhiptailMolochTest extends BaseCardTest {
     @Test
     @DisplayName("ETB cannot target an opponent's creature")
     void etbCannotTargetOpponentCreature() {
-        harness.addToBattlefield(player2, new StalkingVengeance());
-        UUID opponentCreature = harness.getPermanentId(player2, "Stalking Vengeance");
+        UUID opponentCreature = harness.addToBattlefieldAndReturn(player2, new StalkingVengeance()).getId();
 
         harness.setHand(player1, List.of(new WhiptailMoloch()));
         addWhiptailMana();
@@ -63,8 +62,7 @@ class WhiptailMolochTest extends BaseCardTest {
     @Test
     @DisplayName("ETB cannot target a noncreature permanent you control")
     void etbCannotTargetOwnNoncreaturePermanent() {
-        harness.addToBattlefield(player1, new RixMaadiDungeonPalace());
-        UUID ownLand = harness.getPermanentId(player1, "Rix Maadi, Dungeon Palace");
+        UUID ownLand = harness.addToBattlefieldAndReturn(player1, new RixMaadiDungeonPalace()).getId();
 
         harness.setHand(player1, List.of(new WhiptailMoloch()));
         addWhiptailMana();
@@ -86,6 +84,47 @@ class WhiptailMolochTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Whiptail Moloch");
+    }
+
+    @Test
+    @DisplayName("ETB must target itself when it is the only creature you control")
+    void etbMustTargetItselfWhenAlone() {
+        harness.castFromHand(player1, new WhiptailMoloch(), "{4}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Whiptail Moloch");
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Whiptail Moloch"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Whiptail Moloch");
+        harness.assertInGraveyard(player1, "Whiptail Moloch");
+    }
+
+    @Test
+    @DisplayName("ETB triggers when Whiptail Moloch enters without being cast")
+    void etbTriggersWithoutBeingCast() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new StalkingVengeance());
+        harness.enterBattlefieldAndReturn(player1, new WhiptailMoloch());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Whiptail Moloch");
+    }
+
+    @Test
+    @DisplayName("ETB still deals damage after Whiptail Moloch leaves the battlefield")
+    void etbResolvesAfterSourceLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new StalkingVengeance());
+        castWhiptailMoloch(target.getId());
+        harness.passBothPriorities();
+
+        Permanent source = findPermanent(player1, "Whiptail Moloch");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, source));
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        harness.assertInGraveyard(player1, "Whiptail Moloch");
     }
 
     private void castWhiptailMoloch(UUID targetId) {
