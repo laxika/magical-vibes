@@ -110,4 +110,39 @@ class VengeanceTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Vengeance");
         assertThat(gameLogContains("fizzles")).isTrue();
     }
+
+    @Test
+    @DisplayName("Destroys a target that untaps and taps again before resolution")
+    void destroysTargetTappedAgainBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.tap();
+        harness.setHand(player1, List.of(new Vengeance()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castSorcery(player1, 0, target.getId());
+        target.untap();
+        target.tap();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Vengeance");
+    }
+
+    @Test
+    @DisplayName("Destroys only the targeted tapped creature")
+    void destroysOnlyTargetedTappedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.tap();
+        other.tap();
+        harness.setHand(player1, List.of(new Vengeance()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(other);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Vengeance");
+    }
 }
