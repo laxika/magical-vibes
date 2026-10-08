@@ -4,8 +4,12 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,17 +20,12 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WingPuncture.class, AirElemental.class, GrizzlyBears.class, LlanowarElves.class, GiantGrowth.class})
 class WingPunctureTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Creature you control deals power damage to creature with flying, killing it")
-    void killsFlyingCreature() {
-        // Air Elemental is 4/4 flying, Grizzly Bears is 2/2
-        // We need a bigger creature to kill Air Elemental — use two scenarios
-        // Actually let's use a smaller flyer: use LlanowarElves as biter won't work (no flying)
-        // Let's just test with Grizzly Bears (2/2) biting Air Elemental (4/4) — won't kill but deals damage
-        // For a kill test, let's put Air Elemental on our side as biter vs opponent's smaller flyer
-        // Simplest: Grizzly Bears (2/2) deals 2 damage to Air Elemental (4/4) — survives with 2 damage
+    @DisplayName("Creature deals nonlethal power damage to a flying creature")
+    void dealsNonlethalDamageToFlyingCreature() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new AirElemental());
         harness.setHand(player1, List.of(new WingPuncture()));
@@ -34,8 +33,7 @@ class WingPunctureTest extends BaseCardTest {
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID elementalId = harness.getPermanentId(player2, "Air Elemental");
-        harness.castInstant(player1, 0, List.of(bearId, elementalId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(bearId, elementalId));
 
         // Air Elemental should survive (2 damage < 4 toughness)
         harness.assertOnBattlefield(player2, "Air Elemental");
@@ -53,8 +51,7 @@ class WingPunctureTest extends BaseCardTest {
 
         UUID biterId = harness.getPermanentId(player1, "Air Elemental");
         UUID targetId = harness.getPermanentId(player2, "Air Elemental");
-        harness.castInstant(player1, 0, List.of(biterId, targetId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(biterId, targetId));
 
         // Opponent's Air Elemental should be destroyed (4 damage = 4 toughness)
         harness.assertNotOnBattlefield(player2, "Air Elemental");
@@ -135,5 +132,79 @@ class WingPunctureTest extends BaseCardTest {
 
         // Air Elemental should survive — no biter to deal damage
         harness.assertOnBattlefield(player2, "Air Elemental");
+    }
+
+    @Test
+    void flyingCreatureCanDealDamageToItself() {
+        Permanent flyer = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        harness.setHand(player1, List.of(new WingPuncture()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, List.of(flyer.getId(), flyer.getId()));
+
+        harness.assertInGraveyard(player1, "Air Elemental");
+        harness.assertNotOnBattlefield(player1, "Air Elemental");
+    }
+
+    @Test
+    void canDamageAnotherCreatureYouControlWithoutReturnDamage() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent flyer = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        harness.setHand(player1, List.of(new WingPuncture()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, List.of(source.getId(), flyer.getId()));
+
+        assertThat(flyer.getMarkedDamage()).isEqualTo(2);
+        assertThat(source.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void usesPowerAtResolutionAfterGiantGrowth() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent flyer = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new WingPuncture(), new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castInstant(player1, 0, List.of(source.getId(), flyer.getId()));
+        harness.castAndResolveInstant(player1, 0, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Air Elemental");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(source.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void dealsNoDamageWhenVictimLosesFlying() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent flyer = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new WingPuncture()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, List.of(source.getId(), flyer.getId()));
+        flyer.getRemovedKeywords().add(Keyword.FLYING);
+
+        harness.passBothPriorities();
+
+        assertThat(flyer.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player1, "Wing Puncture");
+    }
+
+    @Test
+    void dealsNoDamageWhenSourceChangesController() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent flyer = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new WingPuncture()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, List.of(source.getId(), flyer.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerBattlefields.get(player2.getId()).add(source);
+
+        harness.passBothPriorities();
+
+        assertThat(flyer.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player1, "Wing Puncture");
     }
 }
