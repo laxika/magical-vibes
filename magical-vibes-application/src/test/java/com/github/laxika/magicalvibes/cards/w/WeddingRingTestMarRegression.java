@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -79,5 +80,75 @@ class WeddingRingTestMarRegression extends BaseCardTest {
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+    }
+
+    @Test
+    void enteringWithoutBeingCastDoesNotCreateCopy() {
+        harness.enterBattlefieldAndReturn(player1, new WeddingRing());
+
+        assertThat(countPermanents(player1, "Wedding Ring")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Wedding Ring")).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void drawTriggerStillResolvesAfterOpponentLosesTheirRing() {
+        harness.addToBattlefield(player1, new WeddingRing());
+        Permanent opponentRing = harness.addToBattlefieldAndReturn(player2, new WeddingRing());
+        harness.setLibrary(player1, java.util.List.of(new WeddingRing()));
+        harness.setLibrary(player2, java.util.List.of(new WeddingRing()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToDraw(player2);
+        assertThat(gd.stack).hasSize(1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, opponentRing));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentWithoutRingDoesNotTriggerDraw() {
+        harness.addToBattlefield(player1, new WeddingRing());
+        harness.setLibrary(player2, java.util.List.of(new WeddingRing()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToDraw(player2);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentWithoutRingDoesNotTriggerLifeGain() {
+        harness.addToBattlefield(player1, new WeddingRing());
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3));
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void lifeGainTriggerStillResolvesAfterOpponentLosesTheirRing() {
+        harness.addToBattlefield(player1, new WeddingRing());
+        Permanent opponentRing = harness.addToBattlefieldAndReturn(player2, new WeddingRing());
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3));
+        assertThat(gd.stack).hasSize(1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, opponentRing));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(23);
+        assertThat(gd.stack).isEmpty();
     }
 }
