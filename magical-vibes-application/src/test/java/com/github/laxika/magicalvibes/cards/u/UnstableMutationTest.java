@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UnstableMutation.class, GrizzlyBears.class, Forest.class})
+@CardUsed({UnstableMutation.class, GrizzlyBears.class, Forest.class, Disenchant.class})
 class UnstableMutationTest extends BaseCardTest {
 
     @Test
@@ -130,5 +131,66 @@ class UnstableMutationTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Destroying the Aura leaves its counters on the creature")
+    void countersRemainAfterAuraIsDestroyed() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new UnstableMutation());
+        aura.setAttachedTo(creature.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+
+        harness.assertInGraveyard(player1, "Unstable Mutation");
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The upkeep trigger still puts a counter on the creature after the Aura is destroyed")
+    void pendingTriggerSurvivesAuraDestruction() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new UnstableMutation());
+        aura.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new Disenchant()));
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        harness.assertInGraveyard(player1, "Unstable Mutation");
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The fifth upkeep counter kills the creature and sends its Aura to the graveyard")
+    void accumulatedCountersEventuallyKillCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new UnstableMutation());
+        aura.setAttachedTo(creature.getId());
+
+        for (int upkeep = 0; upkeep < 4; upkeep++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Unstable Mutation");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Unstable Mutation");
+    }
 }
