@@ -125,6 +125,30 @@ class WingsOfHopeTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Two Wings of Hope bonuses stack and one remaining aura retains flying")
+    void multipleCopiesStackAndRemainingCopyKeepsFlying() {
+        Permanent lancer = harness.addToBattlefieldAndReturn(player1, new BenalishLancer());
+        harness.setHand(player1, List.of(new WingsOfHope(), new WingsOfHope()));
+
+        addMana();
+        harness.castEnchantment(player1, 0, lancer.getId());
+        harness.passBothPriorities();
+        addMana();
+        harness.castEnchantment(player1, 0, lancer.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, lancer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, lancer)).isEqualTo(8);
+        assertThat(gqs.hasKeyword(gd, lancer, Keyword.FLYING)).isTrue();
+
+        Permanent aura = findPermanent(player1, "Wings of Hope");
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+
+        assertThat(gqs.getEffectivePower(gd, lancer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, lancer)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, lancer, Keyword.FLYING)).isTrue();
+    }
     private void addMana() {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
