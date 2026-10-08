@@ -93,6 +93,55 @@ class WayfarersBaubleTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Sacrifice and mana are paid before the search ability resolves")
+    void costsArePaidBeforeResolution() {
+        activateBauble();
+
+        harness.assertNotOnBattlefield(player1, "Wayfarer's Bauble");
+        harness.assertInGraveyard(player1, "Wayfarer's Bauble");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("Search resolves normally when the library is empty")
+    void resolvesWithEmptyLibrary() {
+        harness.addToBattlefield(player1, new WayfarersBauble());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Wayfarer's Bauble");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Search finds no land when only nonbasic lands and creatures remain")
+    void resolvesWithoutMatchingBasicLand() {
+        harness.addToBattlefield(player1, new WayfarersBauble());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        var nonbasicLand = new CavesOfKoilos();
+        var creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(nonbasicLand, creature));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Wayfarer's Bauble");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(nonbasicLand, creature);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void activateBauble() {
         harness.addToBattlefield(player1, new WayfarersBauble());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
