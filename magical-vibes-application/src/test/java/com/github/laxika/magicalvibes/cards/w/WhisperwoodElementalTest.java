@@ -44,20 +44,24 @@ class WhisperwoodElementalTest extends BaseCardTest {
         Permanent faceDownCreature = addCreatureReady(player1, new GrizzlyBears());
         faceDownCreature.setFaceDown(2, 2, java.util.Set.of(CardType.CREATURE));
         harness.addToBattlefield(player1, tokenCreature());
+        addCreatureReady(player2, new GrizzlyBears());
 
         Card topCard = new GrizzlyBears();
-        harness.setLibrary(player1, List.of(topCard));
+        Card secondCard = new GrizzlyBears();
+        Card thirdCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard, secondCard, thirdCard));
+        Card opponentTopCard = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(opponentTopCard));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.forceActivePlayer(player2);
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new WrathOfGod()));
-        harness.addMana(player2, ManaColor.WHITE, 4);
-        harness.castSorcery(player2, 0, (java.util.UUID) null);
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castAndResolveSorcery(player1, 0, (java.util.UUID) null);
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -65,14 +69,81 @@ class WhisperwoodElementalTest extends BaseCardTest {
                 .singleElement()
                 .satisfies(manifested -> assertThat(manifested.getCard().getId()).isEqualTo(topCard.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(whisperwood.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard, thirdCard);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentTopCard);
+    }
+
+    @Test
+    void doesNotManifestAtOpponentsEndStep() {
+        harness.addToBattlefield(player1, new WhisperwoodElemental());
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(Permanent::isManifested);
+    }
+
+    @Test
+    void emptyLibraryDoesNotCauseLossWhenManifesting() {
+        harness.addToBattlefield(player1, new WhisperwoodElemental());
+        harness.setLibrary(player1, List.of());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.RUNNING);
+    }
+
+    @Test
+    void creaturesEnteringAfterResolutionDoNotGainDeathTrigger() {
+        harness.addToBattlefield(player1, new WhisperwoodElemental());
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castAndResolveSorcery(player1, 0, (java.util.UUID) null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    void creaturesEnteringBeforeResolutionGainDeathTrigger() {
+        harness.addToBattlefield(player1, new WhisperwoodElemental());
+        harness.activateAbility(player1, 0, null, null);
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        resolveAllTriggers();
+        Card topCard = new WrathOfGod();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castAndResolveSorcery(player1, 0, (java.util.UUID) null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
+                .satisfies(permanent -> {
+                    assertThat(permanent.isManifested()).isTrue();
+                    assertThat(permanent.isFaceDown()).isTrue();
+                    assertThat(permanent.getCard().getId()).isEqualTo(topCard.getId());
+                });
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private Card tokenCreature() {
-        Card token = new Card();
-        token.setName("Soldier Token");
-        token.setType(CardType.CREATURE);
-        token.setPower(2);
-        token.setToughness(2);
+        Card token = new GrizzlyBears();
         token.setToken(true);
         return token;
     }
