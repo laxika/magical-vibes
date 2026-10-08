@@ -98,6 +98,93 @@ class SoulOfWindgraceTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, soul, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
+    @Test
+    void attackReturnsLandFromControllersGraveyardTapped() {
+        addReadySoul(player1);
+        Forest forest = new Forest();
+        harness.setGraveyard(player1, List.of(forest));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Forest");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anySatisfy(permanent -> {
+                    assertThat(permanent.getCard()).isSameAs(forest);
+                    assertThat(permanent.isTapped()).isTrue();
+                });
+    }
+
+    @Test
+    void mayDeclineReturningLand() {
+        harness.setGraveyard(player2, List.of(new Forest()));
+        castSoul();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    void nonlandCardsCannotBeReturned() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        castSoul();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void discardIsPaidBeforeLifeGainResolves() {
+        addReadySoul(player1);
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotInHand(player1, "Forest");
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    void blackAbilityCanBeActivatedWhileTappedAndSummoningSick() {
+        Permanent soul = harness.addToBattlefieldAndReturn(player1, new SoulOfWindgrace());
+        soul.setSummoningSick(true);
+        soul.tap();
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gqs.hasKeyword(gd, soul, Keyword.INDESTRUCTIBLE)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(soul.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, soul, Keyword.INDESTRUCTIBLE)).isTrue();
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
     private void castSoul() {
         harness.setHand(player1, List.of(new SoulOfWindgrace()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -108,9 +195,8 @@ class SoulOfWindgraceTest extends BaseCardTest {
     }
 
     private Permanent addReadySoul(Player player) {
-        Permanent soul = new Permanent(new SoulOfWindgrace());
+        Permanent soul = harness.addToBattlefieldAndReturn(player, new SoulOfWindgrace());
         soul.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(soul);
         return soul;
     }
 }
