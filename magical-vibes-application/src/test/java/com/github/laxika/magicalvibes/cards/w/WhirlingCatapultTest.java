@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -21,7 +23,7 @@ class WhirlingCatapultTest extends BaseCardTest {
         harness.addToBattlefield(player1, new WhirlingCatapult());
         harness.addToBattlefield(player1, new WildAesthir());
         harness.addToBattlefield(player2, new WildAesthir());
-        harness.addToBattlefield(player2, new ShieldSphere());
+        var shieldSphere = harness.addToBattlefieldAndReturn(player2, new ShieldSphere());
         var aesthirGlider = harness.addToBattlefieldAndReturn(player2, new AesthirGlider());
         GameData gd = harness.getGameData();
 
@@ -46,6 +48,7 @@ class WhirlingCatapultTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard() instanceof WildAesthir)
                 .anyMatch(p -> p.getCard() instanceof ShieldSphere);
         assertThat(aesthirGlider.getMarkedDamage()).isEqualTo(1);
+        assertThat(shieldSphere.getMarkedDamage()).isZero();
     }
 
     @Test
@@ -70,7 +73,7 @@ class WhirlingCatapultTest extends BaseCardTest {
     void cannotActivateWithShortLibrary() {
         harness.addToBattlefield(player1, new WhirlingCatapult());
         GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -84,5 +87,65 @@ class WhirlingCatapultTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotPayExileCostWithOnlyOneCard() {
+        harness.addToBattlefield(player1, new WhirlingCatapult());
+        var remainingCard = new ShieldSphere();
+        harness.setLibrary(player1, List.of(remainingCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int exileBefore = gd.exiledCards.size();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.exiledCards).hasSize(exileBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canActivateRepeatedlyWhileTapped() {
+        var catapult = harness.addToBattlefieldAndReturn(player1, new WhirlingCatapult());
+        catapult.setTapped(true);
+        var first = new ShieldSphere();
+        var second = new WildAesthir();
+        var third = new AesthirGlider();
+        var fourth = new WhirlingCatapult();
+        harness.setLibrary(player1, List.of(first, second, third, fourth));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        int exileBefore = gd.exiledCards.size();
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third, fourth);
+        assertThat(gd.exiledCards).hasSize(exileBefore + 2)
+                .extracting(entry -> entry.card()).contains(first, second);
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).hasSize(exileBefore + 4)
+                .extracting(entry -> entry.card()).contains(first, second, third, fourth);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+        assertThat(catapult.isTapped()).isTrue();
+    }
+
+    @Test
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        harness.addToBattlefield(player1, new WhirlingCatapult());
+        harness.addToBattlefield(player2, new WildAesthir());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player2, "Wild Aesthir");
     }
 }
