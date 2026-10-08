@@ -95,6 +95,80 @@ class SolarTideTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(land, creature);
     }
 
+    @Test
+    @DisplayName("Power is checked when Solar Tide resolves")
+    void checksCurrentPowerAtResolution() {
+        Permanent growing = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+        Permanent shrinking = harness.addToBattlefieldAndReturn(player2, new VulshokBerserker());
+        addMana();
+        harness.setHand(player1, List.of(new SolarTide()));
+        harness.castModalSorceryWithModesAndSacrifices(
+                player1, 0, 1, 2, new int[]{0}, List.of());
+
+        growing.setPowerModifier(1);
+        shrinking.setPowerModifier(-1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(growing);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(shrinking);
+        harness.assertInGraveyard(player2, "Vulshok Berserker");
+    }
+
+    @Test
+    @DisplayName("Entwine sacrifices lands during casting, before creatures are destroyed")
+    void paysEntwineBeforeResolution() {
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+        addMana();
+        harness.setHand(player1, List.of(new SolarTide()));
+
+        harness.castModalSorceryWithModesAndSacrifices(
+                player1, 0, 1, 2, new int[]{0, 1}, List.of(firstLand.getId(), secondLand.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstLand, secondLand);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(firstLand.getCard(), secondLand.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        harness.assertInGraveyard(player2, "Alpha Myr");
+    }
+
+    @Test
+    @DisplayName("Entwine cannot sacrifice the same land twice")
+    void entwinedRejectsDuplicateLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
+        addMana();
+        harness.setHand(player1, List.of(new SolarTide()));
+
+        assertThatThrownBy(() -> harness.castModalSorceryWithModesAndSacrifices(
+                player1, 0, 1, 2, new int[]{0, 1}, List.of(land.getId(), land.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(land);
+        harness.assertInHand(player1, "Solar Tide");
+    }
+
+    @Test
+    @DisplayName("Entwine cannot sacrifice an opponent's land")
+    void entwinedRejectsOpponentsLand() {
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent opposingLand = harness.addToBattlefieldAndReturn(player2, new Plains());
+        addMana();
+        harness.setHand(player1, List.of(new SolarTide()));
+
+        assertThatThrownBy(() -> harness.castModalSorceryWithModesAndSacrifices(
+                player1, 0, 1, 2, new int[]{0, 1}, List.of(ownLand.getId(), opposingLand.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownLand);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingLand);
+        harness.assertInHand(player1, "Solar Tide");
+    }
+
     private void cast(int[] modes, List<UUID> sacrificePermanentIds) {
         addMana();
         harness.setHand(player1, List.of(new SolarTide()));
