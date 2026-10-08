@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.s.SpinelessThug;
+import com.github.laxika.magicalvibes.cards.s.SamiteHealer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ViciousHunger.class, SpinelessThug.class, HornedTurtle.class, HowlingMine.class})
+@CardUsed({ViciousHunger.class, SpinelessThug.class, HornedTurtle.class, HowlingMine.class, SamiteHealer.class})
 class ViciousHungerTest extends BaseCardTest {
 
     @Test
@@ -75,5 +76,41 @@ class ViciousHungerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gameLogContains("fizzles")).isTrue();
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Can target the controller's own creature and still gain 2 life")
+    void canTargetOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SpinelessThug());
+        harness.setHand(player1, List.of(new ViciousHunger()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(target.getCard());
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Gains the full 2 life even when all damage is prevented")
+    void gainsLifeEvenWhenAllDamageIsPrevented() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SpinelessThug());
+        addCreatureReady(player1, new SamiteHealer());
+        addCreatureReady(player1, new SamiteHealer());
+        harness.setHand(player1, List.of(new ViciousHunger()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
     }
 }
