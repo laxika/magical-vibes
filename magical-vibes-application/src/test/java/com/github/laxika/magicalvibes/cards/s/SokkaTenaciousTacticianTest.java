@@ -20,6 +20,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SokkaTenaciousTacticianTest extends BaseCardTest {
 
     @Test
+    void sokkaGetsExactlyOneProwessBoostPerNoncreatureSpell() {
+        Permanent sokka = addCreatureReady(player1, new SokkaTenaciousTactician());
+        int power = gqs.getEffectivePower(gd, sokka);
+        int toughness = gqs.getEffectiveToughness(gd, sokka);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, sokka)).isEqualTo(power + 1);
+        assertThat(gqs.getEffectiveToughness(gd, sokka)).isEqualTo(toughness + 1);
+        assertThat(countPermanents(player1, "Ally")).isEqualTo(1);
+    }
+
+    @Test
     void otherAlliesGainMenaceAndProwess() {
         Permanent sokka = addCreatureReady(player1, new SokkaTenaciousTactician());
         Permanent ally = addCreatureReady(player1, new EarthenAlly());
@@ -94,5 +110,49 @@ class SokkaTenaciousTacticianTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, sokka)).isEqualTo(sokkaPower);
         assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(allyPower);
+    }
+
+    @Test
+    void pendingGrantedProwessAndTokenTriggerSurviveSokkaLeaving() {
+        Permanent sokka = addCreatureReady(player1, new SokkaTenaciousTactician());
+        Permanent ally = addCreatureReady(player1, new EarthenAlly());
+        int allyToughness = gqs.getEffectiveToughness(gd, ally);
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, sokka));
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.MENACE)).isFalse();
+        assertThat(gqs.getEffectiveToughness(gd, ally)).isEqualTo(allyToughness + 1);
+        assertThat(countPermanents(player1, "Ally")).isEqualTo(1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectiveToughness(gd, ally)).isEqualTo(allyToughness + 1);
+        assertThat(countPermanents(player1, "Ally")).isEqualTo(1);
+    }
+
+    @Test
+    void allyEnteringAfterCastOnlyTriggersForSubsequentSpells() {
+        addCreatureReady(player1, new SokkaTenaciousTactician());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        Permanent ally = addCreatureReady(player1, new EarthenAlly());
+        int allyToughness = gqs.getEffectiveToughness(gd, ally);
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.MENACE)).isTrue();
+        assertThat(gqs.getEffectiveToughness(gd, ally)).isEqualTo(allyToughness);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectiveToughness(gd, ally)).isEqualTo(allyToughness + 1);
     }
 }
