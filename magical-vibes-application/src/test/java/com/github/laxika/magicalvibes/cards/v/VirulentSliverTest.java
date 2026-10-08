@@ -76,4 +76,62 @@ class VirulentSliverTest extends BaseCardTest {
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
+
+    @Test
+    @DisplayName("Multiple Virulent Slivers grant independently triggering instances of poisonous")
+    void multipleInstancesOfPoisonousTriggerSeparately() {
+        addCreatureReady(player1, new VirulentSliver());
+        addCreatureReady(player2, new VirulentSliver());
+        Permanent attacker = addCreatureReady(player1, new HomingSliver());
+        attacker.setAttacking(true);
+
+        resolveCombat(player1);
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Poisonous triggers still resolve after the granting and attacking Slivers leave")
+    void poisonousTriggersSurviveSliversLeavingBattlefield() {
+        Permanent grantor = addCreatureReady(player1, new VirulentSliver());
+        Permanent attacker = addCreatureReady(player1, new HomingSliver());
+        attacker.setAttacking(true);
+
+        resolveCombat(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+        gd.playerBattlefields.get(player1.getId()).remove(grantor);
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        gd.playerGraveyards.get(player1.getId()).add(grantor.getCard());
+        gd.playerGraveyards.get(player1.getId()).add(attacker.getCard());
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Slivers lose the poisonous grant when Virulent Sliver leaves before combat damage")
+    void grantEndsWhenVirulentSliverLeaves() {
+        Permanent grantor = addCreatureReady(player1, new VirulentSliver());
+        Permanent attacker = addCreatureReady(player1, new HomingSliver());
+        attacker.setAttacking(true);
+        gd.playerBattlefields.get(player1.getId()).remove(grantor);
+        gd.playerGraveyards.get(player1.getId()).add(grantor.getCard());
+
+        resolveCombat(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
 }
