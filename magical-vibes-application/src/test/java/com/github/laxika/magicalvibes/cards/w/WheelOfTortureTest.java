@@ -106,4 +106,46 @@ class WheelOfTortureTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
     }
+
+    @Test
+    void twoCardsDealOneDamageRegardlessOfControllersHand() {
+        harness.addToBattlefield(player1, new WheelOfTorture());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new BouncingBeebles(), new BouncingBeebles()));
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore - 1);
+    }
+
+    @Test
+    void handGrowingToThreeBeforeResolutionPreventsDamage() {
+        harness.addToBattlefield(player1, new WheelOfTorture());
+        harness.setHand(player2, List.of());
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player2, List.of(new BouncingBeebles(), new BouncingBeebles(), new BouncingBeebles()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore);
+    }
+
+    @Test
+    void triggerStillDealsDamageAfterSourceLeavesBattlefield() {
+        harness.addToBattlefield(player1, new WheelOfTorture());
+        harness.setHand(player2, List.of());
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        var wheel = gd.playerBattlefields.get(player1.getId()).removeFirst();
+        gd.playerGraveyards.get(player1.getId()).add(wheel.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore - 3);
+    }
 }
