@@ -50,4 +50,40 @@ class VialSmasherGleefulGrenadierTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertLife(player2, 20);
     }
+
+    @Test
+    @DisplayName("Does not trigger for its own entry despite being a Mercenary")
+    void doesNotTriggerForItself() {
+        harness.setHand(player1, List.of(new VialSmasherGleefulGrenadier()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Vial Smasher, Gleeful Grenadier");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Does not trigger when an opponent's outlaw enters")
+    void doesNotTriggerForOpponentsOutlaw() {
+        harness.addToBattlefield(player1, new VialSmasherGleefulGrenadier());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new VialSmasherGleefulGrenadier()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Vial Smasher, Gleeful Grenadier");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 }
