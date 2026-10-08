@@ -84,6 +84,46 @@ class WindSailTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Must choose at least one target")
+    void cannotCastWithoutTargets() {
+        harness.addToBattlefield(player1, new AlabornTrooper());
+        harness.setHand(player1, List.of(new WindSail()));
+        giveMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot choose more than two targets")
+    void cannotChooseThreeTargets() {
+        Permanent a = harness.addToBattlefieldAndReturn(player1, new AlabornTrooper());
+        Permanent b = harness.addToBattlefieldAndReturn(player2, new AlabornTrooper());
+        Permanent c = harness.addToBattlefieldAndReturn(player2, new AlabornTrooper());
+        harness.setHand(player1, List.of(new WindSail()));
+        giveMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(a.getId(), b.getId(), c.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("May target creatures controlled by different players without affecting other creatures")
+    void affectsOnlyChosenCreaturesAcrossControllers() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new AlabornTrooper());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new AlabornTrooper());
+        Permanent unchosen = harness.addToBattlefieldAndReturn(player1, new AlabornTrooper());
+        harness.setHand(player1, List.of(new WindSail()));
+        giveMana();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(own.getId(), opposing.getId()));
+
+        assertThat(gqs.hasKeyword(gd, own, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposing, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, unchosen, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
     @DisplayName("Cannot target the same creature twice")
     void cannotTargetSameCreatureTwice() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new AlabornTrooper());
