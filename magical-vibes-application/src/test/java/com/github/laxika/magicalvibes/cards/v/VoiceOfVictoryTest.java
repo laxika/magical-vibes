@@ -55,8 +55,7 @@ class VoiceOfVictoryTest extends BaseCardTest {
                 .count()).isEqualTo(2);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Warrior").stream()
@@ -85,7 +84,6 @@ class VoiceOfVictoryTest extends BaseCardTest {
     void restrictionDoesNotBlockActivatedAbilities() {
         addCreatureReady(player1, new VoiceOfVictory());
         Permanent sorcerer = addCreatureReady(player2, new ProdigalSorcerer());
-        sorcerer.setSummoningSick(false);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -96,5 +94,58 @@ class VoiceOfVictoryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Opponents can cast spells during their own turn")
+    void opponentsCanCastDuringTheirTurn() {
+        addCreatureReady(player1, new VoiceOfVictory());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("The controller can cast spells during their own turn")
+    void controllerCanCastDuringTheirTurn() {
+        addCreatureReady(player1, new VoiceOfVictory());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Mobilize resolves and sacrifices its tokens even if Voice leaves before resolution")
+    void mobilizeSurvivesSourceRemoval() {
+        Permanent voice = addCreatureReady(player1, new VoiceOfVictory());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        harness.castInstant(player1, 0, voice.getId());
+        harness.castInstant(player1, 0, voice.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Voice of Victory");
+        assertThat(countPermanents(player1, "Warrior")).isEqualTo(2);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Warrior")).isZero();
     }
 }
