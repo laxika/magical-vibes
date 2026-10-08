@@ -31,8 +31,7 @@ class SoulCollectorTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new SparkSpray()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Coast Watcher"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Coast Watcher"));
 
         harness.assertInGraveyard(player2, "Coast Watcher");
         harness.assertNotOnBattlefield(player1, "Coast Watcher");
@@ -67,12 +66,7 @@ class SoulCollectorTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player2, List.of());
-        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         harness.setHand(player1, List.of(new SparkSpray(), new SparkSpray(), new SparkSpray(), new SparkSpray()));
         harness.addMana(player1, ManaColor.RED, 4);
@@ -103,6 +97,45 @@ class SoulCollectorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(soulCollector.isFaceDown()).isFalse();
+    }
+
+    @Test
+    void doesNotReturnCreatureWhileSoulCollectorIsFaceDown() {
+        harness.setHand(player1, List.of(new SoulCollector()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+        Permanent soulCollector = findPermanent(player1, "Soul Collector");
+        soulCollector.setSummoningSick(false);
+        addCreatureReady(player2, new CoastWatcher());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(soulCollector.isFaceDown()).isTrue();
+        harness.assertInGraveyard(player2, "Coast Watcher");
+        harness.assertNotOnBattlefield(player1, "Coast Watcher");
+    }
+
+    @Test
+    void returnsDamagedCreatureWhenBothCreaturesDieSimultaneously() {
+        Permanent soulCollector = addCreatureReady(player1, new SoulCollector());
+        Permanent shorelineRanger = addCreatureReady(player2, new ShorelineRanger());
+        harness.setHand(player1, List.of(new SparkSpray(), new SparkSpray()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, soulCollector.getId());
+        harness.castAndResolveInstant(player1, 0, shorelineRanger.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Soul Collector");
+        harness.assertOnBattlefield(player1, "Shoreline Ranger");
+        harness.assertNotInGraveyard(player2, "Shoreline Ranger");
     }
 
     private void destroyCoastWatcherInCombat() {
