@@ -96,4 +96,55 @@ class WonderTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
     }
+
+    @Test
+    @DisplayName("Wonder stops granting flying when it leaves the graveyard even if the Island remains")
+    void stopsGrantingFlyingAfterLeavingGraveyardWithIslandStillPresent() {
+        Wonder wonder = new Wonder();
+        harness.setGraveyard(player1, List.of(wonder));
+        harness.addToBattlefield(player1, new Island());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BorderPatrol());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(wonder));
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Wonder on the battlefield does not grant flying to other creatures")
+    void doesNotGrantFlyingFromBattlefield() {
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Wonder());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BorderPatrol());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("One remaining Wonder continues granting flying, including to newly entering creatures")
+    void remainingWonderGrantsFlyingToExistingAndNewCreatures() {
+        Wonder first = new Wonder();
+        Wonder second = new Wonder();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.addToBattlefield(player1, new Island());
+        Permanent existing = harness.addToBattlefieldAndReturn(player1, new BorderPatrol());
+
+        assertThat(gqs.hasKeyword(gd, existing, Keyword.FLYING)).isTrue();
+
+        harness.setGraveyard(player1, List.of(second));
+        harness.setExile(player1, List.of(first));
+        Permanent entering = harness.addToBattlefieldAndReturn(player1, new BorderPatrol());
+
+        assertThat(gqs.hasKeyword(gd, existing, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, entering, Keyword.FLYING)).isTrue();
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(second));
+
+        assertThat(gqs.hasKeyword(gd, existing, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, entering, Keyword.FLYING)).isFalse();
+    }
 }
