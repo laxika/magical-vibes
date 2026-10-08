@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.y;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.laxika.magicalvibes.cards.b.BileUrchin;
+import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.g.GodsEyeGateToTheReikai;
 import com.github.laxika.magicalvibes.cards.k.KentaroTheSmilingCat;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 @CardUsed({YomijiWhoBarsTheWay.class, KentaroTheSmilingCat.class,
-        GodsEyeGateToTheReikai.class, BileUrchin.class})
+        GodsEyeGateToTheReikai.class, BileUrchin.class, Clone.class})
 class YomijiWhoBarsTheWayTest extends BaseCardTest {
 
     @Test
@@ -96,5 +97,39 @@ class YomijiWhoBarsTheWayTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Yomiji, Who Bars the Way");
         harness.assertInHand(player2, "Kentaro, the Smiling Cat");
         harness.assertNotInGraveyard(player2, "Kentaro, the Smiling Cat");
+    }
+
+    @Test
+    @DisplayName("A nonlegendary card that dies as a copy of a legendary creature returns")
+    void legendaryCopyReturnsOriginalCardToHand() {
+        harness.addToBattlefield(player1, new YomijiWhoBarsTheWay());
+        Permanent kentaro = harness.addToBattlefieldAndReturn(player2, new KentaroTheSmilingCat());
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, kentaro.getId());
+
+        Permanent clone = findPermanent(player1, "Kentaro, the Smiling Cat");
+        assertThat(clone).isNotNull();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, clone));
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Clone");
+        harness.assertNotInGraveyard(player1, "Clone");
+    }
+
+    @Test
+    @DisplayName("Removing Yomiji after its ability triggers does not stop the return")
+    void triggerResolvesAfterYomijiLeavesBattlefield() {
+        Permanent yomiji = harness.addToBattlefieldAndReturn(player1, new YomijiWhoBarsTheWay());
+        Permanent kentaro = harness.addToBattlefieldAndReturn(player2, new KentaroTheSmilingCat());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, kentaro));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, yomiji));
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Kentaro, the Smiling Cat");
+        harness.assertInGraveyard(player1, "Yomiji, Who Bars the Way");
+        harness.assertNotInHand(player1, "Yomiji, Who Bars the Way");
     }
 }
