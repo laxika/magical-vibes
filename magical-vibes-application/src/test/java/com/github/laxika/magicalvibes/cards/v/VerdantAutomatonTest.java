@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VerdantAutomaton.class})
 class VerdantAutomatonTest extends BaseCardTest {
 
     @Test
@@ -48,11 +50,51 @@ class VerdantAutomatonTest extends BaseCardTest {
         assertThat(automaton.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
+    @Test
+    void abilityCanBeActivatedWhileTappedAndSummoningSick() {
+        Permanent automaton = harness.addToBattlefieldAndReturn(player1, new VerdantAutomaton());
+        automaton.setSummoningSick(true);
+        automaton.setTapped(true);
+        addAbilityMana(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(automaton.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(automaton.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(automaton.isTapped()).isTrue();
+    }
+
+    @Test
+    void fourColorlessManaCannotPayForAbility() {
+        addAutomaton(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    void abilityDoesNotPutCounterOnAnotherAutomatonWhenSourceLeaves() {
+        Permanent source = addAutomaton(player1);
+        Permanent other = addAutomaton(player1);
+        addAbilityMana(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addAutomaton(Player player) {
-        Permanent automaton = new Permanent(new VerdantAutomaton());
-        automaton.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(automaton);
-        return automaton;
+        return addCreatureReady(player, new VerdantAutomaton());
     }
 
     private void addAbilityMana(Player player) {
