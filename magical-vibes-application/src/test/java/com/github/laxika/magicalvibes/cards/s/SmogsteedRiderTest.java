@@ -41,6 +41,42 @@ class SmogsteedRiderTest extends BaseCardTest {
     }
 
     @Test
+    void twoAttackingRidersGrantFearToEachOther() {
+        Permanent firstRider = addCreatureReady(player1, new SmogsteedRider());
+        Permanent secondRider = addCreatureReady(player1, new SmogsteedRider());
+
+        declareAttackers(player1, List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, firstRider, Keyword.FEAR)).isTrue();
+        assertThat(gqs.hasKeyword(gd, secondRider, Keyword.FEAR)).isTrue();
+    }
+
+    @Test
+    void creatureRemovedFromCombatBeforeResolutionDoesNotGainFear() {
+        addCreatureReady(player1, new SmogsteedRider());
+        Permanent otherAttacker = addCreatureReady(player1, new StreetbreakerWurm());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0, 1)));
+        otherAttacker.setAttacking(false);
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, otherAttacker, Keyword.FEAR)).isFalse();
+    }
+
+    @Test
+    void fearRemainsAfterCreatureStopsAttacking() {
+        addCreatureReady(player1, new SmogsteedRider());
+        Permanent otherAttacker = addCreatureReady(player1, new StreetbreakerWurm());
+
+        declareAttackers(player1, List.of(0, 1));
+        resolveAllTriggers();
+        otherAttacker.setAttacking(false);
+
+        assertThat(gqs.hasKeyword(gd, otherAttacker, Keyword.FEAR)).isTrue();
+    }
+    @Test
     void fearWearsOffAtEndOfTurn() {
         addCreatureReady(player1, new SmogsteedRider());
         Permanent otherAttacker = addCreatureReady(player1, new StreetbreakerWurm());
