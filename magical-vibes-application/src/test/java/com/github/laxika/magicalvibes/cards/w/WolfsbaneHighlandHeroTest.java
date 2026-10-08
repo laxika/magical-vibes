@@ -52,17 +52,69 @@ class WolfsbaneHighlandHeroTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(wolfsbane.getEffectivePower()).isEqualTo(2);
         assertThat(wolfsbane.getEffectiveToughness()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Activation limit applies before the first activation resolves")
+    void cannotActivateAgainWhileAbilityIsOnStack() {
+        Permanent wolfsbane = addReadyWolfsbane(player1);
+        addManaForAbility(player1, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+
+        harness.passBothPriorities();
+        assertThat(wolfsbane.getEffectivePower()).isEqualTo(4);
+        assertThat(wolfsbane.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent wolfsbane = harness.addToBattlefieldAndReturn(player1, new WolfsbaneHighlandHero());
+        wolfsbane.setSummoningSick(true);
+        wolfsbane.setTapped(true);
+        addManaForAbility(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wolfsbane.getEffectivePower()).isEqualTo(4);
+        assertThat(wolfsbane.getEffectiveToughness()).isEqualTo(4);
+        assertThat(wolfsbane.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability can be activated again during the opponent's next turn")
+    void activationLimitResetsOnNextTurn() {
+        Permanent wolfsbane = addReadyWolfsbane(player1);
+        addManaForAbility(player1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(wolfsbane.getEffectivePower()).isEqualTo(2);
+        assertThat(wolfsbane.getEffectiveToughness()).isEqualTo(2);
+
+        addManaForAbility(player1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wolfsbane.getEffectivePower()).isEqualTo(4);
+        assertThat(wolfsbane.getEffectiveToughness()).isEqualTo(4);
+    }
+
     private Permanent addReadyWolfsbane(Player player) {
-        Permanent permanent = new Permanent(new WolfsbaneHighlandHero());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new WolfsbaneHighlandHero());
         permanent.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
