@@ -3,10 +3,12 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalothGorger;
+import com.github.laxika.magicalvibes.cards.t.TeferiHeroOfDominaria;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,24 +17,20 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WarcryPhoenix.class, BalothGorger.class, TeferiHeroOfDominaria.class})
 class WarcryPhoenixTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Triggers when attacking with 3 creatures and Phoenix is in graveyard")
     void triggersWithThreeAttackers() {
-        Permanent bear1 = new Permanent(new GrizzlyBears());
+        Permanent bear1 = harness.addToBattlefieldAndReturn(player1, new BalothGorger());
         bear1.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear1);
 
-        Permanent bear2 = new Permanent(new GrizzlyBears());
+        Permanent bear2 = harness.addToBattlefieldAndReturn(player1, new BalothGorger());
         bear2.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear2);
 
-        Permanent bear3 = new Permanent(new GrizzlyBears());
+        Permanent bear3 = harness.addToBattlefieldAndReturn(player1, new BalothGorger());
         bear3.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear3);
 
         harness.setGraveyard(player1, List.of(new WarcryPhoenix()));
 
@@ -51,13 +49,11 @@ class WarcryPhoenixTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger when attacking with only 2 creatures")
     void doesNotTriggerWithTwoAttackers() {
-        Permanent bear1 = new Permanent(new GrizzlyBears());
+        Permanent bear1 = harness.addToBattlefieldAndReturn(player1, new BalothGorger());
         bear1.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear1);
 
-        Permanent bear2 = new Permanent(new GrizzlyBears());
+        Permanent bear2 = harness.addToBattlefieldAndReturn(player1, new BalothGorger());
         bear2.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear2);
 
         harness.setGraveyard(player1, List.of(new WarcryPhoenix()));
 
@@ -74,17 +70,14 @@ class WarcryPhoenixTest extends BaseCardTest {
     void acceptingReturnsPhoenixTappedAndAttacking() {
         WarcryPhoenix phoenix = new WarcryPhoenix();
 
-        Permanent bear1 = new Permanent(new GrizzlyBears());
+        Permanent bear1 = harness.addToBattlefieldAndReturn(player1, new BalothGorger());
         bear1.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear1);
 
-        Permanent bear2 = new Permanent(new GrizzlyBears());
+        Permanent bear2 = harness.addToBattlefieldAndReturn(player1, new BalothGorger());
         bear2.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear2);
 
-        Permanent bear3 = new Permanent(new GrizzlyBears());
+        Permanent bear3 = harness.addToBattlefieldAndReturn(player1, new BalothGorger());
         bear3.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear3);
 
         harness.setGraveyard(player1, List.of(phoenix));
         harness.addMana(player1, ManaColor.RED, 3);
@@ -96,7 +89,7 @@ class WarcryPhoenixTest extends BaseCardTest {
         // Accept the may ability
         harness.handleMayAbilityChosen(player1, true);
 
-        // Phoenix should be on the battlefield — it entered tapped and attacking
+        // Phoenix should be on the battlefield â€” it entered tapped and attacking
         // (auto-pass advances past END_OF_COMBAT, clearing isAttacking; use attackedThisTurn instead)
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getId().equals(phoenix.getId()));
@@ -119,17 +112,14 @@ class WarcryPhoenixTest extends BaseCardTest {
     void decliningKeepsPhoenixInGraveyard() {
         WarcryPhoenix phoenix = new WarcryPhoenix();
 
-        Permanent bear1 = new Permanent(new GrizzlyBears());
+        Permanent bear1 = harness.addToBattlefieldAndReturn(player1, new BalothGorger());
         bear1.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear1);
 
-        Permanent bear2 = new Permanent(new GrizzlyBears());
+        Permanent bear2 = harness.addToBattlefieldAndReturn(player1, new BalothGorger());
         bear2.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear2);
 
-        Permanent bear3 = new Permanent(new GrizzlyBears());
+        Permanent bear3 = harness.addToBattlefieldAndReturn(player1, new BalothGorger());
         bear3.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear3);
 
         harness.setGraveyard(player1, List.of(phoenix));
         harness.addMana(player1, ManaColor.RED, 3);
@@ -148,17 +138,14 @@ class WarcryPhoenixTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger when Phoenix is on the battlefield (not in graveyard)")
     void doesNotTriggerFromBattlefield() {
-        Permanent phoenix = new Permanent(new WarcryPhoenix());
+        Permanent phoenix = harness.addToBattlefieldAndReturn(player1, new WarcryPhoenix());
         phoenix.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(phoenix);
 
-        Permanent bear1 = new Permanent(new GrizzlyBears());
+        Permanent bear1 = harness.addToBattlefieldAndReturn(player1, new BalothGorger());
         bear1.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear1);
 
-        Permanent bear2 = new Permanent(new GrizzlyBears());
+        Permanent bear2 = harness.addToBattlefieldAndReturn(player1, new BalothGorger());
         bear2.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear2);
 
         // Phoenix is on the battlefield, not in the graveyard
         declareAttackers(List.of(0, 1, 2));
@@ -170,26 +157,19 @@ class WarcryPhoenixTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger during opponent's attack even with 3+ attackers")
     void doesNotTriggerDuringOpponentAttack() {
-        Permanent bear1 = new Permanent(new GrizzlyBears());
+        Permanent bear1 = harness.addToBattlefieldAndReturn(player2, new BalothGorger());
         bear1.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bear1);
 
-        Permanent bear2 = new Permanent(new GrizzlyBears());
+        Permanent bear2 = harness.addToBattlefieldAndReturn(player2, new BalothGorger());
         bear2.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bear2);
 
-        Permanent bear3 = new Permanent(new GrizzlyBears());
+        Permanent bear3 = harness.addToBattlefieldAndReturn(player2, new BalothGorger());
         bear3.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bear3);
 
         // Phoenix in player1's graveyard, but player2 is attacking
         harness.setGraveyard(player1, List.of(new WarcryPhoenix()));
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player2, List.of(0, 1, 2));
+        declareAttackers(player2, List.of(0, 1, 2));
 
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.stack.stream().noneMatch(
@@ -201,17 +181,14 @@ class WarcryPhoenixTest extends BaseCardTest {
     void cannotReturnWithoutMana() {
         WarcryPhoenix phoenix = new WarcryPhoenix();
 
-        Permanent bear1 = new Permanent(new GrizzlyBears());
+        Permanent bear1 = harness.addToBattlefieldAndReturn(player1, new BalothGorger());
         bear1.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear1);
 
-        Permanent bear2 = new Permanent(new GrizzlyBears());
+        Permanent bear2 = harness.addToBattlefieldAndReturn(player1, new BalothGorger());
         bear2.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear2);
 
-        Permanent bear3 = new Permanent(new GrizzlyBears());
+        Permanent bear3 = harness.addToBattlefieldAndReturn(player1, new BalothGorger());
         bear3.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear3);
 
         harness.setGraveyard(player1, List.of(phoenix));
         // No mana added
@@ -225,5 +202,66 @@ class WarcryPhoenixTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(phoenix.getId()));
         harness.assertNotOnBattlefield(player1, "Warcry Phoenix");
+    }
+
+    @Test
+    @DisplayName("Each graveyard Phoenix requires its own payment")
+    void payingForOneCopyDoesNotReturnAnother() {
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefieldAndReturn(player1, new BalothGorger()).setSummoningSick(false);
+        }
+        WarcryPhoenix first = new WarcryPhoenix();
+        WarcryPhoenix second = new WarcryPhoenix();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        declareAttackers(List.of(0, 1, 2));
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard() instanceof WarcryPhoenix).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Losing an attacker after declaration does not prevent returning Phoenix")
+    void attackerCountIsCheckedAtDeclaration() {
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefieldAndReturn(player1, new BalothGorger()).setSummoningSick(false);
+        }
+        harness.setGraveyard(player1, List.of(new WarcryPhoenix()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        declareAttackers(List.of(0, 1, 2));
+        Permanent removed = gd.playerBattlefields.get(player1.getId()).removeFirst();
+        gd.playerGraveyards.get(player1.getId()).add(removed.getCard());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Warcry Phoenix");
+        harness.assertNotInGraveyard(player1, "Warcry Phoenix");
+    }
+
+    @Test
+    @DisplayName("Returning Phoenix offers a choice of attacking the opponent or their planeswalker")
+    void choosesWhatReturnedPhoenixAttacks() {
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefieldAndReturn(player1, new BalothGorger()).setSummoningSick(false);
+        }
+        Permanent teferi = harness.addToBattlefieldAndReturn(player2, new TeferiHeroOfDominaria());
+        teferi.setCounterCount(CounterType.LOYALTY, 4);
+        harness.setGraveyard(player1, List.of(new WarcryPhoenix()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        declareAttackers(List.of(0, 1, 2));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }
 }
