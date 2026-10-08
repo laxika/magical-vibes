@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SludgeCrawler.class, GrizzlyBears.class})
+@CardUsed({SludgeCrawler.class})
 class SludgeCrawlerTest extends BaseCardTest {
 
     @Test
@@ -22,7 +21,7 @@ class SludgeCrawlerTest extends BaseCardTest {
     void combatDamageExilesTopCard() {
         Permanent crawler = addCreatureReady(player1, new SludgeCrawler());
         crawler.setAttacking(true);
-        GrizzlyBears topCard = new GrizzlyBears();
+        SludgeCrawler topCard = new SludgeCrawler();
         harness.setLibrary(player2, List.of(topCard));
 
         resolveCombat();
@@ -62,5 +61,68 @@ class SludgeCrawlerTest extends BaseCardTest {
 
         assertThat(crawler.getEffectivePower()).isEqualTo(1);
         assertThat(crawler.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Ingest waits for resolution and exiles exactly one card even after pumping")
+    void ingestUsesTheStackAndExilesOnlyOneCard() {
+        Permanent crawler = addCreatureReady(player1, new SludgeCrawler());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        crawler.setAttacking(true);
+        SludgeCrawler topCard = new SludgeCrawler();
+        SludgeCrawler nextCard = new SludgeCrawler();
+        SludgeCrawler ownCard = new SludgeCrawler();
+        harness.setLibrary(player2, List.of(topCard, nextCard));
+        harness.setLibrary(player1, List.of(ownCard));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.findExiledCard(topCard.getId())).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard, nextCard);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
+        assertThat(gd.findExiledCard(topCard.getId()).ownerId()).isEqualTo(player2.getId());
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(nextCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownCard);
+    }
+
+    @Test
+    @DisplayName("Ingest resolves harmlessly when the damaged player's library is empty")
+    void ingestWithEmptyLibrary() {
+        Permanent crawler = addCreatureReady(player1, new SludgeCrawler());
+        crawler.setAttacking(true);
+        harness.setLibrary(player2, List.of());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Sludge Crawler can pump using colored mana")
+    void tappedSummoningSickCrawlerCanActivate() {
+        Permanent crawler = harness.addToBattlefieldAndReturn(player1, new SludgeCrawler());
+        crawler.setSummoningSick(true);
+        crawler.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(crawler.getEffectivePower()).isEqualTo(2);
+        assertThat(crawler.getEffectiveToughness()).isEqualTo(2);
+        assertThat(crawler.isTapped()).isTrue();
     }
 }
