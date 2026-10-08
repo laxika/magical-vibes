@@ -77,6 +77,86 @@ class ZhalfirinCommanderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A tapped, summoning-sick Commander can boost itself")
+    void boostsItselfWhileTappedAndSummoningSick() {
+        Permanent commander = harness.addToBattlefieldAndReturn(player1, new ZhalfirinCommander());
+        commander.setSummoningSick(true);
+        commander.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, commander.getId());
+        harness.passBothPriorities();
+
+        assertThat(commander.getEffectivePower()).isEqualTo(3);
+        assertThat(commander.getEffectiveToughness()).isEqualTo(3);
+        assertThat(commander.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations give cumulative boosts")
+    void repeatedActivationsStack() {
+        addCommander();
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        Permanent commander = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+        harness.activateAbility(player1, 0, null, commander.getId());
+        harness.activateAbility(player1, 0, null, commander.getId());
+        resolveAllTriggers();
+
+        assertThat(commander.getEffectivePower()).isEqualTo(4);
+        assertThat(commander.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Activation requires two white mana")
+    void rejectsInsufficientWhiteMana() {
+        Permanent commander = addCreatureReady(player1, new ZhalfirinCommander());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, commander.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(commander.getEffectivePower()).isEqualTo(2);
+        assertThat(commander.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The boost resolves after its source leaves the battlefield")
+    void boostResolvesWithoutSource() {
+        addCommander();
+        Permanent commander = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent knight = addCreatureReady(player1, new ZhalfirinCommander());
+
+        harness.activateAbility(player1, 0, null, knight.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(commander);
+        gd.playerGraveyards.get(player1.getId()).add(commander.getCard());
+        harness.passBothPriorities();
+
+        assertThat(knight.getEffectivePower()).isEqualTo(3);
+        assertThat(knight.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Flanking shrinks each blocker without flanking separately")
+    void flankingShrinksMultipleBlockers() {
+        Permanent commander = addCreatureReady(player1, new ZhalfirinCommander());
+        commander.setAttacking(true);
+        Permanent firstBlocker = addCreatureReady(player2, new Squire());
+        Permanent secondBlocker = addCreatureReady(player2, new Squire());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(firstBlocker.getEffectivePower()).isZero();
+        assertThat(firstBlocker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(secondBlocker.getEffectivePower()).isZero();
+        assertThat(secondBlocker.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Flanking gives a blocker without flanking -1/-1 until end of turn")
     void flankingShrinksNonFlankingBlocker() {
         Permanent commander = addCreatureReady(player1, new ZhalfirinCommander());
