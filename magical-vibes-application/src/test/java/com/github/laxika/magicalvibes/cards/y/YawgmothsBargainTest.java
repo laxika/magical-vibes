@@ -43,7 +43,6 @@ class YawgmothsBargainTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
@@ -61,9 +60,64 @@ class YawgmothsBargainTest extends BaseCardTest {
         harness.forceStep(TurnStep.UPKEEP);
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Skipping the draw step proceeds directly from upkeep to the main phase")
+    void skipsEntireDrawStep() {
+        harness.setLibrary(player1, List.of(new YawgmothsBargain()));
+        harness.addToBattlefield(player1, new YawgmothsBargain());
+        harness.forceActivePlayer(player1);
+        gd.turnNumber = 2;
+        harness.forceStep(TurnStep.UPKEEP);
+
+        harness.withAutoStop(TurnStep.DRAW, () ->
+                harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities));
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Life is paid on activation and the card is drawn only on resolution")
+    void paysLifeBeforeDrawing() {
+        harness.setLibrary(player1, List.of(new YawgmothsBargain()));
+        harness.addToBattlefield(player1, new YawgmothsBargain());
+        harness.setLife(player1, 20);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The controller can pay life to draw during an opponent's turn")
+    void drawsOnOpponentsTurn() {
+        harness.setLibrary(player1, List.of(new YawgmothsBargain()));
+        harness.addToBattlefield(player1, new YawgmothsBargain());
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.ensurePriority(player1);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
