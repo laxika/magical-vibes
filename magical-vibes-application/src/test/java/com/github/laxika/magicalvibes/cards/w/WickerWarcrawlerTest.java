@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.PutMinusOneCounterAtEndOfCombat;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WickerWarcrawler.class, GrizzlyBears.class})
 class WickerWarcrawlerTest extends BaseCardTest {
 
     @Test
@@ -38,10 +40,7 @@ class WickerWarcrawlerTest extends BaseCardTest {
         attacker.setAttacking(true);
         Permanent crawler = addCreatureReady(player2, new WickerWarcrawler());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities(); // resolve the block trigger
 
@@ -65,6 +64,41 @@ class WickerWarcrawlerTest extends BaseCardTest {
         leaveEndOfCombat();
 
         assertThat(crawler.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The attack trigger schedules the counter without weakening combat damage")
+    void attackTriggerDoesNotImmediatelyPutCounter() {
+        Permanent crawler = addCreatureReady(player1, new WickerWarcrawler());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            assertThat(gd.stack).hasSize(1);
+            resolveAllTriggers();
+
+            assertThat(crawler.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        });
+    }
+
+    @Test
+    @DisplayName("The counter uses a respondable delayed trigger at the beginning of end of combat")
+    void counterTriggersAsEndOfCombatBegins() {
+        Permanent crawler = addCreatureReady(player1, new WickerWarcrawler());
+        harness.setLife(player2, 20);
+
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            declareAttackers(player1, List.of(0));
+            harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+
+            harness.assertLife(player2, 14);
+            assertThat(crawler.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+            assertThat(gd.stack).hasSize(1);
+
+            resolveAllTriggers();
+
+            assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
+            assertThat(crawler.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        });
     }
 
     private void leaveEndOfCombat() {
