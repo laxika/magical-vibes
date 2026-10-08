@@ -30,8 +30,7 @@ class XolatoyacTheSmilingFloodTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castCreature(player1, 0, forest.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(forest.getCounterCount(CounterType.FLOOD)).isEqualTo(1);
         assertThat(gqs.effectiveBasicLandTypes(gd, forest))
@@ -77,14 +76,97 @@ class XolatoyacTheSmilingFloodTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.withAutoStop(TurnStep.END_STEP, () -> {
-            harness.passBothPriorities();
-            harness.passBothPriorities();
+            harness.passUntil(TurnStep.END_STEP);
+            resolveAllTriggers();
         });
 
         assertThat(forest.isTapped()).isFalse();
         assertThat(counteredBear.isTapped()).isFalse();
         assertThat(uncounteredBear.isTapped()).isTrue();
         assertThat(opponentBear.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Removing the last flood counter permanently ends the Island effect")
+    void islandEffectDoesNotResumeWhenAnotherFloodCounterIsAdded() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new XolatoyacTheSmilingFlood()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0, forest.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).contains(CardSubtype.ISLAND);
+        forest.setCounterCount(CounterType.FLOOD, 2);
+        forest.setCounterCount(CounterType.FLOOD, 1);
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).contains(CardSubtype.ISLAND);
+        forest.setCounterCount(CounterType.FLOOD, 0);
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).doesNotContain(CardSubtype.ISLAND);
+        forest.setCounterCount(CounterType.FLOOD, 1);
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).doesNotContain(CardSubtype.ISLAND);
+    }
+
+    @Test
+    @DisplayName("Untapping checks counters when the end-step trigger resolves")
+    void endStepChecksCountersAtResolution() {
+        harness.addToBattlefield(player1, new XolatoyacTheSmilingFlood());
+        Permanent losingCounter = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent gainingCounter = harness.addToBattlefieldAndReturn(player1, new Forest());
+        losingCounter.setCounterCount(CounterType.FLOOD, 1);
+        losingCounter.tap();
+        gainingCounter.tap();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passUntil(TurnStep.END_STEP);
+            assertThat(gd.stack).hasSize(1);
+            losingCounter.setCounterCount(CounterType.FLOOD, 0);
+            gainingCounter.setCounterCount(CounterType.FLOOD, 1);
+            resolveAllTriggers();
+        });
+
+        assertThat(losingCounter.isTapped()).isTrue();
+        assertThat(gainingCounter.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The untap ability does not trigger at an opponent's end step")
+    void opponentEndStepDoesNotUntap() {
+        harness.addToBattlefield(player1, new XolatoyacTheSmilingFlood());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setCounterCount(CounterType.FLOOD, 1);
+        forest.tap();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passUntil(TurnStep.END_STEP);
+            resolveAllTriggers();
+        });
+
+        assertThat(forest.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A stun counter replaces the end-step untap")
+    void endStepRemovesStunCounterInsteadOfUntapping() {
+        harness.addToBattlefield(player1, new XolatoyacTheSmilingFlood());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setCounterCount(CounterType.STUN, 1);
+        forest.tap();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passUntil(TurnStep.END_STEP);
+            resolveAllTriggers();
+        });
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(forest.getCounterCount(CounterType.STUN)).isZero();
     }
 
     @Test
