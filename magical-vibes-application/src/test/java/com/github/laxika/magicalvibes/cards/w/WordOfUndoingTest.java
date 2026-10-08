@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.ArmorOfFaith;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.e.EssenceFlare;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.cards.v.ValorOfTheWorthy;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WordOfUndoing.class, ArmorOfFaith.class, BalduvianBears.class, EssenceFlare.class,
-        IcyManipulator.class, WhiteScarab.class})
+        IcyManipulator.class, WhiteScarab.class, ValorOfTheWorthy.class})
 class WordOfUndoingTest extends BaseCardTest {
 
     @Test
@@ -29,8 +30,7 @@ class WordOfUndoingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Balduvian Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Balduvian Bears");
         harness.assertInHand(player2, "Balduvian Bears");
@@ -46,8 +46,7 @@ class WordOfUndoingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WordOfUndoing()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         harness.assertNotOnBattlefield(player2, "Balduvian Bears");
         harness.assertNotOnBattlefield(player1, "Armor of Faith");
@@ -68,8 +67,7 @@ class WordOfUndoingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WordOfUndoing()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         harness.assertInHand(player2, "Balduvian Bears");
         harness.assertInHand(player1, "Armor of Faith");
@@ -88,8 +86,7 @@ class WordOfUndoingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WordOfUndoing()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         harness.assertInHand(player2, "Balduvian Bears");
         // Non-white owned Aura dies as an orphan when the creature leaves
@@ -107,8 +104,7 @@ class WordOfUndoingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WordOfUndoing()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         harness.assertInHand(player1, "Balduvian Bears");
         assertThat(gd.playerHands.get(player2.getId()))
@@ -129,13 +125,72 @@ class WordOfUndoingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WordOfUndoing()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         harness.assertInHand(player1, "White Scarab");
         harness.assertNotInGraveyard(player1, "White Scarab");
         harness.assertNotOnBattlefield(player2, "Balduvian Bears");
         harness.assertInHand(player2, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("Leaves owned white Auras on other creatures alone")
+    void doesNotReturnAurasAttachedToOtherCreatures() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ArmorOfFaith());
+        aura.setAttachedTo(other.getId());
+        harness.setHand(player1, List.of(new WordOfUndoing()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInHand(player2, "Balduvian Bears");
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+        harness.assertOnBattlefield(player1, "Armor of Faith");
+        harness.assertNotInHand(player1, "Armor of Faith");
+        assertThat(aura.getAttachedTo()).isEqualTo(other.getId());
+    }
+
+    @Test
+    @DisplayName("Does not return Auras when the creature target has already left")
+    void doesNotReturnAurasWhenTargetLeavesBeforeResolution() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ArmorOfFaith());
+        aura.setAttachedTo(bears.getId());
+        harness.setHand(player1, List.of(new WordOfUndoing()));
+        harness.setHand(player2, List.of(new WordOfUndoing()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, bears.getId());
+        harness.castInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Balduvian Bears");
+        harness.assertInGraveyard(player1, "Armor of Faith");
+        harness.assertNotInHand(player1, "Armor of Faith");
+        harness.assertInGraveyard(player1, "Word of Undoing");
+        harness.assertInGraveyard(player2, "Word of Undoing");
+    }
+
+    @Test
+    @DisplayName("Simultaneously returning an Aura and its creature preserves the Aura's leaves trigger")
+    void returningAuraAndCreatureTogetherCreatesSpirit() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ValorOfTheWorthy());
+        aura.setAttachedTo(bears.getId());
+        harness.setHand(player1, List.of(new WordOfUndoing()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Balduvian Bears");
+        harness.assertInHand(player1, "Valor of the Worthy");
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
     }
 
     @Test
