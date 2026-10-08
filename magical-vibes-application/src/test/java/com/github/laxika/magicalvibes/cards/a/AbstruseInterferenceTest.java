@@ -55,6 +55,41 @@ class AbstruseInterferenceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining an affordable payment counters the spell and still creates a Scion")
+    void countersSpellWhenControllerDeclinesPayment() {
+        castInterference(3);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertScionCreated();
+    }
+
+    @Test
+    @DisplayName("Does not create a Scion when its sole target leaves the stack before resolution")
+    void doesNotCreateScionWhenTargetBecomesIllegal() {
+        GrizzlyBears bears = castInterference(2);
+        harness.passPriority(player2);
+        harness.setHand(player1, List.of(new AbstruseInterference()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(countPermanents(player1, "Eldrazi Scion")).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Abstruse Interference");
+        harness.assertNotOnBattlefield(player2, "Eldrazi Scion");
+        assertThat(countPermanents(player1, "Eldrazi Scion")).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("An Eldrazi Scion can be sacrificed for colorless mana")
     void scionCanBeSacrificedForColorlessMana() {
         castInterference(2);
@@ -83,6 +118,8 @@ class AbstruseInterferenceTest extends BaseCardTest {
     }
 
     private void assertScionCreated() {
+        assertThat(countPermanents(player2, "Eldrazi Scion")).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Eldrazi Scion");
         Permanent scion = findPermanent(player2, "Eldrazi Scion");
         assertThat(scion.getCard().getColor()).isNull();
         assertThat(scion.getCard().getSubtypes()).containsExactly(CardSubtype.ELDRAZI, CardSubtype.SCION);
