@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ZealotIlVec.class, AshcoatBear.class})
+@CardUsed({ZealotIlVec.class, AshcoatBear.class, FlaringPain.class})
 class ZealotIlVecTest extends BaseCardTest {
 
     private Permanent addAttacker() {
@@ -115,5 +116,49 @@ class ZealotIlVecTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Declining allows normal combat damage to the defending player")
+    void decliningAllowsCombatDamage() {
+        addAttacker();
+        Permanent victim = addDefenderCreature();
+        harness.setLife(player2, 20);
+
+        advanceToUnblockedMay(victim);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.resolveCombatDamage();
+
+        assertThat(victim.getMarkedDamage()).isZero();
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Zealot can target itself and dies from its own damage")
+    void canTargetItself() {
+        Permanent attacker = addAttacker();
+
+        advanceToUnblockedMay(attacker);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Zealot il-Vec");
+        harness.assertInGraveyard(player1, "Zealot il-Vec");
+    }
+
+    @Test
+    @DisplayName("Unpreventable combat damage is dealt after accepting the ability")
+    void unpreventableCombatDamageStillDealt() {
+        addAttacker();
+        Permanent victim = addDefenderCreature();
+        harness.setLife(player2, 20);
+
+        advanceToUnblockedMay(victim);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.castFromHand(player1, new FlaringPain(), "{1}{R}");
+        harness.passBothPriorities();
+        harness.resolveCombatDamage();
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player2, 19);
     }
 }
