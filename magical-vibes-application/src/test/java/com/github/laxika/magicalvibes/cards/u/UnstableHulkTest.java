@@ -37,7 +37,6 @@ class UnstableHulkTest extends BaseCardTest {
         turnFaceUp(hulk);
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(hulk.getEffectivePower()).isEqualTo(2);
@@ -63,13 +62,55 @@ class UnstableHulkTest extends BaseCardTest {
         assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
     }
 
+    @Test
+    void castingFaceUpDoesNotGrantTheTurnedFaceUpAbility() {
+        harness.setHand(player1, List.of(new UnstableHulk()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent hulk = findPermanent(player1, "Unstable Hulk");
+        assertThat(hulk.getEffectivePower()).isEqualTo(2);
+        assertThat(hulk.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, hulk, Keyword.TRAMPLE)).isFalse();
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void turningFaceUpOnOpponentsTurnSkipsControllersNextTurn() {
+        Permanent hulk = castFaceDown();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        advanceTurn(player2);
+        harness.ensurePriority(player1);
+
+        turnFaceUp(hulk);
+        harness.passBothPriorities();
+
+        assertThat(hulk.getEffectivePower()).isEqualTo(8);
+        assertThat(hulk.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.hasKeyword(gd, hulk, Keyword.TRAMPLE)).isTrue();
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isZero();
+
+        advanceTurn(player2);
+
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(hulk.getEffectivePower()).isEqualTo(2);
+        assertThat(hulk.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, hulk, Keyword.TRAMPLE)).isFalse();
+    }
+
     private Permanent castFaceDown() {
         harness.setHand(player1, List.of(new UnstableHulk()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         Permanent hulk = findPermanent(player1, "Unstable Hulk");
@@ -87,7 +128,6 @@ class UnstableHulkTest extends BaseCardTest {
 
     private void advanceTurn(Player expectedActivePlayer) {
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passUntil(expectedActivePlayer, TurnStep.PRECOMBAT_MAIN);
     }
 }
