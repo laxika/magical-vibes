@@ -15,8 +15,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed(UthdenTroll.class)
 class UthdenTrollTest extends BaseCardTest {
 
-    // ===== Activate regeneration ability =====
-
     @Test
     @DisplayName("Activating the ability with mana puts the regeneration ability on the stack")
     void activationStacksAbility() {
@@ -98,8 +96,6 @@ class UthdenTrollTest extends BaseCardTest {
         assertThat(troll.isTapped()).isFalse();
     }
 
-    // ===== Regeneration saves from combat =====
-
     @Test
     @DisplayName("Regeneration shield saves Uthden Troll from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
@@ -134,4 +130,58 @@ class UthdenTrollTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Uthden Troll");
     }
 
+    @Test
+    @DisplayName("A tapped, summoning-sick Troll can activate regeneration")
+    void tappedSummoningSickTrollCanActivate() {
+        Permanent troll = harness.addToBattlefieldAndReturn(player1, new UthdenTroll());
+        troll.setSummoningSick(true);
+        troll.tap();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(troll.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creating a shield does not regenerate the Troll immediately")
+    void creatingShieldDoesNotHealOrTap() {
+        Permanent troll = addCreatureReady(player1, new UthdenTroll());
+        troll.setMarkedDamage(1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(troll.getMarkedDamage()).isEqualTo(1);
+        assertThat(troll.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Multiple activations create separate shields and lethal damage spends only one")
+    void multipleShieldsReplaceOneDestruction() {
+        Permanent troll = addCreatureReady(player1, new UthdenTroll());
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(troll.getRegenerationShield()).isEqualTo(2);
+
+        troll.setBlocking(true);
+        troll.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player2, new UthdenTroll());
+        attacker.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Uthden Troll");
+        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(troll.getMarkedDamage()).isZero();
+        assertThat(troll.isTapped()).isTrue();
+        assertThat(troll.isBlocking()).isFalse();
+        assertThat(troll.getBlockingTargets()).isEmpty();
+    }
 }
