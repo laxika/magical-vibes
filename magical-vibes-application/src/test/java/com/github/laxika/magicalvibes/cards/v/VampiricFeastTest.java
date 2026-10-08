@@ -71,4 +71,47 @@ class VampiricFeastTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Whiptail Wurm");
     }
+
+    @Test
+    @DisplayName("Vampiric Feast can target its controller, dealing damage before gaining life")
+    void canTargetController() {
+        harness.setHand(player1, List.of(new VampiricFeast()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+        harness.setLife(player1, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 5);
+        harness.assertInGraveyard(player1, "Vampiric Feast");
+    }
+
+    @Test
+    @DisplayName("Vampiric Feast can target its controller's creature and gains the full 4 life")
+    void canTargetOwnCreature() {
+        harness.addToBattlefield(player1, new HillGiant());
+        harness.setHand(player1, List.of(new VampiricFeast()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player1, "Hill Giant"));
+
+        harness.assertInGraveyard(player1, "Hill Giant");
+        harness.assertLife(player1, 24);
+    }
+
+    @Test
+    @DisplayName("Vampiric Feast gains no life when its only target leaves before resolution")
+    void doesNotGainLifeWhenTargetLeaves() {
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setHand(player1, List.of(new VampiricFeast()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+        harness.setLife(player1, 20);
+
+        harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Hill Giant"));
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Vampiric Feast");
+    }
 }
