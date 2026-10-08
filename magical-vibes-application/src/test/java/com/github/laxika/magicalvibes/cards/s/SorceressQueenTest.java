@@ -86,4 +86,56 @@ class SorceressQueenTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be another creature");
     }
+
+    @Test
+    @DisplayName("Can target another Sorceress Queen")
+    void canTargetAnotherSorceressQueen() {
+        addCreatureReady(player1, new SorceressQueen());
+        Permanent otherQueen = addCreatureReady(player2, new SorceressQueen());
+
+        harness.activateAbility(player1, 0, null, otherQueen.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, otherQueen)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, otherQueen)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Can target another creature controlled by its controller")
+    void canTargetOwnCreature() {
+        addCreatureReady(player1, new SorceressQueen());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void cannotActivateWithSummoningSickness() {
+        Permanent queen = addCreatureReady(player1, new SorceressQueen());
+        queen.setSummoningSick(true);
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bear.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(queen.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Sorceress Queen cannot activate again")
+    void cannotActivateWhileTapped() {
+        Permanent queen = addCreatureReady(player1, new SorceressQueen());
+        queen.setTapped(true);
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bear.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
 }
