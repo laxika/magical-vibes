@@ -13,11 +13,14 @@ import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SongOfInspiration.class, AirElemental.class, GrizzlyBears.class, Shock.class})
 class SongOfInspirationTest extends BaseCardTest {
@@ -77,6 +80,125 @@ class SongOfInspirationTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(17);
         assertThat(gd.playerHands.get(player1.getId())).contains(first, second);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(unselected, spell);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"7, 10", "8, 17", "20, 17"})
+    void usesModifiedResultAtBothBoundariesAndAboveTwenty(int roll, int expectedLife) {
+        Card first = new GrizzlyBears();
+        Card second = new AirElemental();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new SongOfInspiration()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.setLife(player1, 10);
+        setRoll(roll);
+
+        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, expectedLife);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+    }
+
+    @Test
+    void canResolveWithNoTargets() {
+        Card spell = new SongOfInspiration();
+        harness.setLife(player1, 10);
+        setRoll(20);
+
+        harness.castFromHand(player1, spell, "{3}{G}{G}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"8, 10, true", "13, 12, true", "8, 10, false", "13, 12, false"})
+    void ignoresManaValueOfTargetThatLeftTheGraveyardBeforeResolution(int roll, int expectedLife, boolean exiled) {
+        Card remaining = new GrizzlyBears();
+        Card departed = new AirElemental();
+        harness.setGraveyard(player1, List.of(remaining, departed));
+        harness.setHand(player1, List.of(new SongOfInspiration()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.setLife(player1, 10);
+        setRoll(roll);
+
+        harness.castInstant(player1, 0, List.of(remaining.getId(), departed.getId()));
+        harness.setGraveyard(player1, List.of(remaining));
+        if (exiled) {
+            harness.setExile(player1, List.of(departed));
+        } else {
+            harness.setHand(player1, List.of(departed));
+        }
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, expectedLife);
+        if (exiled) {
+            assertThat(gd.playerHands.get(player1.getId())).containsExactly(remaining);
+            assertThat(gd.findExiledCard(departed.getId())).isNotNull();
+        } else {
+            assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(remaining, departed);
+        }
+    }
+
+    @Test
+    void doesNotResolveWhenItsOnlyTargetLeavesTheGraveyard() {
+        Card target = new GrizzlyBears();
+        Card spell = new SongOfInspiration();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.setLife(player1, 10);
+        setRoll(20);
+
+        harness.castInstant(player1, 0, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
+    void returnsOneTargetAndGainsItsManaValue() {
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new SongOfInspiration()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.setLife(player1, 10);
+        setRoll(13);
+
+        harness.castInstant(player1, 0, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 12);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+    }
+
+    @Test
+    void cannotTargetAnInstant() {
+        Card instant = new Shock();
+        harness.setGraveyard(player1, List.of(instant));
+        harness.setHand(player1, List.of(new SongOfInspiration()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(instant.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotTargetAnOpponentsPermanentCard() {
+        Card opposing = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(opposing));
+        harness.setHand(player1, List.of(new SongOfInspiration()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(opposing.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void setRoll(int result) {
