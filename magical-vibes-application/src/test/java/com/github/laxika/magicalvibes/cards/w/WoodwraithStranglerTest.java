@@ -20,14 +20,13 @@ class WoodwraithStranglerTest extends BaseCardTest {
     @Test
     @DisplayName("Exiles a creature card from the graveyard to gain a regeneration shield")
     void exilesCreatureCardForShield() {
-        harness.addToBattlefield(player1, new WoodwraithStrangler());
+        Permanent strangler = harness.addToBattlefieldAndReturn(player1, new WoodwraithStrangler());
         harness.setGraveyard(player1, List.of(new Watchwolf()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleGraveyardCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        Permanent strangler = findPermanent(player1, "Woodwraith Strangler");
         assertThat(strangler.getRegenerationShield()).isEqualTo(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(card -> card.getName())
@@ -75,5 +74,57 @@ class WoodwraithStranglerTest extends BaseCardTest {
         Permanent strangler = findPermanent(player1, "Woodwraith Strangler");
         assertThat(strangler).isNotNull();
         assertThat(strangler.getRegenerationShield()).isZero();
+    }
+    @Test
+    @DisplayName("Exiling the creature is a cost paid before regeneration resolves")
+    void exileCostIsPaidBeforeResolution() {
+        Permanent strangler = harness.addToBattlefieldAndReturn(player1, new WoodwraithStrangler());
+        harness.setGraveyard(player1, List.of(new Char(), new Watchwolf()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleGraveyardCardChosen(player1, 1);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(card -> card.getName())
+                .containsExactly("Char");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(card -> card.getName())
+                .containsExactly("Watchwolf");
+        assertThat(strangler.getRegenerationShield()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(strangler.getRegenerationShield()).isEqualTo(1);
+        assertThat(strangler.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the cost with a creature in the opponent's graveyard")
+    void cannotExileOpponentsCreature() {
+        harness.addToBattlefield(player1, new WoodwraithStrangler());
+        harness.setGraveyard(player2, List.of(new Watchwolf()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player2.getId())).extracting(card -> card.getName())
+                .containsExactly("Watchwolf");
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and accumulate multiple shields")
+    void canActivateRepeatedlyWhileTapped() {
+        Permanent strangler = harness.addToBattlefieldAndReturn(player1, new WoodwraithStrangler());
+        strangler.setTapped(true);
+        harness.setGraveyard(player1, List.of(new Watchwolf(), new Watchwolf()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(strangler.getRegenerationShield()).isEqualTo(2);
+        assertThat(strangler.isTapped()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
     }
 }
