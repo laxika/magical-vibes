@@ -41,4 +41,62 @@ class VolatileRiftTest extends BaseCardTest {
 
         assertThat(gd.perpetualCardPowerToughnessModifiers).doesNotContainKey(noncreature.getId());
     }
+
+    @Test
+    void opponentsCreatureDrawDoesNotTrigger() {
+        harness.addToBattlefield(player1, new VolatileRift());
+        Card creature = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(creature));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.perpetualCardPowerToughnessModifiers).doesNotContainKey(creature.getId());
+    }
+
+    @Test
+    void multipleRiftsAccumulateBoostsWithoutCountingColorsTwice() {
+        harness.addToBattlefield(player1, new VolatileRift());
+        harness.addToBattlefield(player1, new VolatileRift());
+        Card creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(creature));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(gd.perpetualCardPowerToughnessModifiers)
+                .containsEntry(creature.getId(), new CardPowerToughnessModifier(4, 0));
+    }
+
+    @Test
+    void colorsAreCountedAtResolutionAfterRiftLeavesBattlefield() {
+        var rift = harness.addToBattlefieldAndReturn(player1, new VolatileRift());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Card creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(creature));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(rift);
+        harness.setGraveyard(player1, List.of(rift.getCard()));
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(gd.perpetualCardPowerToughnessModifiers)
+                .containsEntry(creature.getId(), new CardPowerToughnessModifier(1, 0));
+    }
+
+    @Test
+    void boostStillAppliesWhenDrawnCreatureMovesToGraveyardBeforeResolution() {
+        harness.addToBattlefield(player1, new VolatileRift());
+        Card creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(creature));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(creature));
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(gd.perpetualCardPowerToughnessModifiers)
+                .containsEntry(creature.getId(), new CardPowerToughnessModifier(2, 0));
+    }
 }
