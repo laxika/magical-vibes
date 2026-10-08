@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.e.EarthElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WallOfBone.class, EarthElemental.class, GrizzlyBears.class})
+@CardUsed({WallOfBone.class, EarthElemental.class, GrizzlyBears.class, LightningBolt.class})
 class WallOfBoneTest extends BaseCardTest {
 
     @Test
@@ -58,7 +59,7 @@ class WallOfBoneTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Activating regeneration ability puts it on the stack with self as target")
+    @DisplayName("Activating regeneration ability puts it on the stack referencing its source")
     void activatingAbilityPutsOnStack() {
         Permanent wallPerm = addWallOfBoneReady(player1);
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -184,6 +185,104 @@ class WallOfBoneTest extends BaseCardTest {
         harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(findPermanent(player1, "Wall of Bone").getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Regeneration can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfBone());
+        wall.setSummoningSick(true);
+        wall.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(wall.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Regeneration clears accumulated damage and protects only one destruction")
+    void regenerationClearsDamageAndIsConsumedOnce() {
+        Permanent wall = addWallOfBoneReady(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt(),
+                new LightningBolt(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveInstant(player1, 0, wall.getId());
+        assertThat(wall.getMarkedDamage()).isEqualTo(3);
+        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(wall.isTapped()).isFalse();
+
+        harness.castAndResolveInstant(player1, 0, wall.getId());
+        harness.assertOnBattlefield(player1, "Wall of Bone");
+        assertThat(wall.getMarkedDamage()).isZero();
+        assertThat(wall.getRegenerationShield()).isZero();
+        assertThat(wall.isTapped()).isTrue();
+
+        harness.castAndResolveInstant(player1, 0, wall.getId());
+        harness.assertOnBattlefield(player1, "Wall of Bone");
+        assertThat(wall.getMarkedDamage()).isEqualTo(3);
+
+        harness.castAndResolveInstant(player1, 0, wall.getId());
+        harness.assertNotOnBattlefield(player1, "Wall of Bone");
+        harness.assertInGraveyard(player1, "Wall of Bone");
+    }
+
+    @Test
+    @DisplayName("Repeated activations protect against separate destruction events")
+    void multipleShieldsProtectAgainstSeparateDestructions() {
+        Permanent wall = addWallOfBoneReady(player1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(wall.getRegenerationShield()).isEqualTo(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt(),
+                new LightningBolt(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveInstant(player1, 0, wall.getId());
+        harness.castAndResolveInstant(player1, 0, wall.getId());
+        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(wall.getMarkedDamage()).isZero();
+
+        harness.castAndResolveInstant(player1, 0, wall.getId());
+        harness.castAndResolveInstant(player1, 0, wall.getId());
+        harness.assertOnBattlefield(player1, "Wall of Bone");
+        assertThat(wall.getRegenerationShield()).isZero();
+        assertThat(wall.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Regenerating a blocking Wall of Bone removes it from combat")
+    void regenerationRemovesWallFromCombat() {
+        Permanent wall = addWallOfBoneReady(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        wall.setBlocking(true);
+        wall.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player2, new EarthElemental());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Wall of Bone");
+        assertThat(wall.isTapped()).isTrue();
+        assertThat(wall.isBlocking()).isFalse();
+        assertThat(wall.getBlockingTargets()).isEmpty();
+        assertThat(wall.getMarkedDamage()).isZero();
+        assertThat(wall.getRegenerationShield()).isZero();
+        harness.assertLife(player1, 20);
     }
 
     private Permanent addWallOfBoneReady(Player player) {
