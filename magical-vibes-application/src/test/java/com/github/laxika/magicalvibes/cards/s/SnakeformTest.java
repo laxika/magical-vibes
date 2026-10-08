@@ -1,15 +1,18 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Snakeform.class, AirElemental.class, FountainOfYouth.class, GrizzlyBears.class, AmoeboidChangeling.class})
 class SnakeformTest extends BaseCardTest {
 
     @Test
@@ -112,7 +116,73 @@ class SnakeformTest extends BaseCardTest {
     private void castSnakeform(UUID targetId) {
         harness.setHand(player1, List.of(new Snakeform()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, targetId);
+    }
+
+    @Test
+    @DisplayName("A later creature-type removal overrides Snakeform's Snake type")
+    void laterTypeRemovalOverridesSnakeform() {
+        Permanent changeling = harness.addToBattlefieldAndReturn(player1, new AmoeboidChangeling());
+        changeling.setSummoningSick(false);
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        castSnakeform(elemental.getId());
+        assertThat(gqs.hasEffectiveSubtype(gd, elemental, CardSubtype.SNAKE)).isTrue();
+
+        harness.activateAbility(player1, 0, 1, null, elemental.getId());
         harness.passBothPriorities();
+
+        assertThat(gqs.hasEffectiveSubtype(gd, elemental, CardSubtype.SNAKE)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, elemental, CardSubtype.ELEMENTAL)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Snakeform overrides an earlier creature-type removal")
+    void snakeformOverridesEarlierTypeRemoval() {
+        Permanent changeling = harness.addToBattlefieldAndReturn(player1, new AmoeboidChangeling());
+        changeling.setSummoningSick(false);
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.activateAbility(player1, 0, 1, null, elemental.getId());
+        harness.passBothPriorities();
+
+        castSnakeform(elemental.getId());
+
+        assertThat(gqs.hasEffectiveSubtype(gd, elemental, CardSubtype.SNAKE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, elemental, CardSubtype.ELEMENTAL)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Counters modify the 1/1 base stats and remain after cleanup")
+    void preservesCounters() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        elemental.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        castSnakeform(elemental.getId());
+
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(3);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Does not draw when the only target leaves before resolution")
+    void doesNotDrawWhenTargetLeaves() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Snakeform()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castInstant(player1, 0, elemental.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, elemental));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Snakeform");
     }
 }
