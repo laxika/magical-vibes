@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({VisaraTheDreadful.class, ElvishWarrior.class, Island.class})
@@ -48,5 +49,64 @@ class VisaraTheDreadfulTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, island.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can destroy a creature its controller controls and taps as a cost")
+    void destroysOwnCreatureAndPaysTapCost() {
+        Permanent visara = addCreatureReady(player1, new VisaraTheDreadful());
+        Permanent target = addCreatureReady(player1, new ElvishWarrior());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(visara.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Elvish Warrior");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Elvish Warrior");
+        harness.assertNotOnBattlefield(player1, "Elvish Warrior");
+        harness.assertOnBattlefield(player1, "Visara the Dreadful");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent visara = addCreatureReady(player1, new VisaraTheDreadful());
+        Permanent target = addCreatureReady(player2, new ElvishWarrior());
+        visara.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+        harness.assertOnBattlefield(player2, "Elvish Warrior");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate with summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        Permanent visara = addCreatureReady(player1, new VisaraTheDreadful());
+        Permanent target = addCreatureReady(player2, new ElvishWarrior());
+        visara.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(visara.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Elvish Warrior");
+    }
+
+    @Test
+    @DisplayName("Can target itself")
+    void canDestroyItself() {
+        Permanent visara = addCreatureReady(player1, new VisaraTheDreadful());
+
+        harness.activateAbility(player1, 0, null, visara.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Visara the Dreadful");
+        harness.assertInGraveyard(player1, "Visara the Dreadful");
     }
 }
