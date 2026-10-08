@@ -26,8 +26,7 @@ class WordOfCommandTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player2, ManaColor.BLACK, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.WordOfCommandCardChoice.class);
@@ -36,9 +35,7 @@ class WordOfCommandTest extends BaseCardTest {
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
-        while (!gd.interaction.isAwaitingInput() && !gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(3);
         assertThat(gd.mindControllerPlayerId).isNull();
@@ -49,13 +46,12 @@ class WordOfCommandTest extends BaseCardTest {
     @Test
     void onlyAllowsManaFromControlledLandsWhilePlayingTheCard() {
         harness.setHand(player1, List.of(new WordOfCommand()));
-        harness.setHand(player2, List.of(new DarkRitual()));
+        harness.setHand(player2, List.of(new LlanowarElves()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addToBattlefield(player2, new Forest());
         harness.addToBattlefield(player2, new LlanowarElves());
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
 
         assertThatThrownBy(() -> gs.tapPermanent(gd, player1, 1))
@@ -64,6 +60,86 @@ class WordOfCommandTest extends BaseCardTest {
 
         gs.tapPermanent(gd, player1, 0);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    void cannotDeclineToPlayAnAffordableChosenCard() {
+        harness.setHand(player1, List.of(new WordOfCommand()));
+        harness.setHand(player2, List.of(new DarkRitual()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThatThrownBy(() -> harness.handleMayAbilityChosen(player1, false))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void castsCreatureDuringTheOtherPlayersTurn() {
+        LlanowarElves elves = new LlanowarElves();
+        harness.setHand(player1, List.of(new WordOfCommand()));
+        harness.setHand(player2, List.of(elves));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(elves);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(elves.getId()));
+    }
+
+    @Test
+    void releasesControlWhileTheChosenSpellWaitsOnTheStack() {
+        DarkRitual ritual = new DarkRitual();
+        harness.setHand(player1, List.of(new WordOfCommand()));
+        harness.setHand(player2, List.of(ritual));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(ritual.getId()));
+        assertThat(gd.mindControllerPlayerId).isNull();
+        assertThat(gd.mindControlledPlayerId).isNull();
+        resolveAllTriggers();
+    }
+
+    @Test
+    void cannotActivateLandManaThatCannotBeSpentOnTheChosenCard() {
+        harness.setHand(player1, List.of(new WordOfCommand()));
+        harness.setHand(player2, List.of(new DarkRitual()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThatThrownBy(() -> gs.tapPermanent(gd, player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void emptyHandFinishesWithoutAChoiceOrPlayerControl() {
+        harness.setHand(player1, List.of(new WordOfCommand()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.mindControllerPlayerId).isNull();
+        assertThat(gd.mindControlledPlayerId).isNull();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
     }
 
     @Test
