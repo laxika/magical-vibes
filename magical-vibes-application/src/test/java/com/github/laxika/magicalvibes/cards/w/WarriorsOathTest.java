@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
+import com.github.laxika.magicalvibes.cards.c.CaptureOfJingzhou;
 import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,29 +13,17 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WarriorsOath.class, PlatinumAngel.class})
+@CardUsed({WarriorsOath.class, PlatinumAngel.class, CaptureOfJingzhou.class})
 class WarriorsOathTest extends BaseCardTest {
-
-    /** Stops auto-pass at PRECOMBAT_MAIN for both players so turns advance one at a time. */
-    private void enableAutoStop() {
-        Set<TurnStep> stops1 = ConcurrentHashMap.newKeySet();
-        stops1.add(TurnStep.PRECOMBAT_MAIN);
-        gd.playerAutoStopSteps.put(player1.getId(), stops1);
-        Set<TurnStep> stops2 = ConcurrentHashMap.newKeySet();
-        stops2.add(TurnStep.PRECOMBAT_MAIN);
-        gd.playerAutoStopSteps.put(player2.getId(), stops2);
-    }
 
     private void castWarriorsOath() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player1, new WarriorsOath(), "{R}{R}");
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
     }
 
     @Test
@@ -68,12 +57,11 @@ class WarriorsOathTest extends BaseCardTest {
     @Test
     @DisplayName("You lose the game at the beginning of the extra turn's end step")
     void extraTurnEndStepTriggersLoss() {
-        enableAutoStop();
         castWarriorsOath();
 
         // End the current turn -> begin the extra turn (still player1, next turn number).
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
 
         // Reach the extra turn's end step -> delayed loss fires onto the stack.
@@ -81,7 +69,7 @@ class WarriorsOathTest extends BaseCardTest {
         gs.advanceStep(gd); // -> END_STEP
         assertThat(gd.stack).isNotEmpty();
 
-        harness.passBothPriorities(); // resolve the loss
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities); // resolve the loss
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("loses the game"));
@@ -91,16 +79,15 @@ class WarriorsOathTest extends BaseCardTest {
     @Test
     @DisplayName("Platinum Angel keeps you from losing at the extra turn's end step")
     void platinumAngelPreventsLoss() {
-        enableAutoStop();
         harness.addToBattlefield(player1, new PlatinumAngel());
         castWarriorsOath();
 
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd); // -> END_STEP
-        harness.passBothPriorities(); // resolve the loss trigger
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities); // resolve the loss trigger
 
         // Can't-lose: the trigger resolves but the player stays in the game.
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
@@ -109,7 +96,6 @@ class WarriorsOathTest extends BaseCardTest {
     @Test
     @DisplayName("Each delayed loss waits for the extra turn created by its own spell")
     void delayedLossesTrackTheirOwnExtraTurns() {
-        enableAutoStop();
         harness.addToBattlefield(player1, new PlatinumAngel());
         castWarriorsOath();
         castWarriorsOath();
@@ -124,15 +110,66 @@ class WarriorsOathTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).hasSize(1);
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
 
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd); // -> second extra turn's END_STEP
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).isEmpty();
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("A later extra-turn spell does not make the Oath loss trigger early")
+    void insertedExtraTurnDoesNotTriggerLoss() {
+        castWarriorsOath();
+        harness.castFromHand(player1, new CaptureOfJingzhou(), "{3}{U}{U}");
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
+
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).hasSize(1);
+
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("The second player receives the extra turn and loses to their own Oath")
+    void secondPlayerReceivesExtraTurnAndLoses() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player2, new WarriorsOath(), "{R}{R}");
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
+
+        assertThat(gd.extraTurns).containsExactly(player2.getId());
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
     }
 }
