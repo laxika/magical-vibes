@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.y;
 import com.github.laxika.magicalvibes.cards.a.Archangel;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.q.Quicksand;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({YavimayaCradleOfGrowth.class, Quicksand.class, Archangel.class})
+@CardUsed({YavimayaCradleOfGrowth.class, Quicksand.class, Archangel.class, Forest.class, Swamp.class})
 class YavimayaCradleOfGrowthTest extends BaseCardTest {
 
     @Test
@@ -25,7 +26,6 @@ class YavimayaCradleOfGrowthTest extends BaseCardTest {
         assertThat(gqs.hasEffectiveSubtype(gd, opponentLand, CardSubtype.FOREST)).isTrue();
     }
 
-    @CardUsed(Forest.class)
     @Test
     void landRetainsItsOtherLandTypes() {
         harness.addToBattlefield(player1, new YavimayaCradleOfGrowth());
@@ -67,5 +67,41 @@ class YavimayaCradleOfGrowthTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void yavimayaItselfIsAForestAndCanTapForGreen() {
+        Permanent yavimaya = harness.addToBattlefieldAndReturn(player1, new YavimayaCradleOfGrowth());
+
+        assertThat(gqs.hasEffectiveSubtype(gd, yavimaya, CardSubtype.FOREST)).isTrue();
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(yavimaya.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    void swampRetainsItsTypeAndBlackManaAbility() {
+        harness.addToBattlefield(player1, new YavimayaCradleOfGrowth());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+
+        assertThat(gqs.hasEffectiveSubtype(gd, swamp, CardSubtype.SWAMP)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, swamp, CardSubtype.FOREST)).isTrue();
+        harness.tapPermanent(player1, 1);
+
+        assertThat(swamp.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+    }
+
+    @Test
+    void swampCanUseItsAdditionalGreenManaAbility() {
+        harness.addToBattlefield(player1, new YavimayaCradleOfGrowth());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThat(swamp.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 }
