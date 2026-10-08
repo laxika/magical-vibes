@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrimMonolith;
+import com.github.laxika.magicalvibes.cards.f.FranticSearch;
 import com.github.laxika.magicalvibes.cards.p.PlagueBeetle;
+import com.github.laxika.magicalvibes.cards.t.TragicPoet;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Sluggishness.class, PlagueBeetle.class, GrimMonolith.class})
+@CardUsed({Sluggishness.class, PlagueBeetle.class, GrimMonolith.class, TragicPoet.class, FranticSearch.class})
 class SluggishnessTest extends BaseCardTest {
 
     @Test
@@ -104,9 +106,63 @@ class SluggishnessTest extends BaseCardTest {
     }
 
     private Permanent attachSluggishness(Player auraController, Permanent enchanted) {
-        Permanent aura = new Permanent(new Sluggishness());
+        Permanent aura = harness.addToBattlefieldAndReturn(auraController, new Sluggishness());
         aura.setAttachedTo(enchanted.getId());
-        gd.playerBattlefields.get(auraController.getId()).add(aura);
         return aura;
+    }
+
+    @Test
+    @DisplayName("An Aura spell whose target disappears stays in the graveyard")
+    void doesNotReturnWhenItsSpellFailsToResolve() {
+        Permanent creature = addCreatureReady(player1, new PlagueBeetle());
+        harness.setHand(player1, List.of(new Sluggishness()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Sluggishness");
+        harness.assertNotInHand(player1, "Sluggishness");
+        harness.assertNotOnBattlefield(player1, "Sluggishness");
+    }
+
+    @Test
+    @DisplayName("The return ability returns only the copy that left the battlefield")
+    void returnsOnlyItsOwnCopy() {
+        Sluggishness otherCopy = new Sluggishness();
+        harness.setGraveyard(player1, List.of(otherCopy));
+        Permanent creature = addCreatureReady(player1, new PlagueBeetle());
+        Permanent aura = attachSluggishness(player1, creature);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(aura.getCard()).doesNotContain(otherCopy);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherCopy).doesNotContain(aura.getCard());
+    }
+
+    @Test
+    @DisplayName("The old return trigger cannot find the Aura after it leaves and reenters the graveyard")
+    void doesNotReturnAfterLeavingAndReenteringGraveyard() {
+        addCreatureReady(player1, new TragicPoet());
+        Permanent creature = addCreatureReady(player1, new PlagueBeetle());
+        Permanent aura = attachSluggishness(player1, creature);
+        harness.setHand(player1, List.of(new FranticSearch()));
+        harness.setLibrary(player1, List.of(new PlagueBeetle(), new PlagueBeetle()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(aura.getCard().getId()));
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Sluggishness");
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Sluggishness");
+        harness.assertNotInHand(player1, "Sluggishness");
     }
 }
