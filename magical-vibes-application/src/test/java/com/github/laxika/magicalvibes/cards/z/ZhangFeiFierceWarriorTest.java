@@ -59,4 +59,44 @@ class ZhangFeiFierceWarriorTest extends BaseCardTest {
 
         assertThat(zhangFei.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Horsemanship does not prevent Zhang Fei from blocking a creature without horsemanship")
+    void canBlockCreatureWithoutHorsemanship() {
+        addCreatureReady(player1, new ForestBear());
+        Permanent zhangFei = addCreatureReady(player2, new ZhangFeiFierceWarrior());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(zhangFei.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Vigilance does not allow a tapped Zhang Fei to attack")
+    void tappedCreatureCannotAttackDespiteVigilance() {
+        Permanent zhangFei = addCreatureReady(player1, new ZhangFeiFierceWarrior());
+        zhangFei.tap();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+
+        assertThat(zhangFei.isAttacking()).isFalse();
+        assertThat(zhangFei.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Vigilance does not allow a summoning-sick Zhang Fei to attack")
+    void summoningSickCreatureCannotAttackDespiteVigilance() {
+        Permanent zhangFei = addCreatureReady(player1, new ZhangFeiFierceWarrior());
+        zhangFei.setSummoningSick(true);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+
+        assertThat(zhangFei.isAttacking()).isFalse();
+        assertThat(zhangFei.isTapped()).isFalse();
+    }
 }
