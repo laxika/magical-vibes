@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Piracy;
 import com.github.laxika.magicalvibes.cards.q.QuicksilverFountain;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -84,9 +83,7 @@ class SnowfallTest extends BaseCardTest {
     void foreignIslandBenefitsItsController() {
         harness.addToBattlefield(player1, new Snowfall());
         Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
-        harness.setHand(player1, List.of(new Piracy()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Piracy(), "{U}{U}");
         harness.passBothPriorities();
 
         harness.tapForeignLandForMana(player1, island.getId());
@@ -104,12 +101,14 @@ class SnowfallTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Snowfall());
         harness.addToBattlefield(player1, new QuicksilverFountain());
         Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        mountain.setCounterCount(CounterType.FLOOD, 1);
-        mountain.getGrantedSubtypes().add(CardSubtype.ISLAND);
+        advanceToUpkeep(player2);
+        harness.handlePermanentChosen(player2, mountain.getId());
+        harness.passBothPriorities();
 
         harness.tapPermanent(player2, 0);
 
-        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isZero();
         assertThat(gd.playerManaPools.get(player2.getId()).getCumulativeUpkeepOnlyColored(ManaColor.BLUE))
                 .isEqualTo(1);
     }
@@ -227,5 +226,55 @@ class SnowfallTest extends BaseCardTest {
 
         assertThat(snowfall.getCounterCount(CounterType.AGE)).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(snowfall);
+    }
+
+    @Test
+    @DisplayName("The Island's controller may decline Snowfall's additional mana")
+    void islandControllerCanDeclineAdditionalMana() {
+        harness.addToBattlefield(player1, new Snowfall());
+        harness.addToBattlefield(player2, new Island());
+
+        harness.tapPermanent(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getCumulativeUpkeepOnlyColored(ManaColor.BLUE))
+                .isZero();
+    }
+
+    @Test
+    @DisplayName("Multiple Snowfalls each add their snow Island bonus without using the stack")
+    void multipleSnowfallsAddSeparateSnowBonuses() {
+        harness.addToBattlefield(player1, new Snowfall());
+        harness.addToBattlefield(player2, new Snowfall());
+        harness.addToBattlefield(player1, new SnowCoveredIsland());
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getCumulativeUpkeepOnlyColored(ManaColor.BLUE))
+                .isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Snowfall is sacrificed when its increasing upkeep cannot be paid in full")
+    void insufficientManaSacrificesSnowfall() {
+        Permanent snowfall = harness.addToBattlefieldAndReturn(player1, new Snowfall());
+        snowfall.setCounterCount(CounterType.AGE, 2);
+        harness.addToBattlefield(player1, new Island());
+
+        advanceToUpkeep(player1);
+        harness.tapPermanent(player1, 1);
+        harness.passBothPriorities();
+
+        assertThat(snowfall.getCounterCount(CounterType.AGE)).isEqualTo(3);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(snowfall);
+        harness.assertInGraveyard(player1, "Snowfall");
     }
 }
