@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.a.AetherflameWall;
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.cards.b.BasalSliver;
+import com.github.laxika.magicalvibes.cards.c.Conspiracy;
 import com.github.laxika.magicalvibes.cards.i.IcatianCrier;
 import com.github.laxika.magicalvibes.cards.p.PlagueSliver;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,8 +20,40 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({VampiricSliver.class, BasalSliver.class, AshcoatBear.class,
-        AetherflameWall.class, IcatianCrier.class, PlagueSliver.class})
+        AetherflameWall.class, IcatianCrier.class, PlagueSliver.class, Conspiracy.class})
 class VampiricSliverTest extends BaseCardTest {
+
+    @Test
+    void multipleVampiricSliversGrantSeparateAbilities() {
+        Permanent attacker = addCreatureReady(player1, new VampiricSliver());
+        addCreatureReady(player1, new VampiricSliver());
+        Permanent blocker = addCreatureReady(player2, new AshcoatBear());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void doesNotGrantAbilityToItselfAfterLosingSliverType() {
+        Permanent attacker = addCreatureReady(player1, new VampiricSliver());
+        Permanent blocker = addCreatureReady(player2, new AshcoatBear());
+        harness.castFromHand(player1, new Conspiracy(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.BEAR.name());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 
     @Test
     @DisplayName("Vampiric Sliver gets a +1/+1 counter when a creature it damaged dies")
