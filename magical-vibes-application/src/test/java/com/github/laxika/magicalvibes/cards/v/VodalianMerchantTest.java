@@ -58,4 +58,28 @@ class VodalianMerchantTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(drawn);
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Entering without being cast lets the controller discard the newly drawn card")
+    void enteringWithoutCastingCanDiscardDrawnCard() {
+        Card retained = new Island();
+        Card drawn = new Forest();
+        Card opponentCard = new Island();
+        harness.setHand(player2, List.of(retained));
+        harness.setLibrary(player2, List.of(drawn));
+        harness.setHand(player1, List.of(opponentCard));
+
+        harness.enterBattlefieldAndReturn(player2, new VodalianMerchant());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(retained, drawn);
+
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(retained);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(drawn);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(opponentCard);
+        assertThat(gd.stack).isEmpty();
+    }
 }
