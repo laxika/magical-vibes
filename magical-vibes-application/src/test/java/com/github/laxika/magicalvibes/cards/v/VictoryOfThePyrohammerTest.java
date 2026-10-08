@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
+import com.github.laxika.magicalvibes.cards.d.DressDown;
+import com.github.laxika.magicalvibes.cards.g.GarrukPrimalHunter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VictoryOfThePyrohammer.class, ColossalDreadmaw.class, GrizzlyBears.class})
+@CardUsed({VictoryOfThePyrohammer.class, ColossalDreadmaw.class, GrizzlyBears.class, GarrukPrimalHunter.class})
 class VictoryOfThePyrohammerTest extends BaseCardTest {
 
     @Test
@@ -33,7 +33,7 @@ class VictoryOfThePyrohammerTest extends BaseCardTest {
         assertThat(opposingCreature.getMarkedDamage()).isEqualTo(4);
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
 
-        harness.passUntil(player1, TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(ownCreature.getMarkedDamage()).isEqualTo(4);
         assertThat(opposingCreature.getMarkedDamage()).isEqualTo(4);
@@ -68,8 +68,74 @@ class VictoryOfThePyrohammerTest extends BaseCardTest {
 
         assertThat(ownCreature.getMarkedDamage()).isEqualTo(1);
         assertThat(opposingCreature.getMarkedDamage()).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Victory of the Pyrohammer"));
+        harness.assertNotOnBattlefield(player1, "Victory of the Pyrohammer");
+        harness.assertInGraveyard(player1, "Victory of the Pyrohammer");
+    }
+
+    @Test
+    @DisplayName("Damage accumulates across chapters, affects later creatures, and clears after chapter III")
+    void damageAccumulatesUntilTheSagaLeaves() {
+        addSagaWithLore(0);
+        Permanent originalCreature = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
+
+        advanceToChapter();
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(originalCreature.getMarkedDamage()).isEqualTo(4);
+
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new ColossalDreadmaw());
+        advanceToChapter();
+        harness.passBothPriorities();
+        assertThat(originalCreature.getMarkedDamage()).isEqualTo(5);
+        assertThat(laterCreature.getMarkedDamage()).isEqualTo(1);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(originalCreature.getMarkedDamage()).isEqualTo(5);
+        assertThat(laterCreature.getMarkedDamage()).isEqualTo(1);
+
+        advanceToChapter();
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Colossal Dreadmaw");
+        harness.assertInGraveyard(player1, "Victory of the Pyrohammer");
+        assertThat(laterCreature.getMarkedDamage()).isEqualTo(2);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(laterCreature.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed(DressDown.class)
+    @DisplayName("Removing creature abilities does not disable the Saga's damage preservation")
+    void creaturesWithoutAbilitiesStillRetainDamage() {
+        addSagaWithLore(0);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
+        advanceToChapter();
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+
+        harness.castFromHand(player1, new DressDown(), "{1}{U}");
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+
+        harness.assertOnBattlefield(player1, "Dress Down");
+        assertThat(creature.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Casting the Saga triggers chapter I and kills creatures with lethal damage")
+    void enteringTheBattlefieldTriggersChapterI() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.castFromHand(player1, new VictoryOfThePyrohammer(), "{3}{R}{R}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Victory of the Pyrohammer");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     private Permanent addSagaWithLore(int lore) {
@@ -86,12 +152,7 @@ class VictoryOfThePyrohammerTest extends BaseCardTest {
     }
 
     private Permanent addTestPlaneswalker(Player player) {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        card.setManaCost("{3}");
-        card.setLoyalty(5);
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new GarrukPrimalHunter());
         permanent.setCounterCount(CounterType.LOYALTY, 5);
         return permanent;
     }
