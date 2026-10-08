@@ -69,12 +69,50 @@ class WakeTheDragonTest extends BaseCardTest {
                 .anyMatch(card -> card.getName().equals("Wake the Dragon"));
     }
 
+    @Test
+    @DisplayName("Dragon can target only artifacts controlled by the damaged player")
+    void excludesOwnArtifactsAndOpposingCreatures() {
+        Permanent dragon = castWakeTheDragon();
+        dragon.setSummoningSick(false);
+        dragon.setAttacking(true);
+        harness.addToBattlefield(player1, new LeoninScimitar());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validPermanentIds()).containsExactly(artifact.getId());
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.findPermanentController(gd, artifact.getId())).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Dragon still deals damage when the damaged player has no artifacts")
+    void noArtifactLeavesNoTargetPrompt() {
+        Permanent dragon = castWakeTheDragon();
+        dragon.setSummoningSick(false);
+        dragon.setAttacking(true);
+        Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 14);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.findPermanentController(gd, ownArtifact.getId())).isEqualTo(player1.getId());
+        assertThat(gqs.findPermanentController(gd, bears.getId())).isEqualTo(player2.getId());
+    }
+
     private Permanent castWakeTheDragon() {
-        harness.setHand(player1, List.of(new WakeTheDragon()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castSorcery(player1, 0);
+        harness.castFromHand(player1, new WakeTheDragon(), "{4}{B}{R}");
         harness.passBothPriorities();
         return findPermanent(player1, "Dragon");
     }
