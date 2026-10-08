@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({VeteranOfTheDepths.class, HillcomberGiant.class})
@@ -66,6 +68,68 @@ class VeteranOfTheDepthsTest extends BaseCardTest {
 
         tap(other);
 
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Attacking triggers the counter before combat damage")
+    void attackingPutsCounter() {
+        Permanent veteran = addCreatureReady(player1, new VeteranOfTheDepths());
+
+        declareAttackers(List.of(0));
+
+        assertThat(veteran.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(veteran.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Only the tapped copy triggers and receives the counter")
+    void tappingOneCopyDoesNotTriggerOtherCopies() {
+        Permanent veteran = harness.addToBattlefieldAndReturn(player1, new VeteranOfTheDepths());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new VeteranOfTheDepths());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new VeteranOfTheDepths());
+
+        tap(veteran);
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(veteran.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Untapping before resolution does not prevent the counter")
+    void untappingBeforeResolutionStillPutsCounter() {
+        Permanent veteran = harness.addToBattlefieldAndReturn(player1, new VeteranOfTheDepths());
+
+        tap(veteran);
+        veteran.untap();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(veteran.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Leaving and returning before resolution does not put a counter on the new permanent")
+    void returningSourceDoesNotReceiveOldTriggerCounter() {
+        VeteranOfTheDepths card = new VeteranOfTheDepths();
+        Permanent veteran = harness.addToBattlefieldAndReturn(player1, card);
+        tap(veteran);
+
+        gd.playerBattlefields.get(player1.getId()).remove(veteran);
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, card);
+        resolveAllTriggers();
+
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
