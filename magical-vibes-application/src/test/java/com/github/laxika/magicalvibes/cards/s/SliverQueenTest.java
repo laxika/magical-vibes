@@ -11,9 +11,53 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SliverQueen.class})
 class SliverQueenTest extends BaseCardTest {
+    @Test
+    @DisplayName("A tapped Sliver Queen can create a token")
+    void canActivateWhileTapped() {
+        Permanent queen = harness.addToBattlefieldAndReturn(player1, new SliverQueen());
+        queen.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(queen.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay the generic activation cost")
+    void canPayWithColoredMana() {
+        harness.addToBattlefield(player1, new SliverQueen());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("One mana cannot pay the activation cost")
+    void cannotActivateWithInsufficientMana() {
+        harness.addToBattlefield(player1, new SliverQueen());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())).isEmpty();
+    }
 
     @Test
     @DisplayName("Paying {2} creates a 1/1 colorless Sliver token")
