@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,10 +22,7 @@ class VenserShaperSavantTest extends BaseCardTest {
         HorizonCanopy targetCard = new HorizonCanopy();
         targetCard.setOwnerId(player1.getId());
         Permanent target = harness.addToBattlefieldAndReturn(player2, targetCard);
-        harness.setHand(player1, List.of(new VenserShaperSavant()));
-        addVenserMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VenserShaperSavant(), "{2}{U}{U}");
         harness.passBothPriorities();
 
         assertThat(harness.getGameData().interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -42,17 +38,11 @@ class VenserShaperSavantTest extends BaseCardTest {
     @Test
     void returnsTargetSpellToItsOwnersHand() {
         Foresee targetSpell = new Foresee();
-        harness.setHand(player2, List.of(targetSpell));
-        harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
-        harness.setHand(player1, List.of(new VenserShaperSavant()));
-        addVenserMana();
-
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castSorcery(player2, 0);
+        harness.castFromHand(player2, targetSpell, "{3}{U}");
         UUID targetSpellId = targetSpell.getId();
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VenserShaperSavant(), "{2}{U}{U}");
         harness.passBothPriorities();
 
         assertThat(harness.getGameData().interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -65,8 +55,42 @@ class VenserShaperSavantTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Foresee");
     }
 
-    private void addVenserMana() {
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+    @Test
+    void mustReturnItselfWhenItIsTheOnlyPermanent() {
+        harness.castFromHand(player1, new VenserShaperSavant(), "{2}{U}{U}");
+        harness.passBothPriorities();
+
+        UUID venserId = harness.getPermanentId(player1, "Venser, Shaper Savant");
+        assertThat(harness.getGameData().interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(venserId);
+        harness.handlePermanentChosen(player1, venserId);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Venser, Shaper Savant");
+        harness.assertNotOnBattlefield(player1, "Venser, Shaper Savant");
+    }
+
+    @Test
+    void cannotTargetAnActivatedAbilityOnTheStack() {
+        harness.addToBattlefield(player2, new HorizonCanopy());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player2, 0, 1, null, null);
+        UUID abilityId = harness.getGameData().stack.getLast().getTargetableId();
+
+        harness.castFromHand(player1, new VenserShaperSavant(), "{2}{U}{U}");
+        harness.passBothPriorities();
+
+        UUID venserId = harness.getPermanentId(player1, "Venser, Shaper Savant");
+        assertThat(harness.getGameData().interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(venserId)
+                .doesNotContain(abilityId);
+        harness.handlePermanentChosen(player1, venserId);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Venser, Shaper Savant");
+        assertThat(harness.getGameData().stack).hasSize(1);
+        assertThat(harness.getGameData().stack.getFirst().getTargetableId()).isEqualTo(abilityId);
     }
 }
