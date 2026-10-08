@@ -82,6 +82,38 @@ class SolidarityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Creatures entering while Solidarity is on the stack receive the boost")
+    void creaturesEnteringBeforeResolutionAreBoosted() {
+        harness.castFromHand(player1, new Solidarity(), "{3}{W}");
+        Permanent bear = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.passBothPriorities();
+
+        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(7);
+        harness.assertInGraveyard(player1, "Solidarity");
+    }
+
+    @Test
+    @DisplayName("Two Solidarity spells stack their toughness boosts")
+    void multipleSpellsGiveCumulativeBoosts() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.castFromHand(player1, new Solidarity(), "{3}{W}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new Solidarity(), "{3}{W}");
+        harness.passBothPriorities();
+
+        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(12);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.UPKEEP);
+
+        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Boost resets at cleanup step")
     void boostResetsAtCleanup() {
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -89,8 +121,7 @@ class SolidarityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
