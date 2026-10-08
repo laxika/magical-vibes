@@ -8,16 +8,32 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 @CardUsed(WildColos.class)
 class WildColosTest extends BaseCardTest {
 
     @Test
     @DisplayName("Wild Colos can attack immediately due to haste")
     void canAttackImmediatelyDueToHaste() {
-        Permanent colos = new Permanent(new WildColos());
+        Permanent colos = harness.addToBattlefieldAndReturn(player1, new WildColos());
         colos.setSummoningSick(true);
-        gd.playerBattlefields.get(player1.getId()).add(colos);
 
         declareAttackers(List.of(0));
+    }
+
+    @Test
+    @DisplayName("Haste does not allow a tapped Wild Colos to attack")
+    void cannotAttackWhileTappedDespiteHaste() {
+        Permanent colos = harness.addToBattlefieldAndReturn(player1, new WildColos());
+        colos.setSummoningSick(true);
+        colos.tap();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }
