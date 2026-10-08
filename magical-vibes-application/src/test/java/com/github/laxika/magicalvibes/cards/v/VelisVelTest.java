@@ -65,7 +65,7 @@ class VelisVelTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.hasKeyword(gd, target, Keyword.CHANGELING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.CHANGELING)).isFalse();
         assertThat(gqs.hasKeyword(gd, target, Keyword.MOUNTAINWALK)).isTrue();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
@@ -77,5 +77,51 @@ class VelisVelTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, target, Keyword.CHANGELING)).isFalse();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    void loneCreatureDoesNotCountItself() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    void eachOtherMatchingCreatureCountsOnceAcrossBothBattlefields() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent unrelated = harness.addToBattlefieldAndReturn(player2, new GoblinKing());
+
+        for (Permanent creature : java.util.List.of(first, second, third)) {
+            assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        }
+        assertThat(gqs.getEffectivePower(gd, unrelated)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, unrelated)).isEqualTo(2);
+    }
+
+    @Test
+    void chaosCanGiveOpposingCreatureAllTypesWithoutGrantingChangeling() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinKing());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent otherBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.MOUNTAINWALK)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, otherBear)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, otherBear, Keyword.MOUNTAINWALK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.CHANGELING)).isFalse();
     }
 }
