@@ -107,8 +107,7 @@ class VisceridArmorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Viscerid Armor");
-        assertThat(gd.playerHands.get(player2.getId()))
-                .noneMatch(card -> card.getName().equals("Viscerid Armor"));
+        harness.assertNotInHand(player2, "Viscerid Armor");
         harness.assertNotOnBattlefield(player2, "Viscerid Armor");
     }
 
@@ -132,15 +131,42 @@ class VisceridArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot enchant a land")
     void cannotEnchantALand() {
-        harness.addToBattlefield(player1, new SchoolOfTheUnseen());
+        Permanent school = harness.addToBattlefieldAndReturn(player1, new SchoolOfTheUnseen());
         harness.setHand(player1, List.of(new VisceridArmor()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent school = findPermanent(player1, "School of the Unseen");
-
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, school.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Two return activations return the Aura only once and leave the creature in play")
+    void multipleReturnActivationsDoNotDuplicateAura() {
+        Permanent creature = addCreatureReady(player1, new StormCrow());
+        Permanent armor = harness.addToBattlefieldAndReturn(player1, new VisceridArmor());
+        armor.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 1, null, null);
+
+        harness.assertOnBattlefield(player1, "Viscerid Armor");
+        harness.assertNotInHand(player1, "Viscerid Armor");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Viscerid Armor"))
+                .hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Viscerid Armor");
+        harness.assertOnBattlefield(player1, "Storm Crow");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 }
