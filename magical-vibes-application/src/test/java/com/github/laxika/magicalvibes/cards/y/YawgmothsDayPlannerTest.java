@@ -18,20 +18,20 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class YawgmothsDayPlannerTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Activating the mana ability pays two life and adds graveyard-only black mana")
+    @DisplayName("Activating the mana ability pays two life and adds unrestricted black mana")
     void activatesManaAbility() {
         harness.addToBattlefield(player1, new YawgmothsDayPlanner());
         harness.setLife(player1, 20);
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
-        assertThat(gd.playerManaPools.get(player1.getId()).getGraveyardOnlyMana(ManaColor.BLACK))
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK))
                 .isEqualTo(2);
     }
 
     @Test
-    @DisplayName("The graveyard-only mana casts a spell from the graveyard")
+    @DisplayName("Mana produced by paying life casts a spell from the graveyard")
     void castsSpellFromGraveyard() {
         harness.addToBattlefield(player1, new YawgmothsDayPlanner());
         harness.setLife(player1, 20);
@@ -43,21 +43,65 @@ class YawgmothsDayPlannerTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Dark Ritual"));
-        assertThat(gd.playerManaPools.get(player1.getId()).getGraveyardOnlyMana(ManaColor.BLACK))
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK))
                 .isEqualTo(1);
     }
 
     @Test
-    @DisplayName("Graveyard-only mana cannot cast a spell from hand")
-    void cannotUseGraveyardOnlyManaFromHand() {
+    @DisplayName("The artifact's mana can cast a spell from hand")
+    void canUseManaFromHand() {
         harness.addToBattlefield(player1, new YawgmothsDayPlanner());
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new DarkRitual()));
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertNotInHand(player1, "Dark Ritual");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Dark Ritual"));
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Ordinary mana cannot pay for a spell using the graveyard permission")
+    void cannotCastFromGraveyardWithOrdinaryMana() {
+        harness.addToBattlefield(player1, new YawgmothsDayPlanner());
+        harness.setGraveyard(player1, List.of(new DarkRitual()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Dark Ritual");
+    }
+
+    @Test
+    @DisplayName("The mana ability cannot be activated with less than two life")
+    void cannotActivateWithoutEnoughLife() {
+        harness.addToBattlefield(player1, new YawgmothsDayPlanner());
+        harness.setLife(player1, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player1, 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("The graveyard replacement does not exile an opponent's dying creature")
+    void doesNotExileOpponentsCards() {
+        harness.addToBattlefield(player1, new YawgmothsDayPlanner());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player2, "Grizzly Bears"));
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertNotInGraveyard(player1, "Shock");
     }
 
     @Test
