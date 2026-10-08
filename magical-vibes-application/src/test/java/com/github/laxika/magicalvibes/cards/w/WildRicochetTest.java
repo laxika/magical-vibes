@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.h.HuntTheWeak;
 import com.github.laxika.magicalvibes.cards.l.LavaAxe;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WildRicochet.class, LavaAxe.class, GrizzlyBears.class, Divination.class, Shock.class, HuntTheWeak.class})
 class WildRicochetTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -71,10 +76,7 @@ class WildRicochetTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, lavaAxe.getId());
-
-        // Resolve Wild Ricochet
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, lavaAxe.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -95,10 +97,7 @@ class WildRicochetTest extends BaseCardTest {
         // Lava Axe targets player2 (the Wild Ricochet caster)
         harness.castSorcery(player1, 0, player2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, lavaAxe.getId());
-
-        // Resolve Wild Ricochet → may prompt to retarget original
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, lavaAxe.getId());
         // Decline retargeting the original
         harness.handleMayAbilityChosen(player2, false);
 
@@ -127,10 +126,7 @@ class WildRicochetTest extends BaseCardTest {
         // Lava Axe originally targets player2 (the Wild Ricochet caster)
         harness.castSorcery(player1, 0, player2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, lavaAxe.getId());
-
-        // Resolve Wild Ricochet → accept retargeting the original to player1
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, lavaAxe.getId());
         harness.handleMayAbilityChosen(player2, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player2, player1.getId());
@@ -164,10 +160,7 @@ class WildRicochetTest extends BaseCardTest {
         // Lava Axe originally targets player1
         harness.castSorcery(player1, 0, player1.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, lavaAxe.getId());
-
-        // Resolve Wild Ricochet → decline original retarget (original keeps player1)
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, lavaAxe.getId());
         harness.handleMayAbilityChosen(player2, false);
 
         // Accept retargeting the copy to player2
@@ -198,10 +191,7 @@ class WildRicochetTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player1.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, lavaAxe.getId());
-
-        // Resolve Wild Ricochet → decline both retargets
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, lavaAxe.getId());
         harness.handleMayAbilityChosen(player2, false);
         harness.handleMayAbilityChosen(player2, false);
         // Resolve copy, then original
@@ -214,5 +204,106 @@ class WildRicochetTest extends BaseCardTest {
         // The original Lava Axe belongs to player1's graveyard
         harness.assertInGraveyard(player1, "Lava Axe");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void untargetedSpellCopyDrawsForRicochetController() {
+        Divination divination = new Divination();
+        harness.setLibrary(player1, List.of(new LavaAxe(), new LavaAxe()));
+        harness.setLibrary(player2, List.of(new Shock(), new Shock()));
+        harness.setHand(player1, List.of(divination));
+        harness.setHand(player2, List.of(new WildRicochet()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player2, ManaColor.RED, 4);
+
+        harness.castSorcery(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, divination.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertNotInGraveyard(player2, "Divination");
+    }
+
+    @Test
+    void instantCopyResolvesBeforeOriginalWithIndependentTarget() {
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock));
+        harness.setHand(player2, List.of(new WildRicochet()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 4);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, shock.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, player1.getId());
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void originalCanChangeSecondTargetWhenFirstHasNoAlternative() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        var ownBear = gd.playerBattlefields.get(player1.getId()).getFirst().getId();
+        var firstOpponentBear = gd.playerBattlefields.get(player2.getId()).getFirst().getId();
+        var secondOpponentBear = gd.playerBattlefields.get(player2.getId()).getLast().getId();
+        HuntTheWeak hunt = new HuntTheWeak();
+        harness.setHand(player1, List.of(hunt));
+        harness.setHand(player2, List.of(new WildRicochet()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player2, ManaColor.RED, 4);
+
+        harness.castSorcery(player1, 0, List.of(ownBear, firstOpponentBear));
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, hunt.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player2, true);
+        }
+        harness.handlePermanentChosen(player2, secondOpponentBear);
+        assertThat(gd.stack.getFirst().getTargetIds()).containsExactly(ownBear, secondOpponentBear);
+    }
+
+    @Test
+    void copyCanChangeBothTargetsUsingItsOwnControllerRestrictions() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        var firstBear = harness.getPermanentId(player1, "Grizzly Bears");
+        var secondBear = harness.getPermanentId(player2, "Grizzly Bears");
+        HuntTheWeak hunt = new HuntTheWeak();
+        harness.setHand(player1, List.of(hunt));
+        harness.setHand(player2, List.of(new WildRicochet()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player2, ManaColor.RED, 4);
+
+        harness.castSorcery(player1, 0, List.of(firstBear, secondBear));
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, hunt.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, secondBear);
+
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player2, true);
+        }
+        harness.handlePermanentChosen(player2, firstBear);
+        assertThat(gd.stack.getLast().getTargetIds()).containsExactly(secondBear, firstBear);
+        assertThat(gd.stack.getFirst().getTargetIds()).containsExactly(firstBear, secondBear);
     }
 }
