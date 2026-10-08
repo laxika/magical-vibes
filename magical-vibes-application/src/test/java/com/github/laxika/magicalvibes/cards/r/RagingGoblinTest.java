@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.a.ArcaneTeachings;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -14,8 +15,24 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RagingGoblin.class})
+@CardUsed({RagingGoblin.class, ArcaneTeachings.class})
 class RagingGoblinTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Haste allows a newly entered Goblin to activate a granted tap ability")
+    void canActivateGrantedTapAbilityImmediately() {
+        harness.castFromHand(player1, new RagingGoblin(), "{R}");
+        harness.passBothPriorities();
+        Permanent goblin = findPermanent(player1, "Raging Goblin");
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ArcaneTeachings());
+        aura.setAttachedTo(goblin.getId());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(goblin.isTapped()).isTrue();
+        harness.assertLife(player2, 19);
+    }
 
     @Test
     @DisplayName("Casting puts it on the stack as CREATURE_SPELL")
