@@ -1,10 +1,14 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.cards.c.CrypticCoat;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HeartbeatOfSpring;
 import com.github.laxika.magicalvibes.cards.n.NicolBolasPlaneswalker;
+import com.github.laxika.magicalvibes.cards.n.NeurokTransmuter;
 import com.github.laxika.magicalvibes.cards.o.OmegaMyr;
+import com.github.laxika.magicalvibes.cards.r.RedHerring;
+import com.github.laxika.magicalvibes.cards.t.TunnelTipster;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,7 +29,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         GrizzlyBears.class,
         HeartbeatOfSpring.class,
         NicolBolasPlaneswalker.class,
-        OmegaMyr.class
+        OmegaMyr.class,
+        CrypticCoat.class,
+        NeurokTransmuter.class,
+        RedHerring.class,
+        TunnelTipster.class
 })
 class UrgentNecropsyTest extends BaseCardTest {
 
@@ -88,10 +96,7 @@ class UrgentNecropsyTest extends BaseCardTest {
 
     @Test
     void mayChooseNoTargetsAndCollectNoEvidence() {
-        harness.setHand(player1, List.of(new UrgentNecropsy()));
-        addManaForUrgentNecropsy();
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new UrgentNecropsy(), "{2}{B}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
@@ -108,6 +113,65 @@ class UrgentNecropsyTest extends BaseCardTest {
                 List.of(firstCreature.getId(), secondCreature.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("at most one creature");
+    }
+
+    @Test
+    void cloakedTargetRequiresZeroEvidenceRegardlessOfUnderlyingManaCost() {
+        harness.setLibrary(player1, List.of(new TunnelTipster()));
+        harness.castFromHand(player1, new CrypticCoat(), "{2}{U}");
+        resolveAllTriggers();
+        Permanent cloaked = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(Permanent::isCloaked).findFirst().orElseThrow();
+        harness.setHand(player1, List.of(new UrgentNecropsy()));
+        addManaForUrgentNecropsy();
+
+        harness.castInstant(player1, 0, List.of(cloaked.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(cloaked);
+        harness.assertInGraveyard(player1, "Tunnel Tipster");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void artifactTargetThatLosesArtifactTypeIsNotDestroyedAsACreature() {
+        harness.addToBattlefield(player1, new NeurokTransmuter());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new RedHerring());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new TunnelTipster());
+        List<Card> evidence = List.of(new TunnelTipster(), new TunnelTipster());
+        harness.setGraveyard(player1, evidence);
+        harness.setHand(player1, List.of(new UrgentNecropsy()));
+        addManaForUrgentNecropsy();
+        gs.playCard(gd, player1, 0, 0, null, null,
+                List.of(artifact.getId(), creature.getId()), List.of(), false,
+                null, null, null, null, List.of(0, 1));
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 1, null, artifact.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.isArtifact(gd, artifact)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact).doesNotContain(creature);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrderElementsOf(evidence);
+    }
+
+    @Test
+    void canAssignDifferentArtifactCreaturesToArtifactAndCreatureTargets() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new RedHerring());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new RedHerring());
+        List<Card> evidence = List.of(new TunnelTipster(), new TunnelTipster());
+        harness.setGraveyard(player1, evidence);
+        harness.setHand(player1, List.of(new UrgentNecropsy()));
+        addManaForUrgentNecropsy();
+
+        gs.playCard(gd, player1, 0, 0, null, null,
+                List.of(first.getId(), second.getId()), List.of(), false,
+                null, null, null, null, List.of(0, 1));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(first, second);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrderElementsOf(evidence);
     }
 
     private void addManaForUrgentNecropsy() {
