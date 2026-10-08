@@ -81,7 +81,6 @@ class SnarlingUndorakTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
@@ -99,6 +98,52 @@ class SnarlingUndorakTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Repeated activations can boost itself while tapped and summoning sick")
+    void canBoostItselfRepeatedlyWhileTappedAndSummoningSick() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new SnarlingUndorak());
+        source.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, source.getId());
+        harness.activateAbility(player1, 0, null, source.getId());
+        resolveAllTriggers();
+
+        assertThat(source.getPowerModifier()).isEqualTo(2);
+        assertThat(source.getToughnessModifier()).isEqualTo(2);
+        assertThat(source.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A face-down Undorak is not a legal Beast target")
+    void cannotTargetFaceDownUndorak() {
+        Permanent target = castFaceDown();
+        addCreatureReady(player1, new SnarlingUndorak());
+        addAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(target.getPowerModifier()).isEqualTo(0);
+        assertThat(target.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Turning face up immediately enables its Beast boost ability")
+    void canActivateAfterTurningFaceUp() {
+        Permanent undorak = castFaceDown();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.turnFaceUp(player1, 0);
+        assertThat(gd.stack).isEmpty();
+        harness.activateAbility(player1, 0, null, undorak.getId());
+        harness.passBothPriorities();
+
+        assertThat(undorak.getPowerModifier()).isEqualTo(1);
+        assertThat(undorak.getToughnessModifier()).isEqualTo(1);
+    }
+
     private void addAbilityMana() {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -110,7 +155,6 @@ class SnarlingUndorakTest extends BaseCardTest {
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         return findPermanent(player1, "Snarling Undorak");
