@@ -19,18 +19,66 @@ class VolcanicRushTest extends BaseCardTest {
         Permanent attackingCreature = addCreatureReady(player1, new GrizzlyBears());
         attackingCreature.setAttacking(true);
         Permanent bystander = addCreatureReady(player1, new GrizzlyBears());
-        Permanent opposingAttacker = addCreatureReady(player2, new GrizzlyBears());
-        opposingAttacker.setAttacking(true);
+        Permanent opposingBystander = addCreatureReady(player2, new GrizzlyBears());
 
         castVolcanicRush();
 
         assertThat(attackingCreature.getEffectivePower()).isEqualTo(4);
         assertThat(attackingCreature.getEffectiveToughness()).isEqualTo(2);
         assertThat(attackingCreature.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(opposingAttacker.getEffectivePower()).isEqualTo(4);
-        assertThat(opposingAttacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(opposingBystander.getEffectivePower()).isEqualTo(2);
+        assertThat(opposingBystander.hasKeyword(Keyword.TRAMPLE)).isFalse();
         assertThat(bystander.getEffectivePower()).isEqualTo(2);
         assertThat(bystander.hasKeyword(Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void affectsOpponentsAttackersWhenCastByDefendingPlayer() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent defender = addCreatureReady(player1, new GrizzlyBears());
+
+        castVolcanicRush();
+
+        assertThat(attacker.getEffectivePower()).isEqualTo(4);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(defender.getEffectivePower()).isEqualTo(2);
+        assertThat(defender.hasKeyword(Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void affectedCreaturesAreFixedAtResolution() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent laterAttacker = addCreatureReady(player1, new GrizzlyBears());
+
+        castVolcanicRush();
+        attacker.setAttacking(false);
+        laterAttacker.setAttacking(true);
+        Permanent newAttacker = addCreatureReady(player1, new GrizzlyBears());
+        newAttacker.setAttacking(true);
+
+        assertThat(attacker.getEffectivePower()).isEqualTo(4);
+        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(laterAttacker.getEffectivePower()).isEqualTo(2);
+        assertThat(laterAttacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(newAttacker.getEffectivePower()).isEqualTo(2);
+        assertThat(newAttacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void resolvesWithoutAttackersAndDoesNotAffectLaterAttackers() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+
+        castVolcanicRush();
+        creature.setAttacking(true);
+
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        harness.assertInGraveyard(player1, "Volcanic Rush");
     }
 
     @Test
@@ -55,7 +103,6 @@ class VolcanicRushTest extends BaseCardTest {
         harness.setHand(player1, java.util.List.of(new VolcanicRush()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, (java.util.UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 }
