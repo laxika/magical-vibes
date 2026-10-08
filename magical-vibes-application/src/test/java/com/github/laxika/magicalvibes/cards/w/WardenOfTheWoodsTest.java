@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.f.Frogify;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WardenOfTheWoods.class, Shock.class, ProdigalPyromancer.class, Frogify.class})
 class WardenOfTheWoodsTest extends BaseCardTest {
 
     @Test
@@ -71,6 +74,53 @@ class WardenOfTheWoodsTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Shock");
+    }
+
+    @Test
+    @DisplayName("An ability controlled by its controller does not trigger it")
+    void ownAbilityDoesNotTrigger() {
+        Permanent warden = addWarden(player1);
+        Permanent pyromancer = harness.addToBattlefieldAndReturn(player1, new ProdigalPyromancer());
+        pyromancer.setSummoningSick(false);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 1, null, warden.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    @DisplayName("An opponent targeting its controller does not trigger Warden")
+    void opponentTargetingControllerDoesNotTrigger() {
+        addWarden(player1);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    @DisplayName("Losing all abilities prevents the draw trigger")
+    void losingAbilitiesPreventsTrigger() {
+        Permanent warden = addWarden(player1);
+        harness.setHand(player1, List.of(new Frogify()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, warden.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, warden.getId());
+
+        assertThat(gd.stack).hasSize(1);
     }
 
     private Permanent addWarden(Player player) {
