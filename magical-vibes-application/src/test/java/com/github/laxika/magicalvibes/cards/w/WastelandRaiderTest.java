@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,32 +12,52 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WastelandRaider.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({WastelandRaider.class})
 @DisplayName("Wasteland Raider")
 class WastelandRaiderTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Squad creates one token copy per additional {2} paid")
+    @DisplayName("Squad copies each trigger a sacrifice, leaving no creatures when none were present")
     void squadCreatesTokenCopies() {
         castRaider(List.of("{2}", "{2}"));
         harness.passBothPriorities();
-        harness.passBothPriorities();
-        resolveAllTriggers();
-
-        // The original Raider is the only creature available for its own sacrifice trigger.
-        harness.assertInGraveyard(player1, "Wasteland Raider");
-        assertThat(findPermanents(player1, "Wasteland Raider")).hasSize(2)
-                .allSatisfy(token -> assertThat(token.getCard().isToken()).isTrue());
         resolveSacrificeChoices();
+        harness.assertInGraveyard(player1, "Wasteland Raider");
+        assertThat(findPermanents(player1, "Wasteland Raider")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Paying squad creates separate squad and sacrifice triggers")
+    void paidSquadAndSacrificeAreSeparateAbilities() {
+        castRaider(List.of("{2}"));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Two squad payments create two copies and each copy triggers one sacrifice")
+    void squadCopiesRetainSacrificeAbilityWithoutCreatingMoreCopies() {
+        for (int i = 0; i < 4; i++) {
+            addCreatureReady(player1, new WastelandRaider());
+        }
+        castRaider(List.of("{2}", "{2}"));
+        harness.passBothPriorities();
+        resolveSacrificeChoices();
+
+        assertThat(findPermanents(player1, "Wasteland Raider")).hasSize(4);
+        assertThat(findPermanents(player1, "Wasteland Raider").stream()
+                .filter(permanent -> permanent.getCard().isToken())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
     }
 
     @Test
     @DisplayName("ETB makes each player choose a creature before sacrificing simultaneously")
     void eachPlayerChoosesCreatureBeforeSacrifice() {
-        Permanent ownBear = addCreatureReady(player1, new GrizzlyBears());
-        Permanent ownGiant = addCreatureReady(player1, new HillGiant());
-        Permanent opposingBear = addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player2, new HillGiant());
+        Permanent ownBear = addCreatureReady(player1, new WastelandRaider());
+        Permanent ownGiant = addCreatureReady(player1, new WastelandRaider());
+        Permanent opposingBear = addCreatureReady(player2, new WastelandRaider());
+        addCreatureReady(player2, new WastelandRaider());
         castRaider(List.of());
         harness.passBothPriorities();
         resolveAllTriggers();
@@ -55,9 +73,9 @@ class WastelandRaiderTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player2, List.of(opposingBear.getId()));
 
-        harness.assertInGraveyard(player1, "Hill Giant");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownGiant.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opposingBear.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownBear);
     }
 
     @Test
