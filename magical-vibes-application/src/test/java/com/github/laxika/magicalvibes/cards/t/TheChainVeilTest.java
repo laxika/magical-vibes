@@ -202,6 +202,90 @@ class TheChainVeilTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
+    @Test
+    @DisplayName("Activating The Chain Veil itself does not prevent the life loss")
+    void veilActivationDoesNotCountAsLoyaltyActivation() {
+        harness.addToBattlefield(player1, new TheChainVeil());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        int lifeBefore = gd.getLife(player1.getId());
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("A loyalty activation still counts after the planeswalker dies")
+    void departedPlaneswalkerStillPreventsLifeLoss() {
+        harness.addToBattlefield(player1, new TheChainVeil());
+        Permanent jace = addReadyJace(player1);
+        jace.setCounterCount(CounterType.LOYALTY, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateAbility(player1, 1, 1, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Jace Beleren");
+        harness.assertInGraveyard(player1, "Jace Beleren");
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("The extra activation may use a different loyalty ability")
+    void extraActivationCanUseDifferentAbility() {
+        harness.addToBattlefield(player1, new TheChainVeil());
+        Permanent jace = addReadyJace(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 1, 1, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("one loyalty ability");
+    }
+
+    @Test
+    @DisplayName("Resolving The Chain Veil does not grant an extra activation to an opponent")
+    void doesNotGrantExtraActivationToOpponent() {
+        harness.addToBattlefield(player1, new TheChainVeil());
+        addReadyJace(player2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("one loyalty ability");
+    }
+
     private Permanent addReadyJace(Player player) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new JaceBeleren());
         perm.setCounterCount(CounterType.LOYALTY, 3);
@@ -212,7 +296,6 @@ class TheChainVeilTest extends BaseCardTest {
     private void advanceToEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.END_STEP);
     }
 }
