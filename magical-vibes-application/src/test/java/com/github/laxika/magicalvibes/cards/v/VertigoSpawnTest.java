@@ -76,6 +76,45 @@ class VertigoSpawnTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Blocking taps an attacker that was untapped before the trigger resolved")
+    void tapsUntappedAttackerOnResolution() {
+        addCreatureReady(player2, new VertigoSpawn());
+        Permanent attacker = addCreatureReady(player1, new GhorClanSavage());
+
+        declareBlockers(List.of(0), List.of(new BlockerAssignment(0, 0)));
+        attacker.untap();
+        assertThat(attacker.isTapped()).isFalse();
+
+        resolveAllTriggers();
+
+        assertThat(attacker.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Two Spawns blocking one creature prevent only its next untap")
+    void multipleBlockTriggersDoNotSkipAdditionalUntapSteps() {
+        addCreatureReady(player2, new VertigoSpawn());
+        addCreatureReady(player2, new VertigoSpawn());
+        Permanent attacker = addCreatureReady(player1, new GhorClanSavage());
+
+        declareBlockers(List.of(0), List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        harness.performUntapStep(player2);
+        assertThat(attacker.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
     private void declareBlockers(List<Integer> attackerIndices, List<BlockerAssignment> assignments) {
         declareAttackersAndPrepareBlockers(attackerIndices);
         gs.declareBlockers(gd, player2, assignments);
