@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.f.Fecundity;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Smokestack.class, CoralMerfolk.class, Disenchant.class})
+@CardUsed({Smokestack.class, CoralMerfolk.class, Disenchant.class, Fecundity.class})
 class SmokestackTest extends BaseCardTest {
 
     @Test
@@ -122,6 +123,57 @@ class SmokestackTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(battlefield(player2)).doesNotContain(firstPermanent, secondPermanent);
+    }
+
+    @Test
+    @DisplayName("Sacrifice count reflects soot counters at resolution, not at trigger time")
+    void usesCurrentSootCountersAtResolution() {
+        Permanent smokestack = addSmokestack(player1);
+        smokestack.setCounterCount(CounterType.SOOT, 1);
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new CoralMerfolk());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new CoralMerfolk());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new CoralMerfolk());
+
+        advanceToUpkeep(player2);
+        smokestack.setCounterCount(CounterType.SOOT, 2);
+        choosePermanents(player2, first, second);
+
+        assertThat(battlefield(player2)).containsExactly(third);
+        assertThat(smokestack.getCounterCount(CounterType.SOOT)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The controller can sacrifice Smokestack to its own ability")
+    void canSacrificeSmokestackItself() {
+        Permanent smokestack = addSmokestack(player1);
+        smokestack.setCounterCount(CounterType.SOOT, 1);
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+
+        advanceToUpkeep(player1);
+        choosePermanents(player1, smokestack);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(battlefield(player1)).containsExactly(merfolk);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(smokestack.getCard());
+    }
+
+    @Test
+    @DisplayName("Permanents sacrificed together see creatures dying in the same event")
+    void sacrificesAllAvailablePermanentsSimultaneously() {
+        Permanent smokestack = addSmokestack(player1);
+        smokestack.setCounterCount(CounterType.SOOT, 2);
+        harness.addToBattlefield(player2, new Fecundity());
+        harness.addToBattlefield(player2, new CoralMerfolk());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new CoralMerfolk()));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(battlefield(player2)).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 
     private Permanent addSmokestack(Player owner) {
