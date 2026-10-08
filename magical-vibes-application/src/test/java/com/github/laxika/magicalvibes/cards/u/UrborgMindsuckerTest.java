@@ -139,6 +139,30 @@ class UrborgMindsuckerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick in the postcombat main phase")
+    void canActivateWhileTappedAndSummoningSick() {
+        var mindsucker = harness.addToBattlefieldAndReturn(player1, new UrborgMindsucker());
+        mindsucker.setSummoningSick(true);
+        mindsucker.setTapped(true);
+        harness.setHand(player1, List.of(new BullElephant()));
+        harness.setHand(player2, List.of(new KingCheetah()));
+        readyForSorcerySpeed();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        harness.assertInGraveyard(player1, "Urborg Mindsucker");
+        harness.assertInHand(player2, "King Cheetah");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "King Cheetah");
+        harness.assertNotInHand(player2, "King Cheetah");
+        harness.assertInHand(player1, "Bull Elephant");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void readyForSorcerySpeed() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
