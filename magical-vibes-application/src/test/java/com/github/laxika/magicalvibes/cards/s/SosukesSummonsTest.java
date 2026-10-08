@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.p.PetalmaneBaku;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SosukesSummons.class, SkeletalSnake.class})
+@CardUsed({SosukesSummons.class, SakuraTribeSpringcaller.class, PetalmaneBaku.class})
 class SosukesSummonsTest extends BaseCardTest {
 
     private void prepareMain(Player active) {
@@ -62,9 +63,8 @@ class SosukesSummonsTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(summons));
         prepareMain(player1);
 
-        harness.castFromHand(player1, new SkeletalSnake(), "{1}{B}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new SakuraTribeSpringcaller(), "{3}{G}");
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -80,9 +80,8 @@ class SosukesSummonsTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(summons));
         prepareMain(player1);
 
-        harness.castFromHand(player1, new SkeletalSnake(), "{1}{B}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new SakuraTribeSpringcaller(), "{3}{G}");
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
@@ -98,7 +97,7 @@ class SosukesSummonsTest extends BaseCardTest {
         SosukesSummons summons = new SosukesSummons();
         harness.setGraveyard(player1, List.of(summons));
 
-        harness.enterBattlefieldAndReturn(player2, new SkeletalSnake());
+        harness.enterBattlefieldAndReturn(player2, new SakuraTribeSpringcaller());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.pendingMayAbilities).isEmpty();
@@ -119,5 +118,108 @@ class SosukesSummonsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card.getId().equals(summonsInGraveyard.getId()));
+    }
+
+    @Test
+    @DisplayName("A nontoken creature that is not a Snake does not trigger the return")
+    void nonSnakeDoesNotTrigger() {
+        SosukesSummons summons = new SosukesSummons();
+        harness.setGraveyard(player1, List.of(summons));
+
+        harness.enterBattlefieldAndReturn(player1, new PetalmaneBaku());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(summons);
+    }
+
+    @Test
+    @DisplayName("Sosuke's Summons in hand does not trigger when a Snake enters")
+    void summonsInHandDoesNotTrigger() {
+        SosukesSummons summons = new SosukesSummons();
+        harness.setHand(player1, List.of(summons));
+
+        harness.enterBattlefieldAndReturn(player1, new SakuraTribeSpringcaller());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(summons);
+    }
+
+    @Test
+    @DisplayName("Each graveyard copy triggers independently and returns only itself")
+    void graveyardCopiesReturnIndependently() {
+        SosukesSummons first = new SosukesSummons();
+        SosukesSummons second = new SosukesSummons();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(first, second));
+        prepareMain(player1);
+
+        harness.enterBattlefieldAndReturn(player1, new SakuraTribeSpringcaller());
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .doesNotContainAnyElementsOf(gd.playerGraveyards.get(player1.getId()));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A return trigger cannot retrieve its source from exile")
+    void sourceRemovedFromGraveyardIsNotReturned() {
+        SosukesSummons summons = new SosukesSummons();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(summons));
+        prepareMain(player1);
+
+        harness.enterBattlefieldAndReturn(player1, new SakuraTribeSpringcaller());
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(summons));
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(summons);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(summons);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An old return trigger cannot retrieve a new graveyard incarnation")
+    void sourceLeavingAndReenteringGraveyardIsNotReturned() {
+        SosukesSummons summons = new SosukesSummons();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(summons));
+        gd.markGraveyardEntry(summons);
+        prepareMain(player1);
+
+        harness.enterBattlefieldAndReturn(player1, new SakuraTribeSpringcaller());
+
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(summons));
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(summons));
+        gd.markGraveyardEntry(summons);
+
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(summons);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(summons);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
