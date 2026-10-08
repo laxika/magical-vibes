@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.a.AshnodsHarvester;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MeticulousExcavation;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +17,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WarpedDevotion.class, Boomerang.class, Forest.class, GrizzlyBears.class})
+@CardUsed({WarpedDevotion.class, Boomerang.class, Forest.class, GrizzlyBears.class,
+        MeticulousExcavation.class, AshnodsHarvester.class})
 class WarpedDevotionTest extends BaseCardTest {
 
     @Test
@@ -151,5 +154,105 @@ class WarpedDevotionTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Warped Devotion triggers when it returns itself to hand")
+    void returningWarpedDevotionItselfTriggersDiscard() {
+        var devotion = harness.addToBattlefieldAndReturn(player1, new WarpedDevotion());
+        harness.setHand(player1, List.of(new Boomerang(), new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, devotion.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Warped Devotion");
+        harness.assertInHand(player1, "Warped Devotion");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInHand(player1, "Warped Devotion");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The owner discards when an opponent controls the returned permanent")
+    void ownerRatherThanCurrentControllerDiscards() {
+        harness.addToBattlefield(player2, new WarpedDevotion());
+        var bears = new GrizzlyBears();
+        bears.setOwnerId(player1.getId());
+        var permanent = harness.addToBattlefieldAndReturn(player2, bears);
+        harness.setHand(player1, List.of(new Boomerang(), new Forest()));
+        harness.setHand(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, permanent.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Warped Devotion triggers separately for a returned permanent")
+    void multipleCopiesEachCauseOneDiscard() {
+        harness.addToBattlefield(player1, new WarpedDevotion());
+        harness.addToBattlefield(player1, new WarpedDevotion());
+        var bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Forest()));
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Returning a card from exile to hand does not trigger Warped Devotion")
+    @CardUsed({WarpedDevotion.class, MeticulousExcavation.class, AshnodsHarvester.class})
+    void exilingUnearthedPermanentThenReturningCardToHandDoesNotTrigger() {
+        harness.addToBattlefield(player1, new MeticulousExcavation());
+        harness.addToBattlefield(player2, new WarpedDevotion());
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(new AshnodsHarvester()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        UUID targetId = harness.getPermanentId(player1, "Ashnod's Harvester");
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ashnod's Harvester");
+        harness.assertInHand(player1, "Ashnod's Harvester");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 }
