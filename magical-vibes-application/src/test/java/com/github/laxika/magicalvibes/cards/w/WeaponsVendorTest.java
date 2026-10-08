@@ -23,12 +23,8 @@ class WeaponsVendorTest extends BaseCardTest {
     @Test
     @DisplayName("Weapons Vendor draws a card when it enters")
     void drawsCardWhenItEnters() {
-        harness.setHand(player1, List.of(new WeaponsVendor()));
         harness.setLibrary(player1, List.of(new Forest()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new WeaponsVendor(), "{3}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -45,15 +41,20 @@ class WeaponsVendorTest extends BaseCardTest {
 
         advanceToCombat(player1);
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(equipment.getId());
         harness.handlePermanentChosen(player1, equipment.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactlyInAnyOrder(vendor.getId(), firstCreature.getId(), secondCreature.getId());
         harness.handlePermanentChosen(player1, secondCreature.getId());
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        assertThat(equipment.getAttachedTo()).isNull();
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(equipment.getAttachedTo()).isEqualTo(secondCreature.getId());
     }
@@ -63,16 +64,17 @@ class WeaponsVendorTest extends BaseCardTest {
     void decliningPaymentDoesNotAttachEquipment() {
         addVendorReady();
         Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
 
         advanceToCombat(player1);
 
-        harness.handlePermanentChosen(player1, equipment.getId());
-        harness.handlePermanentChosen(player1, creature.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(equipment.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
     @Test
@@ -86,18 +88,85 @@ class WeaponsVendorTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("The combat ability does not trigger during an opponent's turn")
+    void noTriggerDuringOpponentsCombat() {
+        addVendorReady();
+        harness.addToBattlefield(player1, new LeoninScimitar());
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's Equipment does not satisfy the combat condition")
+    void opponentsEquipmentDoesNotEnableTrigger() {
+        addVendorReady();
+        harness.addToBattlefield(player2, new LeoninScimitar());
+
+        advanceToCombat(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Losing all Equipment before resolution prevents the payment offer")
+    void equipmentConditionIsCheckedAgainOnResolution() {
+        addVendorReady();
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        advanceToCombat(player1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(equipment);
+        gd.playerGraveyards.get(player1.getId()).add(equipment.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Payment creates a separate trigger that can move attached Equipment and excludes opposing targets")
+    void paymentCreatesSeparateTriggerToMoveEquipment() {
+        Permanent vendor = addVendorReady();
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        Permanent previousCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        equipment.setAttachedTo(previousCreature.getId());
+        harness.addToBattlefield(player2, new LeoninScimitar());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        advanceToCombat(player1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(equipment.getId());
+        harness.handlePermanentChosen(player1, equipment.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactlyInAnyOrder(vendor.getId(), previousCreature.getId());
+        harness.handlePermanentChosen(player1, vendor.getId());
+        assertThat(equipment.getAttachedTo()).isEqualTo(previousCreature.getId());
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(vendor.getId());
+    }
+
     private Permanent addVendorReady() {
-        WeaponsVendor vendor = new WeaponsVendor();
-        Permanent permanent = new Permanent(vendor);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, new WeaponsVendor());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
         return permanent;
     }
 
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 }
