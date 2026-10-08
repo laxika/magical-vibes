@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GaeasSkyfolk;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -45,6 +46,22 @@ class LastCaressTest extends BaseCardTest {
 
         harness.assertLife(player1, 10);
         harness.assertInHand(player1, "Gaea's Skyfolk");
+    }
+
+    @Test
+    @DisplayName("Targeting yourself at 1 life does not lose the game during resolution")
+    void selfTargetAtOneLifeSurvivesResolution() {
+        harness.setLife(player1, 1);
+        harness.setHand(player1, List.of(new LastCaress()));
+        harness.setLibrary(player1, List.of(new GaeasSkyfolk()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 1);
+        harness.assertInHand(player1, "Gaea's Skyfolk");
+        harness.assertInGraveyard(player1, "Last Caress");
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 
     @Test
