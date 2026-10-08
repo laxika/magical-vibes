@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.a.ArcLightning;
+import com.github.laxika.magicalvibes.cards.a.Acridian;
 import com.github.laxika.magicalvibes.cards.b.Bravado;
 import com.github.laxika.magicalvibes.cards.s.ShivanHellkite;
+import com.github.laxika.magicalvibes.cards.s.SteamBlast;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -17,8 +19,56 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VoiceOfLaw.class, ArcLightning.class, Bravado.class, ShivanHellkite.class})
+@CardUsed({VoiceOfLaw.class, ArcLightning.class, Acridian.class, Bravado.class, ShivanHellkite.class, SteamBlast.class})
 class VoiceOfLawTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Flying prevents a creature without flying or reach from blocking Voice of Law")
+    void groundCreatureCannotBlockVoiceOfLaw() {
+        addCreatureReady(player1, new VoiceOfLaw());
+        addCreatureReady(player2, new Acridian());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
+    }
+
+    @Test
+    @DisplayName("A nonred flyer can block and deal lethal damage to Voice of Law")
+    void nonredFlyerCanBlockAndDealDamage() {
+        addCreatureReady(player1, new VoiceOfLaw());
+        addCreatureReady(player2, new VoiceOfLaw());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Voice of Law");
+        harness.assertInGraveyard(player2, "Voice of Law");
+        harness.assertNotOnBattlefield(player1, "Voice of Law");
+        harness.assertNotOnBattlefield(player2, "Voice of Law");
+    }
+
+    @Test
+    @DisplayName("Protection from red prevents untargeted red spell damage")
+    void preventsUntargetedRedDamage() {
+        Permanent voice = addCreatureReady(player2, new VoiceOfLaw());
+        Permanent acridian = addCreatureReady(player2, new Acridian());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new SteamBlast()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(voice.getMarkedDamage()).isZero();
+        assertThat(acridian.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Voice of Law");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
 
     @Test
     @DisplayName("A red spell cannot target Voice of Law")
