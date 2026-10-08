@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.c.CabalCoffers;
+import com.github.laxika.magicalvibes.cards.s.SeasClaim;
 import com.github.laxika.magicalvibes.cards.s.SengirVampire;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ZombieTrailblazer.class, CabalCoffers.class, SengirVampire.class})
+@CardUsed({ZombieTrailblazer.class, CabalCoffers.class, SengirVampire.class, SeasClaim.class})
 class ZombieTrailblazerTest extends BaseCardTest {
 
     @Test
@@ -141,8 +142,7 @@ class ZombieTrailblazerTest extends BaseCardTest {
         assertThat(gqs.effectiveBasicLandTypes(gd, land)).containsExactly(CardSubtype.SWAMP);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.SWAMPWALK)).isTrue();
 
-        attacker.setAttacking(true);
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(2));
 
         assertThatThrownBy(() -> declareBlock(blocker, attacker))
                 .isInstanceOf(IllegalStateException.class)
@@ -162,11 +162,77 @@ class ZombieTrailblazerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.SWAMPWALK)).isTrue();
         assertThat(trailblazer.isTapped()).isTrue();
 
-        attacker.setAttacking(true);
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1));
         declareBlock(blocker, attacker);
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Trailblazer can tap itself to make a Swamp")
+    void summoningSickZombieCanPayLandAbility() {
+        Permanent trailblazer = harness.addToBattlefieldAndReturn(player1, new ZombieTrailblazer());
+        trailblazer.setSummoningSick(true);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new CabalCoffers());
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(trailblazer.isTapped()).isTrue();
+        assertThat(gqs.effectiveBasicLandTypes(gd, land)).containsExactly(CardSubtype.SWAMP);
+    }
+
+    @Test
+    @DisplayName("A tapped Trailblazer can tap another summoning-sick Zombie to grant swampwalk")
+    void tappedTrailblazerCanUseAnotherSummoningSickZombie() {
+        Permanent trailblazer = addCreatureReady(player1, new ZombieTrailblazer());
+        trailblazer.tap();
+        Permanent otherZombie = harness.addToBattlefieldAndReturn(player1, new ZombieTrailblazer());
+        otherZombie.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new SengirVampire());
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(otherZombie.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SWAMPWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's untapped Zombie cannot pay the activation cost")
+    void opponentsZombieCannotPay() {
+        Permanent trailblazer = addCreatureReady(player1, new ZombieTrailblazer());
+        trailblazer.tap();
+        Permanent opponentZombie = addCreatureReady(player2, new ZombieTrailblazer());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new CabalCoffers());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No untapped matching creature to tap");
+        assertThat(opponentZombie.isTapped()).isFalse();
+        assertThat(gqs.effectiveBasicLandTypes(gd, land)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A later Sea's Claim replaces the Swamp type granted by Trailblazer")
+    void laterLandTypeSetterOverridesTrailblazer() {
+        addCreatureReady(player1, new ZombieTrailblazer());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new CabalCoffers());
+        harness.forceActivePlayer(player1);
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.effectiveBasicLandTypes(gd, land)).containsExactly(CardSubtype.SWAMP);
+
+        harness.setHand(player1, List.of(new SeasClaim()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, land)).containsExactly(CardSubtype.ISLAND);
+        harness.tapPermanent(player2, 0);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isZero();
     }
 
     private void declareBlock(Permanent blocker, Permanent attacker) {
