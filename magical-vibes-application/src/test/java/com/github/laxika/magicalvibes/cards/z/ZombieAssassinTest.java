@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ZombieAssassinTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Exiles two graveyard cards, sacrifices itself, and destroys a nonblack creature")
+    @DisplayName("Exiles two graveyard cards and itself, and destroys a nonblack creature")
     void destroysNonblackCreature() {
         addReadyAssassin(player1);
         harness.setGraveyard(player1, List.of(new Plains(), new Plains()));
@@ -32,10 +32,10 @@ class ZombieAssassinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Zombie Assassin");
-        harness.assertInGraveyard(player1, "Zombie Assassin");
+        harness.assertNotInGraveyard(player1, "Zombie Assassin");
         harness.assertNotOnBattlefield(player2, "Nantuko Disciple");
         harness.assertInGraveyard(player2, "Nantuko Disciple");
-        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
     }
 
     @Test
@@ -86,9 +86,9 @@ class ZombieAssassinTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Zombie Assassin");
         harness.assertNotOnBattlefield(player1, "Nantuko Disciple");
-        harness.assertInGraveyard(player1, "Zombie Assassin");
+        harness.assertNotInGraveyard(player1, "Zombie Assassin");
         harness.assertInGraveyard(player1, "Nantuko Disciple");
-        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
     }
 
     @Test
@@ -108,13 +108,82 @@ class ZombieAssassinTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(first, second).hasSize(3);
+        harness.assertNotInGraveyard(player1, "Zombie Assassin");
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .contains(remaining)
                 .doesNotContain(first, second);
         harness.assertNotOnBattlefield(player2, "Nantuko Disciple");
     }
 
+    @Test
+    @DisplayName("Exiles itself and the graveyard cards before the ability resolves")
+    void paysExileCostsBeforeResolution() {
+        addReadyAssassin(player1);
+        ZombieAssassin assassin = (ZombieAssassin) findPermanent(player1, "Zombie Assassin").getCard();
+        Plains first = new Plains();
+        Plains second = new Plains();
+        harness.setGraveyard(player1, List.of(first, second));
+        Permanent target = addCreatureReady(player2, new NantukoDisciple());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Zombie Assassin");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .containsExactlyInAnyOrder(first, second, assassin);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player2, "Nantuko Disciple");
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Nantuko Disciple");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        addReadyAssassin(player1);
+        findPermanent(player1, "Zombie Assassin").tap();
+        harness.setGraveyard(player1, List.of(new Plains(), new Plains()));
+        Permanent target = addCreatureReady(player2, new NantukoDisciple());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Zombie Assassin");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        addReadyAssassin(player1);
+        findPermanent(player1, "Zombie Assassin").setSummoningSick(true);
+        harness.setGraveyard(player1, List.of(new Plains(), new Plains()));
+        Permanent target = addCreatureReady(player2, new NantukoDisciple());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Zombie Assassin");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot use cards in the opponent's graveyard to pay the cost")
+    void cannotPayWithOpponentsGraveyard() {
+        addReadyAssassin(player1);
+        harness.setGraveyard(player1, List.of(new Plains()));
+        harness.setGraveyard(player2, List.of(new Plains(), new Plains()));
+        Permanent target = addCreatureReady(player2, new NantukoDisciple());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Zombie Assassin");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
     private void addReadyAssassin(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
