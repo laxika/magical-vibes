@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -111,6 +110,55 @@ class AbyssalGatekeeperTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Redwood Treefolk");
     }
 
+    @Test
+    @DisplayName("The active player chooses first even when the nonactive player controls the trigger")
+    void nonactiveControllersTriggerUsesActivePlayerChoiceOrder() {
+        Permanent gatekeeper = addCreatureReady(player2, new AbyssalGatekeeper());
+        harness.addToBattlefield(player1, new BenalishInfantry());
+        harness.addToBattlefield(player1, new RedwoodTreefolk());
+        harness.addToBattlefield(player2, new BenalishInfantry());
+        harness.addToBattlefield(player2, new RedwoodTreefolk());
+        harness.forceActivePlayer(player1);
+
+        gatekeeper.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Abyssal Gatekeeper");
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(player1.getId());
+        chooseCreatureForSacrifice(player1, "Benalish Infantry");
+
+        harness.assertOnBattlefield(player1, "Benalish Infantry");
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(player2.getId());
+        chooseCreatureForSacrifice(player2, "Redwood Treefolk");
+
+        harness.assertInGraveyard(player1, "Benalish Infantry");
+        harness.assertInGraveyard(player2, "Redwood Treefolk");
+        harness.assertOnBattlefield(player1, "Redwood Treefolk");
+        harness.assertOnBattlefield(player2, "Benalish Infantry");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+    }
+
+    @Test
+    @DisplayName("The death trigger resolves when neither player has a creature left")
+    void neitherPlayerHasCreatures() {
+        Permanent gatekeeper = addCreatureReady(player1, new AbyssalGatekeeper());
+        gatekeeper.setMarkedDamage(1);
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Abyssal Gatekeeper");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     /**
      * Attacks with the Gatekeeper into a 3/6 Redwood Treefolk blocker so it dies in combat damage.
      */
@@ -123,9 +171,6 @@ class AbyssalGatekeeperTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        harness.forceActivePlayer(attacker);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
     }
 
     private void chooseCreatureForSacrifice(Player player, String cardName) {
