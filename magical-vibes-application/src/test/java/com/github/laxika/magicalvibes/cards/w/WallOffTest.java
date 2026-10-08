@@ -52,8 +52,7 @@ class WallOffTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WallOff()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         Permanent wall = findPermanent(player1, "Wall");
         assertThat(wall.getCard().getType()).isEqualTo(CardType.CREATURE);
@@ -63,5 +62,40 @@ class WallOffTest extends BaseCardTest {
         assertThat(wall.getCard().getSubtypes()).containsExactly(CardSubtype.WALL);
         assertThat(wall.getCard().getKeywords()).contains(Keyword.DEFENDER);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(14);
+    }
+
+    @Test
+    @DisplayName("Excess opposing creatures reduce the cost to one white mana")
+    void excessReductionLeavesWhiteManaCost() {
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player2, new GrizzlyBears());
+        }
+        harness.setHand(player1, List.of(new WallOff()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(findPermanents(player1, "Wall")).hasSize(1);
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Wall Off");
+    }
+
+    @Test
+    @DisplayName("Excess cost reduction cannot pay the required white mana")
+    void excessReductionDoesNotRemoveWhiteRequirement() {
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player2, new GrizzlyBears());
+        }
+        harness.setHand(player1, List.of(new WallOff()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        harness.assertInHand(player1, "Wall Off");
+        assertThat(findPermanents(player1, "Wall")).isEmpty();
+        harness.assertLife(player1, 20);
     }
 }
