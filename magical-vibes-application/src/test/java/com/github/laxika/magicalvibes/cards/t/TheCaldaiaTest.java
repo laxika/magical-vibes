@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.CaldaiaGuardian;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -21,7 +22,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheCaldaia.class, Forest.class, GrizzlyBears.class, TorporOrb.class})
+@CardUsed({TheCaldaia.class, Forest.class, GrizzlyBears.class, TorporOrb.class, CaldaiaGuardian.class})
 class TheCaldaiaTest extends BaseCardTest {
 
     private PlanechaseService planar;
@@ -35,6 +36,30 @@ class TheCaldaiaTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
+    }
+
+    @Test
+    @CardUsed(CaldaiaGuardian.class)
+    void grantedBlitzCanBePaidInsteadOfAnExistingPrintedBlitzCost() {
+        harness.setHand(player1, List.of(new CaldaiaGuardian()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Caldaia Guardian");
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Caldaia Guardian"), Keyword.HASTE)).isTrue();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Caldaia Guardian");
+        harness.assertInHand(player1, "Forest");
     }
 
     @Test
