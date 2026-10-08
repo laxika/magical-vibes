@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.s.SpreadingSeas;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -133,5 +132,30 @@ class UrzasTowerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    void tapWithMineAndOpponentsPowerPlantAddsOne() {
+        harness.addToBattlefield(player1, new UrzasTower());
+        harness.addToBattlefield(player1, new UrzasMine());
+        harness.addToBattlefield(player2, new UrzasPowerPlant());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    void duplicateSupportLandsDoNotMultiplyTheBonus() {
+        harness.addToBattlefield(player1, new UrzasTower());
+        harness.addToBattlefield(player1, new UrzasMine());
+        harness.addToBattlefield(player1, new UrzasMine());
+        harness.addToBattlefield(player1, new UrzasPowerPlant());
+        harness.addToBattlefield(player1, new UrzasPowerPlant());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
     }
 }
