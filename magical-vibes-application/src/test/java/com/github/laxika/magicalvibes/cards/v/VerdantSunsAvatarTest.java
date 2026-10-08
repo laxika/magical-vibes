@@ -1,14 +1,16 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.c.CrashTheRamparts;
+import com.github.laxika.magicalvibes.cards.j.JungleDelver;
+import com.github.laxika.magicalvibes.cards.p.PerilousVoyage;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,33 +18,26 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VerdantSunsAvatar.class, GiantSpider.class, GrizzlyBears.class,
+        CrashTheRamparts.class, JungleDelver.class, PerilousVoyage.class})
 class VerdantSunsAvatarTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Verdant Sun's Avatar puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new VerdantSunsAvatar()));
-        harness.addMana(player1, ManaColor.GREEN, 7);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VerdantSunsAvatar(), "{5}{G}{G}");
 
         GameData gd = harness.getGameData();
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Verdant Sun's Avatar");
     }
 
     @Test
     @DisplayName("Avatar entering triggers self life gain equal to its own toughness (5)")
     void selfEntryTriggersLifeGain() {
-        harness.setHand(player1, List.of(new VerdantSunsAvatar()));
-        harness.addMana(player1, ManaColor.GREEN, 7);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VerdantSunsAvatar(), "{5}{G}{G}");
         // Resolve creature spell → self ETB trigger on stack
         harness.passBothPriorities();
 
@@ -51,19 +46,12 @@ class VerdantSunsAvatarTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(trigger.getCard().getName()).isEqualTo("Verdant Sun's Avatar");
-        assertThat(trigger.getEffectsToResolve()).hasSize(1);
-        assertThat(trigger.getEffectsToResolve().getFirst()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) trigger.getEffectsToResolve().getFirst()).amount()).isEqualTo(new Fixed(5));
     }
 
     @Test
     @DisplayName("Resolving self-ETB trigger gains 5 life")
     void selfEntryGainsFiveLife() {
-        harness.setHand(player1, List.of(new VerdantSunsAvatar()));
-        harness.addMana(player1, ManaColor.GREEN, 7);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VerdantSunsAvatar(), "{5}{G}{G}");
         // Resolve creature spell → trigger on stack
         harness.passBothPriorities();
         // Resolve trigger
@@ -81,9 +69,7 @@ class VerdantSunsAvatarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VerdantSunsAvatar());
 
         // Cast Giant Spider (2/4)
-        harness.setHand(player1, List.of(new GiantSpider()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GiantSpider(), "{3}{G}");
 
         // Resolve creature spell → Avatar trigger on stack
         harness.passBothPriorities();
@@ -93,8 +79,6 @@ class VerdantSunsAvatarTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(trigger.getCard().getName()).isEqualTo("Verdant Sun's Avatar");
-        assertThat(trigger.getEffectsToResolve().getFirst()).isInstanceOf(GainLifeEffect.class);
         harness.passBothPriorities();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
     }
@@ -105,9 +89,7 @@ class VerdantSunsAvatarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VerdantSunsAvatar());
 
         // Cast Grizzly Bears (2/2)
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         // Resolve creature spell → trigger on stack
         harness.passBothPriorities();
@@ -128,9 +110,7 @@ class VerdantSunsAvatarTest extends BaseCardTest {
         harness.addToBattlefield(player2, new VerdantSunsAvatar());
 
         // Player1 casts a creature — player2's Avatar should not trigger
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         // Resolve creature spell
         harness.passBothPriorities();
@@ -150,9 +130,7 @@ class VerdantSunsAvatarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VerdantSunsAvatar());
 
         // Cast Grizzly Bears (2/2)
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         // Resolve creature spell → two triggers on stack
         harness.passBothPriorities();
@@ -168,5 +146,62 @@ class VerdantSunsAvatarTest extends BaseCardTest {
 
         // Started at 20, gained 2 + 2 = 4 life
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
+    }
+
+    @Test
+    @DisplayName("Self-entry life gain uses toughness after a responding pump spell")
+    void selfEntryUsesToughnessAtResolution() {
+        harness.setHand(player1, List.of(new VerdantSunsAvatar(), new CrashTheRamparts()));
+        harness.addMana(player1, ManaColor.GREEN, 10);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Verdant Sun's Avatar"));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 28);
+        harness.assertLife(player2, 20);
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Self-entry uses last-known toughness when the pumped Avatar leaves")
+    void selfEntryUsesLastKnownToughness() {
+        harness.setHand(player1, List.of(new VerdantSunsAvatar(), new CrashTheRamparts()));
+        harness.setHand(player2, List.of(new PerilousVoyage()));
+        harness.addMana(player1, ManaColor.GREEN, 10);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        var avatarId = harness.getPermanentId(player1, "Verdant Sun's Avatar");
+        harness.castInstant(player1, 0, avatarId);
+        harness.passBothPriorities();
+        harness.castInstant(player2, 0, avatarId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Verdant Sun's Avatar");
+        harness.assertInHand(player1, "Verdant Sun's Avatar");
+        harness.assertLife(player1, 28);
+    }
+
+    @Test
+    @DisplayName("Ally-entry life gain uses counters added before the trigger resolves")
+    void allyEntryUsesToughnessAtResolution() {
+        harness.addToBattlefield(player1, new VerdantSunsAvatar());
+        harness.setHand(player1, List.of(new JungleDelver()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+        assertThat(harness.getGameData().stack).isEmpty();
     }
 }
