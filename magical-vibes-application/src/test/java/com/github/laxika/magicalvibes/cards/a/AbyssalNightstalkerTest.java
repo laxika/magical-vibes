@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GoldenBear;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -53,7 +51,7 @@ class AbyssalNightstalkerTest extends BaseCardTest {
 
         addAttacker();
 
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker), 0)));
 
@@ -71,6 +69,50 @@ class AbyssalNightstalkerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to discard"));
+        assertThat(gameLogContains("no cards to discard")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Discard happens after blockers are declared and before combat damage")
+    void discardBeforeCombatDamage() {
+        harness.setHand(player2, List.of(new GoldenBear(), new Forest()));
+        addCreatureReady(player2, new GoldenBear());
+        addAttacker();
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.DiscardChoice.class);
+
+        gs.declareBlockers(gd, player2, List.of());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.handleCardChosen(player2, 1);
+
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Player two's unblocked attacker makes player one discard")
+    void playerTwoAttacks() {
+        harness.setHand(player1, List.of(new GoldenBear(), new Forest()));
+        harness.setHand(player2, List.of(new Forest()));
+        addCreatureReady(player2, new AbyssalNightstalker());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Golden Bear");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 }
