@@ -1,18 +1,20 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.g.GoblinShortcutter;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VialOfPoison.class, GoblinShortcutter.class})
 class VialOfPoisonTest extends BaseCardTest {
 
     @Test
@@ -72,10 +74,56 @@ class VialOfPoisonTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("Sacrifice is paid immediately but deathtouch waits for resolution")
+    void sacrificeIsAnActivationCost() {
+        harness.addToBattlefieldAndReturn(player1, new VialOfPoison());
+        Permanent target = addCreature(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Vial of Poison");
+        harness.assertInGraveyard(player1, "Vial of Poison");
+        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Vial can activate its ability")
+    void tappedVialCanActivate() {
+        Permanent vial = harness.addToBattlefieldAndReturn(player1, new VialOfPoison());
+        vial.tap();
+        Permanent target = addCreature(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Vial of Poison");
+        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature artifact")
+    void cannotTargetNoncreature() {
+        harness.addToBattlefieldAndReturn(player1, new VialOfPoison());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new VialOfPoison());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature");
+
+        harness.assertOnBattlefield(player1, "Vial of Poison");
+    }
+
     private Permanent addCreature(Player player) {
-        Permanent perm = new Permanent(new RagingGoblin());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new GoblinShortcutter());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
