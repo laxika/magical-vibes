@@ -70,4 +70,39 @@ class VotaryOfTheConclaveTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("A tapped creature can activate regeneration repeatedly")
+    void tappedCreatureCanActivateRepeatedly() {
+        Permanent votary = harness.addToBattlefieldAndReturn(player1, new VotaryOfTheConclave());
+        votary.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(votary.getRegenerationShield()).isEqualTo(2);
+        assertThat(votary.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Lethal damage in response kills it before regeneration resolves")
+    void lethalDamageInResponseKillsBeforeRegenerationResolves() {
+        Permanent votary = harness.addToBattlefieldAndReturn(player1, new VotaryOfTheConclave());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.setHand(player2, List.of(new Char()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0, votary.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Votary of the Conclave");
+        harness.assertInGraveyard(player1, "Votary of the Conclave");
+    }
 }
