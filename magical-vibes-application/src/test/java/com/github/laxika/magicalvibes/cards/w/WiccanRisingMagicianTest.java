@@ -41,7 +41,8 @@ class WiccanRisingMagicianTest extends BaseCardTest {
                 .anyMatch(card -> card.getName().equals("Grizzly Bears"));
 
         harness.passBothPriorities();
-        advanceToEndStep();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId())).noneMatch(card -> card.getName().equals("Grizzly Bears"));
@@ -84,11 +85,80 @@ class WiccanRisingMagicianTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void advanceToEndStep() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+    @Test
+    @DisplayName("An opponent's noncreature spell does not trigger Wiccan")
+    void opponentsSpellDoesNotTrigger() {
+        harness.addToBattlefield(player1, new WiccanRisingMagician());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Spellbook()));
+
+        harness.castArtifact(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Spellbook");
+    }
+
+    @Test
+    @DisplayName("Wiccan can exile another noncreature permanent its controller controls")
+    void canTargetOwnNoncreaturePermanent() {
+        harness.addToBattlefield(player1, new WiccanRisingMagician());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        harness.setHand(player1, List.of(new Spellbook()));
+
+        harness.castArtifact(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(target.getId()));
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(target.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() instanceof Spellbook).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A stolen permanent returns to its owner even after Wiccan leaves")
+    void stolenPermanentReturnsToOwnerAfterSourceLeaves() {
+        Permanent wiccan = harness.addToBattlefieldAndReturn(player1, new WiccanRisingMagician());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.stolenCreatures.put(target.getId(), player2.getId());
+        harness.setHand(player1, List.of(new Spellbook()));
+
+        harness.castArtifact(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, wiccan);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(findPermanent(player2, "Grizzly Bears").getId()).isNotEqualTo(target.getId());
+        assertThat(findPermanent(player2, "Grizzly Bears").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Casting without any legal target still resolves the noncreature spell")
+    void noLegalTargetDoesNotBlockSpell() {
+        harness.addToBattlefield(player1, new WiccanRisingMagician());
+        harness.addToBattlefield(player1, new Island());
+        harness.setHand(player1, List.of(new Spellbook()));
+
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Spellbook");
+        harness.assertOnBattlefield(player1, "Wiccan, Rising Magician");
     }
 
     private static Card token() {
