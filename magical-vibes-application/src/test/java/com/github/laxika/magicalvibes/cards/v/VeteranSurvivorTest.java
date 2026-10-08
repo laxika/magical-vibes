@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,15 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VeteranSurvivor.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed(VeteranSurvivor.class)
 class VeteranSurvivorTest extends BaseCardTest {
 
     @Test
     @DisplayName("A tapped Veteran Survivor exiles and tracks up to one card from any graveyard")
     void tappedSurvivorExilesAndTracksCard() {
         Permanent survivor = addSurvivor();
-        Card ownCard = new GrizzlyBears();
-        Card opposingCard = new HillGiant();
+        Card ownCard = new VeteranSurvivor();
+        Card opposingCard = new VeteranSurvivor();
         harness.setGraveyard(player1, List.of(ownCard));
         harness.setGraveyard(player2, List.of(opposingCard));
         survivor.tap();
@@ -50,7 +48,7 @@ class VeteranSurvivorTest extends BaseCardTest {
     @DisplayName("The up-to-one Survival choice may be declined")
     void mayDeclineExile() {
         Permanent survivor = addSurvivor();
-        Card card = new GrizzlyBears();
+        Card card = new VeteranSurvivor();
         harness.setGraveyard(player2, List.of(card));
         survivor.tap();
 
@@ -66,9 +64,9 @@ class VeteranSurvivorTest extends BaseCardTest {
     @DisplayName("Three cards exiled with Veteran Survivor grant +3/+3 and hexproof")
     void thresholdGrantsBoostAndHexproof() {
         Permanent survivor = addSurvivor();
-        Card first = new GrizzlyBears();
-        Card second = new HillGiant();
-        Card third = new GrizzlyBears();
+        Card first = new VeteranSurvivor();
+        Card second = new VeteranSurvivor();
+        Card third = new VeteranSurvivor();
         gd.addToExile(player1.getId(), first, survivor.getId());
         gd.addToExile(player1.getId(), second, survivor.getId());
         gd.addToExile(player1.getId(), third, survivor.getId());
@@ -82,12 +80,92 @@ class VeteranSurvivorTest extends BaseCardTest {
     @DisplayName("An untapped Veteran Survivor does not trigger Survival")
     void untappedSurvivorDoesNotTrigger() {
         addSurvivor();
-        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(new VeteranSurvivor()));
 
         advanceToPostcombatMain(player1);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Survival rechecks whether Veteran Survivor is tapped on resolution")
+    void untappingBeforeResolutionPreventsExile() {
+        Permanent survivor = addSurvivor();
+        Card card = new VeteranSurvivor();
+        harness.setGraveyard(player2, List.of(card));
+        survivor.tap();
+
+        advanceToPostcombatMain(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
+        survivor.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(card);
+        assertThat(gd.getCardsExiledByPermanent(survivor.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Survival does not trigger during the opponent's second main phase")
+    void doesNotTriggerDuringOpponentsTurn() {
+        Permanent survivor = addSurvivor();
+        survivor.tap();
+        harness.setGraveyard(player2, List.of(new VeteranSurvivor()));
+
+        advanceToPostcombatMain(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Survival can resolve without a target when both graveyards are empty")
+    void emptyGraveyardsAllowZeroTargets() {
+        Permanent survivor = addSurvivor();
+        survivor.tap();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+
+        advanceToPostcombatMain(player1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(survivor.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exiling the third card turns on the bonus only for its source")
+    void thirdExileEnablesBonusOnlyForItsSource() {
+        Permanent survivor = addSurvivor();
+        Permanent other = addSurvivor();
+        gd.addToExile(player1.getId(), new VeteranSurvivor(), survivor.getId());
+        gd.addToExile(player1.getId(), new VeteranSurvivor(), survivor.getId());
+        Card third = new VeteranSurvivor();
+        harness.setGraveyard(player2, List.of(third));
+        survivor.tap();
+
+        assertThat(gqs.getEffectivePower(gd, survivor)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, survivor)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, survivor, Keyword.HEXPROOF)).isFalse();
+
+        advanceToPostcombatMain(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(third.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, survivor)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, survivor)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, survivor, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.HEXPROOF)).isFalse();
+
+        gd.removeFromExile(third.getId());
+        gd.playerGraveyards.get(player2.getId()).add(third);
+
+        assertThat(gqs.getEffectivePower(gd, survivor)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, survivor)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, survivor, Keyword.HEXPROOF)).isFalse();
     }
 
     private Permanent addSurvivor() {
@@ -98,7 +176,7 @@ class VeteranSurvivorTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
     }
 }
