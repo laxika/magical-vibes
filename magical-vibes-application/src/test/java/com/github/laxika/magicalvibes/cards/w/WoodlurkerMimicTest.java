@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WoodlurkerMimic.class, Card.class})
 class WoodlurkerMimicTest extends BaseCardTest {
 
     @BeforeEach
@@ -67,9 +69,7 @@ class WoodlurkerMimicTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(mimic.getEffectivePower()).isEqualTo(4);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         assertThat(mimic.getEffectivePower()).isEqualTo(2);
         assertThat(mimic.getEffectiveToughness()).isEqualTo(1);
@@ -86,6 +86,48 @@ class WoodlurkerMimicTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
+        assertThat(mimic.getEffectivePower()).isEqualTo(2);
+        assertThat(mimic.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, mimic, Keyword.WITHER)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Hybrid mana paid with only green still triggers before the spell resolves")
+    void hybridSpellTriggersBeforeResolution() {
+        Permanent mimic = addCreatureReady(player1, new WoodlurkerMimic());
+        harness.setHand(player1, List.of(new WoodlurkerMimic()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(2);
+        assertThat(mimic.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, mimic, Keyword.WITHER)).isFalse();
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(mimic.getEffectivePower()).isEqualTo(4);
+        assertThat(mimic.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, mimic, Keyword.WITHER)).isTrue();
+
+        harness.passBothPriorities();
+        Permanent enteringMimic = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(mimic.getId()))
+                .findFirst().orElseThrow();
+        assertThat(enteringMimic.getEffectivePower()).isEqualTo(2);
+        assertThat(enteringMimic.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, enteringMimic, Keyword.WITHER)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's black-and-green spell does not trigger the Mimic")
+    void opponentsSpellDoesNotTrigger() {
+        Permanent mimic = addCreatureReady(player1, new WoodlurkerMimic());
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new WoodlurkerMimic()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castCreature(player2, 0);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
         assertThat(mimic.getEffectivePower()).isEqualTo(2);
         assertThat(mimic.getEffectiveToughness()).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, mimic, Keyword.WITHER)).isFalse();
