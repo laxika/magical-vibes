@@ -88,9 +88,86 @@ class AangsDefenseTest extends BaseCardTest {
         assertThat(blocker.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("A tapped blocking creature remains a legal target")
+    void canTargetTappedBlocker() {
+        Permanent blocker = addBlockingCreature(player1);
+        blocker.setTapped(true);
+        setupDefense();
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+
+        assertThat(blocker.getPowerModifier()).isEqualTo(2);
+        assertThat(blocker.getToughnessModifier()).isEqualTo(2);
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Does not draw if the target leaves the battlefield before resolution")
+    void doesNotDrawIfTargetLeavesBattlefield() {
+        Permanent blocker = addBlockingCreature(player1);
+        setupDefense();
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.castInstant(player1, 0, blocker.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(blocker);
+        gd.playerGraveyards.get(player1.getId()).add(blocker.getCard());
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Aang's Defense");
+    }
+
+    @Test
+    @DisplayName("The boost persists after the creature stops blocking at end of combat")
+    void boostPersistsAfterCombat() {
+        Permanent blocker = addBlockingCreature(player1);
+        setupDefense();
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(blocker.isBlocking()).isFalse();
+        assertThat(blocker.getPowerModifier()).isEqualTo(2);
+        assertThat(blocker.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Can target a surviving blocker after the blocked attacker dies in combat")
+    void canTargetBlockerAfterAttackerDies() {
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player1.getId());
+        Permanent blocker = addBlockingCreature(player1);
+        blocker.addBlockingTarget(0);
+        blocker.addBlockingTargetId(attacker.getId());
+        setupDefense();
+        harness.setHand(player1, List.of(new AangsDefense(), new AangsDefense()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+
+        assertThat(blocker.getPowerModifier()).isEqualTo(4);
+        assertThat(blocker.getToughnessModifier()).isEqualTo(4);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
     private void setupDefense() {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.forceActivePlayer(player1);
+        harness.forceActivePlayer(player2);
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new AangsDefense()));
         harness.addMana(player1, ManaColor.WHITE, 1);
