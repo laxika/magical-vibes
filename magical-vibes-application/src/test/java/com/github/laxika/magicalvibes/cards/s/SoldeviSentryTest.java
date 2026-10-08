@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SoldeviSentry.class, Forest.class, GrizzlyBears.class, Threaten.class})
 class SoldeviSentryTest extends BaseCardTest {
@@ -46,7 +47,7 @@ class SoldeviSentryTest extends BaseCardTest {
         addSentryReady();
         harness.setLibrary(player2, List.of(new Forest()));
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
         Permanent sentry = findPermanent(player1, "Soldevi Sentry");
@@ -60,7 +61,7 @@ class SoldeviSentryTest extends BaseCardTest {
         addSentryReady();
         harness.setLibrary(player2, List.of(new Forest()));
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
         blockGrizzlyBears(findPermanent(player1, "Soldevi Sentry"));
@@ -89,7 +90,7 @@ class SoldeviSentryTest extends BaseCardTest {
         addSentryReady();
         harness.setLibrary(player2, List.of(new Forest()));
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
         blockGrizzlyBears(findPermanent(player1, "Soldevi Sentry"));
         harness.passBothPriorities();
@@ -120,15 +121,14 @@ class SoldeviSentryTest extends BaseCardTest {
         Permanent sentry = addSentryReady();
         harness.setLibrary(player2, List.of(new Forest()));
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
         harness.forceActivePlayer(player2);
         harness.setHand(player2, List.of(new Threaten()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player2, 0, sentry.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, sentry.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(sentry);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sentry);
@@ -154,5 +154,28 @@ class SoldeviSentryTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Soldevi Sentry");
         harness.assertInGraveyard(player1, "Soldevi Sentry");
+    }
+
+    @Test
+    @DisplayName("The ability cannot be activated without choosing a target opponent")
+    void requiresOpponentTarget() {
+        addSentryReady();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The delayed draw ability is controlled by the player who activated the Sentry")
+    void delayedDrawRetainsActivatingPlayersControl() {
+        Permanent sentry = addSentryReady();
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        blockGrizzlyBears(sentry);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
     }
 }
