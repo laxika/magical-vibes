@@ -61,6 +61,55 @@ class WaterWurmTest extends BaseCardTest {
         assertStats(1, 1);
     }
 
+    @Test
+    @DisplayName("Gains the boost when an opponent's Island enters later")
+    void gainsBoostWhenOpponentIslandEnters() {
+        harness.addToBattlefield(player1, new WaterWurm());
+        assertStats(1, 1);
+
+        harness.addToBattlefield(player2, new Island());
+
+        assertStats(1, 2);
+    }
+
+    @Test
+    @DisplayName("A tapped Island still grants the boost")
+    void tappedOpponentIslandGrantsBoost() {
+        harness.addToBattlefield(player1, new WaterWurm());
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        island.setTapped(true);
+
+        assertStats(1, 2);
+    }
+
+    @Test
+    @DisplayName("Multiple Islands grant only one boost and it remains until the last leaves")
+    void multipleIslandsDoNotMultiplyBoost() {
+        harness.addToBattlefield(player1, new WaterWurm());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new Island());
+
+        assertStats(1, 2);
+
+        gd.playerBattlefields.get(player2.getId()).remove(first);
+        assertStats(1, 2);
+
+        gd.playerBattlefields.get(player2.getId()).remove(second);
+        assertStats(1, 1);
+    }
+
+    @Test
+    @DisplayName("Each Water Wurm checks only its controller's opponents")
+    void boostAppliesOnlyToItsSource() {
+        harness.addToBattlefield(player1, new WaterWurm());
+        Permanent opposingWurm = harness.addToBattlefieldAndReturn(player2, new WaterWurm());
+        harness.addToBattlefield(player2, new Island());
+
+        assertStats(1, 2);
+        assertThat(gqs.getEffectivePower(gd, opposingWurm)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingWurm)).isEqualTo(1);
+    }
+
     private void assertStats(int power, int toughness) {
         Permanent wurm = findPermanent(player1, "Water Wurm");
         assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(power);
