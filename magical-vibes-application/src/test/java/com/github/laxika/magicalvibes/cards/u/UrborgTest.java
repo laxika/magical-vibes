@@ -83,6 +83,49 @@ class UrborgTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
+    @Test
+    @DisplayName("Can remove first strike from its controller's creature without affecting other creatures")
+    void affectsOnlyChosenCreature() {
+        Permanent urborg = setUpUrborg();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new WhiteKnight());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new WhiteKnight());
+
+        activate(urborg, target, "It loses first strike");
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(urborg.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activated ability resolves even if Urborg leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent urborg = setUpUrborg();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WhiteKnight());
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(urborg);
+        gd.playerGraveyards.get(player1.getId()).add(urborg.getCard());
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "It loses first strike");
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+        endTurn();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The keyword removal ability cannot be activated after tapping for mana")
+    void cannotActivateWhileTapped() {
+        setUpUrborg();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BogWraith());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SWAMPWALK)).isTrue();
+    }
+
     private Permanent setUpUrborg() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
