@@ -2,12 +2,13 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -36,7 +37,7 @@ class VengeantEarthTest extends BaseCardTest {
 
         target.setSummoningSick(false);
         target.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new GrizzlyBears()));
+        addCreatureReady(player2, new GrizzlyBears());
         prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
@@ -91,13 +92,92 @@ class VengeantEarthTest extends BaseCardTest {
         harness.setHand(player1, List.of(new VengeantEarth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
-    private Permanent readyCreature(Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        return permanent;
+    @Test
+    void countersApplyOnTopOfNewBasePowerAndToughness() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        castVengeantEarth(target);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
+    }
+
+    @Test
+    void retainsOriginalCreatureSubtype() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castVengeantEarth(target);
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target))
+                .contains(CardSubtype.BEAR, CardSubtype.ELEMENTAL);
+    }
+
+    @Test
+    void animatedLandCanAttackImmediatelyWithHaste() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
+        target.setSummoningSick(true);
+        castVengeantEarth(target);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(target.isAttacking()).isTrue();
+    }
+
+    @Test
+    void oneBlockerSatisfiesRequirementEvenWhenMoreAreAvailable() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        castVengeantEarth(target);
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+    }
+
+    @Test
+    void mayRemainUnblockedWhenOnlyPotentialBlockerIsTapped() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setTapped(true);
+        castVengeantEarth(target);
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of());
+    }
+
+    @Test
+    void landStopsBeingCreatureAtEndOfTurn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
+        castVengeantEarth(target);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isLand(gd, target)).isTrue();
+        assertThat(gqs.isCreature(gd, target)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
+        assertThat(target.isMustBeBlockedThisTurn()).isFalse();
+    }
+
+    @Test
+    void targetChangingControllerBeforeResolutionIsUnaffected() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new VengeantEarth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
+        assertThat(target.isMustBeBlockedThisTurn()).isFalse();
     }
 }
