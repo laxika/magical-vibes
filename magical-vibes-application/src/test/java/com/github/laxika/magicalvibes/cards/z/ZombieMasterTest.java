@@ -24,10 +24,8 @@ class ZombieMasterTest extends BaseCardTest {
     @Test
     @DisplayName("Other Zombie creatures have swampwalk")
     void grantsSwampwalkToOtherZombies() {
-        harness.addToBattlefield(player1, new Gravedigger());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new Gravedigger());
         harness.addToBattlefield(player1, new ZombieMaster());
-
-        Permanent zombie = findPermanent(player1, "Gravedigger");
 
         assertThat(gqs.hasKeyword(gd, zombie, Keyword.SWAMPWALK)).isTrue();
     }
@@ -89,10 +87,8 @@ class ZombieMasterTest extends BaseCardTest {
     @Test
     @DisplayName("Swampwalk is lost when Zombie Master leaves the battlefield")
     void swampwalkLostWhenMasterLeaves() {
-        harness.addToBattlefield(player1, new Gravedigger());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new Gravedigger());
         harness.addToBattlefield(player1, new ZombieMaster());
-
-        Permanent zombie = findPermanent(player1, "Gravedigger");
         assertThat(gqs.hasKeyword(gd, zombie, Keyword.SWAMPWALK)).isTrue();
 
         gd.playerBattlefields.get(player1.getId())
@@ -185,16 +181,55 @@ class ZombieMasterTest extends BaseCardTest {
     @Test
     @DisplayName("Regeneration ability is lost when Zombie Master leaves the battlefield")
     void regenerateAbilityLostWhenMasterLeaves() {
-        harness.addToBattlefield(player1, new Gravedigger());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new Gravedigger());
         harness.addToBattlefield(player1, new ZombieMaster());
-
-        Permanent zombie = findPermanent(player1, "Gravedigger");
         assertThat(gs.getEffectiveActivatedAbilities(gd, zombie)).isNotEmpty();
 
         gd.playerBattlefields.get(player1.getId())
                 .removeIf(p -> p.getCard().getName().equals("Zombie Master"));
 
         assertThat(gs.getEffectiveActivatedAbilities(gd, zombie)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Granted regeneration prevents lethal damage and taps the Zombie")
+    void grantedRegenerationPreventsLethalDamage() {
+        harness.addToBattlefield(player1, new ZombieMaster());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new Gravedigger());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(zombie), 0, null, null);
+        harness.passBothPriorities();
+
+        zombie.setMarkedDamage(2);
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Gravedigger");
+        harness.assertNotInGraveyard(player1, "Gravedigger");
+        assertThat(zombie.isTapped()).isTrue();
+        assertThat(zombie.getMarkedDamage()).isZero();
+        assertThat(zombie.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("A pending regeneration activation resolves after Zombie Master leaves")
+    void pendingRegenerationResolvesAfterMasterLeaves() {
+        Permanent master = harness.addToBattlefieldAndReturn(player1, new ZombieMaster());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new Gravedigger());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(zombie), 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(master);
+        harness.passBothPriorities();
+
+        assertThat(gs.getEffectiveActivatedAbilities(gd, zombie)).isEmpty();
+        assertThat(zombie.getRegenerationShield()).isEqualTo(1);
+        zombie.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.assertOnBattlefield(player1, "Gravedigger");
+        assertThat(zombie.getRegenerationShield()).isZero();
     }
 
     private void declareBlock(Permanent blocker, Permanent attacker) {
