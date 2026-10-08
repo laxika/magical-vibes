@@ -2,7 +2,10 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DiceRollService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ValiantEndeavorEffectHandler;
@@ -13,8 +16,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -70,15 +71,57 @@ class ValiantEndeavorTest extends BaseCardTest {
         assertThat(countPermanents(player2, "Grizzly Bears")).isEqualTo(1);
     }
 
+    @Test
+    void lowThresholdDestroysBothPlayersCreaturesBeforeCreatingKnights() {
+        harness.addToBattlefield(player1, new AirElemental());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        castWithRolls(2, 6);
+
+        harness.handleListChoice(player1, "2");
+
+        harness.assertInGraveyard(player1, "Air Elemental");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Air Elemental");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(countPermanents(player1, "Knight")).isEqualTo(6);
+        assertThat(countPermanents(player2, "Knight")).isZero();
+        var knight = findPermanent(player1, "Knight");
+        assertThat(knight.getCard().isToken()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
+        assertThat(knight.getCard().getColors()).containsExactly(CardColor.WHITE);
+        assertThat(knight.getCard().getSubtypes()).contains(CardSubtype.KNIGHT);
+        assertThat(knight.getCard().getKeywords()).contains(Keyword.VIGILANCE);
+    }
+
+    @Test
+    void createsKnightsEvenWhenNoCreaturesMeetTheThreshold() {
+        castWithRolls(6, 1);
+
+        harness.handleListChoice(player1, "6");
+
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(countPermanents(player1, "Knight")).isEqualTo(1);
+    }
+
+    @Test
+    void usesCurrentPowerIncludingCounters() {
+        var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        castWithRolls(4, 1);
+
+        harness.handleListChoice(player1, "4");
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(countPermanents(player1, "Knight")).isEqualTo(1);
+    }
     private void castWithRolls(int first, int second) {
         ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(first, second));
         harness.addToBattlefield(player2, new AirElemental());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new ValiantEndeavor()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castSorcery(player1, 0);
+        harness.castFromHand(player1, new ValiantEndeavor(), "{4}{W}{W}");
         harness.passBothPriorities();
     }
 
