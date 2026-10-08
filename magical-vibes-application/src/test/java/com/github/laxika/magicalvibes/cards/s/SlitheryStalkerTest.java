@@ -23,6 +23,58 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SlitheryStalkerTest extends BaseCardTest {
 
     @Test
+    void canEnterWithoutALegalTarget() {
+        prepareToCast();
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Slithery Stalker");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void targetRemovedBeforeEtbResolvesIsNotExiled() {
+        harness.addToBattlefield(player2, new SetonsScout());
+        UUID targetId = harness.getPermanentId(player2, "Seton's Scout");
+        prepareToCast();
+        harness.castCreature(player1, 0, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new FieryTemper()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, targetId);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Slithery Stalker");
+        harness.assertInGraveyard(player2, "Seton's Scout");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void eachStalkerReturnsOnlyItsOwnExiledCreature() {
+        harness.addToBattlefield(player2, new SetonsScout());
+        harness.addToBattlefield(player2, new MysticFamiliar());
+        castAndResolve(harness.getPermanentId(player2, "Seton's Scout"));
+        UUID firstStalkerId = harness.getPermanentId(player1, "Slithery Stalker");
+        castAndResolve(harness.getPermanentId(player2, "Mystic Familiar"));
+
+        harness.setHand(player2, List.of(new FieryTemper()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, firstStalkerId);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Seton's Scout");
+        harness.assertNotOnBattlefield(player2, "Mystic Familiar");
+        assertThat(countPermanents(player1, "Slithery Stalker")).isEqualTo(1);
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(card -> card.getName()).containsExactly("Mystic Familiar");
+    }
+
+    @Test
     void etbExilesGreenCreature() {
         harness.addToBattlefield(player2, new SetonsScout());
         UUID targetId = harness.getPermanentId(player2, "Seton's Scout");
@@ -156,8 +208,7 @@ class SlitheryStalkerTest extends BaseCardTest {
     private void castAndResolve(UUID targetId) {
         prepareToCast();
         harness.castCreature(player1, 0, 0, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void prepareToCast() {
