@@ -45,10 +45,46 @@ class UthrosPsionicistTest extends BaseCardTest {
     @DisplayName("The reduction does not apply to an opponent's spells")
     void opponentSpellsAreNotReduced() {
         harness.addToBattlefield(player1, new UthrosPsionicist());
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 3);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
 
         assertThatThrownBy(() -> harness.castCreature(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The second spell receives the full two generic mana reduction")
+    void secondSpellReceivesFullReduction() {
+        harness.addToBattlefield(player1, new UthrosPsionicist());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new UthrosPsionicist()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Uthros Psionicist");
+    }
+
+    @Test
+    @DisplayName("Multiple reductions cannot pay the second spell's colored mana")
+    void reductionDoesNotPayColoredMana() {
+        harness.addToBattlefield(player1, new UthrosPsionicist());
+        harness.setHand(player1, List.of(new UthrosPsionicist(), new UthrosPsionicist()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
