@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -79,5 +81,40 @@ class UtopiaTreeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    void cannotChooseColorlessMana() {
+        addCreatureReady(player1, new UtopiaTree());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "COLORLESS"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+
+        harness.handleListChoice(player1, "GREEN");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    void canProduceManaWhileBlocking() {
+        addCreatureReady(player1, new UtopiaTree());
+        Permanent blocker = addCreatureReady(player2, new UtopiaTree());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+            harness.activateAbility(player2, 0, null, null);
+            harness.handleListChoice(player2, "BLUE");
+
+            assertThat(blocker.isTapped()).isTrue();
+            assertThat(blocker.isBlocking()).isTrue();
+            assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.interaction.activeInteraction()).isNull();
+        });
     }
 }
