@@ -1,7 +1,15 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.a.Artillerize;
+import com.github.laxika.magicalvibes.cards.a.AuraOfSilence;
+import com.github.laxika.magicalvibes.cards.d.Dismember;
+import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
+import com.github.laxika.magicalvibes.cards.s.SurgicalExtraction;
+import com.github.laxika.magicalvibes.cards.t.TrollAscetic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GitaxianProbe;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -14,32 +22,29 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OmenMachine.class, GrizzlyBears.class, Plains.class, Pyroclasm.class, Shock.class})
+@CardUsed({OmenMachine.class, GrizzlyBears.class, Plains.class, Pyroclasm.class, Shock.class,
+        Dismember.class, SurgicalExtraction.class, TrollAscetic.class, RuleOfLaw.class,
+        AuraOfSilence.class, Artillerize.class, GitaxianProbe.class})
 class OmenMachineTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2; // avoid first-turn draw skip
         harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances from UPKEEP to DRAW
+        harness.passUntil(activePlayer, TurnStep.DRAW);
     }
-
-    // ===== Draw prevention =====
 
     @Test
     @DisplayName("Normal draw step draw is prevented")
     void normalDrawIsPrevented() {
         harness.addToBattlefield(player1, new OmenMachine());
-        int handBefore = gd.playerHands.get(player1.getId()).size();
-
         // Put a known card on top so we can track it
         Card topCard = new GrizzlyBears();
         gd.playerDecks.get(player1.getId()).addFirst(topCard);
-        int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
         advanceToDraw(player1);
 
@@ -52,7 +57,6 @@ class OmenMachineTest extends BaseCardTest {
     @DisplayName("Opponent's draw step draw is also prevented")
     void opponentDrawIsPrevented() {
         harness.addToBattlefield(player1, new OmenMachine());
-        int handBefore = gd.playerHands.get(player2.getId()).size();
 
         Card topCard = new GrizzlyBears();
         gd.playerDecks.get(player2.getId()).addFirst(topCard);
@@ -62,8 +66,6 @@ class OmenMachineTest extends BaseCardTest {
         // Opponent should not draw the card into hand
         assertThat(gd.playerHands.get(player2.getId())).doesNotContain(topCard);
     }
-
-    // ===== Trigger — land on top =====
 
     @Test
     @DisplayName("Land on top of library is put onto the battlefield")
@@ -86,8 +88,6 @@ class OmenMachineTest extends BaseCardTest {
         // Not in library
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(plains);
     }
-
-    // ===== Trigger — non-targeted spell on top =====
 
     @Test
     @DisplayName("Non-targeted sorcery on top is cast without paying mana cost")
@@ -116,8 +116,6 @@ class OmenMachineTest extends BaseCardTest {
         // No mana was spent
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
-
-    // ===== Trigger — targeted spell on top =====
 
     @Test
     @DisplayName("Targeted instant on top prompts for target and is cast without paying")
@@ -148,8 +146,6 @@ class OmenMachineTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
-    // ===== Trigger — creature on top =====
-
     @Test
     @DisplayName("Creature on top is cast without paying (put on stack as creature spell)")
     void creatureOnTopIsCast() {
@@ -172,8 +168,6 @@ class OmenMachineTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard() == bears);
     }
 
-    // ===== Trigger fires for opponent too =====
-
     @Test
     @DisplayName("Trigger fires on opponent's draw step as well")
     void triggerFiresOnOpponentDrawStep() {
@@ -190,8 +184,6 @@ class OmenMachineTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard() == plains);
     }
 
-    // ===== Empty library =====
-
     @Test
     @DisplayName("Empty library — trigger does nothing")
     void emptyLibraryDoesNothing() {
@@ -205,29 +197,20 @@ class OmenMachineTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
-    // ===== Targeted spell with no valid targets stays in exile =====
-
     @Test
-    @DisplayName("Targeted spell with no valid targets stays in exile")
+    @DisplayName("Creature-only spell with no legal targets remains in exile")
     void targetedSpellNoValidTargetsStaysInExile() {
         harness.addToBattlefield(player1, new OmenMachine());
-        // No creatures on the battlefield — Shock has no valid permanent targets
-        // But Shock can target players, so it will actually have targets
-        // Let's use a card that can only target creatures/permanents
-        // Actually, Shock can target any target (including players), so it will always have targets
-        // Let me just verify the exile behavior with a different approach
-
-        Card shock = new Shock();
-        gd.playerDecks.get(player1.getId()).addFirst(shock);
+        Card dismember = new Dismember();
+        harness.setLibrary(player1, List.of(dismember));
 
         advanceToDraw(player1);
-        harness.passBothPriorities(); // resolve Omen Machine trigger
+        harness.passBothPriorities();
 
-        // Shock can target players too, so it will be cast
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(dismember);
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == dismember);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
-
-    // ===== Spell cast counts =====
 
     @Test
     @DisplayName("Casting from Omen Machine counts as spell cast")
@@ -241,8 +224,6 @@ class OmenMachineTest extends BaseCardTest {
 
         assertThat(gd.getSpellsCastThisTurnCount(player1.getId())).isEqualTo(1);
     }
-
-    // ===== Card does not go to hand =====
 
     @Test
     @DisplayName("Card exiled by Omen Machine never enters the hand")
@@ -259,5 +240,125 @@ class OmenMachineTest extends BaseCardTest {
         // Bears should not be in hand — it was cast from exile directly to stack
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(bears);
+    }
+
+    @Test
+    @DisplayName("Graveyard-targeting spell must be cast when a legal target exists")
+    void graveyardTargetIsAvailable() {
+        harness.addToBattlefield(player1, new OmenMachine());
+        harness.setGraveyard(player2, List.of(new Dismember()));
+        Card surgicalExtraction = new SurgicalExtraction();
+        harness.setLibrary(player1, List.of(surgicalExtraction));
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.getSpellsCastThisTurnCount(player1.getId())).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's hexproof creature is not a legal target")
+    void hexproofCreatureDoesNotAllowCasting() {
+        harness.addToBattlefield(player1, new OmenMachine());
+        harness.addToBattlefield(player2, new TrollAscetic());
+        Card dismember = new Dismember();
+        harness.setLibrary(player1, List.of(dismember));
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(dismember);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == dismember);
+    }
+
+    @Test
+    @DisplayName("Rule of Law prevents casting a second spell through Omen Machine")
+    void castingLimitLeavesCardInExile() {
+        harness.addToBattlefield(player1, new OmenMachine());
+        harness.addToBattlefield(player2, new RuleOfLaw());
+        Card pyroclasm = new Pyroclasm();
+        harness.setLibrary(player1, List.of(pyroclasm));
+        harness.setHand(player1, List.of(new Shock()));
+
+        advanceToDraw(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(pyroclasm);
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == pyroclasm);
+        assertThat(gd.getSpellsCastThisTurnCount(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cost increases still apply to spells cast without paying their mana cost")
+    void unpaidCostIncreaseLeavesCardInExile() {
+        harness.addToBattlefield(player1, new OmenMachine());
+        harness.addToBattlefield(player2, new AuraOfSilence());
+        Card artifact = new OmenMachine();
+        harness.setLibrary(player1, List.of(artifact));
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(artifact);
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == artifact);
+        assertThat(gd.getSpellsCastThisTurnCount(player1.getId())).isZero();
+    }
+
+    @Test
+    @DisplayName("Artillerize requires an artifact or creature sacrifice before it is cast")
+    void requiredSacrificeIsPaidBeforeCasting() {
+        harness.addToBattlefield(player1, new OmenMachine());
+        Card artillerize = new Artillerize();
+        harness.setLibrary(player1, List.of(artillerize));
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == artillerize);
+        assertThat(gd.getSpellsCastThisTurnCount(player1.getId())).isZero();
+    }
+
+    @Test
+    @DisplayName("Draws from spells are prevented as well as the draw step draw")
+    void spellDrawIsPrevented() {
+        harness.addToBattlefield(player1, new OmenMachine());
+        Card topCard = new Plains();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new GitaxianProbe()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        harness.assertInGraveyard(player1, "Gitaxian Probe");
+    }
+
+    @Test
+    @DisplayName("Each Omen Machine independently processes the next library card")
+    void multipleMachinesProcessSuccessiveCards() {
+        harness.addToBattlefield(player1, new OmenMachine());
+        harness.addToBattlefield(player2, new OmenMachine());
+        Card firstLand = new Plains();
+        Card secondLand = new Plains();
+        harness.setLibrary(player1, List.of(firstLand, secondLand));
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == firstLand)
+                .anyMatch(permanent -> permanent.getCard() == secondLand);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(firstLand, secondLand);
     }
 }
