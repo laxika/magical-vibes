@@ -177,6 +177,25 @@ class SuccumbToTheColdTest extends BaseCardTest {
         assertThat(target.getCounterCount(CounterType.STUN)).isZero();
         harness.assertInGraveyard(player1, "Succumb to the Cold");
     }
+    @Test
+    @DisplayName("Resolves on the remaining creature when the first target leaves the battlefield")
+    void resolvesWhenFirstTargetLeavesBattlefield() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new Mintstrosity());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new Mintstrosity());
+        prepareCast();
+        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(first);
+        harness.setGraveyard(player2, List.of(first.getCard()));
+
+        harness.passBothPriorities();
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(first.getCounterCount(CounterType.STUN)).isZero();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(second.getCounterCount(CounterType.STUN)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Succumb to the Cold");
+    }
+
     private void cast(List<Permanent> targets) {
         prepareCast();
         harness.castAndResolveInstant(player1, 0, targets.stream().map(Permanent::getId).toList());
