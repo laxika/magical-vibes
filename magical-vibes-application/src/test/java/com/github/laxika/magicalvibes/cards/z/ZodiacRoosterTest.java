@@ -97,4 +97,40 @@ class ZodiacRoosterTest extends BaseCardTest {
 
         assertThat(blockerPerm.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Zodiac Rooster cannot be blocked when the defending player's only Plains is tapped")
+    void cannotBeBlockedWhenDefendersPlainsIsTapped() {
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        plains.setTapped(true);
+        Permanent blocker = addCreatureReady(player2, new ShuFootSoldiers());
+        Permanent attacker = addCreatureReady(player1, new ZodiacRooster());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Zodiac Rooster can be blocked when the defending player's only Plains is in the graveyard")
+    void canBeBlockedWhenPlainsIsOnlyInDefendersGraveyard() {
+        harness.setGraveyard(player2, List.of(new Plains()));
+        Permanent blocker = addCreatureReady(player2, new ShuFootSoldiers());
+        Permanent attacker = addCreatureReady(player1, new ZodiacRooster());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 }
