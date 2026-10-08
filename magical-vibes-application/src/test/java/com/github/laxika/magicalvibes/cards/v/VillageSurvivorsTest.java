@@ -4,11 +4,17 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VillageSurvivors.class, GrizzlyBears.class})
 class VillageSurvivorsTest extends BaseCardTest {
 
     // ===== Above threshold (default 20 life) =====
@@ -94,5 +100,35 @@ class VillageSurvivorsTest extends BaseCardTest {
         // Back above threshold — grant gone
         gd.playerLifeTotals.put(player1.getId(), 10);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {5, 6})
+    @DisplayName("Other creatures attack untapped only while fateful hour applies")
+    void vigilanceChangesAttackTappingAtThreshold(int life) {
+        harness.setLife(player1, life);
+        Permanent survivors = addCreatureReady(player1, new VillageSurvivors());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+
+        assertThat(survivors.isAttacking()).isTrue();
+        assertThat(bears.isAttacking()).isTrue();
+        assertThat(survivors.isTapped()).isFalse();
+        assertThat(bears.isTapped()).isEqualTo(life > 5);
+    }
+
+    @Test
+    @DisplayName("Vigilance grant ends when Village Survivors leaves the battlefield")
+    void vigilanceGrantEndsWhenSourceLeaves() {
+        harness.setLife(player1, 5);
+        Permanent survivors = harness.addToBattlefieldAndReturn(player1, new VillageSurvivors());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, survivors);
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
+        harness.assertInGraveyard(player1, "Village Survivors");
     }
 }
