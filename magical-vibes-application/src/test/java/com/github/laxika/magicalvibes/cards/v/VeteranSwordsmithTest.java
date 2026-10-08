@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.a.AvenCloudchaser;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +15,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VeteranSwordsmith.class, AvenCloudchaser.class, GrizzlyBears.class})
 class VeteranSwordsmithTest extends BaseCardTest {
 
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Veteran Swordsmith puts it on the stack")
@@ -45,16 +46,13 @@ class VeteranSwordsmithTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Veteran Swordsmith");
     }
 
-    // ===== Static effect: buffs other own Soldiers =====
 
     @Test
     @DisplayName("Other own Soldier creatures get +1/+0")
     void buffsOtherOwnSoldiers() {
         // Aven Cloudchaser is a Bird Soldier (2/2)
-        harness.addToBattlefield(player1, new AvenCloudchaser());
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new AvenCloudchaser());
         harness.addToBattlefield(player1, new VeteranSwordsmith());
-
-        Permanent soldier = findPermanent(player1, "Aven Cloudchaser");
 
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(2);
@@ -95,7 +93,6 @@ class VeteranSwordsmithTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, opponentSoldier)).isEqualTo(2);
     }
 
-    // ===== Multiple sources =====
 
     @Test
     @DisplayName("Two Veteran Swordsmiths buff each other")
@@ -118,24 +115,19 @@ class VeteranSwordsmithTest extends BaseCardTest {
     void twoSwordsmithsStackBonuses() {
         harness.addToBattlefield(player1, new VeteranSwordsmith());
         harness.addToBattlefield(player1, new VeteranSwordsmith());
-        harness.addToBattlefield(player1, new AvenCloudchaser());
-
-        Permanent soldier = findPermanent(player1, "Aven Cloudchaser");
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new AvenCloudchaser());
 
         // 2/2 base + 2/0 from two sources = 4/2
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(2);
     }
 
-    // ===== Bonus gone when source leaves =====
 
     @Test
     @DisplayName("Bonus is removed when Veteran Swordsmith leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
         harness.addToBattlefield(player1, new VeteranSwordsmith());
-        harness.addToBattlefield(player1, new AvenCloudchaser());
-
-        Permanent soldier = findPermanent(player1, "Aven Cloudchaser");
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new AvenCloudchaser());
 
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(3);
 
@@ -149,11 +141,9 @@ class VeteranSwordsmithTest extends BaseCardTest {
     @Test
     @DisplayName("Bonus applies when Veteran Swordsmith resolves onto battlefield")
     void bonusAppliesOnResolve() {
-        harness.addToBattlefield(player1, new AvenCloudchaser());
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new AvenCloudchaser());
         harness.setHand(player1, List.of(new VeteranSwordsmith()));
         harness.addMana(player1, ManaColor.WHITE, 3);
-
-        Permanent soldier = findPermanent(player1, "Aven Cloudchaser");
 
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(2);
 
@@ -165,12 +155,35 @@ class VeteranSwordsmithTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A Soldier entering after Veteran Swordsmith immediately receives the bonus")
+    void buffsSoldierEnteringLater() {
+        harness.addToBattlefield(player1, new VeteranSwordsmith());
+        harness.setHand(player1, List.of(new AvenCloudchaser()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent soldier = findPermanent(player1, "Aven Cloudchaser");
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Veteran Swordsmith in hand does not boost Soldiers")
+    void doesNotBuffFromHand() {
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new AvenCloudchaser());
+        harness.setHand(player1, List.of(new VeteranSwordsmith()));
+
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Static bonus survives end-of-turn modifier reset")
     void staticBonusSurvivesEndOfTurnReset() {
         harness.addToBattlefield(player1, new VeteranSwordsmith());
-        harness.addToBattlefield(player1, new AvenCloudchaser());
-
-        Permanent soldier = findPermanent(player1, "Aven Cloudchaser");
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new AvenCloudchaser());
 
         soldier.setPowerModifier(soldier.getPowerModifier() + 5);
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(8); // 2 base + 5 spell + 1 static
