@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +16,48 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WhitewaterNaiads.class, GrizzlyBears.class, GloriousAnthem.class})
 class WhitewaterNaiadsTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Its own entry can target itself and triggers only once")
+    void ownEntryCanTargetItself() {
+        Permanent naiads = harness.enterBattlefieldAndReturn(player1, new WhitewaterNaiads());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, naiads.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(naiads.isCantBeBlocked()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A non-enchantment creature entering does not trigger constellation")
+    void nonEnchantmentEntryDoesNotTrigger() {
+        harness.addToBattlefield(player1, new WhitewaterNaiads());
+        Permanent bears = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(bears.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An enchantment entering without being cast still triggers constellation")
+    void enchantmentEnteringWithoutBeingCastTriggers() {
+        Permanent naiads = harness.addToBattlefieldAndReturn(player1, new WhitewaterNaiads());
+        harness.enterBattlefieldAndReturn(player1, new GloriousAnthem());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, naiads.getId());
+        harness.passBothPriorities();
+
+        assertThat(naiads.isCantBeBlocked()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Its own entry makes a target creature unblockable")
