@@ -207,6 +207,41 @@ class TheBlackstaffOfWaterdeepTest extends BaseCardTest {
                 .hasMessageContaining("sorcery speed");
     }
 
+    @Test
+    @DisplayName("Retapping the Staff does not restore an expired animation")
+    void retappingDoesNotRestoreAnimation() {
+        Permanent staff = addReadyStaff(player1);
+        Permanent dagger = addReadySpareDagger(player1);
+        addMana();
+
+        harness.activateAbility(player1, 0, null, dagger.getId());
+        harness.passBothPriorities();
+        advanceToUntapChoice();
+        harness.handleMayAbilityChosen(player1, true);
+        staff.tap();
+
+        assertThat(gqs.isCreature(gd, dagger)).isFalse();
+        assertThat(gqs.isArtifact(gd, dagger)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An artifact that leaves and returns before resolution is a new target")
+    void returnedArtifactIsNotAnimatedByOldAbility() {
+        Permanent staff = addReadyStaff(player1);
+        Permanent dagger = addReadySpareDagger(player1);
+        addMana();
+
+        harness.activateAbility(player1, 0, null, dagger.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, dagger));
+        gd.playerGraveyards.get(player1.getId()).remove(dagger.getCard());
+        Permanent returnedDagger = harness.addToBattlefieldAndReturn(player1, dagger.getCard());
+        harness.passBothPriorities();
+
+        assertThat(staff.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, returnedDagger)).isFalse();
+        assertThat(gqs.isArtifact(gd, returnedDagger)).isTrue();
+    }
+
     private Permanent addReadyStaff(Player player) {
         return addCreatureReady(player, new TheBlackstaffOfWaterdeep());
     }
