@@ -15,7 +15,7 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SongOfBlood.class, PhyrexianWalker.class})
+@CardUsed({SongOfBlood.class, PhyrexianWalker.class, TheWaterCrystal.class})
 class SongOfBloodTest extends BaseCardTest {
 
     @Test
@@ -93,9 +93,10 @@ class SongOfBloodTest extends BaseCardTest {
 
         castAndResolve();
 
-        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
 
-        assertThat(gd.stack).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
         assertThat(attacker.getPowerModifier()).isZero();
     }
 
@@ -116,7 +117,6 @@ class SongOfBloodTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(TheWaterCrystal.class)
     @DisplayName("Counts every card added to the mill event by a replacement effect")
     void countsCardsAddedByMillReplacement() {
         harness.addToBattlefield(player1, new TheWaterCrystal());
@@ -154,6 +154,93 @@ class SongOfBloodTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        assertThat(attacker.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Empty library still creates a zero-boost attack trigger")
+    void emptyLibraryStillCreatesAttackTrigger() {
+        harness.setLibrary(player1, List.of());
+        Permanent attacker = addCreatureReady(player1, new PhyrexianWalker());
+
+        castAndResolve();
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(attacker.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Separate casts create cumulative boosts and leave nonattackers unchanged")
+    void separateCastsHaveIndependentCounts() {
+        harness.setLibrary(player1, List.of(
+                new PhyrexianWalker(), new SongOfBlood(), new SongOfBlood(), new SongOfBlood(),
+                new PhyrexianWalker(), new PhyrexianWalker(), new SongOfBlood(), new SongOfBlood()));
+        Permanent attacker = addCreatureReady(player1, new PhyrexianWalker());
+        Permanent nonattacker = addCreatureReady(player1, new PhyrexianWalker());
+
+        castAndResolve();
+        castAndResolve();
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(3);
+        assertThat(nonattacker.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Boost count remains fixed after milled creatures leave the graveyard")
+    void boostCountDoesNotDependOnCurrentGraveyard() {
+        harness.setLibrary(player1, cards(4));
+        Permanent attacker = addCreatureReady(player1, new PhyrexianWalker());
+
+        castAndResolve();
+        harness.setGraveyard(player1, List.of());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Delayed ability triggers again in an additional combat that turn")
+    void additionalCombatTriggersAgain() {
+        harness.setLibrary(player1, List.of(
+                new PhyrexianWalker(), new SongOfBlood(), new SongOfBlood(), new SongOfBlood()));
+        Permanent attacker = addCreatureReady(player1, new PhyrexianWalker());
+
+        castAndResolve();
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+
+        attacker.setTapped(false);
+        attacker.setAttacking(false);
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Delayed ability no longer triggers on the next turn")
+    void delayedAbilityExpiresAtEndOfTurn() {
+        harness.setLibrary(player1, cards(4));
+        Permanent attacker = addCreatureReady(player2, new PhyrexianWalker());
+
+        castAndResolve();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player2, List.of(0)));
+
+        assertThat(gd.stack).isEmpty();
         assertThat(attacker.getPowerModifier()).isZero();
     }
 
