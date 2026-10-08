@@ -32,8 +32,7 @@ class SnapTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Snap()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInHand(player2, "Grizzly Bears");
@@ -60,12 +59,56 @@ class SnapTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Snap()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
         assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can untap exactly one of three available lands")
+    void canUntapExactlyOneLand() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new Island());
+        first.tap();
+        second.tap();
+        third.tap();
+
+        harness.setHand(player1, List.of(new Snap()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        PendingInteraction.MultiPermanentChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(2);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(first.getId(), second.getId(), third.getId());
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isFalse();
+        assertThat(third.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Snap");
+    }
+
+    @Test
+    @DisplayName("Returns the creature even when there are no lands to untap")
+    void returnsCreatureWithoutLands() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Snap()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Snap");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
     }
 
     @Test
