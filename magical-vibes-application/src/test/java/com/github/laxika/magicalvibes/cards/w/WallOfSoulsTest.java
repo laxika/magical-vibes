@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.l.Lifelink;
 import com.github.laxika.magicalvibes.cards.m.MorgueThrull;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SpinedWurm;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WallOfSouls.class, MorgueThrull.class, ChandraNalaar.class, Shock.class})
+@CardUsed({WallOfSouls.class, MorgueThrull.class, SpinedWurm.class, ChandraNalaar.class, Shock.class, Lifelink.class})
 class WallOfSoulsTest extends BaseCardTest {
 
     @Test
@@ -38,8 +39,7 @@ class WallOfSoulsTest extends BaseCardTest {
         addCreatureReady(player1, new MorgueThrull());
         harness.setLife(player1, 20);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -56,15 +56,13 @@ class WallOfSoulsTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(SpinedWurm.class)
     @DisplayName("Combat-damage trigger resolves after lethal damage destroys Wall of Souls")
     void reflectsLethalCombatDamageAfterWallDies() {
         Permanent wall = addCreatureReady(player2, new WallOfSouls());
         addCreatureReady(player1, new SpinedWurm());
         harness.setLife(player1, 20);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -88,8 +86,7 @@ class WallOfSoulsTest extends BaseCardTest {
         Permanent chandra = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
         chandra.setCounterCount(CounterType.LOYALTY, 5);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -120,5 +117,75 @@ class WallOfSoulsTest extends BaseCardTest {
         assertThat(wall.getMarkedDamage()).isEqualTo(2);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Combat damage can be reflected to the Wall controller's own planeswalker")
+    void reflectsCombatDamageToOwnPlaneswalker() {
+        addCreatureReady(player2, new WallOfSouls());
+        addCreatureReady(player1, new MorgueThrull());
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 5);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(chandra.getId(), player1.getId())
+                .doesNotContain(player2.getId());
+
+        harness.handlePermanentChosen(player2, chandra.getId());
+        resolveAllTriggers();
+
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Previously marked noncombat damage is not included in reflected lethal combat damage")
+    void reflectsOnlyCurrentCombatDamageWhenPreviouslyDamaged() {
+        Permanent wall = addCreatureReady(player2, new WallOfSouls());
+        addCreatureReady(player1, new MorgueThrull());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player1, 20);
+        harness.castAndResolveInstant(player1, 0, wall.getId());
+        assertThat(wall.getMarkedDamage()).isEqualTo(2);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.handlePermanentChosen(player2, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        harness.assertNotOnBattlefield(player2, "Wall of Souls");
+        harness.assertInGraveyard(player2, "Wall of Souls");
+    }
+
+    @Test
+    @DisplayName("A Wall with lifelink still gains life from reflected damage after dying in combat")
+    void retainsLifelinkForReflectedDamageAfterLethalCombat() {
+        Permanent wall = addCreatureReady(player2, new WallOfSouls());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Lifelink());
+        aura.setAttachedTo(wall.getId());
+        addCreatureReady(player1, new SpinedWurm());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.handlePermanentChosen(player2, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Wall of Souls");
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 25);
     }
 }
