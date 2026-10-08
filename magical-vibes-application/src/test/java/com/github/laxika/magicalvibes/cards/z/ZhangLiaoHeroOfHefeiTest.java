@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.s.ShuFootSoldiers;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.cards.v.ViridianLongbow;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ZhangLiaoHeroOfHefei.class, ShuFootSoldiers.class, ViridianLongbow.class})
+@CardUsed({ZhangLiaoHeroOfHefei.class, ShuFootSoldiers.class, ViridianLongbow.class, TurnToFrog.class})
 class ZhangLiaoHeroOfHefeiTest extends BaseCardTest {
 
     @Test
@@ -61,8 +63,7 @@ class ZhangLiaoHeroOfHefeiTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(new ShuFootSoldiers())));
 
         harness.activateAbility(player1, 0, 0, null, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
@@ -88,6 +89,62 @@ class ZhangLiaoHeroOfHefeiTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent with an empty hand discards nothing")
+    void emptyHandDoesNotPromptForDiscard() {
+        addAttackingZhangLiao(player1);
+        harness.setHand(player2, List.of());
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Zhang Liao controlled by the second player makes the first player discard")
+    void secondPlayersZhangLiaoMakesFirstPlayerDiscard() {
+        addAttackingZhangLiao(player2);
+        harness.setHand(player1, List.of(new ShuFootSoldiers(), new ShuFootSoldiers()));
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Losing all abilities before noncombat damage prevents the discard trigger")
+    void abilityRemovalBeforeNoncombatDamagePreventsDiscard() {
+        Permanent zhangLiao = addCreatureReady(player1, new ZhangLiaoHeroOfHefei());
+        Permanent longbow = harness.addToBattlefieldAndReturn(player1, new ViridianLongbow());
+        longbow.setAttachedTo(zhangLiao.getId());
+        harness.setHand(player2, List.of(new TurnToFrog(), new ShuFootSoldiers()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.castInstant(player2, 0, zhangLiao.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInHand(player2, "Shu Foot Soldiers");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addAttackingZhangLiao(Player player) {
