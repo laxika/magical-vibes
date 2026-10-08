@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.f.FangrenHunter;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -76,5 +77,51 @@ class SomberHoverguardTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Affinity cannot pay the blue mana requirement")
+    void affinityDoesNotReduceColoredCost() {
+        for (int i = 0; i < 6; i++) {
+            harness.addToBattlefield(player1, new AlphaMyr());
+        }
+        harness.setHand(player1, List.of(new SomberHoverguard()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Artifacts in hand and graveyard do not contribute to affinity")
+    void affinityIgnoresArtifactsOutsideBattlefield() {
+        harness.setHand(player1, List.of(new SomberHoverguard(), new AlphaMyr(), new AlphaMyr()));
+        harness.setGraveyard(player1, List.of(new AlphaMyr(), new AlphaMyr(), new AlphaMyr()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Somber Hoverguard");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Somber Hoverguard cannot be blocked by a creature without flying or reach")
+    void flyingPreventsGroundBlockers() {
+        addCreatureReady(player1, new SomberHoverguard());
+        addCreatureReady(player2, new FangrenHunter());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
     }
 }
