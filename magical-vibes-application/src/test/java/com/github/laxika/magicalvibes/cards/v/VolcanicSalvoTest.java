@@ -1,11 +1,17 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.c.ChandraHeartOfFire;
+import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.u.Unsubstantiate;
+import com.github.laxika.magicalvibes.cards.w.WakerOfWaves;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VolcanicSalvo.class, GrizzlyBears.class, GiantSpider.class, Mountain.class,
+        ChandraHeartOfFire.class, ColossalDreadmaw.class, WakerOfWaves.class, Unsubstantiate.class})
 class VolcanicSalvoTest extends BaseCardTest {
 
     @Test
@@ -67,8 +75,7 @@ class VolcanicSalvoTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 10);
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(first.getId(), second.getId()));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
@@ -83,5 +90,172 @@ class VolcanicSalvoTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(land.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void resolvesWithNoTargets() {
+        harness.setHand(player1, List.of(new VolcanicSalvo()));
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, List.of());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Volcanic Salvo");
+    }
+
+    @Test
+    void dealsExactlySixDamageToOneCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WakerOfWaves());
+        harness.setHand(player1, List.of(new VolcanicSalvo()));
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(target.getId()));
+
+        harness.assertOnBattlefield(player2, "Waker of Waves");
+        assertThat(target.getMarkedDamage()).isEqualTo(6);
+    }
+
+    @Test
+    void damagesCreatureAndPlaneswalkerForSixEach() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new WakerOfWaves());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraHeartOfFire());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 8);
+        harness.setHand(player1, List.of(new VolcanicSalvo()));
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(creature.getId(), planeswalker.getId()));
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(6);
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Chandra, Heart of Fire");
+    }
+
+    @Test
+    void canTargetOnlyAPlaneswalker() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChandraHeartOfFire());
+        target.setCounterCount(CounterType.LOYALTY, 5);
+        harness.setHand(player1, List.of(new VolcanicSalvo()));
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(target.getId()));
+
+        harness.assertNotOnBattlefield(player2, "Chandra, Heart of Fire");
+        harness.assertInGraveyard(player2, "Chandra, Heart of Fire");
+    }
+
+    @Test
+    void excessPowerReducesCostToTwoRedMana() {
+        harness.addToBattlefield(player1, new ColossalDreadmaw());
+        harness.addToBattlefield(player1, new ColossalDreadmaw());
+        harness.setHand(player1, List.of(new VolcanicSalvo()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0, List.of());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void reductionCannotPayTheRedManaRequirement() {
+        harness.addToBattlefield(player1, new ColossalDreadmaw());
+        harness.addToBattlefield(player1, new ColossalDreadmaw());
+        harness.setHand(player1, List.of(new VolcanicSalvo()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void negativeTotalPowerDoesNotIncreaseCost() {
+        harness.addToBattlefield(player1, new ColossalDreadmaw());
+        for (int i = 0; i < 7; i++) {
+            harness.addToBattlefield(player2, new WakerOfWaves());
+        }
+        harness.setHand(player1, List.of(new VolcanicSalvo()));
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0, List.of());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void rejectsTheSameTargetTwice() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WakerOfWaves());
+        harness.setHand(player1, List.of(new VolcanicSalvo()));
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void rejectsMoreThanTwoTargets() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
+        harness.setHand(player1, List.of(new VolcanicSalvo()));
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void rejectsPlayerTarget() {
+        harness.setHand(player1, List.of(new VolcanicSalvo()));
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(player2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void stillDamagesTheRemainingLegalTarget() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
+        harness.setHand(player1, List.of(new VolcanicSalvo()));
+        harness.setHand(player2, List.of(new Unsubstantiate()));
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
+        harness.castAndResolveInstant(player2, 0, first.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Colossal Dreadmaw");
+        harness.assertInGraveyard(player1, "Volcanic Salvo");
+    }
+
+    @Test
+    void canDamageYourOwnCreatureAndUsesItsCurrentPowerForTheCost() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ColossalDreadmaw());
+        harness.addToBattlefield(player2, new WakerOfWaves());
+        harness.setHand(player1, List.of(new VolcanicSalvo()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(target.getId()));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertNotOnBattlefield(player1, "Colossal Dreadmaw");
+        harness.assertInGraveyard(player1, "Colossal Dreadmaw");
+        harness.assertOnBattlefield(player2, "Waker of Waves");
     }
 }
