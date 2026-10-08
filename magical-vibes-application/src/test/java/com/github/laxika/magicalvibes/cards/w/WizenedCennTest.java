@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 import com.github.laxika.magicalvibes.cards.h.HillcomberGiant;
 import com.github.laxika.magicalvibes.cards.k.KnightOfMeadowgrain;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,16 +14,40 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WizenedCenn.class, KnightOfMeadowgrain.class, HillcomberGiant.class})
+@CardUsed({WizenedCenn.class, KnightOfMeadowgrain.class, HillcomberGiant.class, AvianChangeling.class})
 class WizenedCennTest extends BaseCardTest {
+    @Test
+    @DisplayName("Changeling creatures receive the Kithkin bonus only under the same controller")
+    void buffsOwnChangelingOnly() {
+        harness.addToBattlefield(player1, new WizenedCenn());
+        Permanent ownChangeling = harness.addToBattlefieldAndReturn(player1, new AvianChangeling());
+        Permanent opponentChangeling = harness.addToBattlefieldAndReturn(player2, new AvianChangeling());
+
+        assertThat(gqs.getEffectivePower(gd, ownChangeling)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownChangeling)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentChangeling)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentChangeling)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Kithkin entering after Wizened Cenn receive the bonus immediately")
+    void buffsKithkinResolvingAfterSource() {
+        harness.addToBattlefield(player1, new WizenedCenn());
+        harness.setHand(player1, List.of(new KnightOfMeadowgrain()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent kithkin = findPermanent(player1, "Knight of Meadowgrain");
+        assertThat(gqs.getEffectivePower(gd, kithkin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, kithkin)).isEqualTo(3);
+    }
 
     @Test
     @DisplayName("Other Kithkin creatures you control get +1/+1")
     void buffsOtherKithkinYouControl() {
         harness.addToBattlefield(player1, new WizenedCenn());
-        harness.addToBattlefield(player1, new KnightOfMeadowgrain());
-
-        Permanent kithkin = findPermanent(player1, "Knight of Meadowgrain");
+        Permanent kithkin = harness.addToBattlefieldAndReturn(player1, new KnightOfMeadowgrain());
 
         assertThat(gqs.getEffectivePower(gd, kithkin)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, kithkin)).isEqualTo(3);
@@ -31,9 +56,7 @@ class WizenedCennTest extends BaseCardTest {
     @Test
     @DisplayName("Wizened Cenn does not buff itself")
     void doesNotBuffItself() {
-        harness.addToBattlefield(player1, new WizenedCenn());
-
-        Permanent cenn = findPermanent(player1, "Wizened Cenn");
+        Permanent cenn = harness.addToBattlefieldAndReturn(player1, new WizenedCenn());
 
         assertThat(gqs.getEffectivePower(gd, cenn)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, cenn)).isEqualTo(2);
@@ -43,9 +66,7 @@ class WizenedCennTest extends BaseCardTest {
     @DisplayName("Does not buff non-Kithkin creatures")
     void doesNotBuffNonKithkin() {
         harness.addToBattlefield(player1, new WizenedCenn());
-        harness.addToBattlefield(player1, new HillcomberGiant());
-
-        Permanent giant = findPermanent(player1, "Hillcomber Giant");
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillcomberGiant());
 
         assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
@@ -55,9 +76,7 @@ class WizenedCennTest extends BaseCardTest {
     @DisplayName("Does not buff opponent's Kithkin creatures")
     void doesNotBuffOpponentKithkin() {
         harness.addToBattlefield(player1, new WizenedCenn());
-        harness.addToBattlefield(player2, new KnightOfMeadowgrain());
-
-        Permanent opponentKithkin = findPermanent(player2, "Knight of Meadowgrain");
+        Permanent opponentKithkin = harness.addToBattlefieldAndReturn(player2, new KnightOfMeadowgrain());
 
         assertThat(gqs.getEffectivePower(gd, opponentKithkin)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentKithkin)).isEqualTo(2);
@@ -83,9 +102,7 @@ class WizenedCennTest extends BaseCardTest {
     void twoCennsStackBonuses() {
         harness.addToBattlefield(player1, new WizenedCenn());
         harness.addToBattlefield(player1, new WizenedCenn());
-        harness.addToBattlefield(player1, new KnightOfMeadowgrain());
-
-        Permanent kithkin = findPermanent(player1, "Knight of Meadowgrain");
+        Permanent kithkin = harness.addToBattlefieldAndReturn(player1, new KnightOfMeadowgrain());
 
         // 2/2 base + 2/2 from two Cenns = 4/4
         assertThat(gqs.getEffectivePower(gd, kithkin)).isEqualTo(4);
@@ -96,9 +113,7 @@ class WizenedCennTest extends BaseCardTest {
     @DisplayName("Bonus is removed when Wizened Cenn leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
         harness.addToBattlefield(player1, new WizenedCenn());
-        harness.addToBattlefield(player1, new KnightOfMeadowgrain());
-
-        Permanent kithkin = findPermanent(player1, "Knight of Meadowgrain");
+        Permanent kithkin = harness.addToBattlefieldAndReturn(player1, new KnightOfMeadowgrain());
         assertThat(gqs.getEffectivePower(gd, kithkin)).isEqualTo(3);
 
         gd.playerBattlefields.get(player1.getId())
@@ -111,9 +126,7 @@ class WizenedCennTest extends BaseCardTest {
     @Test
     @DisplayName("Bonus applies when Wizened Cenn resolves onto battlefield")
     void bonusAppliesOnResolve() {
-        harness.addToBattlefield(player1, new KnightOfMeadowgrain());
-
-        Permanent kithkin = findPermanent(player1, "Knight of Meadowgrain");
+        Permanent kithkin = harness.addToBattlefieldAndReturn(player1, new KnightOfMeadowgrain());
         assertThat(gqs.getEffectivePower(gd, kithkin)).isEqualTo(2);
 
         harness.setHand(player1, List.of(new WizenedCenn()));
