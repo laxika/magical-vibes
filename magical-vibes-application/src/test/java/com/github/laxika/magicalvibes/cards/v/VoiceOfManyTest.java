@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.stream.IntStream;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({VoiceOfMany.class, Forest.class, GrizzlyBears.class})
@@ -16,8 +18,7 @@ class VoiceOfManyTest extends BaseCardTest {
         stockLibrary(3);
 
         harness.castFromHand(player1, new VoiceOfMany(), "{2}{G}{G}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
@@ -28,8 +29,7 @@ class VoiceOfManyTest extends BaseCardTest {
         stockLibrary(3);
 
         harness.castFromHand(player1, new VoiceOfMany(), "{2}{G}{G}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
@@ -47,10 +47,46 @@ class VoiceOfManyTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
+    @Test
+    void doesNotDrawWhenOpponentControlsMoreCreatures() {
+        harness.addToBattlefield(player2, new VoiceOfMany());
+        harness.addToBattlefield(player2, new VoiceOfMany());
+        stockLibrary(3);
+
+        harness.castFromHand(player1, new VoiceOfMany(), "{2}{G}{G}");
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void drawsOnlyOneCardForOneOpponentRegardlessOfCreatureDifference() {
+        harness.addToBattlefield(player1, new VoiceOfMany());
+        harness.addToBattlefield(player1, new VoiceOfMany());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        stockLibrary(3);
+
+        harness.castFromHand(player1, new VoiceOfMany(), "{2}{G}{G}");
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void doesNotDrawIfOpponentGainsACreatureBeforeTriggerResolves() {
+        stockLibrary(3);
+
+        harness.castFromHand(player1, new VoiceOfMany(), "{2}{G}{G}");
+        harness.passBothPriorities();
+        harness.addToBattlefield(player2, new VoiceOfMany());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
     private void stockLibrary(int count) {
-        gd.playerDecks.get(player1.getId()).clear();
-        for (int i = 0; i < count; i++) {
-            gd.playerDecks.get(player1.getId()).add(new Forest());
-        }
+        harness.setLibrary(player1, IntStream.range(0, count).mapToObj(i -> new Forest()).toList());
     }
 }
