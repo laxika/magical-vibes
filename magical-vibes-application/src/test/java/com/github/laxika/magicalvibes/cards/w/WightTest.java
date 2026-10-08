@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
+import com.github.laxika.magicalvibes.cards.f.FeignDeath;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PowerWordKill;
+import com.github.laxika.magicalvibes.cards.s.SilverRaven;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,17 +19,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Wight.class, CruelEdict.class, GrizzlyBears.class})
+@CardUsed({Wight.class, CruelEdict.class, GrizzlyBears.class,
+        FeignDeath.class, PowerWordKill.class, SilverRaven.class})
 class WightTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters the battlefield tapped")
     void entersTapped() {
-        harness.setHand(player1, List.of(new Wight()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Wight(), "{1}{B}");
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Wight").isTapped()).isTrue();
@@ -79,8 +79,7 @@ class WightTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -103,8 +102,7 @@ class WightTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(card -> card.getId().equals(blocker.getCard().getId()));
@@ -113,6 +111,81 @@ class WightTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Zombie").stream()
                 .filter(permanent -> permanent.getCard().isToken()))
                 .isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both Wights trigger when they kill each other simultaneously")
+    void triggersWhenWightDiesSimultaneouslyWithDamagedCreature() {
+        Permanent attacker = addReadyCreature(player1, new Wight());
+        Permanent blocker = addReadyCreature(player2, new Wight());
+        attacker.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombatDamage();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Wight");
+        harness.assertNotOnBattlefield(player2, "Wight");
+        assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card().getId().equals(attacker.getCard().getId()));
+        assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card().getId().equals(blocker.getCard().getId()));
+        assertThat(findPermanents(player1, "Zombie")).hasSize(1);
+        assertThat(findPermanents(player2, "Zombie")).hasSize(1);
+        assertThat(findPermanent(player1, "Zombie").isTapped()).isTrue();
+        assertThat(findPermanent(player2, "Zombie").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creates a Zombie even when the dead creature has already returned")
+    void createsTokenWhenDeadCardIsNoLongerInGraveyard() {
+        Permanent returned = returnDamagedRavenBeforeWightTrigger();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(returned);
+        assertThat(gd.exiledCards).noneMatch(exiled -> exiled.card().getId().equals(returned.getCard().getId()));
+        assertThat(findPermanents(player1, "Zombie")).hasSize(1);
+        assertThat(findPermanent(player1, "Zombie").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not exile a new graveyard object after the creature returns and dies again")
+    void doesNotExileCardFromSecondGraveyardVisit() {
+        Permanent returned = returnDamagedRavenBeforeWightTrigger();
+        harness.setHand(player1, List.of(new PowerWordKill()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, returned.getId());
+        harness.assertInGraveyard(player2, "Silver Raven");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Silver Raven");
+        assertThat(gd.exiledCards).noneMatch(exiled -> exiled.card().getId().equals(returned.getCard().getId()));
+        assertThat(findPermanents(player1, "Zombie")).hasSize(1);
+    }
+
+    private Permanent returnDamagedRavenBeforeWightTrigger() {
+        Permanent wight = addReadyCreature(player1, new Wight());
+        Permanent raven = addReadyCreature(player2, new SilverRaven());
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player2, List.of(new FeignDeath()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player2, 0, raven.getId());
+        wight.setAttacking(true);
+        raven.setBlocking(true);
+        raven.addBlockingTarget(0);
+
+        resolveCombatDamage();
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player2, "Silver Raven");
+        assertThat(returned.getId()).isNotEqualTo(raven.getId());
+        harness.assertNotInGraveyard(player2, "Silver Raven");
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+        return returned;
     }
 
     private Permanent addReadyCreature(Player player, Card card) {
