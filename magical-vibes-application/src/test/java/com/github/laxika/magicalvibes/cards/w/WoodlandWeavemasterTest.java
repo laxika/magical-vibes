@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.e.ElvishHerder;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.p.ProwessOfTheFair;
 import com.github.laxika.magicalvibes.cards.s.SkyshroudElf;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -12,6 +14,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -24,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WoodlandWeavemaster.class, LlanowarElves.class, GrizzlyBears.class,
-        SkyshroudElf.class, FountainOfYouth.class, ElvishHerder.class})
+        SkyshroudElf.class, FountainOfYouth.class, ElvishHerder.class, ProwessOfTheFair.class})
 class WoodlandWeavemasterTest extends BaseCardTest {
 
     @Test
@@ -45,7 +48,8 @@ class WoodlandWeavemasterTest extends BaseCardTest {
     @Test
     @DisplayName("Does not boost itself when it enters")
     void doesNotBoostItselfWhenEntering() {
-        Permanent weavemaster = harness.addToBattlefieldAndReturn(player1, new WoodlandWeavemaster());
+        Permanent weavemaster = harness.enterBattlefieldAndReturn(player1, new WoodlandWeavemaster());
+        assertThat(gd.stack).isEmpty();
 
         assertThat(gqs.getEffectivePower(gd, weavemaster)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, weavemaster)).isEqualTo(2);
@@ -95,7 +99,7 @@ class WoodlandWeavemasterTest extends BaseCardTest {
     @Test
     @DisplayName("Restricted mana cannot be spent to cast a non-Elf spell")
     void restrictedManaCannotCastNonElfSpell() {
-        addRestrictedMana(1);
+        addRestrictedMana(2);
         harness.setHand(player1, List.of(new GrizzlyBears()));
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
@@ -135,6 +139,88 @@ class WoodlandWeavemasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, herder, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A noncreature Elf entering triggers the boost")
+    void boostsWhenNoncreatureElfEnters() {
+        Permanent weavemaster = addReadyWeavemaster();
+        harness.setHand(player1, List.of(new ProwessOfTheFair()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, weavemaster)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, weavemaster)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Producing mana does not change this creature's color")
+    void producingManaDoesNotChangeColor() {
+        Permanent weavemaster = addReadyWeavemaster();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.BLUE.name());
+
+        assertThat(gqs.getEffectiveColors(gd, weavemaster)).containsExactly(CardColor.GREEN);
+        assertThat(gd.stack).isEmpty();
+        assertThat(weavemaster.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's Elf entering does not trigger the boost")
+    void doesNotBoostWhenOpponentsElfEnters() {
+        Permanent weavemaster = addReadyWeavemaster();
+
+        harness.enterBattlefieldAndReturn(player2, new LlanowarElves());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, weavemaster)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, weavemaster)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple Elf entries give cumulative boosts that expire at cleanup")
+    void boostsAccumulateAndExpireAtEndOfTurn() {
+        Permanent weavemaster = addReadyWeavemaster();
+        harness.enterBattlefieldAndReturn(player1, new LlanowarElves());
+        harness.enterBattlefieldAndReturn(player1, new LlanowarElves());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, weavemaster)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, weavemaster)).isEqualTo(4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeSpellOrAbilityManaForColor(Set.of(CardSubtype.ELF), ManaColor.GREEN)).isEqualTo(3);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, weavemaster)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, weavemaster)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Restricted mana can cast a noncreature Elf spell")
+    void restrictedManaCanCastNoncreatureElfSpell() {
+        Permanent weavemaster = addReadyWeavemaster();
+        weavemaster.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.BLACK.name());
+        harness.setHand(player1, List.of(new ProwessOfTheFair()));
+
+        harness.castEnchantment(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeSpellOrAbilityManaForColor(Set.of(CardSubtype.ELF), ManaColor.BLACK)).isZero();
     }
 
     private Permanent addReadyWeavemaster() {
