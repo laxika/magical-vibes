@@ -111,4 +111,42 @@ class SoldeviSimulacrumTest extends BaseCardTest {
         assertThat(simulacrum.getPowerModifier()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Repeated activations work while tapped and summoning sick")
+    void repeatedActivationsWhileTappedAndSummoningSick() {
+        Permanent simulacrum = harness.addToBattlefieldAndReturn(player1, new SoldeviSimulacrum());
+        simulacrum.setSummoningSick(true);
+        simulacrum.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(simulacrum.getPowerModifier()).isEqualTo(2);
+        assertThat(simulacrum.getToughnessModifier()).isZero();
+        assertThat(simulacrum.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("One mana cannot partially pay the second cumulative upkeep")
+    void insufficientManaForSecondUpkeepSacrifices() {
+        Permanent simulacrum = harness.addToBattlefieldAndReturn(player1, new SoldeviSimulacrum());
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+        assertThat(simulacrum.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(simulacrum);
+        harness.assertInGraveyard(player1, "Soldevi Simulacrum");
+    }
 }
