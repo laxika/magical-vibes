@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -91,5 +90,65 @@ class VarinaLichQueenTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(findPermanents(player1, "Zombie")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Zombies removed before resolution still count for drawing, discarding and life gain")
+    void removedAttackerStillCounts() {
+        addCreatureReady(player1, new VarinaLichQueen());
+        Permanent zombie = addCreatureReady(player1, new Gravecrawler());
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.setLibrary(player1, List.of(new Forest(), new Island()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        declareAttackers(List.of(1));
+        harness.castInstant(player2, 0, zombie.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(zombie);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)
+                .remainingCount()).isEqualTo(1);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+    }
+
+    @Test
+    @DisplayName("Varina counts herself when attacking")
+    void varinaCountsHerself() {
+        addCreatureReady(player1, new VarinaLichQueen());
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.setLibrary(player1, List.of(new Forest(), new Island()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+    }
+
+    @Test
+    @DisplayName("A newly entered tapped Varina can activate and pays the exile cost before resolution")
+    void tappedVarinaPaysExileCostImmediately() {
+        harness.addToBattlefield(player1, new VarinaLichQueen());
+        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        Forest forest = new Forest();
+        Island island = new Island();
+        harness.setGraveyard(player1, List.of(forest, island));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(forest.getId())).isNotNull();
+        assertThat(gd.findExiledCard(island.getId())).isNotNull();
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Zombie")).hasSize(1);
     }
 }
