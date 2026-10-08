@@ -94,4 +94,44 @@ class VoiceOfTheWoodsTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
         assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
     }
+
+    @Test
+    @DisplayName("Summoning-sick Elves including Voice can pay the tap cost")
+    void summoningSickElvesCanPayCost() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new VoiceOfTheWoods());
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new ElvishWarrior());
+        }
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(source), 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(Permanent::isTapped);
+        assertThat(countPermanents(player1, "Elemental")).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Elemental").isTapped()).isFalse();
+        assertThat(countPermanents(player2, "Elemental")).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped Voice can activate by tapping five other Elves")
+    void tappedVoiceCanActivateUsingOtherElves() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new VoiceOfTheWoods());
+        source.tap();
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new ElvishWarrior());
+        }
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(source), 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(Permanent::isTapped);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(source), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
