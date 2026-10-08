@@ -57,6 +57,23 @@ class VexingBeetleTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The boost returns only after the last opposing creature leaves")
+    void boostReturnsOnlyAfterLastOpposingCreatureLeaves() {
+        harness.addToBattlefield(player1, new VexingBeetle());
+        assertStats(6, 6);
+
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        assertStats(3, 3);
+
+        gd.playerBattlefields.get(player2.getId()).remove(first);
+        assertStats(3, 3);
+
+        gd.playerBattlefields.get(player2.getId()).remove(second);
+        assertStats(6, 6);
+    }
+
+    @Test
     @DisplayName("The spell can't be countered")
     void spellCannotBeCountered() {
         VexingBeetle beetle = new VexingBeetle();
@@ -69,8 +86,7 @@ class VexingBeetleTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, beetle.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, beetle.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Vexing Beetle");
