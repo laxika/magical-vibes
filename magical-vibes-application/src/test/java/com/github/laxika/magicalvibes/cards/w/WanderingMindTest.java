@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WanderingMind.class, Shock.class, Divination.class, GrizzlyBears.class, Plains.class})
 class WanderingMindTest extends BaseCardTest {
 
     @Test
@@ -71,10 +73,65 @@ class WanderingMindTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(6);
     }
 
-    private void setupTopCards(List<Card> cards) {
+    @Test
+    @DisplayName("A short library offers every available eligible card and retains the rest")
+    void shortLibraryLooksAtAvailableCards() {
+        Card shock = new Shock();
+        Card plains = new Plains();
+        setupTopCards(List.of(plains, shock));
+        castAndResolveEtb();
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.allCards()).containsExactly(plains, shock);
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(shock);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library finishes the trigger without a choice or a draw")
+    void emptyLibraryFinishesWithoutChoice() {
+        setupTopCards(List.of());
+        castAndResolveEtb();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the top six are offered and unexamined cards remain above the bottomed cards")
+    void unexaminedCardsStayAboveBottomedCards() {
+        Card shock = new Shock();
+        Card bear = new GrizzlyBears();
+        Card plains1 = new Plains();
+        Card plains2 = new Plains();
+        Card plains3 = new Plains();
+        Card plains4 = new Plains();
+        Card seventh = new Divination();
+        Card eighth = new Plains();
+        setupTopCards(List.of(shock, bear, plains1, plains2, plains3, plains4, seventh, eighth));
+        castAndResolveEtb();
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.allCards()).containsExactly(shock, bear, plains1, plains2, plains3, plains4);
+        assertThat(choice.validCardIds()).containsExactly(shock.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(shock);
         List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+        assertThat(deck.subList(0, 2)).containsExactly(seventh, eighth);
+        assertThat(deck.subList(2, deck.size())).containsExactlyInAnyOrder(bear, plains1, plains2, plains3, plains4);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    private void setupTopCards(List<Card> cards) {
+        harness.setLibrary(player1, cards);
     }
 
     private void castAndResolveEtb() {
@@ -84,7 +141,6 @@ class WanderingMindTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → ETB trigger on stack
-        harness.passBothPriorities(); // resolve ETB trigger → library look
+        resolveAllTriggers();
     }
 }
