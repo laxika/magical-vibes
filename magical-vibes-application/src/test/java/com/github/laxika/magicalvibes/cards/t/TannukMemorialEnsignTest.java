@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.e.EmergencyEject;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TannukMemorialEnsign.class, Forest.class})
+@CardUsed({TannukMemorialEnsign.class, Forest.class, EmergencyEject.class})
 class TannukMemorialEnsignTest extends BaseCardTest {
 
     @Test
@@ -118,6 +121,54 @@ class TannukMemorialEnsignTest extends BaseCardTest {
         harness.assertLife(player2, 16);
         harness.assertLife(player1, 20);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+    }
+
+    @Test
+    @DisplayName("The second landfall still deals damage and draws after Tannuk is destroyed")
+    void queuedSecondResolutionWorksAfterSourceLeaves() {
+        Permanent tannuk = harness.addToBattlefieldAndReturn(player1, new TannukMemorialEnsign());
+        Card drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of());
+
+        resolveLandfall(new Forest());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player2, List.of(new EmergencyEject()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.castAndResolveInstant(player2, 0, tannuk.getId());
+
+        harness.assertNotOnBattlefield(player1, "Tannuk, Memorial Ensign");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    @DisplayName("A new Tannuk starts a separate resolution count in the same turn")
+    void replacementTannukStartsWithFreshCount() {
+        Permanent tannuk = harness.addToBattlefieldAndReturn(player1, new TannukMemorialEnsign());
+        Card drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of());
+        resolveLandfall(new Forest());
+
+        harness.setHand(player2, List.of(new EmergencyEject()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.castAndResolveInstant(player2, 0, tannuk.getId());
+        harness.assertNotOnBattlefield(player1, "Tannuk, Memorial Ensign");
+        harness.enterBattlefieldAndReturn(player1, new TannukMemorialEnsign());
+
+        resolveLandfall(new Forest());
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        resolveLandfall(new Forest());
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
     }
 
     private void resolveLandfall(Card land) {
