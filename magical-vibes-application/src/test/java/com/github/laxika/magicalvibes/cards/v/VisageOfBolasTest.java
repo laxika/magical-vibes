@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.n.NicolBolasTheDeceiver;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,7 +14,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VisageOfBolas.class, NicolBolasTheDeceiver.class})
 class VisageOfBolasTest extends BaseCardTest {
 
     @Test
@@ -32,7 +35,7 @@ class VisageOfBolasTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting may finds Nicol Bolas, the Deceiver in graveyard and puts it into hand")
     void acceptingMayFindsInGraveyard() {
-        Card bolas = createNicolBolasTheDeceiver();
+        Card bolas = new NicolBolasTheDeceiver();
         harness.setGraveyard(player1, List.of(bolas));
         setupAndCast();
 
@@ -47,9 +50,8 @@ class VisageOfBolasTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting may searches library when not in graveyard")
     void acceptingMaySearchesLibrary() {
-        Card bolas = createNicolBolasTheDeceiver();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(bolas);
+        Card bolas = new NicolBolasTheDeceiver();
+        harness.setLibrary(player1, List.of(bolas));
         setupAndCast();
 
         harness.passBothPriorities();
@@ -81,7 +83,7 @@ class VisageOfBolasTest extends BaseCardTest {
     @Test
     @DisplayName("Declining may ability does not search")
     void decliningMayDoesNotSearch() {
-        Card bolas = createNicolBolasTheDeceiver();
+        Card bolas = new NicolBolasTheDeceiver();
         harness.setGraveyard(player1, List.of(bolas));
         setupAndCast();
 
@@ -139,16 +141,69 @@ class VisageOfBolasTest extends BaseCardTest {
     }
 
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new VisageOfBolas()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new VisageOfBolas(), "{4}");
     }
 
-    private Card createNicolBolasTheDeceiver() {
-        Card bolas = new Card();
-        bolas.setName("Nicol Bolas, the Deceiver");
-        bolas.setType(CardType.PLANESWALKER);
-        bolas.setManaCost("{4}{U}{B}{R}");
-        return bolas;
+    @Test
+    void matchingGraveyardCardDoesNotPreventChoosingLibraryCopy() {
+        Card graveyardBolas = new NicolBolasTheDeceiver();
+        Card libraryBolas = new NicolBolasTheDeceiver();
+        harness.setGraveyard(player1, List.of(graveyardBolas));
+        harness.setLibrary(player1, List.of(libraryBolas));
+        setupAndCast();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardBolas);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryBolas);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    void selectedLibraryCardIsPutIntoHand() {
+        Card bolas = new NicolBolasTheDeceiver();
+        harness.setLibrary(player1, List.of(bolas));
+        setupAndCast();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bolas);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void librarySearchCanFailToFindMatchingCard() {
+        Card bolas = new NicolBolasTheDeceiver();
+        harness.setLibrary(player1, List.of(bolas));
+        setupAndCast();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bolas);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void tappedVisageCannotProduceManaAgain() {
+        var visage = harness.addToBattlefieldAndReturn(player1, new VisageOfBolas());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(visage.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
