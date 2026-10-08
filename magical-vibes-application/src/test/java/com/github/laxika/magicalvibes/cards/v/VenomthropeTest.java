@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.p.PoisonArrow;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -35,9 +34,7 @@ class VenomthropeTest extends BaseCardTest {
     void deathtouchDestroysLargerBlocker() {
         Permanent venomthrope = addCreatureReady(player1, new Venomthrope());
         Permanent blocker = addCreatureReady(player2, new ShivanDragon());
-        venomthrope.setAttacking(true);
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -55,5 +52,35 @@ class VenomthropeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player2, 0, venomthrope.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("hexproof");
+    }
+
+    @Test
+    void hexproofAllowsControllerToTargetVenomthrope() {
+        Permanent venomthrope = addCreatureReady(player1, new Venomthrope());
+        harness.setHand(player1, List.of(new PoisonArrow()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveSorcery(player1, 0, venomthrope.getId());
+
+        harness.assertNotOnBattlefield(player1, "Venomthrope");
+        harness.assertInGraveyard(player1, "Venomthrope");
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    void deathtouchDestroysLargerAttackerWhenBlocking() {
+        addCreatureReady(player1, new ShivanDragon());
+        addCreatureReady(player2, new Venomthrope());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Shivan Dragon");
+        harness.assertInGraveyard(player2, "Venomthrope");
+        harness.assertNotOnBattlefield(player1, "Shivan Dragon");
+        harness.assertNotOnBattlefield(player2, "Venomthrope");
     }
 }
