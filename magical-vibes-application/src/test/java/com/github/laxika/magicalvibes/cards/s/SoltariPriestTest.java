@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.CrownOfFlames;
+import com.github.laxika.magicalvibes.cards.d.DauthiMarauder;
 import com.github.laxika.magicalvibes.cards.f.Fireslinger;
 import com.github.laxika.magicalvibes.cards.k.KnightOfDawn;
 import com.github.laxika.magicalvibes.cards.l.LightningBlast;
@@ -24,7 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SoltariPriest.class, LightningBlast.class, Pacifism.class, CrownOfFlames.class,
-        Fireslinger.class, SoltariFootSoldier.class, KnightOfDawn.class, SpontaneousCombustion.class})
+        Fireslinger.class, SoltariFootSoldier.class, KnightOfDawn.class, SpontaneousCombustion.class,
+        DauthiMarauder.class, SoltariGuerrillas.class})
 class SoltariPriestTest extends BaseCardTest {
 
     private static Card createCreature(String name, int power, int toughness, CardColor color,
@@ -148,7 +150,7 @@ class SoltariPriestTest extends BaseCardTest {
     @DisplayName("Cannot block a creature without shadow")
     void cannotBlockCreatureWithoutShadow() {
         addCreatureReady(player1, new KnightOfDawn());
-        Permanent priest = addCreatureReady(player2, new SoltariPriest());
+        addCreatureReady(player2, new SoltariPriest());
 
         declareAttackersAndPrepareBlockers(List.of(0));
 
@@ -173,12 +175,72 @@ class SoltariPriestTest extends BaseCardTest {
     @Test
     @DisplayName("Can be blocked by a creature with shadow")
     void canBeBlockedByCreatureWithShadow() {
-        Permanent priest = addCreatureReady(player1, new SoltariPriest());
+        addCreatureReady(player1, new SoltariPriest());
         Permanent blocker = addCreatureReady(player2, new SoltariFootSoldier());
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot be blocked by a nonred creature without shadow")
+    void cannotBeBlockedByCreatureWithoutShadow() {
+        addCreatureReady(player1, new SoltariPriest());
+        addCreatureReady(player2, new KnightOfDawn());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shadow");
+    }
+
+    @Test
+    @DisplayName("Protection does not prevent combat damage from a black shadow creature")
+    void diesToCombatDamageFromNonredShadowCreature() {
+        addCreatureReady(player1, new DauthiMarauder());
+        addCreatureReady(player2, new SoltariPriest());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertNotOnBattlefield(player2, "Soltari Priest");
+        harness.assertInGraveyard(player2, "Soltari Priest");
+        harness.assertInGraveyard(player1, "Dauthi Marauder");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Cannot be blocked by a red and white shadow creature")
+    void cannotBeBlockedByMulticoloredRedCreature() {
+        addCreatureReady(player1, new SoltariPriest());
+        addCreatureReady(player2, new SoltariGuerrillas());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Can block a red and white shadow creature and prevent all its damage")
+    void preventsCombatDamageFromMulticoloredRedCreature() {
+        addCreatureReady(player1, new SoltariGuerrillas());
+        Permanent priest = addCreatureReady(player2, new SoltariPriest());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(priest.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Soltari Priest");
+        harness.assertInGraveyard(player1, "Soltari Guerrillas");
+        harness.assertLife(player2, 20);
     }
 }
