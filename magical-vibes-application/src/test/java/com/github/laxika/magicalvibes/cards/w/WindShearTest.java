@@ -101,4 +101,43 @@ class WindShearTest extends BaseCardTest {
         assertThat(attackingFlyer.getEffectiveToughness()).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, attackingFlyer, Keyword.FLYING)).isTrue();
     }
+
+    @Test
+    @DisplayName("A second Wind Shear does not debuff attackers that already lost flying")
+    void secondCastingDoesNotDebuffGroundedAttackers() {
+        Permanent firstFlyer = addCreatureReady(player2, new Archangel());
+        Permanent secondFlyer = addCreatureReady(player2, new Archangel());
+        firstFlyer.setAttacking(true);
+        secondFlyer.setAttacking(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.castFromHand(player1, new WindShear(), "{2}{G}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new WindShear(), "{2}{G}");
+        harness.passBothPriorities();
+
+        for (Permanent flyer : new Permanent[]{firstFlyer, secondFlyer}) {
+            assertThat(flyer.getEffectivePower()).isEqualTo(3);
+            assertThat(flyer.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.hasKeyword(gd, flyer, Keyword.FLYING)).isFalse();
+        }
+    }
+
+    @Test
+    @DisplayName("Affected creatures stay debuffed after they stop attacking")
+    void effectsPersistAfterCreatureStopsAttacking() {
+        Permanent flyer = addCreatureReady(player2, new Archangel());
+        flyer.setAttacking(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.castFromHand(player1, new WindShear(), "{2}{G}");
+        harness.passBothPriorities();
+        flyer.setAttacking(false);
+
+        assertThat(flyer.getEffectivePower()).isEqualTo(3);
+        assertThat(flyer.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, flyer, Keyword.FLYING)).isFalse();
+    }
 }
