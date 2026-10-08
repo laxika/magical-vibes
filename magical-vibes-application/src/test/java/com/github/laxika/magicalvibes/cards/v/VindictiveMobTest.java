@@ -23,8 +23,7 @@ class VindictiveMobTest extends BaseCardTest {
     void etbSacrificesItselfWhenOnlyCreature() {
         castVindictiveMob();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Vindictive Mob");
         harness.assertInGraveyard(player1, "Vindictive Mob");
@@ -36,8 +35,7 @@ class VindictiveMobTest extends BaseCardTest {
         addCreatureReady(player1, new BorosRecruit());
         castVindictiveMob();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent recruit = findPermanent(player1, "Boros Recruit");
         harness.handlePermanentChosen(player1, recruit.getId());
@@ -71,6 +69,37 @@ class VindictiveMobTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("ETB allows sacrificing Vindictive Mob even when another creature is available")
+    void canChooseMobWithAnotherCreatureAvailable() {
+        addCreatureReady(player1, new BorosRecruit());
+        castVindictiveMob();
+        resolveAllTriggers();
+
+        harness.handlePermanentChosen(player1, findPermanent(player1, "Vindictive Mob").getId());
+
+        harness.assertNotOnBattlefield(player1, "Vindictive Mob");
+        harness.assertInGraveyard(player1, "Vindictive Mob");
+        harness.assertOnBattlefield(player1, "Boros Recruit");
+    }
+
+    @Test
+    @DisplayName("ETB cannot sacrifice an opponent's creature")
+    void cannotSacrificeOpponentsCreature() {
+        addCreatureReady(player1, new BorosRecruit());
+        Permanent opposingRecruit = addCreatureReady(player2, new BorosRecruit());
+        castVindictiveMob();
+        resolveAllTriggers();
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opposingRecruit.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, findPermanent(player1, "Boros Recruit").getId());
+
+        harness.assertOnBattlefield(player1, "Vindictive Mob");
+        harness.assertInGraveyard(player1, "Boros Recruit");
+        harness.assertOnBattlefield(player2, "Boros Recruit");
     }
 
     private void castVindictiveMob() {
