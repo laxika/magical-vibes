@@ -36,8 +36,7 @@ class WallOfShieldsTest extends BaseCardTest {
         Permanent wall = addCreatureReady(player2, new WallOfShields());
         Permanent bears = addCreatureReady(player2, new BalduvianBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -54,6 +53,53 @@ class WallOfShieldsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(wall);
         harness.assertNotOnBattlefield(player2, "Balduvian Bears");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("Banding allows the defender to divide damage so both blockers survive")
+    void defenderCanKeepBothBlockersAlive() {
+        addCreatureReady(player1, new BalduvianBears());
+        Permanent wall = addCreatureReady(player2, new WallOfShields());
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        resolveCombat();
+
+        harness.handleCombatDamageAssigned(player2, 0, Map.of(wall.getId(), 1, bears.getId(), 1));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(wall, bears);
+        harness.assertInGraveyard(player1, "Balduvian Bears");
+        harness.assertNotInGraveyard(player2, "Balduvian Bears");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The attacking player cannot assign damage when a blocker has banding")
+    void attackingPlayerCannotChooseDamageAssignment() {
+        addCreatureReady(player1, new ShamblingStrider());
+        Permanent wall = addCreatureReady(player2, new WallOfShields());
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        resolveCombat();
+
+        assertThatThrownBy(() -> gs.handleCombatDamageAssigned(gd, player1, 0, Map.of(wall.getId(), 5)))
+                .isInstanceOf(IllegalStateException.class);
+        PendingInteraction.CombatDamageAssignment prompt =
+                gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class);
+        assertThat(prompt).isNotNull();
+        assertThat(prompt.playerId()).isEqualTo(player2.getId());
+
+        harness.handleCombatDamageAssigned(player2, 0, Map.of(bears.getId(), 5));
+
+        harness.assertOnBattlefield(player2, "Wall of Shields");
         harness.assertInGraveyard(player2, "Balduvian Bears");
     }
 }
