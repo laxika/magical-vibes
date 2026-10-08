@@ -88,4 +88,42 @@ class VileDeaconTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, deacon)).isEqualTo(baseToughness);
     }
 
+    @Test
+    @DisplayName("The resolved boost stays fixed when another Cleric enters")
+    void resolvedBoostRemainsFixed() {
+        Permanent deacon = addCreatureReady(player1, new VileDeacon());
+        addCreatureReady(player2, new VileDeacon());
+        int basePower = gqs.getEffectivePower(gd, deacon);
+        int baseToughness = gqs.getEffectiveToughness(gd, deacon);
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        addCreatureReady(player2, new VileDeacon());
+
+        assertThat(gqs.getEffectivePower(gd, deacon)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, deacon)).isEqualTo(baseToughness + 2);
+    }
+
+    @Test
+    @DisplayName("Each attacking Deacon boosts only itself")
+    void eachAttackingDeaconBoostsOnlyItself() {
+        Permanent first = addCreatureReady(player1, new VileDeacon());
+        Permanent second = addCreatureReady(player1, new VileDeacon());
+        Permanent nonattacker = addCreatureReady(player1, new VileDeacon());
+        Permanent opponent = addCreatureReady(player2, new VileDeacon());
+        int basePower = gqs.getEffectivePower(gd, first);
+        int baseToughness = gqs.getEffectiveToughness(gd, first);
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        for (Permanent attacker : List.of(first, second)) {
+            assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(basePower + 4);
+            assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(baseToughness + 4);
+        }
+        for (Permanent other : List.of(nonattacker, opponent)) {
+            assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(basePower);
+            assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(baseToughness);
+        }
+    }
 }
