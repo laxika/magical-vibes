@@ -14,6 +14,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ViashivanDragonTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A tapped, summoning-sick dragon can activate both pumps, which wait for resolution")
+    void tappedSummoningSickDragonCanActivateBothPumps() {
+        Permanent dragon = harness.addToBattlefieldAndReturn(player1, new ViashivanDragon());
+        dragon.setSummoningSick(true);
+        dragon.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(dragon.getPowerModifier()).isZero();
+        assertThat(dragon.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+        assertThat(dragon.getPowerModifier()).isZero();
+        assertThat(dragon.getToughnessModifier()).isEqualTo(1);
+
+        harness.passBothPriorities();
+        assertThat(dragon.getPowerModifier()).isEqualTo(1);
+        assertThat(dragon.getToughnessModifier()).isEqualTo(1);
+        assertThat(dragon.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("{R}: gets +1/+0 until end of turn")
     void redPumpBoostsPower() {
         Permanent dragon = addCreatureReady(player1, new ViashivanDragon());
