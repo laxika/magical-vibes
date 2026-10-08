@@ -56,4 +56,39 @@ class WintersInterventionTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
     }
+
+    @Test
+    void lethalDamageStillGainsLifeAndPutsTheCreatureInItsOwnersGraveyard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WintersIntervention()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setLife(player1, 15);
+        harness.setLife(player2, 12);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Winter's Intervention");
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 12);
+    }
+
+    @Test
+    void canTargetOwnCreatureAndGainsLifeWhenAllDamageIsPrevented() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setDamagePreventionShield(2);
+        harness.setHand(player1, List.of(new WintersIntervention()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setLife(player1, 15);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getDamagePreventionShield()).isZero();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 17);
+    }
 }
