@@ -81,14 +81,78 @@ class WilheltTheRotcleaverTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetId);
     }
 
     private void advanceToEndStep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+    }
+
+    @Test
+    void decliningSacrificeDoesNotDrawOrKillZombie() {
+        harness.addToBattlefield(player1, new WilheltTheRotcleaver());
+        harness.addToBattlefield(player1, new DiregrafGhoul());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new DiregrafGhoul()));
+
+        advanceToEndStep();
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player1, "Diregraf Ghoul");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void sacrificingWilheltDrawsDuringTheSameResolution() {
+        Permanent wilhelt = harness.addToBattlefieldAndReturn(player1, new WilheltTheRotcleaver());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new DiregrafGhoul()));
+
+        advanceToEndStep();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, wilhelt.getId());
+
+        harness.assertInGraveyard(player1, "Wilhelt, the Rotcleaver");
+        harness.assertInHand(player1, "Diregraf Ghoul");
+        assertThat(countPermanents(player1, "Zombie")).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void sacrificingGeneratedDecayedTokenDrawsWithoutReplacingIt() {
+        harness.addToBattlefield(player1, new WilheltTheRotcleaver());
+        Permanent ghoul = harness.addToBattlefieldAndReturn(player1, new DiregrafGhoul());
+        destroyWithShock(ghoul.getId());
+        harness.passBothPriorities();
+        Permanent token = findPermanent(player1, "Zombie");
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new DiregrafGhoul()));
+
+        advanceToEndStep();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, token.getId());
+
+        assertThat(countPermanents(player1, "Zombie")).isZero();
+        harness.assertInHand(player1, "Diregraf Ghoul");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentsZombieDeathDoesNotCreateToken() {
+        harness.addToBattlefield(player1, new WilheltTheRotcleaver());
+        Permanent ghoul = harness.addToBattlefieldAndReturn(player2, new DiregrafGhoul());
+
+        destroyWithShock(ghoul.getId());
+
+        assertThat(countPermanents(player1, "Zombie")).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }
