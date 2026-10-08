@@ -143,6 +143,66 @@ class ZelyonSwordTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Untapping and retapping the Sword before resolution does not restore the duration")
+    void interruptedTappedDurationDoesNotGrantBoost() {
+        Permanent sword = addReadySword(player1);
+        Permanent creature = addReadyBear(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.inMutationScope(() -> {
+            sword.untap();
+            sword.setTapped(true);
+        });
+        harness.passBothPriorities();
+
+        assertThat(sword.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The ability does nothing when its target leaves before resolution")
+    void removedTargetDoesNotReceiveBoost() {
+        Permanent sword = addReadySword(player1);
+        Permanent creature = addReadyBear(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, creature));
+        Permanent replacement = addReadyBear(player1);
+        harness.passBothPriorities();
+
+        assertThat(sword.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, replacement)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, replacement)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Two Swords grant independent cumulative boosts")
+    void multipleSwordsGrantIndependentBoosts() {
+        Permanent firstSword = addReadySword(player1);
+        Permanent secondSword = addReadySword(player1);
+        Permanent creature = addReadyBear(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, firstSword));
+
+        assertThat(secondSword.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
     private Permanent addReadySword(Player player) {
         Permanent permanent = harness.addToBattlefieldAndReturn(player, new ZelyonSword());
         permanent.setSummoningSick(false);
