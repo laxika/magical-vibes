@@ -16,7 +16,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,17 +25,15 @@ class WhimOfVolrathTest extends BaseCardTest {
     @Test
     @DisplayName("Replacing a color word records the change on the target permanent")
     void replacesColorWord() {
-        harness.addToBattlefield(player2, new SoltariPriest());
+        Permanent perm = harness.addToBattlefieldAndReturn(player2, new SoltariPriest());
         harness.setHand(player1, List.of(new WhimOfVolrath()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Soltari Priest");
-        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, perm.getId());
 
         harness.handleListChoice(player1, "BLACK");
         harness.handleListChoice(player1, "GREEN");
 
-        Permanent perm = findPermanent(player2, "Soltari Priest");
         assertThat(perm.getTextReplacements())
                 .containsExactly(new TextReplacement("black", "green", true));
         assertThat(graveyardNames(player1)).containsExactly("Whim of Volrath");
@@ -60,17 +57,15 @@ class WhimOfVolrathTest extends BaseCardTest {
     @Test
     @DisplayName("Replacing a basic land type records the change on the target permanent")
     void replacesLandType() {
-        harness.addToBattlefield(player2, new Forest());
+        Permanent perm = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.setHand(player1, List.of(new WhimOfVolrath()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Forest");
-        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, perm.getId());
 
         harness.handleListChoice(player1, "SWAMP");
         harness.handleListChoice(player1, "FOREST");
 
-        Permanent perm = findPermanent(player2, "Forest");
         assertThat(perm.getTextReplacements())
                 .containsExactly(new TextReplacement("Swamp", "Forest", true));
     }
@@ -97,17 +92,15 @@ class WhimOfVolrathTest extends BaseCardTest {
     @Test
     @DisplayName("The text change wears off at end of turn")
     void textChangeWearsOff() {
-        harness.addToBattlefield(player2, new SoltariPriest());
+        Permanent perm = harness.addToBattlefieldAndReturn(player2, new SoltariPriest());
         harness.setHand(player1, List.of(new WhimOfVolrath()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Soltari Priest");
-        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, perm.getId());
 
         harness.handleListChoice(player1, "BLACK");
         harness.handleListChoice(player1, "GREEN");
 
-        Permanent perm = findPermanent(player2, "Soltari Priest");
         assertThat(perm.getTextReplacements()).hasSize(1);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -128,8 +121,7 @@ class WhimOfVolrathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WhimOfVolrath()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Flickering Ward");
-        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, flickeringWard.getId());
 
         harness.handleListChoice(player1, "BLACK");
         harness.handleListChoice(player1, "RED");
@@ -145,13 +137,12 @@ class WhimOfVolrathTest extends BaseCardTest {
     @Test
     @DisplayName("Paying buyback returns Whim of Volrath to its owner's hand as it resolves")
     void buybackReturnsToHand() {
-        harness.addToBattlefield(player2, new Forest());
+        Permanent perm = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.setHand(player1, List.of(new WhimOfVolrath()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Forest");
-        harness.castInstantWithBuyback(player1, 0, targetId);
+        harness.castInstantWithBuyback(player1, 0, perm.getId());
         harness.passBothPriorities();
 
         harness.handleListChoice(player1, "SWAMP");
@@ -175,6 +166,77 @@ class WhimOfVolrathTest extends BaseCardTest {
 
         assertThat(handNames(player1)).isEmpty();
         assertThat(graveyardNames(player1)).containsExactly("Whim of Volrath");
+    }
+
+    @Test
+    @DisplayName("Successive text changes compose and printed protection returns after cleanup")
+    void successiveChangesComposeUntilCleanup() {
+        Permanent priest = harness.addToBattlefieldAndReturn(player2, new SoltariPriest());
+        harness.setHand(player1, List.of(new WhimOfVolrath(), new WhimOfVolrath()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, priest.getId());
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "GREEN");
+        harness.castAndResolveInstant(player1, 0, priest.getId());
+        harness.handleListChoice(player1, "GREEN");
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(gqs.hasProtectionFrom(gd, priest, CardColor.RED)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, priest, CardColor.GREEN)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, priest, CardColor.BLACK)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasProtectionFrom(gd, priest, CardColor.RED)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, priest, CardColor.BLACK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A basic land regains its printed land type and mana ability after cleanup")
+    void basicLandTypeAndManaReturnAfterCleanup() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new WhimOfVolrath()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, forest.getId());
+        harness.handleListChoice(player1, "FOREST");
+        harness.handleListChoice(player1, "ISLAND");
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
+        harness.tapPermanent(player2, 0);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Buyback waits for both text choices before returning the spell to hand")
+    void buybackWaitsForTextChangeToFinish() {
+        Permanent priest = harness.addToBattlefieldAndReturn(player2, new SoltariPriest());
+        harness.setHand(player1, List.of(new WhimOfVolrath()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstantWithBuyback(player1, 0, priest.getId());
+        harness.passBothPriorities();
+        assertThat(handNames(player1)).isEmpty();
+        assertThat(graveyardNames(player1)).isEmpty();
+
+        harness.handleListChoice(player1, "RED");
+        assertThat(handNames(player1)).isEmpty();
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gqs.hasProtectionFrom(gd, priest, CardColor.GREEN)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, priest, CardColor.RED)).isFalse();
+        assertThat(handNames(player1)).containsExactly("Whim of Volrath");
+        assertThat(graveyardNames(player1)).isEmpty();
     }
 
     private List<String> handNames(Player player) {
