@@ -45,4 +45,43 @@ class WingedHiveTyrantTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
+
+    @Test
+    @DisplayName("The grant updates as counters are added and the last counter is removed")
+    void grantTracksCurrentCounters() {
+        harness.addToBattlefield(player1, new WingedHiveTyrant());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
+
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
+
+        bears.setCounterCount(CounterType.CHARGE, 1);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
+
+        bears.setCounterCount(CounterType.CHARGE, 0);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The grant ends when Winged Hive Tyrant leaves the battlefield")
+    void grantEndsWhenSourceLeavesBattlefield() {
+        Permanent tyrant = harness.addToBattlefieldAndReturn(player1, new WingedHiveTyrant());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.CHARGE, 1);
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(tyrant);
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
+    }
 }
