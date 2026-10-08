@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VampireCutthroat.class, GrizzlyBears.class})
 class VampireCutthroatTest extends BaseCardTest {
 
     @Test
@@ -60,5 +62,41 @@ class VampireCutthroatTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Skulk allows a blocker with less power than the attacker")
+    void canBeBlockedByLessPower() {
+        Permanent blocker = addCreatureReady(player2, new VampireCutthroat());
+        Permanent cutthroat = addCreatureReady(player1, new VampireCutthroat());
+        cutthroat.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        cutthroat.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Both Cutthroats gain life from combat damage even when both die")
+    void lifelinkAppliesToDamageToCreaturesAndDefendingController() {
+        addCreatureReady(player2, new VampireCutthroat());
+        Permanent cutthroat = addCreatureReady(player1, new VampireCutthroat());
+        cutthroat.setAttacking(true);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(21);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
     }
 }
