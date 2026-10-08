@@ -1,16 +1,23 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DrivnodCarnageDominus;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+@CardUsed({VraanExecutionerThane.class, GrizzlyBears.class, Shock.class, WrathOfGod.class,
+        DrivnodCarnageDominus.class})
 class VraanExecutionerThaneTest extends BaseCardTest {
 
     @Test
@@ -39,8 +46,7 @@ class VraanExecutionerThaneTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearsId);
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
@@ -72,9 +78,7 @@ class VraanExecutionerThaneTest extends BaseCardTest {
 
         killOwnBear();
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passBothPriorities();
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         harness.addToBattlefield(player1, new GrizzlyBears());
         killOwnBear();
@@ -83,13 +87,84 @@ class VraanExecutionerThaneTest extends BaseCardTest {
         harness.assertLife(player2, 16);
     }
 
+    @Test
+    void doesNotTriggerOnItsOwnDeath() {
+        harness.addToBattlefield(player1, new VraanExecutionerThane());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Vraan, Executioner Thane"));
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Vraan, Executioner Thane");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void triggersOnceWhenItDiesWithMultipleOtherCreatures() {
+        harness.addToBattlefield(player1, new VraanExecutionerThane());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertInGraveyard(player1, "Vraan, Executioner Thane");
+        harness.passBothPriorities();
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void queuedTriggerSurvivesSourceRemovalAndBlocksFurtherTriggers() {
+        harness.addToBattlefield(player1, new VraanExecutionerThane());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Shock(), new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        assertThat(gd.stack).hasSize(1);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        assertThat(gd.stack).hasSize(1);
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Vraan, Executioner Thane"));
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void drivnodCannotAddATriggerToAnAbilityLimitedToOnceEachTurn() {
+        harness.addToBattlefield(player1, new VraanExecutionerThane());
+        harness.addToBattlefield(player1, new DrivnodCarnageDominus());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
     private void killOwnBear() {
         harness.forceActivePlayer(player2);
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player2, 0, bearsId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bearsId);
         harness.passBothPriorities();
     }
 }
