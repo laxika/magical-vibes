@@ -61,6 +61,48 @@ class VoroshTheHunterTest extends BaseCardTest {
         assertThat(vorosh.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Generic mana cannot replace the green mana in Vorosh's payment")
+    void paymentRequiresGreenMana() {
+        Permanent vorosh = addAttackingVorosh();
+        resolveCombatToMayPrompt();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(vorosh.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An incomplete payment puts no counters on Vorosh")
+    void paymentRequiresAllThreeMana() {
+        Permanent vorosh = addAttackingVorosh();
+        resolveCombatToMayPrompt();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(vorosh.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The attacking Vorosh's controller pays and receives the counters")
+    void opponentControlledVoroshReceivesCounters() {
+        Permanent vorosh = addCreatureReady(player2, new VoroshTheHunter());
+        vorosh.setAttacking(true);
+        resolveCombat(player2);
+        harness.passBothPriorities();
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(vorosh.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+    }
+
     private Permanent addAttackingVorosh() {
         Permanent vorosh = addCreatureReady(player1, new VoroshTheHunter());
         vorosh.setAttacking(true);
