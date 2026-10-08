@@ -165,9 +165,7 @@ class WitheringWispsTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
@@ -186,9 +184,7 @@ class WitheringWispsTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.stack).hasSize(1);
         harness.addToBattlefield(player2, new DireWolves());
@@ -205,12 +201,110 @@ class WitheringWispsTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.stack).noneMatch(e -> e.getCard().getName().equals("Withering Wisps"));
         harness.assertOnBattlefield(player1, "Withering Wisps");
+    }
+
+    @Test
+    @DisplayName("Activations count when put on the stack, before they resolve")
+    void pendingActivationsCountAgainstLimit() {
+        harness.addToBattlefield(player1, new WitheringWisps());
+        addSnowSwamp(player1);
+        addSnowSwamp(player1);
+        harness.addToBattlefield(player2, new DireWolves());
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("snow Swamps you control");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Dire Wolves");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Each copy has its own activation limit")
+    void separateCopiesHaveIndependentLimits() {
+        harness.addToBattlefield(player1, new WitheringWisps());
+        harness.addToBattlefield(player1, new WitheringWisps());
+        addSnowSwamp(player1);
+        harness.addToBattlefield(player2, new DireWolves());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Dire Wolves");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Sacrifice also triggers during the opponent's end step")
+    void sacrificesDuringOpponentsEndStep() {
+        harness.addToBattlefield(player1, new WitheringWisps());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Withering Wisps");
+        harness.assertInGraveyard(player1, "Withering Wisps");
+    }
+
+    @Test
+    @DisplayName("Killing the last creature after the end step begins does not trigger sacrifice")
+    void lastCreatureDiesAfterEndStepBegins() {
+        harness.addToBattlefield(player1, new WitheringWisps());
+        addSnowSwamp(player1);
+        harness.addToBattlefield(player2, new ArcticFoxes());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Arctic Foxes");
+        harness.assertOnBattlefield(player1, "Withering Wisps");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The activation limit resets on the next player's turn")
+    void activationLimitResetsOnOpponentsTurn() {
+        harness.addToBattlefield(player1, new WitheringWisps());
+        addSnowSwamp(player1);
+        harness.addToBattlefield(player2, new DireWolves());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Dire Wolves");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
     }
 
     private void addSnowSwamp(Player player) {
