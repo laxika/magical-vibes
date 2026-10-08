@@ -76,6 +76,62 @@ class VeldtTest extends BaseCardTest {
         assertThat(veldt.isTapped()).isFalse();
     }
 
+    @Test
+    void faceDownVeldtUntapsDespiteDepletionCounter() {
+        Permanent veldt = addVeldt();
+        veldt.setCounterCount(CounterType.DEPLETION, 1);
+        veldt.setFaceDownAsCloaked();
+        veldt.tap();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(veldt.isTapped()).isFalse();
+        assertThat(veldt.getCounterCount(CounterType.DEPLETION)).isEqualTo(1);
+    }
+
+    @Test
+    void opponentsUpkeepDoesNotRemoveDepletionCounter() {
+        Permanent veldt = addVeldt();
+        veldt.tap();
+        veldt.setCounterCount(CounterType.DEPLETION, 1);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(veldt.isTapped()).isTrue();
+        assertThat(veldt.getCounterCount(CounterType.DEPLETION)).isEqualTo(1);
+    }
+
+    @Test
+    void unrelatedCounterDoesNotPreventUntappingOrGetRemoved() {
+        Permanent veldt = addVeldt();
+        veldt.tap();
+        veldt.setCounterCount(CounterType.CHARGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(veldt.isTapped()).isFalse();
+        assertThat(veldt.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(veldt.getCounterCount(CounterType.DEPLETION)).isZero();
+    }
+
+    @Test
+    void canProduceManaAgainAfterBeingUntappedWithDepletionCounter() {
+        Permanent veldt = addVeldt();
+        harness.activateAbility(player1, 0, 0, null, null);
+        veldt.untap();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(mana(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(mana(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(veldt.isTapped()).isTrue();
+        assertThat(veldt.getCounterCount(CounterType.DEPLETION)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addVeldt() {
         Permanent veldt = harness.addToBattlefieldAndReturn(player1, new Veldt());
         veldt.setSummoningSick(false);
