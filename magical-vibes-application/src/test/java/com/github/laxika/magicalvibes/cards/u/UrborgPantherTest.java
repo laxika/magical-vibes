@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -104,7 +103,7 @@ class UrborgPantherTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).allMatch(c -> c.getName().equals("Spirit of the Night"));
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Spirit of the Night");
     }
@@ -130,10 +129,69 @@ class UrborgPantherTest extends BaseCardTest {
                 .containsExactly("Feral Shadow");
     }
 
+    @Test
+    @DisplayName("Sacrificing the Panther destroys only the chosen blocker")
+    void sacrificeDestroysOnlyOneOfMultipleBlockers() {
+        addCreatureReady(player1, new UrborgPanther());
+        Permanent chosenBlocker = addCreatureReady(player2, new FeralShadow());
+        Permanent otherBlocker = addCreatureReady(player2, new Breathstealer());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, chosenBlocker.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Urborg Panther");
+        harness.assertInGraveyard(player2, "Feral Shadow");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(otherBlocker);
+        harness.assertNotInGraveyard(player2, "Breathstealer");
+    }
+
+    @Test
+    @DisplayName("The tutor cannot sacrifice an opponent's named creature")
+    void tutorCannotUseOpponentsNamedCreature() {
+        harness.addToBattlefield(player1, new UrborgPanther());
+        harness.addToBattlefield(player1, new FeralShadow());
+        harness.addToBattlefield(player2, new Breathstealer());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough permanents to sacrifice");
+
+        harness.assertOnBattlefield(player1, "Urborg Panther");
+        harness.assertOnBattlefield(player1, "Feral Shadow");
+        harness.assertOnBattlefield(player2, "Breathstealer");
+    }
+
+    @Test
+    @DisplayName("The tutor may fail to find even when Spirit of the Night is present")
+    void tutorMayDeclineToFindMatchingCard() {
+        harness.addToBattlefield(player1, new UrborgPanther());
+        UUID shadowId = harness.addToBattlefieldAndReturn(player1, new FeralShadow()).getId();
+        UUID breathstealerId = harness.addToBattlefieldAndReturn(player1, new Breathstealer()).getId();
+        harness.setLibrary(player1, List.of(new SpiritOfTheNight()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handlePermanentChosen(player1, shadowId);
+        harness.handlePermanentChosen(player1, breathstealerId);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertInGraveyard(player1, "Urborg Panther");
+        harness.assertInGraveyard(player1, "Feral Shadow");
+        harness.assertInGraveyard(player1, "Breathstealer");
+        harness.assertNotOnBattlefield(player1, "Spirit of the Night");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(card -> card.getName()).containsExactly("Spirit of the Night");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
+
     /** Attacks with the Panther and blocks it with player2's creature at {@code blockerIndex}. */
     private void blockPantherWith(int blockerIndex) {
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, 0)));
         resolveAllTriggers();
     }
