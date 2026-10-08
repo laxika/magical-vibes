@@ -87,4 +87,43 @@ class WarriorsChargeTest extends BaseCardTest {
         assertThat(creature.getEffectivePower()).isEqualTo(2);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Includes creatures entering before resolution")
+    void boostsCreaturesEnteringBeforeResolution() {
+        harness.castFromHand(player1, new WarriorsCharge(), "{2}{W}");
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Multiple resolutions give cumulative boosts")
+    void multipleResolutionsGiveCumulativeBoosts() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.castFromHand(player1, new WarriorsCharge(), "{2}{W}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new WarriorsCharge(), "{2}{W}");
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(4);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Resolves with no creatures and does not boost a later creature")
+    void resolvesWithNoCreatures() {
+        harness.castFromHand(player1, new WarriorsCharge(), "{2}{W}");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Warrior's Charge");
+        assertThat(gd.stack).isEmpty();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+    }
 }
