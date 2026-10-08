@@ -51,10 +51,9 @@ class ViridianScoutTest extends BaseCardTest {
     @DisplayName("2 damage kills a small flying creature")
     void killsSmallFlyer() {
         harness.addToBattlefield(player1, new ViridianScout());
-        harness.addToBattlefield(player2, new FurnaceWhelp());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FurnaceWhelp());
         addAbilityMana();
 
-        Permanent target = findPermanent(player2, "Furnace Whelp");
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
@@ -71,6 +70,37 @@ class ViridianScoutTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Scout can damage its controller's flyer")
+    void canActivateWhileTappedAndSummoningSickTargetingOwnFlyer() {
+        Permanent scout = harness.addToBattlefieldAndReturn(player1, new ViridianScout());
+        scout.setTapped(true);
+        scout.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AuriokWindwalker());
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Viridian Scout");
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without the required green mana")
+    void cannotActivateWithoutGreenMana() {
+        harness.addToBattlefield(player1, new ViridianScout());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AuriokWindwalker());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Viridian Scout");
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addAbilityMana() {
