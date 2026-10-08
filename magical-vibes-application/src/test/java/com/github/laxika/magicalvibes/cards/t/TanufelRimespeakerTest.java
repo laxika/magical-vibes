@@ -114,4 +114,48 @@ class TanufelRimespeakerTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertOnBattlefield(player1, "Tanufel Rimespeaker");
     }
+
+    @Test
+    @DisplayName("Each Rimespeaker draws a card for the same qualifying spell")
+    void multipleRimespeakersEachDrawCard() {
+        harness.addToBattlefield(player1, new TanufelRimespeaker());
+        harness.addToBattlefield(player1, new TanufelRimespeaker());
+        harness.setHand(player1, List.of(new TanufelRimespeaker()));
+        harness.setLibrary(player1, List.of(new TanufelRimespeaker(), new TanufelRimespeaker()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Every qualifying spell in a turn triggers all Rimespeakers already on the battlefield")
+    void successiveQualifyingSpellsEachTrigger() {
+        harness.addToBattlefield(player1, new TanufelRimespeaker());
+        harness.setHand(player1, List.of(new TanufelRimespeaker(), new TanufelRimespeaker()));
+        harness.setLibrary(player1, List.of(
+                new TanufelRimespeaker(), new TanufelRimespeaker(), new TanufelRimespeaker()));
+        harness.addMana(player1, ManaColor.BLUE, 8);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+    }
 }
