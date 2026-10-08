@@ -82,9 +82,8 @@ class AbyssalNocturnusTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(nocturnus.getPowerModifier()).isZero();
         assertThat(nocturnus.getToughnessModifier()).isZero();
@@ -105,6 +104,51 @@ class AbyssalNocturnusTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
+
+        assertThat(nocturnus.getPowerModifier()).isZero();
+        assertThat(nocturnus.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, nocturnus, Keyword.FEAR)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each copy triggers independently for the same opponent discard")
+    void eachCopyGetsItsOwnBoostAndFear() {
+        Permanent first = addCreatureReady(player1, new AbyssalNocturnus());
+        Permanent second = addCreatureReady(player1, new AbyssalNocturnus());
+        Permanent opponentsCopy = addCreatureReady(player2, new AbyssalNocturnus());
+        harness.addToBattlefield(player1, new Cryptwailing());
+        harness.setGraveyard(player1, new ArrayList<>(List.of(
+                new AbyssalNocturnus(), new AbyssalNocturnus())));
+        harness.setHand(player2, new ArrayList<>(List.of(new AbyssalNocturnus())));
+        readyCryptwailingMana(1);
+
+        harness.activateAbility(player1, 2, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        resolveAllTriggers();
+
+        for (Permanent nocturnus : List.of(first, second)) {
+            assertThat(nocturnus.getPowerModifier()).isEqualTo(2);
+            assertThat(nocturnus.getToughnessModifier()).isEqualTo(2);
+            assertThat(gqs.hasKeyword(gd, nocturnus, Keyword.FEAR)).isTrue();
+        }
+        assertThat(opponentsCopy.getPowerModifier()).isZero();
+        assertThat(opponentsCopy.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, opponentsCopy, Keyword.FEAR)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An attempted discard from an empty hand does not trigger")
+    void emptyHandDoesNotTrigger() {
+        Permanent nocturnus = addCreatureReady(player1, new AbyssalNocturnus());
+        harness.addToBattlefield(player1, new Cryptwailing());
+        harness.setGraveyard(player1, new ArrayList<>(List.of(
+                new AbyssalNocturnus(), new AbyssalNocturnus())));
+        harness.setHand(player2, new ArrayList<>());
+        readyCryptwailingMana(1);
+
+        harness.activateAbility(player1, 1, null, player2.getId());
+        resolveAllTriggers();
 
         assertThat(nocturnus.getPowerModifier()).isZero();
         assertThat(nocturnus.getToughnessModifier()).isZero();
