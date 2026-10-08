@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarDead;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianArena;
 import com.github.laxika.magicalvibes.cards.p.PropheticBolt;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -28,7 +27,6 @@ class WildResearchTest extends BaseCardTest {
         assertThat(search.params().cards())
                 .extracting(Card::getName)
                 .containsExactly("Phyrexian Arena");
-        assertThat(search.params().cards()).allMatch(card -> card.hasType(CardType.ENCHANTMENT));
 
         chooseFoundCard();
 
@@ -48,7 +46,6 @@ class WildResearchTest extends BaseCardTest {
         assertThat(search.params().cards())
                 .extracting(Card::getName)
                 .containsExactly("Prophetic Bolt");
-        assertThat(search.params().cards()).allMatch(card -> card.hasType(CardType.INSTANT));
 
         chooseFoundCard();
 
@@ -91,6 +88,61 @@ class WildResearchTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getName)
                 .containsExactlyInAnyOrder("Prophetic Bolt", "Llanowar Dead");
+    }
+
+    @Test
+    @DisplayName("White ability may fail to find an enchantment but still discards")
+    void whiteAbilityCanDeclineMatchingCard() {
+        activate(0, ManaColor.WHITE, List.of(new LlanowarDead()),
+                List.of(new PhyrexianArena(), new PropheticBolt()));
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Llanowar Dead");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Phyrexian Arena", "Prophetic Bolt");
+    }
+
+    @Test
+    @DisplayName("Blue ability may fail to find an instant but still discards")
+    void blueAbilityCanDeclineMatchingCard() {
+        activate(1, ManaColor.BLUE, List.of(new LlanowarDead()),
+                List.of(new PhyrexianArena(), new PropheticBolt()));
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Llanowar Dead");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Phyrexian Arena", "Prophetic Bolt");
+    }
+
+    @Test
+    @DisplayName("Blue ability still discards when the library is empty")
+    void blueAbilityDiscardsWithEmptyLibrary() {
+        activate(1, ManaColor.BLUE, List.of(new LlanowarDead()), List.of());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Llanowar Dead");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Blue ability completes when both the hand and library are empty")
+    void blueAbilityCompletesWithEmptyHandAndLibrary() {
+        activate(1, ManaColor.BLUE, List.of());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
     private PendingInteraction.LibrarySearch activate(int abilityIndex, ManaColor coloredMana,
