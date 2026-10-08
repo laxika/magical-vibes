@@ -92,6 +92,91 @@ class WitchsMistTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(imperiosaur);
     }
 
+    @Test
+    @DisplayName("Activation taps Witch's Mist before the ability resolves")
+    void activationPaysTapCost() {
+        Permanent mist = harness.addToBattlefieldAndReturn(player1, new WitchsMist());
+        Permanent imperiosaur = harness.addToBattlefieldAndReturn(player2, new Imperiosaur());
+        gd.permanentsDealtDamageThisTurn.add(imperiosaur.getId());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, imperiosaur.getId());
+
+        assertThat(mist.isTapped()).isTrue();
+        harness.assertOnBattlefield(player2, "Imperiosaur");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Imperiosaur");
+    }
+
+    @Test
+    @DisplayName("A tapped Witch's Mist cannot activate")
+    void cannotActivateWhileTapped() {
+        Permanent mist = harness.addToBattlefieldAndReturn(player1, new WitchsMist());
+        mist.tap();
+        Permanent imperiosaur = harness.addToBattlefieldAndReturn(player2, new Imperiosaur());
+        gd.permanentsDealtDamageThisTurn.add(imperiosaur.getId());
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, imperiosaur.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+        harness.assertOnBattlefield(player2, "Imperiosaur");
+    }
+
+    @Test
+    @DisplayName("Activation requires black mana")
+    void cannotPayWithOnlyColorlessMana() {
+        Permanent mist = harness.addToBattlefieldAndReturn(player1, new WitchsMist());
+        Permanent imperiosaur = harness.addToBattlefieldAndReturn(player2, new Imperiosaur());
+        gd.permanentsDealtDamageThisTurn.add(imperiosaur.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, imperiosaur.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(mist.isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Imperiosaur");
+    }
+
+    @Test
+    @DisplayName("Can destroy its controller's damaged creature")
+    void canTargetOwnDamagedCreature() {
+        harness.addToBattlefield(player1, new WitchsMist());
+        Permanent imperiosaur = harness.addToBattlefieldAndReturn(player1, new Imperiosaur());
+        gd.permanentsDealtDamageThisTurn.add(imperiosaur.getId());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, imperiosaur.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Imperiosaur");
+        harness.assertInGraveyard(player1, "Imperiosaur");
+    }
+
+    @Test
+    @DisplayName("Regeneration removes marked damage but does not erase damage history")
+    void regeneratedCreatureRemainsEligibleForAnotherMist() {
+        harness.addToBattlefield(player1, new WitchsMist());
+        harness.addToBattlefield(player1, new WitchsMist());
+        Permanent imperiosaur = harness.addToBattlefieldAndReturn(player2, new Imperiosaur());
+        harness.setHand(player1, List.of(new Ghostfire()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, imperiosaur.getId());
+        imperiosaur.setRegenerationShield(1);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, imperiosaur.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Imperiosaur");
+
+        addActivationMana();
+        harness.activateAbility(player1, 1, null, imperiosaur.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Imperiosaur");
+        harness.assertInGraveyard(player2, "Imperiosaur");
+    }
+
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
