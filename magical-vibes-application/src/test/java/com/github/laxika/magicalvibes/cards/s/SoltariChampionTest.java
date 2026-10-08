@@ -56,11 +56,94 @@ class SoltariChampionTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, monk)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, monk)).isEqualTo(3);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, monk)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, monk)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each attacking Champion boosts the other Champion and the bonuses stack")
+    void twoChampionsBoostEachOther() {
+        Permanent first = addCreatureReady(player1, new SoltariChampion());
+        Permanent second = addCreatureReady(player1, new SoltariChampion());
+        Permanent monk = addCreatureReady(player1, new VenerableMonk());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1));
+            assertThat(gd.stack).hasSize(2);
+            resolveAllTriggers();
+        });
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, monk)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, monk)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Attack trigger resolves after the Champion leaves the battlefield")
+    void triggerSurvivesSourceLeaving() {
+        Permanent champion = addCreatureReady(player1, new SoltariChampion());
+        Permanent monk = addCreatureReady(player1, new VenerableMonk());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            assertThat(gd.stack).hasSize(1);
+            harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                    .sacrificePermanentToGraveyard(gd, champion));
+            resolveAllTriggers();
+        });
+
+        harness.assertInGraveyard(player1, "Soltari Champion");
+        assertThat(gqs.getEffectivePower(gd, monk)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, monk)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Creatures present at resolution are boosted but later creatures are not")
+    void affectedCreaturesAreDeterminedAtResolution() {
+        addCreatureReady(player1, new SoltariChampion());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            assertThat(gd.stack).hasSize(1);
+            Permanent beforeResolution = addCreatureReady(player1, new VenerableMonk());
+            resolveAllTriggers();
+            Permanent afterResolution = addCreatureReady(player1, new VenerableMonk());
+
+            assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
+        });
+    }
+
+    @Test
+    @DisplayName("Another creature attacking does not trigger a nonattacking Champion")
+    void anotherCreatureAttackingDoesNotTriggerChampion() {
+        Permanent champion = addCreatureReady(player1, new SoltariChampion());
+        Permanent monk = addCreatureReady(player1, new VenerableMonk());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(1));
+            assertThat(gd.stack).isEmpty();
+        });
+
+        assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, monk)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, monk)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A Champion can be blocked by another creature with shadow")
+    void shadowCreatureCanBlockChampion() {
+        Permanent attacker = addCreatureReady(player1, new SoltariChampion());
+        Permanent blocker = addCreatureReady(player2, new SoltariChampion());
+
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
     }
 }
