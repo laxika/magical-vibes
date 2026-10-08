@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,18 +18,15 @@ class WinterSkyTest extends BaseCardTest {
     void oneBranchResolves() {
         harness.addToBattlefield(player1, new LlanowarElves());
         harness.addToBattlefield(player2, new LlanowarElves());
-        harness.setHand(player1, List.of(new WinterSky()));
         harness.setHand(player2, List.of());
-        harness.addMana(player1, ManaColor.RED, 1);
 
         int p1LifeBefore = gd.playerLifeTotals.get(player1.getId());
         int p2LifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new WinterSky(), "{R}");
         harness.passBothPriorities();
 
-        boolean won = gd.gameLog.stream().map(GameLogEntry::plainText)
-                .anyMatch(log -> log.contains("wins the coin flip"));
+        boolean won = gameLogContains("wins the coin flip for Winter Sky");
 
         if (won) {
             // 1 damage kills both 1/1s and hits both players.
@@ -54,13 +49,41 @@ class WinterSkyTest extends BaseCardTest {
     @Test
     @DisplayName("Coin flip is logged for Winter Sky")
     void coinFlipLogged() {
-        harness.setHand(player1, List.of(new WinterSky()));
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new WinterSky(), "{R}");
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("coin flip for Winter Sky"));
+        assertThat(gameLogContains("coin flip for Winter Sky")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Winter Sky resolves without creatures and draws the top card only on a loss")
+    void resolvesWithoutCreatures() {
+        WinterSky firstCard = new WinterSky();
+        WinterSky secondCard = new WinterSky();
+        harness.setLibrary(player1, List.of(firstCard, new WinterSky()));
+        harness.setLibrary(player2, List.of(secondCard, new WinterSky()));
+        harness.setHand(player2, List.of());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castFromHand(player1, new WinterSky(), "{R}");
+        harness.passBothPriorities();
+
+        boolean won = gameLogContains("wins the coin flip for Winter Sky");
+        harness.assertLife(player1, won ? 19 : 20);
+        harness.assertLife(player2, won ? 19 : 20);
+        if (won) {
+            assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+            assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+            assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+            assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+        } else {
+            assertThat(gameLogContains("loses the coin flip for Winter Sky")).isTrue();
+            assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstCard);
+            assertThat(gd.playerHands.get(player2.getId())).containsExactly(secondCard);
+            assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+            assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        }
+        harness.assertInGraveyard(player1, "Winter Sky");
     }
 }
