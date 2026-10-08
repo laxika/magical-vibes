@@ -36,8 +36,7 @@ class YavimayaIconoclastTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castKickedCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent iconoclast = findPermanent();
         assertThat(iconoclast.getEffectivePower()).isEqualTo(4);
@@ -51,6 +50,37 @@ class YavimayaIconoclastTest extends BaseCardTest {
         assertThat(iconoclast.getEffectivePower()).isEqualTo(3);
         assertThat(iconoclast.getEffectiveToughness()).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, iconoclast, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    void kickedBonusWaitsForTriggerResolutionAndOnlyAffectsItsSource() {
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new YavimayaIconoclast());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new YavimayaIconoclast());
+        harness.setHand(player1, List.of(new YavimayaIconoclast()));
+        addBaseMana();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent kicked = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(other.getId()))
+                .findFirst().orElseThrow();
+        assertThat(kicked.getEffectivePower()).isEqualTo(3);
+        assertThat(kicked.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, kicked, Keyword.HASTE)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(kicked.getEffectivePower()).isEqualTo(4);
+        assertThat(kicked.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, kicked, Keyword.HASTE)).isTrue();
+        for (Permanent unaffected : List.of(other, opponent)) {
+            assertThat(unaffected.getEffectivePower()).isEqualTo(3);
+            assertThat(unaffected.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.hasKeyword(gd, unaffected, Keyword.HASTE)).isFalse();
+        }
     }
 
     private void addBaseMana() {
