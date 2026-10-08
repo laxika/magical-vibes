@@ -22,7 +22,7 @@ class SnagTest extends BaseCardTest {
     void canBeCastByDiscardingForest() {
         harness.setHand(player1, List.of(new Snag(), new Forest()));
 
-        castWithForestDiscard(0, 1);
+        harness.castInstantWithDiscard(player1, 0, null, 1);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Snag");
@@ -34,7 +34,7 @@ class SnagTest extends BaseCardTest {
     void alternateCostRequiresForest() {
         harness.setHand(player1, List.of(new Snag(), new GrizzlyBears()));
 
-        assertThatThrownBy(() -> castWithForestDiscard(0, 1))
+        assertThatThrownBy(() -> harness.castInstantWithDiscard(player1, 0, null, 1))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -46,26 +46,51 @@ class SnagTest extends BaseCardTest {
         Permanent blockedAttacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(
+        declareAttackersAndPrepareBlockers(player1, List.of(
                 gd.playerBattlefields.get(player1.getId()).indexOf(unblockedAttacker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(blockedAttacker)));
-        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(blockedAttacker))));
 
         harness.setHand(player1, List.of(new Snag(), new Forest()));
-        castWithForestDiscard(0, 1);
+        harness.castInstantWithDiscard(player1, 0, null, 1);
         harness.passBothPriorities();
         resolveCombat();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
-    private void castWithForestDiscard(int cardIndex, Integer discardHandCardIndex) {
-        gs.playCard(gd, player1, cardIndex, 0, null, null, List.of(), List.of(), false,
-                null, null, List.of(), null, List.of(), false, discardHandCardIndex);
+    @Test
+    @DisplayName("Can pay the normal mana cost without discarding a Forest")
+    void canPayNormalManaCost() {
+        harness.castFromHand(player1, new Snag(), "{3}{G}");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Snag");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Defender can cast Snag before combat and only unblocked damage is prevented")
+    void defenderCanCastBeforeCombat() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        harness.castFromHand(player2, new Snag(), "{3}{G}");
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        resolveCombat();
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(1);
     }
 }
