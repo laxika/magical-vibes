@@ -20,6 +20,47 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class WieldingTheGreenDragonTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Only the chosen creature receives the boost")
+    void boostsOnlyChosenCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new VolunteerMilitia());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new VolunteerMilitia());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new VolunteerMilitia());
+        harness.setHand(player1, List.of(new WieldingTheGreenDragon()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(other.getEffectivePower()).isEqualTo(1);
+        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(opponent.getEffectivePower()).isEqualTo(1);
+        assertThat(opponent.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Two casts on the same creature stack until cleanup")
+    void repeatedBoostsStackUntilCleanup() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new VolunteerMilitia());
+        harness.setHand(player1, List.of(new WieldingTheGreenDragon(), new WieldingTheGreenDragon()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(target.getEffectivePower()).isEqualTo(9);
+        assertThat(target.getEffectiveToughness()).isEqualTo(10);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player1, TurnStep.CLEANUP);
+
+        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Resolving gives +4/+4 to target creature")
     void resolvesAndBoostsTarget() {
         Permanent militia = harness.addToBattlefieldAndReturn(player1, new VolunteerMilitia());
