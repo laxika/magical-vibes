@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.cards.r.RiftstonePortal;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.cards.t.Threaten;
+import com.github.laxika.magicalvibes.cards.u.UnquestionedAuthority;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -23,7 +24,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GrizzlyBears.class, KrosanVerge.class, RiftstonePortal.class, SuntailHawk.class, Threaten.class, WorldgorgerDragon.class})
+@CardUsed({GrizzlyBears.class, KrosanVerge.class, RiftstonePortal.class, SuntailHawk.class, Threaten.class, UnquestionedAuthority.class, WorldgorgerDragon.class})
 class WorldgorgerDragonTest extends BaseCardTest {
 
     @Test
@@ -89,6 +90,7 @@ class WorldgorgerDragonTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, dragon));
 
+        resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Suntail Hawk");
         harness.assertNotOnBattlefield(player2, "Suntail Hawk");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
@@ -111,6 +113,47 @@ class WorldgorgerDragonTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Suntail Hawk");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Suntail Hawk"));
+    }
+
+    @Test
+    @DisplayName("Cards remain exiled until the Dragon's leaves-the-battlefield trigger resolves")
+    void returnWaitsForLeavesBattlefieldTrigger() {
+        harness.addToBattlefield(player1, new SuntailHawk());
+        castAndResolveWorldgorgerDragon(player1);
+
+        var dragon = findPermanent(player1, "Worldgorger Dragon");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, dragon));
+
+        harness.assertNotOnBattlefield(player1, "Suntail Hawk");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Suntail Hawk"));
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Suntail Hawk");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A returning Aura with no legal preexisting creature stays exiled")
+    void returningAuraCannotEnchantCreatureReturningAtSameTime() {
+        var hawk = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        var aura = harness.addToBattlefieldAndReturn(player1, new UnquestionedAuthority());
+        harness.inMutationScope(() -> aura.setAttachedTo(hawk.getId()));
+        castAndResolveWorldgorgerDragon(player1);
+
+        var dragon = findPermanent(player1, "Worldgorger Dragon");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, dragon));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Suntail Hawk");
+        harness.assertNotOnBattlefield(player1, "Unquestioned Authority");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Unquestioned Authority"));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getName().equals("Unquestioned Authority"));
     }
 
     private void castAndResolveWorldgorgerDragon(Player caster) {
@@ -155,15 +198,7 @@ class WorldgorgerDragonTest extends BaseCardTest {
     }
 
     private void castAndResolveWorldgorgerDragonForJudReview() {
-        castWorldgorgerDragonForJudReview();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-    }
-
-    private void castWorldgorgerDragonForJudReview() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castFromHand(player1, new WorldgorgerDragon(), "{3}{R}{R}{R}");
+        castAndResolveWorldgorgerDragon(player1);
     }
 
     private void castThreatenForJudReview(Permanent target) {
@@ -172,7 +207,6 @@ class WorldgorgerDragonTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Threaten()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 }
