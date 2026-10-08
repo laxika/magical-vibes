@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.a.ArtificialEvolution;
+import com.github.laxika.magicalvibes.cards.b.Bitterblossom;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.m.MODOK;
+import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -26,7 +29,8 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VillainousHideout.class, MODOK.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({VillainousHideout.class, MODOK.class, GrizzlyBears.class, Mountain.class,
+        ArtificialEvolution.class, Bitterblossom.class, ShivanDragon.class})
 class VillainousHideoutTest extends BaseCardTest {
 
     @Test
@@ -98,8 +102,7 @@ class VillainousHideoutTest extends BaseCardTest {
     void conniveAbilityRejectsIllegalTargets() {
         harness.addToBattlefield(player1, new VillainousHideout());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new MODOK());
-        Permanent opponentVillain = findPermanent(player2, "M.O.D.O.K.");
+        Permanent opponentVillain = harness.addToBattlefieldAndReturn(player2, new MODOK());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, bears.getId()))
@@ -123,6 +126,157 @@ class VillainousHideoutTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, villain.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void discardingLandDoesNotAddCounter() {
+        Permanent hideout = harness.addToBattlefieldAndReturn(player1, new VillainousHideout());
+        Permanent villain = addCreatureReady(player1, new MODOK());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Mountain()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 2, null, villain.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(hideout.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Mountain");
+        assertThat(villain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void restrictedManaCanCastVillainSpell() {
+        harness.addToBattlefield(player1, new VillainousHideout());
+        harness.setHand(player1, List.of(new MODOK()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "BLACK");
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "M.O.D.O.K.");
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeSpellOrAbilityManaTotal(Set.of(CardSubtype.VILLAIN))).isZero();
+    }
+
+    @Test
+    void restrictedManaCannotCastNonVillainSpell() {
+        harness.addToBattlefield(player1, new VillainousHideout());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void restrictedManaCannotPayHideoutAbilityDespiteVillainTarget() {
+        harness.addToBattlefield(player1, new VillainousHideout());
+        harness.addToBattlefield(player1, new VillainousHideout());
+        Permanent villain = addCreatureReady(player1, new MODOK());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 2, null, villain.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void conniveAbilityCannotActivateDuringOpponentsMainPhase() {
+        harness.addToBattlefield(player1, new VillainousHideout());
+        Permanent villain = addCreatureReady(player1, new MODOK());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.ensurePriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, villain.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void conniveAbilityCannotActivateWithNonemptyStack() {
+        harness.addToBattlefield(player1, new VillainousHideout());
+        Permanent villain = addCreatureReady(player1, new MODOK());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 1, null, null);
+        assertThat(gd.stack).hasSize(1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, villain.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void missingTargetPreventsDrawAndDiscard() {
+        harness.addToBattlefield(player1, new VillainousHideout());
+        Permanent villain = addCreatureReady(player1, new MODOK());
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.setLibrary(player1, List.of(new Mountain()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 2, null, villain.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(villain);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void restrictedManaCanPayAbilityOfCreatureChangedToVillain() {
+        harness.addToBattlefield(player1, new VillainousHideout());
+        Permanent dragon = addCreatureReady(player1, new ShivanDragon());
+        harness.setHand(player1, List.of(new ArtificialEvolution()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, dragon.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "DRAGON");
+        harness.handleListChoice(player1, "VILLAIN");
+        assertThat(gqs.hasEffectiveSubtype(gd, dragon, CardSubtype.VILLAIN)).isTrue();
+        int powerBefore = gqs.getEffectivePower(gd, dragon);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(powerBefore + 1);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeSpellOrAbilityManaTotal(Set.of(CardSubtype.VILLAIN))).isZero();
+    }
+
+    @Test
+    void noncreatureVillainPermanentCanConnive() {
+        harness.addToBattlefield(player1, new VillainousHideout());
+        Permanent villain = harness.addToBattlefieldAndReturn(player1, new Bitterblossom());
+        harness.setHand(player1, List.of(new ArtificialEvolution()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, villain.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "FAERIE");
+        harness.handleListChoice(player1, "VILLAIN");
+        assertThat(gqs.hasEffectiveSubtype(gd, villain, CardSubtype.VILLAIN)).isTrue();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new MODOK()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 2, null, villain.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "M.O.D.O.K.");
+        assertThat(villain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     private void discardByName(String cardName) {
