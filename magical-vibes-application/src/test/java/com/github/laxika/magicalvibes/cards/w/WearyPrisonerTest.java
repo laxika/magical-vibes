@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -59,14 +58,67 @@ class WearyPrisonerTest extends BaseCardTest {
         Permanent prisoner = harness.enterBattlefieldAndReturn(player1, new WearyPrisoner());
         prisoner.setSummoningSick(false);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
+        assertThatThrownBy(() -> declareAttackers(List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
+        assertThat(prisoner.getCard()).isInstanceOf(WrathfulJailbreaker.class);
+    }
+
+    @Test
+    void establishesDayWhenEnteringBeforeDayOrNightExists() {
+        gd.dayNight = DayNight.NEITHER;
+
+        Permanent prisoner = harness.enterBattlefieldAndReturn(player1, new WearyPrisoner());
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(prisoner.isTransformed()).isFalse();
+        assertThat(prisoner.getCard()).isInstanceOf(WearyPrisoner.class);
+    }
+
+    @Test
+    void wearyPrisonerCannotAttackDespiteBeingReady() {
+        gd.dayNight = DayNight.DAY;
+        Permanent prisoner = harness.enterBattlefieldAndReturn(player1, new WearyPrisoner());
+        prisoner.setSummoningSick(false);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void summoningSickJailbreakerIsNotRequiredToAttack() {
+        gd.dayNight = DayNight.NIGHT;
+        Permanent prisoner = harness.enterBattlefieldAndReturn(player1, new WearyPrisoner());
+        prisoner.setSummoningSick(true);
+
+        declareAttackers(List.of());
+
+        assertThat(prisoner.isAttacking()).isFalse();
+    }
+
+    @Test
+    void tappedJailbreakerIsNotRequiredToAttack() {
+        gd.dayNight = DayNight.NIGHT;
+        Permanent prisoner = harness.enterBattlefieldAndReturn(player1, new WearyPrisoner());
+        prisoner.setSummoningSick(false);
+        prisoner.setTapped(true);
+
+        declareAttackers(List.of());
+
+        assertThat(prisoner.isAttacking()).isFalse();
+    }
+
+    @Test
+    void oneSpellDuringPreviousPlayersTurnKeepsItNight() {
+        gd.dayNight = DayNight.NIGHT;
+        Permanent prisoner = harness.enterBattlefieldAndReturn(player1, new WearyPrisoner());
+        gd.previousTurnActivePlayerId = player2.getId();
+        gd.spellsCastLastTurn.put(player2.getId(), 1);
+        gd.spellsCastLastTurn.put(player1.getId(), 2);
+
+        harness.performUntapStep(player1);
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
         assertThat(prisoner.getCard()).isInstanceOf(WrathfulJailbreaker.class);
     }
 }
