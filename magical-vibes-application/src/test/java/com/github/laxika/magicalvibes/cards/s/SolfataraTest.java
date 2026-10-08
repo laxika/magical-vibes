@@ -6,11 +6,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
-import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -74,8 +71,8 @@ class SolfataraTest extends BaseCardTest {
         castAt(player2);
         assertThat(playableCards(player2)).doesNotContain(0);
 
-        TurnCleanupService turnCleanupService = GameTestEngineContext.get().getBean(TurnCleanupService.class);
-        harness.inMutationScope(() -> turnCleanupService.applyCleanupResets(gd));
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.passBothPriorities();
 
         assertThat(playableCards(player2)).contains(0);
     }
@@ -99,13 +96,39 @@ class SolfataraTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting during upkeep does not draw until the following turn's upkeep")
+    void upkeepCastWaitsForNextTurn() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.setHand(player1, List.of(new Solfatara()));
+        harness.setLibrary(player1, List.of(new RiverBoa(), new Quicksand(), new RiverBoa()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passUntil(player1, TurnStep.DRAW);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
     }
 }
