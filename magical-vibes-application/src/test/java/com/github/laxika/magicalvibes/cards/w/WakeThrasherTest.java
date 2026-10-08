@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.m.MerrowLevitator;
 import com.github.laxika.magicalvibes.cards.s.SlipperyBogle;
+import com.github.laxika.magicalvibes.cards.s.SpringjackPasture;
 import com.github.laxika.magicalvibes.cards.s.StreamHopper;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,8 +16,65 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WakeThrasher.class, SlipperyBogle.class, MerrowLevitator.class, StreamHopper.class})
+@CardUsed({WakeThrasher.class, SlipperyBogle.class, MerrowLevitator.class, StreamHopper.class, SpringjackPasture.class})
 class WakeThrasherTest extends BaseCardTest {
+    @Test
+    @DisplayName("A noncreature permanent untapping also boosts Wake Thrasher")
+    void landUntappingTriggers() {
+        Permanent thrasher = harness.addToBattlefieldAndReturn(player1, new WakeThrasher());
+        Permanent pasture = harness.addToBattlefieldAndReturn(player1, new SpringjackPasture());
+        pasture.tap();
+
+        advanceToUpkeep(player1);
+
+        assertThat(pasture.isTapped()).isFalse();
+        assertThat(thrasher.getPowerModifier()).isEqualTo(1);
+        assertThat(thrasher.getToughnessModifier()).isEqualTo(1);
+    }
+    @Test
+    @DisplayName("Already untapped permanents do not trigger Wake Thrasher")
+    void alreadyUntappedPermanentsDoNotTrigger() {
+        Permanent thrasher = harness.addToBattlefieldAndReturn(player1, new WakeThrasher());
+        harness.addToBattlefield(player1, new SlipperyBogle());
+
+        advanceToUpkeep(player1);
+
+        assertThat(thrasher.getPowerModifier()).isZero();
+        assertThat(thrasher.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Wake Thrasher gets its own boost when a permanent untaps")
+    void multipleThrashersEachTrigger() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new WakeThrasher());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new WakeThrasher());
+        Permanent bogle = harness.addToBattlefieldAndReturn(player1, new SlipperyBogle());
+        bogle.tap();
+
+        advanceToUpkeep(player1);
+
+        assertThat(first.getPowerModifier()).isEqualTo(1);
+        assertThat(first.getToughnessModifier()).isEqualTo(1);
+        assertThat(second.getPowerModifier()).isEqualTo(1);
+        assertThat(second.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An untap effect on an already untapped permanent gives no boost")
+    void effectOnAlreadyUntappedPermanentDoesNotTrigger() {
+        Permanent thrasher = harness.addToBattlefieldAndReturn(player1, new WakeThrasher());
+        Permanent levitator = harness.addToBattlefieldAndReturn(player1, new MerrowLevitator());
+        harness.setHand(player1, List.of(new StreamHopper()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(levitator.isTapped()).isFalse();
+        assertThat(thrasher.getPowerModifier()).isZero();
+        assertThat(thrasher.getToughnessModifier()).isZero();
+    }
 
     @Test
     @DisplayName("A permanent you control untapping gives Wake Thrasher +1/+1")
