@@ -77,9 +77,80 @@ class VoldarenEstateTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 
+    @Test
+    @DisplayName("Without Vampires the Blood ability costs five mana and uses the stack")
+    void bloodAbilityPaysFullCostAndUsesStack() {
+        Permanent estate = addEstate();
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+
+        assertThat(estate.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(findPermanents(player1, "Blood")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Blood")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Opposing Vampires do not reduce the Blood ability's cost")
+    void opposingVampiresDoNotReduceCost() {
+        Permanent estate = addEstate();
+        harness.addToBattlefield(player2, new VoldarenEpicure());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(estate.isTapped()).isFalse();
+        assertThat(findPermanents(player1, "Blood")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Six Vampires reduce the Blood activation cost to zero")
+    void discountCannotReduceCostBelowZero() {
+        Permanent estate = addEstate();
+        for (int i = 0; i < 6; i++) {
+            harness.addToBattlefield(player1, new VoldarenEpicure());
+        }
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(estate.isTapped()).isTrue();
+        assertThat(findPermanents(player1, "Blood")).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Vampire-only mana cannot pay the Blood activation's generic cost")
+    void restrictedManaCannotPayActivationCost() {
+        Permanent manaEstate = addEstate();
+        Permanent bloodEstate = addEstate();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 2, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(manaEstate.isTapped()).isTrue();
+        assertThat(bloodEstate.isTapped()).isFalse();
+        assertThat(findPermanents(player1, "Blood")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Estate cannot activate again")
+    void cannotActivateTappedEstate() {
+        addEstate();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanents(player1, "Blood")).isEmpty();
+    }
+
     private Permanent addEstate() {
-        Permanent estate = harness.addToBattlefieldAndReturn(player1, new VoldarenEstate());
-        estate.setSummoningSick(false);
-        return estate;
+        return addCreatureReady(player1, new VoldarenEstate());
     }
 }
