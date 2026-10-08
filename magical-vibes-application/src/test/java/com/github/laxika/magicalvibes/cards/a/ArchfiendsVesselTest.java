@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.h.HavengulLich;
 import com.github.laxika.magicalvibes.cards.r.RiseFromTheGrave;
 import com.github.laxika.magicalvibes.cards.y.YawgmothsAgenda;
 import com.github.laxika.magicalvibes.cards.z.Zombify;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArchfiendsVessel.class, Shock.class, YawgmothsAgenda.class, Zombify.class, RiseFromTheGrave.class})
+@CardUsed({ArchfiendsVessel.class, Shock.class, YawgmothsAgenda.class, Zombify.class, RiseFromTheGrave.class,
+        HavengulLich.class})
 class ArchfiendsVesselTest extends BaseCardTest {
 
     @Test
@@ -46,6 +49,45 @@ class ArchfiendsVesselTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Archfiend's Vessel");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Archfiend's Vessel"));
+        assertThat(countPermanents(player1, "Demon")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Casting an opponent's Vessel from their graveyard does not create a Demon")
+    void castingFromOpponentGraveyardDoesNotCreateDemon() {
+        harness.addToBattlefield(player1, new HavengulLich());
+        var vessel = new ArchfiendsVessel();
+        harness.setGraveyard(player2, List.of(vessel));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, vessel.getId(), Zone.GRAVEYARD);
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castFromGraveyard(player1, vessel.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Archfiend's Vessel");
+        harness.assertNotInGraveyard(player2, "Archfiend's Vessel");
+        assertThat(countPermanents(player1, "Demon")).isZero();
+    }
+
+    @Test
+    @DisplayName("Casting your own Vessel with Havengul Lich creates exactly one Demon")
+    void castingFromOwnGraveyardWithLichCreatesDemon() {
+        harness.addToBattlefield(player1, new HavengulLich());
+        var vessel = new ArchfiendsVessel();
+        harness.setGraveyard(player1, List.of(vessel));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, vessel.getId(), Zone.GRAVEYARD);
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castFromGraveyard(player1, vessel.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Archfiend's Vessel");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(vessel.getId()));
         assertThat(countPermanents(player1, "Demon")).isEqualTo(1);
     }
 
