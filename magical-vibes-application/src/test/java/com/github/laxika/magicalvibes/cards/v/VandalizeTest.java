@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.a.AncientDen;
+import com.github.laxika.magicalvibes.cards.a.AtarkaMonument;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Vandalize.class, AncientDen.class, Forest.class, Spellbook.class})
+@CardUsed({Vandalize.class, AncientDen.class, AtarkaMonument.class, Forest.class, Spellbook.class})
 class VandalizeTest extends BaseCardTest {
 
     @Test
@@ -57,6 +58,74 @@ class VandalizeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castModalSorceryWithModes(
                 player1, 0, 1, 2, new int[]{0}, List.of(land.getId()), null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Both modes destroy their distinct targets without affecting other permanents")
+    void destroysDistinctTargets() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AtarkaMonument());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addToBattlefield(player1, new AtarkaMonument());
+        harness.addToBattlefield(player1, new Forest());
+
+        cast(new int[]{0, 1}, List.of(artifact.getId(), land.getId()));
+
+        harness.assertInGraveyard(player2, "Atarka Monument");
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertNotOnBattlefield(player2, "Atarka Monument");
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertOnBattlefield(player1, "Atarka Monument");
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Land mode still resolves when the artifact target has left the battlefield")
+    void resolvesLandModeWithMissingArtifactTarget() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AtarkaMonument());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new Vandalize()));
+        addMana();
+        harness.castModalSorceryWithModes(player1, 0, 1, 2,
+                new int[]{0, 1}, List.of(artifact.getId(), land.getId()), null);
+        gd.playerBattlefields.get(player2.getId()).remove(artifact);
+        harness.setExile(player2, List.of(artifact.getCard()));
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player1, "Vandalize");
+    }
+
+    @Test
+    @DisplayName("Artifact mode still resolves when the land target has left the battlefield")
+    void resolvesArtifactModeWithMissingLandTarget() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AtarkaMonument());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new Vandalize()));
+        addMana();
+        harness.castModalSorceryWithModes(player1, 0, 1, 2,
+                new int[]{0, 1}, List.of(artifact.getId(), land.getId()), null);
+        gd.playerBattlefields.get(player2.getId()).remove(land);
+        harness.setExile(player2, List.of(land.getCard()));
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Atarka Monument");
+        harness.assertNotOnBattlefield(player2, "Atarka Monument");
+        harness.assertInGraveyard(player1, "Vandalize");
+    }
+
+    @Test
+    @DisplayName("Land mode cannot target a nonland artifact")
+    void rejectsArtifactForLandMode() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AtarkaMonument());
+        harness.setHand(player1, List.of(new Vandalize()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalSorceryWithModes(
+                player1, 0, 1, 2, new int[]{1}, List.of(artifact.getId()), null))
                 .isInstanceOf(IllegalStateException.class);
     }
 
