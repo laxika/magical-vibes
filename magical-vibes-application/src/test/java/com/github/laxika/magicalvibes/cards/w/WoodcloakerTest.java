@@ -31,7 +31,6 @@ class WoodcloakerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
@@ -59,13 +58,44 @@ class WoodcloakerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
+    @Test
+    void canTargetItselfWhenTurnedFaceUp() {
+        Permanent woodcloaker = castFaceDown();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(woodcloaker));
+        harness.handlePermanentChosen(player1, woodcloaker.getId());
+        harness.passBothPriorities();
+
+        assertThat(woodcloaker.isFaceDown()).isFalse();
+        assertThat(gqs.hasKeyword(gd, woodcloaker, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void castingFaceUpDoesNotGrantTrample() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ScornfulEgotist());
+        harness.setHand(player1, List.of(new Woodcloaker()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent woodcloaker = findPermanent(player1, "Woodcloaker");
+        assertThat(woodcloaker.isFaceDown()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.hasKeyword(gd, woodcloaker, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
+    }
+
     private Permanent castFaceDown() {
         harness.setHand(player1, List.of(new Woodcloaker()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         return findPermanent(player1, "Woodcloaker");
