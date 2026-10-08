@@ -128,6 +128,70 @@ class VictimizeTest extends BaseCardTest {
                 .hasMessageContaining("Card is not playable");
     }
 
+    @Test
+    @DisplayName("Rejects duplicate targets, noncreature cards, and cards in an opponent's graveyard")
+    void rejectsIllegalGraveyardSelections() {
+        Card first = new BullHippo();
+        Card second = new BullHippo();
+        Card noncreature = new Duress();
+        Card opponentsCreature = new BullHippo();
+        harness.setGraveyard(player1, List.of(first, second, noncreature));
+        harness.setGraveyard(player2, List.of(opponentsCreature));
+        castVictimize();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), first.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), noncreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), opponentsCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second, noncreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentsCreature);
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's creature when the caster controls none")
+    void cannotSacrificeOpponentsCreature() {
+        Card first = new BullHippo();
+        Card second = new BullHippo();
+        Permanent opponentsCreature = harness.addToBattlefieldAndReturn(player2, new BullHippo());
+        harness.setGraveyard(player1, List.of(first, second));
+        castVictimize();
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentsCreature);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Checks for a sacrifice at resolution after the caster's creature leaves")
+    void returnsNothingWhenCreatureLeavesBeforeResolution() {
+        Card first = new BullHippo();
+        Card second = new BullHippo();
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new BullHippo());
+        harness.setGraveyard(player1, List.of(first, second));
+        castVictimize();
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(sacrifice);
+        harness.setExile(player1, List.of(sacrifice.getCard()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void castVictimize() {
         harness.setHand(player1, List.of(new Victimize()));
         harness.addMana(player1, ManaColor.BLACK, 3);
