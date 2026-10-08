@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.c.CyberConversion;
+import com.github.laxika.magicalvibes.cards.c.CybermanPatrol;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,18 +16,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(VrestinMenoptraLeader.class)
+@CardUsed({VrestinMenoptraLeader.class, CybermanPatrol.class, CyberConversion.class})
 class VrestinMenoptraLeaderTest extends BaseCardTest {
 
     @Test
     void entersWithXCountersAndCreatesXFlyingAlienInsects() {
-        harness.setHand(player1, List.of(new VrestinMenoptraLeader()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-
-        harness.castCreature(player1, 0, 2);
-        harness.passBothPriorities();
-        resolveAllTriggers();
+        castVrestin(2);
 
         Permanent vrestin = findPermanent(player1, "Vrestin, Menoptra Leader");
         assertThat(vrestin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -47,46 +41,125 @@ class VrestinMenoptraLeaderTest extends BaseCardTest {
 
     @Test
     void putsCountersOnEachAttackingInsectOnce() {
-        addReady(new VrestinMenoptraLeader());
-        Permanent attackingInsect = addReady(creature("Attacking Insect", CardSubtype.INSECT));
-        Permanent secondAttackingInsect = addReady(creature("Second Attacking Insect", CardSubtype.INSECT));
-        Permanent nonAttackingInsect = addReady(creature("Nonattacking Insect", CardSubtype.INSECT));
-        Permanent soldier = addReady(creature("Soldier", CardSubtype.SOLDIER));
+        castVrestin(3);
+        List<Permanent> insects = findPermanents(player1, "Alien Insect");
+        insects.forEach(insect -> insect.setSummoningSick(false));
+        Permanent soldier = addCreatureReady(player1, new CybermanPatrol());
 
         declareAttackers(List.of(1, 2, 4));
         resolveAllTriggers();
 
-        assertThat(attackingInsect.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(secondAttackingInsect.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(nonAttackingInsect.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(insects.get(0).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(insects.get(1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(insects.get(2).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(soldier.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
     void doesNotTriggerWhenOnlyNonInsectsAttack() {
-        addReady(new VrestinMenoptraLeader());
-        Permanent soldier = addReady(creature("Soldier", CardSubtype.SOLDIER));
+        castVrestin(1);
+        Permanent soldier = addCreatureReady(player1, new CybermanPatrol());
 
-        declareAttackers(List.of(1));
+        declareAttackers(List.of(2));
 
         assertThat(soldier.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
-    private Permanent addReady(Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
+    @Test
+    void xZeroCreatesNoTokensAndVrestinDies() {
+        castVrestin(0);
+
+        harness.assertNotOnBattlefield(player1, "Vrestin, Menoptra Leader");
+        harness.assertInGraveyard(player1, "Vrestin, Menoptra Leader");
+        assertThat(findPermanents(player1, "Alien Insect")).isEmpty();
     }
 
-    private Card creature(String name, CardSubtype subtype) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setSubtypes(List.of(subtype));
-        card.setPower(1);
-        card.setToughness(1);
-        return card;
+    @Test
+    void vrestinGetsACounterWhenItAttacks() {
+        castVrestin(1);
+        Permanent vrestin = findPermanent(player1, "Vrestin, Menoptra Leader");
+        vrestin.setSummoningSick(false);
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(vrestin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(findPermanent(player1, "Alien Insect").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void opponentsAttackDoesNotTriggerVrestin() {
+        castVrestin(1);
+        Permanent vrestin = addCreatureReady(player2, new VrestinMenoptraLeader());
+        vrestin.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(vrestin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(findPermanent(player1, "Vrestin, Menoptra Leader")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanent(player1, "Alien Insect").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void originallyAttackingInsectStillGetsCounterAfterLeavingCombat() {
+        castVrestin(1);
+        Permanent insect = findPermanent(player1, "Alien Insect");
+        insect.setSummoningSick(false);
+        declareAttackers(List.of(1));
+        assertThat(gd.stack).hasSize(1);
+
+        insect.setAttacking(false);
+        resolveAllTriggers();
+
+        assertThat(insect.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void insectEnteringAttackingAfterDeclarationDoesNotGetCounter() {
+        castVrestin(2);
+        List<Permanent> insects = findPermanents(player1, "Alien Insect");
+        insects.get(0).setSummoningSick(false);
+        Permanent lateAttacker = insects.get(1);
+        gd.playerBattlefields.get(player1.getId()).remove(lateAttacker);
+        declareAttackers(List.of(1));
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).add(lateAttacker);
+        lateAttacker.setTapped(true);
+        lateAttacker.setAttacking(true);
+        lateAttacker.setAttackTarget(player2.getId());
+        resolveAllTriggers();
+
+        assertThat(insects.get(0).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(lateAttacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void originallyAttackingInsectStillGetsCounterAfterCyberConversion() {
+        castVrestin(1);
+        Permanent vrestin = findPermanent(player1, "Vrestin, Menoptra Leader");
+        vrestin.setSummoningSick(false);
+        harness.setHand(player2, List.of(new CyberConversion()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).hasSize(1);
+
+        harness.castAndResolveInstant(player2, 0, vrestin.getId());
+        assertThat(vrestin.isFaceDown()).isTrue();
+        resolveAllTriggers();
+
+        assertThat(vrestin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    private void castVrestin(int x) {
+        harness.setHand(player1, List.of(new VrestinMenoptraLeader()));
+        harness.addMana(player1, ManaColor.GREEN, x + 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castCreature(player1, 0, x);
+        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
