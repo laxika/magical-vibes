@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SongOfTheDryads.class, GrizzlyBears.class})
+@CardUsed({SongOfTheDryads.class, GrizzlyBears.class, Island.class, SolRing.class})
 class SongOfTheDryadsTest extends BaseCardTest {
 
     @Test
@@ -39,9 +40,8 @@ class SongOfTheDryadsTest extends BaseCardTest {
     @DisplayName("Enchanted permanent gains the Forest mana ability")
     void enchantedPermanentProducesGreenMana() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent aura = new Permanent(new SongOfTheDryads());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SongOfTheDryads());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.tapPermanent(player1, 0);
 
@@ -53,9 +53,8 @@ class SongOfTheDryadsTest extends BaseCardTest {
     @DisplayName("Removing Song of the Dryads restores the enchanted permanent")
     void removingAuraRestoresPermanent() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent aura = new Permanent(new SongOfTheDryads());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SongOfTheDryads());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.isLand(gd, bears)).isTrue();
 
@@ -64,5 +63,85 @@ class SongOfTheDryadsTest extends BaseCardTest {
         assertThat(gqs.isLand(gd, bears)).isFalse();
         assertThat(gqs.isCreature(gd, bears)).isTrue();
         assertThat(gqs.getEffectiveColors(gd, bears)).contains(CardColor.GREEN);
+    }
+
+    @Test
+    @DisplayName("A creature that entered this turn can produce mana after becoming a Forest")
+    void newlyEnteredCreatureCanTapAsLand() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SongOfTheDryads()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.BEAR)).isFalse();
+        harness.tapPermanent(player2, 0);
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An enchanted Island loses its old land type and produces green instead of blue")
+    void replacesExistingLandTypeAndManaAbility() {
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.setHand(player1, List.of(new SongOfTheDryads()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castEnchantment(player1, 0, island.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasEffectiveSubtype(gd, island, CardSubtype.ISLAND)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, island, CardSubtype.FOREST)).isTrue();
+
+        harness.tapPermanent(player2, 0);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("An enchanted Sol Ring loses its artifact type and printed mana ability")
+    void replacesArtifactTypeAndPrintedManaAbility() {
+        Permanent ring = harness.addToBattlefieldAndReturn(player2, new SolRing());
+        harness.setHand(player1, List.of(new SongOfTheDryads()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castEnchantment(player1, 0, ring.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isArtifact(gd, ring)).isFalse();
+        assertThat(gqs.isLand(gd, ring)).isTrue();
+
+        harness.tapPermanent(player2, 0);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Turning an attached Song of the Dryads into a Forest detaches it and restores its host")
+    void enchantedAuraBecomesUnattachedLand() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent firstSong = harness.addToBattlefieldAndReturn(player2, new SongOfTheDryads());
+        firstSong.setAttachedTo(bears.getId());
+        assertThat(gqs.isCreature(gd, bears)).isFalse();
+
+        harness.setHand(player1, List.of(new SongOfTheDryads()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castEnchantment(player1, 0, firstSong.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(firstSong);
+        assertThat(firstSong.isAttached()).isFalse();
+        assertThat(gqs.isEnchantment(gd, firstSong)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, firstSong, CardSubtype.AURA)).isFalse();
+        assertThat(gqs.isLand(gd, firstSong)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, firstSong, CardSubtype.FOREST)).isTrue();
+        assertThat(gqs.getEffectiveColors(gd, firstSong)).isEmpty();
+        assertThat(gqs.isCreature(gd, bears)).isTrue();
+        assertThat(gqs.isLand(gd, bears)).isFalse();
+        assertThat(gqs.getEffectiveColors(gd, bears)).containsExactly(CardColor.GREEN);
     }
 }
