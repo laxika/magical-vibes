@@ -1,5 +1,10 @@
 apply(plugin = "org.springframework.boot")
 
+tasks.named<JavaCompile>("compileTestJava") {
+    options.isFork = true
+    options.forkOptions.memoryMaximumSize = "6g"
+}
+
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-jackson")
