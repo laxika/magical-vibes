@@ -54,6 +54,46 @@ class VoidGrafterTest extends BaseCardTest {
                 .hasMessageContaining("another creature you control");
     }
 
+    @Test
+    @DisplayName("A different Void Grafter is a legal target")
+    void canTargetAnotherVoidGrafter() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new VoidGrafter());
+
+        castVoidGrafter(target);
+
+        assertThat(target.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> !permanent.getId().equals(target.getId()))
+                .allSatisfy(permanent -> assertThat(permanent.hasKeyword(Keyword.HEXPROOF)).isFalse());
+    }
+
+    @Test
+    @DisplayName("Can enter with no other creature and does not grant itself hexproof")
+    void entersWithoutLegalTargets() {
+        harness.castFromHand(player1, new VoidGrafter(), "{1}{G}{U}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Void Grafter");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement().satisfies(permanent ->
+                        assertThat(permanent.hasKeyword(Keyword.HEXPROOF)).isFalse());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flash allows casting during an opponent's combat")
+    void canCastDuringOpponentsCombat() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new VoidGrafter());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+
+        castVoidGrafter(target);
+
+        harness.assertOnBattlefield(player1, "Void Grafter");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(target.hasKeyword(Keyword.HEXPROOF)).isTrue();
+    }
     private void castVoidGrafter(Permanent target) {
         harness.setHand(player1, List.of(new VoidGrafter()));
         addManaForVoidGrafter();
