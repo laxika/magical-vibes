@@ -142,8 +142,7 @@ class SoldeviSageTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while summoning sick (requires tap)")
     void cannotActivateWhenSummoningSick() {
-        Permanent sage = new Permanent(new SoldeviSage());
-        gd.playerBattlefields.get(player1.getId()).add(sage);
+        harness.addToBattlefield(player1, new SoldeviSage());
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Island());
         seedLibrary();
@@ -171,5 +170,64 @@ class SoldeviSageTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    void canSacrificeTappedLands() {
+        addCreatureReady(player1, new SoldeviSage());
+        harness.addToBattlefieldAndReturn(player1, new Forest()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Island()).setTapped(true);
+        harness.setHand(player1, List.of());
+        seedLibrary();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Island");
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void rejectsDiscardingPreexistingCardAndAllowsDrawnCard() {
+        addCreatureReady(player1, new SoldeviSage());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Island());
+        GrizzlyBears originalCard = new GrizzlyBears();
+        harness.setHand(player1, List.of(originalCard));
+        harness.setLibrary(player1, List.of(new Forest(), new Island(), new Plains()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices())
+                .containsExactly(1, 2, 3);
+        assertThat(gd.playerHands.get(player1.getId())).contains(originalCard).hasSize(4);
+
+        harness.handleCardChosen(player1, 3);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(originalCard).hasSize(3);
+        harness.assertInGraveyard(player1, "Plains");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void opponentsLandsCannotPayActivationCost() {
+        Permanent sage = addCreatureReady(player1, new SoldeviSage());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Island());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough permanents to sacrifice");
+
+        assertThat(sage.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Island");
     }
 }
