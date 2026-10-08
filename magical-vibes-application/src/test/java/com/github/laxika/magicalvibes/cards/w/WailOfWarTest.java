@@ -85,4 +85,168 @@ class WailOfWarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
     }
+
+    @Test
+    @DisplayName("The return mode may choose only one of several creature cards")
+    void returnsOneSelectedCreature() {
+        Card selected = new GrizzlyBears();
+        Card unselected = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(selected, unselected));
+        harness.setHand(player1, List.of(new WailOfWar()));
+        addMana();
+
+        harness.castInstant(player1, 0, 1, null);
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(selected);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(unselected).doesNotContain(selected);
+    }
+
+    @Test
+    @DisplayName("The return mode may choose zero targets even with creatures available")
+    void returnsNoCreaturesWhenZeroChosen() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new WailOfWar()));
+        addMana();
+
+        harness.castInstant(player1, 0, 1, null);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
+        harness.assertInGraveyard(player1, "Wail of War");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The return mode can be cast with an empty graveyard")
+    void castsReturnModeWithoutAvailableCreatures() {
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new WailOfWar()));
+        addMana();
+
+        harness.castInstant(player1, 0, 1, null);
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MultiGraveyardChoice) {
+            harness.handleMultipleCardsChosen(player1, List.of());
+        }
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Wail of War");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The return mode rejects more than two targets")
+    void rejectsThreeGraveyardTargets() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        Card third = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(first, second, third));
+        harness.setHand(player1, List.of(new WailOfWar()));
+        addMana();
+
+        harness.castInstant(player1, 0, 1, null);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The return mode cannot target an opponent's graveyard")
+    void rejectsOpponentGraveyardTarget() {
+        Card ownCreature = new GrizzlyBears();
+        Card opposingCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(ownCreature));
+        harness.setGraveyard(player2, List.of(opposingCreature));
+        harness.setHand(player1, List.of(new WailOfWar()));
+        addMana();
+
+        harness.castInstant(player1, 0, 1, null);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(opposingCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The return mode still returns a legal target when the other leaves the graveyard")
+    void returnsRemainingLegalTarget() {
+        Card removed = new GrizzlyBears();
+        Card remaining = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(removed, remaining));
+        harness.setHand(player1, List.of(new WailOfWar()));
+        addMana();
+
+        harness.castInstant(player1, 0, 1, null);
+        harness.handleMultipleCardsChosen(player1, List.of(removed.getId(), remaining.getId()));
+        harness.setGraveyard(player1, List.of(remaining));
+        harness.setExile(player1, List.of(removed));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.findExiledCard(removed.getId())).isNotNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The debuff affects neither noncreatures nor creatures entering afterward")
+    void debuffAppliesOnlyToCreaturesPresentAtResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        harness.setHand(player1, List.of(new WailOfWar()));
+        addMana();
+
+        harness.castInstant(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+        Permanent laterCreature = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(creature.getPowerModifier()).isEqualTo(-1);
+        assertThat(creature.getToughnessModifier()).isEqualTo(-1);
+        assertThat(artifact.getPowerModifier()).isZero();
+        assertThat(artifact.getToughnessModifier()).isZero();
+        assertThat(laterCreature.getPowerModifier()).isZero();
+        assertThat(laterCreature.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Two Wails kill a creature whose toughness becomes zero")
+    void debuffsStackAndCauseZeroToughnessDeath() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WailOfWar(), new WailOfWar()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castInstant(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.castInstant(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The return mode does not return a target that has left the graveyard")
+    void doesNotReturnAnIllegalTarget() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new WailOfWar()));
+        addMana();
+
+        harness.castInstant(player1, 0, 1, null);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(creature.getId())).isNotNull();
+        harness.assertInGraveyard(player1, "Wail of War");
+        assertThat(gd.stack).isEmpty();
+    }
 }
