@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.a.AirCultElemental;
+import com.github.laxika.magicalvibes.cards.p.PowerWordKill;
+import com.github.laxika.magicalvibes.cards.s.SpikedPitTrap;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WestgateRegent.class, GrizzlyBears.class, Shock.class})
+@CardUsed({WestgateRegent.class, AirCultElemental.class, PowerWordKill.class, SpikedPitTrap.class})
 class WestgateRegentTest extends BaseCardTest {
 
     @Test
@@ -23,15 +24,15 @@ class WestgateRegentTest extends BaseCardTest {
     void wardCountersOpponentSpellWhenHandIsEmpty() {
         Permanent regent = addReadyWestgateRegent();
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        prepareOpponentMainPhase();
+        harness.setHand(player2, List.of(new PowerWordKill()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
         harness.castInstant(player2, 0, regent.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        harness.assertInGraveyard(player2, "Shock");
+        harness.assertInGraveyard(player2, "Power Word Kill");
+        harness.assertOnBattlefield(player1, "Westgate Regent");
+        harness.assertNotInGraveyard(player1, "Westgate Regent");
     }
 
     @Test
@@ -54,7 +55,7 @@ class WestgateRegentTest extends BaseCardTest {
         Permanent regent = addReadyWestgateRegent();
         regent.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new AirCultElemental());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -66,9 +67,94 @@ class WestgateRegentTest extends BaseCardTest {
         assertThat(regent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    void discardingPaysWardAndAllowsSpellToResolve() {
+        Permanent regent = addReadyWestgateRegent();
+        prepareOpponentMainPhase();
+        harness.setHand(player2, List.of(new PowerWordKill(), new AirCultElemental()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castInstant(player2, 0, regent.getId());
+        resolveAllTriggers();
+
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Air-Cult Elemental");
+        harness.assertNotInHand(player2, "Air-Cult Elemental");
+        harness.assertInGraveyard(player1, "Westgate Regent");
+        harness.assertNotOnBattlefield(player1, "Westgate Regent");
+    }
+
+    @Test
+    void decliningDiscardCountersSpellAndKeepsCardInHand() {
+        Permanent regent = addReadyWestgateRegent();
+        prepareOpponentMainPhase();
+        harness.setHand(player2, List.of(new PowerWordKill(), new AirCultElemental()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castInstant(player2, 0, regent.getId());
+        resolveAllTriggers();
+
+        harness.handleMayAbilityChosen(player2, false);
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Air-Cult Elemental");
+        harness.assertNotInGraveyard(player2, "Air-Cult Elemental");
+        harness.assertOnBattlefield(player1, "Westgate Regent");
+        harness.assertInGraveyard(player2, "Power Word Kill");
+    }
+
+    @Test
+    void wardDoesNotCounterControllersOwnSpell() {
+        Permanent regent = addReadyWestgateRegent();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new PowerWordKill()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castInstant(player1, 0, regent.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Westgate Regent");
+        harness.assertNotOnBattlefield(player1, "Westgate Regent");
+    }
+
+    @Test
+    void wardCountersOpponentActivatedAbilityWithoutDiscard() {
+        Permanent regent = addReadyWestgateRegent();
+        harness.addToBattlefield(player2, new SpikedPitTrap());
+        prepareOpponentMainPhase();
+        harness.setHand(player2, List.of());
+        harness.addMana(player2, ManaColor.COLORLESS, 5);
+        harness.activateAbility(player2, 0, null, regent.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Westgate Regent");
+        harness.assertInGraveyard(player2, "Spiked Pit Trap");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void countersMatchDamageWithExistingCounters() {
+        Permanent regent = addReadyWestgateRegent();
+        regent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        regent.setAttacking(true);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 13);
+        assertThat(regent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(10);
+    }
+
+    private void prepareOpponentMainPhase() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+    }
+
     private Permanent addReadyWestgateRegent() {
-        Permanent regent = harness.addToBattlefieldAndReturn(player1, new WestgateRegent());
-        regent.setSummoningSick(false);
-        return regent;
+        return addCreatureReady(player1, new WestgateRegent());
     }
 }
