@@ -15,6 +15,41 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class WormfangTurtleTest extends BaseCardTest {
 
     @Test
+    void returnsOnlyTheLandExiledByThatTurtleAndAppliesItsEntryReplacement() {
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new KrosanVerge());
+        harness.castFromHand(player1, new WormfangTurtle(), "{2}{U}");
+        resolveAllTriggers();
+        Permanent firstTurtle = findPermanent(player1, "Wormfang Turtle");
+
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new KrosanVerge());
+        harness.castFromHand(player1, new WormfangTurtle(), "{2}{U}");
+        resolveAllTriggers();
+        Permanent secondTurtle = findPermanents(player1, "Wormfang Turtle").stream()
+                .filter(permanent -> !permanent.getId().equals(firstTurtle.getId()))
+                .findFirst().orElseThrow();
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, firstTurtle));
+        resolveAllTriggers();
+
+        Permanent returnedLand = findPermanent(player1, "Krosan Verge");
+        assertThat(returnedLand.getCard().getId()).isEqualTo(firstLand.getCard().getId());
+        assertThat(returnedLand.getId()).isNotEqualTo(firstLand.getId());
+        assertThat(returnedLand.isTapped()).isTrue();
+        assertThat(gd.getCardsExiledByPermanent(secondTurtle.getId()))
+                .containsExactly(secondLand.getCard());
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, secondTurtle));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Krosan Verge"))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactlyInAnyOrder(firstLand.getCard().getId(), secondLand.getCard().getId());
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
     void exilesOneLandYouControlAndReturnsItWhenTurtleLeaves() {
         Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new KrosanVerge());
         Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new KrosanVerge());
