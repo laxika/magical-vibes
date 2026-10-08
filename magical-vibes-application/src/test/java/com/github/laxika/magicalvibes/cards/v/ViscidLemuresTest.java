@@ -47,6 +47,25 @@ class ViscidLemuresTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Repeated activations can reduce power below zero and affect only their source")
+    void repeatedActivationsAffectOnlySource() {
+        Permanent lemures = harness.addToBattlefieldAndReturn(player1, new ViscidLemures());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new ViscidLemures());
+
+        for (int activation = 0; activation < 5; activation++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gqs.getEffectivePower(gd, lemures)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, lemures)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, lemures, Keyword.SWAMPWALK)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.SWAMPWALK)).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(lemures, other);
+    }
+
+    @Test
     @DisplayName("The power reduction and swampwalk wear off at end of turn")
     void wearsOffAtEndOfTurn() {
         Permanent lemures = harness.addToBattlefieldAndReturn(player1, new ViscidLemures());
