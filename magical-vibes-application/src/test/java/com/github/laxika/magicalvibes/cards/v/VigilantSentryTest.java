@@ -164,6 +164,61 @@ class VigilantSentryTest extends BaseCardTest {
                 .hasMessageContaining("attacking or blocking");
     }
 
+    @Test
+    @DisplayName("An activated boost still resolves after threshold is lost")
+    void activatedBoostResolvesAfterThresholdIsLost() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent sentry = addReadySentry();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        target.setAttacking(true);
+
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, sentry)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sentry)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Losing threshold removes the granted ability immediately")
+    void cannotActivateAfterThresholdIsLost() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent sentry = addReadySentry();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        target.setAttacking(true);
+
+        assertThat(gqs.getEffectivePower(gd, sentry)).isEqualTo(3);
+        harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(sentry.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents activating the granted tap ability")
+    void cannotActivateWhileSummoningSick() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent sentry = harness.addToBattlefieldAndReturn(player1, new VigilantSentry());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        target.setAttacking(true);
+
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(sentry.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent addReadySentry() {
         return addCreatureReady(player1, new VigilantSentry());
     }
