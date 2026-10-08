@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.a.ArcLightning;
 import com.github.laxika.magicalvibes.cards.e.Expunge;
+import com.github.laxika.magicalvibes.cards.e.ElvishLyrist;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
 import com.github.laxika.magicalvibes.cards.h.HermeticStudy;
@@ -23,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({VampiricEmbrace.class, GorillaWarrior.class, HermeticStudy.class,
-        ArcLightning.class, Expunge.class, Forest.class})
+        ArcLightning.class, Expunge.class, Forest.class, ElvishLyrist.class})
 class VampiricEmbraceTest extends BaseCardTest {
 
     @Test
@@ -33,15 +34,15 @@ class VampiricEmbraceTest extends BaseCardTest {
         attachAura(enchantedCreature);
         Permanent blocker = addCreatureReady(player2, new GorillaWarrior());
 
-        enchantedCreature.setAttacking(true);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
+        blocker.setAttacking(true);
+        enchantedCreature.setBlocking(true);
+        enchantedCreature.addBlockingTarget(0);
 
         assertThat(gqs.getEffectivePower(gd, enchantedCreature)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, enchantedCreature)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, enchantedCreature, Keyword.FLYING)).isTrue();
 
-        resolveCombat();
+        resolveCombat(player2);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Gorilla Warrior");
@@ -55,16 +56,8 @@ class VampiricEmbraceTest extends BaseCardTest {
     void noCounterWhenDamagedCreatureSurvives() {
         Permanent enchantedCreature = addCreatureReady(player1, new GorillaWarrior());
         attachAura(enchantedCreature);
-        GorillaWarrior blockerCard = new GorillaWarrior();
-        blockerCard.setPower(1);
-        blockerCard.setToughness(8);
-        Permanent blocker = addCreatureReady(player2, blockerCard);
-
-        enchantedCreature.setAttacking(true);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
-
-        resolveCombat();
+        Permanent blocker = addCreatureReady(player2, new GorillaWarrior());
+        dealOneDamage(enchantedCreature, blocker);
 
         harness.assertOnBattlefield(player2, "Gorilla Warrior");
         assertThat(enchantedCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -76,15 +69,8 @@ class VampiricEmbraceTest extends BaseCardTest {
         Permanent enchantedCreature = addCreatureReady(player1, new GorillaWarrior());
         attachAura(enchantedCreature);
 
-        GorillaWarrior toughBlockerCard = new GorillaWarrior();
-        toughBlockerCard.setPower(1);
-        toughBlockerCard.setToughness(8);
-        Permanent blocker = addCreatureReady(player2, toughBlockerCard);
-
-        enchantedCreature.setAttacking(true);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
-        resolveCombat();
+        Permanent blocker = addCreatureReady(player2, new GorillaWarrior());
+        dealOneDamage(enchantedCreature, blocker);
 
         assertThat(enchantedCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         harness.assertOnBattlefield(player2, "Gorilla Warrior");
@@ -97,7 +83,7 @@ class VampiricEmbraceTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, Map.of(blocker.getId(), 3));
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Gorilla Warrior");
         assertThat(enchantedCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -109,15 +95,8 @@ class VampiricEmbraceTest extends BaseCardTest {
         Permanent enchantedCreature = addCreatureReady(player1, new GorillaWarrior());
         attachAura(enchantedCreature);
 
-        GorillaWarrior toughBlockerCard = new GorillaWarrior();
-        toughBlockerCard.setPower(1);
-        toughBlockerCard.setToughness(8);
-        Permanent blocker = addCreatureReady(player2, toughBlockerCard);
-
-        enchantedCreature.setAttacking(true);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
-        resolveCombat();
+        Permanent blocker = addCreatureReady(player2, new GorillaWarrior());
+        dealOneDamage(enchantedCreature, blocker);
 
         assertThat(enchantedCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         harness.assertOnBattlefield(player2, "Gorilla Warrior");
@@ -131,7 +110,7 @@ class VampiricEmbraceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.castInstant(player1, 0, blocker.getId());
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Gorilla Warrior");
         assertThat(enchantedCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -142,21 +121,10 @@ class VampiricEmbraceTest extends BaseCardTest {
     void triggersForNoncombatDamageFromEnchantedCreature() {
         Permanent enchantedCreature = addCreatureReady(player1, new GorillaWarrior());
         attachAura(enchantedCreature);
-        Permanent study = harness.addToBattlefieldAndReturn(player1, new HermeticStudy());
-        study.setAttachedTo(enchantedCreature.getId());
+        Permanent target = addCreatureReady(player2, new ElvishLyrist());
+        dealOneDamage(enchantedCreature, target);
 
-        GorillaWarrior targetCard = new GorillaWarrior();
-        targetCard.setToughness(1);
-        Permanent target = addCreatureReady(player2, targetCard);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.activateAbility(player1, 0, null, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-
-        harness.assertInGraveyard(player2, "Gorilla Warrior");
+        harness.assertInGraveyard(player2, "Elvish Lyrist");
         assertThat(enchantedCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -174,7 +142,7 @@ class VampiricEmbraceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castSorcery(player1, 0, Map.of(target.getId(), 3));
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Gorilla Warrior");
         assertThat(enchantedCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -187,10 +155,13 @@ class VampiricEmbraceTest extends BaseCardTest {
         attachAura(player1, enchantedCreature);
         Permanent blocker = addCreatureReady(player1, new GorillaWarrior());
 
-        enchantedCreature.setAttacking(true);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
-        resolveCombat(player2);
+        blocker.setAttacking(true);
+        enchantedCreature.setBlocking(true);
+        enchantedCreature.addBlockingTarget(0);
+        resolveCombat(player1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(VampiricEmbrace.class);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Gorilla Warrior");
@@ -208,6 +179,32 @@ class VampiricEmbraceTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Resolving the Aura spell grants the enchanted creature its bonuses")
+    void resolvingAuraSpellGrantsBonuses() {
+        Permanent creature = addCreatureReady(player1, new GorillaWarrior());
+        harness.setHand(player1, List.of(new VampiricEmbrace()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Vampiric Embrace");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+    }
+
+    private void dealOneDamage(Permanent source, Permanent target) {
+        Permanent study = harness.addToBattlefieldAndReturn(player1, new HermeticStudy());
+        study.setAttachedTo(source.getId());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void attachAura(Permanent creature) {
