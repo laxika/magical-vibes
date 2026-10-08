@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -128,5 +129,53 @@ class GravestormTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(controllerHandSize + 1);
+    }
+
+    @Test
+    @DisplayName("Accepting the exile continues resolution without another priority round")
+    void acceptingExileImmediatelyOffersGraveyardChoice() {
+        harness.addToBattlefield(player1, new Gravestorm());
+        harness.setGraveyard(player2, List.of(new DuskImp(), new DuskImp()));
+
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            advanceToUpkeep(player1);
+            harness.handlePermanentChosen(player1, player2.getId());
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player2, true);
+
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+            harness.handleGraveyardCardChosen(player2, 1);
+            assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+            assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(1);
+        });
+    }
+
+    @Test
+    @DisplayName("Gravestorm does not trigger during the opponent's upkeep")
+    void doesNotTriggerDuringOpponentUpkeep() {
+        harness.addToBattlefield(player1, new Gravestorm());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The controller may decline the draw when the opponent's graveyard is empty")
+    void emptyOpponentGraveyardAllowsDecliningDraw() {
+        harness.addToBattlefield(player1, new Gravestorm());
+        int controllerHandSize = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(controllerHandSize);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 }
