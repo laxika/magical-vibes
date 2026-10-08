@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(ViashinoSlasher.class)
+@CardUsed({ViashinoSlasher.class})
 class ViashinoSlasherTest extends BaseCardTest {
 
     @Test
@@ -48,9 +48,8 @@ class ViashinoSlasherTest extends BaseCardTest {
     @Test
     @DisplayName("The ability can be activated while Viashino Slasher has summoning sickness")
     void canActivateWhileSummoningSick() {
-        Permanent slasher = new Permanent(new ViashinoSlasher());
+        Permanent slasher = harness.addToBattlefieldAndReturn(player1, new ViashinoSlasher());
         slasher.setSummoningSick(true);
-        gd.playerBattlefields.get(player1.getId()).add(slasher);
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -74,6 +73,46 @@ class ViashinoSlasherTest extends BaseCardTest {
 
         assertThat(slasher.getPowerModifier()).isZero();
         assertThat(slasher.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The ability uses the stack and boosts only its source")
+    void boostsOnlyItsSourceOnResolution() {
+        Permanent slasher = addCreatureReady(player1, new ViashinoSlasher());
+        Permanent other = addCreatureReady(player1, new ViashinoSlasher());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(slasher.getPowerModifier()).isZero();
+        assertThat(slasher.getToughnessModifier()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(slasher.getPowerModifier()).isEqualTo(1);
+        assertThat(slasher.getToughnessModifier()).isEqualTo(-1);
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(slasher.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Viashino Slasher can activate its ability during an opponent's turn")
+    void canActivateWhileTappedDuringOpponentsTurn() {
+        Permanent slasher = addCreatureReady(player1, new ViashinoSlasher());
+        slasher.tap();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(slasher.getPowerModifier()).isEqualTo(1);
+        assertThat(slasher.getToughnessModifier()).isEqualTo(-1);
+        assertThat(slasher.isTapped()).isTrue();
     }
 
     @Test
