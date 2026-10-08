@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
 import com.github.laxika.magicalvibes.cards.i.IndomitableAncients;
 import com.github.laxika.magicalvibes.cards.p.PricklyBoggart;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -14,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WeightOfConscience.class, IndomitableAncients.class, PricklyBoggart.class})
+@CardUsed({WeightOfConscience.class, IndomitableAncients.class, PricklyBoggart.class, AmoeboidChangeling.class})
 class WeightOfConscienceTest extends BaseCardTest {
 
     @Test
@@ -92,5 +94,91 @@ class WeightOfConscienceTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(enchanted);
         assertThat(treefolk.isTapped()).isFalse();
         assertThat(boggart.isTapped()).isFalse();
+    }
+
+    @Test
+    void castingAuraAttachesItAndPreventsAttacking() {
+        Permanent creature = addCreatureReady(player1, new IndomitableAncients());
+        harness.setHand(player1, List.of(new WeightOfConscience()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Weight of Conscience").getAttachedTo()).isEqualTo(creature.getId());
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    void summoningSickCreaturesCanPayTapCost() {
+        Permanent enchanted = addCreatureReady(player2, new IndomitableAncients());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new WeightOfConscience());
+        aura.setAttachedTo(enchanted.getId());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new IndomitableAncients());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new IndomitableAncients());
+        first.setSummoningSick(true);
+        second.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(enchanted.getCard());
+    }
+
+    @Test
+    void tappedCreatureCannotPayCostEvenWithMatchingType() {
+        Permanent enchanted = addCreatureReady(player2, new IndomitableAncients());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new WeightOfConscience());
+        aura.setAttachedTo(enchanted.getId());
+        Permanent first = addCreatureReady(player1, new IndomitableAncients());
+        Permanent second = addCreatureReady(player1, new IndomitableAncients());
+        second.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("share a creature type");
+        assertThat(first.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(enchanted);
+    }
+
+    @Test
+    void exilesCreatureEnchantedAtResolutionAfterAuraMoves() {
+        Permanent original = addCreatureReady(player2, new IndomitableAncients());
+        Permanent replacement = addCreatureReady(player2, new PricklyBoggart());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new WeightOfConscience());
+        aura.setAttachedTo(original.getId());
+        addCreatureReady(player1, new IndomitableAncients());
+        addCreatureReady(player1, new IndomitableAncients());
+
+        harness.activateAbility(player1, 0, null, null);
+        aura.setAttachedTo(replacement.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(original).doesNotContain(replacement);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(replacement.getCard()).doesNotContain(original.getCard());
+    }
+
+    @Test
+    void creaturesThatLostTheirTypesCannotPaySharedTypeCost() {
+        Permanent enchanted = addCreatureReady(player2, new IndomitableAncients());
+        Permanent changeling = addCreatureReady(player2, new AmoeboidChangeling());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new WeightOfConscience());
+        aura.setAttachedTo(enchanted.getId());
+        Permanent first = addCreatureReady(player1, new IndomitableAncients());
+        Permanent second = addCreatureReady(player1, new IndomitableAncients());
+
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(changeling),
+                1, null, first.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("share a creature type");
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(enchanted);
     }
 }
