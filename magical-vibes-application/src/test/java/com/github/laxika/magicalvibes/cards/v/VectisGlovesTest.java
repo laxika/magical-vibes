@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.a.AncientDen;
+import com.github.laxika.magicalvibes.cards.d.DressDown;
+import com.github.laxika.magicalvibes.cards.g.GoldmireBridge;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.m.MyrScrapling;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VectisGloves.class, GrizzlyBears.class, AncientDen.class, Ornithopter.class})
+@CardUsed({VectisGloves.class, GrizzlyBears.class, AncientDen.class, Ornithopter.class,
+        Mountain.class, DressDown.class, GoldmireBridge.class, MyrScrapling.class})
 class VectisGlovesTest extends BaseCardTest {
 
     @Test
@@ -38,7 +42,7 @@ class VectisGlovesTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent attacker = equippedAttacker();
 
-        prepareDeclareBlockers(attacker);
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
@@ -55,7 +59,7 @@ class VectisGlovesTest extends BaseCardTest {
         Permanent attacker = equippedAttacker();
         harness.setLife(player2, 20);
 
-        prepareDeclareBlockers(attacker);
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
@@ -84,10 +88,89 @@ class VectisGlovesTest extends BaseCardTest {
         return attacker;
     }
 
-    private void prepareDeclareBlockers(Permanent attacker) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+    @Test
+    @DisplayName("An artifact and a separate nonartifact land do not enable artifact landwalk")
+    void separateArtifactAndLandDoNotPreventBlocking() {
+        harness.addToBattlefield(player2, new Ornithopter());
+        harness.addToBattlefield(player2, new Mountain());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = equippedAttacker();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+    }
+
+    @Test
+    @DisplayName("An artifact land controlled by the attacking player does not prevent blocking")
+    void attackersArtifactLandDoesNotPreventBlocking() {
+        harness.addToBattlefield(player1, new AncientDen());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = equippedAttacker();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+    }
+
+    @Test
+    @DisplayName("Re-equipping transfers the power bonus and artifact landwalk")
+    void reequippingTransfersBothBenefits() {
+        Permanent gloves = harness.addToBattlefieldAndReturn(player1, new VectisGloves());
+        Permanent former = addCreatureReady(player1, new GrizzlyBears());
+        Permanent current = addCreatureReady(player1, new GrizzlyBears());
+        gloves.setAttachedTo(former.getId());
+        harness.addToBattlefield(player2, new AncientDen());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, current.getId());
+        harness.passBothPriorities();
+
+        assertThat(gloves.getAttachedTo()).isEqualTo(current.getId());
+        assertThat(gqs.getEffectivePower(gd, former)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, current)).isEqualTo(4);
+        former.setAttacking(true);
+        current.setAttacking(true);
+        prepareDeclareBlockers();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(current)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(former))));
+    }
+
+    @Test
+    @DisplayName("A later Dress Down removes granted artifact landwalk but preserves the power bonus")
+    void laterAbilityRemovalAllowsBlocking() {
+        Permanent gloves = harness.addToBattlefieldAndReturn(player1, new VectisGloves());
+        Permanent attacker = addCreatureReady(player1, new MyrScrapling());
+        harness.addToBattlefield(player2, new GoldmireBridge());
+        Permanent blocker = addCreatureReady(player2, new MyrScrapling());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+        assertThat(gloves.getAttachedTo()).isEqualTo(attacker.getId());
+
+        harness.setHand(player1, List.of(new DressDown()));
+        harness.setLibrary(player1, List.of(new MyrScrapling()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Dress Down");
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
     }
 }
