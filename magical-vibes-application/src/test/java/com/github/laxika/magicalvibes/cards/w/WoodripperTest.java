@@ -128,6 +128,44 @@ class WoodripperTest extends BaseCardTest {
         assertThat(woodripper.getCounterCount(CounterType.FADE)).isZero();
     }
 
+    @Test
+    @DisplayName("A tapped, summoning-sick Woodripper can destroy its controller's artifact")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent woodripper = harness.enterBattlefieldAndReturn(player1, new Woodripper());
+        woodripper.setSummoningSick(true);
+        woodripper.setTapped(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new BelbesArmor());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+
+        assertThat(woodripper.getCounterCount(CounterType.FADE)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Belbe's Armor");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Belbe's Armor");
+        harness.assertNotOnBattlefield(player1, "Belbe's Armor");
+        harness.assertOnBattlefield(player1, "Woodripper");
+    }
+
+    @Test
+    @DisplayName("Spending the last fade counter in response to upkeep causes fading to sacrifice Woodripper")
+    void spendsLastCounterInResponseToUpkeep() {
+        Permanent woodripper = addReadyWoodripper(player1, 1);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new BelbesArmor());
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+
+        assertThat(woodripper.getCounterCount(CounterType.FADE)).isZero();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Belbe's Armor");
+        harness.assertInGraveyard(player1, "Woodripper");
+        harness.assertNotOnBattlefield(player1, "Woodripper");
+    }
+
     private Permanent addReadyWoodripper(com.github.laxika.magicalvibes.model.Player player, int fadeCounters) {
         Permanent woodripper = addCreatureReady(player, new Woodripper());
         woodripper.setCounterCount(CounterType.FADE, fadeCounters);
