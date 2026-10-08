@@ -1,8 +1,12 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.a.AlmightyBrushwagg;
+import com.github.laxika.magicalvibes.cards.e.EssenceScatter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HumbleNaturalist;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.w.WalkingBallista;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +23,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VivienMonstersAdvocate.class, GrizzlyBears.class, LlanowarElves.class, Shock.class})
+@CardUsed({VivienMonstersAdvocate.class, GrizzlyBears.class, LlanowarElves.class, Shock.class,
+        AlmightyBrushwagg.class, HumbleNaturalist.class, EssenceScatter.class, WalkingBallista.class})
 class VivienMonstersAdvocateTest extends BaseCardTest {
 
     @Test
@@ -30,8 +35,7 @@ class VivienMonstersAdvocateTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(bears));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castFromLibraryTop(player1);
-        harness.passBothPriorities();
+        harness.castAndResolveFromLibraryTop(player1);
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(bears);
@@ -146,6 +150,214 @@ class VivienMonstersAdvocateTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard() instanceof GrizzlyBears)
                 .hasSize(2);
+    }
+
+    @Test
+    void topCardIsVisibleOnlyToControllerEvenWithoutPriority() {
+        addReadyVivien(3);
+        harness.setLibrary(player1, List.of(new Shock()));
+        harness.forceActivePlayer(player2);
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[{")
+                        && message.contains("Shock"));
+        assertThat(harness.getConn2().getSentMessages())
+                .noneMatch(message -> message.contains("\"revealedLibraryTopCards\":[[{")
+                        && message.contains("Shock"));
+    }
+
+    @Test
+    void cannotCastTopCreatureWithoutPayingItsCost() {
+        addReadyVivien(3);
+        AlmightyBrushwagg creature = new AlmightyBrushwagg();
+        harness.setLibrary(player1, List.of(creature));
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+    }
+
+    @Test
+    void cannotCastNonflashTopCreatureDuringCombat() {
+        addReadyVivien(3);
+        AlmightyBrushwagg creature = new AlmightyBrushwagg();
+        harness.setLibrary(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+    }
+
+    @Test
+    void delayedSearchSurvivesVivienDyingToLoyaltyCost() {
+        addReadyVivien(2);
+        AlmightyBrushwagg cheaperCreature = new AlmightyBrushwagg();
+        HumbleNaturalist creatureToCast = new HumbleNaturalist();
+        harness.setLibrary(player1, List.of(cheaperCreature));
+        harness.setHand(player1, List.of(creatureToCast));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Vivien, Monsters' Advocate");
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Almighty Brushwagg");
+        harness.assertNotOnBattlefield(player1, "Humble Naturalist");
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Humble Naturalist");
+    }
+
+    @Test
+    void delayedSearchStillUsesManaValueOfCounteredCreature() {
+        addReadyVivien(3);
+        AlmightyBrushwagg cheaperCreature = new AlmightyBrushwagg();
+        HumbleNaturalist creatureToCast = new HumbleNaturalist();
+        harness.setLibrary(player1, List.of(cheaperCreature));
+        harness.setHand(player1, List.of(creatureToCast));
+        harness.setHand(player2, List.of(new EssenceScatter()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, creatureToCast.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Humble Naturalist");
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(cheaperCreature);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Almighty Brushwagg");
+        harness.assertNotOnBattlefield(player1, "Humble Naturalist");
+    }
+
+    @Test
+    void delayedSearchCanFailToFindAnEligibleCreature() {
+        addReadyVivien(3);
+        AlmightyBrushwagg cheaperCreature = new AlmightyBrushwagg();
+        harness.setLibrary(player1, List.of(cheaperCreature));
+        harness.setHand(player1, List.of(new HumbleNaturalist()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(cheaperCreature);
+        harness.assertNotOnBattlefield(player1, "Almighty Brushwagg");
+        harness.assertOnBattlefield(player1, "Humble Naturalist");
+    }
+
+    @Test
+    void delayedSearchCountsEveryXSymbolInCreatureManaCost() {
+        addReadyVivien(3);
+        HumbleNaturalist cheaperCreature = new HumbleNaturalist();
+        harness.setLibrary(player1, List.of(cheaperCreature));
+        harness.setHand(player1, List.of(new WalkingBallista()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0, 2);
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(cheaperCreature);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Humble Naturalist");
+        harness.assertOnBattlefield(player1, "Walking Ballista");
+    }
+
+    @Test
+    void delayedSearchTriggersWhenCreatureIsCastFromLibraryTop() {
+        addReadyVivien(3);
+        HumbleNaturalist creatureToCast = new HumbleNaturalist();
+        AlmightyBrushwagg cheaperCreature = new AlmightyBrushwagg();
+        harness.setLibrary(player1, List.of(creatureToCast, cheaperCreature));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.castFromLibraryTop(player1);
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(cheaperCreature);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Almighty Brushwagg");
+        harness.assertOnBattlefield(player1, "Humble Naturalist");
+    }
+
+    @Test
+    void unusedDelayedSearchExpiresAtEndOfTurn() {
+        addReadyVivien(3);
+        AlmightyBrushwagg cheaperCreature = new AlmightyBrushwagg();
+        harness.setLibrary(player1, List.of(cheaperCreature));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.setLibrary(player1, List.of(cheaperCreature));
+        harness.setHand(player1, List.of(new HumbleNaturalist()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(cheaperCreature);
+        harness.assertOnBattlefield(player1, "Humble Naturalist");
+        harness.assertNotOnBattlefield(player1, "Almighty Brushwagg");
+    }
+
+    @Test
+    void noncreatureSpellDoesNotConsumeDelayedSearch() {
+        addReadyVivien(3);
+        AlmightyBrushwagg cheaperCreature = new AlmightyBrushwagg();
+        harness.setLibrary(player1, List.of(cheaperCreature));
+        harness.setHand(player1, List.of(new Shock(), new HumbleNaturalist()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(cheaperCreature);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Almighty Brushwagg");
     }
 
     private Permanent addReadyVivien(int loyalty) {
