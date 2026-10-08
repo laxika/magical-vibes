@@ -163,6 +163,51 @@ class WojekEmbermageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Can target itself and damages other red creatures")
+    void canTargetItself() {
+        Permanent embermage = addReadyEmbermage();
+        Permanent redCreature = harness.addToBattlefieldAndReturn(player2, new ViashinoFangtail());
+        Permanent greenCreature = harness.addToBattlefieldAndReturn(player1, new GolgariBrownscale());
+
+        activate(embermage, embermage);
+
+        assertThat(embermage.getMarkedDamage()).isEqualTo(1);
+        assertThat(redCreature.getMarkedDamage()).isEqualTo(1);
+        assertThat(greenCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Color sharing does not spread through another multicolored creature")
+    void doesNotChainColorSharing() {
+        Permanent embermage = addReadyEmbermage();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GolgariBrownscale());
+        Permanent greenBlackCreature = harness.addToBattlefieldAndReturn(player2, new GolgariRotwurm());
+        Permanent blueBlackCreature = harness.addToBattlefieldAndReturn(player2, new Moroii());
+
+        activate(embermage, target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(greenBlackCreature.getMarkedDamage()).isEqualTo(1);
+        assertThat(blueBlackCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("The ability resolves after its source leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent embermage = addReadyEmbermage();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GolgariBrownscale());
+        Permanent matchingCreature = harness.addToBattlefieldAndReturn(player1, new GolgariBrownscale());
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(embermage),
+                null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(embermage);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(matchingCreature.getMarkedDamage()).isEqualTo(1);
+    }
+
     private Permanent addReadyEmbermage() {
         return addCreatureReady(player1, new WojekEmbermage());
     }
