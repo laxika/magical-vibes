@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeatherbackBaloth;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -26,7 +25,7 @@ class ViciousClownTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
-        resolveAllStackEntries();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, clown)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, clown)).isEqualTo(3);
@@ -40,7 +39,7 @@ class ViciousClownTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LeatherbackBaloth()));
         harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castCreature(player1, 0);
-        resolveAllStackEntries();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, clown)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, clown)).isEqualTo(3);
@@ -57,7 +56,7 @@ class ViciousClownTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.addMana(player2, ManaColor.GREEN, 2);
         harness.castCreature(player2, 0);
-        resolveAllStackEntries();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, clown)).isEqualTo(2);
     }
@@ -70,7 +69,7 @@ class ViciousClownTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
-        resolveAllStackEntries();
+        resolveAllTriggers();
         assertThat(gqs.getEffectivePower(gd, clown)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -80,10 +79,57 @@ class ViciousClownTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, clown)).isEqualTo(2);
     }
 
-    private void resolveAllStackEntries() {
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+    @Test
+    @DisplayName("Does not trigger for its own entry")
+    void doesNotTriggerForItsOwnEntry() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new ViciousClown()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent clown = findPermanent(player1, "Vicious Clown");
+        assertThat(gqs.getEffectivePower(gd, clown)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, clown)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Each qualifying entry adds another boost to the same source")
+    void boostsAccumulateForMultipleEntries() {
+        Permanent clown = addClown();
+        harness.setHand(player1, List.of(new ViciousClown(), new ViciousClown()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        List<Permanent> clowns = findPermanents(player1, "Vicious Clown");
+        assertThat(gqs.getEffectivePower(gd, clown)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, clowns.get(1))).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, clowns.get(2))).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, clown)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Power increasing after entry does not stop the queued trigger")
+    void doesNotRecheckEnteringCreaturePowerOnResolution() {
+        Permanent clown = addClown();
+        harness.setHand(player1, List.of(new ViciousClown()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        Permanent enteringClown = findPermanents(player1, "Vicious Clown").get(1);
+        enteringClown.setPowerModifier(3);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, clown)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, enteringClown)).isEqualTo(5);
     }
 
     private Permanent addClown() {
