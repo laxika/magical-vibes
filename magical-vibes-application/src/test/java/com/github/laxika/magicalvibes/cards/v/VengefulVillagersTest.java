@@ -68,4 +68,58 @@ class VengefulVillagersTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("The attacking Villagers may sacrifice themselves to stun the chosen creature")
+    void attackerCanSacrificeItself() {
+        Permanent attacker = addCreatureReady(player1, new VengefulVillagers());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new VengefulVillagers());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isZero();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, attacker.getId());
+
+        harness.assertInGraveyard(player1, "Vengeful Villagers");
+        harness.assertNotOnBattlefield(player1, "Vengeful Villagers");
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An already tapped creature can be stunned and skips its next untap")
+    void alreadyTappedCreatureCanBeStunned() {
+        addCreatureReady(player1, new VengefulVillagers());
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new VengefulVillagers());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new VengefulVillagers());
+        target.tap();
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(1);
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isZero();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("With no opposing creature there is no sacrifice choice")
+    void noLegalTargetDoesNotOfferSacrifice() {
+        addCreatureReady(player1, new VengefulVillagers());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Vengeful Villagers");
+        harness.assertNotInGraveyard(player1, "Vengeful Villagers");
+    }
 }
