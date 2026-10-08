@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -51,15 +50,43 @@ class UnworthyDeadTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new UnworthyDead());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Unworthy Dead");
         Permanent survivingDead = findPermanent(player1, "Unworthy Dead");
         assertThat(survivingDead.isTapped()).isTrue();
         assertThat(survivingDead.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Regeneration can be activated repeatedly while tapped and summoning sick")
+    void canActivateRepeatedlyWhileTappedAndSummoningSick() {
+        Permanent dead = harness.addToBattlefieldAndReturn(player1, new UnworthyDead());
+        dead.setSummoningSick(true);
+        dead.tap();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(dead.getRegenerationShield()).isEqualTo(2);
+        assertThat(dead.isTapped()).isTrue();
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().tryDestroyPermanent(gd, dead));
+        harness.assertOnBattlefield(player1, "Unworthy Dead");
+        assertThat(dead.getRegenerationShield()).isEqualTo(1);
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().tryDestroyPermanent(gd, dead));
+        harness.assertOnBattlefield(player1, "Unworthy Dead");
+        assertThat(dead.getRegenerationShield()).isZero();
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().tryDestroyPermanent(gd, dead));
+        harness.assertNotOnBattlefield(player1, "Unworthy Dead");
+        harness.assertInGraveyard(player1, "Unworthy Dead");
     }
 }
