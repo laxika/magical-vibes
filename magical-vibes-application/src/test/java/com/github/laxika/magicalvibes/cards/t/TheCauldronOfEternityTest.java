@@ -258,4 +258,56 @@ class TheCauldronOfEternityTest extends BaseCardTest {
         assertThat(cauldron.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
+
+    @Test
+    void deathTriggerStillResolvesAfterCauldronLeavesBattlefield() {
+        Permanent cauldron = harness.addToBattlefieldAndReturn(player1, new TheCauldronOfEternity());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Gingerbrute());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, cauldron));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).last().isSameAs(creature.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(cauldron.getCard());
+    }
+
+    @Test
+    void deathTriggerDoesNotMoveCreatureThatLeftAndReenteredGraveyard() {
+        Permanent cauldron = harness.addToBattlefieldAndReturn(player1, new TheCauldronOfEternity());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Gingerbrute());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        assertThat(gd.stack).hasSize(1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removeCardFromGraveyardById(gd, creature.getCard().getId()));
+        Permanent returnedCreature = harness.enterBattlefieldAndReturn(player1, creature.getCard());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, cauldron));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, returnedCreature));
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(creature.getCard());
+    }
+
+    @Test
+    void moreThanFiveCreaturesStillRequireBothBlackMana() {
+        harness.setGraveyard(player1, List.of(new Gingerbrute(), new Gingerbrute(),
+                new Gingerbrute(), new Gingerbrute(), new Gingerbrute(), new Gingerbrute()));
+        harness.setHand(player1, List.of(new TheCauldronOfEternity()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 12);
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
 }
