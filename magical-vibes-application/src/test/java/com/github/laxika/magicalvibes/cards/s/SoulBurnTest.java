@@ -14,13 +14,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SoulBurn.class, BalduvianBears.class, EnergyStorm.class, InvasionOfInnistrad.class,
-        JaceUnravelerOfSecrets.class, Plains.class, SoulScarMage.class})
+        JaceUnravelerOfSecrets.class, Plains.class, SoulScarMage.class, SarkhanTheMasterless.class})
 class SoulBurnTest extends BaseCardTest {
 
     @Test
@@ -58,13 +57,12 @@ class SoulBurnTest extends BaseCardTest {
     @Test
     @DisplayName("Overkill on creature: life gain capped by toughness")
     void lifeGainCappedByToughness() {
-        harness.addToBattlefield(player2, new BalduvianBears()); // 2/2
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
         harness.setHand(player1, List.of(new SoulBurn()));
         harness.addMana(player1, ManaColor.BLACK, 7); // X=4
         harness.setLife(player1, 20);
 
-        UUID bearsId = harness.getPermanentId(player2, "Balduvian Bears");
-        harness.castAndResolveSorcery(player1, 0, 4, bearsId);
+        harness.castAndResolveSorcery(player1, 0, 4, bears.getId());
 
         harness.assertNotOnBattlefield(player2, "Balduvian Bears");
         // 4 damage dealt, 4B on X, but toughness was 2 → gain 2
@@ -182,12 +180,11 @@ class SoulBurnTest extends BaseCardTest {
     @Test
     @DisplayName("Cast at a land is rejected")
     void castAtLandIsRejected() {
-        harness.addToBattlefield(player2, new Plains());
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
         harness.setHand(player1, List.of(new SoulBurn()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        UUID plainsId = harness.getPermanentId(player2, "Plains");
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 2, plainsId))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 2, plains.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -205,5 +202,66 @@ class SoulBurnTest extends BaseCardTest {
 
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("X=0 deals no damage and gains no life")
+    void zeroXDoesNotChangeLifeTotals() {
+        harness.setHand(player1, List.of(new SoulBurn()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 0, player2.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Soul Burn");
+    }
+
+    @Test
+    @DisplayName("Self-targeting gains life after damage before checking player loss")
+    void selfTargetingCanRestoreLifeFromZero() {
+        harness.setHand(player1, List.of(new SoulBurn()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.setLife(player1, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 3, player1.getId());
+
+        harness.assertLife(player1, 3);
+        assertThat(gd.status).isNotEqualTo(com.github.laxika.magicalvibes.model.GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Previously marked damage does not reduce the toughness cap")
+    void lifeGainUsesFullToughnessOfPreviouslyDamagedCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        bears.setMarkedDamage(1);
+        harness.setHand(player1, List.of(new SoulBurn()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 2, bears.getId());
+
+        harness.assertNotOnBattlefield(player2, "Balduvian Bears");
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("Damage to a planeswalker turned into a creature still grants life")
+    void gainsLifeFromDamageToAnimatedPlaneswalker() {
+        Permanent sarkhan = harness.addToBattlefieldAndReturn(player1, new SarkhanTheMasterless());
+        sarkhan.setCounterCount(CounterType.LOYALTY, 5);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new SoulBurn()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 2, sarkhan.getId());
+
+        assertThat(sarkhan.getMarkedDamage()).isEqualTo(2);
+        assertThat(sarkhan.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
+        harness.assertLife(player1, 22);
     }
 }
