@@ -138,6 +138,72 @@ class AbandonHopeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An empty opposing hand does not prevent payment or resolution")
+    void emptyOpponentHandStillPaysCostAndResolves() {
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new AbandonHope(), new DarkRitual()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorceryWithDiscards(player1, 0, 1, player2.getId(), List.of(1));
+
+        harness.assertInGraveyard(player1, "Dark Ritual");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Abandon Hope");
+    }
+
+    @Test
+    @DisplayName("Additional-cost cards may be selected on both sides of the spell in hand")
+    void discardsCardsBeforeAndAfterSpellInHand() {
+        harness.setHand(player2, List.of(new DarkBanishing(), new DarkRitual()));
+        harness.setHand(player1, List.of(new DauthiGhoul(), new AbandonHope(), new DarkRitual()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorceryWithDiscards(player1, 1, 2, player2.getId(), List.of(0, 2));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Dauthi Ghoul", "Dark Ritual");
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Abandon Hope");
+    }
+
+    @Test
+    @DisplayName("The opponent cannot choose the discards and the caster cannot decline them")
+    void discardChoiceIsMandatoryAndBelongsToCaster() {
+        harness.setHand(player2, List.of(new DarkBanishing(), new DarkRitual()));
+        harness.setHand(player1, List.of(new AbandonHope(), new DauthiGhoul()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorceryWithDiscards(player1, 0, 1, player2.getId(), List.of(1));
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(Card::getName).containsExactly("Dark Banishing");
+        harness.assertInGraveyard(player2, "Dark Ritual");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
     @DisplayName("Cast is rejected, with no mana or cards spent, when the hand cannot cover X discards")
     void castRejectedWhenNotEnoughCardsToDiscard() {
         harness.setHand(player2, new ArrayList<>(List.of(new DauthiGhoul())));
