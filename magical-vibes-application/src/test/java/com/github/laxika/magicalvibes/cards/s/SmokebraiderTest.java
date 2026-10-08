@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.h.HellsparkElemental;
+import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
+import com.github.laxika.magicalvibes.cards.f.FlamekinBrawler;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -12,6 +14,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +24,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Smokebraider.class, HellsparkElemental.class, FlamekinBrawler.class, AmoeboidChangeling.class})
 class SmokebraiderTest extends BaseCardTest {
 
     private static Card createCreature(String name, String manaCost, CardColor color, CardSubtype... subtypes) {
@@ -48,8 +52,7 @@ class SmokebraiderTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping Smokebraider adds two mana in any combination of colors (spell/ability restricted)")
     void tappingAddsTwoRestrictedManaAnyCombination() {
-        Permanent smokebraider = harness.addToBattlefieldAndReturn(player1, new Smokebraider());
-        smokebraider.setSummoningSick(false);
+        Permanent smokebraider = addCreatureReady(player1, new Smokebraider());
 
         harness.activateAbility(player1, 0, null, null);
         assertThat(smokebraider.isTapped()).isTrue();
@@ -176,5 +179,69 @@ class SmokebraiderTest extends BaseCardTest {
         pool.drainNonPersistent();
 
         assertThat(pool.getSubtypeSpellOrAbilityManaForColor(Set.of(CardSubtype.ELEMENTAL), ManaColor.RED)).isEqualTo(0);
+    }
+
+    @Test
+    void summoningSicknessPreventsManaActivation() {
+        Permanent smokebraider = harness.addToBattlefieldAndReturn(player1, new Smokebraider());
+        smokebraider.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(smokebraider.isTapped()).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void generatedManaPaysForRealElementalAbility() {
+        addCreatureReady(player1, new Smokebraider());
+        Permanent brawler = harness.addToBattlefieldAndReturn(player1, new FlamekinBrawler());
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "RED");
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(brawler.getPowerModifier()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeSpellOrAbilityManaForColor(Set.of(CardSubtype.ELEMENTAL), ManaColor.RED))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void generatedManaCastsChangelingSpell() {
+        addCreatureReady(player1, new Smokebraider());
+        harness.setHand(player1, List.of(new AmoeboidChangeling()));
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+        harness.handleListChoice(player1, "RED");
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof AmoeboidChangeling);
+        ManaPool pool = gd.playerManaPools.get(player1.getId());
+        assertThat(pool.getSubtypeSpellOrAbilityManaForColor(Set.of(CardSubtype.ELEMENTAL), ManaColor.BLUE)).isZero();
+        assertThat(pool.getSubtypeSpellOrAbilityManaForColor(Set.of(CardSubtype.ELEMENTAL), ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void manaCannotPayAbilityAfterSourceLosesElementalType() {
+        addCreatureReady(player1, new Smokebraider());
+        Permanent brawler = harness.addToBattlefieldAndReturn(player1, new FlamekinBrawler());
+        addCreatureReady(player1, new AmoeboidChangeling());
+        harness.activateAbility(player1, 2, 1, null, brawler.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.hasEffectiveSubtype(gd, brawler, CardSubtype.ELEMENTAL)).isFalse();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "RED");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(brawler.getPowerModifier()).isZero();
     }
 }
