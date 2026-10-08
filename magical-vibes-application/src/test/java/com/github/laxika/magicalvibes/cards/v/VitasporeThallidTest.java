@@ -123,6 +123,37 @@ class VitasporeThallidTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
+    @Test
+    @DisplayName("Spore counters are paid before the token ability resolves, even while summoning sick")
+    void countersArePaidImmediatelyWhileSummoningSick() {
+        Permanent thallid = harness.addToBattlefieldAndReturn(player1, new VitasporeThallid());
+        thallid.setSummoningSick(true);
+        thallid.setCounterCount(CounterType.FUNGUS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's Saproling cannot pay the haste ability's cost")
+    void cannotSacrificeOpponentsSaproling() {
+        Permanent thallid = addThallid();
+        Permanent opponentThallid = addCreatureReady(player2, new VitasporeThallid());
+        opponentThallid.setCounterCount(CounterType.FUNGUS, 3);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, thallid.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(findPermanents(player2, "Saproling")).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, thallid, Keyword.HASTE)).isFalse();
+    }
+
     private Permanent addThallid() {
         return addCreatureReady(player1, new VitasporeThallid());
     }
