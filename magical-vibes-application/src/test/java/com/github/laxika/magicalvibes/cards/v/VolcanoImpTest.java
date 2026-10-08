@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(VolcanoImp.class)
+@CardUsed({VolcanoImp.class})
 class VolcanoImpTest extends BaseCardTest {
 
     @Test
@@ -59,5 +59,52 @@ class VolcanoImpTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("First strike is granted only to the source and only when the ability resolves")
+    void grantsFirstStrikeOnlyToSourceOnResolution() {
+        Permanent imp = addCreatureReady(player1, new VolcanoImp());
+        Permanent otherImp = addCreatureReady(player1, new VolcanoImp());
+        Permanent opposingImp = addCreatureReady(player2, new VolcanoImp());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gqs.hasKeyword(gd, imp, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, imp, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherImp, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingImp, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Volcano Imp can activate its ability")
+    void canActivateWhileTapped() {
+        Permanent imp = addCreatureReady(player1, new VolcanoImp());
+        imp.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(imp.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, imp, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("One red mana alone cannot pay the generic part of the activation cost")
+    void cannotActivateWithoutGenericMana() {
+        Permanent imp = addCreatureReady(player1, new VolcanoImp());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gqs.hasKeyword(gd, imp, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
