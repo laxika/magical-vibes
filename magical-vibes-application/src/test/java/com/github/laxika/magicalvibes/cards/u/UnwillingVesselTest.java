@@ -56,8 +56,7 @@ class UnwillingVesselTest extends BaseCardTest {
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, List.of(new WrathOfGod()));
         harness.addMana(player2, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(harness.getGameData(), player2, 0, 0, null, null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0);
         harness.passBothPriorities();
 
         List<Permanent> spirits = findPermanents(player1, "Spirit");
@@ -66,5 +65,74 @@ class UnwillingVesselTest extends BaseCardTest {
         assertThat(spirits.getFirst().getEffectiveToughness()).isEqualTo(3);
         assertThat(spirits.getFirst().getCard().getColor()).isEqualTo(CardColor.BLUE);
         assertThat(spirits.getFirst().getCard().hasKeyword(com.github.laxika.magicalvibes.model.Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void roomEntryAndFullyUnlockingEachAddOneCounter() {
+        Permanent vessel = harness.addToBattlefieldAndReturn(player1, new UnwillingVessel());
+        harness.setHand(player1, List.of(new DazzlingTheaterPropRoom()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castModalSorcery(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+        assertThat(vessel.getCounterCount(CounterType.POSSESSION)).isZero();
+        harness.passBothPriorities();
+        assertThat(vessel.getCounterCount(CounterType.POSSESSION)).isEqualTo(1);
+
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.unlockRoomDoor(player1, 1, 1);
+        assertThat(vessel.getCounterCount(CounterType.POSSESSION)).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(vessel.getCounterCount(CounterType.POSSESSION)).isEqualTo(2);
+    }
+
+    @Test
+    void opponentsRoomEntryAndUnlockDoNotAddCounters() {
+        Permanent vessel = harness.addToBattlefieldAndReturn(player1, new UnwillingVessel());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new DazzlingTheaterPropRoom()));
+        harness.addMana(player2, ManaColor.WHITE, 4);
+
+        harness.castModalSorcery(player2, 0, 0, List.of());
+        harness.passBothPriorities();
+        assertThat(vessel.getCounterCount(CounterType.POSSESSION)).isZero();
+
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.unlockRoomDoor(player2, 0, 1);
+
+        assertThat(harness.getGameData().stack).isEmpty();
+        assertThat(vessel.getCounterCount(CounterType.POSSESSION)).isZero();
+    }
+
+    @Test
+    void spiritCreatedWithoutCountersDiesAsZeroToughnessCreature() {
+        harness.addToBattlefield(player1, new UnwillingVessel());
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        harness.assertInGraveyard(player1, "Unwilling Vessel");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    void stillCreatesSpiritWithNoCountersWhenAnAnthemKeepsItAlive() {
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.addToBattlefield(player1, new UnwillingVessel());
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        List<Permanent> spirits = findPermanents(player1, "Spirit");
+        assertThat(spirits).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, spirits.getFirst())).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, spirits.getFirst())).isEqualTo(1);
     }
 }
