@@ -5,12 +5,13 @@ import com.github.laxika.magicalvibes.cards.d.DarkSphere;
 import com.github.laxika.magicalvibes.cards.s.ScarwoodGoblins;
 import com.github.laxika.magicalvibes.cards.s.Squire;
 import com.github.laxika.magicalvibes.cards.w.WormwoodTreefolk;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -47,8 +48,8 @@ class VenomTest extends BaseCardTest {
                         && se.getSourcePermanentId().equals(venom.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(attacker.getId()));
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .anyMatch(a -> a.affectedPermanentId().equals(attacker.getId()));
     }
 
     @Test
@@ -66,7 +67,7 @@ class VenomTest extends BaseCardTest {
 
         assertThat(gd.stack)
                 .noneMatch(se -> se.getCard().getName().equals("Venom"));
-        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
+        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
     }
 
     @Test
@@ -88,8 +89,8 @@ class VenomTest extends BaseCardTest {
                         && se.getSourcePermanentId().equals(venom.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(blocker.getId()));
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .anyMatch(a -> a.affectedPermanentId().equals(blocker.getId()));
     }
 
     @Test
@@ -104,9 +105,7 @@ class VenomTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        // Resolve the trigger, then advance through end of combat
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertNotOnBattlefield(player2, "Wormwood Treefolk");
         harness.assertInGraveyard(player2, "Wormwood Treefolk");
@@ -126,7 +125,7 @@ class VenomTest extends BaseCardTest {
 
         assertThat(gd.stack)
                 .noneMatch(se -> se.getCard().getName().equals("Venom"));
-        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
+        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
     }
 
     @Test
@@ -169,8 +168,8 @@ class VenomTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .extracting(DelayedPermanentAction::permanentId)
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
                 .containsExactlyInAnyOrder(firstBlocker.getId(), secondBlocker.getId());
     }
 
@@ -190,8 +189,8 @@ class VenomTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(blocker.getId()));
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .anyMatch(a -> a.affectedPermanentId().equals(blocker.getId()));
     }
 
     @Test
@@ -220,6 +219,88 @@ class VenomTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Venom's controller controls both triggers when it enchants an opponent's attacker")
+    void auraControllerControlsTriggersOnOpponentsCreature() {
+        Permanent attacker = addCreatureReady(player1, new Squire());
+        Permanent venom = addVenomAttachedTo(player2, attacker);
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new WormwoodTreefolk());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).singleElement().satisfies(trigger -> {
+            assertThat(trigger.getSourcePermanentId()).isEqualTo(venom.getId());
+            assertThat(trigger.getControllerId()).isEqualTo(player2.getId());
+        });
+        resolveAllTriggers();
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .singleElement().satisfies(trigger -> {
+                    assertThat(trigger.controllerId()).isEqualTo(player2.getId());
+                    assertThat(trigger.affectedPermanentId()).isEqualTo(blocker.getId());
+                });
+    }
+
+    @Test
+    @DisplayName("Destruction waits for the end-of-combat trigger to resolve even after the enchanted creature dies")
+    void destructionUsesEndOfCombatStack() {
+        Permanent attacker = addCreatureReady(player1, new Squire());
+        addVenomAttachedTo(player1, attacker);
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new WormwoodTreefolk());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertInGraveyard(player1, "Squire");
+        harness.assertInGraveyard(player1, "Venom");
+        harness.assertOnBattlefield(player2, "Wormwood Treefolk");
+        assertThat(gd.stack).singleElement().satisfies(trigger ->
+                assertThat(trigger.getTargetId()).isEqualTo(blocker.getId()));
+        resolveAllTriggers();
+        harness.assertInGraveyard(player2, "Wormwood Treefolk");
+    }
+
+    @Test
+    @DisplayName("A Wall and a non-Wall blocking together only trigger destruction for the non-Wall")
+    void mixedBlockersOnlyScheduleNonWall() {
+        Permanent attacker = addCreatureReady(player1, new WormwoodTreefolk());
+        addVenomAttachedTo(player1, attacker);
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new CarnivorousPlant());
+        Permanent nonWall = addCreatureReady(player2, new Squire());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
+                .containsExactly(nonWall.getId());
+    }
+
+    @Test
+    @DisplayName("An attacker is destroyed at end of combat even if it kills the enchanted blocker")
+    void attackingCreatureDestroyedAfterEnchantedBlockerDies() {
+        Permanent blocker = addCreatureReady(player2, new Squire());
+        addVenomAttachedTo(player2, blocker);
+        Permanent attacker = addCreatureReady(player1, new WormwoodTreefolk());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertInGraveyard(player2, "Squire");
+        harness.assertInGraveyard(player2, "Venom");
+        harness.assertOnBattlefield(player1, "Wormwood Treefolk");
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Wormwood Treefolk");
     }
 
     private Permanent addVenom(Player player) {
