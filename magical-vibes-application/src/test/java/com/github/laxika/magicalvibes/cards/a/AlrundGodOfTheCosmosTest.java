@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.b.BattlefieldRaptor;
+import com.github.laxika.magicalvibes.cards.d.DepartTheRealm;
 import com.github.laxika.magicalvibes.cards.d.Doomskar;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HakkaWhisperingRaven;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({AlrundGodOfTheCosmos.class, HakkaWhisperingRaven.class, Doomskar.class,
-        Forest.class, Island.class, GrizzlyBears.class})
+        Forest.class, Island.class, BattlefieldRaptor.class, DepartTheRealm.class})
 class AlrundGodOfTheCosmosTest extends BaseCardTest {
 
     @org.junit.jupiter.api.BeforeEach
@@ -34,7 +35,7 @@ class AlrundGodOfTheCosmosTest extends BaseCardTest {
     void getsPowerAndToughnessForCardsInHandAndForetoldCardsInExile() {
         Permanent alrund = harness.addToBattlefieldAndReturn(player1, new AlrundGodOfTheCosmos());
         Doomskar foretold = new Doomskar();
-        harness.setHand(player1, List.of(new Forest(), new Island(), new GrizzlyBears(), foretold));
+        harness.setHand(player1, List.of(new Forest(), new Island(), new BattlefieldRaptor(), foretold));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThat(gqs.getEffectivePower(gd, alrund)).isEqualTo(5);
@@ -49,15 +50,11 @@ class AlrundGodOfTheCosmosTest extends BaseCardTest {
     @Test
     void choosesCardTypeAndPutsMatchingRevealedCardsIntoHand() {
         Permanent alrund = harness.addToBattlefieldAndReturn(player1, new AlrundGodOfTheCosmos());
-        Card creature = new GrizzlyBears();
+        Card creature = new BattlefieldRaptor();
         Card land = new Forest();
         harness.setLibrary(player1, List.of(creature, land));
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.END_STEP);
-        resolveAllTriggers();
+        resolveEndStep(player1);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "CREATURE");
@@ -80,7 +77,7 @@ class AlrundGodOfTheCosmosTest extends BaseCardTest {
         hakka.setSummoningSick(false);
         Card top = new Forest();
         Card second = new Island();
-        Card third = new GrizzlyBears();
+        Card third = new BattlefieldRaptor();
         harness.setLibrary(player1, List.of(top, second, third));
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(hakka)));
@@ -114,7 +111,7 @@ class AlrundGodOfTheCosmosTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AlrundGodOfTheCosmos());
         Card first = new Forest();
         Card second = new Island();
-        Card unrevealed = new GrizzlyBears();
+        Card unrevealed = new BattlefieldRaptor();
         harness.setLibrary(player1, List.of(first, second, unrevealed));
 
         resolveEndStep(player1);
@@ -203,7 +200,7 @@ class AlrundGodOfTheCosmosTest extends BaseCardTest {
     void bonusUpdatesWhenControllerHandChanges() {
         Permanent alrund = harness.addToBattlefieldAndReturn(player1, new AlrundGodOfTheCosmos());
         harness.setHand(player1, List.of(new Forest(), new Island()));
-        harness.setHand(player2, List.of(new Forest(), new Island(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new Forest(), new Island(), new BattlefieldRaptor()));
 
         assertThat(gqs.getEffectivePower(gd, alrund)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, alrund)).isEqualTo(3);
@@ -225,7 +222,7 @@ class AlrundGodOfTheCosmosTest extends BaseCardTest {
         hakka.setSummoningSick(false);
         Card top = new Forest();
         Card second = new Island();
-        Card third = new GrizzlyBears();
+        Card third = new BattlefieldRaptor();
         harness.setLibrary(player1, List.of(top, second, third));
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(hakka)));
@@ -240,6 +237,77 @@ class AlrundGodOfTheCosmosTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, third, top);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
+
+    @Test
+    void canChooseInstantAndSorceryTypes() {
+        harness.addToBattlefield(player1, new AlrundGodOfTheCosmos());
+        Card instant = new DepartTheRealm();
+        Card sorcery = new Doomskar();
+        Card unrevealed = new Forest();
+        harness.setLibrary(player1, List.of(instant, sorcery, unrevealed));
+
+        resolveEndStep(player1);
+        harness.handleListChoice(player1, "INSTANT");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(instant);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unrevealed, sorcery);
+
+        harness.setLibrary(player1, List.of(sorcery, unrevealed));
+        resolveEndStep(player1);
+        harness.handleListChoice(player1, "SORCERY");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(instant, sorcery);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unrevealed);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void endStepTriggerResolvesAfterAlrundReturnsToHand() {
+        AlrundGodOfTheCosmos card = new AlrundGodOfTheCosmos();
+        Permanent alrund = harness.addToBattlefieldAndReturn(player1, card);
+        Card top = new Forest();
+        Card second = new Island();
+        harness.setLibrary(player1, List.of(top, second));
+        harness.setHand(player1, List.of(new DepartTheRealm()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.castAndResolveInstant(player1, 0, alrund.getId());
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "LAND");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(alrund);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(card, top, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void hakkaDoesNotReceiveFrontFaceBonusOrEndStepTrigger() {
+        harness.setHand(player1, List.of(new AlrundGodOfTheCosmos(), new Forest(), new Doomskar()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castCreature(player1, 0, 1);
+        harness.passBothPriorities();
+        Permanent hakka = findPermanent(player1, "Hakka, Whispering Raven");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.foretell(player1, 1);
+        Card top = new Island();
+        harness.setLibrary(player1, List.of(top));
+
+        assertThat(gqs.getEffectivePower(gd, hakka)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hakka)).isEqualTo(3);
+
+        resolveEndStep(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void resolveEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
