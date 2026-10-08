@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -25,17 +24,12 @@ class WallOfBramblesTest extends BaseCardTest {
     void defenderPreventsAttacking() {
         addCreatureReady(player1, new WallOfBrambles());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    @DisplayName("Activating regeneration ability puts it on the stack targeting the wall")
+    @DisplayName("Activating regeneration ability puts it on the stack for the wall")
     void activatingAbilityPutsOnStack() {
         Permanent wall = addCreatureReady(player1, new WallOfBrambles());
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -90,11 +84,8 @@ class WallOfBramblesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent attacker = addCreatureReady(player2, new CrawWurm());
-        attacker.setAttacking(true);
-
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        addCreatureReady(player2, new CrawWurm());
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player2);
 
@@ -102,5 +93,54 @@ class WallOfBramblesTest extends BaseCardTest {
         assertThat(wall.isTapped()).isTrue();
         assertThat(wall.getRegenerationShield()).isZero();
         assertThat(wall.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick wall can activate regeneration")
+    void tappedSummoningSickWallCanRegenerate() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfBrambles());
+        wall.setSummoningSick(true);
+        wall.tap();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(wall.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Creating a shield does not tap the wall or remove existing damage")
+    void creatingShieldDoesNotImmediatelyRegenerate() {
+        Permanent wall = addCreatureReady(player1, new WallOfBrambles());
+        wall.setMarkedDamage(1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(wall.isTapped()).isFalse();
+        assertThat(wall.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Repeated activations grant independent shields only to the activating wall")
+    void repeatedActivationsOnlyProtectTheirSource() {
+        Permanent wall = addCreatureReady(player1, new WallOfBrambles());
+        Permanent otherWall = addCreatureReady(player1, new WallOfBrambles());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(wall.getRegenerationShield()).isEqualTo(2);
+        assertThat(otherWall.getRegenerationShield()).isZero();
+        assertThat(wall.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }
