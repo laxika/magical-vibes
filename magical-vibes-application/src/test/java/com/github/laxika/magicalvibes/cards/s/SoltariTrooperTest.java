@@ -61,6 +61,40 @@ class SoltariTrooperTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The attack bonus waits for resolution and affects only the attacking Trooper")
+    void attackBonusWaitsForResolutionAndAffectsOnlyItsSource() {
+        Permanent attacker = addCreatureReady(player1, new SoltariTrooper());
+        Permanent nonAttacker = addCreatureReady(player1, new SoltariTrooper());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(nonAttacker.getPowerModifier()).isZero();
+        assertThat(nonAttacker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each attacking Trooper gets its own bonus")
+    void multipleAttackersEachReceiveTheirOwnBonus() {
+        Permanent first = addCreatureReady(player1, new SoltariTrooper());
+        Permanent second = addCreatureReady(player1, new SoltariTrooper());
+
+        declareAttackers(player1, List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(first.getPowerModifier()).isEqualTo(1);
+        assertThat(first.getToughnessModifier()).isEqualTo(1);
+        assertThat(second.getPowerModifier()).isEqualTo(1);
+        assertThat(second.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Shadow prevents a non-shadow creature from blocking Soltari Trooper")
     void shadowPreventsNonShadowCreatureFromBlocking() {
         Permanent trooper = addCreatureReady(player1, new SoltariTrooper());
