@@ -30,6 +30,7 @@ class WanderingTroubadourTest extends BaseCardTest {
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Lost Mine of Phandelver");
         harness.passBothPriorities();
 
         assertThat(gd.playerDungeonProgress.get(player1.getId()))
@@ -60,10 +61,64 @@ class WanderingTroubadourTest extends BaseCardTest {
         assertThat(gd.playerDungeonProgress).doesNotContainKey(player1.getId());
     }
 
+    @Test
+    @DisplayName("Does not venture during an opponent's end step even after your land entered")
+    void doesNotVentureAtOpponentsEndStep() {
+        harness.addToBattlefield(player1, new WanderingTroubadour());
+        gd.permanentsEnteredBattlefieldThisTurn.put(player1.getId(), List.of(new Forest()));
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDungeonProgress).doesNotContainKey(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Counts a land that entered before Troubadour and has since left the battlefield")
+    void countsEarlierLandThatLeftBattlefield() {
+        harness.setHand(player1, List.of(new Forest()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.playLand(player1, 0);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.addToBattlefield(player1, new WanderingTroubadour());
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Lost Mine of Phandelver");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDungeonProgress.get(player1.getId()))
+                .isEqualTo(new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 0));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Venturing advances an existing dungeon once even if multiple lands entered")
+    void advancesExistingDungeonOnceForMultipleLands() {
+        harness.addToBattlefield(player1, new WanderingTroubadour());
+        gd.permanentsEnteredBattlefieldThisTurn.put(player1.getId(), List.of(new Forest(), new Forest()));
+        gd.playerDungeonProgress.put(player1.getId(),
+                new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 0));
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Mine Tunnels");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDungeonProgress.get(player1.getId()))
+                .isEqualTo(new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 2));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 }
