@@ -118,6 +118,54 @@ class TangledFlorahedronTest extends BaseCardTest {
     }
 
     @Test
+    void landManaAbilityResolvesImmediatelyAndRequiresUntappingBeforeReuse() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new TangledFlorahedron()));
+        gs.playCard(gd, player1, 0, 1, null, null);
+        Permanent land = findPermanent(player1, "Tangled Vale");
+        land.untap();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+
+        land.untap();
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+    }
+
+    @Test
+    void castingCreatureFaceDoesNotConsumeTheLandPlay() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new TangledFlorahedron(), new TangledFlorahedron()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Tangled Florahedron");
+        harness.ensurePriority(player1);
+        gs.playCard(gd, player1, 0, 1, null, null);
+
+        harness.assertOnBattlefield(player1, "Tangled Vale");
+        assertThat(findPermanent(player1, "Tangled Vale").isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotInHand(player1, "Tangled Florahedron");
+    }
+
+    @Test
     void creatureFaceStillRequiresItsManaCostWhenLandFaceIsPlayable() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
