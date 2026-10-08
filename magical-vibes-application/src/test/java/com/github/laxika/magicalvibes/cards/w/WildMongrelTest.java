@@ -84,6 +84,54 @@ class WildMongrelTest extends BaseCardTest {
     }
 
     @Test
+    void discardIsPaidBeforeTheBoostAndColorChangeResolve() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent mongrel = harness.addToBattlefieldAndReturn(player1, new WildMongrel());
+        harness.setHand(player1, List.of(new Werebear()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Werebear");
+        harness.assertNotInHand(player1, "Werebear");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, mongrel)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mongrel)).isEqualTo(2);
+        assertThat(gqs.getEffectiveColors(gd, mongrel)).containsExactly(CardColor.GREEN);
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(gqs.getEffectivePower(gd, mongrel)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mongrel)).isEqualTo(3);
+        assertThat(gqs.getEffectiveColors(gd, mongrel)).containsExactly(CardColor.BLACK);
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent mongrel = harness.addToBattlefieldAndReturn(player1, new WildMongrel());
+        mongrel.setTapped(true);
+        mongrel.setSummoningSick(true);
+        harness.setHand(player1, List.of(new Werebear()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gqs.getEffectivePower(gd, mongrel)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mongrel)).isEqualTo(3);
+        assertThat(gqs.getEffectiveColors(gd, mongrel)).containsExactly(CardColor.WHITE);
+        assertThat(mongrel.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Werebear");
+    }
+
+    @Test
     void cannotActivateWithoutACardInHand() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
