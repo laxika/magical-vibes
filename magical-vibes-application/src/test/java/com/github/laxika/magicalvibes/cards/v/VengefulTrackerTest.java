@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.d.DrossHopper;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.ImplementsOfSacrifice;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -18,7 +19,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed({VengefulTracker.class, ImplementsOfSacrifice.class})
+@CardUsed({VengefulTracker.class, ImplementsOfSacrifice.class, DrossHopper.class, GrizzlyBears.class, TurnToFrog.class})
 class VengefulTrackerTest extends BaseCardTest {
 
     @Test
@@ -64,6 +65,61 @@ class VengefulTrackerTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, null, hopper.getId());
         harness.handlePermanentChosen(player2, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Does not trigger when its controller sacrifices an artifact")
+    void controllerSacrificesArtifact() {
+        harness.addToBattlefield(player1, new VengefulTracker());
+        harness.addToBattlefield(player1, new ImplementsOfSacrifice());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.handleListChoice(player1, ManaColor.BLACK.name());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Triggers separately for each opponent artifact sacrifice")
+    void multipleArtifactSacrifices() {
+        harness.addToBattlefield(player1, new VengefulTracker());
+        harness.addToBattlefield(player2, new ImplementsOfSacrifice());
+        harness.addToBattlefield(player2, new ImplementsOfSacrifice());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleListChoice(player2, ManaColor.BLACK.name());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleListChoice(player2, ManaColor.BLACK.name());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Does not trigger after losing all abilities")
+    void abilityRemovalStopsSacrificeTrigger() {
+        Permanent tracker = harness.addToBattlefieldAndReturn(player1, new VengefulTracker());
+        harness.addToBattlefield(player2, new ImplementsOfSacrifice());
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, tracker.getId());
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleListChoice(player2, ManaColor.BLACK.name());
         harness.passBothPriorities();
 
         harness.assertLife(player2, 20);
