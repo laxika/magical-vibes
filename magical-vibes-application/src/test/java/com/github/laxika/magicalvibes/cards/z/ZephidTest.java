@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 @CardUsed({Zephid.class, PathOfPeace.class, WizardMentor.class, CoralMerfolk.class})
 class ZephidTest extends BaseCardTest {
@@ -21,8 +22,7 @@ class ZephidTest extends BaseCardTest {
     @Test
     @DisplayName("Zephid cannot be targeted by spells because it has shroud")
     void cannotBeTargetedBySpells() {
-        harness.addToBattlefield(player1, new Zephid());
-        Permanent zephid = findPermanent(player1, "Zephid");
+        Permanent zephid = harness.addToBattlefieldAndReturn(player1, new Zephid());
 
         harness.setHand(player1, List.of(new PathOfPeace()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -56,5 +56,33 @@ class ZephidTest extends BaseCardTest {
                         gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("cannot block");
+    }
+
+    @Test
+    @DisplayName("Shroud also prevents an opponent's spell from targeting Zephid")
+    void cannotBeTargetedByOpponentSpells() {
+        Permanent zephid = harness.addToBattlefieldAndReturn(player2, new Zephid());
+        harness.setHand(player1, List.of(new PathOfPeace()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, zephid.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
+    @Test
+    @DisplayName("A flying creature can block Zephid despite its shroud")
+    void flyingCreatureCanBlock() {
+        addCreatureReady(player1, new Zephid());
+        addCreatureReady(player2, new Zephid());
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        assertThatCode(() -> gs.declareBlockers(
+                gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player1, "Zephid");
+        harness.assertOnBattlefield(player2, "Zephid");
     }
 }
