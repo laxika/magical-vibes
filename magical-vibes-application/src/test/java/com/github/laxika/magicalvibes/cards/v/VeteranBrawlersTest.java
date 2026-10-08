@@ -19,6 +19,44 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class VeteranBrawlersTest extends BaseCardTest {
 
     @Test
+    @DisplayName("One untapped defending land prevents attacking even when another land is tapped")
+    void cannotAttackWithMixedTappedAndUntappedDefendingLands() {
+        addCreatureReady(player1, new VeteranBrawlers());
+        harness.addToBattlefieldAndReturn(player2, new RhysticCave()).tap();
+        harness.addToBattlefield(player2, new RhysticCave());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("One untapped controlled land prevents blocking even when another land is tapped")
+    void cannotBlockWithMixedTappedAndUntappedControlledLands() {
+        addCreatureReady(player1, new PygmyRazorback()).setAttacking(true);
+        addCreatureReady(player2, new VeteranBrawlers());
+        harness.addToBattlefieldAndReturn(player2, new RhysticCave()).tap();
+        harness.addToBattlefield(player2, new RhysticCave());
+        prepareDeclareBlockers(player1);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An untapped nonland controlled by the blocker controller does not prevent blocking")
+    void canBlockWithUntappedControlledNonland() {
+        addCreatureReady(player1, new PygmyRazorback()).setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new VeteranBrawlers());
+        harness.addToBattlefield(player2, new WellOfLife());
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Cannot attack while defending player controls an untapped land")
     void cannotAttackWhileDefendingPlayerControlsUntappedLand() {
         addCreatureReady(player1, new VeteranBrawlers());
