@@ -25,8 +25,7 @@ class SokkasSwordTrainingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SokkasSwordTraining()));
         addMana();
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(bear.getEffectivePower()).isEqualTo(4);
         assertThat(bear.getEffectiveToughness()).isEqualTo(4);
@@ -40,8 +39,7 @@ class SokkasSwordTrainingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SokkasSwordTraining()));
         addMana();
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -60,6 +58,62 @@ class SokkasSwordTrainingTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, fountain.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+
+    @Test
+    @DisplayName("Targeting an opponent's creature still creates the Clue for the caster")
+    void targetingOpponentsCreatureCreatesClueForCaster() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SokkasSwordTraining()));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(bear.getEffectivePower()).isEqualTo(4);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(findPermanents(player1, "Clue")).hasSize(1);
+        assertThat(findPermanents(player2, "Clue")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not create a Clue when its only target leaves the battlefield")
+    void doesNotCreateClueWhenTargetLeavesBattlefield() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SokkasSwordTraining()));
+        addMana();
+
+        harness.castInstant(player1, 0, bear.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bear);
+        gd.playerGraveyards.get(player1.getId()).add(bear.getCard());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Sokka's Sword Training");
+    }
+
+    @Test
+    @DisplayName("The Clue is sacrificed as a cost and draws a card on resolution")
+    void clueCanBeSacrificedToDrawCard() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SokkasSwordTraining()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        Permanent clue = findPermanent(player1, "Clue");
+        int clueIndex = gd.playerBattlefields.get(player1.getId()).indexOf(clue);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, clueIndex, null, null);
+
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     private void addMana() {
