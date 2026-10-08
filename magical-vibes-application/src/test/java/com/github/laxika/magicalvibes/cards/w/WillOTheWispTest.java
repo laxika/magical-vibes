@@ -108,4 +108,57 @@ class WillOTheWispTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Will-o'-the-Wisp");
         harness.assertInGraveyard(player1, "Will-o'-the-Wisp");
     }
+
+    @Test
+    void canRegenerateWhileTappedAndSummoningSick() {
+        Permanent wisp = addCreatureReady(player1, new WillOTheWisp());
+        wisp.setSummoningSick(true);
+        wisp.tap();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wisp.getRegenerationShield()).isEqualTo(1);
+        assertThat(wisp.isTapped()).isTrue();
+    }
+
+    @Test
+    void resolvingAbilityDoesNotTapOrRemoveCreatureFromCombat() {
+        Permanent wisp = addCreatureReady(player1, new WillOTheWisp());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wisp.getRegenerationShield()).isEqualTo(1);
+        assertThat(wisp.isTapped()).isFalse();
+        assertThat(wisp.isBlocking()).isTrue();
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Will-o'-the-Wisp");
+        assertThat(wisp.getRegenerationShield()).isZero();
+        assertThat(wisp.isTapped()).isTrue();
+        assertThat(wisp.isBlocking()).isFalse();
+        assertThat(wisp.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void multipleActivationsGrantIndependentShields() {
+        Permanent wisp = addCreatureReady(player1, new WillOTheWisp());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wisp.getRegenerationShield()).isEqualTo(2);
+        assertThat(wisp.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }
