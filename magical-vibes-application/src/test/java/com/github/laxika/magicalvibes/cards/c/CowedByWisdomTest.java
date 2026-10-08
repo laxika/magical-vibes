@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.t.TrustedAdvisor;
+import com.github.laxika.magicalvibes.cards.t.TwoHeadedDragon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CowedByWisdom.class, TrustedAdvisor.class})
+@CardUsed({CowedByWisdom.class, TrustedAdvisor.class, TwoHeadedDragon.class})
 class CowedByWisdomTest extends BaseCardTest {
 
     @Test
@@ -78,6 +79,79 @@ class CowedByWisdomTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
     }
 
+    @Test
+    void emptyAuraControllersHandAllowsAttackWithoutMana() {
+        Permanent creature = addCreatureReady(player1, new TrustedAdvisor());
+        enchant(creature, player2);
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new TrustedAdvisor(), new TrustedAdvisor()));
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void currentHandSizeIsUsedInsteadOfHandSizeWhenAuraWasAttached() {
+        Permanent creature = addCreatureReady(player1, new TrustedAdvisor());
+        harness.setHand(player2, List.of(new TrustedAdvisor(), new TrustedAdvisor()));
+        enchant(creature, player2);
+        harness.setHand(player2, List.of(new TrustedAdvisor()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void twoAurasEachChargeForTheirControllersHand() {
+        Permanent creature = addCreatureReady(player1, new TrustedAdvisor());
+        enchant(creature, player1);
+        enchant(creature, player2);
+        harness.setHand(player1, List.of(new TrustedAdvisor()));
+        harness.setHand(player2, List.of(new TrustedAdvisor(), new TrustedAdvisor()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void emptyAuraControllersHandAllowsBlockingWithoutMana() {
+        Permanent attacker = addCreatureReady(player1, new TrustedAdvisor());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new TrustedAdvisor());
+        enchant(blocker, player1);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new TrustedAdvisor(), new TrustedAdvisor()));
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void blockingTwoAttackersPaysAuraTaxOnlyOnce() {
+        Permanent firstAttacker = addCreatureReady(player1, new TrustedAdvisor());
+        Permanent secondAttacker = addCreatureReady(player1, new TrustedAdvisor());
+        firstAttacker.setAttacking(true);
+        secondAttacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new TwoHeadedDragon());
+        enchant(blocker, player1);
+        harness.setHand(player1, List.of(new TrustedAdvisor(), new TrustedAdvisor()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
     private void enchant(Permanent creature, Player auraController) {
         Permanent aura = harness.addToBattlefieldAndReturn(auraController, new CowedByWisdom());
         aura.setAttachedTo(creature.getId());
