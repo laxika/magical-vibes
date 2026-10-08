@@ -185,4 +185,64 @@ class SolitaryConfinementTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shroud");
     }
+
+    @Test
+    @DisplayName("Skips the entire draw step even when players have a draw-step priority stop")
+    void skipsEntireDrawStep() {
+        harness.addToBattlefield(player1, new SolitaryConfinement());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        harness.withAutoStop(TurnStep.DRAW,
+                () -> harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities));
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
+    }
+
+    @Test
+    @DisplayName("Sacrificing Solitary Confinement during upkeep restores that turn's draw")
+    void drawsAfterSacrificingDuringUpkeep() {
+        harness.addToBattlefield(player1, new SolitaryConfinement());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new SuntailHawk()));
+        gd.startingPlayerId = player2.getId();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Solitary Confinement");
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        harness.assertInHand(player1, "Suntail Hawk");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not grant shroud or damage prevention to its controller's creatures")
+    void doesNotProtectControllersCreatures() {
+        harness.addToBattlefield(player1, new SolitaryConfinement());
+        harness.addToBattlefield(player1, new SuntailHawk());
+        harness.setHand(player2, List.of(new LavaDart()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Suntail Hawk"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Suntail Hawk");
+        harness.assertOnBattlefield(player1, "Solitary Confinement");
+    }
+
+    @Test
+    @DisplayName("Does not grant shroud or damage prevention to an opponent")
+    void doesNotProtectOpponent() {
+        harness.addToBattlefield(player1, new SolitaryConfinement());
+        harness.setHand(player1, List.of(new LavaDart()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
 }
