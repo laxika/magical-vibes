@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.cards.b.BorosSignet;
+import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
 import com.github.laxika.magicalvibes.cards.g.GlassGolem;
+import com.github.laxika.magicalvibes.cards.p.PrivilegedPosition;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Smash.class, BorosSignet.class, GlassGolem.class, BorosRecruit.class})
+@CardUsed({Smash.class, BorosSignet.class, GlassGolem.class, BorosRecruit.class,
+        DarksteelIngot.class, PrivilegedPosition.class})
 class SmashTest extends BaseCardTest {
 
     @Test
@@ -116,7 +117,7 @@ class SmashTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
         harness.assertInGraveyard(player1, "Smash");
@@ -131,6 +132,44 @@ class SmashTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Smash draws a card even when the artifact is indestructible")
+    void drawsWhenArtifactIsIndestructible() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new DarksteelIngot());
+        BorosRecruit drawnCard = new BorosRecruit();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(new Smash()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, artifact.getId());
+
+        harness.assertOnBattlefield(player2, "Darksteel Ingot");
+        harness.assertNotInGraveyard(player2, "Darksteel Ingot");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Smash");
+    }
+
+    @Test
+    @DisplayName("Smash does not destroy or draw when its target gains hexproof")
+    void doesNotDrawWhenTargetGainsHexproof() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new BorosSignet());
+        BorosRecruit libraryCard = new BorosRecruit();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player1, List.of(new Smash()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, artifact.getId());
+        harness.addToBattlefield(player2, new PrivilegedPosition());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Boros Signet");
+        harness.assertNotInGraveyard(player2, "Boros Signet");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        harness.assertInGraveyard(player1, "Smash");
     }
 }
 
