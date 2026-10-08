@@ -20,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WanderingMage.class, GuerrillaTactics.class, SwornDefender.class})
+@CardUsed({WanderingMage.class, GuerrillaTactics.class, SwornDefender.class, Card.class})
 class WanderingMageTest extends BaseCardTest {
 
     private Permanent addMageReady() {
@@ -191,6 +191,61 @@ class WanderingMageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Multiple white activations accumulate shields consumed across damage events")
+    void whiteShieldsAccumulateAndAreConsumed() {
+        addMageReady();
+        Permanent defender = harness.addToBattlefieldAndReturn(player2, new SwornDefender());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, defender.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, defender.getId());
+        harness.passBothPriorities();
+
+        castGuerrillaTactics(player2, defender.getId());
+        assertThat(defender.getMarkedDamage()).isZero();
+        assertThat(defender.getDamagePreventionShield()).isEqualTo(2);
+        castGuerrillaTactics(player2, defender.getId());
+        assertThat(defender.getMarkedDamage()).isZero();
+        assertThat(defender.getDamagePreventionShield()).isZero();
+        castGuerrillaTactics(player2, defender.getId());
+        assertThat(defender.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The white ability can be activated while the Mage is tapped and summoning sick")
+    void whiteAbilityDoesNotRequireTapping() {
+        Permanent mage = addMageReady();
+        mage.setTapped(true);
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, mage.getId());
+        harness.passBothPriorities();
+
+        assertThat(mage.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(mage.isTapped()).isTrue();
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("The black ability resolves even when its cost kills the Mage")
+    void blackAbilityResolvesAfterSourceDiesToCost() {
+        Permanent mage = addMageReady();
+        mage.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Wandering Mage");
+        harness.setLife(player2, 20);
+        castGuerrillaTactics(player1, player2.getId());
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
     private void castGuerrillaTactics(Player caster, UUID targetId) {
         harness.setHand(caster, List.of(new GuerrillaTactics()));
         harness.addMana(caster, ManaColor.RED, 2);
@@ -202,9 +257,8 @@ class WanderingMageTest extends BaseCardTest {
         card.setName("Test Planeswalker");
         card.setType(CardType.PLANESWALKER);
         card.setOwnerId(player.getId());
-        Permanent planeswalker = new Permanent(card);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player, card);
         planeswalker.setCounterCount(CounterType.LOYALTY, loyalty);
-        gd.playerBattlefields.get(player.getId()).add(planeswalker);
         return planeswalker;
     }
 }
