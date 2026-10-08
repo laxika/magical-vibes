@@ -77,4 +77,42 @@ class VampiricTouchTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("An opponent's planeswalker with one loyalty goes to the graveyard and controller gains 2 life")
+    void lethalPlaneswalkerDamageStillGainsTwoLife() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new VampiricTouch()));
+        addManaForVampiricTouch();
+
+        harness.castAndResolveSorcery(player1, 0, planeswalker.getId());
+
+        harness.assertNotOnBattlefield(player2, "Jace Beleren");
+        harness.assertInGraveyard(player2, "Jace Beleren");
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Does not gain life when the only target leaves the battlefield before resolution")
+    void noLifeGainWhenTargetLeavesBattlefield() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new VampiricTouch()));
+        addManaForVampiricTouch();
+
+        harness.castSorcery(player1, 0, planeswalker.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, planeswalker));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Jace Beleren");
+        harness.assertInGraveyard(player1, "Vampiric Touch");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 }
