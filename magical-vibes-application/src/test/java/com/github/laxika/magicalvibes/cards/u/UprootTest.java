@@ -56,6 +56,23 @@ class UprootTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void canPutOwnLandIntoEmptyLibraryWithoutTriggeringItsGraveyardAbility() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new GodsEyeGateToTheReikai());
+        harness.setLibrary(player1, List.of());
+        harness.setGraveyard(player1, List.of());
+
+        prepareUproot();
+        harness.castAndResolveSorcery(player1, 0, land.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(land.getCard().getId()));
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Uproot");
+    }
+
     private void prepareUproot() {
         harness.setHand(player1, List.of(new Uproot()));
         harness.addMana(player1, ManaColor.GREEN, 1);
