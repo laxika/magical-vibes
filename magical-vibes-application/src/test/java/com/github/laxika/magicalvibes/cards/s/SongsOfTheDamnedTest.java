@@ -66,4 +66,32 @@ class SongsOfTheDamnedTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(0);
     }
+
+    @Test
+    @DisplayName("Does not count creatures removed from the graveyard before resolution")
+    void excludesCreatureCardsRemovedBeforeResolution() {
+        harness.setGraveyard(player1, List.of(new BalduvianBears(), new SoldeviGolem()));
+        harness.setHand(player1, List.of(new SongsOfTheDamned()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0);
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Player two receives mana based on their own graveyard")
+    void countsCastingPlayersGraveyardAndAwardsManaToThem() {
+        harness.setGraveyard(player1, List.of(new BalduvianBears()));
+        harness.setGraveyard(player2, List.of(new BalduvianBears(), new SoldeviGolem(), new Mountain()));
+        harness.setHand(player2, List.of(new SongsOfTheDamned()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player2, 0);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
 }
