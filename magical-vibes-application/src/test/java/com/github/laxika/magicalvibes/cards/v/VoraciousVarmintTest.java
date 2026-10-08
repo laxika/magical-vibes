@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({VoraciousVarmint.class, GloriousAnthem.class, GrizzlyBears.class, LeoninScimitar.class})
@@ -70,23 +73,70 @@ class VoraciousVarmintTest extends BaseCardTest {
     }
 
     private Permanent addReadyVarmint(Player player) {
-        Permanent permanent = new Permanent(new VoraciousVarmint());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new VoraciousVarmint());
     }
 
     private Permanent addArtifact(Player player) {
-        Permanent permanent = new Permanent(new LeoninScimitar());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new LeoninScimitar());
     }
 
     private Permanent addEnchantment(Player player) {
-        Permanent permanent = new Permanent(new GloriousAnthem());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new GloriousAnthem());
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSickUsingColoredMana() {
+        Permanent varmint = harness.addToBattlefieldAndReturn(player1, new VoraciousVarmint());
+        varmint.setSummoningSick(true);
+        varmint.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        Permanent target = addArtifact(player2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Voracious Varmint");
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
+    }
+
+    @Test
+    void canDestroyAnArtifactYouControl() {
+        addReadyVarmint(player1);
+        Permanent target = addArtifact(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Voracious Varmint");
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+    }
+
+    @Test
+    void sacrificesRemainPaidWhenAnotherActivationDestroysTheTargetFirst() {
+        addReadyVarmint(player1);
+        addReadyVarmint(player1);
+        Permanent target = addArtifact(player2);
+        Permanent otherArtifact = addArtifact(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof VoraciousVarmint).hasSize(2);
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(otherArtifact).doesNotContain(target);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void attackingWithVigilanceDoesNotTapVarmint() {
+        Permanent varmint = addReadyVarmint(player1);
+
+        declareAttackers(List.of(0));
+
+        assertThat(varmint.isTapped()).isFalse();
     }
 }
