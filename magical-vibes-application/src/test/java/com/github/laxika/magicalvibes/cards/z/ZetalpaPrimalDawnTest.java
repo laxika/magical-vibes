@@ -60,7 +60,7 @@ class ZetalpaPrimalDawnTest extends BaseCardTest {
     @DisplayName("Double strike and trample deal damage in both combat damage steps")
     void doubleStrikeAndTrampleDealDamageInBothSteps() {
         harness.setLife(player2, 20);
-        Permanent zetalpa = addCreatureReady(player1, new ZetalpaPrimalDawn());
+        addCreatureReady(player1, new ZetalpaPrimalDawn());
         Permanent blocker = addCreatureReady(player2, new EkunduGriffin());
 
         declareAttackersAndPrepareBlockers(List.of(0));
@@ -73,5 +73,35 @@ class ZetalpaPrimalDawnTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+    }
+
+    @Test
+    @DisplayName("An unblocked Zetalpa deals damage twice and remains untapped")
+    void unblockedDoubleStrikeDealsEightDamage() {
+        harness.setLife(player2, 20);
+        Permanent zetalpa = addCreatureReady(player1, new ZetalpaPrimalDawn());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 12);
+        assertThat(zetalpa.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Zetalpa can block a flyer and kills it in first-strike combat")
+    void blocksFlyingAttacker() {
+        harness.setLife(player1, 20);
+        Permanent zetalpa = addCreatureReady(player1, new ZetalpaPrimalDawn());
+        Permanent attacker = addCreatureReady(player2, new EkunduGriffin());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(zetalpa);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(attacker);
+        harness.assertInGraveyard(player2, "Ekundu Griffin");
     }
 }
