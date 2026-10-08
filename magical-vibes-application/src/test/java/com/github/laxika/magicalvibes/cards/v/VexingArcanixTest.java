@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({VexingArcanix.class, Incinerate.class})
 class VexingArcanixTest extends BaseCardTest {
@@ -142,6 +143,67 @@ class VexingArcanixTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getId().equals(topCard.getId()));
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Card-name suggestions do not disclose cards in the opponent's hidden zones")
+    void namePromptDoesNotDiscloseHiddenCards() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of());
+        addReadyArcanix(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        List<String> optionsBefore = List.copyOf(
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options());
+        harness.handleListChoice(player2, "Vexing Arcanix");
+
+        harness.setHand(player1, List.of(new Incinerate()));
+        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(false);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyElementsOf(optionsBefore);
+    }
+
+    @Test
+    @DisplayName("A name that is not an Oracle card name is rejected without revealing the library")
+    void invalidCardNameIsRejected() {
+        addReadyArcanix(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        Card topCard = new Incinerate();
+        harness.setLibrary(player2, List.of(topCard));
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleListChoice(player2, "Definitely not a real Oracle card name"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+    }
+
+    @Test
+    @DisplayName("A real card name may be chosen even when that card is absent from the game")
+    void realCardNameAbsentFromGameIsAllowed() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player2, List.of());
+        Card topCard = new VexingArcanix();
+        harness.setLibrary(player2, List.of(topCard));
+        harness.setLife(player2, 20);
+        addReadyArcanix(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "Incinerate");
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(topCard);
+        harness.assertLife(player2, 18);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private Permanent addReadyArcanix(Player player) {
