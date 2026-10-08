@@ -89,4 +89,84 @@ class SnapbackTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Alternate cost can exile a blue card preceding Snapback in hand")
+    void exilesBlueCardBeforeSpellInHand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AshcoatBear());
+        Bewilder payment = new Bewilder();
+        AshcoatBear remainingCard = new AshcoatBear();
+        harness.setHand(player1, List.of(payment, new Snapback(), remainingCard));
+
+        harness.castInstantWithAlternateExileFromHand(player1, 1, target.getId(), 0);
+
+        assertThat(gd.exiledCards).extracting(e -> e.card()).containsExactly(payment);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(remainingCard);
+        harness.assertOnBattlefield(player1, "Ashcoat Bear");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ashcoat Bear");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(remainingCard, target.getCard());
+        harness.assertInGraveyard(player1, "Snapback");
+    }
+
+    @Test
+    @DisplayName("Snapback cannot exile itself to pay its alternate cost")
+    void cannotExileSpellItself() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
+        Snapback spell = new Snapback();
+        harness.setHand(player1, List.of(spell));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(
+                player1, 0, target.getId(), 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Ashcoat Bear");
+    }
+
+    @Test
+    @DisplayName("Another copy of Snapback can pay the alternate cost")
+    void canExileAnotherSnapback() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
+        Snapback spell = new Snapback();
+        Snapback payment = new Snapback();
+        harness.setHand(player1, List.of(spell, payment));
+
+        harness.castInstantWithAlternateExileFromHand(player1, 0, target.getId(), 1);
+
+        assertThat(gd.exiledCards).extracting(e -> e.card()).containsExactly(payment);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Ashcoat Bear");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
+    @DisplayName("Exiled payment remains exiled when the target leaves before resolution")
+    void paymentRemainsExiledWhenTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
+        Bewilder payment = new Bewilder();
+        harness.setHand(player1, List.of(new Snapback(), payment));
+        harness.setHand(player2, List.of(new Snapback()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstantWithAlternateExileFromHand(player1, 0, target.getId(), 1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Ashcoat Bear");
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(target.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).extracting(e -> e.card()).containsExactly(payment);
+        harness.assertInGraveyard(player1, "Snapback");
+        harness.assertInGraveyard(player2, "Snapback");
+        assertThat(gd.stack).isEmpty();
+    }
 }
