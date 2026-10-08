@@ -91,4 +91,46 @@ class WarmthTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(controllerLifeBefore);
     }
+
+    @Test
+    @DisplayName("Each Warmth triggers independently, and only the opponent's controller gains life")
+    void multipleCopiesTriggerIndependently() {
+        setUpOpponentTurn();
+        harness.addToBattlefield(player1, new Warmth());
+        harness.addToBattlefield(player2, new Warmth());
+        int controllerLifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castFromHand(player2, new MoggConscripts(), "{R}");
+
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.assertLife(player1, controllerLifeBefore + 2);
+        harness.assertLife(player2, opponentLifeBefore);
+        harness.passBothPriorities();
+        harness.assertLife(player1, controllerLifeBefore + 4);
+        harness.assertLife(player2, opponentLifeBefore);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Warmth triggers for each red spell in the same turn")
+    void repeatedRedSpellsEachGainLife() {
+        setUpOpponentTurn();
+        int controllerLifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castFromHand(player2, new MoggConscripts(), "{R}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, controllerLifeBefore + 2);
+
+        harness.castFromHand(player2, new GoblinBombardment(), "{1}{R}");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, controllerLifeBefore + 4);
+        harness.assertLife(player2, opponentLifeBefore);
+    }
 }
