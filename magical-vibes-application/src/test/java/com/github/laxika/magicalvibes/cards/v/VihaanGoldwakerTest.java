@@ -66,6 +66,72 @@ class VihaanGoldwakerTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, treasure)).isZero();
     }
 
+    @Test
+    @DisplayName("Animated Treasures retain Treasure and gain the outlaw keywords")
+    void animatedTreasuresRetainSubtypeAndGainKeywords() {
+        addCreatureReady(player1, new VihaanGoldwaker());
+        Permanent treasure = harness.addToBattlefieldAndReturn(player1, new Treasure());
+
+        advanceToCombat();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertAnimatedTreasure(treasure);
+        assertThat(gqs.hasEffectiveSubtype(gd, treasure, CardSubtype.TREASURE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, treasure, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, treasure, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Treasures entering after resolution are not animated")
+    void laterTreasuresAreNotAnimated() {
+        addCreatureReady(player1, new VihaanGoldwaker());
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new Treasure());
+
+        advanceToCombat();
+        harness.handleMayAbilityChosen(player1, true);
+        Permanent later = harness.addToBattlefieldAndReturn(player1, new Treasure());
+
+        assertAnimatedTreasure(original);
+        assertThat(gqs.isCreature(gd, later)).isFalse();
+        assertThat(gqs.hasKeyword(gd, later, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, later, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Treasure animation and outlaw keywords expire at end of turn")
+    void animationExpiresAtEndOfTurn() {
+        addCreatureReady(player1, new VihaanGoldwaker());
+        Permanent treasure = harness.addToBattlefieldAndReturn(player1, new Treasure());
+
+        advanceToCombat();
+        harness.handleMayAbilityChosen(player1, true);
+        assertAnimatedTreasure(treasure);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.isCreature(gd, treasure)).isFalse();
+        assertThat(gqs.isArtifact(gd, treasure)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, treasure, CardSubtype.TREASURE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, treasure, CardSubtype.CONSTRUCT)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, treasure, CardSubtype.ASSASSIN)).isFalse();
+        assertThat(gqs.hasKeyword(gd, treasure, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, treasure, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Vihaan does not trigger during an opponent's combat")
+    void doesNotTriggerOnOpponentsTurn() {
+        addCreatureReady(player1, new VihaanGoldwaker());
+        Permanent treasure = harness.addToBattlefieldAndReturn(player1, new Treasure());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.isCreature(gd, treasure)).isFalse();
+    }
+
     private Permanent addOutlaw(Player player) {
         Permanent outlaw = addCreatureReady(player, new GrizzlyBears());
         TestCards.mutableCard(outlaw).setSubtypes(java.util.List.of(CardSubtype.ASSASSIN));
@@ -84,8 +150,7 @@ class VihaanGoldwakerTest extends BaseCardTest {
     private void advanceToCombat() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
         harness.passBothPriorities();
     }
 }
