@@ -33,8 +33,7 @@ class SoratamiMindsweeperTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(player1, "Soratami Mindsweeper"), null, player2.getId());
 
         harness.assertInHand(player1, "Tendo Ice Bridge");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Tendo Ice Bridge"));
+        harness.assertNotOnBattlefield(player1, "Tendo Ice Bridge");
 
         harness.passBothPriorities();
 
@@ -102,6 +101,52 @@ class SoratamiMindsweeperTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Gnarled Mass");
         harness.assertInGraveyard(player1, "Child of Thorns");
+    }
+
+    @Test
+    @DisplayName("Cannot activate with less than two mana")
+    void cannotActivateWithInsufficientMana() {
+        harness.addToBattlefield(player1, new SoratamiMindsweeper());
+        harness.addToBattlefield(player1, new TendoIceBridge());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(player1, "Soratami Mindsweeper"), null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Tendo Ice Bridge");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot return an opponent's land as the activation cost")
+    void cannotReturnOpponentsLand() {
+        harness.addToBattlefield(player1, new SoratamiMindsweeper());
+        harness.addToBattlefield(player2, new TendoIceBridge());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(player1, "Soratami Mindsweeper"), null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Tendo Ice Bridge");
+    }
+
+    @Test
+    @DisplayName("A tapped Mindsweeper can return a tapped land and mill a one-card library")
+    void tappedSourceAndLandCanMillShortLibrary() {
+        harness.addToBattlefieldAndReturn(player1, new SoratamiMindsweeper()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new TendoIceBridge()).setTapped(true);
+        harness.setLibrary(player2, List.of(new GnarledMass()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, "Soratami Mindsweeper"), null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Tendo Ice Bridge");
+        harness.assertInGraveyard(player2, "Gnarled Mass");
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Soratami Mindsweeper");
     }
 
     private int battlefieldIndex(Player owner, String name) {
