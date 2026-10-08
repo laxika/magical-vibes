@@ -87,18 +87,62 @@ class ZombieMusherTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The attacking player's snow land does not enable snow landwalk")
+    void attackersSnowLandDoesNotEnableLandwalk() {
+        harness.addToBattlefield(player1, new SnowCoveredSwamp());
+        Permanent blocker = addCreatureReady(player2, new BorealCentaur());
+        Permanent musher = readyAttacker(player1);
+        harness.setLife(player2, 20);
+
+        prepareDeclareBlockers();
+        declareBlock(blocker, musher);
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Mana produced by a snow land pays for regeneration without tapping Zombie Musher")
+    void snowLandManaPaysForRegeneration() {
+        Permanent musher = addCreatureReady(player1, new ZombieMusher());
+        harness.addToBattlefield(player1, new SnowCoveredSwamp());
+
+        harness.tapPermanent(player1, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(musher.getRegenerationShield()).isEqualTo(1);
+        assertThat(musher.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Zombie Musher can activate regeneration repeatedly")
+    void tappedSummoningSickMusherCanRegenerateRepeatedly() {
+        Permanent musher = harness.addToBattlefieldAndReturn(player1, new ZombieMusher());
+        musher.setTapped(true);
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(musher.getRegenerationShield()).isEqualTo(2);
+        assertThat(musher.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
+    }
+
+    @Test
     @DisplayName("The regeneration shield saves Zombie Musher from lethal combat damage")
     void regenerationShieldSavesFromLethalCombatDamage() {
         Permanent musher = addCreatureReady(player1, new ZombieMusher());
-        Permanent attacker = addCreatureReady(player2, new PhyrexianSoulgorger());
+        addCreatureReady(player2, new PhyrexianSoulgorger());
         gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        musher.setBlocking(true);
-        musher.addBlockingTarget(0);
-        attacker.setAttacking(true);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
         resolveCombat(player2);
 
