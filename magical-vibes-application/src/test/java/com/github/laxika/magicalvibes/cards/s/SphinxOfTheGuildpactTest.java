@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.m.Mortify;
+import com.github.laxika.magicalvibes.cards.h.Humility;
+import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SphinxOfTheGuildpact.class, Shock.class, Mortify.class, ProdigalSorcerer.class,
+        Humility.class, IcyManipulator.class})
 class SphinxOfTheGuildpactTest extends BaseCardTest {
 
     @Test
@@ -61,5 +66,60 @@ class SphinxOfTheGuildpactTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, sphinx.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("monocolored");
+    }
+
+    @Test
+    @DisplayName("Controller's monocolored spell can target the Sphinx")
+    void controllerMonocoloredSpellCanTarget() {
+        Permanent sphinx = harness.addToBattlefieldAndReturn(player1, new SphinxOfTheGuildpact());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, sphinx.getId());
+        harness.passBothPriorities();
+
+        assertThat(sphinx.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Sphinx of the Guildpact");
+    }
+
+    @Test
+    @DisplayName("Controller's monocolored ability can target the Sphinx")
+    void controllerMonocoloredAbilityCanTarget() {
+        addCreatureReady(player1, new ProdigalSorcerer());
+        Permanent sphinx = harness.addToBattlefieldAndReturn(player1, new SphinxOfTheGuildpact());
+
+        harness.activateAbility(player1, 0, null, sphinx.getId());
+        harness.passBothPriorities();
+
+        assertThat(sphinx.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Opponent's colorless ability can target the Sphinx")
+    void opponentColorlessAbilityCanTarget() {
+        harness.addToBattlefield(player1, new IcyManipulator());
+        Permanent sphinx = harness.addToBattlefieldAndReturn(player2, new SphinxOfTheGuildpact());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, sphinx.getId());
+        harness.passBothPriorities();
+
+        assertThat(sphinx.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Losing all abilities removes hexproof from monocolored")
+    void losingAllAbilitiesAllowsOpponentMonocoloredTargeting() {
+        Permanent sphinx = harness.addToBattlefieldAndReturn(player2, new SphinxOfTheGuildpact());
+        harness.castFromHand(player1, new Humility(), "{2}{W}{W}");
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, sphinx.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Sphinx of the Guildpact");
+        harness.assertInGraveyard(player2, "Sphinx of the Guildpact");
     }
 }
