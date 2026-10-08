@@ -1,24 +1,27 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.c.ConsumeSpirit;
+import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.p.PitFight;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SulfuricVapors.class, Shock.class, SerraAngel.class, ConsumeSpirit.class,
-        ProdigalPyromancer.class, PitFight.class, GrizzlyBears.class, HillGiant.class})
+        ProdigalPyromancer.class, PitFight.class, GrizzlyBears.class, HillGiant.class,
+        Blaze.class, FurnaceOfRath.class})
 class SulfuricVaporsTest extends BaseCardTest {
 
     @Test
@@ -93,6 +96,36 @@ class SulfuricVaporsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A red spell dealing zero damage does not deal one damage instead")
+    void zeroDamageIsNotBoosted() {
+        harness.addToBattlefield(player1, new SulfuricVapors());
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 0, player2.getId());
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The damaged player chooses the order of Sulfuric Vapors and Furnace of Rath")
+    void damagedPlayerChoosesReplacementOrder() {
+        harness.addToBattlefield(player1, new SulfuricVapors());
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
     @DisplayName("Combat damage from a red creature is not boosted")
     void redCombatDamageIsNotBoosted() {
         harness.addToBattlefield(player1, new SulfuricVapors());
@@ -109,18 +142,15 @@ class SulfuricVaporsTest extends BaseCardTest {
     @DisplayName("A red fight spell does not boost damage dealt by the fighting creatures")
     void redFightSpellDoesNotBoostCreatureDamage() {
         harness.addToBattlefield(player1, new SulfuricVapors());
-        addCreatureReady(player1, new HillGiant());
-        addCreatureReady(player2, new GrizzlyBears());
+        Permanent hillGiant = addCreatureReady(player1, new HillGiant());
+        Permanent grizzlyBears = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player2, List.of(new PitFight()));
         harness.addMana(player2, ManaColor.RED, 2);
         harness.forceActivePlayer(player2);
 
-        UUID player2CreatureId = harness.getPermanentId(player2, "Grizzly Bears");
-        UUID player1CreatureId = harness.getPermanentId(player1, "Hill Giant");
-        harness.castAndResolveInstant(player2, 0, List.of(player2CreatureId, player1CreatureId));
+        harness.castAndResolveInstant(player2, 0, List.of(grizzlyBears.getId(), hillGiant.getId()));
 
         harness.assertOnBattlefield(player1, "Hill Giant");
-        Permanent hillGiant = findPermanent(player1, "Hill Giant");
         assertThat(hillGiant.getMarkedDamage()).isEqualTo(2);
     }
 }
