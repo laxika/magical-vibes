@@ -15,6 +15,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 class VitalizeTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Resolves without any creatures under your control")
+    void resolvesWithoutControlledCreatures() {
+        harness.castFromHand(player1, new Vitalize(), "{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Vitalize");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Untaps creatures present at resolution even if they entered after casting")
+    void untapsCreatureThatEnteredAfterCasting() {
+        harness.castFromHand(player1, new Vitalize(), "{G}");
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BenalishInfantry());
+        creature.tap();
+
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Vitalize");
+    }
+
+    @Test
     @DisplayName("Untaps all tapped creatures you control")
     void untapsAllTappedCreaturesYouControl() {
         Permanent bear1 = harness.addToBattlefieldAndReturn(player1, new BenalishInfantry());
