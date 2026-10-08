@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.p.PoliticalTrickery;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -7,9 +8,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(VecTownships.class)
+@CardUsed({VecTownships.class, PoliticalTrickery.class})
 class VecTownshipsTest extends BaseCardTest {
 
     @Test
@@ -72,5 +75,40 @@ class VecTownshipsTest extends BaseCardTest {
 
         assertThat(greenLand.isTapped()).isFalse();
         assertThat(whiteLand.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's untap step does not consume the colored mana restriction")
+    void opponentsUntapStepDoesNotConsumeRestriction() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new VecTownships());
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        harness.performUntapStep(player2);
+        assertThat(land.isTapped()).isTrue();
+
+        harness.performUntapStep(player1);
+        assertThat(land.isTapped()).isTrue();
+
+        harness.performUntapStep(player1);
+        assertThat(land.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Colored mana does not prevent untapping during a new controller's untap step")
+    void newControllerCanUntapLandAfterColoredManaActivation() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new VecTownships());
+        Permanent otherLand = harness.addToBattlefieldAndReturn(player2, new VecTownships());
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.setHand(player1, List.of(new PoliticalTrickery()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(land.getId(), otherLand.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
+        assertThat(land.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(land.isTapped()).isFalse();
     }
 }
