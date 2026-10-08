@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,7 +40,7 @@ class ArtilleryEnthusiastTest extends BaseCardTest {
         GrizzlyBears discarded = new GrizzlyBears();
         GrizzlyBears matching = new GrizzlyBears();
         HillGiant nonmatching = new HillGiant();
-        harness.setHand(player1, new ArrayList<>(List.of(discarded)));
+        harness.setHand(player1, List.of(discarded));
         harness.setLibrary(player1, List.of(nonmatching, matching));
 
         harness.enterBattlefieldAndReturn(player1, new ArtilleryEnthusiast());
@@ -62,7 +61,7 @@ class ArtilleryEnthusiastTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new ArtilleryEnthusiast());
         GrizzlyBears card = new GrizzlyBears();
         HillGiant libraryCard = new HillGiant();
-        harness.setHand(player1, new ArrayList<>(List.of(card)));
+        harness.setHand(player1, List.of(card));
         harness.setLibrary(player1, List.of(libraryCard));
 
         harness.passBothPriorities();
@@ -124,6 +123,47 @@ class ArtilleryEnthusiastTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void discardingWithAnEmptyLibraryStillDiscardsAndFinishesResolving() {
+        GrizzlyBears discarded = new GrizzlyBears();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of());
+        harness.enterBattlefieldAndReturn(player1, new ArtilleryEnthusiast());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentControlledEnthusiastDiscardsAndSeeksOnlyForItsController() {
+        GrizzlyBears untouchedHand = new GrizzlyBears();
+        GrizzlyBears untouchedLibrary = new GrizzlyBears();
+        GrizzlyBears discarded = new GrizzlyBears();
+        GrizzlyBears matching = new GrizzlyBears();
+        harness.setHand(player1, List.of(untouchedHand));
+        harness.setLibrary(player1, List.of(untouchedLibrary));
+        harness.setHand(player2, List.of(discarded));
+        harness.setLibrary(player2, List.of(matching));
+        harness.enterBattlefieldAndReturn(player2, new ArtilleryEnthusiast());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discarded);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(matching);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(untouchedHand);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouchedLibrary);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 
