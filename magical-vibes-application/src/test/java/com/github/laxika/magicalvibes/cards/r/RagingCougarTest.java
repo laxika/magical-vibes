@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RagingCougar.class})
 class RagingCougarTest extends BaseCardTest {
@@ -25,5 +26,20 @@ class RagingCougarTest extends BaseCardTest {
 
         assertThat(cougar.isTapped()).isTrue();
         harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void cannotAttackWhileTappedDespiteHaste() {
+        harness.castFromHand(player1, new RagingCougar(), "{2}{R}");
+        harness.passBothPriorities();
+
+        Permanent cougar = findPermanent(player1, "Raging Cougar");
+        cougar.tap();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+
+        harness.assertLife(player2, 20);
     }
 }
