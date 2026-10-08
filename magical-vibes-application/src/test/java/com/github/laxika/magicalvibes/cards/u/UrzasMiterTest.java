@@ -27,8 +27,7 @@ class UrzasMiterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         int handSizeBeforeCast = gd.playerHands.get(player1.getId()).size();
-        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Mind Stone"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Mind Stone"));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -50,6 +49,96 @@ class UrzasMiterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Urza's Miter triggers when it is itself destroyed")
+    void selfDestructionOffersPayment() {
+        harness.addToBattlefield(player1, new UrzasMiter());
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.setLibrary(player1, List.of(new Atog()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Urza's Miter"));
+
+        harness.assertInGraveyard(player1, "Urza's Miter");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Atog");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Declining payment does not draw a card")
+    void decliningPaymentDoesNotDraw() {
+        harness.addToBattlefield(player1, new UrzasMiter());
+        harness.addToBattlefield(player1, new MindStone());
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.setLibrary(player1, List.of(new Atog()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Mind Stone"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's destroyed artifact does not trigger Urza's Miter")
+    void opponentsArtifactDoesNotTrigger() {
+        harness.addToBattlefield(player1, new UrzasMiter());
+        harness.addToBattlefield(player2, new MindStone());
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Mind Stone"));
+
+        harness.assertInGraveyard(player2, "Mind Stone");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Insufficient mana cannot buy a card")
+    void insufficientManaDoesNotDraw() {
+        harness.addToBattlefield(player1, new UrzasMiter());
+        harness.addToBattlefield(player1, new MindStone());
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.setLibrary(player1, List.of(new Atog()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Mind Stone"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Paying three mana draws exactly one card")
+    void payingDrawsExactlyOneCard() {
+        harness.addToBattlefield(player1, new UrzasMiter());
+        harness.addToBattlefield(player1, new MindStone());
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.setLibrary(player1, List.of(new Atog(), new Atog()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Mind Stone"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Atog");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.stack).isEmpty();
     }
 }
