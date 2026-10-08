@@ -28,9 +28,68 @@ class VigorousFarmingTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.playLand(player1, 0);
+        harness.handleListChoice(player1, "Untapped");
 
         Permanent forest = findPermanent(player1, "Forest");
         assertThat(forest.isTapped()).isFalse();
+    }
+
+    @Test
+    void opponentsLandsStillEnterTapped() {
+        harness.addToBattlefield(player1, new RootMaze());
+        harness.addToBattlefield(player1, new VigorousFarming());
+        harness.setHand(player2, List.of(new Forest()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.playLand(player2, 0);
+
+        assertThat(findPermanent(player2, "Forest").isTapped()).isTrue();
+    }
+
+    @Test
+    void multipleGrantsStackAndOnlyEnhanceTheSelectedLand() {
+        harness.addToBattlefield(player1, new FutureSight());
+        harness.addToBattlefield(player1, new VigorousFarming());
+        harness.addToBattlefield(player1, new VigorousFarming());
+        Permanent ordinaryForest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromLibraryTop(player1);
+        Permanent enhancedForest = gd.playerBattlefields.get(player1.getId()).getLast();
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(ordinaryForest));
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(enhancedForest));
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(4);
+    }
+
+    @Test
+    void opponentsEndStepDoesNotEnhanceYourLibraryLand() {
+        harness.addToBattlefield(player1, new FutureSight());
+        harness.addToBattlefield(player1, new VigorousFarming());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromLibraryTop(player1);
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).size() - 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
     @Test
