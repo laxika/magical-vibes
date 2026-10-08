@@ -3,12 +3,11 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.TopanFreeblade;
 import com.github.laxika.magicalvibes.cards.w.WallOfWood;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ValeronWardens.class, TopanFreeblade.class, GrizzlyBears.class, WallOfWood.class})
 class ValeronWardensTest extends BaseCardTest {
 
     @Test
@@ -112,15 +112,49 @@ class ValeronWardensTest extends BaseCardTest {
         assertThat(handSize()).isEqualTo(handBefore);
     }
 
+    @Test
+    @DisplayName("Each Wardens draws when one of them becomes renowned")
+    void multipleWardensEachDraw() {
+        Permanent attacker = addCreatureReady(player1, new ValeronWardens());
+        Permanent observer = addCreatureReady(player1, new ValeronWardens());
+        setupLibrary();
+        int handBefore = handSize();
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(attacker.isRenowned()).isTrue();
+        assertThat(observer.isRenowned()).isFalse();
+        assertThat(handSize()).isEqualTo(handBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Two creatures becoming renowned in the same combat each draw a card")
+    void simultaneousRenownDrawsForEachCreature() {
+        Permanent wardens = addCreatureReady(player1, new ValeronWardens());
+        Permanent freeblade = addCreatureReady(player1, new TopanFreeblade());
+        setupLibrary();
+        int handBefore = handSize();
+
+        declareAttackers(player1, List.of(0, 1));
+        resolveAllTriggers();
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(wardens.isRenowned()).isTrue();
+        assertThat(freeblade.isRenowned()).isTrue();
+        assertThat(handSize()).isEqualTo(handBefore + 2);
+    }
+
     private int handSize() {
         return harness.getGameData().playerHands.get(player1.getId()).size();
     }
 
     private void setupLibrary() {
-        GameData gameData = harness.getGameData();
-        for (var deck : List.of(gameData.playerDecks.get(player1.getId()), gameData.playerDecks.get(player2.getId()))) {
-            deck.clear();
-            deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        for (var player : List.of(player1, player2)) {
+            harness.setLibrary(player, List.of(new GrizzlyBears(), new GrizzlyBears()));
         }
     }
 }
