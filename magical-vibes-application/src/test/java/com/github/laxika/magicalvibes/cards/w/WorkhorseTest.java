@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(Workhorse.class)
+@CardUsed({Workhorse.class})
 class WorkhorseTest extends BaseCardTest {
 
     @Test
@@ -63,6 +63,60 @@ class WorkhorseTest extends BaseCardTest {
 
         assertThat(workhorse.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("All four counters can produce mana, including the counter whose removal kills Workhorse")
+    void canConvertAllFourCountersToMana() {
+        Permanent workhorse = harness.enterBattlefieldAndReturn(player1, new Workhorse());
+
+        for (int i = 1; i <= 4; i++) {
+            harness.activateAbility(player1, 0, null, null);
+
+            assertThat(workhorse.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4 - i);
+            assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(i);
+            assertThat(gd.stack).isEmpty();
+            if (i < 4) {
+                harness.assertOnBattlefield(player1, "Workhorse");
+            }
+        }
+
+        harness.assertNotOnBattlefield(player1, "Workhorse");
+        harness.assertInGraveyard(player1, "Workhorse");
+    }
+
+    @Test
+    @DisplayName("A tapped Workhorse can remove a counter without untapping")
+    void canActivateWhileTapped() {
+        Permanent workhorse = harness.enterBattlefieldAndReturn(player1, new Workhorse());
+        workhorse.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(workhorse.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(workhorse.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Workhorse produces mana immediately while another spell is on the stack")
+    void producesManaWithoutResolvingPendingSpell() {
+        Permanent workhorse = harness.enterBattlefieldAndReturn(player1, new Workhorse());
+        harness.setHand(player1, List.of(new Workhorse()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castCreature(player1, 0);
+        var pendingSpell = gd.stack.getFirst();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(workhorse.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).containsExactly(pendingSpell);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(workhorse);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
     }
 
     private Permanent addReadyWorkhorse(Player player, int counters) {
