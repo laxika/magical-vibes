@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.c.Cancel;
+import com.github.laxika.magicalvibes.cards.a.AlpineGrizzly;
+import com.github.laxika.magicalvibes.cards.b.BeanstalkGiant;
+import com.github.laxika.magicalvibes.cards.f.FertileFootsteps;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -8,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VillainousWealth.class, Cancel.class, Forest.class, GrizzlyBears.class, Shock.class,
+        AlpineGrizzly.class, ValleyDasher.class, BeanstalkGiant.class, FertileFootsteps.class})
 class VillainousWealthTest extends BaseCardTest {
 
     @Test
@@ -81,11 +87,97 @@ class VillainousWealthTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void zeroExilesNothing() {
+        Forest forest = new Forest();
+        harness.setLibrary(player2, List.of(forest));
+
+        cast(0, player2.getId());
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(forest);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Villainous Wealth");
+    }
+
+    @Test
+    void shortLibraryExilesOnlyAvailableCards() {
+        Forest forest = new Forest();
+        harness.setLibrary(player2, List.of(forest));
+
+        cast(3, player2.getId());
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(forest);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void canDeclineAllSpells() {
+        ValleyDasher dasher = new ValleyDasher();
+        harness.setLibrary(player2, List.of(dasher));
+
+        cast(2, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(dasher);
+        harness.assertNotOnBattlefield(player1, "Valley Dasher");
+        harness.assertInGraveyard(player1, "Villainous Wealth");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void doesNotOfferSpellsAboveXOrPreviouslyExiledCards() {
+        AlpineGrizzly grizzly = new AlpineGrizzly();
+        ValleyDasher dasher = new ValleyDasher();
+        ValleyDasher previouslyExiled = new ValleyDasher();
+        harness.setExile(player2, List.of(previouslyExiled));
+        harness.setLibrary(player2, List.of(grizzly, dasher));
+
+        cast(2, player2.getId());
+
+        PendingInteraction.ImprovisationCapstoneCastChoice interaction =
+                (PendingInteraction.ImprovisationCapstoneCastChoice) gd.interaction.activeInteraction();
+        assertThat(interaction.validCardIds()).containsExactly(dasher.getId());
+    }
+
+    @Test
+    void castsMultipleCreaturesUnderCasterControl() {
+        AlpineGrizzly grizzly = new AlpineGrizzly();
+        ValleyDasher dasher = new ValleyDasher();
+        Forest forest = new Forest();
+        harness.setLibrary(player2, List.of(grizzly, dasher, forest));
+
+        cast(3, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(grizzly.getId(), dasher.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Alpine Grizzly");
+        harness.assertOnBattlefield(player1, "Valley Dasher");
+        harness.assertNotOnBattlefield(player2, "Alpine Grizzly");
+        harness.assertNotOnBattlefield(player2, "Valley Dasher");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(forest);
+    }
+
+    @Test
+    void offersAdventureWhoseManaValueIsWithinX() {
+        BeanstalkGiant giant = new BeanstalkGiant();
+        harness.setLibrary(player2, List.of(giant, new Forest(), new Forest()));
+
+        cast(3, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.ImprovisationCapstoneCastChoice.class);
+        PendingInteraction.ImprovisationCapstoneCastChoice interaction =
+                (PendingInteraction.ImprovisationCapstoneCastChoice) gd.interaction.activeInteraction();
+        assertThat(interaction.validCardIds()).contains(giant.getId());
+    }
+
     private void cast(int xValue, java.util.UUID targetPlayerId) {
         harness.setHand(player1, List.of(new VillainousWealth()));
         addMana(xValue);
-        harness.castSorcery(player1, 0, xValue, targetPlayerId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, xValue, targetPlayerId);
     }
 
     private void addMana(int xValue) {
