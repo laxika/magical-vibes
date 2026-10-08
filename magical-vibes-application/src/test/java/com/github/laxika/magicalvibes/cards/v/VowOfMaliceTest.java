@@ -1,24 +1,26 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.a.AwakenedSkyclave;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VowOfMalice.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({VowOfMalice.class, GrizzlyBears.class, FountainOfYouth.class, GarrukWildspeaker.class, Ornithopter.class, RagingGoblin.class, InvasionOfZendikar.class, AwakenedSkyclave.class})
 class VowOfMaliceTest extends BaseCardTest {
 
     @Test
@@ -47,10 +49,7 @@ class VowOfMaliceTest extends BaseCardTest {
         aura.setAttachedTo(creature.getId());
         gd.playerBattlefields.get(player2.getId()).add(aura);
 
-        beginAttack(player1);
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1,
-                List.of(0), Map.of(0, player2.getId())))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -82,10 +81,73 @@ class VowOfMaliceTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private void beginAttack(Player attacker) {
-        harness.forceActivePlayer(attacker);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+    @Test
+    @DisplayName("The enchanted creature cannot attack the Aura controller's planeswalker")
+    void cannotAttackAuraControllersPlaneswalker() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new VowOfMalice());
+        aura.setAttachedTo(creature.getId());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new GarrukWildspeaker());
+
+        assertThat(als.canAttackDefender(gd, creature, planeswalker.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature enchanted by its own controller can attack the opponent")
+    void canAttackOpponentWhenAuraHasSameController() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new VowOfMalice());
+        aura.setAttachedTo(creature.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(creature.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Removing the Aura ends its attack restriction")
+    void attackRestrictionEndsWhenAuraLeaves() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new VowOfMalice());
+        aura.setAttachedTo(creature.getId());
+        assertThat(als.canAttackDefender(gd, creature, player2.getId())).isFalse();
+
+        gd.playerBattlefields.get(player2.getId()).remove(aura);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(creature.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Intimidate uses the creature's colors and permits artifact blockers")
+    void intimidateRestrictsBlocking() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new VowOfMalice());
+        aura.setAttachedTo(creature.getId());
+        Permanent greenBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent redBlocker = addCreatureReady(player2, new RagingGoblin());
+        Permanent artifactBlocker = addCreatureReady(player2, new Ornithopter());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        List<Permanent> defenders = gd.playerBattlefields.get(player2.getId());
+        assertThat(bls.canBlockAttacker(gd, greenBlocker, creature, defenders)).isTrue();
+        assertThat(bls.canBlockAttacker(gd, redBlocker, creature, defenders)).isFalse();
+        assertThat(bls.canBlockAttacker(gd, artifactBlocker, creature, defenders)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The Aura does not prevent attacks against battles its controller controls")
+    void canAttackBattleControlledByAuraController() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfZendikar());
+        battle.setProtectorPlayerId(player2.getId());
+        assertThat(als.canAttackDefender(gd, creature, battle.getId())).isTrue();
+
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new VowOfMalice());
+        aura.setAttachedTo(creature.getId());
+
+        assertThat(als.canAttackDefender(gd, creature, battle.getId())).isTrue();
     }
 }
