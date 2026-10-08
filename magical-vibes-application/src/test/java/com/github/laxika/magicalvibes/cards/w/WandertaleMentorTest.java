@@ -21,7 +21,7 @@ class WandertaleMentorTest extends BaseCardTest {
     @Test
     @DisplayName("Taps for red mana")
     void tapsForRedMana() {
-        Permanent mentor = addReadyMentor();
+        Permanent mentor = addCreatureReady(player1, new WandertaleMentor());
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -36,7 +36,7 @@ class WandertaleMentorTest extends BaseCardTest {
     @Test
     @DisplayName("Taps for green mana")
     void tapsForGreenMana() {
-        Permanent mentor = addReadyMentor();
+        Permanent mentor = addCreatureReady(player1, new WandertaleMentor());
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -60,12 +60,10 @@ class WandertaleMentorTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent mentor = findPermanent(player1, "Wandertale Mentor");
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(mentor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(mentor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -83,15 +81,60 @@ class WandertaleMentorTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent mentor = findPermanent(player1, "Wandertale Mentor");
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(mentor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
-    private Permanent addReadyMentor() {
+    @Test
+    @DisplayName("Crossing four mana triggers only the Mentors already on the battlefield")
+    void crossingThresholdTriggersOnlyExistingMentorsOnce() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new WandertaleMentor());
+        harness.setHand(player1, List.of(new WandertaleMentor(), new WandertaleMentor(), new WandertaleMentor()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castCreature(player1, 0);
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+        Permanent second = gd.playerBattlefields.get(player1.getId()).get(1);
+        assertThat(original.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.castCreature(player1, 0);
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+        Permanent third = gd.playerBattlefields.get(player1.getId()).get(2);
+        assertThat(original.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(third.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.castCreature(player1, 0);
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+        assertThat(original.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(third.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent expending four does not trigger the Mentor")
+    void opponentSpendingDoesNotTriggerMentor() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         Permanent mentor = harness.addToBattlefieldAndReturn(player1, new WandertaleMentor());
-        mentor.setSummoningSick(false);
-        return mentor;
+        harness.setHand(player2, List.of(new Shock(), new Shock(), new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 4);
+
+        for (int i = 0; i < 4; i++) {
+            harness.castAndResolveInstant(player2, 0, player1.getId());
+        }
+
+        assertThat(mentor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
