@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.l.LushGrowth;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Piracy;
+import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
 import com.github.laxika.magicalvibes.cards.t.Twiddle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Forest.class, Mountain.class, VernalBloom.class})
+@CardUsed({DryadOfTheIlysianGrove.class, Forest.class, LushGrowth.class, Mountain.class,
+        Piracy.class, SongOfTheDryads.class, Twiddle.class, VernalBloom.class})
 class VernalBloomTest extends BaseCardTest {
 
     @Test
@@ -152,5 +154,42 @@ class VernalBloomTest extends BaseCardTest {
         harness.handleListChoice(player1, "GREEN");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Vernal Bloom has no effect until its spell resolves")
+    void bonusStartsOnlyAfterResolution() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.castFromHand(player1, new VernalBloom(), "{3}{G}");
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed(SongOfTheDryads.class)
+    @DisplayName("Vernal Bloom stops adding mana after Song of the Dryads removes its ability")
+    void lostPrintedAbilityDoesNotTrigger() {
+        var bloom = harness.addToBattlefieldAndReturn(player1, new VernalBloom());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new SongOfTheDryads()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0, bloom.getId());
+        harness.passBothPriorities();
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
