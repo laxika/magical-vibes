@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
@@ -35,8 +33,8 @@ class SokenzanTest extends BaseCardTest {
 
     @Test
     void givesAllCreaturesPlusOnePlusOneAndHaste() {
-        Permanent ownCreature = addReadyCreature(player1, new GrizzlyBears());
-        Permanent opposingCreature = addReadyCreature(player2, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
 
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
@@ -54,9 +52,9 @@ class SokenzanTest extends BaseCardTest {
 
     @Test
     void chaosUntapsCreaturesThatAttackedAndAddsCombatAndMainPhaseDuringMainPhase() {
-        Permanent attackedOwnCreature = addReadyCreature(player1, new GrizzlyBears());
-        Permanent attackedOpposingCreature = addReadyCreature(player2, new GrizzlyBears());
-        Permanent nonAttackedCreature = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attackedOwnCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attackedOpposingCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent nonAttackedCreature = addCreatureReady(player1, new GrizzlyBears());
         attackedOwnCreature.setAttackedThisTurn(true);
         attackedOpposingCreature.setAttackedThisTurn(true);
         attackedOwnCreature.tap();
@@ -75,7 +73,7 @@ class SokenzanTest extends BaseCardTest {
 
     @Test
     void chaosOutsideMainPhaseStillUntapsButDoesNotAddAnotherCombatAndMainPhase() {
-        Permanent attackedCreature = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attackedCreature = addCreatureReady(player1, new GrizzlyBears());
         attackedCreature.setAttackedThisTurn(true);
         attackedCreature.tap();
 
@@ -87,10 +85,52 @@ class SokenzanTest extends BaseCardTest {
         assertThat(gd.additionalCombatMainPhasePairs).isZero();
     }
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void chaosDuringPrecombatMainAddsCombatEvenWhenNoCreatureAttacked() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.additionalCombatMainPhasePairs).isEqualTo(1);
+        assertThat(gd.additionalCombatMainPhasePairsReturnStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+    }
+
+    @Test
+    void repeatedChaosAddsOneCombatAndMainPhasePerResolution() {
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.additionalCombatMainPhasePairs).isEqualTo(2);
+        assertThat(gd.additionalCombatMainPhasePairsReturnStep).isEqualTo(TurnStep.END_STEP);
+    }
+
+    @Test
+    void chaosDoesNotUntapCreatureThatOnlyBlocked() {
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setBlocking(true);
+        blocker.tap();
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+
+        assertThat(blocker.isTapped()).isTrue();
+        assertThat(gd.additionalCombatMainPhasePairs).isZero();
+    }
+    @Test
+    void chaosStillResolvesAfterPlaneLeaves() {
+        Permanent attackedCreature = addCreatureReady(player1, new GrizzlyBears());
+        attackedCreature.setAttackedThisTurn(true);
+        attackedCreature.tap();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.inMutationScope(() -> planar.chaos(gd));
+        gd.planechase.faceUp.clear();
+
+        harness.passBothPriorities();
+
+        assertThat(attackedCreature.isTapped()).isFalse();
+        assertThat(gd.additionalCombatMainPhasePairs).isEqualTo(1);
     }
 }
