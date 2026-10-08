@@ -118,6 +118,64 @@ class YukiOnnaTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("The mandatory ETB ability can destroy your own artifact")
+    void destroysOwnArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ScrollOfOrigins());
+        harness.setHand(player1, List.of(new YukiOnna()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0, artifact.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Scroll of Origins");
+        harness.assertOnBattlefield(player1, "Yuki-Onna");
+    }
+
+    @Test
+    @DisplayName("The cast trigger returns a borrowed Yuki-Onna to its owner before the Spirit resolves")
+    void returnsToOwnerBeforeSpiritResolves() {
+        YukiOnna yukiOnna = new YukiOnna();
+        yukiOnna.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, yukiOnna);
+        harness.castFromHand(player1, new GhostLitRedeemer(), "{W}");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player2, "Yuki-Onna");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Ghost-Lit Redeemer");
+    }
+
+    @Test
+    @DisplayName("Each Yuki-Onna returns only itself when both cast triggers are accepted")
+    void multipleCopiesReturnIndependently() {
+        addYukiOnna();
+        addYukiOnna();
+        harness.castFromHand(player1, new GhostLitRedeemer(), "{W}");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Ghost-Lit Redeemer");
+    }
+
     private void addYukiOnna() {
         harness.addToBattlefield(player1, new YukiOnna());
     }
