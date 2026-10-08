@@ -265,4 +265,45 @@ class AncestralKnowledgeTest extends BaseCardTest {
                 .anyMatch(log -> log.contains(player1.getUsername() + " shuffles their library."))
                 .noneMatch(log -> log.contains(player2.getUsername() + " shuffles their library."));
     }
+
+    @Test
+    @DisplayName("The enters trigger still resolves after the enchantment leaves and its library is shuffled")
+    void entersTriggerResolvesAfterSourceLeaves() {
+        Card libraryCard = new Abeyance();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.castFromHand(player1, new AncestralKnowledge(), "{1}{U}");
+        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new AuraOfSilence());
+
+        harness.sacrificePermanent(player1, 1,
+                harness.getPermanentId(player1, "Ancestral Knowledge"));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Ancestral Knowledge");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains(player1.getUsername() + " shuffles their library."));
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getId).containsExactly(libraryCard.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep does not trigger during the opponent's upkeep")
+    void noCumulativeUpkeepOnOpponentTurn() {
+        Permanent knowledge = harness.addToBattlefieldAndReturn(player1, new AncestralKnowledge());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(knowledge.getCounterCount(CounterType.AGE)).isZero();
+        harness.assertOnBattlefield(player1, "Ancestral Knowledge");
+    }
 }
