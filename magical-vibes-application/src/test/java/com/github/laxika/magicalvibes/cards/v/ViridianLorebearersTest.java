@@ -156,4 +156,37 @@ class ViridianLorebearersTest extends BaseCardTest {
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
     }
+
+    @Test
+    @DisplayName("Can target itself even though activating taps it")
+    void canTargetItself() {
+        Permanent source = addCreatureReady(player1, new ViridianLorebearers());
+        harness.addToBattlefield(player2, new CranialPlating());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(source.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Artifact changes after resolution do not change the boost")
+    void boostIsFixedAfterResolution() {
+        addCreatureReady(player1, new ViridianLorebearers());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SkyhunterProwler());
+        harness.addToBattlefield(player2, new CranialPlating());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.addToBattlefield(player2, new CranialPlating());
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
+    }
 }
