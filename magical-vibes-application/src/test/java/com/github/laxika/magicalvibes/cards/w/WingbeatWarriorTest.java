@@ -51,6 +51,45 @@ class WingbeatWarriorTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.FIRST_STRIKE)).isFalse();
     }
 
+    @Test
+    void castingFaceUpDoesNotGrantFirstStrike() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
+        harness.setHand(player1, List.of(new WingbeatWarrior()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent warrior = findPermanent(player1, "Wingbeat Warrior");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    void firstStrikeIsGrantedOnlyWhenTheFaceUpTriggerResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
+        Permanent warrior = castFaceDown();
+        assertThat(warrior.isFaceDown()).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(warrior));
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThat(warrior.isFaceDown()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
     private Permanent castFaceDown() {
         harness.setHand(player1, List.of(new WingbeatWarrior()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
