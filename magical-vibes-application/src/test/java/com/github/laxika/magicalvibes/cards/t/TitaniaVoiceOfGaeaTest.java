@@ -314,4 +314,45 @@ class TitaniaVoiceOfGaeaTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
+
+    @Test
+    void opponentsUpkeepDoesNotTriggerMeld() {
+        harness.addToBattlefield(player1, new TitaniaVoiceOfGaea());
+        harness.addToBattlefield(player1, new ArgothSanctumOfNature());
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Titania, Voice of Gaea");
+        harness.assertOnBattlefield(player1, "Argoth, Sanctum of Nature");
+    }
+
+    @Test
+    void missingArgothDoesNotTriggerMeld() {
+        harness.addToBattlefield(player1, new TitaniaVoiceOfGaea());
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Titania, Voice of Gaea");
+    }
+
+    @Test
+    void losingArgothBeforeResolutionPreventsMeld() {
+        Permanent titania = harness.addToBattlefieldAndReturn(player1, new TitaniaVoiceOfGaea());
+        Permanent argoth = harness.addToBattlefieldAndReturn(player1, new ArgothSanctumOfNature());
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, argoth));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(titania).doesNotContain(argoth);
+        harness.assertNotOnBattlefield(player1, "Titania, Gaea Incarnate");
+        harness.assertInGraveyard(player1, "Argoth, Sanctum of Nature");
+    }
 }
