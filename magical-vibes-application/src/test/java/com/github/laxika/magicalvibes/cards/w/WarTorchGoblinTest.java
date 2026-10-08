@@ -13,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(WarTorchGoblin.class)
+@CardUsed({WarTorchGoblin.class})
 class WarTorchGoblinTest extends BaseCardTest {
 
     @Test
@@ -62,5 +62,71 @@ class WarTorchGoblinTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, blocker.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Goblin can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent source = addCreatureReady(player1, new WarTorchGoblin());
+        source.setTapped(true);
+        source.setSummoningSick(true);
+        addCreatureReady(player1, new WarTorchGoblin());
+        Permanent blocker = addCreatureReady(player2, new WarTorchGoblin());
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, blocker.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(source);
+        harness.assertInGraveyard(player1, "War-Torch Goblin");
+        assertThat(blocker.getMarkedDamage()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        harness.assertInGraveyard(player2, "War-Torch Goblin");
+    }
+
+    @Test
+    @DisplayName("The ability can target its controller's blocking creature")
+    void canTargetOwnBlockingCreature() {
+        addCreatureReady(player1, new WarTorchGoblin());
+        Permanent blocker = addCreatureReady(player1, new WarTorchGoblin());
+        addCreatureReady(player2, new WarTorchGoblin());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(blocker);
+    }
+
+    @Test
+    @DisplayName("A blocking Goblin may target itself, but sacrifice makes the target illegal")
+    void selfTargetBecomesIllegalAfterPayingSacrificeCost() {
+        addCreatureReady(player1, new WarTorchGoblin());
+        Permanent blocker = addCreatureReady(player2, new WarTorchGoblin());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.activateAbility(player2, 0, null, blocker.getId());
+
+        harness.assertNotOnBattlefield(player2, "War-Torch Goblin");
+        harness.assertInGraveyard(player2, "War-Torch Goblin");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(blocker.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }
