@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -19,6 +21,65 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WormwoodTreefolk.class, Forest.class, Swamp.class})
 class WormwoodTreefolkTest extends BaseCardTest {
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    @DisplayName("Either ability can be activated while tapped and summoning sick")
+    void abilityDoesNotRequireTappingOrHaste(int abilityIndex) {
+        Permanent treefolk = harness.addToBattlefieldAndReturn(player1, new WormwoodTreefolk());
+        treefolk.setSummoningSick(true);
+        treefolk.setTapped(true);
+        harness.addMana(player1, abilityIndex == 0 ? ManaColor.GREEN : ManaColor.BLACK, 2);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.activateAbility(player1, 0, abilityIndex, null, null);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, treefolk,
+                abilityIndex == 0 ? Keyword.FORESTWALK : Keyword.SWAMPWALK)).isTrue();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
+        assertThat(treefolk.isTapped()).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    @DisplayName("Activating an already granted landwalk ability still deals damage")
+    void repeatedActivationStillDealsDamage(int abilityIndex) {
+        Permanent treefolk = addCreatureReady(player1, new WormwoodTreefolk());
+        harness.addMana(player1, abilityIndex == 0 ? ManaColor.GREEN : ManaColor.BLACK, 4);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, abilityIndex, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, abilityIndex, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, treefolk,
+                abilityIndex == 0 ? Keyword.FORESTWALK : Keyword.SWAMPWALK)).isTrue();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 4);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    @DisplayName("Landwalk permits blocking when only the attacking player controls the matching land")
+    void landwalkRequiresDefendingPlayersLand(int abilityIndex) {
+        Permanent treefolk = addCreatureReady(player1, new WormwoodTreefolk());
+        Permanent blocker = addCreatureReady(player2, new WormwoodTreefolk());
+        harness.addToBattlefield(player1, abilityIndex == 0 ? new Forest() : new Swamp());
+        harness.addMana(player1, abilityIndex == 0 ? ManaColor.GREEN : ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, abilityIndex, null, null);
+        harness.passBothPriorities();
+        treefolk.setAttacking(true);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 
     @Test
     @DisplayName("The green ability grants forestwalk and deals 2 damage to its controller")
