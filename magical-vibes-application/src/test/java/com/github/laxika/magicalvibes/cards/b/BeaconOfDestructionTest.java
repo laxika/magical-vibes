@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.w.WanShiTongAllKnowing;
 import com.github.laxika.magicalvibes.cards.c.CranialPlating;
 import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
+import com.github.laxika.magicalvibes.cards.e.EnormousBaloth;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -24,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BeaconOfDestruction.class, DrossCrocodile.class, ChandraNalaar.class, CranialPlating.class,
-        Cancel.class, Unsummon.class, WanShiTongAllKnowing.class})
+        Cancel.class, Unsummon.class, WanShiTongAllKnowing.class, EnormousBaloth.class})
 class BeaconOfDestructionTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -249,4 +250,21 @@ class BeaconOfDestructionTest extends BaseCardTest {
         assertThat(findPermanents(player2, "Spirit")).hasSize(2);
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("An own creature can survive five damage while Beacon is shuffled away")
+    void ownCreatureSurvivesFiveDamage() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new EnormousBaloth());
+        BeaconOfDestruction beacon = new BeaconOfDestruction();
+        harness.setHand(player1, List.of(beacon));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        harness.assertOnBattlefield(player1, "Enormous Baloth");
+        assertThat(creature.getMarkedDamage()).isEqualTo(5);
+        assertThat(gd.playerDecks.get(player1.getId())).containsOnlyOnce(beacon);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(beacon);
+    }
+
 }
