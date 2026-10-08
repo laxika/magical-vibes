@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.k.KnightOfMeadowgrain;
 import com.github.laxika.magicalvibes.cards.t.Tarfire;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -109,13 +110,68 @@ class WellgabberApothecaryTest extends BaseCardTest {
     @DisplayName("Cannot target a tapped creature that is neither Merfolk nor Kithkin")
     void rejectsWrongSubtype() {
         harness.addToBattlefield(player1, new WellgabberApothecary());
-        harness.addToBattlefield(player2, new HillcomberGiant());
-        Permanent giant = findPermanent(player2, "Hillcomber Giant");
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillcomberGiant());
         giant.tap();
 
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, giant.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped Apothecary can protect itself repeatedly while summoning sick")
+    void protectsItselfFromMultipleDamageEvents() {
+        Permanent apothecary = harness.addToBattlefieldAndReturn(player1, new WellgabberApothecary());
+        apothecary.tap();
+        apothecary.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 0, null, apothecary.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Tarfire(), new Tarfire()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, apothecary.getId());
+        harness.castAndResolveInstant(player1, 0, apothecary.getId());
+
+        harness.assertOnBattlefield(player1, "Wellgabber Apothecary");
+        assertThat(apothecary.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("An untapped target is illegal when the ability resolves")
+    void doesNotProtectTargetUntappedBeforeResolution() {
+        harness.addToBattlefield(player1, new WellgabberApothecary());
+        Permanent knight = addTappedKnight();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 0, null, knight.getId());
+        knight.untap();
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Tarfire()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, knight.getId());
+
+        harness.assertNotOnBattlefield(player1, "Knight of Meadowgrain");
+        harness.assertInGraveyard(player1, "Knight of Meadowgrain");
+    }
+
+    @Test
+    @DisplayName("Damage prevention expires at the end of the turn")
+    void preventionExpiresAfterTurn() {
+        harness.addToBattlefield(player1, new WellgabberApothecary());
+        Permanent knight = addTappedKnight();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 0, null, knight.getId());
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.setHand(player2, List.of(new Tarfire()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, knight.getId());
+
+        harness.assertNotOnBattlefield(player1, "Knight of Meadowgrain");
+        harness.assertInGraveyard(player1, "Knight of Meadowgrain");
     }
 }
