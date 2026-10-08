@@ -95,4 +95,67 @@ class ViviOrnitierTest extends BaseCardTest {
     private Permanent addVivi() {
         return harness.addToBattlefieldAndReturn(player1, new ViviOrnitier());
     }
+
+    @Test
+    void manaCanBeSplitBetweenBlueAndRedWithoutUsingTheStack() {
+        Permanent vivi = addVivi();
+        vivi.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        vivi.tap();
+        vivi.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void zeroPowerActivationStillUsesTheActivationForTheTurn() {
+        Permanent vivi = addVivi();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+
+        vivi.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void opponentsNoncreatureSpellDoesNotTriggerVivi() {
+        Permanent vivi = addVivi();
+        harness.setHand(player2, List.of(new Opt()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(vivi.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void triggerStillDealsDamageAfterViviLeavesTheBattlefield() {
+        Permanent vivi = addVivi();
+        harness.setHand(player1, List.of(new Opt()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0);
+
+        gd.playerBattlefields.get(player1.getId()).remove(vivi);
+        gd.playerGraveyards.get(player1.getId()).add(vivi.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+        assertThat(gd.stack).hasSize(1);
+    }
 }
