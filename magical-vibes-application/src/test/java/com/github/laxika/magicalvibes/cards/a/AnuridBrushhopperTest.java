@@ -18,6 +18,61 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class AnuridBrushhopperTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent brushhopper = harness.addToBattlefieldAndReturn(player1, new AnuridBrushhopper());
+        brushhopper.setSummoningSick(true);
+        brushhopper.tap();
+        harness.setHand(player1, List.of(new GiantWarthog(), new GiantWarthog()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Anurid Brushhopper");
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player1, "Anurid Brushhopper");
+        assertThat(returned.getId()).isNotEqualTo(brushhopper.getId());
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(returned.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations pay both costs but return the creature only once")
+    void repeatedActivationsReturnOnlyOnce() {
+        addCreatureReady(player1, new AnuridBrushhopper());
+        harness.setHand(player1, List.of(new GiantWarthog(), new GiantWarthog(),
+                new GiantWarthog(), new GiantWarthog()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Anurid Brushhopper");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Anurid Brushhopper"))
+                .hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Discarding two cards exiles Anurid Brushhopper")
     void discardingTwoCardsExilesIt() {
         addCreatureReady(player1, new AnuridBrushhopper());
