@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -47,5 +49,43 @@ class WardSliverTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(wardSliver);
 
         assertThat(gqs.hasProtectionFrom(gd, laterSliver, CardColor.RED)).isFalse();
+    }
+
+    @ParameterizedTest
+    @EnumSource(CardColor.class)
+    @DisplayName("A Ward Sliver entering without being cast can choose any color")
+    void choosesAnyColorWhenEnteringWithoutBeingCast(CardColor chosenColor) {
+        Permanent opposingSliver = harness.addToBattlefieldAndReturn(player2, new PlatedSliver());
+        Permanent wardSliver = harness.enterBattlefieldAndReturn(player1, new WardSliver());
+        harness.handleListChoice(player1, chosenColor.name());
+
+        for (CardColor color : CardColor.values()) {
+            assertThat(gqs.hasProtectionFrom(gd, wardSliver, color)).isEqualTo(color == chosenColor);
+            assertThat(gqs.hasProtectionFrom(gd, opposingSliver, color)).isEqualTo(color == chosenColor);
+        }
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Multiple Ward Slivers grant independent chosen colors to both players' Slivers")
+    void multipleWardSliversKeepIndependentChoices() {
+        Permanent sliver = harness.addToBattlefieldAndReturn(player1, new PlatedSliver());
+        Permanent redWard = harness.enterBattlefieldAndReturn(player1, new WardSliver());
+        harness.handleListChoice(player1, "RED");
+        Permanent blueWard = harness.enterBattlefieldAndReturn(player2, new WardSliver());
+        harness.handleListChoice(player2, "BLUE");
+
+        for (Permanent permanent : java.util.List.of(sliver, redWard, blueWard)) {
+            assertThat(gqs.hasProtectionFrom(gd, permanent, CardColor.RED)).isTrue();
+            assertThat(gqs.hasProtectionFrom(gd, permanent, CardColor.BLUE)).isTrue();
+            assertThat(gqs.hasProtectionFrom(gd, permanent, CardColor.BLACK)).isFalse();
+        }
+
+        gd.playerBattlefields.get(player1.getId()).remove(redWard);
+
+        for (Permanent permanent : java.util.List.of(sliver, blueWard)) {
+            assertThat(gqs.hasProtectionFrom(gd, permanent, CardColor.RED)).isFalse();
+            assertThat(gqs.hasProtectionFrom(gd, permanent, CardColor.BLUE)).isTrue();
+        }
     }
 }
