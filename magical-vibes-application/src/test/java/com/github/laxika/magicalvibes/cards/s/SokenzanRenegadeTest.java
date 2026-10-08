@@ -106,6 +106,89 @@ class SokenzanRenegadeTest extends BaseCardTest {
         assertThat(renegade.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("Being blocked by multiple creatures triggers bushido only once")
+    void multipleBlockersGiveOnlyOneBushidoBonus() {
+        Permanent renegade = addReadyRenegade(player1);
+        addReadySupportCreature(player2);
+        addReadySupportCreature(player2);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        harness.passBothPriorities();
+
+        assertThat(renegade.getPowerModifier()).isEqualTo(1);
+        assertThat(renegade.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A tie at the beginning of upkeep prevents the ability from triggering")
+    void tiedHandsDoNotTriggerEvenIfLeadAppearsLater() {
+        harness.setHand(player1, List.of(new SakuraTribeScout()));
+        harness.setHand(player2, List.of(new SakuraTribeScout()));
+        harness.addToBattlefield(player1, new SokenzanRenegade());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        harness.setHand(player2, List.of(new SakuraTribeScout(), new SakuraTribeScout()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Sokenzan Renegade");
+        harness.assertNotOnBattlefield(player2, "Sokenzan Renegade");
+    }
+
+    @Test
+    @DisplayName("The upkeep ability uses the hand-size leader at resolution")
+    void newHandSizeLeaderAtResolutionGainsControl() {
+        harness.setHand(player1, List.of(new SakuraTribeScout(), new SakuraTribeScout()));
+        harness.setHand(player2, List.of(new SakuraTribeScout()));
+        harness.addToBattlefield(player1, new SokenzanRenegade());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Sokenzan Renegade");
+        harness.assertOnBattlefield(player2, "Sokenzan Renegade");
+    }
+
+    @Test
+    @DisplayName("The ability does not trigger during an opponent's upkeep")
+    void opponentUpkeepDoesNotChangeControl() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new SakuraTribeScout()));
+        harness.addToBattlefield(player1, new SokenzanRenegade());
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).isEmpty();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Sokenzan Renegade");
+        harness.assertNotOnBattlefield(player2, "Sokenzan Renegade");
+    }
+
+    @Test
+    @DisplayName("After changing control, the ability triggers during the new controller's upkeep")
+    void newControllerUpkeepCanReturnControl() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new SakuraTribeScout()));
+        harness.addToBattlefield(player1, new SokenzanRenegade());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Sokenzan Renegade");
+
+        harness.setHand(player1, List.of(new SakuraTribeScout(), new SakuraTribeScout()));
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player2, "Sokenzan Renegade");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Sokenzan Renegade");
+        harness.assertNotOnBattlefield(player2, "Sokenzan Renegade");
+    }
+
     private Permanent addReadyRenegade(Player player) {
         return addCreatureReady(player, new SokenzanRenegade());
     }
