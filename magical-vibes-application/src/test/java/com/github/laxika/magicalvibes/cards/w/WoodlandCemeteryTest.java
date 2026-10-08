@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WoodlandCemetery.class, Forest.class, Mountain.class, Swamp.class})
 class WoodlandCemeteryTest extends BaseCardTest {
-
-    // ===== Enters tapped (no qualifying lands) =====
 
     @Test
     @DisplayName("Enters tapped when you control no lands")
@@ -46,8 +46,6 @@ class WoodlandCemeteryTest extends BaseCardTest {
         Permanent cemetery = findCemetery(player1);
         assertThat(cemetery.isTapped()).isTrue();
     }
-
-    // ===== Enters untapped (qualifying lands present) =====
 
     @Test
     @DisplayName("Enters untapped when you control a Swamp")
@@ -95,8 +93,6 @@ class WoodlandCemeteryTest extends BaseCardTest {
         assertThat(cemetery.isTapped()).isFalse();
     }
 
-    // ===== Only checks your lands, not opponent's =====
-
     @Test
     @DisplayName("Opponent's Swamp does not satisfy the check")
     void opponentSwampDoesNotCount() {
@@ -112,12 +108,10 @@ class WoodlandCemeteryTest extends BaseCardTest {
         assertThat(cemetery.isTapped()).isTrue();
     }
 
-    // ===== Mana production =====
-
     @Test
     @DisplayName("Tapping for black mana produces one black")
     void tappingProducesBlackMana() {
-        addCemeteryReady(player1);
+        harness.addToBattlefield(player1, new WoodlandCemetery());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -128,7 +122,7 @@ class WoodlandCemeteryTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for green mana produces one green")
     void tappingProducesGreenMana() {
-        addCemeteryReady(player1);
+        harness.addToBattlefield(player1, new WoodlandCemetery());
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -136,13 +130,57 @@ class WoodlandCemeteryTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("A tapped Swamp still lets Woodland Cemetery enter untapped")
+    void entersUntappedWithTappedSwamp() {
+        harness.addToBattlefieldAndReturn(player1, new Swamp()).tap();
+        harness.setHand(player1, List.of(new WoodlandCemetery()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-    private Permanent addCemeteryReady(Player player) {
-        Permanent perm = new Permanent(new WoodlandCemetery());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        harness.playLand(player1, 0);
+
+        assertThat(findCemetery(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A Swamp and Forest in hand do not satisfy the check")
+    void qualifyingLandsInHandDoNotCount() {
+        harness.setHand(player1, List.of(new WoodlandCemetery(), new Swamp(), new Forest()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+
+        assertThat(findCemetery(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Another Woodland Cemetery is neither a Swamp nor a Forest")
+    void anotherCemeteryDoesNotCount() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player1, new WoodlandCemetery());
+        harness.setHand(player1, List.of(new WoodlandCemetery()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> !permanent.getId().equals(existing.getId()))
+                .singleElement().satisfies(permanent -> assertThat(permanent.isTapped()).isTrue());
+    }
+
+    @Test
+    @DisplayName("Opponent's Forest does not satisfy the check")
+    void opponentForestDoesNotCount() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new WoodlandCemetery()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+
+        assertThat(findCemetery(player1).isTapped()).isTrue();
     }
 
     private Permanent findCemetery(Player player) {
