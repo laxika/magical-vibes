@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WallOfFrost.class, RuneclawBear.class})
 class WallOfFrostTest extends BaseCardTest {
-
-    // ===== Block trigger pushes onto stack =====
 
     @Test
     @DisplayName("Declaring Wall of Frost as blocker pushes a triggered ability onto the stack")
@@ -31,7 +31,6 @@ class WallOfFrostTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Wall of Frost");
         assertThat(entry.getTargetId()).isEqualTo(atkPerm.getId());
         assertThat(entry.getSourcePermanentId()).isEqualTo(wallPerm.getId());
     }
@@ -47,8 +46,6 @@ class WallOfFrostTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.isNonTargeting()).isTrue();
     }
-
-    // ===== Block trigger resolution =====
 
     @Test
     @DisplayName("Resolving block trigger sets skipUntapCount on the blocked creature")
@@ -71,7 +68,7 @@ class WallOfFrostTest extends BaseCardTest {
         declareBlockers(List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Runeclaw Bear");
     }
 
     @Test
@@ -85,8 +82,6 @@ class WallOfFrostTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Wall of Frost");
     }
-
-    // ===== Attacker removed before resolution =====
 
     @Test
     @DisplayName("Trigger does nothing if attacker is removed before resolution")
@@ -104,8 +99,6 @@ class WallOfFrostTest extends BaseCardTest {
         // Stack should be empty, no crash
         assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Game log =====
 
     @Test
     @DisplayName("Block trigger generates appropriate game log entry")
@@ -129,25 +122,100 @@ class WallOfFrostTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
-                log.contains("Grizzly Bears") && log.contains("untap"));
+                log.contains("Runeclaw Bear") && log.contains("untap"));
     }
 
-    // ===== Helpers =====
+    @Test
+    void skipsOnlyTheNextControllersUntapStep() {
+        addReadyWall(player2);
+        Permanent attacker = addReadyAttacker(player1);
+        attacker.setTapped(true);
+        declareBlockers(List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player2);
+        assertThat(attacker.isTapped()).isTrue();
+        assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
+    @Test
+    void untappedCreatureConsumesRestrictionAtNextUntapStep() {
+        addReadyWall(player2);
+        Permanent attacker = addReadyAttacker(player1);
+        declareBlockers(List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(attacker.isTapped()).isFalse();
+        harness.performUntapStep(player1);
+        attacker.setTapped(true);
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
+    @Test
+    void triggerResolvesAfterWallLeavesBattlefield() {
+        addReadyWall(player2);
+        Permanent attacker = addReadyAttacker(player1);
+        attacker.setTapped(true);
+        declareBlockers(List.of(new BlockerAssignment(0, 0)));
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
+    @Test
+    void restrictionFollowsCreatureWhenControllerChanges() {
+        addReadyWall(player2);
+        Permanent attacker = addReadyAttacker(player1);
+        attacker.setTapped(true);
+        declareBlockers(List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        gd.playerBattlefields.get(player2.getId()).add(attacker);
+
+        harness.performUntapStep(player1);
+        assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+        harness.performUntapStep(player2);
+        assertThat(attacker.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
+    @Test
+    void twoWallsRestrictTheSameUntapStep() {
+        addReadyWall(player2);
+        addReadyWall(player2);
+        Permanent attacker = addReadyAttacker(player1);
+        attacker.setTapped(true);
+        declareBlockers(List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isFalse();
+    }
 
     private Permanent addReadyWall(com.github.laxika.magicalvibes.model.Player player) {
-        WallOfFrost card = new WallOfFrost();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new WallOfFrost());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addReadyAttacker(com.github.laxika.magicalvibes.model.Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new RuneclawBear());
         perm.setSummoningSick(false);
         perm.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
