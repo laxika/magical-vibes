@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(ValleyMightcaller.class)
+@CardUsed({ValleyMightcaller.class})
 class ValleyMightcallerTest extends BaseCardTest {
 
     @Test
@@ -46,10 +45,7 @@ class ValleyMightcallerTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger when Valley Mightcaller itself enters")
     void doesNotTriggerForItsOwnEntry() {
-        harness.setHand(player1, List.of(new ValleyMightcaller()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ValleyMightcaller(), "{G}");
         harness.passBothPriorities();
 
         Permanent mightcaller = gd.playerBattlefields.get(player1.getId()).getFirst();
@@ -57,26 +53,60 @@ class ValleyMightcallerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    private Permanent addToken(Player player, String name, CardSubtype subtype) {
+    @Test
+    @DisplayName("Another Valley Mightcaller triggers the existing one but not itself")
+    void anotherMightcallerTriggersOnlyExistingMightcaller() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ValleyMightcaller());
+        Permanent second = harness.enterBattlefieldAndReturn(player1, new ValleyMightcaller());
+
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A creature with multiple matching subtypes gives only one counter")
+    void multipleMatchingSubtypesGiveOnlyOneCounter() {
+        Permanent mightcaller = harness.addToBattlefieldAndReturn(player1, new ValleyMightcaller());
+        Permanent token = addToken(player1, "Frog Rabbit", CardSubtype.FROG, CardSubtype.RABBIT);
+
+        triggerPermanentEntry(player1, token);
+
+        assertThat(mightcaller.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The counter is still placed after the entering creature leaves")
+    void enteringCreatureLeavingDoesNotPreventCounter() {
+        Permanent mightcaller = harness.addToBattlefieldAndReturn(player1, new ValleyMightcaller());
+        Permanent entering = harness.enterBattlefieldAndReturn(player1, new ValleyMightcaller());
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(entering);
+        gd.playerGraveyards.get(player1.getId()).add(entering.getCard());
+
+        resolveAllTriggers();
+
+        assertThat(mightcaller.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    private Permanent addToken(Player player, String name, CardSubtype... subtypes) {
         Card card = new Card();
         card.setName(name);
         card.setType(CardType.CREATURE);
-        card.setSubtypes(List.of(subtype));
+        card.setSubtypes(List.of(subtypes));
         card.setToken(true);
         card.setPower(1);
         card.setToughness(1);
 
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
     private void triggerPermanentEntry(Player controller, Permanent enteringPermanent) {
         harness.inMutationScope(() -> harness.getTriggerCollectionService()
                 .checkAllyCreatureEntersTriggers(gd, controller.getId(), enteringPermanent.getCard(), 0));
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
     }
 }
