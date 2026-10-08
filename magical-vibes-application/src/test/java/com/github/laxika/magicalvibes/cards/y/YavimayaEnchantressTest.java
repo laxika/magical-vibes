@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.t.Telepathy;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,14 +17,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({GrizzlyBears.class, HolyStrength.class, Telepathy.class, YavimayaEnchantress.class})
 class YavimayaEnchantressTest extends BaseCardTest {
 
-    // ===== Static boost =====
-
     @Test
     @DisplayName("Base stats are 2/2 with no enchantments on battlefield")
     void baseStatsWithNoEnchantments() {
-        harness.addToBattlefield(player1, new YavimayaEnchantress());
+        Permanent enchantress = harness.addToBattlefieldAndReturn(player1, new YavimayaEnchantress());
 
-        Permanent enchantress = findPermanent(player1, "Yavimaya Enchantress");
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(2);
     }
@@ -31,10 +29,9 @@ class YavimayaEnchantressTest extends BaseCardTest {
     @Test
     @DisplayName("Enchantments outside the battlefield do not boost")
     void enchantmentsOutsideBattlefieldDoNotBoost() {
-        harness.addToBattlefield(player1, new YavimayaEnchantress());
+        Permanent enchantress = harness.addToBattlefieldAndReturn(player1, new YavimayaEnchantress());
         harness.setGraveyard(player1, List.of(new Telepathy()));
 
-        Permanent enchantress = findPermanent(player1, "Yavimaya Enchantress");
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(2);
     }
@@ -42,10 +39,9 @@ class YavimayaEnchantressTest extends BaseCardTest {
     @Test
     @DisplayName("Gets +1/+1 for own enchantment on battlefield")
     void boostedByOwnEnchantment() {
-        harness.addToBattlefield(player1, new YavimayaEnchantress());
+        Permanent enchantress = harness.addToBattlefieldAndReturn(player1, new YavimayaEnchantress());
         harness.addToBattlefield(player1, new Telepathy());
 
-        Permanent enchantress = findPermanent(player1, "Yavimaya Enchantress");
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(3);
     }
@@ -53,10 +49,9 @@ class YavimayaEnchantressTest extends BaseCardTest {
     @Test
     @DisplayName("Gets +1/+1 for own enchantment on battlefield")
     void boostedByOwnEnchantmentUpstreamReview() {
-        harness.addToBattlefield(player1, new YavimayaEnchantress());
+        Permanent enchantress = harness.addToBattlefieldAndReturn(player1, new YavimayaEnchantress());
         harness.addToBattlefield(player1, new Telepathy());
 
-        Permanent enchantress = findPermanent(player1, "Yavimaya Enchantress");
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(3);
     }
@@ -64,10 +59,9 @@ class YavimayaEnchantressTest extends BaseCardTest {
     @Test
     @DisplayName("Gets +1/+1 for opponent's enchantment on battlefield")
     void boostedByOpponentEnchantment() {
-        harness.addToBattlefield(player1, new YavimayaEnchantress());
+        Permanent enchantress = harness.addToBattlefieldAndReturn(player1, new YavimayaEnchantress());
         harness.addToBattlefield(player2, new Telepathy());
 
-        Permanent enchantress = findPermanent(player1, "Yavimaya Enchantress");
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(3);
     }
@@ -75,10 +69,9 @@ class YavimayaEnchantressTest extends BaseCardTest {
     @Test
     @DisplayName("Gets +1/+1 for opponent's enchantment on battlefield")
     void boostedByOpponentEnchantmentUpstreamReview() {
-        harness.addToBattlefield(player1, new YavimayaEnchantress());
+        Permanent enchantress = harness.addToBattlefieldAndReturn(player1, new YavimayaEnchantress());
         harness.addToBattlefield(player2, new Telepathy());
 
-        Permanent enchantress = findPermanent(player1, "Yavimaya Enchantress");
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(3);
     }
@@ -86,11 +79,10 @@ class YavimayaEnchantressTest extends BaseCardTest {
     @Test
     @DisplayName("Gets +1/+1 for each enchantment, stacks with multiple")
     void boostedByMultipleEnchantments() {
-        harness.addToBattlefield(player1, new YavimayaEnchantress());
+        Permanent enchantress = harness.addToBattlefieldAndReturn(player1, new YavimayaEnchantress());
         harness.addToBattlefield(player1, new Telepathy());
         harness.addToBattlefield(player2, new Telepathy());
 
-        Permanent enchantress = findPermanent(player1, "Yavimaya Enchantress");
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(4);
     }
@@ -98,11 +90,10 @@ class YavimayaEnchantressTest extends BaseCardTest {
     @Test
     @DisplayName("Gets +1/+1 for each enchantment, stacks with multiple")
     void boostedByMultipleEnchantmentsUpstreamReview() {
-        harness.addToBattlefield(player1, new YavimayaEnchantress());
+        Permanent enchantress = harness.addToBattlefieldAndReturn(player1, new YavimayaEnchantress());
         harness.addToBattlefield(player1, new Telepathy());
         harness.addToBattlefield(player2, new Telepathy());
 
-        Permanent enchantress = findPermanent(player1, "Yavimaya Enchantress");
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(4);
     }
@@ -110,10 +101,9 @@ class YavimayaEnchantressTest extends BaseCardTest {
     @Test
     @DisplayName("Boost updates when enchantment is removed")
     void boostUpdatesWhenEnchantmentRemoved() {
-        harness.addToBattlefield(player1, new YavimayaEnchantress());
+        Permanent enchantress = harness.addToBattlefieldAndReturn(player1, new YavimayaEnchantress());
         harness.addToBattlefield(player1, new Telepathy());
 
-        Permanent enchantress = findPermanent(player1, "Yavimaya Enchantress");
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(3);
 
@@ -128,10 +118,9 @@ class YavimayaEnchantressTest extends BaseCardTest {
     @Test
     @DisplayName("Boost updates when enchantment is removed")
     void boostUpdatesWhenEnchantmentRemovedUpstreamReview() {
-        harness.addToBattlefield(player1, new YavimayaEnchantress());
+        Permanent enchantress = harness.addToBattlefieldAndReturn(player1, new YavimayaEnchantress());
         Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new Telepathy());
 
-        Permanent enchantress = findPermanent(player1, "Yavimaya Enchantress");
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(3);
 
@@ -146,10 +135,9 @@ class YavimayaEnchantressTest extends BaseCardTest {
     @Test
     @DisplayName("Non-enchantment permanents do not boost")
     void nonEnchantmentDoesNotBoost() {
-        harness.addToBattlefield(player1, new YavimayaEnchantress());
+        Permanent enchantress = harness.addToBattlefieldAndReturn(player1, new YavimayaEnchantress());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent enchantress = findPermanent(player1, "Yavimaya Enchantress");
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(2);
     }
@@ -158,13 +146,45 @@ class YavimayaEnchantressTest extends BaseCardTest {
     @DisplayName("Auras on the battlefield also count as enchantments")
     void aurasCountAsEnchantments() {
         Permanent spider = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new YavimayaEnchantress());
+        Permanent enchantress = harness.addToBattlefieldAndReturn(player1, new YavimayaEnchantress());
 
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
         aura.setAttachedTo(spider.getId());
 
-        Permanent enchantress = findPermanent(player1, "Yavimaya Enchantress");
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Boost updates only when an enchantment spell resolves")
+    void boostUpdatesWhenEnchantmentResolves() {
+        Permanent enchantress = harness.addToBattlefieldAndReturn(player1, new YavimayaEnchantress());
+        harness.setHand(player1, List.of(new Telepathy()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(2);
+        harness.castEnchantment(player1, 0);
+        assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An Aura enchanting the Enchantress contributes both its own bonus and the enchantment count")
+    void attachedAuraBonusStacksWithEnchantmentCount() {
+        Permanent enchantress = harness.addToBattlefieldAndReturn(player1, new YavimayaEnchantress());
+        harness.setHand(player1, List.of(new HolyStrength()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, enchantress.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(5);
     }
 }
