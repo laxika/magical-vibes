@@ -46,6 +46,44 @@ class SilverquillCharmTest extends BaseCardTest {
     }
 
     @Test
+    void counterModeCanTargetACreatureWithPowerGreaterThanTwo() {
+        Permanent baloth = harness.addToBattlefieldAndReturn(player1, new EnormousBaloth());
+        harness.setHand(player1, List.of(new SilverquillCharm()));
+        addWB();
+
+        harness.castInstant(player1, 0, 0, baloth.getId());
+        harness.passBothPriorities();
+
+        assertThat(baloth.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Enormous Baloth");
+    }
+
+    @Test
+    void counterModeDoesNothingWhenItsTargetIsExiledInResponse() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SilverquillCharm(), new SilverquillCharm()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0, 0, bears.getId());
+        harness.castInstant(player1, 0, 1, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.exiledCards).anyMatch(e -> e.card().getName().equals("Grizzly Bears"));
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Silverquill Charm"))
+                .hasSize(2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
     void countersCanTargetAnOpponentsCreatureWithoutDrainingLife() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new SilverquillCharm()));
