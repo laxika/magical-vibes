@@ -71,12 +71,68 @@ class WhisperSquadTest extends BaseCardTest {
     }
 
     private void addReadyWhisperSquad() {
-        Permanent squad = findPermanentAfterAdding();
+        Permanent squad = harness.addToBattlefieldAndReturn(player1, new WhisperSquad());
         squad.setSummoningSick(false);
     }
 
-    private Permanent findPermanentAfterAdding() {
+    @Test
+    @DisplayName("A tapped, summoning-sick Whisper Squad can activate its ability")
+    void tappedSummoningSickSquadCanActivate() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new WhisperSquad());
+        source.setSummoningSick(true);
+        source.tap();
+        WhisperSquad fetched = new WhisperSquad();
+        harness.setLibrary(player1, List.of(fetched));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(findPermanents(player1, "Whisper Squad")).hasSize(2);
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The controller may fail to find even with a Whisper Squad in the library")
+    void mayFailToFindMatchingCard() {
         harness.addToBattlefield(player1, new WhisperSquad());
-        return findPermanent(player1, "Whisper Squad");
+        WhisperSquad unchosen = new WhisperSquad();
+        harness.setLibrary(player1, List.of(unchosen));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanents(player1, "Whisper Squad")).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unchosen);
+    }
+
+    @Test
+    @DisplayName("A fetched tapped Whisper Squad can immediately search for another copy")
+    void fetchedSquadCanImmediatelyActivate() {
+        harness.addToBattlefield(player1, new WhisperSquad());
+        WhisperSquad first = new WhisperSquad();
+        WhisperSquad second = new WhisperSquad();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(findPermanents(player1, "Whisper Squad")).hasSize(3);
+        assertThat(findPermanents(player1, "Whisper Squad").stream()
+                .filter(permanent -> permanent.getCard() == first || permanent.getCard() == second))
+                .allSatisfy(permanent -> assertThat(permanent.isTapped()).isTrue());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 }
