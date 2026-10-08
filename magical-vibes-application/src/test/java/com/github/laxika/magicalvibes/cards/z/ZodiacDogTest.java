@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ZodiacDog.class, ShuFootSoldiers.class})
+@CardUsed({ZodiacDog.class, ShuFootSoldiers.class, Mountain.class})
 class ZodiacDogTest extends BaseCardTest {
 
     // ===== Mountainwalk =====
@@ -58,7 +58,6 @@ class ZodiacDogTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Mountain.class)
     @DisplayName("Zodiac Dog can be blocked when only the attacking player controls a Mountain")
     void canBeBlockedWhenOnlyAttackerControlsMountain() {
         harness.addToBattlefield(player1, new Mountain());
@@ -76,5 +75,24 @@ class ZodiacDogTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
 
         assertThat(blockerPerm.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Mountain still makes Zodiac Dog unblockable")
+    void cannotBeBlockedWhenDefendersMountainIsTapped() {
+        harness.addToBattlefield(player2, new Mountain());
+        findPermanent(player2, "Mountain").setTapped(true);
+        Permanent blocker = addCreatureReady(player2, new ShuFootSoldiers());
+        Permanent attacker = addCreatureReady(player1, new ZodiacDog());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
     }
 }
