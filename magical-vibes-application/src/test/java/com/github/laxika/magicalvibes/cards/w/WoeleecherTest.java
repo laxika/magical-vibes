@@ -20,12 +20,11 @@ class WoeleecherTest extends BaseCardTest {
     @DisplayName("Removes a -1/-1 counter from target creature and gains 2 life")
     void removesCounterAndGainsLife() {
         addCreatureReady(player1, new Woeleecher());
-        harness.addToBattlefield(player1, new BarrentonCragtreads());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BarrentonCragtreads());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.setLife(player1, 20);
 
         // Barrenton Cragtreads (3/3) survives with two -1/-1 counters (1/1); one is removed.
-        Permanent target = findPermanent(player1, "Barrenton Cragtreads");
         target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
@@ -40,12 +39,11 @@ class WoeleecherTest extends BaseCardTest {
     void counterComesOffTheTargetNotTheSource() {
         Permanent woeleecher = addCreatureReady(player1, new Woeleecher());
         // Woeleecher is the ability's source permanent, so a source/target mix-up is observable:
-        // it carries its own -1/-1 counter (3/5 → 2/4, survives).
+        // it carries its own -1/-1 counter (3/5 becomes 2/4, survives).
         woeleecher.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        harness.addToBattlefield(player1, new BarrentonCragtreads());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BarrentonCragtreads());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        Permanent target = findPermanent(player1, "Barrenton Cragtreads");
         target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
@@ -75,11 +73,9 @@ class WoeleecherTest extends BaseCardTest {
     @DisplayName("No life gained when the target has no -1/-1 counter")
     void noLifeWhenNoCounter() {
         addCreatureReady(player1, new Woeleecher());
-        harness.addToBattlefield(player1, new BarrentonCragtreads());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BarrentonCragtreads());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.setLife(player1, 20);
-
-        Permanent target = findPermanent(player1, "Barrenton Cragtreads");
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
@@ -106,10 +102,8 @@ class WoeleecherTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreature() {
         addCreatureReady(player1, new Woeleecher());
-        harness.addToBattlefield(player2, new BlightSickle());
+        Permanent sickle = harness.addToBattlefieldAndReturn(player2, new BlightSickle());
         harness.addMana(player1, ManaColor.WHITE, 1);
-
-        Permanent sickle = findPermanent(player2, "Blight Sickle");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, sickle.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -120,11 +114,54 @@ class WoeleecherTest extends BaseCardTest {
     @DisplayName("Cannot activate without white mana")
     void cannotActivateWithoutMana() {
         addCreatureReady(player1, new Woeleecher());
-        harness.addToBattlefield(player1, new BarrentonCragtreads());
-
-        Permanent target = findPermanent(player1, "Barrenton Cragtreads");
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BarrentonCragtreads());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can remove its own counter and gain life")
+    void canTargetItself() {
+        Permanent woeleecher = addCreatureReady(player1, new Woeleecher());
+        woeleecher.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null, woeleecher.getId());
+        harness.passBothPriorities();
+
+        assertThat(woeleecher.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("No life gained if the last counter disappears before resolution")
+    void noLifeWhenCounterDisappearsBeforeResolution() {
+        addCreatureReady(player1, new Woeleecher());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BarrentonCragtreads());
+        target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 0);
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent woeleecher = harness.addToBattlefieldAndReturn(player1, new Woeleecher());
+        woeleecher.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, woeleecher.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(woeleecher.isTapped()).isFalse();
     }
 }
