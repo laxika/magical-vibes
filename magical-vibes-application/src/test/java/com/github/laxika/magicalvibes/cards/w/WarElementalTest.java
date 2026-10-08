@@ -105,4 +105,46 @@ class WarElementalTest extends BaseCardTest {
 
         assertThat(elemental.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
+
+    @Test
+    void getsCountersWhenOpponentDamagesThemselves() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player1, new WarElemental());
+        Permanent shard = harness.addToBattlefieldAndReturn(player2, new GraniteShard());
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(shard),
+                1, null, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(elemental.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void accumulatesCountersFromSeparateDamageEvents() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player1, new WarElemental());
+        Permanent firstShard = harness.addToBattlefieldAndReturn(player1, new GraniteShard());
+        Permanent secondShard = harness.addToBattlefieldAndReturn(player1, new GraniteShard());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(firstShard),
+                1, null, player2.getId());
+        resolveAllTriggers();
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(secondShard),
+                1, null, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(elemental.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void getsCountersFromItsOwnCombatDamageAfterDamageIsDealt() {
+        Permanent elemental = addCreatureReady(player1, new WarElemental());
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(elemental)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+        assertThat(elemental.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
 }
