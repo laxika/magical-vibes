@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
 import com.github.laxika.magicalvibes.cards.d.DauthiSlayer;
+import com.github.laxika.magicalvibes.cards.e.EvincarsJustice;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SoltariMonk.class, DarkBanishing.class, Pacifism.class, DauthiSlayer.class,
-        TrainedArmodon.class, SoltariFootSoldier.class})
+        TrainedArmodon.class, SoltariFootSoldier.class, SpinalGraft.class, EvincarsJustice.class})
 class SoltariMonkTest extends BaseCardTest {
 
     @Test
@@ -101,5 +102,63 @@ class SoltariMonkTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot block a creature without shadow")
+    void cannotBlockCreatureWithoutShadow() {
+        addCreatureReady(player1, new TrainedArmodon());
+        addCreatureReady(player2, new SoltariMonk());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shadow");
+    }
+
+    @Test
+    @DisplayName("Takes combat damage from a white creature with shadow")
+    void takesDamageFromWhiteCreatureWithShadow() {
+        addCreatureReady(player1, new SoltariFootSoldier());
+        addCreatureReady(player2, new SoltariMonk());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Soltari Foot Soldier");
+        harness.assertInGraveyard(player2, "Soltari Monk");
+    }
+
+    @Test
+    @DisplayName("Cannot be targeted by a black Aura")
+    void cannotBeTargetedByBlackAura() {
+        Permanent monk = addCreatureReady(player1, new SoltariMonk());
+        harness.setHand(player1, List.of(new SpinalGraft()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, monk.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from black");
+    }
+
+    @Test
+    @DisplayName("Prevents nontargeted damage from a black spell")
+    void preventsNontargetedBlackSpellDamage() {
+        Permanent monk = addCreatureReady(player2, new SoltariMonk());
+        addCreatureReady(player2, new SoltariFootSoldier());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castFromHand(player1, new EvincarsJustice(), "{2}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Soltari Monk");
+        assertThat(monk.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Soltari Foot Soldier");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
     }
 }
