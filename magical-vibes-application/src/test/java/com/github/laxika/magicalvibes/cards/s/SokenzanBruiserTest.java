@@ -52,6 +52,33 @@ class SokenzanBruiserTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("A tapped Mountain still enables mountainwalk")
+    void tappedMountainPreventsBlocking() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        mountain.tap();
+        Permanent blocker = addCreatureReady(player2, new WanderingOnes());
+        Permanent bruiser = addAttackingBruiser();
+
+        assertThatThrownBy(() -> declareBlock(blocker, bruiser))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Mountainwalk stops preventing blocks if the last Mountain leaves before blockers")
+    void mountainLeavingBeforeBlockersAllowsBlocking() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        Permanent blocker = addCreatureReady(player2, new WanderingOnes());
+        Permanent bruiser = addAttackingBruiser();
+        gd.playerBattlefields.get(player2.getId()).remove(mountain);
+        gd.playerGraveyards.get(player2.getId()).add(mountain.getCard());
+
+        declareBlock(blocker, bruiser);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
     private Permanent addAttackingBruiser() {
         Permanent bruiser = addCreatureReady(player1, new SokenzanBruiser());
         bruiser.setAttacking(true);
