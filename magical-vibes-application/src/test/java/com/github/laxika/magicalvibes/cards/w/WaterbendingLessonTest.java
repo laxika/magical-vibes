@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CatOwl;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,13 +12,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WaterbendingLesson.class, GrizzlyBears.class})
+@CardUsed({WaterbendingLesson.class, CatOwl.class})
 class WaterbendingLessonTest extends BaseCardTest {
 
     @Test
     void drawsThreeCardsThenDiscardsWithoutWaterbend() {
-        harness.setHand(player1, List.of(new WaterbendingLesson(), new GrizzlyBears()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new WaterbendingLesson(), new CatOwl()));
+        harness.setLibrary(player1, List.of(new CatOwl(), new CatOwl(), new CatOwl()));
         addMana();
 
         harness.castSorcery(player1, 0, 0);
@@ -34,24 +34,38 @@ class WaterbendingLessonTest extends BaseCardTest {
     }
 
     @Test
-    void waterbendDrawsThreeCardsWithoutDiscarding() {
-        Permanent firstSource = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent secondSource = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new WaterbendingLesson()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
-        addMana();
+    void offersWaterbendAfterDrawingInsteadOfRequiringPaymentDuringCasting() {
+        Permanent firstSource = harness.addToBattlefieldAndReturn(player1, new CatOwl());
+        Permanent secondSource = harness.addToBattlefieldAndReturn(player1, new CatOwl());
+        harness.setLibrary(player1, List.of(new CatOwl(), new CatOwl(), new CatOwl()));
 
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false,
-                null, null, null, null, null, false, null, null, null,
-                List.of(firstSource.getId(), secondSource.getId()), List.of(), false,
-                null, null, List.of(), List.of(), null, null, true);
+        harness.castFromHand(player1, new WaterbendingLesson(), "{3}{U}");
+
+        assertThat(firstSource.isTapped()).isFalse();
+        assertThat(secondSource.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
         harness.passBothPriorities();
 
-        assertThat(firstSource.isTapped()).isTrue();
-        assertThat(secondSource.isTapped()).isTrue();
+        assertThat(firstSource.isTapped()).isFalse();
+        assertThat(secondSource.isTapped()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class))
                 .isNull();
+    }
+
+    @Test
+    void offersWaterbendUsingManaAvailableWhenTheSpellResolves() {
+        harness.setLibrary(player1, List.of(new CatOwl(), new CatOwl(), new CatOwl()));
+        harness.castFromHand(player1, new WaterbendingLesson(), "{3}{U}");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
     }
 
     private void addMana() {
