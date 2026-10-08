@@ -128,13 +128,99 @@ class DeepfathomEchoTest extends BaseCardTest {
         return harness.addToBattlefieldAndReturn(player1, new DeepfathomEcho());
     }
 
+    @Test
+    @DisplayName("Keeping a revealed nonland still allows declining the copy")
+    void keepsNonlandAndDeclinesCopy() {
+        Permanent echo = addEcho();
+        DeepfathomEcho revealed = new DeepfathomEcho();
+        harness.setLibrary(player1, List.of(revealed));
+
+        advanceToCombat(player1);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(revealed);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(echo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, echo)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, echo)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("An empty library still gives an explore counter before copying")
+    void emptyLibraryStillExploresAndCopies() {
+        Permanent echo = addEcho();
+        harness.addToBattlefield(player1, new HillGiant());
+        harness.setLibrary(player1, List.of());
+
+        advanceToCombat(player1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(echo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, echo)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, echo)).isEqualTo(4);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Exploring succeeds when there is no other creature you control to copy")
+    void noOtherOwnCreatureStillExplores() {
+        Permanent echo = addEcho();
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new DeepfathomEcho());
+        Forest revealed = new Forest();
+        harness.setLibrary(player1, List.of(revealed));
+
+        advanceToCombat(player1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(revealed);
+        assertThat(gqs.getEffectivePower(gd, echo)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, echo)).isEqualTo(4);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Copying preserves Echo's counters and does not copy the chosen creature's counters or tapped state")
+    void copyUsesCopiableValuesAndPreservesSourceState() {
+        Permanent echo = addEcho();
+        echo.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        giant.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        giant.setTapped(true);
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        advanceToCombat(player1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(echo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(echo.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, echo)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, echo)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Copying a creature without the combat ability prevents a second trigger that turn")
+    void copiedEchoDoesNotTriggerInAnotherCombat() {
+        addEcho();
+        harness.addToBattlefield(player1, new HillGiant());
+        Forest secondLand = new Forest();
+        harness.setLibrary(player1, List.of(new Forest(), secondLand));
+
+        advanceToCombat(player1);
+        harness.handleMayAbilityChosen(player1, true);
+        advanceToCombat(player1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondLand);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        if (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
+        resolveAllTriggers();
     }
 }
