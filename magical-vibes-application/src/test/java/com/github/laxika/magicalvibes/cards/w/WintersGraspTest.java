@@ -74,4 +74,42 @@ class WintersGraspTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Destroys only the targeted land")
+    void destroysOnlyTargetedLand() {
+        harness.addToBattlefield(player2, new Mountain());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new WintersGrasp()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Mountain"));
+
+        harness.assertNotOnBattlefield(player2, "Mountain");
+        harness.assertInGraveyard(player2, "Mountain");
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertNotInGraveyard(player2, "Forest");
+        harness.assertInGraveyard(player1, "Winter's Grasp");
+    }
+
+    @Test
+    @DisplayName("Does not destroy a new land with the same name after the target leaves")
+    void doesNotDestroyReplacementLand() {
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setHand(player1, List.of(new WintersGrasp()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        UUID targetId = harness.getPermanentId(player2, "Mountain");
+        harness.castSorcery(player1, 0, targetId);
+
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.addToBattlefield(player2, new Mountain());
+        UUID replacementId = harness.getPermanentId(player2, "Mountain");
+        harness.passBothPriorities();
+
+        assertThat(replacementId).isNotEqualTo(targetId);
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.assertNotInGraveyard(player2, "Mountain");
+        harness.assertInGraveyard(player1, "Winter's Grasp");
+        assertThat(gd.stack).isEmpty();
+    }
 }
