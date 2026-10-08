@@ -94,4 +94,40 @@ class WebTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Web grants its toughness bonus and reach to an opponent's creature")
+    void bonusesApplyToOpponentsCreature() {
+        Permanent opposingBears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Web()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castEnchantment(player1, 0, opposingBears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, opposingBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingBears)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, opposingBears, Keyword.REACH)).isTrue();
+        assertThat(gqs.getEffectiveToughness(gd, ownBears)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, ownBears, Keyword.REACH)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Multiple Webs stack their toughness bonuses on the same creature")
+    void multipleWebsStack() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Web(), new Web()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Web")).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.REACH)).isTrue();
+    }
 }
