@@ -120,4 +120,44 @@ class SoldeviAdnateTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+    @Test
+    @DisplayName("Cannot activate with summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        harness.addToBattlefield(player1, new SoldeviAdnate());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        harness.assertOnBattlefield(player1, "Soldevi Adnate");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's black creature")
+    void cannotSacrificeOpponentsCreature() {
+        addCreatureReady(player1, new SoldeviAdnate());
+        addCreatureReady(player1, new PhantasmalFiend());
+        UUID opponentFiend = harness.addToBattlefieldAndReturn(player2, new PhantasmalFiend()).getId();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentFiend))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Phantasmal Fiend");
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick creature can be sacrificed and mana is added without the stack")
+    void sacrificesTappedSummoningSickCreatureWithoutUsingStack() {
+        addCreatureReady(player1, new SoldeviAdnate());
+        Permanent fiend = harness.addToBattlefieldAndReturn(player1, new PhantasmalFiend());
+        fiend.tap();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, fiend.getId());
+
+        harness.assertInGraveyard(player1, "Phantasmal Fiend");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
 }
