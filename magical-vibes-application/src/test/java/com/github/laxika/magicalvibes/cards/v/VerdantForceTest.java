@@ -103,4 +103,39 @@ class VerdantForceTest extends BaseCardTest {
 
         assertThat(saprolingTokens(player1)).hasSize(1);
     }
+
+    @Test
+    @DisplayName("Opposing Verdant Forces each create a token for their own controller")
+    void opposingForcesCreateTokensForTheirControllers() {
+        harness.addToBattlefield(player1, new VerdantForce());
+        harness.addToBattlefield(player2, new VerdantForce());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(saprolingTokens(player1)).hasSize(1);
+        assertThat(saprolingTokens(player2)).hasSize(1);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(saprolingTokens(player1)).hasSize(2);
+        assertThat(saprolingTokens(player2)).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Entering after upkeep begins waits until the next upkeep to create a token")
+    void enteringDuringUpkeepDoesNotTriggerRetroactively() {
+        advanceToUpkeep(player1);
+        harness.addToBattlefield(player1, new VerdantForce());
+        resolveAllTriggers();
+
+        assertThat(saprolingTokens(player1)).isEmpty();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(saprolingTokens(player1)).hasSize(1);
+        assertThat(saprolingTokens(player2)).isEmpty();
+    }
 }
