@@ -95,4 +95,75 @@ class ZuranEnchanterTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+
+    @Test
+    @DisplayName("Can activate during its controller's end step")
+    void canActivateDuringOwnEndStep() {
+        harness.setHand(player2, List.of(new BalduvianBears()));
+        readyEnchanter();
+        harness.forceStep(TurnStep.END_STEP);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("Pays two generic mana and one black mana on activation")
+    void paysExactActivationCost() {
+        Permanent enchanter = readyEnchanter();
+        gd.playerManaPools.get(player1.getId()).clear();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(enchanter.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without black mana")
+    void requiresBlackMana() {
+        Permanent enchanter = readyEnchanter();
+        gd.playerManaPools.get(player1.getId()).clear();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(enchanter.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate with summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        Permanent enchanter = readyEnchanter();
+        enchanter.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(enchanter.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target a permanent")
+    void cannotTargetPermanent() {
+        Permanent enchanter = readyEnchanter();
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(enchanter.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }
