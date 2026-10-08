@@ -42,4 +42,28 @@ class WhosThatPraetorTest extends BaseCardTest {
                 .toList();
         assertThat(tokenCopies).hasSize(1);
     }
+
+    @Test
+    @DisplayName("The caster creates an untapped copy of one of the six listed cards")
+    void opponentCreatesListedPraetorUnderTheirControl() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new WhosThatPraetor(), "{6}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        Permanent token = gd.playerBattlefields.get(player2.getId()).getFirst();
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.getCard().getName()).isIn(
+                "Elesh Norn, Mother of Machines",
+                "Jin-Gitaxias, Progress Tyrant",
+                "Sheoldred, the Apocalypse",
+                "Urabrask, Heretic Praetor",
+                "Vorinclex, Monstrous Raider",
+                "Ebon Praetor");
+        assertThat(token.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Who's That Praetor?");
+    }
 }
