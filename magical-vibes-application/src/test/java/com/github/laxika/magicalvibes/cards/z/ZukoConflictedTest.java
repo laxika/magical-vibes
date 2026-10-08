@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -82,6 +84,56 @@ class ZukoConflictedTest extends BaseCardTest {
         assertThat(choice.options()).contains("Draw a card");
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "Draw a card",
+            "Put a +1/+1 counter on Zuko",
+            "Add {R}",
+            "Exile Zuko, then return him to the battlefield under an opponent's control"
+    })
+    void losesTwoLifeWhenAnyChosenModeResolves(String mode) {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setLibrary(player1, List.of(new Forest()));
+        addZuko(player1);
+
+        advanceToPrecombatMain(player1);
+        harness.handleListChoice(player1, mode);
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void returningUnderOpponentControlResetsModesAndRemovesCounters() {
+        Permanent original = addZuko(player1);
+        advanceToPrecombatMain(player1);
+        harness.handleListChoice(player1, "Put a +1/+1 counter on Zuko");
+        harness.passBothPriorities();
+
+        advanceToPrecombatMain(player1);
+        harness.handleListChoice(player1,
+                "Exile Zuko, then return him to the battlefield under an opponent's control");
+        harness.passBothPriorities();
+
+        Permanent returned = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof ZukoConflicted)
+                .findFirst().orElseThrow();
+        assertThat(returned.getId()).isNotEqualTo(original.getId());
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        advanceToPrecombatMain(player2);
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).containsExactlyInAnyOrder(
+                "Draw a card", "Put a +1/+1 counter on Zuko", "Add {R}",
+                "Exile Zuko, then return him to the battlefield under an opponent's control");
+        harness.handleListChoice(player2, "Put a +1/+1 counter on Zuko");
+        harness.passBothPriorities();
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private Permanent addZuko(Player player) {
         return harness.addToBattlefieldAndReturn(player, new ZukoConflicted());
     }
@@ -89,7 +141,6 @@ class ZukoConflictedTest extends BaseCardTest {
     private void advanceToPrecombatMain(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.PRECOMBAT_MAIN);
     }
 }
