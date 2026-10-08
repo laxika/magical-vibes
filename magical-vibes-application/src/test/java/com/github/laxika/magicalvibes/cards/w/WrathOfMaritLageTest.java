@@ -24,8 +24,7 @@ class WrathOfMaritLageTest extends BaseCardTest {
 
         harness.castFromHand(player1, new WrathOfMaritLage(), "{3}{U}{U}");
 
-        harness.passBothPriorities(); // enchantment resolves → ETB trigger on stack
-        harness.passBothPriorities(); // ETB trigger resolves
+        resolveAllTriggers();
 
         assertThat(redGiant.isTapped()).isTrue();
         assertThat(greenBears.isTapped()).isFalse();
@@ -66,8 +65,7 @@ class WrathOfMaritLageTest extends BaseCardTest {
 
         harness.castFromHand(player1, new WrathOfMaritLage(), "{3}{U}{U}");
 
-        harness.passBothPriorities(); // enchantment resolves -> ETB trigger on stack
-        harness.passBothPriorities(); // ETB trigger resolves
+        resolveAllTriggers();
 
         assertThat(bloodMoon.isTapped()).isFalse();
 
@@ -138,6 +136,50 @@ class WrathOfMaritLageTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(enchantment);
 
         advanceToUpkeep(player1);
+
+        assertThat(redGiant.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The enter trigger still taps red creatures after the enchantment leaves")
+    void enterTriggerResolvesAfterSourceLeaves() {
+        Permanent redGiant = addCreatureReady(player2, new HillGiant());
+        harness.castFromHand(player1, new WrathOfMaritLage(), "{3}{U}{U}");
+        harness.passBothPriorities();
+
+        Permanent enchantment = findPermanent(player1, "Wrath of Marit Lage");
+        gd.playerBattlefields.get(player1.getId()).remove(enchantment);
+        harness.passBothPriorities();
+
+        assertThat(redGiant.isTapped()).isTrue();
+        advanceToUpkeep(player2);
+        assertThat(redGiant.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature that stops being red before the enter trigger resolves is not tapped")
+    void enterTriggerExcludesCreaturesThatStopBeingRed() {
+        Permanent redGiant = addCreatureReady(player2, new HillGiant());
+        harness.castFromHand(player1, new WrathOfMaritLage(), "{3}{U}{U}");
+        harness.passBothPriorities();
+
+        Permanent shiftingSky = harness.addToBattlefieldAndReturn(player1, new ShiftingSky());
+        shiftingSky.setChosenColor(CardColor.GREEN);
+        harness.passBothPriorities();
+
+        assertThat(redGiant.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A red creature untaps if its color changes to green before its untap step")
+    void creatureThatStopsBeingRedUntaps() {
+        harness.addToBattlefield(player1, new WrathOfMaritLage());
+        Permanent redGiant = addCreatureReady(player2, new HillGiant());
+        redGiant.tap();
+        Permanent shiftingSky = harness.addToBattlefieldAndReturn(player1, new ShiftingSky());
+        shiftingSky.setChosenColor(CardColor.GREEN);
+
+        advanceToUpkeep(player2);
 
         assertThat(redGiant.isTapped()).isFalse();
     }
