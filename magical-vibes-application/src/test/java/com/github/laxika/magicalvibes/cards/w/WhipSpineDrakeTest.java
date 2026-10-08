@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 @CardUsed({WhipSpineDrake.class, BlindPhantasm.class})
 class WhipSpineDrakeTest extends BaseCardTest {
@@ -53,6 +54,48 @@ class WhipSpineDrakeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.turnFaceUp(
                 player1, gd.playerBattlefields.get(player1.getId()).indexOf(drake)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(drake.isFaceDown()).isTrue();
+    }
+
+    @Test
+    void faceDownDrakeCanBeBlockedByNonFlyingCreature() {
+        Permanent drake = castFaceDown();
+        drake.setSummoningSick(false);
+        addCreatureReady(player2, new BlindPhantasm());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatCode(() -> gs.declareBlockers(
+                gd, player2, List.of(new BlockerAssignment(0, 0)))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void turningFaceUpRestoresFlyingImmediatelyWithoutUsingStack() {
+        Permanent drake = castFaceDown();
+        drake.setSummoningSick(false);
+        addCreatureReady(player2, new BlindPhantasm());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.turnFaceUp(player1, 0);
+
+        assertThat(drake.isFaceDown()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        assertThatThrownBy(() -> gs.declareBlockers(
+                gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("(flying)");
+    }
+
+    @Test
+    void requiresTwoGenericManaInAdditionToWhiteToTurnFaceUp() {
+        Permanent drake = castFaceDown();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(drake.isFaceDown()).isTrue();
     }
