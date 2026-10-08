@@ -24,8 +24,7 @@ class VillainousWrathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new VillainousWrath()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertLife(player2, 18);
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -40,12 +39,47 @@ class VillainousWrathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new VillainousWrath()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertLife(player2, 18);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Manor Gargoyle");
+    }
+
+    @Test
+    @DisplayName("Still destroys creatures when the target opponent controls no creatures")
+    void destroysCreaturesWhenOpponentControlsNone() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new VillainousWrath()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Villainous Wrath");
+    }
+
+    @Test
+    @DisplayName("Counts creatures at resolution rather than when the spell is cast")
+    void countsCreaturesAtResolution() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new VillainousWrath()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
