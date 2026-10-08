@@ -73,16 +73,14 @@ class ValMaroonedSurveyorTest extends BaseCardTest {
         int player1Life = gd.getLife(player1.getId());
         int player2Life = gd.getLife(player2.getId());
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
         resolveAllTriggers();
 
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.setHand(player1, List.of(new DazzlingLights()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
         resolveAllTriggers();
 
@@ -111,6 +109,63 @@ class ValMaroonedSurveyorTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(sought);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(player1Life + 2);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(player2Life - 2);
+    }
+
+    @Test
+    void doesNotTriggerWhenOpponentInvestigates() {
+        harness.addToBattlefield(player1, new ValMaroonedSurveyor());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new ThrabenInspector()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        int player1Life = gd.getLife(player1.getId());
+        int player2Life = gd.getLife(player2.getId());
+
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player2, "Clue")).isEqualTo(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(player1Life);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(player2Life);
+    }
+
+    @Test
+    void triggersWhenSurveillingAnEmptyLibrary() {
+        harness.addToBattlefield(player1, new ValMaroonedSurveyor());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new DazzlingLights()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        int player1Life = gd.getLife(player1.getId());
+        int player2Life = gd.getLife(player2.getId());
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(player1Life + 2);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(player2Life - 2);
+    }
+
+    @Test
+    void triggerResolvesAfterValLeavesTheBattlefield() {
+        Permanent val = harness.addToBattlefieldAndReturn(player1, new ValMaroonedSurveyor());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Opt(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+        int player1Life = gd.getLife(player1.getId());
+        int player2Life = gd.getLife(player2.getId());
+
+        harness.castAndResolveInstant(player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        harness.castAndResolveInstant(player1, 0, val.getId());
+        harness.castAndResolveInstant(player1, 0, val.getId());
+        harness.assertInGraveyard(player1, "Val, Marooned Surveyor");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(player1Life);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(player2Life);
+        resolveAllTriggers();
+
         assertThat(gd.getLife(player1.getId())).isEqualTo(player1Life + 2);
         assertThat(gd.getLife(player2.getId())).isEqualTo(player2Life - 2);
     }
