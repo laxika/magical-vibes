@@ -113,6 +113,56 @@ class CadaverousKnightTest extends BaseCardTest {
         assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Regeneration can be activated while tapped and summoning sick")
+    void regenerationDoesNotRequireTappingOrHaste() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new CadaverousKnight());
+        knight.setSummoningSick(true);
+        knight.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(knight.getRegenerationShield()).isEqualTo(1);
+        assertThat(knight.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Flanking triggers independently for each non-flanking blocker")
+    void flankingShrinksEachBlocker() {
+        Permanent knight = addKnightReady(player1);
+        knight.setAttacking(true);
+        Permanent first = addCreatureReady(player2, new FemerefScouts());
+        Permanent second = addCreatureReady(player2, new FemerefScouts());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(first.getEffectivePower()).isZero();
+        assertThat(first.getEffectiveToughness()).isEqualTo(3);
+        assertThat(second.getEffectivePower()).isZero();
+        assertThat(second.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Flanking does not shrink a creature that the Knight blocks")
+    void flankingDoesNotTriggerWhenBlocking() {
+        addKnightReady(player1);
+        Permanent attacker = addCreatureReady(player2, new FemerefScouts());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
+
+        assertThat(attacker.getEffectivePower()).isEqualTo(1);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(4);
+        harness.assertOnBattlefield(player1, "Cadaverous Knight");
+    }
+
     private Permanent addKnightReady(Player player) {
         return addCreatureReady(player, new CadaverousKnight());
     }
