@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.b.BishopOfWings;
+import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.s.StarlitAngel;
@@ -21,7 +22,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ValkyriesCall.class, BishopOfWings.class, GrizzlyBears.class, Murder.class, StarlitAngel.class})
+@CardUsed({ValkyriesCall.class, BishopOfWings.class, DoublingSeason.class, GrizzlyBears.class, Murder.class, StarlitAngel.class})
 class ValkyriesCallTest extends BaseCardTest {
 
     @Test
@@ -58,6 +59,64 @@ class ValkyriesCallTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Spirit")).isEmpty();
     }
 
+    @Test
+    @DisplayName("A returned creature is an Angel when it dies again and is not returned again")
+    void doesNotReturnPreviouslyReturnedCreatureAgain() {
+        harness.addToBattlefield(player1, new ValkyriesCall());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        destroyWithMurder(player2, player1, "Grizzly Bears");
+        harness.passBothPriorities();
+        destroyWithMurder(player2, player1, "Grizzly Bears");
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Does not return an opponent's creature")
+    void doesNotReturnOpponentsCreature() {
+        harness.addToBattlefield(player1, new ValkyriesCall());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        destroyWithMurder(player1, player2, "Grizzly Bears");
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The returned creature enters as an Angel and triggers Bishop of Wings")
+    void returnedCreatureTriggersAngelEntryAbility() {
+        harness.addToBattlefield(player1, new ValkyriesCall());
+        harness.addToBattlefield(player1, new BishopOfWings());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        destroyWithMurder(player2, player1, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore + 4);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Doubling Season doubles the counter on the returned creature")
+    void doublesReturnCounter() {
+        harness.addToBattlefield(player1, new ValkyriesCall());
+        harness.addToBattlefield(player1, new DoublingSeason());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        destroyWithMurder(player2, player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanents(player1, "Grizzly Bears").getFirst();
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
     private void destroyWithMurder(Player caster, Player targetController, String targetName) {
         harness.forceActivePlayer(caster);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -66,7 +125,6 @@ class ValkyriesCallTest extends BaseCardTest {
         harness.addMana(caster, ManaColor.BLACK, 3);
 
         UUID targetId = harness.getPermanentId(targetController, targetName);
-        harness.castInstant(caster, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, targetId);
     }
 }
