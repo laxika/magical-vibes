@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.Disappear;
 import com.github.laxika.magicalvibes.cards.f.FendOff;
 import com.github.laxika.magicalvibes.cards.o.Opposition;
 import com.github.laxika.magicalvibes.cards.t.ThievingMagpie;
+import com.github.laxika.magicalvibes.cards.y.YavimayaElder;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -18,8 +19,48 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({VoiceOfReason.class, Disappear.class, FendOff.class, Opposition.class,
-        ThievingMagpie.class, VoiceOfDuty.class})
+        ThievingMagpie.class, VoiceOfDuty.class, YavimayaElder.class})
 class VoiceOfReasonTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Cannot be targeted by its controller's blue Aura")
+    void cannotBeTargetedByOwnBlueAura() {
+        Permanent voice = addCreatureReady(player1, new VoiceOfReason());
+        harness.setHand(player1, List.of(new Disappear()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, voice.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from blue");
+    }
+
+    @Test
+    @DisplayName("A creature without flying or reach cannot block Voice of Reason")
+    void groundCreatureCannotBlock() {
+        addCreatureReady(player1, new VoiceOfReason());
+        addCreatureReady(player2, new YavimayaElder());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Protection from blue does not prevent damage from a white creature")
+    void diesToCombatDamageFromNonBlueCreature() {
+        addCreatureReady(player1, new VoiceOfDuty());
+        addCreatureReady(player2, new VoiceOfReason());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertNotOnBattlefield(player2, "Voice of Reason");
+        harness.assertInGraveyard(player2, "Voice of Reason");
+        harness.assertInGraveyard(player1, "Voice of Duty");
+    }
 
     @Test
     @DisplayName("Cannot be targeted by a blue Aura")
