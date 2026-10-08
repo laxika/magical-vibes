@@ -93,4 +93,172 @@ class WhipcorderTest extends BaseCardTest {
 
         assertThat(whipcorder.isFaceDown()).isFalse();
     }
+
+    @Test
+    @DisplayName("Cannot activate without white mana")
+    void cannotActivateWithoutWhiteMana() {
+        Permanent whipcorder = addCreatureReady(player1, new Whipcorder());
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(whipcorder.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent whipcorder = addCreatureReady(player1, new Whipcorder());
+        whipcorder.tap();
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost with summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        harness.addToBattlefield(player1, new Whipcorder());
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target itself even though paying the cost taps it")
+    void canTargetItself() {
+        Permanent whipcorder = addCreatureReady(player1, new Whipcorder());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, whipcorder.getId());
+        assertThat(whipcorder.isTapped()).isTrue();
+
+        resolveAllTriggers();
+
+        assertThat(whipcorder.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target a creature that is already tapped")
+    void canTargetTappedCreature() {
+        addCreatureReady(player1, new Whipcorder());
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
+        target.tap();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability resolves after Whipcorder leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent whipcorder = addCreatureReady(player1, new Whipcorder());
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(whipcorder);
+        resolveAllTriggers();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Face-down Whipcorder has no printed tap ability")
+    void cannotActivatePrintedAbilityWhileFaceDown() {
+        Permanent whipcorder = castFaceDownWhipcorder();
+        whipcorder.setSummoningSick(false);
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
+
+        assertThat(whipcorder.isFaceDown()).isTrue();
+        assertThat(whipcorder.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Turning face up requires white mana")
+    void cannotTurnFaceUpWithColorlessMana() {
+        Permanent whipcorder = castFaceDownWhipcorder();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(whipcorder.isFaceDown()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Turning face up is immediate and restores the tap ability")
+    void turningFaceUpRestoresAbilityImmediately() {
+        Permanent whipcorder = castFaceDownWhipcorder();
+        whipcorder.setSummoningSick(false);
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.turnFaceUp(player1, 0);
+
+        assertThat(whipcorder.isFaceDown()).isFalse();
+        assertThat(gd.stack).isEmpty();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        resolveAllTriggers();
+
+        assertThat(whipcorder.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Turning face up does not remove summoning sickness")
+    void turningFaceUpDoesNotRemoveSummoningSickness() {
+        Permanent whipcorder = castFaceDownWhipcorder();
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.turnFaceUp(player1, 0);
+
+        assertThat(whipcorder.isFaceDown()).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(whipcorder.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    private Permanent castFaceDownWhipcorder() {
+        harness.setHand(player1, List.of(new Whipcorder()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+        return findPermanent(player1, "Whipcorder");
+    }
 }
