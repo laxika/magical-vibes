@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WordsOfWorship.class, GlorySeeker.class})
+@CardUsed({WordsOfWorship.class, WordsOfWilding.class, GlorySeeker.class})
 class WordsOfWorshipTest extends BaseCardTest {
 
     @Test
@@ -148,6 +148,74 @@ class WordsOfWorshipTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertInHand(player1, "Glory Seeker");
+    }
+
+    @Test
+    @DisplayName("An activation does not replace draws until it resolves")
+    void unresolvedActivationDoesNotReplaceDraw() {
+        harness.addToBattlefield(player1, new WordsOfWorship());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GlorySeeker(), new GlorySeeker()));
+        harness.setLife(player1, 20);
+        prepareAbilityActivation();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        draw(player1);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.passBothPriorities();
+        draw(player1);
+
+        harness.assertLife(player1, 25);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Multiple activations replace only one effect per draw")
+    void oneDrawConsumesOnlyOneActivation() {
+        harness.addToBattlefield(player1, new WordsOfWorship());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
+        harness.setLife(player1, 20);
+        prepareAbilityActivation();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        draw(player1);
+
+        harness.assertLife(player1, 25);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The drawing player chooses between different Words replacements")
+    void competingWordsReplacementsRequireChoice() {
+        harness.addToBattlefield(player1, new WordsOfWorship());
+        harness.addToBattlefield(player1, new WordsOfWilding());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
+        harness.setLife(player1, 20);
+        prepareAbilityActivation();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        draw(player1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.assertLife(player1, 20);
+        harness.assertNotOnBattlefield(player1, "Bear");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
     private void prepareAbilityActivation() {
