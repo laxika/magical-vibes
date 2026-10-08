@@ -105,10 +105,35 @@ class VugLizardTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Vug Lizard");
     }
 
-    private void castAndResolveVugLizard() {
+    @Test
+    @DisplayName("Entering Vug Lizard does not create an enters-the-battlefield trigger")
+    void enteringDoesNotCreateTrigger() {
         harness.castFromHand(player1, new VugLizard(), "{1}{R}{R}");
         harness.passBothPriorities();
-        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Vug Lizard");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Mountain controlled by the attacker does not prevent blocking")
+    void attackersMountainDoesNotPreventBlocking() {
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent blockerPerm = addCreatureReady(player2, new CoralMerfolk());
+        Permanent attackerPerm = addCreatureReady(player1, new VugLizard());
+        attackerPerm.setAttacking(true);
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attackerPerm);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blockerPerm.getBlockingTargetIds()).containsExactly(attackerPerm.getId());
+    }
+
+    private void castAndResolveVugLizard() {
+        harness.castFromHand(player1, new VugLizard(), "{1}{R}{R}");
+        resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Vug Lizard");
     }
 }
