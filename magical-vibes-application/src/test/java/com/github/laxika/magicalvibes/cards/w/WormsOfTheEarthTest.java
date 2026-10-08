@@ -106,8 +106,7 @@ class WormsOfTheEarthTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        List<java.util.UUID> forestIds = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Forest"))
+        List<java.util.UUID> forestIds = findPermanents(player1, "Forest").stream()
                 .map(permanent -> permanent.getId())
                 .toList();
         harness.handleMultiplePermanentsChosen(player1, forestIds.subList(0, 2));
@@ -149,5 +148,46 @@ class WormsOfTheEarthTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Worms of the Earth");
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("The opponent may accept damage after the active player declines both options")
+    void opponentCanChooseAfterActivePlayerDeclinesBothOptions() {
+        harness.addToBattlefield(player1, new WormsOfTheEarth());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 15);
+        harness.assertNotOnBattlefield(player1, "Worms of the Earth");
+        assertThat(findPermanents(player1, "Forest")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A player with two lands may choose damage instead of sacrificing")
+    void canChooseDamageWhileControllingTwoLands() {
+        harness.addToBattlefield(player1, new WormsOfTheEarth());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 15);
+        harness.assertNotOnBattlefield(player1, "Worms of the Earth");
+        assertThat(findPermanents(player1, "Forest")).hasSize(2);
     }
 }
