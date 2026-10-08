@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.g.GoblinSledder;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,8 +14,42 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WirewoodPride.class, WirewoodElf.class, WirewoodLodge.class})
+@CardUsed({WirewoodPride.class, WirewoodElf.class, WirewoodLodge.class, GoblinSledder.class})
 class WirewoodPrideTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Can target a non-Elf with no Elves on the battlefield")
+    void nonElfGetsZeroBoostWithoutBattlefieldElves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GoblinSledder());
+        harness.setHand(player1, List.of(new WirewoodPride(), new WirewoodElf()));
+        harness.setGraveyard(player2, List.of(new WirewoodElf()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Wirewood Pride");
+    }
+
+    @Test
+    @DisplayName("A non-Elf receives a boost fixed at resolution")
+    void nonElfBoostDoesNotChangeAfterResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoblinSledder());
+        harness.addToBattlefield(player1, new WirewoodElf());
+        harness.setHand(player1, List.of(new WirewoodPride()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
+
+        harness.addToBattlefield(player2, new WirewoodElf());
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
+    }
 
     @Test
     @DisplayName("Rejects a noncreature target")
