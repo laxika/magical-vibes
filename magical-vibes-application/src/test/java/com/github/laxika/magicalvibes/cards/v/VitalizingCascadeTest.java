@@ -10,7 +10,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(VitalizingCascade.class)
+@CardUsed({VitalizingCascade.class})
 class VitalizingCascadeTest extends BaseCardTest {
 
     @Test
@@ -40,5 +40,26 @@ class VitalizingCascadeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+    }
+
+    @Test
+    @DisplayName("Only the caster gains life on resolution using the announced X")
+    void opponentGainsLifeUsingAnnouncedX() {
+        harness.setHand(player2, List.of(new VitalizingCascade()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 10);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 8);
+
+        harness.castInstant(player2, 0, 2, null);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 10);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 15);
     }
 }
