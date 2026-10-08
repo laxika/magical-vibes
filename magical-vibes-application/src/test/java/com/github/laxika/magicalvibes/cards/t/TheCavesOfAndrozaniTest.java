@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.c.ClockworkDroid;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -28,11 +27,8 @@ class TheCavesOfAndrozaniTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player2, new ClockworkDroid());
         first.tap();
         second.tap();
-        harness.setHand(player1, List.of(new TheCavesOfAndrozani()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromHand(player1, new TheCavesOfAndrozani(), "{3}{W}");
 
-        harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice choice =
@@ -113,11 +109,8 @@ class TheCavesOfAndrozaniTest extends BaseCardTest {
         Permanent tapped = harness.addToBattlefieldAndReturn(player2, new ClockworkDroid());
         Permanent untapped = harness.addToBattlefieldAndReturn(player1, new ClockworkDroid());
         tapped.tap();
-        harness.setHand(player1, List.of(new TheCavesOfAndrozani()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromHand(player1, new TheCavesOfAndrozani(), "{3}{W}");
 
-        harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -141,11 +134,8 @@ class TheCavesOfAndrozaniTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player2, new ClockworkDroid());
         first.tap();
         second.tap();
-        harness.setHand(player1, List.of(new TheCavesOfAndrozani()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromHand(player1, new TheCavesOfAndrozani(), "{3}{W}");
 
-        harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, first.getId());
         harness.handlePermanentChosen(player1, second.getId());
@@ -222,6 +212,38 @@ class TheCavesOfAndrozaniTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(nonDoctor);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(saga.getCard());
+    }
+
+    @Test
+    void chapterIResolvesWithNoTappedCreatures() {
+        Permanent untapped = harness.addToBattlefieldAndReturn(player2, new ClockworkDroid());
+
+        harness.castFromHand(player1, new TheCavesOfAndrozani(), "{3}{W}");
+        harness.passBothPriorities();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, player1.getId());
+        }
+        harness.passBothPriorities();
+
+        assertThat(untapped.getCounterCount(CounterType.STUN)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof TheCavesOfAndrozani);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+    void counterChaptersResolveWithoutEligibleCounters(int loreCount) {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheCavesOfAndrozani());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ClockworkDroid());
+        saga.setCounterCount(CounterType.LORE, loreCount);
+
+        advanceToNextChapter();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(creature.getCounterCount(CounterType.STUN)).isZero();
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(loreCount + 1);
     }
 
     private void advanceToNextChapter() {
