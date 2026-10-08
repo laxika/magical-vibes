@@ -32,8 +32,7 @@ class WallOfEarthTest extends BaseCardTest {
         addCreatureReady(player1, new DurkwoodBoars());
         Permanent wall = addCreatureReady(player2, new WallOfEarth());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(wall.isBlocking()).isTrue();
