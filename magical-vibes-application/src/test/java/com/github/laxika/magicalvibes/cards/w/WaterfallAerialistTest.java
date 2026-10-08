@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SpinedKarok;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,11 +19,24 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WaterfallAerialist.class, Shock.class, SpinedKarok.class, ProdigalPyromancer.class})
 class WaterfallAerialistTest extends BaseCardTest {
+
+    @Test
+    void cannotBeBlockedByCreatureWithoutFlyingOrReach() {
+        addReadyAerialist();
+        harness.addToBattlefield(player2, new SpinedKarok());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
     @Nested
     @DisplayName("Ward")
+    @CardUsed({WaterfallAerialist.class, Shock.class, ProdigalPyromancer.class})
     class Ward {
 
         @Test
@@ -71,13 +88,55 @@ class WaterfallAerialistTest extends BaseCardTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getCard()).isInstanceOf(Shock.class);
         }
+
+        @Test
+        void countersWhenOpponentCannotAffordPayment() {
+            var aerialist = addReadyAerialist();
+            castShock(aerialist.getId(), 2);
+
+            harness.passBothPriorities();
+
+            assertThat(gd.stack).isEmpty();
+            harness.assertOnBattlefield(player1, "Waterfall Aerialist");
+            harness.assertInGraveyard(player2, "Shock");
+        }
+
+        @Test
+        void paidSpellResolvesNormally() {
+            var aerialist = addReadyAerialist();
+            castShock(aerialist.getId(), 3);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player2, true);
+
+            harness.passBothPriorities();
+
+            harness.assertNotOnBattlefield(player1, "Waterfall Aerialist");
+            harness.assertInGraveyard(player1, "Waterfall Aerialist");
+            harness.assertInGraveyard(player2, "Shock");
+        }
+
+        @Test
+        void countersOpponentsActivatedAbilityWithoutRemovingItsSource() {
+            var aerialist = addReadyAerialist();
+            var pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
+            harness.forceActivePlayer(player2);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.clearPriorityPassed();
+            harness.activateAbility(player2, 0, null, aerialist.getId());
+
+            assertThat(gd.stack).hasSize(2);
+            harness.passBothPriorities();
+
+            assertThat(gd.stack).isEmpty();
+            harness.assertOnBattlefield(player1, "Waterfall Aerialist");
+            harness.assertOnBattlefield(player2, "Prodigal Pyromancer");
+            harness.assertNotInGraveyard(player2, "Prodigal Pyromancer");
+            assertThat(pyromancer.isTapped()).isTrue();
+        }
     }
 
     private Permanent addReadyAerialist() {
-        var aerialist = new Permanent(new WaterfallAerialist());
-        aerialist.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(aerialist);
-        return aerialist;
+        return addCreatureReady(player1, new WaterfallAerialist());
     }
 
     private void castShock(UUID targetId, int mana) {
