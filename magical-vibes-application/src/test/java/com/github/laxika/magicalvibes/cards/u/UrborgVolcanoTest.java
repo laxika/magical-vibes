@@ -81,4 +81,44 @@ class UrborgVolcanoTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("Entering through an effect still enters tapped and cannot produce mana")
+    void enteringThroughEffectCannotProduceManaImmediately() {
+        Permanent land = harness.enterBattlefieldAndReturn(player1, new UrborgVolcano());
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        for (int abilityIndex = 0; abilityIndex < 2; abilityIndex++) {
+            int index = abilityIndex;
+            assertThatThrownBy(() -> harness.activateAbility(player1, 0, index, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("already tapped");
+        }
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("After untapping, each activation immediately produces only the chosen color")
+    void untappingAllowsChoosingEitherColorWithoutUsingStack() {
+        Permanent land = harness.enterBattlefieldAndReturn(player1, new UrborgVolcano());
+
+        harness.performUntapStep(player1);
+        assertThat(land.isTapped()).isFalse();
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.stack).isEmpty();
+
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 }
