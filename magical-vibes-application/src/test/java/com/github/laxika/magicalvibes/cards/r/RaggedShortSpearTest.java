@@ -131,6 +131,44 @@ class RaggedShortSpearTest extends BaseCardTest {
     }
 
     @Test
+    void enteringWithoutBeingCastAllowsChoosingOneCardToDiscard() {
+        Card kept = new Forest();
+        Card discarded = new OrdinaryBear();
+        Card firstDraw = new Mountain();
+        Card secondDraw = new Forest();
+        Card remaining = new Mountain();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(kept, discarded));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw, remaining));
+
+        harness.enterBattlefieldAndReturn(player1, new RaggedShortSpear());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept, firstDraw, secondDraw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+    }
+
+    @Test
+    void equipCannotBeActivatedWithOnlyTwoMana() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent spear = harness.addToBattlefieldAndReturn(player1, new RaggedShortSpear());
+        Permanent creature = addCreatureReady(player1, new OrdinaryBear());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(spear.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void equipCannotBeActivatedDuringCombat() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
