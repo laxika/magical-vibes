@@ -6,11 +6,15 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WardenOfTheFirstTree.class, WingsOfVelisVel.class})
 class WardenOfTheFirstTreeTest extends BaseCardTest {
 
     private Permanent addWarden() {
@@ -94,5 +98,73 @@ class WardenOfTheFirstTreeTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, warden)).isEqualTo(8);
         assertThat(gqs.getEffectiveToughness(gd, warden)).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("Returning to Human Warrior removes Spirit but retains granted keywords and counters")
+    void firstAbilityRemovesSpiritWithoutRemovingKeywordsOrCounters() {
+        Permanent warden = addWarden();
+        activate(warden, 0, 2);
+        resetPriority();
+        activate(warden, 1, 4);
+        resetPriority();
+        activate(warden, 2, 6);
+        resetPriority();
+        activate(warden, 0, 2);
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, warden))
+                .containsExactlyInAnyOrder(CardSubtype.HUMAN, CardSubtype.WARRIOR);
+        assertThat(gqs.hasKeyword(gd, warden, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warden, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, warden)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, warden)).isEqualTo(8);
+
+        resetPriority();
+        activate(warden, 2, 6);
+        assertThat(gqs.getEffectivePower(gd, warden)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, warden)).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("Second ability leaves a different base power and toughness unchanged")
+    void secondAbilityDoesNotSetBasePowerAndToughness() {
+        Permanent warden = addWarden();
+        activate(warden, 0, 2);
+        resetPriority();
+        harness.setHand(player1, List.of(new WingsOfVelisVel()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, warden.getId());
+        assertThat(gqs.getEffectivePower(gd, warden)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, warden)).isEqualTo(4);
+
+        resetPriority();
+        activate(warden, 1, 4);
+
+        assertThat(gqs.getEffectivePower(gd, warden)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, warden)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, warden, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warden, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated third activations accumulate counters and hybrid costs accept black mana")
+    void repeatedThirdAbilityAddsCountersWithBlackMana() {
+        Permanent warden = addWarden();
+        harness.addMana(player1, ManaColor.BLACK, 18);
+        int permanentIndex = gd.playerBattlefields.get(player1.getId()).indexOf(warden);
+        harness.activateAbility(player1, permanentIndex, 0, null, null);
+        harness.passBothPriorities();
+        resetPriority();
+        harness.activateAbility(player1, permanentIndex, 1, null, null);
+        harness.passBothPriorities();
+        resetPriority();
+        harness.activateAbility(player1, permanentIndex, 2, null, null);
+        harness.passBothPriorities();
+        resetPriority();
+        harness.activateAbility(player1, permanentIndex, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, warden)).isEqualTo(13);
+        assertThat(gqs.getEffectiveToughness(gd, warden)).isEqualTo(13);
     }
 }
