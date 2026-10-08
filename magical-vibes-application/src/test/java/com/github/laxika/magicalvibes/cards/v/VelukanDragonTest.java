@@ -13,6 +13,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -90,6 +92,21 @@ class VelukanDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(dragon.getEffectivePower()).isEqualTo(5);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2, 3, 4, 5, 6})
+    void eachRollBoostsCombatDamageWithoutChangingToughness(int result) {
+        setRoll(result);
+        Permanent dragon = addCreatureReady(player1, new VelukanDragon());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        resolveCombat();
+
+        assertThat(dragon.getEffectivePower()).isEqualTo(4 + result);
+        assertThat(dragon.getEffectiveToughness()).isEqualTo(5);
+        harness.assertLife(player2, 16 - result);
     }
 
     private void setRoll(int result) {
