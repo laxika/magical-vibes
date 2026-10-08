@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WoodSage.class, TrainedArmodon.class, MoggConscripts.class, Capsize.class, SkyshroudElf.class})
 class WoodSageTest extends BaseCardTest {
@@ -118,5 +119,70 @@ class WoodSageTest extends BaseCardTest {
         assertThat(gd.playerHands.get(p1)).extracting(Card::getId).contains(hit.getId());
         assertThat(gd.playerGraveyards.get(p1)).extracting(Card::getId).contains(other.getId());
         assertThat(gd.playerDecks.get(p1)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty library finishes resolving without moving cards")
+    void emptyLibraryFinishesResolving() {
+        activate(List.of());
+        List<Card> graveyardBefore = List.copyOf(gd.playerGraveyards.get(player1.getId()));
+
+        harness.handleListChoice(player1, "Trained Armodon");
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(graveyardBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cards stay in the library until the creature name is chosen")
+    void choosesNameBeforeRevealingCards() {
+        Card hit = new TrainedArmodon();
+        Card miss = new Capsize();
+        activate(List.of(hit, miss));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(hit, miss);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains("reveals Trained Armodon")).isFalse();
+
+        harness.handleListChoice(player1, "Trained Armodon");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(hit);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains("reveals Trained Armodon, Capsize")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Every copy goes to hand when all four revealed cards match")
+    void allFourMatchesGoToHand() {
+        List<Card> hits = List.of(new TrainedArmodon(), new TrainedArmodon(),
+                new TrainedArmodon(), new TrainedArmodon());
+        activate(hits);
+        List<Card> graveyardBefore = List.copyOf(gd.playerGraveyards.get(player1.getId()));
+
+        harness.handleListChoice(player1, "Trained Armodon");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(hits);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(graveyardBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A noncreature card name cannot be submitted for Wood Sage")
+    void rejectsNoncreatureCardName() {
+        Card instant = new Capsize();
+        activate(List.of(instant));
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "Capsize"))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(instant);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handleListChoice(player1, "Trained Armodon");
+        harness.assertInGraveyard(player1, "Capsize");
     }
 }
