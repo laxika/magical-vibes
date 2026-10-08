@@ -84,4 +84,47 @@ class WarmongerTest extends BaseCardTest {
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 19);
     }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent warmonger = harness.addToBattlefieldAndReturn(player1, new Warmonger());
+        warmonger.tap();
+        warmonger.setSummoningSick(true);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(warmonger.getMarkedDamage()).isEqualTo(1);
+        assertThat(warmonger.isTapped()).isTrue();
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Stacked abilities continue resolving after Warmonger dies")
+    void stackedAbilitiesResolveAfterSourceDies() {
+        harness.addToBattlefieldAndReturn(player1, new Warmonger());
+        harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        Permanent flyingCreature = harness.addToBattlefieldAndReturn(player2, new CloudSprite());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        for (int activation = 0; activation < 4; activation++) {
+            harness.activateAbility(player1, 0, null, null);
+        }
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Warmonger");
+        harness.assertInGraveyard(player1, "Warmonger");
+        harness.assertNotOnBattlefield(player2, "Fresh Volunteers");
+        harness.assertInGraveyard(player2, "Fresh Volunteers");
+        assertThat(flyingCreature.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 16);
+    }
 }
