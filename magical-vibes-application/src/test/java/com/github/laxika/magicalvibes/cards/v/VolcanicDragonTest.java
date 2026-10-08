@@ -50,4 +50,30 @@ class VolcanicDragonTest extends BaseCardTest {
         assertThat(attacker.isAttacking()).isTrue();
         assertThat(blocker.isBlocking()).isFalse();
     }
+
+    @Test
+    @DisplayName("Can be blocked by another flying creature")
+    void canBeBlockedByFlyingCreature() {
+        addCreatureReady(player1, new VolcanicDragon());
+        Permanent blocker = addCreatureReady(player2, new VolcanicDragon());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can block a ground creature immediately after entering")
+    void canBlockGroundCreatureImmediatelyAfterEntering() {
+        addCreatureReady(player1, new MistDragon());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new VolcanicDragon());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 }
