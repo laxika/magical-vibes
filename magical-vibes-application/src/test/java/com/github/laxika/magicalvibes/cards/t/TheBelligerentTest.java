@@ -176,6 +176,62 @@ class TheBelligerentTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Bitter Triumph");
     }
 
+    @Test
+    @DisplayName("The granted permission survives The Belligerent leaving the battlefield")
+    void permissionSurvivesSourceRemoval() {
+        attackWithBelligerent(new Shock());
+        Permanent belligerent = findPermanent(player1, "The Belligerent");
+        harness.setHand(player1, List.of(new BitterTriumph()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, belligerent.getId());
+
+        harness.assertInGraveyard(player1, "The Belligerent");
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveFromLibraryTop(player1, player2.getId());
+        harness.assertLife(player2, 13);
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent the attack trigger from making a Treasure")
+    void emptyLibraryStillCreatesTreasure() {
+        addCreatureReady(player1, new TheBelligerent());
+        addCreatureReady(player1, new AirElemental());
+        harness.setLibrary(player1, List.of());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The attack trigger does not permit the opponent to cast from their library")
+    void opponentDoesNotReceivePermission() {
+        attackWithBelligerent(new Forest());
+        harness.setLibrary(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player2, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Crew 3 cannot be activated without untapped creatures to pay its cost")
+    void cannotCrewWithoutCreatures() {
+        addCreatureReady(player1, new TheBelligerent());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void attackWithBelligerent(Card topCard) {
         addCreatureReady(player1, new TheBelligerent());
         addCreatureReady(player1, new AirElemental());
