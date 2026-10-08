@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.TormodsCrypt;
-import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,13 +14,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WorkshopAssistant.class, WrathOfGod.class, TormodsCrypt.class, GrizzlyBears.class})
 class WorkshopAssistantTest extends BaseCardTest {
 
     private void destroyWorkshopAssistant() {
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     @Test
@@ -73,5 +73,45 @@ class WorkshopAssistantTest extends BaseCardTest {
         destroyWorkshopAssistant();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Another Workshop Assistant is a legal target despite having the same name")
+    void returnsAnotherWorkshopAssistant() {
+        Card source = new WorkshopAssistant();
+        Card target = new WorkshopAssistant();
+        harness.addToBattlefield(player1, source);
+        harness.setGraveyard(player1, List.of(target));
+
+        destroyWorkshopAssistant();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(target.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(target).doesNotContain(source);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(source).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("The trigger does not return a target exiled before resolution")
+    void doesNotReturnExiledTarget() {
+        Card target = new TormodsCrypt();
+        harness.addToBattlefield(player1, new WorkshopAssistant());
+        harness.addToBattlefield(player2, new TormodsCrypt());
+        harness.setGraveyard(player1, List.of(target));
+
+        destroyWorkshopAssistant();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(target);
+        harness.assertNotInGraveyard(player1, "Tormod's Crypt");
+        assertThat(gd.stack).isEmpty();
     }
 }
