@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -82,8 +81,7 @@ class ViridianLongbowTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(creature.isTapped()).isTrue();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("damage from Alpha Myr"));
+        assertThat(gameLogContains("damage from Alpha Myr")).isTrue();
     }
 
     @Test
@@ -112,5 +110,69 @@ class ViridianLongbowTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no activated ability");
+    }
+
+    @Test
+    void summoningSickCreatureCannotActivateGrantedTapAbility() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+        creature.setSummoningSick(true);
+        Permanent longbow = harness.addToBattlefieldAndReturn(player1, new ViridianLongbow());
+        longbow.setAttachedTo(creature.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    void tappedCreatureCannotActivateGrantedTapAbility() {
+        Permanent creature = addCreatureReady(player1, new AlphaMyr());
+        creature.setTapped(true);
+        Permanent longbow = harness.addToBattlefieldAndReturn(player1, new ViridianLongbow());
+        longbow.setAttachedTo(creature.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    void reequippingTransfersGrantedAbilityAndDoesNotTapEquipment() {
+        Permanent original = addCreatureReady(player1, new AlphaMyr());
+        Permanent recipient = addCreatureReady(player1, new AlphaMyr());
+        Permanent longbow = harness.addToBattlefieldAndReturn(player1, new ViridianLongbow());
+        longbow.setAttachedTo(original.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 2, null, recipient.getId());
+        harness.passBothPriorities();
+
+        assertThat(longbow.getAttachedTo()).isEqualTo(recipient.getId());
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
+        harness.activateAbility(player1, 1, null, player2.getId());
+        assertThat(recipient.isTapped()).isTrue();
+        assertThat(original.isTapped()).isFalse();
+        assertThat(longbow.isTapped()).isFalse();
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void activatedDamageAbilityResolvesAfterLongbowIsDetached() {
+        Permanent creature = addCreatureReady(player1, new AlphaMyr());
+        Permanent longbow = harness.addToBattlefieldAndReturn(player1, new ViridianLongbow());
+        longbow.setAttachedTo(creature.getId());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        longbow.setAttachedTo(null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(gameLogContains("damage from Alpha Myr")).isTrue();
     }
 }
