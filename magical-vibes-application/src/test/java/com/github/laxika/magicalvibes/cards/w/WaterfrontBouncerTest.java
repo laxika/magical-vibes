@@ -94,6 +94,55 @@ class WaterfrontBouncerTest extends BaseCardTest {
     }
 
     @Test
+    void canDiscardACreatureAndReturnItself() {
+        Permanent bouncer = addCreatureReady(player1, new WaterfrontBouncer());
+        harness.setHand(player1, List.of(new FreshVolunteers()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, bouncer.getId());
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Fresh Volunteers");
+        harness.assertOnBattlefield(player1, "Waterfront Bouncer");
+        assertThat(bouncer.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Waterfront Bouncer");
+        harness.assertInHand(player1, "Waterfront Bouncer");
+    }
+
+    @Test
+    void abilityCannotBeActivatedWithOnlyNonblueMana() {
+        Permanent bouncer = addCreatureReady(player1, new WaterfrontBouncer());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bouncer.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(bouncer.isTapped()).isFalse();
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void abilityCannotBeActivatedWithSummoningSickness() {
+        Permanent bouncer = addCreatureReady(player1, new WaterfrontBouncer());
+        bouncer.setSummoningSick(true);
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bouncer.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(bouncer.isTapped()).isFalse();
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void abilityCannotBeActivatedWhenBouncerIsTapped() {
         Permanent bouncer = addCreatureReady(player1, new WaterfrontBouncer());
         bouncer.tap();
