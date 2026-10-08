@@ -158,6 +158,60 @@ class AncestralMemoriesTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("With three cards in library, choose two and put the remaining card into the graveyard")
+    void threeCardsInLibraryStillRequiresChoosingTwo() {
+        Card first = new Island();
+        Card second = new Island();
+        Card third = new Island();
+        harness.setLibrary(player1, List.of(first, second, third));
+        AncestralMemories spell = new AncestralMemories();
+
+        harness.castFromHand(player1, spell, "{2}{U}{U}{U}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(first.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Invalid number of cards selected");
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), third.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(second, spell);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Cannot select the same card twice or a card below the top seven")
+    void invalidSelectionLeavesChoiceAvailable() {
+        List<Card> cards = sevenCards();
+        Card eighth = new Island();
+        cards.add(eighth);
+        harness.setLibrary(player1, cards);
+        AncestralMemories spell = new AncestralMemories();
+
+        harness.castFromHand(player1, spell, "{2}{U}{U}{U}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(cards.getFirst().getId(), cards.getFirst().getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Duplicate card IDs in selection");
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(cards.getFirst().getId(), eighth.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageStartingWith("Invalid card:");
+        harness.handleMultipleCardsChosen(player1, List.of(cards.get(0).getId(), cards.get(1).getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(cards.get(0), cards.get(1));
+        List<Card> expectedGraveyard = new ArrayList<>(cards.subList(2, 7));
+        expectedGraveyard.add(spell);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrderElementsOf(expectedGraveyard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(eighth);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private List<Card> sevenCards() {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < 7; i++) {
