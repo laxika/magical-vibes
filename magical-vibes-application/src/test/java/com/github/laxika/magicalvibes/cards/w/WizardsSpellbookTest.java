@@ -115,6 +115,59 @@ class WizardsSpellbookTest extends BaseCardTest {
                 .containsExactly(first, second);
     }
 
+    @Test
+    void copiesCardFromOpponentsGraveyardUnderActivatorsControl() {
+        setRoll(19);
+        Divination divination = new Divination();
+        harness.addToBattlefield(player1, new WizardsSpellbook());
+        harness.setGraveyard(player2, List.of(divination));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, divination.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(harness.getPermanentId(player1, "Wizard's Spellbook")))
+                .containsExactly(divination);
+    }
+
+    @Test
+    void decliningCopyLeavesOnlyOriginalInExile() {
+        setRoll(9);
+        Divination divination = new Divination();
+        harness.addToBattlefield(player1, new WizardsSpellbook());
+        harness.setGraveyard(player1, List.of(divination));
+
+        harness.activateAbility(player1, 0, null, divination.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.exiledCards).extracting(entry -> entry.card()).containsExactly(divination);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void illegalGraveyardTargetPreventsCopies() {
+        setRoll(20);
+        Divination divination = new Divination();
+        harness.addToBattlefield(player1, new WizardsSpellbook());
+        harness.setGraveyard(player1, List.of(divination));
+
+        harness.activateAbility(player1, 0, null, divination.getId(), Zone.GRAVEYARD);
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void setRoll(int result) {
         setRolls(result);
     }
