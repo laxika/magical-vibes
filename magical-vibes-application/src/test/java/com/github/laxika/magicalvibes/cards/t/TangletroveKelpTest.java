@@ -198,6 +198,31 @@ class TangletroveKelpTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
+    @Test
+    @DisplayName("Animated Clues remain creatures after Kelp is sacrificed")
+    void animationPersistsAfterSourceLeavesBattlefield() {
+        Permanent kelp = harness.addToBattlefieldAndReturn(player1, new TangletroveKelp());
+        Permanent clue = addClueToken(player1);
+        TangletroveKelp drawn = new TangletroveKelp();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+
+        advanceToCombatAndResolve(player1);
+        kelp.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(kelp);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gqs.isCreature(gd, clue)).isTrue();
+        assertThat(gqs.isArtifact(gd, clue)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, clue, CardSubtype.CLUE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, clue, CardSubtype.PLANT)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, clue)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, clue)).isEqualTo(6);
+    }
+
     private void advanceToCombatAndResolve(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -211,9 +236,8 @@ class TangletroveKelpTest extends BaseCardTest {
         clueCard.setType(CardType.ARTIFACT);
         clueCard.setToken(true);
         clueCard.setSubtypes(List.of(CardSubtype.CLUE));
-        Permanent clue = new Permanent(clueCard);
+        Permanent clue = harness.addToBattlefieldAndReturn(player, clueCard);
         clue.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(clue);
         return clue;
     }
 }
