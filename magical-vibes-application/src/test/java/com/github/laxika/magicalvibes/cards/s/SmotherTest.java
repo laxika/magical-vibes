@@ -25,8 +25,7 @@ class SmotherTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Smother()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Daru Healer"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Daru Healer"));
 
         harness.assertNotOnBattlefield(player2, "Daru Healer");
         harness.assertInGraveyard(player2, "Daru Healer");
@@ -69,10 +68,49 @@ class SmotherTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Smother()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0, healer.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, healer.getId());
 
         harness.assertNotOnBattlefield(player2, "Daru Healer");
         harness.assertInGraveyard(player2, "Daru Healer");
+    }
+
+    @Test
+    @DisplayName("Smother destroys a face-down creature whose face-up mana value exceeds 3")
+    void destroysFaceDownCreature() {
+        harness.setHand(player1, List.of(new ExaltedAngel()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent angel = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.setHand(player2, List.of(new Smother()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player2, 0, angel.getId());
+
+        harness.assertNotOnBattlefield(player1, "Exalted Angel");
+        harness.assertInGraveyard(player1, "Exalted Angel");
+    }
+
+    @Test
+    @DisplayName("Smother does not destroy a target turned face up with mana value greater than 3")
+    void targetBecomesIllegalWhenTurnedFaceUp() {
+        harness.setHand(player1, List.of(new ExaltedAngel()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent angel = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.setHand(player2, List.of(new Smother()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castInstant(player2, 0, angel.getId());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(angel));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Exalted Angel");
+        harness.assertNotInGraveyard(player1, "Exalted Angel");
+        harness.assertInGraveyard(player2, "Smother");
     }
 }
