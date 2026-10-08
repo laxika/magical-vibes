@@ -75,26 +75,51 @@ class WizenedArbiterTest extends BaseCardTest {
     }
 
     @Test
-    void doesNotOfferExchangeWithoutAHandCard() {
+    void mayRevealWithoutAHandCardButCannotExchange() {
         Card outsideCard = new SerraAngel();
         setSideboard(outsideCard);
 
         harness.setHand(player1, List.of(new WizenedArbiter()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        PendingInteraction.ExchangeOutsideGameCardChoice outsideChoice =
+                gd.interaction.activeInteraction(PendingInteraction.ExchangeOutsideGameCardChoice.class);
+        assertThat(outsideChoice).isNotNull();
+        assertThat(outsideChoice.cards()).containsExactly(outsideCard);
+
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardsChosen(List.of(outsideCard.getId())));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(outsideCard);
+    }
+
+    @Test
+    void exchangeDoesNotRevealTheHandCardToOpponents() {
+        Card outsideCard = new SerraAngel();
+        Card handCard = new GrizzlyBears();
+        setSideboard(outsideCard);
+        castWizenedArbiter(handCard);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardsChosen(List.of(outsideCard.getId())));
+        int logStart = gd.gameLog.size();
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardIndexChosen(0));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(outsideCard);
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(handCard);
+        assertThat(gd.gameLog.subList(logStart, gd.gameLog.size()))
+                .noneMatch(entry -> entry.plainText().contains(handCard.getName()));
     }
 
     private void castWizenedArbiter(Card handCard) {
         harness.setHand(player1, List.of(new WizenedArbiter(), handCard));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void setSideboard(Card... cards) {
