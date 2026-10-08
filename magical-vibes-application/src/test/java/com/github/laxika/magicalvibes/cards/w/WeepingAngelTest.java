@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.e.EnchantedEvening;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WeepingAngel.class, GrizzlyBears.class, MindStone.class, Shock.class})
+@CardUsed({WeepingAngel.class, GrizzlyBears.class, MindStone.class, Shock.class, EnchantedEvening.class})
 class WeepingAngelTest extends BaseCardTest {
 
     @Test
@@ -73,15 +74,14 @@ class WeepingAngelTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, angel.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, angel.getId());
 
         assertThat(angel.getMarkedDamage()).isEqualTo(2);
     }
 
     @Test
-    @DisplayName("Combat damage that cannot be prevented does not shuffle the damaged creature")
-    void unpreventableCombatDamageDoesNotShuffle() {
+    @DisplayName("Combat damage that cannot be prevented still shuffles the damaged creature")
+    void unpreventableCombatDamageStillShuffles() {
         addAttacker(player1);
         Permanent blocker = addBlockerWithPowerAndToughness(player2, 0, 3);
         harness.setLibrary(player2, List.of(new MindStone()));
@@ -89,11 +89,67 @@ class WeepingAngelTest extends BaseCardTest {
 
         resolveWeepingAngelCombat();
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
-        assertThat(blocker.getMarkedDamage()).isEqualTo(2);
-        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
     }
 
+    @Test
+    @DisplayName("Casting your own creature spell does not make Weeping Angel a noncreature")
+    void ownCreatureSpellDoesNotRemoveCreatureType() {
+        Permanent angel = harness.addToBattlefieldAndReturn(player1, new WeepingAngel());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, angel)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Weeping Angel retains other card types when it stops being a creature")
+    void retainsEnchantmentTypeWhenBecomingNoncreature() {
+        Permanent angel = harness.addToBattlefieldAndReturn(player1, new WeepingAngel());
+        harness.addToBattlefield(player1, new EnchantedEvening());
+        assertThat(gqs.isEnchantment(gd, angel)).isTrue();
+
+        opponentCasts(new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, angel)).isFalse();
+        assertThat(gqs.isArtifact(gd, angel)).isTrue();
+        assertThat(gqs.isEnchantment(gd, angel)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A blocking Weeping Angel shuffles an attacker before its normal combat damage")
+    void blockingAngelShufflesAttackerBeforeNormalDamage() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent angel = harness.addToBattlefieldAndReturn(player2, new WeepingAngel());
+        angel.setBlocking(true);
+        angel.addBlockingTarget(0);
+        harness.setLibrary(player1, List.of(new MindStone()));
+
+        resolveWeepingAngelCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(attacker.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(angel);
+        assertThat(angel.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Unblocked Weeping Angel deals combat damage to the defending player")
+    void unblockedAngelDealsDamageToPlayer() {
+        addAttacker(player1);
+
+        resolveWeepingAngelCombat();
+
+        harness.assertLife(player2, 18);
+    }
     private void opponentCasts(Card card, String manaCost) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -113,11 +169,10 @@ class WeepingAngelTest extends BaseCardTest {
         Card blockerCard = new GrizzlyBears();
         blockerCard.setPower(power);
         blockerCard.setToughness(toughness);
-        Permanent blocker = new Permanent(blockerCard);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player, blockerCard);
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player.getId()).add(blocker);
         return blocker;
     }
 
