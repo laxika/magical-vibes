@@ -102,6 +102,40 @@ class VaevictisAsmadiTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Vaevictis Asmadi");
     }
 
+    @Test
+    @DisplayName("Pump abilities can be activated repeatedly while tapped and summoning sick")
+    void canPumpRepeatedlyWhileTappedAndSummoningSick() {
+        Permanent dragon = addDragon();
+        dragon.setTapped(true);
+        dragon.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(dragon.getPowerModifier()).isEqualTo(2);
+        assertThat(dragon.getToughnessModifier()).isZero();
+        assertThat(dragon.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The controller may decline an affordable upkeep payment")
+    void canDeclineAffordableUpkeepPayment() {
+        addDragon();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Vaevictis Asmadi");
+        harness.assertInGraveyard(player1, "Vaevictis Asmadi");
+    }
+
     private Permanent addDragon() {
         return addCreatureReady(player1, new VaevictisAsmadi());
     }
