@@ -144,6 +144,39 @@ class SongOfSerenityTest extends BaseCardTest {
         assertThat(enchanted.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Song of Serenity also prevents an opponent's enchanted creature from attacking")
+    void opponentsEnchantedCreatureCannotAttack() {
+        harness.addToBattlefield(player1, new SongOfSerenity());
+        Permanent enchanted = addCreatureReady(player2, new Carnophage());
+        attachRobeOfMirrors(enchanted, player2);
+
+        int index = gd.playerBattlefields.get(player2.getId()).indexOf(enchanted);
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(index)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Removing one Aura does not lift the restriction while another remains attached")
+    void restrictionRemainsUntilLastAuraLeaves() {
+        harness.addToBattlefield(player1, new SongOfSerenity());
+        harness.setLife(player2, 20);
+        Permanent enchanted = addCreatureReady(player1, new Carnophage());
+        Permanent firstAura = attachRobeOfMirrors(enchanted, player1);
+        Permanent secondAura = attachRobeOfMirrors(enchanted, player2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstAura);
+
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(enchanted);
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(index)))
+                .isInstanceOf(IllegalStateException.class);
+
+        gd.playerBattlefields.get(player2.getId()).remove(secondAura);
+        declareAttackers(player1, List.of(index));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
     private Permanent attachRobeOfMirrors(Permanent creature, Player controller) {
         Permanent aura = harness.addToBattlefieldAndReturn(controller, new RobeOfMirrors());
         aura.setAttachedTo(creature.getId());
