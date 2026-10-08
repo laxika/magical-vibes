@@ -24,6 +24,41 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class WojekSirenTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Creatures entering after resolution do not receive the boost")
+    void doesNotBoostCreaturesEnteringAfterResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CivicWayfinder());
+        harness.setHand(player1, List.of(new WojekSiren()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        Permanent lateCreature = harness.addToBattlefieldAndReturn(player1, new CivicWayfinder());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, lateCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lateCreature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Color sharing is checked against the target, not other boosted creatures")
+    void doesNotSpreadBoostThroughMulticoloredCreatures() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CourierHawk());
+        Permanent matchingCreature = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
+        Permanent redCreature = harness.addToBattlefieldAndReturn(player2, new ViashinoFangtail());
+        harness.setHand(player1, List.of(new WojekSiren()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, matchingCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, matchingCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, redCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, redCreature)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Boosts the target and every creature sharing a color with it")
     void boostsTargetAndColorSharingCreatures() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new CivicWayfinder());
