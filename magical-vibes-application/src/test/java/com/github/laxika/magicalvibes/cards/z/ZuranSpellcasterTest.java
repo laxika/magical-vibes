@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.FyndhornElves;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -27,10 +26,9 @@ class ZuranSpellcasterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(spellcaster.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -94,8 +92,55 @@ class ZuranSpellcasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
-                .anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can deal damage to its controller")
+    void canTargetController() {
+        harness.setLife(player1, 20);
+        addReadySpellcaster(player1);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target itself and die from its own damage")
+    void canTargetItself() {
+        Permanent spellcaster = addReadySpellcaster(player1);
+
+        harness.activateAbility(player1, 0, null, spellcaster.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Zuran Spellcaster");
+        harness.assertInGraveyard(player1, "Zuran Spellcaster");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability still deals damage after its source dies in response")
+    void dealsDamageAfterSourceDies() {
+        harness.setLife(player2, 20);
+        Permanent spellcaster = addReadySpellcaster(player1);
+        addReadySpellcaster(player2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, null, spellcaster.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Zuran Spellcaster");
+        harness.assertInGraveyard(player1, "Zuran Spellcaster");
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addReadySpellcaster(Player player) {
