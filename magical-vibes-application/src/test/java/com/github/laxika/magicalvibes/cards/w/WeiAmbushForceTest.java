@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(WeiAmbushForce.class)
+@CardUsed({WeiAmbushForce.class})
 class WeiAmbushForceTest extends BaseCardTest {
 
     @Test
@@ -50,6 +50,37 @@ class WeiAmbushForceTest extends BaseCardTest {
 
         assertThat(attacker.getPowerModifier()).isEqualTo(2);
         assertThat(nonAttacker.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Attack boost applies only when the trigger resolves")
+    void boostWaitsForTriggerResolution() {
+        Permanent force = addCreatureReady(player1, new WeiAmbushForce());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(force.getPowerModifier()).isZero();
+        assertThat(force.getToughnessModifier()).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(force.getPowerModifier()).isEqualTo(2);
+        assertThat(force.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Two attacking copies each get their own boost")
+    void bothAttackingCopiesGetTheirOwnBoost() {
+        Permanent first = addCreatureReady(player1, new WeiAmbushForce());
+        Permanent second = addCreatureReady(player1, new WeiAmbushForce());
+
+        declareAttackers(player1, List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(first.getPowerModifier()).isEqualTo(2);
+        assertThat(first.getToughnessModifier()).isZero();
+        assertThat(second.getPowerModifier()).isEqualTo(2);
+        assertThat(second.getToughnessModifier()).isZero();
     }
 
     @Test
