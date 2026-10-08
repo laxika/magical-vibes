@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.m.MorselTheft;
+import com.github.laxika.magicalvibes.cards.t.TaureanMauler;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VengefulFirebrand.class, MorselTheft.class})
+@CardUsed({VengefulFirebrand.class, MorselTheft.class, TaureanMauler.class})
 class VengefulFirebrandTest extends BaseCardTest {
 
     // ===== Conditional haste: Warrior card in graveyard =====
@@ -124,11 +125,57 @@ class VengefulFirebrandTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, firebrand)).isEqualTo(baseToughness);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, firebrand)).isEqualTo(basePower);
         assertThat(gqs.getEffectiveToughness(gd, firebrand)).isEqualTo(baseToughness);
+    }
+
+    @Test
+    @DisplayName("A changeling card in the graveyard grants haste")
+    void hasteWithChangelingInGraveyard() {
+        harness.setGraveyard(player1, List.of(new TaureanMauler()));
+        Permanent firebrand = harness.addToBattlefieldAndReturn(player1, new VengefulFirebrand());
+
+        assertThat(gqs.hasKeyword(gd, firebrand, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A newly entered Firebrand can attack only while its graveyard condition holds")
+    void conditionalHasteAllowsAttackingWhileSummoningSick() {
+        Permanent firebrand = harness.addToBattlefieldAndReturn(player1, new VengefulFirebrand());
+        firebrand.setSummoningSick(true);
+
+        assertThat(als.canAttack(gd, firebrand, player1.getId())).isFalse();
+
+        harness.setGraveyard(player1, List.of(new VengefulFirebrand()));
+        assertThat(als.canAttack(gd, firebrand, player1.getId())).isTrue();
+
+        harness.setGraveyard(player1, List.of());
+        assertThat(als.canAttack(gd, firebrand, player1.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("Firebreathing uses the stack and boosts only the source while summoning sick")
+    void firebreathingOnlyBoostsItsSourceOnResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new VengefulFirebrand());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new VengefulFirebrand());
+        source.setSummoningSick(true);
+        source.setTapped(true);
+        int sourcePower = gqs.getEffectivePower(gd, source);
+        int otherPower = gqs.getEffectivePower(gd, other);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(sourcePower);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(otherPower);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(sourcePower + 1);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(otherPower);
     }
 
     private Permanent findFirebrand() {
