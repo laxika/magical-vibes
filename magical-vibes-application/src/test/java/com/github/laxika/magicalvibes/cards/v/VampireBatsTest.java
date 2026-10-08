@@ -25,8 +25,7 @@ class VampireBatsTest extends BaseCardTest {
         Permanent bats = addReadyVampireBats(player1);
         Permanent wolves = addCreatureReady(player2, new TundraWolves());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(wolves),
@@ -130,6 +129,75 @@ class VampireBatsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bats.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Unresolved activations count toward the limit and boost only on resolution")
+    void unresolvedActivationsCountTowardLimit() {
+        Permanent bats = addReadyVampireBats(player1);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(bats.getPowerModifier()).isZero();
+        assertThat(gd.stack).hasSize(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no more than 2 times each turn");
+        assertThat(gd.stack).hasSize(2);
+
+        resolveAllTriggers();
+
+        assertThat(bats.getPowerModifier()).isEqualTo(2);
+        assertThat(bats.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each copy has its own activation limit and boosts only itself")
+    void eachCopyHasIndependentActivationLimit() {
+        Permanent first = addReadyVampireBats(player1);
+        Permanent second = addReadyVampireBats(player1);
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(second.getPowerModifier()).isZero();
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getPowerModifier()).isEqualTo(2);
+        assertThat(second.getPowerModifier()).isEqualTo(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no more than 2 times each turn");
+    }
+
+    @Test
+    @DisplayName("Ability can be activated twice during the opponent's turn while tapped")
+    void canActivateDuringOpponentsTurnWhileTapped() {
+        Permanent bats = addReadyVampireBats(player1);
+        bats.setTapped(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(bats.getPowerModifier()).isEqualTo(2);
+        assertThat(bats.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no more than 2 times each turn");
     }
 
     private Permanent addReadyVampireBats(Player player) {
