@@ -13,7 +13,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,9 +29,7 @@ class VraskaTheSilencerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        UUID dyingId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.castInstant(player1, 0, dyingId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Llanowar Elves"));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -43,11 +40,11 @@ class VraskaTheSilencerTest extends BaseCardTest {
         assertThat(returned.getCard().getType()).isEqualTo(CardType.ARTIFACT);
         assertThat(returned.getCard().getSubtypes()).containsExactly(CardSubtype.TREASURE);
         assertThat(gqs.isCreature(gd, returned)).isFalse();
-        assertThat(gs.getEffectiveActivatedAbilities(gd, returned)).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
     @Test
-    @DisplayName("The returned Treasure has only its sacrifice-for-mana ability")
+    @DisplayName("The returned Treasure can sacrifice itself for mana")
     void returnedTreasureProducesManaAndSacrifices() {
         harness.addToBattlefield(player1, new VraskaTheSilencer());
         harness.addToBattlefield(player2, new LlanowarElves());
@@ -56,8 +53,7 @@ class VraskaTheSilencerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Llanowar Elves"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Llanowar Elves"));
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -68,5 +64,83 @@ class VraskaTheSilencerTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(returned);
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("The returned Treasure retains its original tap ability")
+    void returnedTreasureRetainsOriginalManaAbility() {
+        harness.addToBattlefield(player1, new VraskaTheSilencer());
+        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Llanowar Elves"));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player1, "Llanowar Elves");
+        returned.untap();
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(returned));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(returned.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(returned);
+    }
+
+    @Test
+    @DisplayName("Declining leaves the creature in its owner's graveyard and spends no mana")
+    void decliningDoesNotReturnCreatureOrSpendMana() {
+        harness.addToBattlefield(player1, new VraskaTheSilencer());
+        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Llanowar Elves"));
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A creature owned by Vraska's controller still returns when it dies under opposing control")
+    void returnsOwnCreatureThatDiedUnderOpponentControl() {
+        harness.addToBattlefield(player1, new VraskaTheSilencer());
+        Permanent stolen = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        gd.stolenCreatures.put(stolen.getId(), player1.getId());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, stolen.getId());
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player1, "Llanowar Elves");
+        assertThat(returned.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, returned)).isFalse();
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("A creature dying under Vraska's controller does not trigger her ability")
+    void ownControlledCreatureDoesNotTrigger() {
+        harness.addToBattlefield(player1, new VraskaTheSilencer());
+        harness.addToBattlefield(player1, new LlanowarElves());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Llanowar Elves"));
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 }
