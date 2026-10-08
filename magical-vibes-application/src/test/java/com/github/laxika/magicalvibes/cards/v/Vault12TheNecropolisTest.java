@@ -69,6 +69,75 @@ class Vault12TheNecropolisTest extends BaseCardTest {
         assertThat(opposingZombie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Entering triggers chapter I and adds to existing rad counters")
+    void enteringTriggersChapterIAndAddsToExistingRadCounters() {
+        gd.playerRadCounters.put(player1.getId(), 2);
+        gd.playerRadCounters.put(player2.getId(), 4);
+        harness.castFromHand(player1, new Vault12TheNecropolis(), "{4}{B}{B}");
+
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Vault 12: The Necropolis")
+                .getCounterCount(CounterType.LORE)).isEqualTo(1);
+        assertThat(gd.playerRadCounters.get(player1.getId())).isEqualTo(5);
+        assertThat(gd.playerRadCounters.get(player2.getId())).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Chapter II creates no tokens when neither player has rad counters")
+    void chapterIICreatesNoTokensWithoutRadCounters() {
+        addSagaWithLore(1);
+        gd.playerRadCounters.clear();
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Zombie Mutant")).isEmpty();
+        assertThat(findPermanents(player2, "Zombie Mutant")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Chapter II counts rad counters at resolution")
+    void chapterIICountsRadCountersAtResolution() {
+        addSagaWithLore(1);
+        gd.playerRadCounters.put(player1.getId(), 1);
+        gd.playerRadCounters.put(player2.getId(), 2);
+
+        advanceToNextChapter();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerRadCounters.put(player1.getId(), 4);
+        gd.playerRadCounters.put(player2.getId(), 1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Zombie Mutant")).hasSize(5);
+        assertThat(findPermanents(player2, "Zombie Mutant")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Chapter III gives a Zombie Mutant only two counters and then sacrifices the Saga")
+    void chapterIIICountsBothSubtypesOnlyOnceAndSacrificesSaga() {
+        addSagaWithLore(1);
+        gd.playerRadCounters.put(player1.getId(), 1);
+        gd.playerRadCounters.put(player2.getId(), 0);
+        advanceToNextChapter();
+        harness.passBothPriorities();
+        Permanent token = findPermanent(player1, "Zombie Mutant");
+
+        advanceToNextChapter();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Vault 12: The Necropolis");
+        assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
+        harness.assertNotOnBattlefield(player1, "Vault 12: The Necropolis");
+        harness.assertInGraveyard(player1, "Vault 12: The Necropolis");
+    }
+
     private Permanent addSagaWithLore(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new Vault12TheNecropolis());
         saga.setCounterCount(CounterType.LORE, loreCounters);
