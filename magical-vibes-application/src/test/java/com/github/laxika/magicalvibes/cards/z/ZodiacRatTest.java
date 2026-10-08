@@ -18,6 +18,25 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ZodiacRatTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Zodiac Rat cannot be blocked when the defending Swamp is tapped")
+    void cannotBeBlockedWhenDefendingSwampIsTapped() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
+        swamp.setTapped(true);
+        Permanent blocker = addCreatureReady(player2, new ShuFootSoldiers());
+        Permanent attacker = addCreatureReady(player1, new ZodiacRat());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
     @DisplayName("Zodiac Rat cannot be blocked when defending player controls a Swamp")
     void cannotBeBlockedWhenDefenderControlsSwamp() {
         harness.addToBattlefield(player2, new Swamp());
