@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.CinderShade;
 import com.github.laxika.magicalvibes.cards.l.LightningDart;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -31,8 +32,7 @@ class UrborgPhantomTest extends BaseCardTest {
         Permanent phantom = addCreatureReady(player2, new UrborgPhantom());
         Permanent blocker = addCreatureReady(player1, new CinderShade());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.activateAbility(player2, 0, null, null);
@@ -85,8 +85,28 @@ class UrborgPhantomTest extends BaseCardTest {
         Permanent phantom = addCreatureReady(player2, new UrborgPhantom());
         addCreatureReady(player1, new CinderShade());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
+
+        assertThat(phantom.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player2, "Urborg Phantom");
+        harness.assertInGraveyard(player1, "Cinder Shade");
+    }
+
+    @Test
+    @DisplayName("Combat damage prevention expires at end of turn")
+    void preventionExpiresAtEndOfTurn() {
+        Permanent phantom = addCreatureReady(player2, new UrborgPhantom());
+        addCreatureReady(player1, new CinderShade());
+
+        harness.forceActivePlayer(player1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player2);
 
