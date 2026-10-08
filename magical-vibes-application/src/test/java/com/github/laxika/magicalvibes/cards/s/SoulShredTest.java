@@ -27,8 +27,7 @@ class SoulShredTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertLife(player1, 23);
@@ -43,11 +42,44 @@ class SoulShredTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Wall of Granite");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertOnBattlefield(player2, "Wall of Granite");
         harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @DisplayName("Can target its controller's nonblack creature")
+    void canTargetOwnCreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SoulShred()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Soul Shred");
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Does not gain life when its only target leaves the battlefield before resolution")
+    void noLifeGainWhenTargetLeavesBattlefield() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SoulShred()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castSorcery(player1, 0, targetId);
+        gd.playerBattlefields.get(player2.getId()).removeIf(permanent -> permanent.getId().equals(targetId));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Soul Shred");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     @Test
