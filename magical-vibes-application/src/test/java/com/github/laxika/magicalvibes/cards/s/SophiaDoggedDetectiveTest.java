@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WhirlerRogue;
+import com.github.laxika.magicalvibes.cards.m.MirrorEntity;
+import com.github.laxika.magicalvibes.cards.e.ErdwalIlluminator;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -9,16 +12,16 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SophiaDoggedDetective.class, GrizzlyBears.class})
+@CardUsed({SophiaDoggedDetective.class, WhirlerRogue.class, MirrorEntity.class, ErdwalIlluminator.class})
 class SophiaDoggedDetectiveTest extends BaseCardTest {
 
     @Test
@@ -35,6 +38,10 @@ class SophiaDoggedDetectiveTest extends BaseCardTest {
 
         Permanent tiny = findPermanent(player1, "Tiny");
         assertThat(tiny.getCard().isToken()).isTrue();
+        assertThat(tiny.getCard().getPower()).isEqualTo(2);
+        assertThat(tiny.getCard().getToughness()).isEqualTo(2);
+        assertThat(tiny.getCard().getColor()).isEqualTo(CardColor.GREEN);
+        assertThat(tiny.getCard().getSubtypes()).containsExactlyInAnyOrder(CardSubtype.DOG, CardSubtype.DETECTIVE);
         assertThat(tiny.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);
         assertThat(gqs.hasKeyword(gd, tiny, Keyword.TRAMPLE)).isTrue();
     }
@@ -43,10 +50,10 @@ class SophiaDoggedDetectiveTest extends BaseCardTest {
     void DogCombatDamageCreatesFoodThenClue() {
         addCreatureReady(player1, new SophiaDoggedDetective());
         Permanent dog = addDogToken(player1);
-        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
+        addCreatureReady(player1, new WhirlerRogue()).setAttacking(true);
         dog.setAttacking(true);
 
-        resolveCombatDamage();
+        resolveCombat();
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Food")).hasSize(1);
@@ -58,7 +65,7 @@ class SophiaDoggedDetectiveTest extends BaseCardTest {
         addCreatureReady(player1, new SophiaDoggedDetective());
         Permanent firstDog = addDogToken(player1);
         Permanent secondDog = addDogToken(player1);
-        Permanent nonDog = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonDog = addCreatureReady(player1, new WhirlerRogue());
         addFoodToken(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -80,7 +87,7 @@ class SophiaDoggedDetectiveTest extends BaseCardTest {
         dog.setToughness(2);
         dog.setToken(true);
         dog.setSubtypes(List.of(CardSubtype.DOG));
-        return addReady(player, dog);
+        return addCreatureReady(player, dog);
     }
 
     private Permanent addFoodToken(com.github.laxika.magicalvibes.model.Player player) {
@@ -89,20 +96,67 @@ class SophiaDoggedDetectiveTest extends BaseCardTest {
         food.setType(CardType.ARTIFACT);
         food.setToken(true);
         food.setSubtypes(List.of(CardSubtype.FOOD));
-        return addReady(player, food);
+        return harness.addToBattlefieldAndReturn(player, food);
     }
 
-    private Permanent addReady(com.github.laxika.magicalvibes.model.Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void eachDogIncludingChangelingsTriggersSeparatelyAndInvestigates() {
+        addCreatureReady(player1, new SophiaDoggedDetective());
+        addCreatureReady(player1, new ErdwalIlluminator());
+        addDogToken(player1).setAttacking(true);
+        addCreatureReady(player1, new MirrorEntity()).setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Food")).hasSize(2);
+        assertThat(findPermanents(player1, "Clue")).hasSize(3);
+        assertThat(findPermanents(player2, "Food")).isEmpty();
+        assertThat(findPermanents(player2, "Clue")).isEmpty();
     }
 
-    private void resolveCombatDamage() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+    @Test
+    void opponentsDogDoesNotTriggerSophia() {
+        addCreatureReady(player1, new SophiaDoggedDetective());
+        addCreatureReady(player2, new MirrorEntity()).setAttacking(true);
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Food")).isEmpty();
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+    }
+
+    @Test
+    void nonDogCombatDamageDoesNotCreateTokens() {
+        addCreatureReady(player1, new SophiaDoggedDetective()).setAttacking(true);
+        addCreatureReady(player1, new WhirlerRogue()).setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Food")).isEmpty();
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+    }
+
+    @Test
+    void countersIncludeNoncreatureKindredDogsButExcludeOpponentsDogs() {
+        addCreatureReady(player1, new SophiaDoggedDetective());
+        Card kindredDog = new Card();
+        kindredDog.setName("Kindred Dog enchantment");
+        kindredDog.setType(CardType.ENCHANTMENT);
+        kindredDog.setAdditionalTypes(Set.of(CardType.KINDRED));
+        kindredDog.setSubtypes(List.of(CardSubtype.DOG));
+        Permanent ownDog = harness.addToBattlefieldAndReturn(player1, kindredDog);
+        Permanent opposingDog = addCreatureReady(player2, new MirrorEntity());
+        addFoodToken(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(ownDog.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opposingDog.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanents(player1, "Food")).isEmpty();
     }
 }
