@@ -18,6 +18,71 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class WirewoodGuardianTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Forestcycling pays mana and discards before its search resolves")
+    void forestcyclingPaysCostsBeforeResolution() {
+        Forest forest = new Forest();
+        harness.setHand(player1, List.of(new WirewoodGuardian()));
+        harness.setLibrary(player1, List.of(forest));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Wirewood Guardian");
+        harness.assertNotInHand(player1, "Wirewood Guardian");
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Forestcycling may fail to find even when a Forest is available")
+    void forestcyclingMayDeclineAvailableForest() {
+        Forest forest = new Forest();
+        harness.setHand(player1, List.of(new WirewoodGuardian()));
+        harness.setLibrary(player1, List.of(forest));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertInGraveyard(player1, "Wirewood Guardian");
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Forestcycling with an empty library still discards and shuffles")
+    void forestcyclingWithEmptyLibrary() {
+        harness.setHand(player1, List.of(new WirewoodGuardian()));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Wirewood Guardian");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+    }
+
+    @Test
     @DisplayName("Forestcycling discards the card and offers only Forest cards")
     void forestcyclingDiscardsAndOffersForests() {
         Forest forest = new Forest();
