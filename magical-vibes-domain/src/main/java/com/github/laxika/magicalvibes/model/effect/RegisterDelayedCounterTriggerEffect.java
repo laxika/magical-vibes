@@ -9,5 +9,5 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param genericManaAmount the generic mana the opponent must pay to avoid the counter
  */
-public record RegisterDelayedCounterTriggerEffect(int genericManaAmount) implements CardEffect {
+public record RegisterDelayedCounterTriggerEffect(int genericManaAmount) implements PregameChoiceEffect {
 }

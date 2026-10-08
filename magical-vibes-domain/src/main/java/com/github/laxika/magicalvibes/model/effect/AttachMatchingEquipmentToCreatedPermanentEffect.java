@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * @param equipmentFilter filter for the Equipment to attach
  */
-public record AttachMatchingEquipmentToCreatedPermanentEffect(PermanentPredicate equipmentFilter)
+public record AttachMatchingEquipmentToCreatedPermanentEffect(PermanentPredicate equipmentFilter,
+                                                               boolean chooseCreatedPermanent)
         implements CardEffect {
+    public AttachMatchingEquipmentToCreatedPermanentEffect(PermanentPredicate equipmentFilter) {
+        this(equipmentFilter, false);
+    }
 }

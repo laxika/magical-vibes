@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.Abolish;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CelestialConvergence.class, Abolish.class})
+@CardUsed({CelestialConvergence.class, Abolish.class, Plains.class})
 class CelestialConvergenceTest extends BaseCardTest {
 
     @Test
@@ -123,9 +125,12 @@ class CelestialConvergenceTest extends BaseCardTest {
     void destroyedSourceWithOneCounterDoesNotEndGame() {
         Permanent convergence = addWithOmenCounters(1);
         harness.setHand(player2, List.of(new Abolish()));
-        harness.addMana(player2, ManaColor.WHITE, 3);
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player2, new Plains());
+        }
 
-        advanceToUpkeep(player1);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> advanceToUpkeep(player1));
+        harness.addMana(player2, ManaColor.WHITE, 3);
         harness.castAndResolveInstant(player2, 0, convergence.getId());
         harness.passBothPriorities();
 
@@ -140,9 +145,12 @@ class CelestialConvergenceTest extends BaseCardTest {
         harness.setLife(player2, 20);
         Permanent convergence = addWithOmenCounters(0);
         harness.setHand(player2, List.of(new Abolish()));
-        harness.addMana(player2, ManaColor.WHITE, 3);
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player2, new Plains());
+        }
 
-        advanceToUpkeep(player1);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> advanceToUpkeep(player1));
+        harness.addMana(player2, ManaColor.WHITE, 3);
         harness.castAndResolveInstant(player2, 0, convergence.getId());
         harness.passBothPriorities();
 

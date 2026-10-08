@@ -64,7 +64,7 @@ class CitanulDruidTest extends BaseCardTest {
 
         assertThat(druid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.stack).hasSize(1);
-        assertThat(findPermanent(player2, "Ivory Tower")).isNull();
+        assertThat(findPermanents(player2, "Ivory Tower")).isEmpty();
 
         resolveAllTriggers();
 

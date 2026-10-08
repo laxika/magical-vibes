@@ -44,7 +44,7 @@ public class EachPlayerNameCardRevealTopEffectHandler implements NormalEffectHan
         var choiceContext = new ChoiceContext.EachPlayerCardNameRevealChoice(
                 playerOrder, new LinkedHashMap<>());
 
-        List<String> cardNames = libraryRevealSupport.collectAllCardNamesInGame(gameData);
+        List<String> cardNames = libraryRevealSupport.collectPublicCardNames(gameData);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 firstPlayerId, null, null, choiceContext, cardNames, "Choose a card name."));
 

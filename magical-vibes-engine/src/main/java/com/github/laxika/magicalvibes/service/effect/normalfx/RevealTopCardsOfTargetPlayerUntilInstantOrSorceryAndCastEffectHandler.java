@@ -50,6 +50,10 @@ public class RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffectHandl
         Card hit = null;
         while (!deck.isEmpty()) {
             Card card = deck.removeFirst();
+            gameData.addToExile(targetPlayerId, card, entry.getSourcePermanentId());
+            if (gameData.findExiledCard(card.getId()) == null) {
+                continue;
+            }
             exiled.add(card);
             gameLogService.append(gameData, GameLog.builder()
                     .text(targetName + " exiles ").card(card).text(" from the top of their library.")
@@ -63,6 +67,7 @@ public class RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffectHandl
         }
 
         if (hit == null) {
+            exiled.removeIf(card -> !gameData.removeFromExile(card.getId()));
             Collections.shuffle(exiled);
             deck.addAll(exiled);
             return;

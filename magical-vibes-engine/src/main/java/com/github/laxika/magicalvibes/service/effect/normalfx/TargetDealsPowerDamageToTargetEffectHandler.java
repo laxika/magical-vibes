@@ -59,13 +59,19 @@ public class TargetDealsPowerDamageToTargetEffectHandler implements NormalEffect
             return;
         }
 
+        UUID sourceController = gameQueryService.findPermanentController(gameData, biter.getId());
+        if (sourceController == null) return;
+        StackEntry damageEntry = new StackEntry(
+                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
+                biter.getCard(), sourceController, biter.getCard().getName(), List.of(), null, biter.getId());
+        damageEntry.setSourcePermanentSnapshot(new Permanent(biter));
         int power = gameQueryService.getPowerBasedDamage(gameData, biter);
         int rawDamage = gameQueryService.applyDamageMultiplier(
-                gameData, Math.multiplyExact(power, e.powerMultiplier()), entry);
+                gameData, Math.multiplyExact(power, e.powerMultiplier()), damageEntry);
         int markedDamageBefore = e.recordExcessDamage() ? target.getMarkedDamage() : 0;
         boolean deathtouch = e.recordExcessDamage()
                 && gameQueryService.sourceHasKeyword(gameData, entry, biter, Keyword.DEATHTOUCH);
-        int damageDealt = damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage, biter);
+        int damageDealt = damageSupport.dealCreatureDamage(gameData, damageEntry, target, rawDamage, biter);
         if (e.recordExcessDamage()) {
             entry.setEventValue(damageSupport.computeExcessDamageToCreature(
                     gameData, target, damageDealt, markedDamageBefore, deathtouch));

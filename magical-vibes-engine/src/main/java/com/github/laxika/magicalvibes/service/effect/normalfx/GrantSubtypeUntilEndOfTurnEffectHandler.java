@@ -63,7 +63,7 @@ public class GrantSubtypeUntilEndOfTurnEffectHandler implements NormalEffectHand
             }
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                     .text(" grants " + e.subtype().getDisplayName() + " to " + count
-                            + " creature(s) until end of turn.").build());
+                            + " creature(s)" + durationText(e) + ".").build());
             return;
         }
 
@@ -81,7 +81,7 @@ public class GrantSubtypeUntilEndOfTurnEffectHandler implements NormalEffectHand
             }
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                     .text(" grants " + e.subtype().getDisplayName() + " to " + count
-                            + " creature(s) until end of turn.").build());
+                            + " creature(s)" + durationText(e) + ".").build());
             return;
         }
 
@@ -95,7 +95,7 @@ public class GrantSubtypeUntilEndOfTurnEffectHandler implements NormalEffectHand
             applyEffect(gameData, entry, e, self);
             gameLogService.append(gameData, GameLog.builder().card(self.getCard())
                     .text(" becomes a " + e.subtype().getDisplayName()
-                            + " in addition to its other types until end of turn.").build());
+                            + " in addition to its other types" + durationText(e) + ".").build());
             return;
         }
 
@@ -112,7 +112,7 @@ public class GrantSubtypeUntilEndOfTurnEffectHandler implements NormalEffectHand
             applyEffect(gameData, entry, e, target);
             gameLogService.append(gameData, GameLog.builder().card(target.getCard())
                     .text(" becomes a " + e.subtype().getDisplayName()
-                            + " in addition to its other types until end of turn.").build());
+                            + " in addition to its other types" + durationText(e) + ".").build());
         }
     }
 
@@ -121,7 +121,11 @@ public class GrantSubtypeUntilEndOfTurnEffectHandler implements NormalEffectHand
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                 entry.getControllerId(), new GrantSubtypeEffect(effect.subtype(), GrantScope.TARGET),
-                target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                target.getId(), null, null, effect.duration(), 0));
+    }
+
+    private String durationText(GrantSubtypeUntilEndOfTurnEffect effect) {
+        return effect.duration() == EffectDuration.UNTIL_END_OF_TURN ? " until end of turn" : "";
     }
 
     private boolean matchesFilter(Permanent permanent, GrantSubtypeUntilEndOfTurnEffect effect,

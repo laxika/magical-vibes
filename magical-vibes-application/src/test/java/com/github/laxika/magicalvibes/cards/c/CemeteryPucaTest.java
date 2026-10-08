@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.t.TattermungeManiac;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -32,13 +33,15 @@ class CemeteryPucaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castAndResolveInstant(player1, 0, maniac.getId());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> harness.castAndResolveInstant(player1, 0, maniac.getId()));
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
         harness.handleMayAbilityChosen(player1, false);
         Permanent token = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()).findFirst().orElseThrow();
-        harness.castAndResolveInstant(player1, 0, token.getId());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> harness.castAndResolveInstant(player1, 0, token.getId()));
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
         assertThat(puca.getCard().getName()).isEqualTo("Elf Warrior");
         assertThat(gqs.getEffectivePower(gd, puca)).isEqualTo(1);
@@ -53,13 +56,13 @@ class CemeteryPucaTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Scar(), new FaerieMacabre()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castAndResolveInstant(player1, 0, maniac.getId());
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> harness.castAndResolveInstant(player1, 0, maniac.getId()));
 
         harness.activateHandAbilityWithGraveyardTargets(player1, 0, List.of(maniac.getCard().getId()));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(puca.getCard().getName()).isEqualTo("Tattermunge Maniac");
         assertThat(gqs.getEffectivePower(gd, puca)).isEqualTo(2);
@@ -73,14 +76,20 @@ class CemeteryPucaTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock(), new Shock()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> harness.castAndResolveInstant(player1, 0, bears.getId()));
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
         Permanent secondPuca = putPuca();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castAndResolveInstant(player1, 0, firstPuca.getId());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> harness.castAndResolveInstant(player1, 0, firstPuca.getId()));
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
         assertThat(secondPuca.getCard().getName()).isEqualTo("Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, secondPuca)).isEqualTo(2);
@@ -95,11 +104,11 @@ class CemeteryPucaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castAndResolveInstant(player1, 0, maniac.getId());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> harness.castAndResolveInstant(player1, 0, maniac.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.stack).isEmpty();
@@ -119,12 +128,13 @@ class CemeteryPucaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1); // for the {1}
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> harness.castAndResolveInstant(player1, 0, bears.getId()));
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // become-copy resolves
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities); // become-copy resolves
 
         assertThat(puca.getCard().getName()).isEqualTo("Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, puca)).isEqualTo(2);
@@ -140,7 +150,8 @@ class CemeteryPucaTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> harness.castAndResolveInstant(player1, 0, bears.getId()));
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
@@ -162,17 +173,23 @@ class CemeteryPucaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         // First death: copy Grizzly Bears
-        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> harness.castAndResolveInstant(player1, 0, bears.getId()));
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
         assertThat(puca.getCard().getName()).isEqualTo("Grizzly Bears");
 
         // Second death: the copy still has the trigger, so it fires again and copies Runeclaw Bear
-        harness.castAndResolveInstant(player1, 0, runeclaw.getId());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> harness.castAndResolveInstant(player1, 0, runeclaw.getId()));
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
         assertThat(puca.getCard().getName()).isEqualTo("Runeclaw Bear");
     }

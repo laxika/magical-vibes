@@ -46,8 +46,9 @@ class ChainedToTheRocksTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new SatyrRambler());
         harness.setHand(player1, List.of(new ChainedToTheRocks()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castEnchantment(player1, 0, List.of(mountain.getId(), creature.getId()));
+        harness.castEnchantment(player1, 0, mountain.getId());
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, creature.getId());
 
         harness.setHand(player2, List.of(new RayOfDissolution()));
         harness.addMana(player2, ManaColor.WHITE, 3);
@@ -86,8 +87,9 @@ class ChainedToTheRocksTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChainedToTheRocks()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castEnchantment(player1, 0, List.of(enchantTargetId, exileTargetId));
+        harness.castEnchantment(player1, 0, enchantTargetId);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, exileTargetId);
         harness.passBothPriorities();
     }
 
@@ -153,8 +155,7 @@ class ChainedToTheRocksTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChainedToTheRocks()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0,
-                List.of(forest.getId(), creature.getId())))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -166,8 +167,7 @@ class ChainedToTheRocksTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChainedToTheRocks()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0,
-                List.of(mountain.getId(), creature.getId())))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -179,9 +179,13 @@ class ChainedToTheRocksTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChainedToTheRocks()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0,
-                List.of(mountain.getId(), creature.getId())))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a creature an opponent controls");
+        Permanent legalTarget = harness.addToBattlefieldAndReturn(player2, new SatyrRambler());
+        harness.castEnchantment(player1, 0, mountain.getId());
+        harness.passBothPriorities();
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, legalTarget.getId());
+        harness.passBothPriorities();
+        assertThat(harness.getPermanentId(player1, "Satyr Rambler")).isEqualTo(creature.getId());
     }
 }

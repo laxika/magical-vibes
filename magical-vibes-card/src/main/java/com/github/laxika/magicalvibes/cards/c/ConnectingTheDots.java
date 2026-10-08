@@ -16,7 +16,8 @@ import java.util.List;
 public class ConnectingTheDots extends Card {
 
     public ConnectingTheDots() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS, new ExileTopCardsToSourceEffect(1, true));
+        addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
+                ExileTopCardsToSourceEffect.faceDownWithoutLookPermission(1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

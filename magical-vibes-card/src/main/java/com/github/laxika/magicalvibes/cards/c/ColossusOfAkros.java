@@ -26,7 +26,7 @@ public class ColossusOfAkros extends Card {
                 "{10}",
                 List.of(new MonstrosityEffect(10)),
                 "{10}: Monstrosity 10."
-        ).withActivationCondition(new NotCondition(monstrous), "This creature is already monstrous"));
+        ));
 
         addEffect(EffectSlot.STATIC, new ConditionalEffect(monstrous,
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));

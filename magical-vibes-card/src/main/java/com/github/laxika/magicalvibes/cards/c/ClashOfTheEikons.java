@@ -20,6 +20,7 @@ import java.util.List;
 public class ClashOfTheEikons extends Card {
 
     public ClashOfTheEikons() {
+        setAllowSharedTargets(true);
         var sagaFilter = new ControlledPermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.SAGA),
                 "Target must be a Saga you control");

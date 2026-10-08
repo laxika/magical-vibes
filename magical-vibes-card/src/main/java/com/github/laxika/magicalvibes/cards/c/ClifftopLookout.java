@@ -11,6 +11,6 @@ public class ClifftopLookout extends Card {
 
     public ClifftopLookout() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new RevealUntilLandToBattlefieldRestToBottomEffect(true));
+                new RevealUntilLandToBattlefieldRestToBottomEffect(true, true));
     }
 }

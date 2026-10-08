@@ -89,13 +89,13 @@ class ChameleonColossusTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SharedAnimosity());
         Permanent colossus = addCreatureReady(player1, new ChameleonColossus());
         addCreatureReady(player1, new PricklyBoggart());
-        harness.addMana(player1, ManaColor.GREEN, 4);
 
         declareAttackers(List.of(1, 2));
         resolveAllTriggers();
         assertThat(gqs.getEffectivePower(gd, colossus)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, colossus)).isEqualTo(4);
 
+        harness.addMana(player1, ManaColor.GREEN, 4);
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 

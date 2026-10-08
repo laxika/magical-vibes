@@ -115,6 +115,30 @@ public class LibraryRevealSupport {
         return collectCardNamesInGame(gameData, card -> true);
     }
 
+    /** Public card names offered as suggestions without exposing hidden zones. */
+    public List<String> collectPublicCardNames(GameData gameData) {
+        Set<String> names = new TreeSet<>();
+        for (UUID playerId : gameData.playerIds) {
+            gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                    .filter(permanent -> !permanent.isFaceDown())
+                    .forEach(permanent -> names.add(permanent.getCard().getName()));
+            gameData.playerGraveyards.getOrDefault(playerId, List.of())
+                    .forEach(card -> names.add(card.getName()));
+            gameData.getPlayerExiledCards(playerId).stream()
+                    .filter(card -> gameData.findExiledCard(card.getId()) != null
+                            && !gameData.findExiledCard(card.getId()).faceDown())
+                    .forEach(card -> names.add(card.getName()));
+        }
+        gameData.stack.forEach(entry -> names.add(entry.getCard().getName()));
+        return new ArrayList<>(names);
+    }
+
+    /** Validates a freely chosen card name independently of the public suggestions. */
+    public boolean isCardNameAllowed(GameData gameData, String name) {
+        return collectAllCardNamesInGame(gameData).stream().anyMatch(candidate -> candidate.equalsIgnoreCase(name))
+                || isCatalogCardNameAllowed(name, List.of());
+    }
+
     /** Every distinct card name in the game that has none of the excluded card types. */
     public List<String> collectCardNamesInGameExcluding(GameData gameData, List<CardType> excludedTypes) {
         Set<CardType> excluded = Set.copyOf(excludedTypes);

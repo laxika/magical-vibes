@@ -32,6 +32,8 @@ public class GameMutationCoordinator {
 
     private final GameEventDispatcher dispatcher;
     @org.springframework.beans.factory.annotation.Autowired
+    private org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.battlefield.GameQueryService> gameQueryServices;
+    @org.springframework.beans.factory.annotation.Autowired
     private org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.SubgameService> subgames;
     private final Map<GameData, ActionState> actionStates =
             Collections.synchronizedMap(new WeakHashMap<>());
@@ -111,6 +113,7 @@ public class GameMutationCoordinator {
             GameEventBatch batch;
             try {
                 synchronized (gameData) {
+                    captureRevealedHandCardPowers(gameData);
                     result = mutation.get();
                     gameData.recordWayBehindState();
                     batch = completeBatch(context);
@@ -133,6 +136,17 @@ public class GameMutationCoordinator {
                 activeActions.remove(actionState);
             }
             actionState.actionLock.unlock();
+        }
+    }
+
+    private void captureRevealedHandCardPowers(GameData gameData) {
+        if (gameQueryServices == null) return;
+        for (var entry : gameData.stack) {
+            var revealed = entry.getRevealedPowerCostCard();
+            if (revealed == null || gameData.playerHands.values().stream().noneMatch(hand ->
+                    hand.stream().anyMatch(card -> card.getId().equals(revealed.getId())))) continue;
+            Integer power = gameQueryServices.getObject().getEffectiveCardPower(gameData, revealed);
+            entry.setRevealedPowerCostCardLastKnownPower(power == null ? 0 : Math.max(0, power));
         }
     }
 

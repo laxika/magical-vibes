@@ -56,6 +56,10 @@ class CactusPreserveTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 1, null, null);
+        if (gd.interaction.activeInteraction() instanceof
+                com.github.laxika.magicalvibes.model.PendingInteraction.CommanderReturnChoice) {
+            harness.handleMayAbilityChosen(player1, false);
+        }
         harness.passBothPriorities();
 
         assertThat(gqs.isLand(gd, cactus)).isTrue();
@@ -66,7 +70,7 @@ class CactusPreserveTest extends BaseCardTest {
         assertThat(gqs.effectiveCreatureSubtypes(gd, cactus)).contains(CardSubtype.PLANT);
         assertThat(gqs.hasKeyword(gd, cactus, Keyword.REACH)).isTrue();
 
-        harness.passUntil(TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, cactus)).isFalse();
     }
@@ -83,6 +87,7 @@ class CactusPreserveTest extends BaseCardTest {
             case "exile" -> harness.setExile(player1, List.of(commander));
             default -> throw new IllegalArgumentException(zone);
         }
+        gd.commanderReturnCandidates.remove(commander.getId());
         Permanent cactus = addCactusReady(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

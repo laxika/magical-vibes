@@ -7,6 +7,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -136,8 +140,10 @@ class CyclonicRiftTest extends BaseCardTest {
     void overloadUsesControlAndReturnsCardsToTheirOwners() {
         Permanent ownedButNotControlled = addCreature(player2);
         gd.stolenCreatures.put(ownedButNotControlled.getId(), player1.getId());
+        recordControlEffect(ownedButNotControlled, player2);
         Permanent controlledButNotOwned = addCreature(player1);
         gd.stolenCreatures.put(controlledButNotOwned.getId(), player2.getId());
+        recordControlEffect(controlledButNotOwned, player1);
         harness.setHand(player1, List.of(new CyclonicRift()));
         harness.addMana(player1, ManaColor.BLUE, 7);
 
@@ -160,6 +166,7 @@ class CyclonicRiftTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(target);
         gd.playerBattlefields.get(player1.getId()).add(target);
         gd.stolenCreatures.put(target.getId(), player2.getId());
+        recordControlEffect(target, player1);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
@@ -189,5 +196,11 @@ class CyclonicRiftTest extends BaseCardTest {
 
     private Permanent addLand(Player player) {
         return harness.addToBattlefieldAndReturn(player, new Island());
+    }
+    private void recordControlEffect(Permanent permanent, com.github.laxika.magicalvibes.model.Player controller) {
+        gd.addFloatingEffect(new FloatingContinuousEffect(
+                java.util.UUID.randomUUID(), "Control setup", null, controller.getId(),
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
     }
 }

@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.PopulateEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -31,10 +34,10 @@ public class CaythFamedMechanist extends Card {
 
     public CaythFamedMechanist() {
         // Fabricate's counter-or-Servo choice is made as the ability resolves
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtResolutionEffect(fabricate()));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, fabricateTrigger());
         addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseOneAtResolutionEffect(fabricate()),
+                fabricateTrigger(),
                 GrantScope.OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
@@ -49,7 +52,14 @@ public class CaythFamedMechanist extends Card {
                         new ChooseOneEffect.ChooseOneOption("Proliferate", new ProliferateEffect())
                 ))),
                 "{2}, {T}: Choose one — Populate. — Proliferate."
-        ));
+        ).withModalChoiceAtActivation());
+    }
+
+    private CardEffect fabricateTrigger() {
+        CardEffect servo = new CreateTokenEffect(1, "Servo", 1, 1, null,
+                List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT));
+        return new ConditionalReplacementEffect(new SourceIsOnBattlefield(), servo,
+                new ChooseOneAtResolutionEffect(fabricate()));
     }
 
     private ChooseOneEffect fabricate() {

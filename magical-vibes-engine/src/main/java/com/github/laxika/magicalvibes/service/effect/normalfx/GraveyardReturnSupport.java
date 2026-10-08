@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -349,6 +350,19 @@ public class GraveyardReturnSupport {
                         null, effect.grantIndestructible(), losesAllAbilitiesBeforeEntering(effect), 0,
                         permanent -> {
                             permanent.setEnteredFromGraveyardOwnerId(targetOwnerId);
+                            if (effect.battlefieldEffectGrants() != null) {
+                                for (CardEffect grant : effect.battlefieldEffectGrants()) {
+                                    if (grant instanceof GrantColorEffect) {
+                                        gameData.addFloatingEffect(new FloatingContinuousEffect(
+                                                UUID.randomUUID(), entry.getCard().getName(),
+                                                entry.getSourcePermanentId(), entry.getControllerId(), grant,
+                                                permanent.getId(), null, null,
+                                                effect.battlefieldEffectGrantDuration() == null
+                                                        ? EffectDuration.PERMANENT
+                                                        : effect.battlefieldEffectGrantDuration(), 0));
+                                    }
+                                }
+                            }
                             if (effect.grantSubtypes() != null) {
                                 permanent.getGrantedSubtypes().addAll(effect.grantSubtypes());
                             }
@@ -599,11 +613,9 @@ public class GraveyardReturnSupport {
                 p.setCounterCount(CounterType.MANNEQUIN, 1);
             }
             if (enterWithCounter) {
-                int placed = gameQueryService.replaceCounters(gameData, p, controllerId, effect.enterWithCounter(),
-                        effect.enterWithCounterCount(), entry == null ? controllerId : entry.getControllerId());
-                if (placed > 0) {
-                    p.setCounterCount(effect.enterWithCounter(), p.getCounterCount(effect.enterWithCounter()) + placed);
-                }
+                permanentCounterSupport.placeCounterOnPermanentForPlayer(gameData, entry, p,
+                        effect.enterWithCounter(), effect.enterWithCounterCount(),
+                        entry == null ? controllerId : entry.getControllerId());
             }
             if (enterWithCounters) {
                 for (CounterType counterType : effect.enterWithCounters()) {
@@ -620,6 +632,7 @@ public class GraveyardReturnSupport {
             }
             if (effect.exileIfDying()) {
                 p.setExileIfDying(true);
+                p.setExileIfDyingTimestamp(gameData.nextTimestamp());
             }
             if (effect.unearth()) {
                 p.setEnteredViaUnearth(true);
@@ -677,6 +690,13 @@ public class GraveyardReturnSupport {
                 String sourceCardName = entry == null ? card.getName() : entry.getCard().getName();
                 UUID sourcePermanentId = entry == null ? null : entry.getSourcePermanentId();
                 for (CardEffect grantedEffect : effect.battlefieldEffectGrants()) {
+                    if (grantedEffect instanceof GrantColorEffect
+                            && gameData.floatingEffects.stream().anyMatch(floating ->
+                            grantedEffect.equals(floating.effect())
+                                    && p.getId().equals(floating.affectedPermanentId())
+                                    && java.util.Objects.equals(sourcePermanentId, floating.sourcePermanentId()))) {
+                        continue;
+                    }
                     if (grantedEffect instanceof LosesAllAbilitiesEffect loses
                             && loses.duration() == EffectDuration.PERMANENT) {
                         p.setLosesAllAbilitiesPermanently(true);
@@ -857,6 +877,13 @@ public class GraveyardReturnSupport {
         }
 
         List<Card> returnedCards = new ArrayList<>();
+        boolean alreadyCollectingEntries = gameData.collectingSimultaneousCreatureEntryTriggers;
+        if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
+            gameData.collectingSimultaneousCreatureEntryTriggers = true;
+            if (!alreadyCollectingEntries) {
+                gameData.simultaneousCreatureEntryTriggers.clear();
+            }
+        }
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
             for (Map.Entry<UUID, List<Card>> gyEntry : graveyardsToSearch.entrySet()) {
@@ -904,6 +931,10 @@ public class GraveyardReturnSupport {
             }
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);
+            gameData.collectingSimultaneousCreatureEntryTriggers = alreadyCollectingEntries;
+            if (!alreadyCollectingEntries) {
+                gameData.simultaneousCreatureEntryTriggers.clear();
+            }
         }
 
         if (returnedCards.isEmpty()) {
@@ -1313,13 +1344,17 @@ public class GraveyardReturnSupport {
                 Card randomCard = matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
                 matchingCards.remove(randomCard);
                 graveyard.remove(randomCard);
-                graveyardService.notifyCardsExiledFromGraveyard(gameData, controllerId, randomCard);
 
                 boolean conditionalDestination = effect.battlefieldIfCreatureElseHand()
                         || effect.battlefieldIfCreatureElseExile();
                 boolean toBattlefield = conditionalDestination
                         ? randomCard.hasType(CardType.CREATURE)
                         : effect.destination() != GraveyardChoiceDestination.HAND;
+                if (!toBattlefield && effect.battlefieldIfCreatureElseExile()) {
+                    graveyardService.notifyCardsExiledFromGraveyard(gameData, controllerId, randomCard);
+                } else {
+                    graveyardService.notifyCardLeftGraveyard(gameData, controllerId, randomCard);
+                }
                 if (toBattlefield) {
                     if (effect.grantHaste() || effect.exileAtEndStep() || effect.exileAtYourNextEndStep()
                             || effect.sacrificeAtEndStep()) {
@@ -2917,11 +2952,15 @@ public class GraveyardReturnSupport {
                 || state.disposition() == CardPileDisposition.HAND_AND_BOTTOM_WITH_FACE_DOWN_PILE) {
             // Jace, Architect of Thought −2: chosen pile → controller's hand; other pile → the bottom
             // of their library in an order they choose (an async LibraryReorder when two or more).
+            boolean chosenPileHidden = state.disposition() == CardPileDisposition.HAND_AND_BOTTOM_WITH_FACE_DOWN_PILE
+                    && accepted == state.controllerChoosesPile();
             for (UUID cardId : chosenPileCardIds) {
                 Card card = allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
                 if (card != null) {
                     gameData.addCardToHand(controllerId, card);
-                    gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", card, " into their hand."));
+                    gameLogService.append(gameData, chosenPileHidden
+                            ? GameLog.text(controllerName + " puts a face-down card into their hand.")
+                            : GameLog.textCardText(controllerName + " puts ", card, " into their hand."));
                 }
             }
             List<Card> toBottom = otherPileCardIds.stream()
@@ -2933,7 +2972,11 @@ public class GraveyardReturnSupport {
             }
             if (toBottom.size() == 1) {
                 gameData.playerDecks.get(controllerId).add(toBottom.getFirst());
-                gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", toBottom.getFirst(),
+                boolean bottomPileHidden = state.disposition() == CardPileDisposition.HAND_AND_BOTTOM_WITH_FACE_DOWN_PILE
+                        && !chosenPileHidden;
+                gameLogService.append(gameData, bottomPileHidden
+                        ? GameLog.text(controllerName + " puts a face-down card on the bottom of their library.")
+                        : GameLog.textCardText(controllerName + " puts ", toBottom.getFirst(),
                         " on the bottom of their library."));
                 return;
             }

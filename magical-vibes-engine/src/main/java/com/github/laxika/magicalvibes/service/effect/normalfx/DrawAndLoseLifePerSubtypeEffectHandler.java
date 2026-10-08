@@ -40,7 +40,8 @@ public class DrawAndLoseLifePerSubtypeEffectHandler implements NormalEffectHandl
         int count = 0;
         if (battlefield != null) {
             for (Permanent perm : battlefield) {
-                if (perm.getCard().getSubtypes().contains(e.subtype())) {
+                if (gameQueryService.isCreature(gameData, perm)
+                        && gameQueryService.hasEffectiveSubtype(gameData, perm, e.subtype())) {
                     count++;
                 }
             }

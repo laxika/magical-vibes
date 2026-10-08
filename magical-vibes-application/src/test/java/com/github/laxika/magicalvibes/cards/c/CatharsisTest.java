@@ -3,9 +3,12 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.i.IronShieldElf;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -93,7 +96,7 @@ class CatharsisTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreatureWithEvoke(player1, 0, null);
-        resolveAllTriggers();
+        resolveEvokeTriggers();
 
         assertThat(findPermanents(player1, "Kithkin")).hasSize(2);
         harness.assertNotOnBattlefield(player1, "Catharsis");
@@ -104,7 +107,7 @@ class CatharsisTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Catharsis()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castCreatureWithEvoke(player1, 0, null);
-        resolveAllTriggers();
+        resolveEvokeTriggers();
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken()).toList();
@@ -137,7 +140,7 @@ class CatharsisTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Catharsis()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castCreatureWithEvoke(player1, 0, null);
-        resolveAllTriggers();
+        resolveEvokeTriggers();
 
         assertThat(own.getEffectivePower()).isEqualTo(4);
         assertThat(own.getEffectiveToughness()).isEqualTo(2);
@@ -151,7 +154,7 @@ class CatharsisTest extends BaseCardTest {
         Permanent later = harness.addToBattlefieldAndReturn(player1, new IronShieldElf());
         assertThat(later.getEffectivePower()).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, later, Keyword.HASTE)).isFalse();
-        advanceToUpkeep(player2);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(own.getEffectivePower()).isEqualTo(3);
         assertThat(own.getEffectiveToughness()).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, own, Keyword.HASTE)).isFalse();
@@ -163,9 +166,17 @@ class CatharsisTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castCreatureWithEvoke(player1, 0, null);
-        resolveAllTriggers();
+        resolveEvokeTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Catharsis");
+    }
+    private void resolveEvokeTriggers() {
+        resolveAllTriggers();
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (choice != null && choice.context() instanceof ChoiceContext.SpellCastTriggerOrder) {
+            harness.handleListChoice(player1, choice.options().getFirst());
+            resolveAllTriggers();
+        }
     }
 }

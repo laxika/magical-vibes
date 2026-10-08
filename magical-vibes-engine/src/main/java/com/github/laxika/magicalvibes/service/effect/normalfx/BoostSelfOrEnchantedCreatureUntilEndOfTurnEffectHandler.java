@@ -32,7 +32,8 @@ public class BoostSelfOrEnchantedCreatureUntilEndOfTurnEffectHandler implements 
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var boost = (BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect) effect;
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        java.util.UUID targetId = source == null
+        java.util.UUID targetId = entry.getTriggeringPermanentId() != null
+                ? entry.getTriggeringPermanentId() : source == null
                 ? entry.getTargetId()
                 : source.getAttachedTo() == null ? source.getId() : source.getAttachedTo();
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);

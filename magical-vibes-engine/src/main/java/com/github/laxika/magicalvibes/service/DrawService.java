@@ -343,6 +343,17 @@ public class DrawService {
                 ? originalFirstDrawStepDraw : markFirstDrawStepDraw(gameData, playerId);
         gameData.pendingDrawFirstDrawStepFlags.put(playerId, firstDrawStepDraw);
 
+        Card abundanceSource = findAbundanceSourceCard(gameData, playerId);
+        if (abundanceSource != null) {
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    abundanceSource,
+                    playerId,
+                    List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.ABUNDANCE)),
+                    "Replace this draw with Abundance?"
+            ));
+            return;
+        }
+
         if (!firstDrawStepDraw && resolveChainsOfMephistophelesDrawReplacement(gameData, playerId)) {
             return;
         }
@@ -511,17 +522,6 @@ public class DrawService {
                     .builder(playerId, validIndices, GraveyardChoiceDestination.HAND,
                             "Return a card from your graveyard to your hand.")
                     .build());
-            return;
-        }
-
-        Card abundanceSource = findAbundanceSourceCard(gameData, playerId);
-        if (abundanceSource != null) {
-            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                    abundanceSource,
-                    playerId,
-                    List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.ABUNDANCE)),
-                    "Replace this draw with Abundance?"
-            ));
             return;
         }
 

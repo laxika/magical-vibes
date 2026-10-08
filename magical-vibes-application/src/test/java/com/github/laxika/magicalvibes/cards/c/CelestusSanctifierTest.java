@@ -105,7 +105,7 @@ class CelestusSanctifierTest extends BaseCardTest {
         gd.recordSpellCast(player1.getId(), new CelestusSanctifier());
 
         advanceToDayNightTrigger();
-        harness.handleCardChosen(player2, 1);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleCardChosen(player2, 1));
 
         assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(first, third);

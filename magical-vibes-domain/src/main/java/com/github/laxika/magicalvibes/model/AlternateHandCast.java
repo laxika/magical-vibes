@@ -34,7 +34,19 @@ public record AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlD
                                 CardColor prototypeColor, Integer prototypePower,
                                 Integer prototypeToughness, boolean spectacle, boolean sneak, TargetFilter alternateTargetFilter,
                                 boolean castTransformed, boolean blitz,
-                                Integer flashAdditionalGenericCost) implements CastingOption {
+                                Integer flashAdditionalGenericCost, boolean mutate) implements CastingOption {
+
+    public AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlDamageSubtypes,
+                             Condition availabilityCondition, boolean grantsFlash,
+                             boolean reduceManaBySacrificedManaValue, boolean reduceManaBySacrificedManaCost,
+                             CardColor prototypeColor, Integer prototypePower, Integer prototypeToughness,
+                             boolean spectacle, boolean sneak, TargetFilter alternateTargetFilter,
+                             boolean castTransformed, boolean blitz, Integer flashAdditionalGenericCost) {
+        this(costs, prowlDamageSubtypes, availabilityCondition, grantsFlash,
+                reduceManaBySacrificedManaValue, reduceManaBySacrificedManaCost, prototypeColor,
+                prototypePower, prototypeToughness, spectacle, sneak, alternateTargetFilter,
+                castTransformed, blitz, flashAdditionalGenericCost, false);
+    }
 
     public AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlDamageSubtypes,
                              Condition availabilityCondition, boolean grantsFlash,
@@ -53,7 +65,7 @@ public record AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlD
         return new AlternateHandCast(costs, prowlDamageSubtypes, availabilityCondition, grantsFlash,
                 reduceManaBySacrificedManaValue, reduceManaBySacrificedManaCost, prototypeColor,
                 prototypePower, prototypeToughness, spectacle, sneak, alternateTargetFilter,
-                castTransformed, blitz, amount);
+                castTransformed, blitz, amount, mutate);
     }
 
     public AlternateHandCast(List<CastingCost> costs) {
@@ -127,6 +139,13 @@ public record AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlD
     public static AlternateHandCast blitz(String manaCost) {
         return new AlternateHandCast(List.of(new ManaCastingCost(manaCost)), Set.of(), null,
                 false, false, false, null, null, null, false, false, null, false, true);
+    }
+
+    /** Casts a targeted creature spell which merges with its target as it resolves. */
+    public static AlternateHandCast mutate(String manaCost, TargetFilter targetFilter) {
+        return new AlternateHandCast(List.of(new ManaCastingCost(manaCost)), Set.of(), null,
+                false, false, false, null, null, null, false, false, targetFilter,
+                false, false, null, true);
     }
 
     public boolean isPrototype() {

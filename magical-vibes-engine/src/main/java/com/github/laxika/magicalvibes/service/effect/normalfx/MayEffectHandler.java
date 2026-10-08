@@ -94,9 +94,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                     ? entry.getActivePlayerId() : gameData.activePlayerId;
             case DEFENDING_PLAYER -> findDefendingPlayerId(gameData, entry.getAttackedTargetId());
             case TARGET_PLAYER -> targetId != null && gameData.playerIds.contains(targetId) ? targetId : null;
-            case TARGET_PERMANENT_CONTROLLER -> targetId == null
-                    ? null
-                    : gameQueryService.findPermanentController(gameData, targetId);
+            case TARGET_PERMANENT_CONTROLLER -> targetPermanentController(gameData, entry, targetId);
             case TARGET_SPELL_CONTROLLER -> findTargetSpellControllerId(gameData, targetId);
             case TRIGGERING_PERMANENT_CONTROLLER -> findTriggeringPermanentControllerId(gameData, entry, targetId);
             case TARGET_PLAYER_OR_PERMANENT_CONTROLLER -> targetId == null
@@ -105,6 +103,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                     ? targetId
                     : gameQueryService.findPermanentController(gameData, targetId);
             case TRIGGERING_SPELL_CONTROLLER -> targetId;
+            case LAST_MANA_PAYMENT_PLAYER -> entry.getLastManaPaymentPlayerId();
             case SOURCE_OWNER -> sourceOwnerId(entry);
         };
         if (choicePlayerId == null) {
@@ -181,6 +180,12 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 && choicePlayerId.equals(gameQueryService.findPermanentController(gameData, enchantedId))
                 && !gameQueryService.cantBeSacrificed(gameData,
                 gameQueryService.findPermanentById(gameData, enchantedId));
+    }
+
+    private UUID targetPermanentController(GameData gameData, StackEntry entry, UUID targetId) {
+        if (targetId == null) return null;
+        UUID current = gameQueryService.findPermanentController(gameData, targetId);
+        return current == null ? entry.getRemovedPermanentControllers().get(targetId) : current;
     }
 
     private UUID findTriggeringPermanentControllerId(GameData gameData, StackEntry entry, UUID fallback) {

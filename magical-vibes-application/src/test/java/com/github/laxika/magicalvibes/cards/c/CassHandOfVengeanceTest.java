@@ -45,9 +45,10 @@ class CassHandOfVengeanceTest extends BaseCardTest {
 
         PendingInteraction.MultiPermanentChoice attachmentChoice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(attachmentChoice.validIds()).containsExactly(equipment.getId());
+        assertThat(attachmentChoice.validIds()).isEmpty();
         assertThat(attachmentChoice.validCardIds()).containsExactly(aura.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(aura.getId(), equipment.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(aura.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(equipment.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(
                 permanent -> permanent.getCard().getId().equals(aura.getId())
@@ -97,6 +98,7 @@ class CassHandOfVengeanceTest extends BaseCardTest {
         destroyWithMurder(dyingCreature);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(aura);

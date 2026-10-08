@@ -114,12 +114,10 @@ class CaseyJonesAsphaltHooliganTest extends BaseCardTest {
         addCreatureReady(player1, new CaseyJonesAsphaltHooligan());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
-        declareAttackers(List.of(0));
-        resolveCombat();
-        // Double strike: pass the first-strike damage step to reach regular combat damage
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertLife(player2, 12);
     }

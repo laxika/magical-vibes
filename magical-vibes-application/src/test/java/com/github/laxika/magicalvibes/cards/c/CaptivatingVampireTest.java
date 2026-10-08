@@ -215,7 +215,9 @@ class CaptivatingVampireTest extends BaseCardTest {
 
         harness.activateAbility(player1, 5, null, target.getId());
         for (Permanent vampire : findPermanents(player1, "Barony Vampire")) {
-            harness.handlePermanentChosen(player1, vampire.getId());
+            if (gd.interaction.activeInteraction() instanceof com.github.laxika.magicalvibes.model.PendingInteraction.PermanentChoice) {
+                harness.handlePermanentChosen(player1, vampire.getId());
+            }
         }
         harness.passBothPriorities();
 
@@ -236,7 +238,9 @@ class CaptivatingVampireTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         for (Permanent vampire : vampires) {
-            harness.handlePermanentChosen(player1, vampire.getId());
+            if (gd.interaction.activeInteraction() instanceof com.github.laxika.magicalvibes.model.PendingInteraction.PermanentChoice) {
+                harness.handlePermanentChosen(player1, vampire.getId());
+            }
         }
         assertThat(vampires).allMatch(Permanent::isTapped);
         harness.passBothPriorities();
@@ -255,7 +259,9 @@ class CaptivatingVampireTest extends BaseCardTest {
 
         harness.activateAbility(player1, 4, null, target.getId());
         for (Permanent vampire : vampires) {
-            harness.handlePermanentChosen(player1, vampire.getId());
+            if (gd.interaction.activeInteraction() instanceof com.github.laxika.magicalvibes.model.PendingInteraction.PermanentChoice) {
+                harness.handlePermanentChosen(player1, vampire.getId());
+            }
         }
         gd.playerBattlefields.get(player1.getId()).remove(source);
         harness.passBothPriorities();
@@ -277,7 +283,9 @@ class CaptivatingVampireTest extends BaseCardTest {
 
         harness.activateAbility(player1, 4, null, target.getId());
         for (Permanent vampire : vampires) {
-            harness.handlePermanentChosen(player1, vampire.getId());
+            if (gd.interaction.activeInteraction() instanceof com.github.laxika.magicalvibes.model.PendingInteraction.PermanentChoice) {
+                harness.handlePermanentChosen(player1, vampire.getId());
+            }
         }
         harness.passBothPriorities();
 
@@ -302,7 +310,9 @@ class CaptivatingVampireTest extends BaseCardTest {
 
         harness.activateAbility(player1, 4, null, target.getId());
         for (Permanent vampire : vampires) {
-            harness.handlePermanentChosen(player1, vampire.getId());
+            if (gd.interaction.activeInteraction() instanceof com.github.laxika.magicalvibes.model.PendingInteraction.PermanentChoice) {
+                harness.handlePermanentChosen(player1, vampire.getId());
+            }
         }
         harness.passBothPriorities();
 

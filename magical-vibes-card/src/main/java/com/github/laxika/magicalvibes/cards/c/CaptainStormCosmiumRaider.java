@@ -6,10 +6,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 
 import java.util.List;
 
@@ -19,12 +21,11 @@ public class CaptainStormCosmiumRaider extends Card {
 
     public CaptainStormCosmiumRaider() {
         target(new ControlledPermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.PIRATE)
-                )),
-                "Target must be a Pirate creature you control"
-        )).addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
+                new PermanentHasSubtypePredicate(CardSubtype.PIRATE),
+                "Target must be a Pirate you control"
+        )).addEffect(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
+                new TriggeringPermanentConditionalEffect(new PermanentAllOfPredicate(List.of(
+                        new PermanentIsArtifactPredicate(), new PermanentControlledBySourceControllerPredicate())),
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)));
     }
 }

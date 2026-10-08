@@ -87,7 +87,7 @@ class CaptivatingCrossroadsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CaptivatingCrossroads()));
         harness.playLand(player1, 0);
         harness.handleListChoice(player1, color.name());
-        harness.tapPermanent(player1, 0);
+        harness.activateAbility(player1, 0, 0, null, null);
 
         for (ManaColor manaColor : ManaColor.values()) {
             assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor))
@@ -102,7 +102,6 @@ class CaptivatingCrossroadsTest extends BaseCardTest {
         gd.activePlayerId = player2.getId();
         gd.turnsTakenByPlayer.put(player1.getId(), 1);
         Permanent crossroads = harness.enterBattlefieldAndReturn(player1, new CaptivatingCrossroads());
-        harness.handleListChoice(player1, ManaColor.BLUE.name());
 
         assertThat(crossroads.isTapped()).isFalse();
         assertThat(gd.stack).isEmpty();

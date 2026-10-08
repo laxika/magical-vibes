@@ -25,7 +25,7 @@ public class ChitinousCrawler extends Card {
                 List.of(
                         new ExileNCardsFromGraveyardCost(
                                 1, null, new CardIsPermanentPredicate(), false, true),
-                        new AllowPlayExiledCostCardThisTurnEffect()),
+                        new AllowPlayExiledCostCardThisTurnEffect(true)),
                 "Exile a permanent card from your graveyard: You may play it. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED)
                 .withRequiredGraveyardCards(

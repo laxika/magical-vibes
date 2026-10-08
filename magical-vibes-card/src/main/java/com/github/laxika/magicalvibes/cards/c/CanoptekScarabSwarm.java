@@ -38,8 +38,7 @@ public class CanoptekScarabSwarm extends Card {
                 "Target must be a player"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
                 new ExileGraveyardCardsEffect(0, GraveyardExileScope.TARGET_PLAYER_ALL_MATCHING,
-                        artifactOrLand),
-                new ExileGraveyardCardsEffect(GraveyardExileScope.TARGET_PLAYER_ENTIRE),
+                        null, null, false, false, false, artifactOrLand),
                 scarab));
     }
 }

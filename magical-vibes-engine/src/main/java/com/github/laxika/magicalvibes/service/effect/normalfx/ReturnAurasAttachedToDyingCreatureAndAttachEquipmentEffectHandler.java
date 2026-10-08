@@ -58,13 +58,15 @@ public class ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffectHandler
                 (ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffect) effect;
         List<UUID> legalAuraCardIds = legalAuraCardIds(gameData, entry.getControllerId(), target,
                 attachmentEffect);
-        List<UUID> legalEquipmentIds = legalEquipmentIds(gameData, target, attachmentEffect);
+        List<UUID> legalEquipmentIds = legalAuraCardIds.isEmpty()
+                ? legalEquipmentIds(gameData, target, attachmentEffect) : List.of();
         if (!legalAuraCardIds.isEmpty() || !legalEquipmentIds.isEmpty()) {
             playerInputService.beginMultiPermanentChoice(gameData, entry.getControllerId(),
                     legalEquipmentIds, legalAuraCardIds,
                     legalAuraCardIds.size() + legalEquipmentIds.size(),
                     new MultiPermanentChoiceContext.ReturnAurasAndAttachEquipmentToTargetCreature(
-                            target.getId(), attachmentEffect.auraCardIds(), attachmentEffect.equipmentPermanentIds()),
+                            target.getId(), legalAuraCardIds.isEmpty() ? List.of() : attachmentEffect.auraCardIds(),
+                            attachmentEffect.equipmentPermanentIds()),
                     "Choose any number of Auras and Equipment to attach to " + target.getCard().getName() + ".");
         }
     }
@@ -81,6 +83,20 @@ public class ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffectHandler
             if (selected.contains(auraCardId)) {
                 returnAura(gameData, controllerId, auraCardId, target);
             }
+        }
+        creatureControlService.recomputeControl(gameData, target);
+        if (!context.auraCardIds().isEmpty()) {
+            var equipmentEffect = new ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffect(
+                    List.of(), context.equipmentPermanentIds());
+            List<UUID> legalEquipmentIds = legalEquipmentIds(gameData, target, equipmentEffect);
+            if (!legalEquipmentIds.isEmpty()) {
+                playerInputService.beginMultiPermanentChoice(gameData, controllerId,
+                        legalEquipmentIds, List.of(), legalEquipmentIds.size(),
+                        new MultiPermanentChoiceContext.ReturnAurasAndAttachEquipmentToTargetCreature(
+                                target.getId(), List.of(), context.equipmentPermanentIds()),
+                        "Choose any number of Equipment to attach to " + target.getCard().getName() + ".");
+            }
+            return;
         }
         for (UUID equipmentPermanentId : context.equipmentPermanentIds()) {
             if (selected.contains(equipmentPermanentId)) {

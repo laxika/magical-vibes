@@ -124,6 +124,7 @@ class CormelaGlamourThiefTest extends BaseCardTest {
 
     @Test
     void deathTriggerWithNoEligibleCardsReturnsNothing() {
+        harness.setHand(player1, List.of());
         Permanent cormela = harness.addToBattlefieldAndReturn(player1, new CormelaGlamourThief());
         harness.setGraveyard(player1, List.of(new Goldhound()));
 

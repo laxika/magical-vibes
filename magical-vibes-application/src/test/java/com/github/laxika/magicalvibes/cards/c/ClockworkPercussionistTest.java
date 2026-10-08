@@ -98,6 +98,8 @@ class ClockworkPercussionistTest extends BaseCardTest {
 
     @Test
     void permissionLastsThroughTheControllersNextTurnAndThenExpires() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Forest topCard = new Forest();
         harness.setLibrary(player1, List.of(topCard, new Forest(), new Forest(), new Forest()));
         harness.addToBattlefieldAndReturn(player1, new ClockworkPercussionist()).setMarkedDamage(1);

@@ -117,7 +117,7 @@ class CartoucheOfZealTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(blocker.isCantBlockThisTurn()).isTrue();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(blocker.isCantBlockThisTurn()).isFalse();
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);

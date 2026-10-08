@@ -37,6 +37,23 @@ public class ExileTargetCreaturesThenRevealUntilCreatureToBattlefieldRestOnBotto
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var mutation = (ExileTargetCreaturesThenRevealUntilCreatureToBattlefieldRestOnBottomRandomEffect) effect;
+        if (mutation.controllersToReveal() != null) {
+            List<UUID> controllers = mutation.controllersToReveal();
+            if (controllers.isEmpty()) {
+                return;
+            }
+            if (controllers.size() > 1) {
+                entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
+                        new ExileTargetCreaturesThenRevealUntilCreatureToBattlefieldRestOnBottomRandomEffect(
+                                controllers.subList(1, controllers.size()))));
+            }
+            StackEntry revealEntry = new StackEntry(entry);
+            revealEntry.setControllerId(controllers.getFirst());
+            revealHandler.resolve(gameData, revealEntry, new RevealUntilCardPredicateRestOnBottomRandomEffect(
+                    new CardTypePredicate(CardType.CREATURE), LibrarySearchDestination.BATTLEFIELD));
+            return;
+        }
         List<UUID> targetIds = entry.targetsForEffect(effect);
         List<ExiledTarget> exiledTargets = new ArrayList<>();
 
@@ -66,15 +83,16 @@ public class ExileTargetCreaturesThenRevealUntilCreatureToBattlefieldRestOnBotto
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        RevealUntilCardPredicateRestOnBottomRandomEffect revealCreature =
-                new RevealUntilCardPredicateRestOnBottomRandomEffect(
-                        new CardTypePredicate(CardType.CREATURE),
-                        LibrarySearchDestination.BATTLEFIELD);
-        for (ExiledTarget exiledTarget : exiledTargets) {
-            StackEntry revealEntry = new StackEntry(entry);
-            revealEntry.setControllerId(exiledTarget.controllerId());
-            revealHandler.resolve(gameData, revealEntry, revealCreature);
+        List<UUID> controllerOrder = new ArrayList<>(gameData.orderedPlayerIds);
+        int activeIndex = controllerOrder.indexOf(gameData.activePlayerId);
+        if (activeIndex > 0) {
+            java.util.Collections.rotate(controllerOrder, -activeIndex);
         }
+        exiledTargets.sort(java.util.Comparator.comparingInt(
+                target -> controllerOrder.indexOf(target.controllerId())));
+        entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
+                new ExileTargetCreaturesThenRevealUntilCreatureToBattlefieldRestOnBottomRandomEffect(
+                        exiledTargets.stream().map(ExiledTarget::controllerId).toList())));
     }
 
     private record ExiledTarget(UUID controllerId) {

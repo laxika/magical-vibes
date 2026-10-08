@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForTargetControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -43,7 +45,8 @@ public class ChainLightning extends Card {
         )).addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3))
                 .addEffect(EffectSlot.SPELL, new MayPayManaEffect(
                         "{R}{R}",
-                        new CopyThisSpellForTargetControllerEffect(),
+                        new MayEffect(new CopyThisSpellForTargetControllerEffect(),
+                                "Copy Chain Lightning?", null, MayChoicePlayer.LAST_MANA_PAYMENT_PLAYER),
                         "Pay {R}{R} to copy Chain Lightning?",
                         MayPayPayer.TARGET_PLAYER_OR_PERMANENT_CONTROLLER
                 ));

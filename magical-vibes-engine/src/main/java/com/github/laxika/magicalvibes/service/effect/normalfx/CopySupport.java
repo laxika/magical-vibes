@@ -134,6 +134,9 @@ public class CopySupport {
                 targetCardIds,
                 source.getTargetIds() != null ? new ArrayList<>(source.getTargetIds()) : null
         );
+        if (source.getTargetingCard() != source.getCard()) {
+            copy.setCastCard(copyCard.createRuntimeCopyWithFace(source.getTargetingCard()));
+        }
         copy.setCopy(true);
         copy.setSourcePermanentSnapshot(source.getSourcePermanentSnapshot() == null
                 ? null : new com.github.laxika.magicalvibes.model.Permanent(source.getSourcePermanentSnapshot()));

@@ -17,12 +17,10 @@ public class ChompingMastasaur extends Card {
 
     public ChompingMastasaur() {
         var nonlandCard = new CardNotPredicate(new CardTypePredicate(CardType.LAND));
-        var discardThenSeekAndDamage = new DiscardCardThenEffect(
-                null,
-                SequenceEffect.of(
-                        new SeekLibraryToHandEffect(nonlandCard),
-                        new DealDamageToAnyTargetEffect(new LastDiscardedCardManaValue())),
-                "a card");
+        var discardThenSeekAndDamage = SequenceEffect.of(
+                new DiscardCardThenEffect(null,
+                        new DealDamageToAnyTargetEffect(new LastDiscardedCardManaValue()), "a card"),
+                new SeekLibraryToHandEffect(nonlandCard));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, discardThenSeekAndDamage);
         addEffect(EffectSlot.ON_ATTACK, discardThenSeekAndDamage);

@@ -91,6 +91,7 @@ class CelestialRegulatorTest extends BaseCardTest {
 
     @Test
     void regulatorItselfWithCounterQualifiesAndLockExpiresAfterOneUntap() {
+        harness.setHand(player2, List.of());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new CivilServant());
         target.tap();
         castRegulatorWithTriggerPending(target);
@@ -100,10 +101,10 @@ class CelestialRegulatorTest extends BaseCardTest {
         regulator.setCounterCount(CounterType.SHIELD, 1);
 
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(target.isTapped()).isTrue();
-        harness.passUntil(player1, TurnStep.UPKEEP);
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(target.isTapped()).isFalse();
     }
 

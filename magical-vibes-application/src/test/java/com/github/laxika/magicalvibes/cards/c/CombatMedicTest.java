@@ -153,7 +153,7 @@ class CombatMedicTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         Permanent goblin = harness.addToBattlefieldAndReturn(player2, new GoblinChirurgeon());
         harness.setHand(player2, List.of(new GoblinGrenade()));
         harness.addMana(player2, ManaColor.RED, 1);

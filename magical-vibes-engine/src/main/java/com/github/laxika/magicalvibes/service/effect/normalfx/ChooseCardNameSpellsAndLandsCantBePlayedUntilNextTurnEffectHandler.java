@@ -27,7 +27,7 @@ public class ChooseCardNameSpellsAndLandsCantBePlayedUntilNextTurnEffectHandler 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<String> cardNames = libraryRevealSupport.collectAllCardNamesInGame(gameData);
+        List<String> cardNames = libraryRevealSupport.collectPublicCardNames(gameData);
         var choiceContext = new ChoiceContext.SpellsAndLandsCantBePlayedUntilNextTurnChoice(
                 entry.getControllerId());
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(

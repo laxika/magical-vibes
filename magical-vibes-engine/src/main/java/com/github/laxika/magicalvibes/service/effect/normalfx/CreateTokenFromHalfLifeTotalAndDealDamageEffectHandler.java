@@ -1,32 +1,22 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenFromHalfLifeTotalAndDealDamageEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import java.util.UUID;
-import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import org.springframework.stereotype.Component;
 
-@Slf4j
-@Component
-@RequiredArgsConstructor
-public class CreateTokenFromHalfLifeTotalAndDealDamageEffectHandler implements NormalEffectHandlerBean {
+import java.util.List;
+import java.util.Set;
 
-    private final BattlefieldEntryService battlefieldEntryService;
-    private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
+/** Snapshots the token size and delegates creation and subsequent damage to the shared handlers. */
+@Component
+public class CreateTokenFromHalfLifeTotalAndDealDamageEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,64 +25,12 @@ public class CreateTokenFromHalfLifeTotalAndDealDamageEffectHandler implements N
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (CreateTokenFromHalfLifeTotalAndDealDamageEffect) effect;
-        
-                UUID controllerId = entry.getControllerId();
-                int currentLife = gameData.getLife(controllerId);
-                int x = (currentLife + 1) / 2; // half life total, rounded up
-                if (x < 0) x = 0;
-
-                int tokenCount = gameQueryService.getTokenCreationAmount(
-                        gameData, controllerId, 1, e.subtypes(), true);
-                for (int copy = 0; copy < tokenCount; copy++) {
-                    // Create the X/X token
-                    Card tokenCard = new Card();
-                    tokenCard.setName(e.tokenName());
-                    tokenCard.setType(CardType.CREATURE);
-                    tokenCard.setManaCost("");
-                    tokenCard.setToken(true);
-                    tokenCard.setColor(e.color());
-                    tokenCard.setPower(x);
-                    tokenCard.setToughness(x);
-                    tokenCard.setSubtypes(e.subtypes());
-
-                    CardPrintingRegistry.TokenImageData imageData = CardPrintingRegistry.getTokenImage(
-                            entry.getCard().getSetCode(), e.tokenName(), x, x, e.color()
-                    );
-                    if (imageData != null) {
-                        tokenCard.setSetCode(imageData.setCode());
-                        tokenCard.setCollectorNumber(imageData.collectorNumber());
-                    }
-
-                    Card createdTokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                            gameData, controllerId, tokenCard);
-                    Permanent tokenPerm = new Permanent(createdTokenCard);
-                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPerm);
-
-                    String tokenLog = "A " + x + "/" + x + " black " + e.tokenName() + " creature token enters the battlefield.";
-                    gameLogService.append(gameData, GameLog.text(tokenLog));
-                    log.info("Game {} - {} {}/{} token created for {}", gameData.id, e.tokenName(), x, x, controllerId);
-
-                    battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, createdTokenCard, null, false);
-                }
-
-                // The token deals X damage to the controller (damage source is the token, not the Saga)
-                if (x > 0) {
-                    if (!gameQueryService.canPlayerLoseLife(gameData, controllerId)) {
-                        String playerName = gameData.playerIdToName.get(controllerId);
-                        gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
-                    } else {
-                        int lifeLoss = x * gameQueryService.opponentLifeLossMultiplier(gameData, controllerId);
-                        int lifeBeforeDamage = gameData.getLife(controllerId);
-                        int lifeAfterDamage = gameQueryService.lifeAfterDamage(gameData, controllerId, lifeLoss);
-                        gameData.playerLifeTotals.put(controllerId, lifeAfterDamage);
-                        String dmgLog = e.tokenName() + " deals " + x + " damage to " + gameData.playerIdToName.get(controllerId) + ".";
-                        gameLogService.append(gameData, GameLog.text(dmgLog));
-                        log.info("Game {} - {} deals {} damage to controller {}", gameData.id, e.tokenName(), x, controllerId);
-                        triggerCollectionService.checkLifeLossTriggers(
-                                gameData, controllerId, lifeBeforeDamage - lifeAfterDamage);
-                    }
-                }
-    
+        var token = (CreateTokenFromHalfLifeTotalAndDealDamageEffect) effect;
+        int x = Math.max(0, (gameData.getLife(entry.getControllerId()) + 1) / 2);
+        entry.getCreatedPermanentIds().clear();
+        entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
+                new CreateTokenEffect(token.tokenName(), x, x, token.color(), token.subtypes(), Set.of(), Set.of()),
+                new TargetCreatureDealsDamageToControllerEffect(new Fixed(x),
+                        GrantScope.TOKENS_CREATED_THIS_RESOLUTION, DamageRecipient.CONTROLLER)));
     }
 }

@@ -993,6 +993,8 @@ public class TurnProgressionService {
             }
         }
         gameData.turnNumber++;
+        gameData.mainPhasesBegunThisTurn = 0;
+        gameData.postcombatMainPhasesBegunThisTurn = 0;
         gameData.exilePlayPermissionsAwaitNextTurnOfPlayer.entrySet().removeIf(permission -> {
             if (permission.getValue().equals(gameData.activePlayerId)) {
                 if (gameData.exilePlayPermissionsExpireAtTurnBeginning.containsKey(permission.getKey())) {
@@ -1009,6 +1011,7 @@ public class TurnProgressionService {
                 return false;
             }
             gameData.exilePlayPermissions.remove(permission.getKey());
+            gameData.exilePlayPermissionSpellFilters.remove(permission.getKey());
             gameData.clearExilePlayPermissionGroup(permission.getKey());
             return true;
         });
@@ -1116,6 +1119,7 @@ public class TurnProgressionService {
         gameData.cardsPutIntoGraveyardFromHandThisTurn.clear();
         gameData.creatureCardsPutIntoGraveyardFromAnywhereThisTurn.clear();
         gameData.creatureCardGraveyardEntriesThisTurn.clear();
+        gameData.landCardGraveyardEntriesThisTurn.clear();
         gameData.playersWhoDescendedThisTurn.clear();
         gameData.descentsThisTurn.clear();
         gameData.playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn.clear();
@@ -1128,6 +1132,7 @@ public class TurnProgressionService {
         gameData.nonlandPermanentLeftBattlefieldThisTurn = false;
         gameData.creatureDeathCountThisTurn.clear();
         gameData.creatureNamesDiedThisTurn.clear();
+        gameData.creaturePermanentIdsDiedThisTurn.clear();
         gameData.playersWhoControlledModifiedCreatureDiedThisTurn.clear();
         gameData.creaturesPutIntoOwnGraveyardThisTurnCount.clear();
         gameData.nontokenCreaturesPutIntoOwnGraveyardThisTurnCount.clear();
@@ -1163,6 +1168,7 @@ public class TurnProgressionService {
         gameData.sorcerySpellDamageDealtThisTurn.clear();
         gameData.damageSourcesControlledByPlayerThisTurn.clear();
         gameData.playersAttackedThisTurn.clear();
+        gameData.playersAfraidOfControllerAfterAttackThisTurn.clear();
         gameData.playersAttackedThisCombat.clear();
         gameData.playersWhoAttackedPlayerOrPlaneswalkerThisTurn.clear();
         gameData.playersWhoAttackedPlayersThisTurn.clear();

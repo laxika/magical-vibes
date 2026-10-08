@@ -6,12 +6,11 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfDamagedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerExilesRandomHandCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GhyrsonStarnKelermorphEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerAwareEffect;
@@ -86,11 +85,9 @@ import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextEn
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -114,9 +111,7 @@ public class DamageTriggerCollectorService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
-    private final CreatureControlService creatureControlService;
     private final ConditionEvaluationService conditionEvaluationService;
-    private final TapUntapSupport tapUntapSupport;
 
     @CollectsTrigger(value = PutCounterOnTargetPermanentEffect.class,
             slot = EffectSlot.ON_ALLY_CREATURE_FIGHTS)
@@ -535,16 +530,19 @@ public class DamageTriggerCollectorService {
         UUID sourceControllerId = gameQueryService.findPermanentController(gameData, dc.sourcePermanentId());
         if (sourceControllerId == null || sourceControllerId.equals(dc.damagedPlayerId())) return false;
 
-        creatureControlService.applyControlEffect(gameData, sourceControllerId, match.permanent(),
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                EffectDuration.PERMANENT, null, match.permanent().getCard().getName());
+        List<CardEffect> effects = new ArrayList<>();
+        effects.add(new DamageSourceControllerGainsControlOfDamagedPermanentEffect(sourceControllerId));
         if (controlEffect.untap()) {
-            tapUntapSupport.untapPermanent(gameData, match.permanent());
+            effects.add(new UntapPermanentsEffect(TapUntapScope.SELF));
         }
-
-        log.info("Game {} - {} triggers, {} gains control of {}",
-                gameData.id, match.permanent().getCard().getName(),
-                gameData.playerIdToName.get(sourceControllerId), match.permanent().getCard().getName());
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(), match.controllerId(),
+                match.permanent().getCard().getName() + "'s triggered ability", List.copyOf(effects),
+                null, match.permanent().getId());
+        entry.setNonTargeting(true);
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
     }
 

@@ -37,14 +37,16 @@ public class BecomeCopyOfDyingCreatureEffectHandler implements NormalEffectHandl
         var e = (BecomeCopyOfDyingCreatureEffect) effect;
 
         // The source permanent (Cemetery Puca) is carried as the stack entry's self-target.
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId() != null
+                ? entry.getSourcePermanentId() : entry.getTargetId());
         if (source == null) {
             log.info("Game {} - Become-copy-of-dying source no longer on the battlefield", gameData.id);
             return;
         }
 
         // Copy the dying creature from last-known information — its card sits in a graveyard.
-        Card dyingCard = gameQueryService.findCardInGraveyardById(gameData, e.dyingCardId());
+        Card dyingCard = e.dyingCardSnapshot() != null ? e.dyingCardSnapshot()
+                : gameQueryService.findCardInGraveyardById(gameData, e.dyingCardId());
         if (dyingCard == null) {
             
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s ability fizzles (the creature that died is no longer available to copy)."));
@@ -58,7 +60,10 @@ public class BecomeCopyOfDyingCreatureEffectHandler implements NormalEffectHandl
         // "except it has this ability" — re-grant the source's own death-copy trigger onto the copy.
         Card copiedCard = source.getCard();
         for (EffectRegistration reg : source.getOriginalCard().getEffectRegistrations(EffectSlot.ON_ANY_CREATURE_DIES)) {
-            copiedCard.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, reg.effect(), reg.triggerMode());
+            if (copiedCard.getEffectRegistrations(EffectSlot.ON_ANY_CREATURE_DIES).stream()
+                    .noneMatch(existing -> existing.effect().equals(reg.effect()))) {
+                copiedCard.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, reg.effect(), reg.triggerMode());
+            }
         }
 
         gameLogService.append(gameData, GameLog.textCardText(originalName + " becomes a copy of " , dyingCard, "."));

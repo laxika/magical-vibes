@@ -21,6 +21,7 @@ public class AdjustTimeCountersOnEachSuspendedCardEffectHandler implements Norma
 
     private final GameLogService gameLogService;
     private final RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterHandler;
+    private final RemoveSuspendCounterFromExiledSpellEffectHandler removeSpellTimeCounterHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,6 +53,27 @@ public class AdjustTimeCountersOnEachSuspendedCardEffectHandler implements Norma
             } else {
                 for (int i = 0; i < adjustment.amount(); i++) {
                     removeTimeCounterHandler.removeTimeCounter(gameData, cardId);
+                }
+            }
+        }
+        for (GameData.SuspendedSpellExile suspended : List.copyOf(gameData.suspendedSpellExiles)) {
+            ExiledCardEntry exiled = gameData.findExiledCard(suspended.cardId());
+            if (exiled == null || exiled.faceDown() || suspended.counters() <= 0
+                    || (adjustment.controllerOwnedOnly()
+                    && !Objects.equals(entry.getControllerId(), suspended.ownerId()))) {
+                continue;
+            }
+            if (adjustment.add()) {
+                int index = gameData.suspendedSpellExiles.indexOf(suspended);
+                if (index >= 0) {
+                    gameData.suspendedSpellExiles.set(index, new GameData.SuspendedSpellExile(
+                            suspended.cardId(), suspended.ownerId(), suspended.counters() + adjustment.amount()));
+                    gameLogService.append(gameData, GameLog.cardThen(exiled.card(),
+                            " gets " + adjustment.amount() + " time counters."));
+                }
+            } else {
+                for (int i = 0; i < adjustment.amount(); i++) {
+                    removeSpellTimeCounterHandler.removeTimeCounter(gameData, suspended.cardId());
                 }
             }
         }

@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -48,6 +49,8 @@ public class ExileFreeCastSupport {
     private final InputCompletionService inputCompletionService;
     private final ExileCastTargetSupport exileCastTargetSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    @org.springframework.beans.factory.annotation.Autowired @Lazy
+    private CastingPermissionService castingPermissionService;
 
     @org.springframework.beans.factory.annotation.Autowired @Lazy
     private SpellCastingService spellCastingService;
@@ -174,6 +177,11 @@ public class ExileFreeCastSupport {
             spellCastingService.prepareModalSpellCast(gameData, playerId, card, chosenEffects, face - 2);
         }
         boolean exileInsteadOfGraveyard = gameData.exileInsteadOfGraveyard.contains(exileCardId);
+        if (!castingPermissionService.canCastDuringResolution(gameData, playerId)) {
+            if (returnToHandIfUnable) returnExiledCardToHand(gameData, exileCardId);
+            if (completeInput) inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         if (card.isCastOnlyFromGraveyard()) {
             if (returnToHandIfUnable) {
                 returnExiledCardToHand(gameData, exileCardId);

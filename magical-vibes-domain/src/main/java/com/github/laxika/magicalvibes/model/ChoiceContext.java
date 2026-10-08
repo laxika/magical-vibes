@@ -17,6 +17,34 @@ import java.util.UUID;
 
 public sealed interface ChoiceContext {
 
+    /** A controller chooses which of their exiled permanents is replaced next. */
+    record PermanentReplacementOrder(List<UUID> permanentIds) implements ChoiceContext {
+        public PermanentReplacementOrder {
+            permanentIds = List.copyOf(permanentIds);
+        }
+    }
+
+
+    /** The affected player chooses one overlapping creature-damage prevention shield. */
+    record CreaturePreventionLifeGainChoice(int preventedDamage, List<UUID> shieldControllers)
+            implements ChoiceContext {
+        public CreaturePreventionLifeGainChoice {
+            shieldControllers = List.copyOf(shieldControllers);
+        }
+    }
+
+
+    /** The resolving mutating spell's controller chooses its position in the merged creature. */
+    record MutateOrderChoice(StackEntry entry) implements ChoiceContext {
+        public MutateOrderChoice {
+            entry = new StackEntry(entry);
+        }
+    }
+
+    /** Retains an activation while its controller chooses how to pay a forage cost. */
+    record ActivatedAbilityForageCostChoice(UUID playerId, PendingAbilityActivation activation)
+            implements ChoiceContext {}
+
     /** Chooses whether to discard or pay mana for a prepared spell cast without its mana cost. */
     record FreeCastAdditionalCostChoice(StackEntry entry) implements ChoiceContext {
         public FreeCastAdditionalCostChoice {

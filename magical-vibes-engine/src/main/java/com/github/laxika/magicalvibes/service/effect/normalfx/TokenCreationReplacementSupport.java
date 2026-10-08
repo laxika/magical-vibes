@@ -254,6 +254,17 @@ public final class TokenCreationReplacementSupport {
                 original.initialPlusOnePlusOneCounters(), original.grantedKeywordsUntilEndOfTurn(), Set.of());
     }
 
+    /** Counts additional Squirrels after each applicable replacement modifies the same token event. */
+    public static int additionalSquirrelTokenCount(GameData gameData, UUID controllerId, int amount) {
+        int total = amount;
+        int replacements = countActiveStaticEffects(gameData, controllerId,
+                AddSquirrelTokenToTokenCreationEffect.class);
+        for (int i = 0; i < replacements; i++) {
+            total = Math.multiplyExact(total, 2);
+        }
+        return total - amount;
+    }
+
     /** Returns the Soldier token blueprint when Queen Allenal's replacement applies. */
     public static CreateTokenEffect additionalSoldierTokenIfApplicable(GameData gameData,
                                                                          UUID controllerId,

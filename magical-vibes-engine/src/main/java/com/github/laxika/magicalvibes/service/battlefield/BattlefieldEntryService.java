@@ -189,9 +189,18 @@ public class BattlefieldEntryService {
                        Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
                        int xValue, boolean kicked, List<String> repeatedAdditionalCosts,
                        int convokeCreatureCount, StackEntry sourceStackEntry) {
-        if (beginLandCardNameChoice(gameData, controllerId, permanent, null)) {
-            return;
-        }
+        if (beginNativeCardNameChoice(gameData, new BattlefieldEntryRequest(controllerId, permanent,
+                enterTappedTypes, simultaneouslyEntered, xValue, kicked, repeatedAdditionalCosts))) return;
+        placementService.place(gameData, new BattlefieldEntryRequest(controllerId, permanent,
+                enterTappedTypes, simultaneouslyEntered, xValue, kicked, repeatedAdditionalCosts,
+                convokeCreatureCount, null, null, null, sourceStackEntry));
+    }
+
+    /** Collects names before entry, including when a physical card is still in a revealed library. */
+    public boolean beginNativeCardNameChoice(GameData gameData, BattlefieldEntryRequest request) {
+        UUID controllerId = request.controllerId();
+        Permanent permanent = request.permanent();
+        if (beginLandCardNameChoice(gameData, controllerId, permanent, null)) return true;
         boolean needsDualNameChoice = permanent.getCard() != null
                 && permanent.getChosenName() == null
                 && permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
@@ -203,11 +212,9 @@ public class BattlefieldEntryService {
             playerInputService.beginDualCardNameChoice(gameData,
                     new ChoiceContext.DualCardNameChoice(
                             permanent.getCard(), controllerId, controllerId, null));
-            return;
+            return true;
         }
-        placementService.place(gameData, new BattlefieldEntryRequest(controllerId, permanent,
-                enterTappedTypes, simultaneouslyEntered, xValue, kicked, repeatedAdditionalCosts,
-                convokeCreatureCount, null, null, null, sourceStackEntry));
+        return false;
     }
 
     public UUID resolveEnteringController(GameData gameData, UUID controllerId, Permanent permanent) {

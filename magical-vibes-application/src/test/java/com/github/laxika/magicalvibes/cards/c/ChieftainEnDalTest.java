@@ -88,6 +88,8 @@ class ChieftainEnDalTest extends BaseCardTest {
     @Test
     @DisplayName("Attacker bounced and replayed after resolution does not retain first strike")
     void returnedCreatureDoesNotRetainFirstStrike() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         addCreatureReady(player1, new ChieftainEnDal());
         Permanent attacker = addCreatureReady(player1, new DefiantFalcon());
         harness.addToBattlefield(player2, new SealOfRemoval());

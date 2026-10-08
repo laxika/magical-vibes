@@ -359,6 +359,7 @@ public class TurnCleanupService {
                 watch -> watch.untilEndOfTurn());
         gameData.clearDelayedActions(DelayedNamedCreatureCombatDamage.class,
                 watch -> watch.untilEndOfTurn());
+        gameData.clearDelayedActions(com.github.laxika.magicalvibes.model.action.DelayedCamouflage.class);
         gameData.clearDelayedActions(DelayedWatchedCreatureDealsDamage.class);
         gameData.clearDelayedActions(DelayedWatchedCreatureAttack.class);
         gameData.clearDelayedActions(DelayedWatchedCreatureDealtDamageByAttackingCreature.class);
@@ -574,6 +575,7 @@ public class TurnCleanupService {
         // Remove temporary impulse-draw exile permissions (e.g. Vance's Blasting Cannons)
         for (var cardId : gameData.exilePlayPermissionsExpireEndOfTurn) {
             gameData.exilePlayPermissions.remove(cardId);
+            gameData.exilePlayPermissionSpellFilters.remove(cardId);
             gameData.clearExilePlayPermissionGroup(cardId);
             gameData.exilePlayForLifeEqualToManaValue.remove(cardId);
             gameData.exilePlayCostModifiers.remove(cardId);
@@ -600,6 +602,7 @@ public class TurnCleanupService {
         gameData.exilePlayPermissionsExpireAtTurnEnd.entrySet().removeIf(entry -> {
             if (entry.getValue() <= currentTurn) {
                 gameData.exilePlayPermissions.remove(entry.getKey());
+                gameData.exilePlayPermissionSpellFilters.remove(entry.getKey());
                 gameData.clearExilePlayPermissionGroup(entry.getKey());
                 gameData.exilePlayCostModifiers.remove(entry.getKey());
                 gameData.exilePlayWithoutPayingManaCost.remove(entry.getKey());
@@ -754,6 +757,8 @@ public class TurnCleanupService {
             for (Permanent perm : bf) {
                 boolean hasChosenPlayer = perm.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                         .anyMatch(RememberTargetPlayerEffect.class::isInstance);
+                boolean choosesOpponentAsEnters = perm.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .anyMatch(com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect.class::isInstance);
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof OpponentMaxHandSizeEffect handSizeEffect) {
                         UUID affectedPlayerId = null;
@@ -768,7 +773,10 @@ public class TurnCleanupService {
                                         .orElse(null);
                             }
                         }
-                        if (hasChosenPlayer ? playerId.equals(affectedPlayerId) : !own) {
+                        boolean affectsPlayer = choosesOpponentAsEnters && !perm.getChosenPlayerIds().isEmpty()
+                                ? perm.getChosenPlayerIds().contains(playerId)
+                                : hasChosenPlayer ? playerId.equals(affectedPlayerId) : !own;
+                        if (affectsPlayer) {
                             modifiers.add(new HandSizeModifier(effect, perm, perm.getTimestamp(), order++, otherPlayerId));
                         }
                     } else if (own && effect instanceof ControllerMaxHandSizeEffect handSizeEffect) {

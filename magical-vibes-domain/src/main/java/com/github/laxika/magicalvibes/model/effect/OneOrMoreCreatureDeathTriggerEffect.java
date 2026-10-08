@@ -7,11 +7,20 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * simultaneously.
  */
 public record OneOrMoreCreatureDeathTriggerEffect(CardEffect wrapped,
-                                                   PermanentPredicate dyingPermanentPredicate)
+                                                   PermanentPredicate dyingPermanentPredicate,
+                                                   boolean includeSource)
         implements BatchedCreatureDeathTriggerEffect {
 
     public OneOrMoreCreatureDeathTriggerEffect(CardEffect wrapped) {
-        this(wrapped, null);
+        this(wrapped, null, false);
+    }
+
+    public OneOrMoreCreatureDeathTriggerEffect(CardEffect wrapped, PermanentPredicate dyingPermanentPredicate) {
+        this(wrapped, dyingPermanentPredicate, false);
+    }
+
+    public OneOrMoreCreatureDeathTriggerEffect(CardEffect wrapped, boolean includeSource) {
+        this(wrapped, null, includeSource);
     }
 
     @Override

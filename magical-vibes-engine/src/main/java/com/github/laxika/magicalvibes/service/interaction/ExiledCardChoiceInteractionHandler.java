@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnExiledCardNamedToBattlefieldUnderOwnerControlEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PutTargetCardExiledWithSourceIntoOwnersGraveyardAndCreateTokenEffectHandler;
+import com.github.laxika.magicalvibes.model.effect.PutTargetCardExiledWithSourceIntoOwnersGraveyardAndCreateTokenEffect;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +21,7 @@ public class ExiledCardChoiceInteractionHandler
 
     private final InputCompletionService inputCompletionService;
     private final ReturnExiledCardNamedToBattlefieldUnderOwnerControlEffectHandler returnHandler;
+    private final PutTargetCardExiledWithSourceIntoOwnersGraveyardAndCreateTokenEffectHandler putHandler;
 
     @Override
     public Class<PendingInteraction.ExiledCardChoice> handledType() {
@@ -41,6 +44,14 @@ public class ExiledCardChoiceInteractionHandler
         List<UUID> cardIds = ((InteractionAnswer.CardsChosen) answer).cardIds();
         if (cardIds == null || cardIds.size() != 1 || !interaction.validCardIds().contains(cardIds.getFirst())) {
             throw new IllegalStateException("Choose one exiled card named " + interaction.cardName());
+        }
+
+        if (interaction.followUpEntry() != null && interaction.followUpEffect()
+                instanceof PutTargetCardExiledWithSourceIntoOwnersGraveyardAndCreateTokenEffect effect) {
+            gameData.interaction.clearAwaitingInput();
+            putHandler.putChosenCardIntoGraveyard(gameData, interaction.followUpEntry(), effect, cardIds.getFirst());
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
         }
 
         ExiledCardEntry exiled = returnHandler.findMatchingEntry(

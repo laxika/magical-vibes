@@ -193,7 +193,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 }
             } else if (restToGraveyard) {
                 for (Card card : topCards) {
-                    gameData.playerGraveyards.get(controllerId).add(card);
+                    graveyardService.addCardToGraveyard(gameData, controllerId, card);
                 }
                 gameLogService.append(gameData, GameLog.text(
                         playerName + " puts the revealed cards into their graveyard."));

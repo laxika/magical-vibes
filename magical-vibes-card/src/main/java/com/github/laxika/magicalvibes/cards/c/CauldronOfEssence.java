@@ -8,10 +8,12 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DyingPermanentWasCreatureConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -23,6 +25,8 @@ public class CauldronOfEssence extends Card {
         // Whenever a creature you control dies, each opponent loses 1 life and you gain 1 life.
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new GainLifeEffect(1));
+        addEffect(EffectSlot.ON_DEATH, new DyingPermanentWasCreatureConditionalEffect(SequenceEffect.of(
+                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT), new GainLifeEffect(1))));
 
         // {1}{B}{G}, {T}, Sacrifice a creature: Return target creature card from your graveyard
         // to the battlefield. Activate only as a sorcery.

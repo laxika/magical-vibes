@@ -106,7 +106,8 @@ class ClackbridgeTrollTest extends BaseCardTest {
 
         resolveBeginningOfCombat(player2);
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test
@@ -143,7 +144,8 @@ class ClackbridgeTrollTest extends BaseCardTest {
 
         resolveBeginningOfCombat(player1);
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(troll.isTapped()).isFalse();
         harness.assertLife(player1, 20);
         harness.assertOnBattlefield(player1, "Gingerbrute");

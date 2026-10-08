@@ -14,9 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Chastise extends Card {
 
     public Chastise() {
-        // Gain life first so the target's power is read before it is destroyed.
         target(TargetFilters.attackingCreature())
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new TargetPower()))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(false));
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(false))
+                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new TargetPower()));
     }
 }

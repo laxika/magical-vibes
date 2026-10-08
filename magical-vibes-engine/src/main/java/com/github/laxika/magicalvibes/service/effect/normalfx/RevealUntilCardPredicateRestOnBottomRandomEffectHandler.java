@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
+import com.github.laxika.magicalvibes.model.BattlefieldEntryLibraryRemainder;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -14,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
+import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
@@ -43,6 +47,7 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
     private final AttackLegalityService attackLegalityService;
     private final PlayerInputService playerInputService;
     private final EquipSupport equipSupport;
+    private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -63,6 +68,20 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
 
     void resolve(GameData gameData, StackEntry entry,
                  RevealUntilCardPredicateRestOnBottomRandomEffect typedEffect, boolean shuffleLibrary) {
+        resolve(gameData, entry, typedEffect, shuffleLibrary, null, null);
+    }
+
+    void collectIntoBattlefieldBatch(GameData gameData, StackEntry entry,
+                                     RevealUntilCardPredicateRestOnBottomRandomEffect effect,
+                                     List<BattlefieldEntryCard> cards,
+                                     List<BattlefieldEntryLibraryRemainder> remainders) {
+        resolve(gameData, entry, effect, false, cards, remainders);
+    }
+
+    private void resolve(GameData gameData, StackEntry entry,
+                         RevealUntilCardPredicateRestOnBottomRandomEffect typedEffect, boolean shuffleLibrary,
+                         List<BattlefieldEntryCard> batchCards,
+                         List<BattlefieldEntryLibraryRemainder> batchRemainders) {
         UUID controllerId = entry.getControllerId();
         String playerName = gameData.playerIdToName.get(controllerId);
         List<Card> deck = gameData.playerDecks.get(controllerId);
@@ -108,6 +127,32 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
         Permanent permanent = null;
         boolean entryBlocked = foundCard != null && toBattlefield
                 && gameQueryService.isCardBlockedFromEnteringFromZone(gameData, foundCard, Zone.LIBRARY);
+        if (typedEffect.destination() == LibrarySearchDestination.BATTLEFIELD
+                && !typedEffect.enterTappedAndAttacking()) {
+            List<BattlefieldEntryCard> cards = batchCards == null ? new ArrayList<>() : batchCards;
+            List<BattlefieldEntryLibraryRemainder> remainders = batchRemainders == null
+                    ? new ArrayList<>() : batchRemainders;
+            deck.addAll(0, revealedCards);
+            if (typedEffect.recordFoundCardManaValue()) {
+                entry.setEventValue(foundCard == null || entryBlocked ? 0 : foundCard.getManaValue());
+            }
+            if (foundCard != null) {
+                revealedCards.remove(foundCard);
+                if (entryBlocked) {
+                    gameLogService.append(gameData, GameLog.cardThen(foundCard,
+                            " can't enter the battlefield from a library; it stays in the library."));
+                } else if (predicateEvaluationService.matchesCardPredicate(foundCard, new CardIsPermanentPredicate(),
+                        entry.getCard().getId(), gameData, controllerId)) {
+                    cards.add(new BattlefieldEntryCard(controllerId, controllerId, foundCard, Zone.LIBRARY, null));
+                }
+            } else {
+                gameLogService.append(gameData, GameLog.text(
+                        playerName + " reveals their entire library — no matching card was found."));
+            }
+            remainders.add(new BattlefieldEntryLibraryRemainder(controllerId, revealedCards, shuffleLibrary));
+            if (batchCards == null) battlefieldEntryBatchSupport.begin(gameData, cards, remainders);
+            return;
+        }
         if (entryBlocked) {
             gameLogService.append(gameData, GameLog.cardThen(foundCard,
                     " can't enter the battlefield from a library; it stays in the library."));

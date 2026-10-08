@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -93,6 +94,8 @@ class CopperhornScoutTest extends BaseCardTest {
     @Test
     @DisplayName("Untaps another attacker without removing it from combat")
     void untapsAnotherAttacker() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.DECLARE_ATTACKERS));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.DECLARE_ATTACKERS));
         Permanent scout = addCreatureReady(player1, new CopperhornScout());
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
 
@@ -108,6 +111,8 @@ class CopperhornScoutTest extends BaseCardTest {
     @Test
     @DisplayName("Two attacking Scouts untap one another")
     void twoScoutsUntapEachOther() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.DECLARE_ATTACKERS));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.DECLARE_ATTACKERS));
         Permanent first = addCreatureReady(player1, new CopperhornScout());
         Permanent second = addCreatureReady(player1, new CopperhornScout());
 

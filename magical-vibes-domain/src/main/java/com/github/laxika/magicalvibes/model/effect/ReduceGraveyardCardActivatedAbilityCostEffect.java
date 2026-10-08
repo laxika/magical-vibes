@@ -7,8 +7,13 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * controller's graveyard by {@code amount} generic mana (static, controller-scoped). E.g. Embalmer's
  * Tools with a creature-card predicate and amount 1.
  */
-public record ReduceGraveyardCardActivatedAbilityCostEffect(CardPredicate filter, int amount)
+public record ReduceGraveyardCardActivatedAbilityCostEffect(CardPredicate filter, int amount,
+                                                           int minimumManaCost)
         implements GraveyardActivatedAbilityCostReducingEffect {
+
+    public ReduceGraveyardCardActivatedAbilityCostEffect(CardPredicate filter, int amount) {
+        this(filter, amount, 0);
+    }
 
     @Override
     public CardPredicate affectedGraveyardCards() {

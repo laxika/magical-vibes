@@ -40,6 +40,8 @@ class ChandrasOutburstTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
+        harness.handleMultipleCardsChosen(player1, List.of(chandraBold.getId()));
+
         // Damage dealt
         harness.assertLife(player2, 16);
         // Named card moved from graveyard to hand
@@ -66,6 +68,7 @@ class ChandrasOutburstTest extends BaseCardTest {
     @Test
     void dealsFourDamageToPlaneswalker() {
         var chandra = harness.addToBattlefieldAndReturn(player2, new ChandraBoldPyromancer());
+        chandra.setCounterCount(CounterType.LOYALTY, 5);
         harness.setHand(player1, List.of(new ChandrasOutburst()));
         harness.addMana(player1, ManaColor.RED, 5);
 
@@ -96,7 +99,7 @@ class ChandrasOutburstTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(chandra.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(chandra);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -112,7 +115,7 @@ class ChandrasOutburstTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, -1);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(chandra);

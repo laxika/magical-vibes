@@ -73,6 +73,7 @@ class CaseOfTheLockedHothouseTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player1);
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
 
@@ -142,6 +143,7 @@ class CaseOfTheLockedHothouseTest extends BaseCardTest {
         addSevenLands();
         resolveEndStepTriggers();
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
 
@@ -196,6 +198,7 @@ class CaseOfTheLockedHothouseTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).removeLast();
         harness.setLibrary(player1, List.of(new NervousGardener()));
         harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
 
@@ -226,6 +229,7 @@ class CaseOfTheLockedHothouseTest extends BaseCardTest {
         resolveEndStepTriggers();
         harness.setHand(player1, List.of(new Forest()));
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
 
@@ -265,7 +269,9 @@ class CaseOfTheLockedHothouseTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passUntil(TurnStep.END_STEP);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passUntil(TurnStep.END_STEP);
+            resolveAllTriggers();
+        });
     }
 }

@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -34,11 +36,19 @@ public class TargetCreatureDealsDamageToControllerEffectHandler implements Norma
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var targetEffect = (TargetCreatureDealsDamageToControllerEffect) effect;
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null) {
-            return;
+        List<UUID> sourceIds = targetEffect.scope() == GrantScope.TOKENS_CREATED_THIS_RESOLUTION
+                ? List.copyOf(entry.getCreatedPermanentIds())
+                : entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
+        for (UUID sourceId : sourceIds) {
+            Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
+            if (source != null) {
+                dealDamage(gameData, entry, targetEffect, source);
+            }
         }
+    }
 
+    private void dealDamage(GameData gameData, StackEntry entry,
+                            TargetCreatureDealsDamageToControllerEffect targetEffect, Permanent target) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
         if (controllerId == null) {
             return;
@@ -62,7 +72,10 @@ public class TargetCreatureDealsDamageToControllerEffectHandler implements Norma
                 null,
                 target.getId());
 
+        damageEntry.setSourcePermanentSnapshot(new Permanent(target));
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, damageEntry);
-        damageSupport.dealDamageToPlayer(gameData, damageEntry, controllerId, rawDamage);
+        UUID recipientId = targetEffect.recipient() == DamageRecipient.CONTROLLER
+                ? entry.getControllerId() : controllerId;
+        damageSupport.dealDamageToPlayer(gameData, damageEntry, recipientId, rawDamage);
     }
 }

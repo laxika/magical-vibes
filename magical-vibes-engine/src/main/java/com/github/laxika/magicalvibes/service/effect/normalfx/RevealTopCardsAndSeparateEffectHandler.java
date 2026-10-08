@@ -84,7 +84,8 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
                 ? defendingPlayerId(gameData, entry)
                 : e.targetedSeparator()
                         ? entry.getTargetId()
-                        : opponentIds.size() == 1 ? opponentIds.getFirst() : null;
+                        : opponentIds.size() == 1 || e.controllerSeparates() && e.faceDownPile() && !opponentIds.isEmpty()
+                                ? opponentIds.getFirst() : null;
         if (opponentId == null || opponentId.equals(controllerId) || !gameData.playerIds.contains(opponentId)) {
             // No opponent to separate the piles — put the revealed cards into the controller's hand.
             for (Card card : revealedCards) {
@@ -102,7 +103,7 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
                 && e.controllerSeparates() && e.faceDownPile() && opponentIds.size() > 1) {
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.CuratorOpponentChoice());
             playerInputService.beginAnyTargetChoice(gameData, controllerId, List.of(), opponentIds,
-                    "Choose an opponent to choose a pile for Curator of Destinies.");
+                    "Choose an opponent to choose a pile for " + entry.getCard().getName() + ".");
             return;
         }
 

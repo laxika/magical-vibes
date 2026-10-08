@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FuneralCharm;
 import com.github.laxika.magicalvibes.cards.a.AegisTurtle;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HoneyMammoth;
@@ -23,7 +24,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChargeOfTheForeverBeast.class, Forest.class, GrizzlyBears.class, WallOfBlossoms.class,
+@CardUsed({ChargeOfTheForeverBeast.class, FuneralCharm.class, Forest.class, GrizzlyBears.class, WallOfBlossoms.class,
         WallOfStone.class, YargleAndMultani.class, AegisTurtle.class, HoneyMammoth.class,
         LordOfExtinction.class, VivienMonstersAdvocate.class})
 class ChargeOfTheForeverBeastTest extends BaseCardTest {
@@ -147,6 +148,28 @@ class ChargeOfTheForeverBeastTest extends BaseCardTest {
                 .hasMessageContaining("Must reveal creature card");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(3);
+    }
+
+    @Test
+    void remembersRevealedCardsPowerImmediatelyBeforeItLeavesHand() {
+        Permanent target = addCreatureReady(player2, new AegisTurtle());
+        LordOfExtinction revealed = new LordOfExtinction();
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player1, List.of(new ChargeOfTheForeverBeast(), revealed, new GrizzlyBears()));
+        harness.setHand(player2, List.of(new FuneralCharm()));
+        addMana();
+        castCharge(target.getId(), 1);
+
+        harness.setGraveyard(player2, List.of(new Forest()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.castInstant(player2, 0, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(revealed);
     }
 
     private void castCharge(UUID targetId, Integer revealedHandCardIndex) {

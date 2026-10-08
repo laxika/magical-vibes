@@ -135,6 +135,42 @@ class CamelliaTheSeedmiserTest extends BaseCardTest {
                 .hasSize(1);
     }
 
+    @Test
+    void canChooseGraveyardForageWhenFoodIsAlsoAvailable() {
+        harness.addToBattlefield(player1, new CamelliaTheSeedmiser());
+        Permanent food = addFoodToken(player1);
+        Card retained = new BakersbaneDuo();
+        Card first = new BakersbaneDuo();
+        Card second = new BakersbaneDuo();
+        Card third = new BakersbaneDuo();
+        harness.setGraveyard(player1, List.of(retained, first, second, third));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "Exile three graveyard cards");
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId(), third.getId()));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(retained);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(food);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void canChooseFoodForageWhenGraveyardCardsAreAlsoAvailable() {
+        harness.addToBattlefield(player1, new CamelliaTheSeedmiser());
+        Permanent food = addFoodToken(player1);
+        harness.setGraveyard(player1, List.of(new BakersbaneDuo(), new BakersbaneDuo(), new BakersbaneDuo()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "Sacrifice a Food");
+        harness.handlePermanentChosen(player1, food.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(food);
+        assertThat(gd.stack).hasSize(2);
+    }
+
     private Permanent addFoodToken(Player player) {
         Card food = new Card();
         food.setName("Food");

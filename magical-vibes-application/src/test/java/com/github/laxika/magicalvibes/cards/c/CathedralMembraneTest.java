@@ -132,7 +132,8 @@ class CathedralMembraneTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Dismember()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castAndResolveInstant(player1, 0, membrane.getId());
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT,
+                () -> harness.castAndResolveInstant(player1, 0, membrane.getId()));
 
         harness.assertInGraveyard(player2, "Cathedral Membrane");
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
@@ -167,7 +168,7 @@ class CathedralMembraneTest extends BaseCardTest {
 
         harness.ensurePriority(player2);
         harness.activateAbility(player2, 1, 1, null, membrane.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, harness::passBothPriorities);
         assertThat(membrane.isBlocking()).isFalse();
         harness.setHand(player1, List.of(new Dismember()));
         harness.addMana(player1, ManaColor.BLACK, 3);

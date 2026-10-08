@@ -52,7 +52,7 @@ class ConsumptiveGooTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player2, new SilverKnight());
 
         activateGoo(goo, bears);
-        harness.passUntil(TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -86,7 +86,7 @@ class ConsumptiveGooTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(goo);
         assertThat(goo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, goo)).isEqualTo(1);
-        harness.passUntil(TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, goo)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, goo)).isEqualTo(2);
     }

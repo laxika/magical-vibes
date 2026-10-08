@@ -46,7 +46,7 @@ class CachedDefensesTest extends BaseCardTest {
         assertThat(choice.validIds()).containsExactlyInAnyOrder(first.getId(), second.getId());
         assertThat(choice.context()).isEqualTo(
                 new MultiPermanentChoiceContext.OwnPermanentCounterPlacement(
-                        CounterType.PLUS_ONE_PLUS_ONE, 3));
+                        CounterType.PLUS_ONE_PLUS_ONE, 3, true));
 
         harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
 

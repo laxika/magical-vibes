@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -33,33 +32,28 @@ public class DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffectHandler i
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect) effect;
 
-        List<UUID> targets = entry.getTargetIds();
+        List<UUID> targets = entry.getDeclaredTargetIds();
         if (targets == null || targets.isEmpty()) {
             return;
         }
 
-        if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
-            return;
-        }
+        boolean sourceDamagePrevented = damageSupport.isDamageSourcePreventedWithLog(gameData, entry);
 
         UUID firstTargetId = targets.getFirst();
         UUID affectedPlayerId = resolveAffectedPlayer(gameData, entry, e, firstTargetId);
-        if (affectedPlayerId != null) {
+        if (!sourceDamagePrevented && affectedPlayerId != null && entry.isTargetLegal(0)) {
             int playerDamage = gameQueryService.applyDamageMultiplier(gameData, e.playerDamage(), entry);
             damageSupport.resolveAnyTargetDamage(gameData, entry, firstTargetId, playerDamage, false);
         }
 
         for (int i = 1; i < targets.size(); i++) {
+            if (!entry.isTargetLegal(i)) continue;
             UUID creatureId = targets.get(i);
             Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
             if (creature == null || !gameQueryService.isCreature(gameData, creature)) {
                 continue;
             }
-            UUID creatureControllerId = gameQueryService.findPermanentController(gameData, creatureId);
-            if (affectedPlayerId == null || !Objects.equals(affectedPlayerId, creatureControllerId)) {
-                continue;
-            }
-            if (!damageSupport.isDamagePreventedForCreature(gameData, entry, creature)) {
+            if (!sourceDamagePrevented && !damageSupport.isDamagePreventedForCreature(gameData, entry, creature)) {
                 int creatureDamage = gameQueryService.applyDamageMultiplier(gameData, e.creatureDamage(), entry);
                 damageSupport.dealCreatureDamage(gameData, entry, creature, creatureDamage);
             }

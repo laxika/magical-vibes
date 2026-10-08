@@ -107,6 +107,8 @@ import java.util.concurrent.ThreadLocalRandom;
 @Slf4j
 @Component
 public class BattlefieldPlacementService {
+    @Autowired @Lazy
+    private BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.RegisterEchoAtNextUpkeepEffectHandler echoHandler;
@@ -507,6 +509,42 @@ public class BattlefieldPlacementService {
         if (simultaneouslyEntered.isEmpty()) {
             gameData.activeMysticReflectionsForEntryBatch.clear();
         }
+    }
+
+    /** Determines native entry choices while the batch's physical cards remain in their old zones. */
+    public boolean prepareNativeBatchChoices(GameData gameData, BattlefieldEntryRequest request) {
+        if (beginAmplifyChoice(gameData, request) || beginUnleashChoice(gameData, request)
+                || beginRiotChoices(gameData, request)) return true;
+        UUID controllerId = resolveEnteringController(gameData, request.controllerId(), request.permanent());
+        if (!applyRequiredGraveyardExileReplacement(gameData, controllerId, request.permanent(), request.xValue())
+                || !applyEntryCostReplacement(gameData, controllerId, request.permanent())) return true;
+        request.permanent().setEntryCostResolved(true);
+        if (request.permanent().getChosenTappedEntryState() != null) return false;
+        Permanent preview = new Permanent(request.permanent());
+        preview.enterUntapped();
+        applyPerpetualEnterTapped(gameData, preview);
+        applyEnterTappedEffects(preview, request.enterTappedTypes());
+        applySelfEnterTapped(gameData, controllerId, preview);
+        applyConditionalEnterTapped(gameData, controllerId, preview, request.xValue());
+        applyAllPermanentsEnterTapped(gameData, preview);
+        applyGlobalFilteredEnterTappedEffects(gameData, preview);
+        applyOpponentOnlyEnterTappedEffects(gameData, controllerId, preview);
+        applyTurnScopedFilteredEnterTappedEffects(gameData, controllerId, preview);
+        enchantedPlayerCreaturesEnterTappedEffectHandler.apply(gameData, controllerId, preview);
+        applyUnchosenParityEnterTapped(gameData, preview);
+        boolean entersTapped = preview.isTapped();
+        if (request.permanent().isTapped()) preview.tap();
+        applyControlledPermanentsEnterUntapped(gameData, controllerId, preview);
+        applyControlledLandsEnterUntapped(gameData, controllerId, preview);
+        applyAllPermanentsEnterUntapped(gameData, preview);
+        if (entersTapped && !preview.isTapped()) {
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(controllerId, null, null,
+                    new com.github.laxika.magicalvibes.model.ChoiceContext.TappedEntryStateChoice(request),
+                    List.of("Tapped", "Untapped"), "Choose whether " + request.permanent().getCard().getName()
+                            + " enters tapped or untapped."));
+            return true;
+        }
+        return false;
     }
 
     private void applyRandomNumberChoiceOnEnter(Permanent permanent) {
@@ -1460,6 +1498,7 @@ public class BattlefieldPlacementService {
             return;
         }
         permanent.setEntryCostPaid(true);
+        if (battlefieldEntryBatchSupport.completeNativeChoice(gameData, permanent)) return;
         place(gameData, defaultRequest(gameData, controllerId, permanent));
     }
 
@@ -1470,6 +1509,7 @@ public class BattlefieldPlacementService {
         if (sacrificed) {
             permanent.setEntryCostPaid(true);
         }
+        if (battlefieldEntryBatchSupport.completeNativeChoice(gameData, permanent)) return;
         place(gameData, defaultRequest(gameData, controllerId, permanent));
     }
 
@@ -1480,6 +1520,7 @@ public class BattlefieldPlacementService {
             return;
         }
         permanent.setEntryCostPaid(true);
+        if (battlefieldEntryBatchSupport.completeNativeChoice(gameData, permanent)) return;
         place(gameData, defaultRequest(gameData, controllerId, permanent));
     }
 
@@ -1490,6 +1531,7 @@ public class BattlefieldPlacementService {
             return;
         }
         permanent.setEntryCostPaid(true);
+        if (battlefieldEntryBatchSupport.completeNativeChoice(gameData, permanent)) return;
         place(gameData, defaultRequest(gameData, controllerId, permanent));
     }
 
@@ -1501,12 +1543,14 @@ public class BattlefieldPlacementService {
 
     private void putEnteringPermanentIntoGraveyard(GameData gameData, UUID controllerId, Permanent permanent,
                                                     EntryCostReplacementEffect effect) {
-        Card card = permanent.getCard();
+        battlefieldEntryBatchSupport.removeRejectedCardFromOrigin(gameData, permanent);
+        Card card = permanent.getOriginalCard();
         UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : controllerId;
         graveyardService.addCardToGraveyard(gameData, ownerId, card);
         gameLogService.append(gameData, GameLog.cardThen(card, " is put into its owner's graveyard instead of entering."));
         log.info("Game {} - {} put into graveyard instead of entering ({})", gameData.id, card.getName(),
                 effect == null ? "declined" : "no " + effect.description());
+        battlefieldEntryBatchSupport.completeRejectedEntry(gameData, permanent);
     }
 
     private void applySelfEnterTapped(GameData gameData, UUID controllerId, Permanent enteringPermanent) {

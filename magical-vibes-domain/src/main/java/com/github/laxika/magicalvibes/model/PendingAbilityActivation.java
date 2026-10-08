@@ -12,12 +12,22 @@ import java.util.UUID;
  * @param discardCostRequiredName the name every remaining discard must match for a same-name discard
  *                                cost (Sphinx of the Chimes), fixed by the first card chosen;
  *                                {@code null} while no name has been locked in
+ * @param forageSacrificeFood selected forage payment: true for Food, false for three graveyard
+ *                            cards, or null before a payment alternative has been chosen
  */
 public record PendingAbilityActivation(UUID sourcePermanentId, int abilityIndex, int xValue,
                                        UUID targetId, Zone targetZone,
                                        String discardCostLabel, int remainingDiscards,
                                        String discardCostRequiredName,
-                                       List<UUID> targetIds, Map<UUID, Integer> damageAssignments) {
+                                       List<UUID> targetIds, Map<UUID, Integer> damageAssignments, Boolean forageSacrificeFood) {
+
+    public PendingAbilityActivation(UUID sourcePermanentId, int abilityIndex, int xValue,
+                                    UUID targetId, Zone targetZone, String discardCostLabel,
+                                    int remainingDiscards, String discardCostRequiredName,
+                                    List<UUID> targetIds, Map<UUID, Integer> damageAssignments) {
+        this(sourcePermanentId, abilityIndex, xValue, targetId, targetZone, discardCostLabel,
+                remainingDiscards, discardCostRequiredName, targetIds, damageAssignments, null);
+    }
 
     public PendingAbilityActivation {
         targetIds = targetIds != null ? List.copyOf(targetIds) : List.of();

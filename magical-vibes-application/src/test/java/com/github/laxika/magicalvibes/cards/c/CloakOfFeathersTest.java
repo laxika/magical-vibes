@@ -69,6 +69,7 @@ class CloakOfFeathersTest extends BaseCardTest {
     @Test
     @DisplayName("Can give an opponent's creature flying while the caster draws")
     void targetsOpponentsCreature() {
+        harness.setHand(player2, List.of());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Card drawn = new Forest();
         harness.setLibrary(player1, List.of(drawn));

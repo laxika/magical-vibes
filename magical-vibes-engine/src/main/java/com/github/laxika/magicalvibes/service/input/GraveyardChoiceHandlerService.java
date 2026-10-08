@@ -473,24 +473,25 @@ public class GraveyardChoiceHandlerService {
                     }
                     UUID battlefieldControllerId = destinationControllerId != null
                             ? destinationControllerId : playerId;
+                    if (graveyardChoice.enterWithCounter() != null
+                            && graveyardChoice.enterWithCounterCount() > 0) {
+                        int counters = gameQueryService.replaceCounters(gameData, perm, battlefieldControllerId,
+                                graveyardChoice.enterWithCounter(), graveyardChoice.enterWithCounterCount(), playerId);
+                        perm.setCounterCount(graveyardChoice.enterWithCounter(), counters);
+                    }
+                    if (graveyardChoice.enterWithCounters() != null) {
+                        for (CounterType counterType : graveyardChoice.enterWithCounters()) {
+                            int counters = gameQueryService.replaceCounters(
+                                    gameData, perm, battlefieldControllerId, counterType, 1, playerId);
+                            perm.setCounterCount(counterType, perm.getCounterCount(counterType) + counters);
+                        }
+                    }
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, battlefieldControllerId, perm);
                     if (cardGraveyardOwnerId != null && !cardGraveyardOwnerId.equals(battlefieldControllerId)) {
                         graveyardReturnSupport.trackStolenCreature(
                                 gameData, perm.getId(), battlefieldControllerId, cardGraveyardOwnerId);
                     }
 
-                    if (graveyardChoice.enterWithCounter() != null
-                            && graveyardChoice.enterWithCounterCount() > 0) {
-                        permanentCounterSupport.placeCounterOnPermanent(
-                                gameData, gameData.pendingEffectResolutionEntry, perm,
-                                graveyardChoice.enterWithCounter(), graveyardChoice.enterWithCounterCount());
-                    }
-                    if (graveyardChoice.enterWithCounters() != null) {
-                        for (CounterType counterType : graveyardChoice.enterWithCounters()) {
-                            permanentCounterSupport.placeCounterOnPermanent(
-                                    gameData, gameData.pendingEffectResolutionEntry, perm, counterType, 1);
-                        }
-                    }
                     graveyardReturnSupport.grantOnDeathEffect(perm, grantOnDeathEffect, cardGraveyardOwnerId);
 
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " puts " , card, " from a graveyard onto the battlefield."));

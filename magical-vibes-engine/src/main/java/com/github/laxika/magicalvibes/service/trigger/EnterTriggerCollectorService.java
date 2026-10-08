@@ -420,10 +420,21 @@ public class EnterTriggerCollectorService {
                 return true;
             }
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                CardEffect targetingEffect = effect;
+                if (effect instanceof com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect exchange
+                        && exchange.triggeringPermanentIsFirstTarget()) {
+                    targetingEffect = com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect
+                            .forTriggeringPermanent(new com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate(List.of(
+                                    new com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate(
+                                            new com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate(
+                                                    pe.enteringControllerId())),
+                                    new com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithSourcePermanentPredicate())));
+                }
                 match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                        match.permanent().getCard(), pe.enteringControllerId(),
-                        new ArrayList<>(List.of(effect)), match.permanent().getId(),
-                        enteringPermanentId, enteringPermanentId));
+                        match.permanent().getCard(), match.controllerId(),
+                        new ArrayList<>(List.of(targetingEffect)), match.permanent().getId(),
+                        enteringPermanentId, enteringPermanentId, null, false, null, null,
+                        pe.enteringControllerId()));
             }
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
             log.info("Game {} - {} any-permanent-enters trigger awaiting target selection",
@@ -1385,6 +1396,10 @@ public class EnterTriggerCollectorService {
             entry.setEventValue(eventValue);
             entry.setTriggeringPermanentId(enteringPermanentId);
             entry.setTriggeringCardId(pe.enteringCard().getId());
+            if (enteringPermanent != null && mayPay.wrapped() != null
+                    && mayPay.wrapped().usesEnteringPermanentReference()) {
+                entry.setAttachedPermanentSnapshot(new Permanent(enteringPermanent));
+            }
             entry.setNonTargeting(!isTargeting(mayPay));
             if (match.permanent() != null) {
                 entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
@@ -2319,14 +2334,16 @@ public class EnterTriggerCollectorService {
             effects.add(new GrantKeywordEffect(effect.keywords(), GrantScope.TARGET, effect.duration()));
         }
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-            match.gameData().stack.add(new StackEntry(
+            StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     sourceCard,
                     match.controllerId(),
                     sourceCard.getName() + "'s ability",
                     effects,
                     enteringPermanentId,
-                    match.permanent().getId()));
+                    match.permanent().getId());
+            entry.setNonTargeting(true);
+            match.gameData().stack.add(entry);
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (+{}/+{}, gains {})",

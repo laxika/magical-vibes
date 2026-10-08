@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 
 @CardRegistration(set = "TSP", collectorNumber = "52")
 @CardRegistration(set = "MMA", collectorNumber = "37")
@@ -16,10 +16,10 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 public class CarefulConsideration extends Card {
 
     public CarefulConsideration() {
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(4));
+        addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect(4));
         addEffect(EffectSlot.SPELL, new ConditionalEffect(
-                new CastDuringMainPhase(), new DiscardEffect(2, DiscardRecipient.CONTROLLER)));
+                new CastDuringMainPhase(), new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER)));
         addEffect(EffectSlot.SPELL, new ConditionalEffect(
-                new NotCondition(new CastDuringMainPhase()), new DiscardEffect(3, DiscardRecipient.CONTROLLER)));
+                new NotCondition(new CastDuringMainPhase()), new DiscardEffect(3, DiscardRecipient.TARGET_PLAYER)));
     }
 }

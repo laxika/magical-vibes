@@ -24,13 +24,13 @@ public class CormelaGlamourThief extends Card {
                 Set.of(CardType.INSTANT, CardType.SORCERY));
         addActivatedAbility(new ActivatedAbility(
                 true,
-                null,
+                "{1}",
                 List.of(
                         new AwardRestrictedManaEffect(ManaColor.BLUE, 1, instantOrSorcery),
                         new AwardRestrictedManaEffect(ManaColor.BLACK, 1, instantOrSorcery),
                         new AwardRestrictedManaEffect(ManaColor.RED, 1, instantOrSorcery)
                 ),
-                "{T}: Add {U}{B}{R}. Spend this mana only to cast instant and/or sorcery spells."
+                "{1}, {T}: Add {U}{B}{R}. Spend this mana only to cast instant and/or sorcery spells."
         ));
 
         addEffect(EffectSlot.ON_DEATH, ReturnCardFromGraveyardEffect.builder()

@@ -36,7 +36,7 @@ public class ChongAndLilyNomads extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         PUT_LORE_COUNTERS,
                         List.of(new PutCounterOnTargetPermanentEffect(CounterType.LORE)),
-                        sagaTarget, null, 0, 99, false, null),
+                        sagaTarget, null, 0, Integer.MAX_VALUE, false, null),
                 new ChooseOneEffect.ChooseOneOption(
                         BOOST_CREATURES,
                         new BoostAllOwnCreaturesEffect(loreCountersOnSagas, new Fixed(0)))));

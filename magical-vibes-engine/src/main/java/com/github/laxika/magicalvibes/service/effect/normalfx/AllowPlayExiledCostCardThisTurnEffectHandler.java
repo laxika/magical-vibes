@@ -27,6 +27,14 @@ public class AllowPlayExiledCostCardThisTurnEffectHandler implements NormalEffec
         if (exiledCardId == null || gameData.findExiledCard(exiledCardId) == null) {
             return;
         }
+        if (((AllowPlayExiledCostCardThisTurnEffect) effect).duringResolution()) {
+            var exiled = gameData.findExiledCard(exiledCardId);
+            gameData.pendingMayAbilities.add(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                    exiled.card(), entry.getControllerId(),
+                    java.util.List.of(new com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithNormalCostEffect(
+                            UUID.randomUUID(), false)), "Play " + exiled.card().getName() + "?", exiledCardId));
+            return;
+        }
         gameData.exilePlayPermissions.put(exiledCardId, entry.getControllerId());
         gameData.exilePlayPermissionsExpireEndOfTurn.add(exiledCardId);
     }

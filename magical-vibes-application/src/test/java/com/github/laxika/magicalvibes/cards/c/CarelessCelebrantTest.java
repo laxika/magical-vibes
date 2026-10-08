@@ -91,6 +91,8 @@ class CarelessCelebrantTest extends BaseCardTest {
         harness.addToBattlefield(player2, new ElspethSunsNemesis());
         UUID ownId = harness.getPermanentId(player1, "Elspeth, Sun's Nemesis");
         UUID targetId = harness.getPermanentId(player2, "Elspeth, Sun's Nemesis");
+        gqs.findPermanentById(gd, ownId).setCounterCount(CounterType.LOYALTY, 5);
+        gqs.findPermanentById(gd, targetId).setCounterCount(CounterType.LOYALTY, 5);
         int loyaltyBefore = gqs.findPermanentById(gd, targetId).getCounterCount(CounterType.LOYALTY);
 
         killCelebrantWithFlameJavelin();

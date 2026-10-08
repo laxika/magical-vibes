@@ -51,6 +51,7 @@ class CurseOfLeechesTest extends BaseCardTest {
         curse.setTransformed(true);
         curse.setAttachedTo(null);
         gd.dayNight = DayNight.NIGHT;
+        gd.previousTurnActivePlayerId = player2.getId();
         gd.spellsCastLastTurn.put(player2.getId(), 2);
 
         harness.performUntapStep(player1);
@@ -117,6 +118,7 @@ class CurseOfLeechesTest extends BaseCardTest {
     void staysDayWhenPreviousActivePlayerCastOneSpell() {
         Permanent curse = placeCurse(player1, player2);
         gd.dayNight = DayNight.DAY;
+        gd.previousTurnActivePlayerId = player2.getId();
         gd.spellsCastLastTurn.put(player2.getId(), 1);
 
         harness.performUntapStep(player1);

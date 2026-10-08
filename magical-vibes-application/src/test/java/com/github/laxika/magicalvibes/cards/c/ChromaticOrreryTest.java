@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AlpineWatchdog;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.l.LlanowarVisionary;
 import com.github.laxika.magicalvibes.cards.l.LorescaleCoatl;
+import com.github.laxika.magicalvibes.cards.m.MycosynthLattice;
 import com.github.laxika.magicalvibes.cards.o.OnakkeOgre;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ChromaticOrrery.class, AlpineWatchdog.class, WalkingCorpse.class, OnakkeOgre.class,
-        LlanowarVisionary.class, LorescaleCoatl.class, Forest.class, Shock.class})
+        LlanowarVisionary.class, LorescaleCoatl.class, Forest.class, Shock.class, MycosynthLattice.class})
 class ChromaticOrreryTest extends BaseCardTest {
 
     @Test
@@ -70,13 +71,19 @@ class ChromaticOrreryTest extends BaseCardTest {
 
     @Test
     void opponentCannotUseOrreryManaPermission() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addToBattlefield(player1, new ChromaticOrrery());
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("mana");
+                .hasMessageContaining("not playable");
+        harness.assertInHand(player2, "Shock");
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -89,6 +96,21 @@ class ChromaticOrreryTest extends BaseCardTest {
 
         harness.assertLife(player2, 18);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void aGlobalManaPermissionStillAppliesToAnOpponentAlongsideOrrery() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new ChromaticOrrery());
+        harness.addToBattlefield(player1, new MycosynthLattice());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
     }
 
     @Test

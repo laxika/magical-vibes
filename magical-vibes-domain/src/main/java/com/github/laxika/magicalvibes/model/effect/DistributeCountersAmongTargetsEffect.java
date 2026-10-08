@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                              assignment buffer.
  * @param targetRestriction     optional permanent predicate narrowing the legal targets.
  * @param allowsNoTargets       whether the chosen distribution may contain no targets.
+ * @param separateInstructions whether each assigned counter is a separate placement instruction.
  * @param allowsPartialDistribution whether the chosen distribution may use fewer than {@code total}
  *                                 counters.
  */
@@ -52,8 +53,24 @@ public record DistributeCountersAmongTargetsEffect(
         boolean etbAssignments,
         PermanentPredicate targetRestriction,
         boolean allowsNoTargets,
-        boolean allowsPartialDistribution)
+        boolean allowsPartialDistribution,
+        boolean separateInstructions)
         implements CardEffect {
+
+    public DistributeCountersAmongTargetsEffect(CounterType counterType, DynamicAmount total,
+            DivisionMode mode, boolean removeAtNextCleanup, boolean removeAtNextEndStep,
+            boolean etbAssignments, PermanentPredicate targetRestriction, boolean allowsNoTargets,
+            boolean allowsPartialDistribution) {
+        this(counterType, total, mode, removeAtNextCleanup, removeAtNextEndStep, etbAssignments,
+                targetRestriction, allowsNoTargets, allowsPartialDistribution, false);
+    }
+
+    /** Repeated one-counter instructions, applying replacements separately to each placement. */
+    public static DistributeCountersAmongTargetsEffect separateEvenInstructions(
+            CounterType counterType, int total) {
+        return new DistributeCountersAmongTargetsEffect(counterType, new Fixed(total), DivisionMode.EVEN,
+                false, false, false, null, false, false, true);
+    }
 
     public DistributeCountersAmongTargetsEffect(
             CounterType counterType,

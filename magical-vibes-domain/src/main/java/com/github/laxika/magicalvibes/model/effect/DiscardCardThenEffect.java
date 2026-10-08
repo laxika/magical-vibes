@@ -88,4 +88,8 @@ public record DiscardCardThenEffect(
                                  DiscardRecipient recipient, boolean useEntryTarget) {
         this(filter, thenEffect, cardDescription, null, useEntryTarget, null, null, recipient);
     }
+    @Override
+    public TargetSpec targetSpec() {
+        return useEntryTarget && thenEffect != null ? thenEffect.targetSpec() : TargetSpec.NONE;
+    }
 }

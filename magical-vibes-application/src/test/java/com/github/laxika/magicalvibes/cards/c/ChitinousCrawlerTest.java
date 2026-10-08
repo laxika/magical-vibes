@@ -61,9 +61,31 @@ class ChitinousCrawlerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(target.getId())).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
         harness.addMana(player1, ManaColor.GREEN, 2);
         assertThatThrownBy(() -> harness.castFromExile(player1, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void descendCanCastTheExiledCardWhileTheAbilityResolves() {
+        GrizzlyBears target = new GrizzlyBears();
+        List<Card> graveyard = new ArrayList<>();
+        graveyard.add(target);
+        IntStream.range(0, 7).mapToObj(ignored -> (Card) new Plains()).forEach(graveyard::add);
+        harness.setGraveyard(player1, graveyard);
+        harness.addToBattlefield(player1, new ChitinousCrawler());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.findExiledCard(target.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(target.getId());
     }
 
     @Test

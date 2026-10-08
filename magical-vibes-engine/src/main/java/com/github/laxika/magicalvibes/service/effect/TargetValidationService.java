@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -80,7 +81,7 @@ public class TargetValidationService {
     }
 
     /**
-     * Conditional wrappers preserve the wrapped effect's target specification, but cast-time
+     * Conditional and optional wrappers preserve the wrapped effect's target specification, but cast-time
      * rules such as an optional graveyard target also need the concrete effect's extra targeting
      * flags (for example {@code ReturnCardFromGraveyardEffect.upTo()}).
      */
@@ -89,6 +90,8 @@ public class TargetValidationService {
         while (true) {
             if (unwrapped instanceof ConditionalEffect conditional) {
                 unwrapped = conditional.wrapped();
+            } else if (unwrapped instanceof MayEffect may && may.wrapped().targetSpec() != TargetSpec.NONE) {
+                unwrapped = may.wrapped();
             } else if (unwrapped instanceof ConditionalReplacementEffect replacement) {
                 unwrapped = replacement.condition() instanceof TeamworkCostPaid
                         ? (teamworkCostPaid ? replacement.upgradedEffect() : replacement.baseEffect())

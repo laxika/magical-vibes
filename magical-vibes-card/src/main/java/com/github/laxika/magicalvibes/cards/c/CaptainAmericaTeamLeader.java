@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostEnteringCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -25,10 +26,8 @@ public class CaptainAmericaTeamLeader extends Card {
                 new TriggeringCardConditionalEffect(hero, SequenceEffect.of(
                         new PutCounterOnReferencedPermanentEffect(
                                 PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new TriggeringCardConditionalEffect(hero,
-                        new BoostEnteringCreatureEffect(0, 0,
-                                Set.of(Keyword.VIGILANCE, Keyword.HASTE))));
+                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                        new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.HASTE),
+                                GrantScope.TRIGGERING_PERMANENT))));
     }
 }

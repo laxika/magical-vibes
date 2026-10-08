@@ -106,7 +106,10 @@ class CalmingLicidTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, host.getId());
-        harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, host);
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, host);
+            harness.getPermanentRemovalService().removeOrphanedAuras(gd);
+        });
         harness.passBothPriorities();
 
         assertThat(licid.getAttachedTo()).isNull();
@@ -174,7 +177,10 @@ class CalmingLicidTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, host.getId());
         harness.passBothPriorities();
 
-        harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, host);
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, host);
+            harness.getPermanentRemovalService().removeOrphanedAuras(gd);
+        });
 
         harness.assertNotOnBattlefield(player1, "Calming Licid");
         harness.assertInGraveyard(player1, "Calming Licid");

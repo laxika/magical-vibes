@@ -27,10 +27,10 @@ public class ChromeDome extends Card {
                         new PermanentIsCreaturePredicate()))));
 
         addActivatedAbility(new ActivatedAbility(
-                true,
+                false,
                 "{5}",
                 List.of(new CreateTokenCopyOfTargetPermanentEffect(true, false, true)),
-                "{5}, {T}: Create a token that's a copy of another target artifact you control. That token gains haste. Sacrifice it at the beginning of the next end step.",
+                "{5}: Create a token that's a copy of another target artifact you control. That token gains haste. Sacrifice it at the beginning of the next end step.",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),

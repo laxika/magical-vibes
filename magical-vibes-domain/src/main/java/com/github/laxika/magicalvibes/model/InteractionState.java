@@ -51,13 +51,19 @@ public class InteractionState {
                     choice.etbTargetId(), copiedNameChoice, choice.options(), choice.prompt(), choice.disabledOptions());
         }
         copy.activeDecisionId = this.activeDecisionId;
-        copy.permanentChoiceContext = this.permanentChoiceContext instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger
-                ? trigger.copyPlanarSnapshot() : this.permanentChoiceContext;
-        if (this.permanentChoiceContext instanceof PermanentChoiceContext.FreeCastSacrificeCost sacrificeCost) {
-            copy.permanentChoiceContext = sacrificeCost.deepCopy();
+        copy.permanentChoiceContext = copyPermanentChoiceContext(this.permanentChoiceContext);
+        if (activeInteraction instanceof PendingInteraction.PermanentChoice choice) {
+            PermanentChoiceContext context = choice.context() == this.permanentChoiceContext
+                    ? copy.permanentChoiceContext : copyPermanentChoiceContext(choice.context());
+            copy.activeInteraction = new PendingInteraction.PermanentChoice(choice.playerId(),
+                    choice.validPermanentIds(), choice.validPlayerIds(), context, choice.prompt());
         }
-        if (this.permanentChoiceContext instanceof PermanentChoiceContext.PreparedOpponentTokenCopiesAttacking copies) {
-            copy.permanentChoiceContext = copies.deepCopy();
+        if (activeInteraction instanceof PendingInteraction.MultiPermanentChoice choice
+                && choice.context() instanceof MultiPermanentChoiceContext.SacrificePermanentsToEnter sacrifice) {
+            copy.activeInteraction = new PendingInteraction.MultiPermanentChoice(choice.playerId(), choice.validIds(),
+                    choice.validPlayerIds(), choice.validCardIds(), choice.maxCount(),
+                    new MultiPermanentChoiceContext.SacrificePermanentsToEnter(sacrifice.controllerId(),
+                            new Permanent(sacrifice.enteringPermanent()), sacrifice.requiredCount()), choice.prompt());
         }
         copy.pendingAuraCard = this.pendingAuraCard;
         copy.pendingAuraOriginalCard = this.pendingAuraOriginalCard;
@@ -67,6 +73,25 @@ public class InteractionState {
         copy.pendingEquipmentAttachEquipmentId = this.pendingEquipmentAttachEquipmentId;
         copy.pendingEquipmentAttachTargetId = this.pendingEquipmentAttachTargetId;
         return copy;
+    }
+
+    private static PermanentChoiceContext copyPermanentChoiceContext(PermanentChoiceContext context) {
+        if (context instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger) {
+            return trigger.copyPlanarSnapshot();
+        }
+        if (context instanceof PermanentChoiceContext.FreeCastSacrificeCost cost) return cost.deepCopy();
+        if (context instanceof PermanentChoiceContext.AuraEntryBatchChoice batch) return batch.deepCopy();
+        if (context instanceof PermanentChoiceContext.PreparedTokenCopyAttachments copies) return copies.deepCopy();
+        if (context instanceof PermanentChoiceContext.PreparedOpponentTokenCopiesAttacking copies) return copies.deepCopy();
+        if (context instanceof PermanentChoiceContext.SacrificePermanentToEnter sacrifice) {
+            return new PermanentChoiceContext.SacrificePermanentToEnter(sacrifice.controllerId(),
+                    new Permanent(sacrifice.enteringPermanent()));
+        }
+        if (context instanceof PermanentChoiceContext.LandCasualty casualty) {
+            return new PermanentChoiceContext.LandCasualty(casualty.controllerId(),
+                    new Permanent(casualty.enteringPermanent()));
+        }
+        return context;
     }
 
     // ========================================================================

@@ -125,16 +125,19 @@ public final class OracleTextNormalizer {
     /** The lowercased keyword heading this segment, or null when the segment is not a keyword. */
     private static String matchingKeyword(String segment, Set<String> keywords) {
         String lower = segment.toLowerCase(Locale.ROOT);
+        String longestMatch = null;
         for (String keyword : keywords) {
             // equals first, so the charAt below only runs when the segment is strictly longer
             if (lower.equals(keyword)
                     || (lower.startsWith(keyword)
                     && (lower.charAt(keyword.length()) == ' '
                     || lower.charAt(keyword.length()) == '\u2014'))) {
-                return keyword;
+                if (longestMatch == null || keyword.length() > longestMatch.length()) {
+                    longestMatch = keyword;
+                }
             }
         }
-        return null;
+        return longestMatch;
     }
 
     private static String[] keywordSegments(String line) {

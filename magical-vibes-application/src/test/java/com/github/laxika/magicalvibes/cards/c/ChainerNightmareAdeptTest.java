@@ -141,25 +141,29 @@ class ChainerNightmareAdeptTest extends BaseCardTest {
 
     @Test
     void hasteExpiresAtTheBeginningOfControllersNextTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new ChainerNightmareAdept());
         Permanent creature = harness.enterBattlefieldAndReturn(player1, new DeepwoodDenizen());
         resolveAllTriggers();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
-        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
     }
 
     @Test
     void graveyardPermissionExpiresAtEndOfTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new ChainerNightmareAdept());
         harness.setHand(player1, List.of(new DeepwoodDenizen()));
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
         resolveAllTriggers();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -208,7 +212,7 @@ class ChainerNightmareAdeptTest extends BaseCardTest {
     void abilityCanBeActivatedOnOpponentsTurnButDoesNotChangeCreatureTiming() {
         harness.addToBattlefield(player1, new ChainerNightmareAdept());
         harness.setHand(player1, List.of(new DeepwoodDenizen()));
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.ensurePriority(player1);
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);

@@ -1349,8 +1349,11 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()),
                 exiledCardViews(gameData, interaction.validCardIds()),
                 1,
-                "Choose an exiled card named \"" + interaction.cardName()
-                        + "\" to return to the battlefield.");
+                interaction.followUpEntry() != null
+                        ? "Choose a card exiled with " + interaction.cardName()
+                                + " to put into its owner's graveyard."
+                        : "Choose an exiled card named \"" + interaction.cardName()
+                                + "\" to return to the battlefield.");
     }
 
     private InteractionPromptMessage projectActivatedExiledCardOpponentChoice(

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -12,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -28,10 +28,10 @@ public class ChampionsFromBeyond extends Card {
 
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                 new ConditionalEffect(new MinimumAttackers(4),
-                        SequenceEffect.of(new ScryEffect(2), new DrawCardEffect(1))));
+                        SequenceEffect.of(new ScryEffect(2), new DrawCardEffect(1))), TriggerMode.INDEPENDENT);
 
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                 new ConditionalEffect(new MinimumAttackers(8),
-                        new BoostAllOwnCreaturesEffect(4, 4, new PermanentIsAttackingPredicate())));
+                        new BoostAllOwnCreaturesEffect(4, 4).forDeclaredAttackers()), TriggerMode.INDEPENDENT);
     }
 }

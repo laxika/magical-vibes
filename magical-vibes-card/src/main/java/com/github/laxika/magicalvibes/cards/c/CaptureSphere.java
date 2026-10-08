@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class CaptureSphere extends Card {
 
     public CaptureSphere() {
-        target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+        target(TargetFilters.creature());
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.ENCHANTED));
+        addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
     }
 }

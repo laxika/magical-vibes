@@ -168,9 +168,7 @@ public class PermanentControlSupport {
         // apply its own replacement/static abilities to the others as they enter.
         List<Permanent> batch = new ArrayList<>();
         int additionalFrogTokenCount = additionalFrog != null && totalAmount > 0 ? 1 : 0;
-        int additionalSquirrelTokenCount = additionalSquirrel != null && totalAmount > 0
-                ? totalAmount
-                : 0;
+        int additionalSquirrelTokenCount = 0;
         if (totalAmount <= 0) {
             additionalSoldierTokenCount = 0;
         }
@@ -195,9 +193,6 @@ public class PermanentControlSupport {
                     fixedAmount.value(), simultaneousToken.subtypes(),
                     simultaneousToken.primaryType() == CardType.CREATURE)
                     : fixedAmount.value();
-            if (additionalSquirrel != null && simultaneousToken.primaryType() == CardType.CREATURE) {
-                additionalSquirrelTokenCount += simultaneousCount;
-            }
             for (int tokenIndex = 0; tokenIndex < simultaneousCount; tokenIndex++) {
                 tokenBlueprints.add(simultaneousToken);
             }
@@ -226,14 +221,26 @@ public class PermanentControlSupport {
         if (additionalFrogTokenCount > 0) {
             tokenBlueprints.add(additionalFrog);
         }
-        for (int i = 0; i < additionalSquirrelTokenCount; i++) {
-            tokenBlueprints.add(additionalSquirrel);
-        }
         for (int i = 0; i < additionalSoldierTokenCount; i++) {
             tokenBlueprints.add(additionalSoldier);
         }
         for (int i = 0; i < additionalMutagenTokenCount; i++) {
             tokenBlueprints.add(TokenCreationReplacementSupport.additionalMutagenToken(token));
+        }
+
+        additionalSquirrelTokenCount = additionalSquirrel == null ? 0
+                : TokenCreationReplacementSupport.additionalSquirrelTokenCount(
+                        gameData, controllerId, tokenBlueprints.size());
+        boolean originalEventHasCreature = baseTokenIsCreature && totalAmount > 0
+                || token.simultaneousTokens().stream().anyMatch(blueprint ->
+                blueprint.primaryType() == CardType.CREATURE
+                        && blueprint.amount() instanceof Fixed count && count.value() > 0);
+        if (!originalEventHasCreature && applyTokenMultiplier && additionalSquirrelTokenCount > 0) {
+            additionalSquirrelTokenCount = gameQueryService.getNewCreatureTokenCreationAmount(
+                    gameData, controllerId, additionalSquirrelTokenCount, additionalSquirrel.subtypes());
+        }
+        for (int i = 0; i < additionalSquirrelTokenCount; i++) {
+            tokenBlueprints.add(additionalSquirrel);
         }
 
         for (CreateTokenEffect originalTokenBlueprint : tokenBlueprints) {
@@ -270,10 +277,11 @@ public class PermanentControlSupport {
                     gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot, batch);
             batch.add(tokenPermanent);
             createdIds.add(tokenPermanent.getId());
+            UUID enteringControllerId = gameQueryService.findPermanentController(gameData, tokenPermanent.getId());
 
             if (tokenBlueprint.tappedAndAttacking()) {
                 tokenPermanent.tap();
-                tokenPermanent.enterAttacking(controllerId.equals(gameData.activePlayerId)
+                tokenPermanent.enterAttacking(gameData.activePlayerId.equals(enteringControllerId)
                         && gameData.currentStep != null && gameData.currentStep.isCombatPhase());
             } else if (tokenBlueprint.tapped()) {
                 tokenPermanent.tap();
@@ -346,7 +354,7 @@ public class PermanentControlSupport {
         return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness, true, true, true, additionalEffects);
     }
 
-    private int solvedClueReplacementCount(GameData gameData, UUID controllerId) {
+    int solvedClueReplacementCount(GameData gameData, UUID controllerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) {
             return 0;

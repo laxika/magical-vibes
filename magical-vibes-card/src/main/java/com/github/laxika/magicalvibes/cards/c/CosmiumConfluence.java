@@ -25,6 +25,7 @@ import java.util.Set;
 public class CosmiumConfluence extends Card {
 
     public CosmiumConfluence() {
+        setAllowSharedTargets(true);
         addEffect(EffectSlot.SPELL, ChooseOneEffect.withRepeatedModes(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Search your library for a Cave card, put it onto the battlefield tapped, then shuffle.",

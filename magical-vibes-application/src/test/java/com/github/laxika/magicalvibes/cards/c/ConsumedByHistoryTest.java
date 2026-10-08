@@ -97,14 +97,14 @@ class ConsumedByHistoryTest extends BaseCardTest {
         harness.castSorcery(player1, 0);
         resolveAllTriggers();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player2, ManaColor.COLORLESS, 5);
         harness.activateGraveyardAbility(player2, 0);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
-        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         resolveAllTriggers();
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
@@ -118,7 +118,7 @@ class ConsumedByHistoryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveSorcery(player1, 0, 0);
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         bears.setMarkedDamage(2);

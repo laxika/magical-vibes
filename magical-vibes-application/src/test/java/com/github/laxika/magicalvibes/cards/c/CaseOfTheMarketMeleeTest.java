@@ -78,7 +78,7 @@ class CaseOfTheMarketMeleeTest extends BaseCardTest {
         PendingInteraction.MultiPermanentChoice targets =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(targets).isNotNull();
-        assertThat(targets.validIds()).contains(player2.getId());
+        assertThat(targets.validPlayerIds()).contains(player2.getId());
         harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
         harness.passBothPriorities();
         harness.handleXValueChosen(player1, 3);

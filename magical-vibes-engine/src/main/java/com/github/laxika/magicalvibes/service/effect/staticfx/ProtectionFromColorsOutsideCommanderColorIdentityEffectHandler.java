@@ -31,7 +31,13 @@ public class ProtectionFromColorsOutsideCommanderColorIdentityEffectHandler impl
             return;
         }
 
+        List<Card> designatedCommanders = context.gameData().playerCommanders
+                .getOrDefault(context.sourceControllerId(), List.of());
+        if (designatedCommanders.isEmpty()) {
+            return;
+        }
         Set<CardColor> commanderIdentity = EnumSet.noneOf(CardColor.class);
+        designatedCommanders.forEach(card -> commanderIdentity.addAll(card.getColorIdentity()));
         List<Card> commandZone = context.gameData().playerCommandZones
                 .getOrDefault(context.sourceControllerId(), List.of());
         for (Card card : commandZone) {

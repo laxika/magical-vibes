@@ -111,9 +111,20 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
      * One queued "search your library for a &lt;descriptor&gt; card, reveal it, put it into your hand"
      * pick. Exactly one of {@code color} (Conflux), {@code subtype} (Gem of Becoming), or
      * {@code cardName} (Nissa's Encouragement) is set; it selects the library cards offered for that
-     * pick and names it in the prompt.
+     * pick and names it in the prompt. Non-null {@code searchableCardIds} keeps the choices within
+     * a single search and retains the library restriction established when that search began.
      */
-    public record ToHandPick(CardColor color, CardSubtype subtype, String cardName) {
+    public record ToHandPick(CardColor color, CardSubtype subtype, String cardName,
+                             java.util.Set<UUID> searchableCardIds) {
+
+        public ToHandPick(CardColor color, CardSubtype subtype, String cardName) {
+            this(color, subtype, cardName, null);
+        }
+
+        /** Carries the initial search restriction across subsequent choices of the same search. */
+        public ToHandPick withinSingleSearch(java.util.Set<UUID> cardIds) {
+            return new ToHandPick(color, subtype, cardName, java.util.Set.copyOf(cardIds));
+        }
 
         public static ToHandPick ofColor(CardColor color) {
             return new ToHandPick(color, null, null);
@@ -301,6 +312,11 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
         }
     }
 
+    /** A chosen basic land that remains in its library until the shared entry instruction. */
+    public record DeferredBasicLand(Card card, UUID libraryOwnerId, UUID battlefieldControllerId,
+                                   boolean enterTapped) {
+    }
+
     /**
      * The carry-over of an each-player basic-land search: the APNAP-ordered picks still to be
      * offered, and the forced land sacrifices to run once the last pick has resolved (empty unless
@@ -310,7 +326,17 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                                       List<PendingForcedSacrifice> sacrifices,
                                       boolean shuffleAfterQueue,
                                       List<UUID> searchedPlayerIds,
-                                      boolean destinationToHand, boolean optionalSearch) {
+                                      boolean destinationToHand, boolean optionalSearch,
+                                      boolean enterAfterAllSearches,
+                                      List<DeferredBasicLand> selectedLands) {
+
+        public BasicLandSearchQueue(List<BasicLandsPick> remainingPicks,
+                                    List<PendingForcedSacrifice> sacrifices,
+                                    boolean shuffleAfterQueue, List<UUID> searchedPlayerIds,
+                                    boolean destinationToHand, boolean optionalSearch) {
+            this(remainingPicks, sacrifices, shuffleAfterQueue, searchedPlayerIds,
+                    destinationToHand, optionalSearch, false, List.of());
+        }
 
         public BasicLandSearchQueue(List<BasicLandsPick> remainingPicks,
                                     List<PendingForcedSacrifice> sacrifices,
@@ -321,7 +347,19 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
 
         public BasicLandSearchQueue withOptionalSearch(boolean optional) {
             return new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue,
-                    searchedPlayerIds, destinationToHand, optional);
+                    searchedPlayerIds, destinationToHand, optional, enterAfterAllSearches, selectedLands);
+        }
+
+        public BasicLandSearchQueue deferBattlefieldEntry() {
+            return new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue,
+                    searchedPlayerIds, destinationToHand, optionalSearch, true, selectedLands);
+        }
+
+        public BasicLandSearchQueue withSelectedLand(DeferredBasicLand selected) {
+            List<DeferredBasicLand> updated = new java.util.ArrayList<>(selectedLands);
+            updated.add(selected);
+            return new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue,
+                    searchedPlayerIds, destinationToHand, optionalSearch, enterAfterAllSearches, updated);
         }
 
         public BasicLandSearchQueue(List<BasicLandsPick> remainingPicks,
@@ -346,11 +384,12 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
             remainingPicks = List.copyOf(remainingPicks);
             sacrifices = List.copyOf(sacrifices);
             searchedPlayerIds = List.copyOf(searchedPlayerIds);
+            selectedLands = List.copyOf(selectedLands);
         }
 
         public BasicLandSearchQueue withRemainingPicks(List<BasicLandsPick> remaining) {
             return new BasicLandSearchQueue(remaining, sacrifices, shuffleAfterQueue, searchedPlayerIds,
-                    destinationToHand, optionalSearch);
+                    destinationToHand, optionalSearch, enterAfterAllSearches, selectedLands);
         }
 
         public BasicLandSearchQueue withSearchedPlayer(UUID playerId) {
@@ -360,12 +399,12 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
             List<UUID> updated = new java.util.ArrayList<>(searchedPlayerIds);
             updated.add(playerId);
             return new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue, updated,
-                    destinationToHand, optionalSearch);
+                    destinationToHand, optionalSearch, enterAfterAllSearches, selectedLands);
         }
 
         public BasicLandSearchQueue toHand() {
             return new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue,
-                    searchedPlayerIds, true, optionalSearch);
+                    searchedPlayerIds, true, optionalSearch, enterAfterAllSearches, selectedLands);
         }
     }
 

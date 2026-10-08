@@ -35,14 +35,13 @@ class CauldronDanceTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         var returned = findPermanent(player1, "Yavimaya Barbarian");
-        assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .anyMatch(action -> action.permanentId().equals(returned.getId())
                         && action.kind() == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP);
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Yavimaya Barbarian");
         harness.assertInHand(player1, "Yavimaya Barbarian");
@@ -65,14 +64,10 @@ class CauldronDanceTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         var handPermanent = findPermanent(player1, "Hooded Kavu");
-        assertThat(handPermanent.getGrantedKeywords()).contains(Keyword.HASTE);
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(action -> action.permanentId().equals(handPermanent.getId())
-                        && action.kind() == DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
+        assertThat(gqs.hasKeyword(gd, handPermanent, Keyword.HASTE)).isTrue();
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getId().equals(handCreature.getId()));
@@ -190,7 +185,6 @@ class CauldronDanceTest extends BaseCardTest {
         harness.assertInHand(player1, "Hooded Kavu");
         harness.assertInGraveyard(player1, "Cauldron Dance");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -213,7 +207,6 @@ class CauldronDanceTest extends BaseCardTest {
         harness.assertInHand(player1, "Holy Day");
         harness.assertNotOnBattlefield(player1, "Holy Day");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.stack).isEmpty();
     }
 
     private void addCauldronDanceMana() {

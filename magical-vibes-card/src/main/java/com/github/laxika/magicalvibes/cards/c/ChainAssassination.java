@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.AnotherCreatureDiedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Freerunning;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -21,8 +21,8 @@ public class ChainAssassination extends Card {
     public ChainAssassination() {
         addCastingOption(new AlternateHandCast(
                 List.of(new ManaCastingCost("{1}{B}")), new Freerunning(), false));
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
-                new ConditionalEffect(new AnotherCreatureDiedThisTurn(), new DrawCardEffect()),
-                ThenEffectRecipient.CONTROLLER));
+        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        addEffect(EffectSlot.SPELL,
+                new ConditionalEffect(new AnotherCreatureDiedThisTurn(), new DrawCardEffect(), false));
     }
 }

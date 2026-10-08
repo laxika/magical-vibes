@@ -2632,6 +2632,12 @@ public class TargetLegalityService {
         if (constraint == null) {
             return;
         }
+        if (constraint == MultiTargetConstraint.DISTINCT_TARGETS) {
+            if (new HashSet<>(targetIds).size() != targetIds.size()) {
+                throw new IllegalStateException("Each target must be different");
+            }
+            return;
+        }
         if (constraint == MultiTargetConstraint.DIFFERENT_NAMES) {
             Set<String> names = new HashSet<>();
             for (UUID targetId : targetIds) {

@@ -38,6 +38,6 @@ public class ChoiceOfDamnations extends Card {
                                         new PermanentCount(allPermanents, CountScope.TARGET_PLAYER),
                                         new Scaled(new EventValue(), -1))),
                                 allPermanents,
-                                SacrificeRecipient.TARGET_PLAYER)));
+                                SacrificeRecipient.TARGET_PLAYER).withSimultaneousChoices()));
     }
 }

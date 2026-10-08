@@ -1842,6 +1842,12 @@ public class Card {
         return getEffects(EffectSlot.STATIC).stream().anyMatch(AllCardNamesEffect.class::isInstance);
     }
 
+    /** Whether this card has the chosen name, including either half of a split card. */
+    public boolean hasName(String chosenName) {
+        return hasAllCardNames() || name != null && (name.equals(chosenName)
+                || java.util.Arrays.asList(name.split(" // ")).contains(chosenName));
+    }
+
     public boolean isAura() {
         return subtypes.contains(CardSubtype.AURA);
     }

@@ -1688,9 +1688,16 @@ public class CastingCostService {
      * activating player is always the graveyard's owner, so only their battlefield is scanned.
      */
     public int getGraveyardActivatedAbilityCostReduction(GameData gameData, UUID activatingPlayerId, Card graveyardCard) {
+        return getGraveyardActivatedAbilityCostReduction(gameData, activatingPlayerId, graveyardCard, null);
+    }
+
+    public int getGraveyardActivatedAbilityCostReduction(GameData gameData, UUID activatingPlayerId,
+                                                         Card graveyardCard, ManaCost abilityCost) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(activatingPlayerId);
         if (battlefield == null) return 0;
         int reduction = 0;
+        int boundedReduction = 0;
+        int minimumManaCost = 0;
         for (Permanent perm : battlefield) {
             for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                 CardEffect activeEffect = effect;
@@ -1705,11 +1712,22 @@ public class CastingCostService {
                 if (activeEffect instanceof GraveyardActivatedAbilityCostReducingEffect reducer
                         && predicateEvaluationService.matchesCardPredicate(
                                 graveyardCard, reducer.affectedGraveyardCards(), null)) {
-                    reduction += reducer.genericCostReduction();
+                    if (reducer.minimumManaCost() == 0) {
+                        reduction += reducer.genericCostReduction();
+                    } else {
+                        boundedReduction += reducer.genericCostReduction();
+                        minimumManaCost = Math.max(minimumManaCost, reducer.minimumManaCost());
+                    }
                 }
             }
         }
-        return reduction;
+        if (abilityCost != null && minimumManaCost > 0) {
+            int nonGenericCost = abilityCost.getManaValue() - abilityCost.getGenericCost();
+            int genericFloor = Math.max(0, minimumManaCost - nonGenericCost);
+            boundedReduction = Math.min(boundedReduction,
+                    Math.max(0, abilityCost.getGenericCost() - genericFloor));
+        }
+        return reduction + boundedReduction;
     }
 
     public boolean hasAlternativeZeroCostFromBattlefield(GameData gameData, UUID playerId, Card card) {

@@ -956,8 +956,23 @@ public class PredicateEvaluationService {
                 if (gameData == null || sourceCardId == null) {
                     yield !imprintedTypePredicate.requireImprintedCard();
                 }
+                if (imprintedTypePredicate.requireImprintedCard()) {
+                    Permanent source = sourcePermanentId == null
+                            ? findPermanentByOriginalCardId(gameData, sourceCardId)
+                            : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                    UUID linkedSourceId = sourcePermanentId != null ? sourcePermanentId
+                            : source == null ? null : source.getId();
+                    if (linkedSourceId != null) {
+                        yield gameData.getCardsExiledByPermanent(linkedSourceId).stream()
+                                .anyMatch(exiled -> java.util.Arrays.stream(CardType.values())
+                                        .anyMatch(type -> gameQueryService.cardHasType(card, type, gameData, cardOwnerId)
+                                                && gameQueryService.cardHasType(exiled, type, gameData,
+                                                exiled.getOwnerId())));
+                    }
+                }
                 Card imprintedCard = gameData.imprintedCards.get(sourceCardId);
-                if (imprintedCard == null) {
+                if (imprintedCard == null || imprintedTypePredicate.requireImprintedCard()
+                        && gameData.findExiledCard(imprintedCard.getId()) == null) {
                     yield !imprintedTypePredicate.requireImprintedCard();
                 }
                 yield java.util.Arrays.stream(CardType.values())
@@ -1491,6 +1506,12 @@ public class PredicateEvaluationService {
                     sharesCardTypeWithSourcePermanent(permanent, filterContext);
             case PermanentSharesCardTypeWithTargetCardPredicate ignored ->
                     sharesCardTypeWithTargetCard(permanent, filterContext);
+            case com.github.laxika.magicalvibes.model.filter.PermanentChosenColorStrictlyMostCommonPredicate ignored ->
+                    gameData != null && com.github.laxika.magicalvibes.model.condition.ChosenColorStrictlyMostCommonAmongOpponentNontokens
+                            .isStrictlyMostCommon(gameData, permanent, sourceControllerId,
+                                    candidate -> GameQueryService.isStaticEvaluationActive()
+                                            ? gameQueryService.colorsForStaticEvaluation(candidate)
+                                            : gameQueryService.getEffectiveColors(gameData, candidate));
             case PermanentSharesMostCommonColorPredicate ignored -> {
                 if (gameData == null) {
                     yield false;
@@ -2002,7 +2023,7 @@ public class PredicateEvaluationService {
                         .getSpellCastColorsSpent(filterContext.sourceCardId()).size();
             }
             case PermanentMaxManaValuePredicate maxManaValuePredicate ->
-                    (permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue()) <= maxManaValuePredicate.maxManaValue();
+                    gameQueryService.getPermanentManaValue(permanent) <= maxManaValuePredicate.maxManaValue();
             case PermanentMinManaValuePredicate minManaValuePredicate ->
                     (permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue()) >= minManaValuePredicate.minManaValue();
             case PermanentManaValueParityPredicate parityPredicate ->
@@ -2030,11 +2051,14 @@ public class PredicateEvaluationService {
                         && permanent.getCard().getManaValue()
                         == triggeringPermanent.getCard().getManaValue();
             }
-            case PermanentManaValueLessThanSourceManaValuePredicate ignored -> {
+            case PermanentManaValueLessThanSourceManaValuePredicate lesser -> {
                 if (gameData == null || sourceCardId == null) {
                     yield false;
                 }
-                Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                Permanent sourcePermanent = lesser.useTriggeringPermanent() && filterContext != null
+                        && filterContext.triggeringPermanentId() != null
+                        ? gameQueryService.findPermanentById(gameData, filterContext.triggeringPermanentId())
+                        : findPermanentByOriginalCardId(gameData, sourceCardId);
                 if (sourcePermanent == null && filterContext != null) {
                     sourcePermanent = filterContext.sourcePermanentSnapshot();
                 }
@@ -4586,8 +4610,8 @@ public class PredicateEvaluationService {
     private boolean isAttackingAlone(GameData gameData, Permanent permanent) {
         return gameData != null
                 && permanent.isAttacking()
-                && gameData.declaredAttackerIdsThisCombat.size() == 1
-                && gameData.declaredAttackerIdsThisCombat.contains(permanent.getId());
+                && gameData.playerBattlefields.values().stream().flatMap(List::stream)
+                        .filter(Permanent::isAttacking).count() == 1;
     }
 
     private boolean isAttackingOrBlockingAlone(GameData gameData, Permanent permanent) {

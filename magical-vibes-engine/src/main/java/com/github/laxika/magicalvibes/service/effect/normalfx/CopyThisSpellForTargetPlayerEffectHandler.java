@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -37,7 +40,7 @@ public class CopyThisSpellForTargetPlayerEffectHandler implements NormalEffectHa
             targetPlayerId = gameQueryService.findPermanentController(gameData, targetPlayerId);
         }
         if (targetPlayerId == null) {
-            return;
+            targetPlayerId = entry.getControllerId();
         }
 
         Card spellCard = entry.getCard();
@@ -47,7 +50,11 @@ public class CopyThisSpellForTargetPlayerEffectHandler implements NormalEffectHa
         }
 
         Card copyCard = copySupport.createCopyCard(spellCard);
-        StackEntry copyEntry = copySupport.createCopyStackEntry(entry, copyCard, targetPlayerId, targetPlayerId);
+        StackEntry copyEntry = copySupport.createCopyStackEntry(entry, copyCard, targetPlayerId, entry.getTargetId());
+        copyEntry.getEffectsToResolve().clear();
+        copyEntry.getEffectsToResolve().addAll(copyCard.getEffects(EffectSlot.SPELL));
+        copyEntry.setEntryType(copyCard.hasType(CardType.INSTANT)
+                ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL);
         copySupport.addCopyToStack(gameData, copyEntry);
 
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));

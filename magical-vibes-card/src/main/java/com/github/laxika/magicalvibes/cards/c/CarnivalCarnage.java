@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -26,8 +28,6 @@ import java.util.List;
 public class CarnivalCarnage extends Card {
 
     public CarnivalCarnage() {
-        setAllowSharedTargets(true);
-
         PermanentPredicate creatureOrPlaneswalker = new PermanentAnyOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentIsPlaneswalkerPredicate()));
@@ -47,21 +47,14 @@ public class CarnivalCarnage extends Card {
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Carnival — Carnival deals 1 damage to target creature or planeswalker and 1 damage to that permanent's controller",
-                        List.of(carnivalDamage, carnivalControllerDamage),
-                        List.of(creatureOrPlaneswalkerTarget, creatureOrPlaneswalkerTarget)
-                ).withManaCost("{B/R}"),
+                        List.of(SequenceEffect.of(carnivalDamage, carnivalControllerDamage)),
+                        List.of(creatureOrPlaneswalkerTarget)
+                ).withManaCost("{B/R}").withSpellType(CardType.INSTANT),
                 new ChooseOneEffect.ChooseOneOption(
                         "Carnage — Carnage deals 3 damage to target opponent. That player discards two cards",
-                        List.of(carnageDamage, carnageDiscard),
-                        List.of(opponentTarget, opponentTarget)
-                ).withManaCost("{2}{B}{R}"),
-                new ChooseOneEffect.ChooseOneOption(
-                        "Fuse — Carnival and then Carnage",
-                        List.of(carnivalDamage, carnivalControllerDamage, carnageDamage, carnageDiscard),
-                        List.of(
-                                creatureOrPlaneswalkerTarget, creatureOrPlaneswalkerTarget,
-                                opponentTarget, opponentTarget)
-                ).withManaCost("{2}{B}{R}{B/R}")
+                        List.of(SequenceEffect.of(carnageDamage, carnageDiscard)),
+                        List.of(opponentTarget)
+                ).withManaCost("{2}{B}{R}").withSpellType(CardType.SORCERY)
         )));
     }
 }

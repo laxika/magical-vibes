@@ -17,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -60,24 +62,24 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
         // Multi-target / optional "up to N" ETB path: targets land on targetIds with targetId null.
         // When this effect is bound to a target group, narrow the flat list to that group so a
         // modal spell does not apply the same effect to targets belonging to another effect.
+        Map<UUID, Integer> damageBefore = e.exileInsteadOfDie()
+                ? new HashMap<>(gameData.damageDealtToPermanentsThisTurn) : Map.of();
         List<UUID> effectTargets = entry.targetsForEffect(e);
         if (effectTargets != null && !effectTargets.isEmpty()
                 && (effectTargets.size() > 1 || entry.getTargetId() == null)) {
             for (UUID targetId : effectTargets) {
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) continue;
-                markForExileInsteadOfDying(gameData, target, e);
                 if (!damageSupport.isDamagePreventedForCreature(gameData, entry, target)) {
                     damageSupport.dealCreatureDamage(gameData, entry, target, damage);
                 }
             }
+            markDamagedPermanentsForExile(gameData, e, damageBefore);
             return;
         }
 
-        if (singleTarget != null) {
-            markForExileInsteadOfDying(gameData, singleTarget, e);
-        }
         int damageDealt = damageSupport.resolveCreatureTargetDamage(gameData, entry, damage);
+        markDamagedPermanentsForExile(gameData, e, damageBefore);
         if (tracksExcess) {
             entry.setEventValue(singleTarget == null
                     ? 0
@@ -93,12 +95,16 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
                 || referencesExcessDamage(conditional.wrapped()));
     }
 
-    private void markForExileInsteadOfDying(GameData gameData, Permanent target,
-                                            DealDamageToTargetCreatureOrPlaneswalkerEffect effect) {
-        if (effect.exileInsteadOfDie()
-                && (gameQueryService.isCreature(gameData, target)
-                || gameQueryService.isPlaneswalker(gameData, target))) {
-            target.setExileInsteadOfDieThisTurn(true);
+    private void markDamagedPermanentsForExile(GameData gameData,
+            DealDamageToTargetCreatureOrPlaneswalkerEffect effect, Map<UUID, Integer> damageBefore) {
+        if (!effect.exileInsteadOfDie()) return;
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent permanent : battlefield) {
+                if (gameData.damageDealtToPermanentsThisTurn.getOrDefault(permanent.getId(), 0)
+                        > damageBefore.getOrDefault(permanent.getId(), 0)) {
+                    permanent.setExileInsteadOfDieThisTurn(true);
+                }
+            }
         }
     }
 }

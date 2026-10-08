@@ -108,12 +108,14 @@ class CometCrawlerTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new Spellbook());
 
-        attackAndAcceptMay();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            attackAndAcceptMay();
 
-        assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gqs.getEffectivePower(gd, crawler)).isEqualTo(2);
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(crawler);
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+            assertThat(gqs.getEffectivePower(gd, crawler)).isEqualTo(2);
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(crawler);
+            assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        });
     }
 
     @Test

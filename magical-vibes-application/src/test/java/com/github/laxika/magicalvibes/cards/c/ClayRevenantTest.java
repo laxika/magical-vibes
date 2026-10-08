@@ -55,14 +55,14 @@ class ClayRevenantTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 1);
 
-        assertThat(gd.playerGraveyards.get(player1)).containsExactly(other, source);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other, source);
         harness.assertNotInHand(player1, "Clay Revenant");
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1)).contains(source).doesNotContain(other);
-        assertThat(gd.playerGraveyards.get(player1)).containsExactly(other);
-        assertThat(gd.playerGraveyards.get(player2)).containsExactly(opponentsCopy);
+        assertThat(gd.playerHands.get(player1.getId())).contains(source).doesNotContain(other);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentsCopy);
     }
 
     @Test
@@ -79,8 +79,8 @@ class ClayRevenantTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1)).containsOnlyOnce(source).doesNotContain(other);
-        assertThat(gd.playerGraveyards.get(player1)).containsExactly(other);
+        assertThat(gd.playerHands.get(player1.getId())).containsOnlyOnce(source).doesNotContain(other);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
     }
 
     @Test
@@ -94,7 +94,7 @@ class ClayRevenantTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1)).containsExactly(source);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(source);
         harness.assertNotInHand(player1, "Clay Revenant");
     }
 }

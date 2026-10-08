@@ -616,7 +616,15 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record LibraryReorder(UUID playerId, java.util.List<Card> cards, boolean toBottom,
                           UUID deckOwnerId, String prompt, int drawAfterReorder,
                           java.util.List<UUID> topCardIds, boolean planar,
-                          boolean planarDeck) implements PendingInteraction {
+                          boolean planarDeck, Zone destinationZone,
+                          Integer destinationPosition) implements PendingInteraction {
+        public LibraryReorder(UUID playerId, java.util.List<Card> cards, boolean toBottom,
+                              UUID deckOwnerId, String prompt, int drawAfterReorder,
+                              java.util.List<UUID> topCardIds, boolean planar, boolean planarDeck) {
+            this(playerId, cards, toBottom, deckOwnerId, prompt, drawAfterReorder,
+                    topCardIds, planar, planarDeck, null, null);
+        }
+
         public LibraryReorder(UUID playerId, java.util.List<Card> cards, boolean toBottom,
                               UUID deckOwnerId, String prompt, int drawAfterReorder, boolean planar) {
             this(playerId, cards, toBottom, deckOwnerId, prompt, drawAfterReorder, null, planar, false);
@@ -887,7 +895,14 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     /** The controller chooses one of the matching cards revealed from a target player's hand. */
     record RevealedMatchingHandCardChoice(UUID choosingPlayerId, UUID targetPlayerId,
                                           java.util.List<Card> cards, CardEffect thenEffect,
-                                          String prompt, boolean keepInHand) implements PendingInteraction {
+                                          String prompt, boolean keepInHand,
+                                          PendingMayAbility entryRevealAbility) implements PendingInteraction {
+
+        public RevealedMatchingHandCardChoice(UUID choosingPlayerId, UUID targetPlayerId,
+                                              java.util.List<Card> cards, CardEffect thenEffect,
+                                              String prompt, boolean keepInHand) {
+            this(choosingPlayerId, targetPlayerId, cards, thenEffect, prompt, keepInHand, null);
+        }
 
         public RevealedMatchingHandCardChoice(UUID choosingPlayerId, UUID targetPlayerId,
                                               java.util.List<Card> cards, CardEffect thenEffect,
@@ -2705,8 +2720,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /** Chooses one matching face-up card from exile to return to the battlefield. */
-    record ExiledCardChoice(UUID playerId, java.util.List<UUID> validCardIds, String cardName)
+    record ExiledCardChoice(UUID playerId, java.util.List<UUID> validCardIds, String cardName,
+                            StackEntry followUpEntry, com.github.laxika.magicalvibes.model.effect.CardEffect followUpEffect)
             implements PendingInteraction {
+
+        public ExiledCardChoice(UUID playerId, java.util.List<UUID> validCardIds, String cardName) {
+            this(playerId, validCardIds, cardName, null, null);
+        }
+
+        public ExiledCardChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+            followUpEntry = followUpEntry == null ? null : new StackEntry(followUpEntry);
+        }
 
         @Override
         public UUID decidingPlayerId() {
@@ -2863,6 +2888,11 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         /** Isolates a prepared as-entry permanent when this choice is copied for simulation. */
         public ColorChoice copyCardTypeOnEnterPermanent() {
+            if (context instanceof ChoiceContext.TappedEntryStateChoice tapped) {
+                return new ColorChoice(playerId, permanentId, etbTargetId,
+                        new ChoiceContext.TappedEntryStateChoice(tapped.request().deepCopy()),
+                        options, prompt, disabledOptions);
+            }
             if (context instanceof ChoiceContext.SpellDamageModifierOrder order) {
                 return new ColorChoice(playerId, permanentId, etbTargetId,
                         new ChoiceContext.SpellDamageModifierOrder(new StackEntry(order.entry()),
@@ -4749,8 +4779,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         /** Copies the mutable spell payload when simulating a discard cost payment. */
         public DiscardChoice deepCopy() {
-            DiscardFollowUp copiedFollowUp = followUp.pendingSpellCast() == null ? followUp
-                    : followUp.withPendingSpellCast(new StackEntry(followUp.pendingSpellCast()));
+            DiscardFollowUp copiedFollowUp = followUp.deepCopyEntryPayloads();
             return new DiscardChoice(playerId, validIndices, remainingCount, copiedFollowUp, prompt,
                     stopAfterDiscardingType, stopAfterDiscardingPredicate, declinable);
         }

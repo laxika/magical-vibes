@@ -8,11 +8,21 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CanyonVaulter.class, DuneDrifter.class, DistrictMascot.class})
 class CanyonVaulterTest extends BaseCardTest {
+
+    @BeforeEach
+    void keepPriorityAtRelevantSteps() {
+        for (var player : java.util.List.of(player1, player2)) {
+            gd.playerAutoStopSteps.put(player.getId(), java.util.EnumSet.of(
+                    TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN,
+                    TurnStep.END_STEP, TurnStep.UPKEEP));
+        }
+    }
 
     @Test
     void crewsVehicleDuringMainPhaseAndGrantsFlyingUntilEndOfTurn() {
@@ -27,7 +37,7 @@ class CanyonVaulterTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, vehicle, Keyword.FLYING)).isTrue();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gqs.hasKeyword(gd, vehicle, Keyword.FLYING)).isTrue();
         harness.passUntil(player2, TurnStep.UPKEEP);
 

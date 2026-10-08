@@ -91,7 +91,7 @@ class CityscapeLevelerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent leveler = findPermanent(player1, "Cityscape Leveler");
-        assertThat(leveler.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, leveler, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();

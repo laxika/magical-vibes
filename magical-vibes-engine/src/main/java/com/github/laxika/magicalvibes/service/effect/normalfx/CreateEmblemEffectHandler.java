@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Emblem;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -41,12 +43,18 @@ public class CreateEmblemEffectHandler implements NormalEffectHandlerBean {
             }
             String playerName = gameData.playerIdToName.get(recipientId);
 
-            gameData.emblems.add(new Emblem(recipientId, emblemEffect.staticEffects(), entry.getCard(),
+            Card emblemSource = new Card();
+            emblemSource.setName("");
+            emblemSource.setType(CardType.EMBLEM);
+            emblemSource.setCardText(emblemEffect.reminderText());
+            emblemSource.setOwnerId(recipientId);
+            emblemSource.freeze();
+            gameData.emblems.add(new Emblem(recipientId, emblemEffect.staticEffects(), emblemSource,
                     emblemEffect.activatedAbilities()));
             if (emblemEffect.staticEffects().stream().anyMatch(DrawOnControlledCreatureEntersEffect.class::isInstance)) {
                 gameData.creatureEntersDrawSources
                         .computeIfAbsent(recipientId, ignored -> java.util.Collections.synchronizedList(new java.util.ArrayList<>()))
-                        .add(entry.getCard());
+                        .add(emblemSource);
             }
 
             gameLogService.append(gameData, GameLog.text(

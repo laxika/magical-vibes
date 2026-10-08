@@ -169,6 +169,7 @@ public class ExileSupport {
     public void grantPlayUntilNextTurnOfPlayer(GameData gameData, UUID cardId,
                                                 UUID permissionPlayerId, UUID expiryPlayerId) {
         gameData.clearExilePlayPermissionGroup(cardId);
+        gameData.exilePlayPermissionSpellFilters.remove(cardId);
         gameData.exilePlayPermissionsExpireAtTurnBeginning.remove(cardId);
         gameData.exilePlayPermissions.put(cardId, permissionPlayerId);
         gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, Integer.MAX_VALUE);
@@ -178,6 +179,7 @@ public class ExileSupport {
     /** Grants an owner permission to play a card from exile for as long as it remains exiled. */
     public void grantPlayWhileExiled(GameData gameData, UUID cardId, UUID ownerId) {
         gameData.clearExilePlayPermissionGroup(cardId);
+        gameData.exilePlayPermissionSpellFilters.remove(cardId);
         gameData.exilePlayPermissionsAwaitNextTurnOfPlayer.remove(cardId);
         gameData.exilePlayPermissions.put(cardId, ownerId);
     }
@@ -208,6 +210,7 @@ public class ExileSupport {
      */
     public void grantPlayUntilOwnersNextEndStep(GameData gameData, UUID cardId, UUID ownerId) {
         gameData.clearExilePlayPermissionGroup(cardId);
+        gameData.exilePlayPermissionSpellFilters.remove(cardId);
         gameData.exilePlayPermissionsAwaitNextTurnOfPlayer.remove(cardId);
         boolean ownerIsActive = ownerId.equals(gameData.activePlayerId);
         boolean currentEndStepHasBegun = gameData.currentStep != null
@@ -217,12 +220,14 @@ public class ExileSupport {
                 : 1);
         gameData.exilePlayPermissions.put(cardId, ownerId);
         gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, expireTurn);
+        gameData.exilePlayPermissionsExpireAtEndStep.add(cardId);
     }
 
     /** Grants {@code permissionPlayerId} permission until {@code endStepPlayerId}'s next end step. */
     public void grantPlayUntilNextEndStepOfPlayer(GameData gameData, UUID cardId,
                                                    UUID permissionPlayerId, UUID endStepPlayerId) {
         gameData.clearExilePlayPermissionGroup(cardId);
+        gameData.exilePlayPermissionSpellFilters.remove(cardId);
         gameData.exilePlayPermissionsAwaitNextTurnOfPlayer.remove(cardId);
         boolean endStepPlayerIsActive = endStepPlayerId.equals(gameData.activePlayerId);
         boolean currentEndStepHasBegun = gameData.currentStep != null
@@ -232,6 +237,7 @@ public class ExileSupport {
                 : 1);
         gameData.exilePlayPermissions.put(cardId, permissionPlayerId);
         gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, expireTurn);
+        gameData.exilePlayPermissionsExpireAtEndStep.add(cardId);
     }
 
     public StackEntryType mapCardTypeToSpellType(Card card) {

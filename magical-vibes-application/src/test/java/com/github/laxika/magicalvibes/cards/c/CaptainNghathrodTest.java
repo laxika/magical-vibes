@@ -22,6 +22,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({CaptainNghathrod.class, Forest.class, GrizzlyBears.class, MindStone.class, PhyrexianRager.class})
 class CaptainNghathrodTest extends BaseCardTest {
 
+    @org.junit.jupiter.api.BeforeEach
+    void keepTurnStepsAvailableForAssertions() {
+        for (var player : java.util.List.of(player1, player2)) {
+            gd.playerAutoStopSteps.put(player.getId(), java.util.EnumSet.of(
+                    com.github.laxika.magicalvibes.model.TurnStep.UPKEEP,
+                    com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN,
+                    com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE,
+                    com.github.laxika.magicalvibes.model.TurnStep.POSTCOMBAT_MAIN));
+        }
+    }
+
+
     @Test
     void givesHorrorsYouControlMenace() {
         Permanent captain = addCreatureReady(player1, new CaptainNghathrod());

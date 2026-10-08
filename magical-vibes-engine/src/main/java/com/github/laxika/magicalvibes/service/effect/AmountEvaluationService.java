@@ -943,7 +943,7 @@ public class AmountEvaluationService {
                     chosenPermanentEffectivePower(gameData, ctx);
             case ChosenCreatureOrRevealedCardPower ignored ->
                     ctx.chosenPermanentId() == null
-                            ? Math.max(0, ctx.xValue())
+                            ? revealedCostCardPower(gameData, ctx)
                             : chosenPermanentEffectivePower(gameData, ctx);
             case BeheldPower ignored ->
                     beheldPower(gameData, ctx);
@@ -1055,6 +1055,19 @@ public class AmountEvaluationService {
                 ? 0 : Math.max(0, chosenCard.getPower());
     }
 
+    private int revealedCostCardPower(GameData gameData, AmountContext ctx) {
+        StackEntry entry = ctx.stackEntry();
+        if (entry == null || entry.getRevealedPowerCostCard() == null) return Math.max(0, ctx.xValue());
+        Card revealed = entry.getRevealedPowerCostCard();
+        boolean remainsInHand = gameData.playerHands.values().stream()
+                .anyMatch(hand -> hand.stream().anyMatch(card -> card.getId().equals(revealed.getId())));
+        if (remainsInHand) {
+            Integer power = gameQueryService.getEffectiveCardPower(gameData, revealed);
+            return power == null ? 0 : Math.max(0, power);
+        }
+        return entry.getRevealedPowerCostCardLastKnownPower();
+    }
+
     private int beheldPower(GameData gameData, AmountContext ctx) {
         StackEntry entry = ctx.stackEntry();
         if (entry == null) return 0;
@@ -1102,7 +1115,6 @@ public class AmountEvaluationService {
     private int targetEffectiveToughness(GameData gameData, AmountContext ctx) {
         if (ctx.targetPermanentId() == null) return 0;
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
-        // No legal target at resolution -> 0, matching the fizzle behaviour of the handlers this replaces.
         return target == null ? 0 : Math.max(0, gameQueryService.getEffectiveToughness(gameData, target));
     }
 
@@ -1148,6 +1160,11 @@ public class AmountEvaluationService {
         if (target != null) {
             int power = gameQueryService.getEffectivePower(gameData, target);
             return allowNegative ? power : Math.max(0, power);
+        }
+        Integer lastKnownPower = ctx.stackEntry() == null ? null
+                : ctx.stackEntry().getLastKnownPermanentPowers().get(ctx.targetPermanentId());
+        if (lastKnownPower != null) {
+            return allowNegative ? lastKnownPower : Math.max(0, lastKnownPower);
         }
         return ctx.stackEntry() != null && ctx.stackEntry().isNonTargeting()
                 && ctx.targetPermanentId().equals(ctx.stackEntry().getTriggeringPermanentId())
@@ -2628,6 +2645,23 @@ public class AmountEvaluationService {
                 .toList()) {
             greatest = Math.max(greatest, card.getManaValue());
         }
+        for (Map<UUID, List<Card>> zone : List.of(gameData.playerHands, gameData.playerDecks,
+                gameData.playerGraveyards)) {
+            for (List<Card> cards : zone.values()) {
+                for (Card card : cards) {
+                    if (commanderIds.contains(card.getId())) {
+                        greatest = Math.max(greatest, card.getManaValue());
+                    }
+                }
+            }
+        }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            for (Card card : gameData.getPlayerExiledCards(playerId)) {
+                if (commanderIds.contains(card.getId())) {
+                    greatest = Math.max(greatest, card.getManaValue());
+                }
+            }
+        }
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent permanent : battlefield) {
                 if (commanderIds.contains(permanent.getOriginalCard().getId())) {
@@ -2642,6 +2676,11 @@ public class AmountEvaluationService {
     private int countAttachmentsOnSource(GameData gameData, AttachmentsOnSource amount, AmountContext ctx) {
         if (ctx.sourcePermanent() == null) return 0;
         UUID sourceId = ctx.sourcePermanent().getId();
+        if (gameQueryService.findPermanentById(gameData, sourceId) == null
+                && ctx.sourcePermanent().getLastKnownAuraCount() != null) {
+            return (amount.countAuras() ? ctx.sourcePermanent().getLastKnownAuraCount() : 0)
+                    + (amount.countEquipment() ? ctx.sourcePermanent().getLastKnownEquipmentCount() : 0);
+        }
         final int[] count = {0};
         gameData.forEachPermanent((playerId, permanent) -> {
             if (permanent.isAttached() && permanent.getAttachedTo().equals(sourceId)) {

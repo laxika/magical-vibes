@@ -91,6 +91,8 @@ class ChooseYourChampionTest extends BaseCardTest {
 
     @Test
     void restrictionPersistsThroughOpponentsTurnAndExpiresOnControllersTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         resolveScheme();
         harness.handlePermanentChosen(player2, player1.getId());
 

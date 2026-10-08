@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -25,7 +25,6 @@ import org.springframework.stereotype.Component;
 public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
-    private final QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
@@ -127,8 +126,10 @@ public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implem
             libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, revealed);
         }
         if (nonland != null && reflexive) {
-            queueReflexiveAbilityEffectHandler.resolve(gameData, entry, new QueueReflexiveAbilityEffect(
-                    new DealDamageToAnyTargetEffect(new EventValue(), false, false), false, true));
+            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    entry.getCard(), entry.getControllerId(), List.of(new DealDamageToAnyTargetEffect(
+                    new Fixed(nonland.getManaValue()), false, false)), false, null, 0,
+                    entry.getSourcePermanentId()));
         }
     }
 }

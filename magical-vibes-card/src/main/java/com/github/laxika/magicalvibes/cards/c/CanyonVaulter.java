@@ -12,6 +12,6 @@ public class CanyonVaulter extends Card {
 
     public CanyonVaulter() {
         addEffect(EffectSlot.ON_SELF_SADDLES_OR_CREWS_DURING_MAIN_PHASE,
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TRIGGERING_PERMANENT));
     }
 }

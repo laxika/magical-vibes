@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfComb
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationControl;
-import com.github.laxika.magicalvibes.model.action.DelayedCamouflage;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerUntapRemoveFromCombat;
 import com.github.laxika.magicalvibes.model.action.GainControlOfPermanentAtEndOfCombat;
@@ -195,7 +194,6 @@ public class CombatService {
         // Keep Master Warcraft's declaration control through additional combats this turn.
         gameData.clearDelayedActions(DelayedBlockerDeclarationControl.class,
                 control -> !control.untilEndOfTurn());
-        gameData.clearDelayedActions(DelayedCamouflage.class);
         gameData.clearDelayedActions(DelayedUnblockedAttackerUntapRemoveFromCombat.class);
     }
 

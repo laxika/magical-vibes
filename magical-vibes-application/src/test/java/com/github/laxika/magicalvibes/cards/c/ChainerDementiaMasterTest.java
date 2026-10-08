@@ -125,6 +125,32 @@ class ChainerDementiaMasterTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(CelestialDawn.class)
+    void enteringColorOverrideIsNewerThanTheExistingGlobalSetter() {
+        harness.addToBattlefield(player1, new ChainerDementiaMaster());
+        harness.addToBattlefield(player1, new CelestialDawn());
+        harness.addToBattlefield(player1, new AyaraFirstOfLocthwain());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Card creature = new GrizzlyBears();
+        Card handCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(handCreature));
+        assertThat(gqs.getEffectiveCardColors(gd, creature)).containsExactly(CardColor.WHITE);
+        assertThat(gqs.getEffectiveCardColors(gd, handCreature)).containsExactly(CardColor.WHITE);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, null, creature.getId(), Zone.GRAVEYARD);
+        resolveAllTriggers();
+
+        Permanent returned = findPermanents(player1, "Grizzly Bears").getFirst();
+        assertThat(gqs.getEffectiveColors(gd, returned)).containsExactly(CardColor.BLACK);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 19);
+        assertThat(gqs.getEffectiveCardColors(gd, handCreature)).containsExactly(CardColor.WHITE);
+    }
+
+    @Test
     @DisplayName("Cannot activate without enough life to pay the cost")
     void cannotPayWithTwoLife() {
         harness.addToBattlefield(player1, new ChainerDementiaMaster());

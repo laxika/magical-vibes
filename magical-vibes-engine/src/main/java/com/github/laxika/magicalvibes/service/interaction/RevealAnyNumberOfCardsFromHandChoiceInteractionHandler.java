@@ -45,6 +45,9 @@ public class RevealAnyNumberOfCardsFromHandChoiceInteractionHandler
     private final PermanentControlSupport permanentControlSupport;
     private final com.github.laxika.magicalvibes.service.battlefield.BattlefieldPlacementService battlefieldPlacementService;
     private final com.github.laxika.magicalvibes.service.battlefield.AsEntersInteractionService asEntersInteractionService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     @Override
     public Class<PendingInteraction.RevealAnyNumberOfCardsFromHandChoice> handledType() {
@@ -126,6 +129,10 @@ public class RevealAnyNumberOfCardsFromHandChoiceInteractionHandler
             var request = interaction.amplifyEntry();
             Permanent permanent = request.permanent();
             permanent.setAmplifyRevealedCards(selectedCards.size());
+            if (battlefieldEntryBatchSupport.completeNativeChoice(gameData, request)) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
             battlefieldPlacementService.place(gameData, request);
             asEntersInteractionService.handleCreatureEnteredBattlefield(gameData, request.controllerId(),
                     permanent.getCard(), null, permanent.getCastFromZone() == com.github.laxika.magicalvibes.model.Zone.HAND,

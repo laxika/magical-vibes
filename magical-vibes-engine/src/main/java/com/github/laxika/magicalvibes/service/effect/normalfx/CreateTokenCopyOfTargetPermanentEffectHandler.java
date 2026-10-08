@@ -25,6 +25,7 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
 
     private final GameQueryService gameQueryService;
     private final TokenCopySupport tokenCopySupport;
+    private final com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService permanentCopierService;
     private final PlayerInputService playerInputService;
     private final AmountEvaluationService amountEvaluationService;
 
@@ -99,7 +100,7 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
                 : targetPermanent.getAttackTarget()
                 : null;
         List<UUID> attackTargetIds = attackTargetId == null ? null : List.of(attackTargetId);
-        tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(copyCount, targetPermanent.getCard()),
+        tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(copyCount, permanentCopierService.copiableCard(targetPermanent)),
                 sourcePermanent, tokenControllerId, effect, attackTargetIds);
     }
     private List<CardSubtype> tokenSubtypes(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {

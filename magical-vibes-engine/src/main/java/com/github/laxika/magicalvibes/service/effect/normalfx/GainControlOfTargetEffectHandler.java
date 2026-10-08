@@ -6,6 +6,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -59,10 +63,15 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             boolean controlApplied = creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
                     e, e.duration().toEffectDuration(), null, entry.getCard().getName());
 
-            if (controlApplied && e.grantedSubtype() != null
-                    && !target.getGrantedSubtypes().contains(e.grantedSubtype())) {
-                target.getGrantedSubtypes().add(e.grantedSubtype());
-                
+            if (controlApplied && e.grantedSubtype() != null) {
+                if (!target.getGrantedSubtypes().contains(e.grantedSubtype())) {
+                    target.getGrantedSubtypes().add(e.grantedSubtype());
+                }
+                gameData.addFloatingEffect(new FloatingContinuousEffect(
+                        UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
+                        entry.getControllerId(), new GrantSubtypeEffect(e.grantedSubtype(), GrantScope.TARGET),
+                        targetId, null, null, EffectDuration.PERMANENT, 0));
+
                 gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" becomes a " + e.grantedSubtype().getDisplayName() + " in addition to its other types.").build());
             }
         }

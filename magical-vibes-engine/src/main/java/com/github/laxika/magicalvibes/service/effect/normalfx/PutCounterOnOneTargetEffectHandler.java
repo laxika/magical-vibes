@@ -33,11 +33,7 @@ public class PutCounterOnOneTargetEffectHandler implements NormalEffectHandlerBe
         List<UUID> targetIds = entry.targetsForEffect(effect);
         boolean returnedCardTargets = targetIds.isEmpty() && !entry.getTargetCardIds().isEmpty();
         if (returnedCardTargets) {
-            targetIds = entry.getTargetCardIds().stream()
-                    .map(cardId -> findPermanentByCardId(gameData, cardId))
-                    .filter(java.util.Objects::nonNull)
-                    .map(Permanent::getId)
-                    .toList();
+            targetIds = List.copyOf(entry.getReturnedPermanentIds());
         }
         List<UUID> legalTargets = targetIds.stream()
                 .filter(targetId -> {
@@ -77,19 +73,4 @@ public class PutCounterOnOneTargetEffectHandler implements NormalEffectHandlerBe
                 "Choose a creature to put a counter on.");
     }
 
-    private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
-        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
-            if (battlefield == null) {
-                continue;
-            }
-            for (Permanent permanent : battlefield) {
-                if (cardId.equals(permanent.getCard().getId())
-                        || (permanent.getOriginalCard() != null
-                        && cardId.equals(permanent.getOriginalCard().getId()))) {
-                    return permanent;
-                }
-            }
-        }
-        return null;
-    }
 }

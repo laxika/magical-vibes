@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ControlLossTapTrigger;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -223,8 +222,7 @@ public class CreatureControlService {
         }
         queueSelfControlLossTriggers(gameData, permanent, current);
         boolean revertedToDefault = gameData.newestControlEffectFor(permanent.getId()) == null;
-        boolean hasControlLossUnattachTrigger = queueControlLossUnattachTriggers(
-                gameData, permanent, current);
+        queueControlLossUnattachTriggers(gameData, permanent, current);
 
         queueControlLossTapTriggers(gameData, permanent, current);
 
@@ -279,17 +277,6 @@ public class CreatureControlService {
         gameData.stolenCreatures.putIfAbsent(permanent.getId(), current);
         if (derived.equals(gameData.stolenCreatures.get(permanent.getId()))) {
             gameData.stolenCreatures.remove(permanent.getId());
-        }
-
-        // Legacy behavior preserved: an attached Equipment reverting to its default controller
-        // becomes unattached.
-        if (revertedToDefault && !hasControlLossUnattachTrigger && permanent.isAttached()
-                && permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
-            unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, permanent, permanent.getAttachedTo(), current);
-            permanent.setAttachedTo(null);
-            gameData.expireFloatingEffectsForUnattachedSource(permanent.getId());
-            gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " becomes unattached."));
-            log.info("Game {} - {} unattached on control change", gameData.id, permanent.getCard().getName());
         }
 
         String newControllerName = gameData.playerIdToName.get(derived);

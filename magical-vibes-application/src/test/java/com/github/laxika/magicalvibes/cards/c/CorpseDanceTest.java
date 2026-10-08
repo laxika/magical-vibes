@@ -30,7 +30,7 @@ class CorpseDanceTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
 
         Permanent returned = findPermanent(player1, "Serra Angel");
-        assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -195,15 +195,17 @@ class CorpseDanceTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        harness.castFromHand(player1, new CorpseDance(), "{2}{B}");
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.castFromHand(player1, new CorpseDance(), "{2}{B}");
+            harness.passBothPriorities();
+            assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.HASTE)).isTrue();
+        });
 
         Permanent returned = findPermanent(player1, "Grizzly Bears");
-        assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
-        assertThat(returned.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isFalse();
         harness.passUntil(player2, TurnStep.END_STEP);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.passBothPriorities();

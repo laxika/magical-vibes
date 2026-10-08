@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.condition.CastFromZone;
+import com.github.laxika.magicalvibes.model.condition.SourceWasCastWithEscape;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -38,10 +38,10 @@ public class ChainwebAracnir extends Card {
                 new DealDamageToTargetCreatureEffect(new SourcePower()));
 
         addCastingOption(new GraveyardCast(null, "{3}{G}{G}", List.of(
-                new ExileNCardsFromGraveyardCastingCost(null, "other cards", 4))));
+                new ExileNCardsFromGraveyardCastingCost(null, "other cards", 4)), null, false, false, true));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
-                new CastFromZone(Zone.GRAVEYARD),
+                new SourceWasCastWithEscape(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3))));
     }
 }

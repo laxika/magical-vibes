@@ -4,6 +4,10 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -112,6 +116,7 @@ class CivicGuildmageTest extends BaseCardTest {
         addCreatureReady(player1, new CivicGuildmage());
         Permanent target = addCreatureReady(player1, new CivicGuildmage());
         gd.stolenCreatures.put(target.getId(), player2.getId());
+        recordControlEffect(target, player1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
@@ -175,6 +180,7 @@ class CivicGuildmageTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(target);
         gd.playerBattlefields.get(player2.getId()).add(target);
         gd.stolenCreatures.put(target.getId(), player1.getId());
+        recordControlEffect(target, player2);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
@@ -183,5 +189,11 @@ class CivicGuildmageTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId()))
                 .noneMatch(card -> card.getId().equals(target.getCard().getId()));
         assertThat(gd.stack).isEmpty();
+    }
+    private void recordControlEffect(Permanent permanent, com.github.laxika.magicalvibes.model.Player controller) {
+        gd.addFloatingEffect(new FloatingContinuousEffect(
+                java.util.UUID.randomUUID(), "Control setup", null, controller.getId(),
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
     }
 }

@@ -96,7 +96,6 @@ public class CityInABottle extends Card {
             "Elephant Graveyard",
             "Island of Wak-Wak",
             "Library of Alexandria",
-            "Mountain",
             "Oasis"
     );
 

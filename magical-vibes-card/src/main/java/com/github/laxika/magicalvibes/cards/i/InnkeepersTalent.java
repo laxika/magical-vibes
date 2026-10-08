@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnPermanentsOrP
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -32,8 +32,8 @@ public class InnkeepersTalent extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{G}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
-                "Level up {G} ({G}: Put a level counter on this. Level up only as a sorcery.)",
+                List.of(new ClassLevelUpEffect(2)),
+                "{G}: Gain level 2. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withActivationCondition(
                 new NotCondition(new SourceCounterThreshold(1, CounterType.LEVEL)),
@@ -41,8 +41,8 @@ public class InnkeepersTalent extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{G}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
-                "Level up {3}{G} ({3}{G}: Put a level counter on this. Level up only as a sorcery.)",
+                List.of(new ClassLevelUpEffect(3)),
+                "{3}{G}: Gain level 3. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withActivationCondition(
                 new AllOf(List.of(

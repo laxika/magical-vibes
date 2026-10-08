@@ -153,6 +153,8 @@ public class LibraryChoiceHandlerService {
     private com.github.laxika.magicalvibes.service.effect.normalfx.AllureOfTheUnknownEffectHandler allureOfTheUnknownEffectHandler;
     @Autowired @Lazy
     private AbilityActivationService abilityActivationService;
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport exileFreeCastQueueSupport;
 
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -274,6 +276,14 @@ public class LibraryChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
+
+        if (followUp.basicLandSearchQueue() != null
+                && followUp.basicLandSearchQueue().enterAfterAllSearches()
+                && (librarySearch.decisionPlayerId() == null
+                || librarySearch.decisionPlayerId().equals(playerId))) {
+            handleDeferredBasicLandSearchChoice(gameData, activeSearch, cardIndex);
+            return;
+        }
 
         List<Card> deck = gameData.playerDecks.get(deckOwnerId);
         List<Card> sourceZone;
@@ -2015,6 +2025,46 @@ public class LibraryChoiceHandlerService {
         return matches;
     }
 
+    private void handleDeferredBasicLandSearchChoice(GameData gameData,
+            PendingInteraction.LibrarySearch activeSearch, int cardIndex) {
+        LibrarySearchParams params = activeSearch.params();
+        UUID ownerId = params.targetPlayerId() != null ? params.targetPlayerId() : params.playerId();
+        UUID controllerId = params.battlefieldControllerId() != null
+                ? params.battlefieldControllerId() : ownerId;
+        LibrarySearchFollowUp.BasicLandSearchQueue queue = params.followUp().basicLandSearchQueue();
+        if (cardIndex >= 0) {
+            Card chosen = params.cards().get(cardIndex);
+            if (!gameData.playerDecks.getOrDefault(ownerId, List.of()).contains(chosen)) {
+                throw new IllegalStateException("Chosen card not found in library");
+            }
+            boolean tapped = params.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED
+                    || params.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED_UNDER_TARGET_PLAYER;
+            queue = queue.withSelectedLand(new LibrarySearchFollowUp.DeferredBasicLand(
+                    chosen, ownerId, controllerId, tapped));
+        }
+        LibrarySearchFollowUp followUp = params.followUp().withBasicLandSearchQueue(queue);
+        if (cardIndex >= 0 && params.remainingCount() > 1) {
+            Set<UUID> selectedIds = queue.selectedLands().stream()
+                    .map(selected -> selected.card().getId()).collect(java.util.stream.Collectors.toSet());
+            List<Card> remaining = params.cards().stream()
+                    .filter(card -> !selectedIds.contains(card.getId()))
+                    .filter(gameData.playerDecks.getOrDefault(ownerId, List.of())::contains)
+                    .toList();
+            if (!remaining.isEmpty()) {
+                int count = params.remainingCount() - 1;
+                beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
+                        params.withCards(new ArrayList<>(remaining)).withRemainingCount(count).withFollowUp(followUp),
+                        "Choose up to " + count + " more basic land cards.", true));
+                return;
+            }
+        }
+        if (params.shuffleAfterSelection()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
+        }
+        if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
+        finishSearchAndResume(gameData);
+    }
+
     private void insertSelectedCardFollowUp(GameData gameData, LibrarySearchFollowUp followUp,
             Card chosenCard, UUID playerId) {
         LibrarySearchFollowUp.SelectedCardFollowUp selectedCardFollowUp = followUp.selectedCardFollowUp();
@@ -2441,6 +2491,10 @@ public class LibraryChoiceHandlerService {
 
     public void completeTappedEntryStateChoice(GameData gameData,
             com.github.laxika.magicalvibes.model.BattlefieldEntryRequest request) {
+        if (battlefieldEntryBatchSupport.completeNativeChoice(gameData, request)) {
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
+        }
         battlefieldPlacementService.place(gameData, request);
         StackEntry sourceEntry = request.sourceStackEntry();
         int etbMode = sourceEntry != null && sourceEntry.getEtbMode() != null
@@ -4082,6 +4136,21 @@ public class LibraryChoiceHandlerService {
                 .filter(card -> gameData.findExiledCard(card.getId()) != null)
                 .map(Card::getId).collect(java.util.stream.Collectors.toSet());
 
+        if (!sourceCards.isEmpty() && exiledSourceIds.size() == sourceCards.size()
+                && !grantHaste && !sacrificeAtEndStep) {
+            if (cardIndex == -1 && !canFailToFind) {
+                throw new IllegalStateException("Cannot fail to find with an unrestricted search");
+            }
+            if (cardIndex < -1 || cardIndex >= searchCards.size()) {
+                throw new IllegalStateException("Invalid card index: " + cardIndex);
+            }
+            exileFreeCastQueueSupport.queueRemainderToLibraryBottom(gameData,
+                    sourceCards.stream().map(Card::getId).toList());
+            exileFreeCastQueueSupport.castChosenSpellsWithoutPaying(gameData, player,
+                    cardIndex == -1 ? List.of() : List.of(searchCards.get(cardIndex).getId()));
+            return;
+        }
+
         Card chosenCard = null;
         boolean uncastable = false;
         if (cardIndex == -1) {
@@ -4488,7 +4557,7 @@ public class LibraryChoiceHandlerService {
      * when the card needs a target and none is legal. Only meaningful for cards where
      * {@link EffectResolution#needsTarget} holds.
      */
-    private List<UUID> computeCastWithoutPayingTargets(GameData gameData, Card card) {
+    private List<UUID> computeCastWithoutPayingTargets(GameData gameData, Card card, UUID controllerId) {
         Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(card);
         List<UUID> validTargets = new ArrayList<>();
 
@@ -4510,6 +4579,16 @@ public class LibraryChoiceHandlerService {
 
         if (allowedTargets.contains(TargetType.PLAYER)) {
             validTargets.addAll(gameData.orderedPlayerIds);
+        }
+
+        if (allowedTargets.contains(TargetType.SPELL_ON_STACK)) {
+            for (StackEntry stackEntry : gameData.stack) {
+                UUID targetId = stackEntry.getTargetableId();
+                if (targetLegalityService.checkSpellTargetOnStack(gameData, targetId,
+                        card.getTargetFilter(), controllerId, null, 0).isEmpty()) {
+                    validTargets.add(targetId);
+                }
+            }
         }
 
         return validTargets;
@@ -4719,8 +4798,8 @@ public class LibraryChoiceHandlerService {
         if (spellModal(card) != null) {
             return legalModalOptions(gameData, card, controllerId) != null;
         }
-        return !EffectResolution.needsTarget(card)
-                || !computeCastWithoutPayingTargets(gameData, card).isEmpty();
+        return !(EffectResolution.needsTarget(card) || EffectResolution.needsSpellTarget(card))
+                || !computeCastWithoutPayingTargets(gameData, card, controllerId).isEmpty();
     }
 
     /**
@@ -4780,8 +4859,8 @@ public class LibraryChoiceHandlerService {
 
         List<CardEffect> spellEffects = new ArrayList<>(castCard.getEffects(EffectSlot.SPELL));
 
-        if (EffectResolution.needsTarget(castCard)) {
-            List<UUID> validTargets = computeCastWithoutPayingTargets(gameData, castCard);
+        if (EffectResolution.needsTarget(castCard) || EffectResolution.needsSpellTarget(castCard)) {
+            List<UUID> validTargets = computeCastWithoutPayingTargets(gameData, castCard, playerId);
 
             if (validTargets.isEmpty()) {
                 throw new IllegalStateException("Uncastable card reached castCardWithoutPaying: "

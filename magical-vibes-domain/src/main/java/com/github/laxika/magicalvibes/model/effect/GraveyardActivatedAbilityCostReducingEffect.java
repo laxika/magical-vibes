@@ -16,4 +16,9 @@ public interface GraveyardActivatedAbilityCostReducingEffect extends CardEffect 
 
     /** Generic mana removed from a matching card's graveyard-ability activation cost (floored at 0). */
     int genericCostReduction();
+
+    /** Minimum total mana left by this reduction, or zero for an unrestricted reduction. */
+    default int minimumManaCost() {
+        return 0;
+    }
 }

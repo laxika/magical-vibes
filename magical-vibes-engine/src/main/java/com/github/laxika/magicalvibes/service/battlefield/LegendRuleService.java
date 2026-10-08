@@ -167,7 +167,7 @@ public class LegendRuleService {
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         return battlefield != null && battlefield.stream()
-                .flatMap(source -> source.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(source -> gameQueryService.getActiveStaticEffects(gameData, source).stream())
                 .anyMatch(ControlledCreaturesLegendRuleExemptionEffect.class::isInstance);
     }
 

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachMatchingEquipmentToCreatedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -27,6 +29,7 @@ public class AttachMatchingEquipmentToCreatedPermanentEffectHandler implements N
     private final GameLogService gameLogService;
     private final EquipSupport equipSupport;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -56,6 +59,23 @@ public class AttachMatchingEquipmentToCreatedPermanentEffectHandler implements N
                 equipmentPermanents.add(permanent);
             }
         });
+
+        var attachmentEffect = (AttachMatchingEquipmentToCreatedPermanentEffect) effect;
+        if (attachmentEffect.chooseCreatedPermanent() && !equipmentPermanents.isEmpty()) {
+            var hosts = entry.getCreatedPermanentIds().stream()
+                    .map(id -> gameQueryService.findPermanentById(gameData, id))
+                    .filter(permanent -> permanent != null && gameQueryService.isCreature(gameData, permanent))
+                    .filter(permanent -> equipmentPermanents.stream().anyMatch(equipment ->
+                            equipSupport.canAttachEquipment(gameData, equipment, permanent)))
+                    .map(Permanent::getId).toList();
+            if (hosts.size() > 1) {
+                playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), hosts,
+                        new PermanentChoiceContext.AttachMatchingEquipmentToCreatedPermanent(
+                                equipmentPermanents.stream().map(Permanent::getId).toList()),
+                        "Choose a created creature to attach the Equipment to.");
+                return;
+            }
+        }
 
         for (Permanent equipment : equipmentPermanents) {
             if (host.getId().equals(equipment.getAttachedTo())

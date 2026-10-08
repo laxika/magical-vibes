@@ -145,6 +145,8 @@ class ClockworkBeastTest extends BaseCardTest {
     @Test
     @DisplayName("Declaring an attacker does not trigger counter removal yet")
     void attackDoesNotCreatePrematureTrigger() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.DECLARE_ATTACKERS));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.DECLARE_ATTACKERS));
         Permanent beast = addCreatureReady(player1, new ClockworkBeast());
         beast.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 7);
 
@@ -158,6 +160,8 @@ class ClockworkBeastTest extends BaseCardTest {
     @Test
     @DisplayName("End-of-combat removal waits for its trigger to resolve")
     void endOfCombatRemovalUsesStack() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.END_OF_COMBAT));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.END_OF_COMBAT));
         Permanent beast = addCreatureReady(player1, new ClockworkBeast());
         beast.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 7);
 

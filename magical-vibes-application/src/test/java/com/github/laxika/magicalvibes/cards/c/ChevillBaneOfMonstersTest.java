@@ -89,6 +89,7 @@ class ChevillBaneOfMonstersTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AlmightyBrushwagg());
         harness.addToBattlefield(player2, new Forest());
         Permanent vivien = harness.addToBattlefieldAndReturn(player2, new VivienMonstersAdvocate());
+        vivien.setCounterCount(CounterType.LOYALTY, 5);
 
         advanceToUpkeep(player1);
 

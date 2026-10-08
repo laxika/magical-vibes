@@ -13,11 +13,10 @@ public class CommonBond extends Card {
 
     public CommonBond() {
         // Put a +1/+1 counter on target creature. Put a +1/+1 counter on target creature.
-        // Equivalent to distributing two +1/+1 counters among one or two target creatures.
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature."
         ), 1, 2).addEffect(EffectSlot.SPELL,
-                DistributeCountersAmongTargetsEffect.evenlyAmongTargets(CounterType.PLUS_ONE_PLUS_ONE, 2));
+                DistributeCountersAmongTargetsEffect.separateEvenInstructions(CounterType.PLUS_ONE_PLUS_ONE, 2));
     }
 }

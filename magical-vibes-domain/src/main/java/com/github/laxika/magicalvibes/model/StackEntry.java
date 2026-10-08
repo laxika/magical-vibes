@@ -106,6 +106,8 @@ public class StackEntry {
     private final Map<UUID, Integer> damageAssignments;
     @Getter(AccessLevel.NONE)
     private final Map<UUID, Card> lastKnownPermanentCards = new HashMap<>();
+    /** Effective power just before a permanent leaves during this resolution. */
+    private final Map<UUID, Integer> lastKnownPermanentPowers = new HashMap<>();
     private final Map<UUID, Map<CounterType, Integer>> lastKnownPermanentCounters = new HashMap<>();
     /** Permanents returned by a previous effect in this resolution, for follow-up effects. */
     private final Set<UUID> returnedPermanentIds = new LinkedHashSet<>();
@@ -151,6 +153,8 @@ public class StackEntry {
     @Setter private boolean castWithFlashforward;
     /** Whether this spell was cast using an escape permission. */
     @Setter private boolean castWithEscape;
+    /** This creature spell targets a creature to merge with as it resolves. */
+    @Setter private boolean castWithMutate;
     /** Cards exiled from the graveyard to pay an escape cost, linked when the permanent enters. */
     @Setter private List<UUID> escapeExiledCardIds = List.of();
     /** Whether Feather's replacement effect should exile this spell and return it at the next end step. */
@@ -290,6 +294,12 @@ public class StackEntry {
     /** Whether the spell's controller controlled a modified creature when the spell was finished being cast. */
     @Setter private boolean controlledModifiedCreatureAsCast;
     /** Card exiled as an additional behold cost, pending the permanent spell entering. */
+    /** The hand card revealed to pay a power-tracking additional cost. */
+    @Setter private UUID lastManaPaymentPlayerId;
+    @Setter private List<Card> cardsMilledAsActivationCost = List.of();
+    @Setter private Card revealedPowerCostCard;
+    /** The revealed card's last power while it remained in its owner's hand. */
+    @Setter private int revealedPowerCostCardLastKnownPower;
     @Setter private Card beheldCard;
     @Setter private UUID beheldCardOwnerId;
     @Setter private CardSubtype beholdChosenSubtype;
@@ -781,6 +791,7 @@ public class StackEntry {
         this.resolutionSourcePermanentId = source.resolutionSourcePermanentId;
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new LinkedHashMap<>(source.damageAssignments);
         this.lastKnownPermanentCards.putAll(source.lastKnownPermanentCards);
+        this.lastKnownPermanentPowers.putAll(source.lastKnownPermanentPowers);
         source.lastKnownPermanentCounters.forEach((id, counts) ->
                 this.lastKnownPermanentCounters.put(id, new EnumMap<>(counts)));
         this.returnedPermanentIds.addAll(source.returnedPermanentIds);
@@ -809,6 +820,7 @@ public class StackEntry {
         this.castWithFlashback = source.castWithFlashback;
         this.castWithFlashforward = source.castWithFlashforward;
         this.castWithEscape = source.castWithEscape;
+        this.castWithMutate = source.castWithMutate;
         this.escapeExiledCardIds = source.escapeExiledCardIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.escapeExiledCardIds);
         this.exileAndReturnToHandAtNextEndStep = source.exileAndReturnToHandAtNextEndStep;
@@ -860,6 +872,10 @@ public class StackEntry {
         this.controlledDragonAsCast = source.controlledDragonAsCast;
         this.controlledFaerieAsCast = source.controlledFaerieAsCast;
         this.controlledModifiedCreatureAsCast = source.controlledModifiedCreatureAsCast;
+        this.lastManaPaymentPlayerId = source.lastManaPaymentPlayerId;
+        this.cardsMilledAsActivationCost = List.copyOf(source.cardsMilledAsActivationCost);
+        this.revealedPowerCostCard = source.revealedPowerCostCard;
+        this.revealedPowerCostCardLastKnownPower = source.revealedPowerCostCardLastKnownPower;
         this.beheldCard = source.beheldCard;
         this.beheldCardOwnerId = source.beheldCardOwnerId;
         this.beholdChosenSubtype = source.beholdChosenSubtype;
@@ -1121,6 +1137,7 @@ public class StackEntry {
         this.castWithFlashback = false;
         this.castWithFlashforward = false;
         this.castWithEscape = false;
+        this.castWithMutate = false;
         this.castWithAdventure = false;
         this.castWithOmen = false;
         this.castWithDisturb = false;
@@ -1156,6 +1173,10 @@ public class StackEntry {
         this.controlledDragonAsCast = false;
         this.controlledFaerieAsCast = false;
         this.controlledModifiedCreatureAsCast = false;
+        this.lastManaPaymentPlayerId = null;
+        this.cardsMilledAsActivationCost = List.of();
+        this.revealedPowerCostCard = null;
+        this.revealedPowerCostCardLastKnownPower = 0;
         this.beheldCard = null;
         this.beheldCardOwnerId = null;
         this.beholdChosenSubtype = null;
@@ -1239,7 +1260,12 @@ public class StackEntry {
      * like Blazing Torch the damage source is the equipment, not the equipped creature.
      */
     public Card getEffectiveDamageSourceCard() {
-        return damageSourceCard != null ? damageSourceCard : getCard();
+        if (damageSourceCard != null) return damageSourceCard;
+        if (sourcePermanentSnapshot != null && sourcePermanentId != null
+                && sourcePermanentId.equals(sourcePermanentSnapshot.getId())) {
+            return sourcePermanentSnapshot.getCard();
+        }
+        return getCard();
     }
 
     public Card getCard() {

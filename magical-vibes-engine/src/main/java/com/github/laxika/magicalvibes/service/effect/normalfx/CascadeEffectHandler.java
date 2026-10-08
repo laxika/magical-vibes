@@ -69,7 +69,8 @@ public class CascadeEffectHandler implements NormalEffectHandlerBean {
         while (!deck.isEmpty()) {
             Card top = deck.removeFirst();
             exiled.add(top);
-            gameData.addToExile(controllerId, top);
+            gameData.addToExile(controllerId, top,
+                    cascade.deferCastUntilEndOfTurn() ? entry.getSourcePermanentId() : null);
             boolean qualifyingType = cascade.instantOrSorceryOnly()
                     ? top.hasType(CardType.INSTANT) || top.hasType(CardType.SORCERY)
                     : !top.hasType(CardType.LAND);
@@ -98,6 +99,16 @@ public class CascadeEffectHandler implements NormalEffectHandlerBean {
 
         gameLogService.append(gameData, GameLog.builder()
                 .text(playerName + " cascades into ").card(hit).text(" (" + sourceName + ").").build());
+
+        if (cascade.deferCastUntilEndOfTurn()) {
+            gameData.exileCastPermissionsUntilEndOfTurn.add(new GameData.ExileCastPermission(
+                    UUID.randomUUID(), entry.getSourcePermanentId(), controllerId, hit.getId(), true));
+            exiled.remove(hit);
+            Collections.shuffle(exiled);
+            exiled.forEach(card -> gameData.removeFromExile(card.getId()));
+            deck.addAll(exiled);
+            return;
+        }
 
         // Reuse the shared cast-without-paying flow: cast the hit card for free (or decline), then put
         // the other exiled cards on the bottom of the library in a random order.

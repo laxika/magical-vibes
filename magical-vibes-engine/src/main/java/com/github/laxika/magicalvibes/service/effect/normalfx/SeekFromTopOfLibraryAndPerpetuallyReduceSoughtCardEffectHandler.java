@@ -36,6 +36,7 @@ public class SeekFromTopOfLibraryAndPerpetuallyReduceSoughtCardEffectHandler
         LibraryRevealSupport.TopCardsResult result = libraryRevealSupport.takeTopCardsFromLibrary(
                 gameData, entry, seek.count());
         if (result == null) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             return;
         }
 

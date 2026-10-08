@@ -3,12 +3,16 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.d.DeeptreadMerrow;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,7 +30,16 @@ class CaptivatingGlanceTest extends BaseCardTest {
     /** Runs player1 through their end step so the controller-end-step clash trigger resolves. */
     private void runPlayer1EndStep() {
         advancePlayer1ToEndStep();
+        resolveClash();
+    }
+
+    private void resolveClash() {
         resolveAllTriggers();
+        while (gd.interaction.activeInteraction() instanceof PendingInteraction.Scry scry) {
+            Player chooser = scry.playerId().equals(player1.getId()) ? player1 : player2;
+            gs.handleInteractionAnswer(gd, chooser, new InteractionAnswer.ScryOrder(
+                    java.util.List.of(0), java.util.List.of()));
+        }
     }
 
     /** Advances player1 to the end step without resolving the triggered ability. */
@@ -138,7 +151,7 @@ class CaptivatingGlanceTest extends BaseCardTest {
         advancePlayer1ToEndStep();
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, glance));
-        resolveAllTriggers();
+        resolveClash();
 
         assertThat(gameLogContains("clashes")).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
@@ -156,7 +169,7 @@ class CaptivatingGlanceTest extends BaseCardTest {
         advancePlayer1ToEndStep();
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, creature));
-        resolveAllTriggers();
+        resolveClash();
 
         assertThat(gameLogContains("clashes")).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
@@ -171,7 +184,8 @@ class CaptivatingGlanceTest extends BaseCardTest {
         harness.setLibrary(player1, java.util.List.of(new DeeptreadMerrow(), new Forest()));
         harness.setLibrary(player2, java.util.List.of(new Forest(), new DeeptreadMerrow()));
 
-        runPlayer1EndStep();
+        advancePlayer1ToEndStep();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }

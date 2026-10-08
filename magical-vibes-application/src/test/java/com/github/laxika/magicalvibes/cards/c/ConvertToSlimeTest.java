@@ -75,7 +75,7 @@ class ConvertToSlimeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0,
                 List.of(firstCreature.getId(), secondCreature.getId())))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("at most one creature");
+                .hasMessageContaining("declared target groups");
     }
 
     @Test

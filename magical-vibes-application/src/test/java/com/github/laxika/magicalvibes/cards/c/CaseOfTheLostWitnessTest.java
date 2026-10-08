@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Opt;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -70,6 +71,8 @@ class CaseOfTheLostWitnessTest extends BaseCardTest {
         harness.castAndResolveFromLibraryTop(player1);
         harness.castFromLibraryTop(player1);
         harness.castAndResolveFromLibraryTop(player1);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Forest");

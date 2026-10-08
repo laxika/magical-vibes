@@ -44,6 +44,7 @@ class CarnivalCarnageTest extends BaseCardTest {
     @DisplayName("Carnival can target a planeswalker")
     void carnivalDamagesPlaneswalker() {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new DovinGrandArbiter());
+        planeswalker.getCounters().put(CounterType.LOYALTY, 3);
 
         harness.setHand(player1, List.of(new CarnivalCarnage()));
         harness.addMana(player1, ManaColor.BLACK, 1);

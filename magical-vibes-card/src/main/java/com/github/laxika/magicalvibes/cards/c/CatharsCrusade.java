@@ -18,7 +18,7 @@ public class CatharsCrusade extends Card {
 
     public CatharsCrusade() {
         // Whenever a creature you control enters, put a +1/+1 counter on each creature you control.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
     }

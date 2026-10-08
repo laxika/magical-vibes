@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SeekHighestManaValueCardEffec
 public class CeriseSlayerOfFear extends Card {
 
     public CeriseSlayerOfFear() {
-        addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, new ConditionalEffect(
+        addEffect(EffectSlot.SECOND_MAIN_PHASE_TRIGGERED, new ConditionalEffect(
                 new GainedLifeThisTurn(),
                 new SeekHighestManaValueCardEffect(new LifeGainedThisTurn(CountScope.CONTROLLER))));
     }

@@ -13,10 +13,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class ChaosIsMyPlaything extends Card {
 
     public ChaosIsMyPlaything() {
-        setMultiTargetConstraint(MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE);
+        setMultiTargetConstraint(MultiTargetConstraint.ONE_PER_OPPONENT);
         target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
-                "Target must be a permanent an opponent controls"), 0, 99)
+                "Target must be a permanent an opponent controls"), 1, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL,
                         new ExileTargetPermanentsThenEachPlayerRevealsUntilPermanentEffect());
     }

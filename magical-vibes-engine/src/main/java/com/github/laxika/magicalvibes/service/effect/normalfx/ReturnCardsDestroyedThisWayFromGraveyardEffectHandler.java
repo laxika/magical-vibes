@@ -3,18 +3,17 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsDestroyedThisWayFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -23,7 +22,6 @@ import java.util.UUID;
 public class ReturnCardsDestroyedThisWayFromGraveyardEffectHandler implements NormalEffectHandlerBean {
 
     private final GraveyardReturnSupport graveyardReturnSupport;
-    private final GraveyardService graveyardService;
     private final GameLogService gameLogService;
 
     @Override
@@ -51,18 +49,12 @@ public class ReturnCardsDestroyedThisWayFromGraveyardEffectHandler implements No
             return;
         }
 
-        graveyardService.beginGraveyardLeaveBatch(gameData);
-        try {
-            for (Card card : cardsToReturn) {
-                graveyard.remove(card);
-                graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
-            }
-        } finally {
-            graveyardService.endGraveyardLeaveBatch(gameData);
-        }
-
-        graveyardReturnSupport.putCardsOntoBattlefieldSimultaneously(
-                gameData, Map.of(controllerId, cardsToReturn), false, null);
+        List<Permanent> prepared = cardsToReturn.stream().map(card -> {
+            Permanent permanent = new Permanent(card);
+            permanent.setEnteredFromGraveyardOwnerId(controllerId);
+            return permanent;
+        }).toList();
+        graveyardReturnSupport.returnPreparedPermanentsWithAuraChoices(gameData, controllerId, prepared, null);
 
         GameLog.Builder log = GameLog.builder().text(gameData.playerIdToName.get(controllerId) + " returns ");
         for (int i = 0; i < cardsToReturn.size(); i++) {

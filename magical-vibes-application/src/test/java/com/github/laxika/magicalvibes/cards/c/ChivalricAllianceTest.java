@@ -99,8 +99,10 @@ class ChivalricAllianceTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new ChivalricAlliance()));
 
-        declareAttackers(player2, List.of(0, 1));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player2, List.of(0, 1));
+            harness.passBothPriorities();
+        });
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);

@@ -21,7 +21,7 @@ import java.util.List;
 public class ChromaticOrrery extends Card {
 
     public ChromaticOrrery() {
-        addEffect(EffectSlot.STATIC, new SpendManaAsAnyColorEffect());
+        addEffect(EffectSlot.STATIC, new SpendManaAsAnyColorEffect(false));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

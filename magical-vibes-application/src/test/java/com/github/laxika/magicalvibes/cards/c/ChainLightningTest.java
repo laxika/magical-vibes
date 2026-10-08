@@ -44,6 +44,7 @@ class ChainLightningTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.stack).hasSize(1);
@@ -84,6 +85,7 @@ class ChainLightningTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 2);
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleMayAbilityChosen(player2, true);
         harness.handleMayAbilityChosen(player2, true);
 
@@ -161,6 +163,7 @@ class ChainLightningTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Barbary Apes");
         harness.handleMayAbilityChosen(player2, true);
         harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, true);
         harness.handlePermanentChosen(player2, player1.getId());
 
         harness.assertInGraveyard(player2, "Barbary Apes");
@@ -183,8 +186,10 @@ class ChainLightningTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleMayAbilityChosen(player2, true);
         harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, true);
         harness.handlePermanentChosen(player2, player1.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());

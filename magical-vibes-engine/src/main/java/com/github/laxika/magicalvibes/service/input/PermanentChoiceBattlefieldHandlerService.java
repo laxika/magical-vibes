@@ -533,6 +533,14 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
     }
 
+    public void handleAttachMatchingEquipmentToCreatedPermanent(GameData gameData, UUID creatureId,
+            PermanentChoiceContext.AttachMatchingEquipmentToCreatedPermanent context) {
+        for (UUID equipmentId : context.equipmentPermanentIds()) {
+            attachOneOfEquipmentToCreatureSupport.attach(gameData, equipmentId, creatureId);
+        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleAttachEquipmentToSamuraiTarget(
             GameData gameData, UUID controllerId, UUID equipmentId,
             PermanentChoiceContext.AttachEquipmentToSamuraiTarget context) {
@@ -1872,13 +1880,15 @@ public class PermanentChoiceBattlefieldHandlerService {
             gameLogService.append(gameData, GameLog.cardThen(sacrifice.getCard(), " is sacrificed."));
         }
 
+        boolean batchEntry = gameData.pendingBattlefieldEntryRequests.containsKey(
+                context.enteringPermanent().getOriginalCard().getId());
         battlefieldEntryService.completeLandCasualtyToEnter(
                 gameData, context.controllerId(), context.enteringPermanent(), !declined);
-        if (!gameData.interaction.isAwaitingInput()) {
+        if (!batchEntry && !gameData.interaction.isAwaitingInput()) {
             battlefieldEntryService.processLandETBEffects(
                     gameData, context.controllerId(), context.enteringPermanent().getCard());
         }
-        if (!gameData.interaction.isAwaitingInput()) {
+        if (!batchEntry && !gameData.interaction.isAwaitingInput()) {
             triggerCollectionService.checkControllerPlaysLandTriggers(
                     gameData, context.controllerId(), context.enteringPermanent().getCard());
         }
@@ -2901,7 +2911,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         Permanent source = ctx.sourcePermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
-        if (source == null) {
+        if (source == null && ctx.sourcePermanentId() == null) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
             if (battlefield != null) {
                 source = battlefield.stream()
@@ -3398,6 +3408,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             auraPerm.setCard(auraCard);
             auraPerm.setAttachedTo(permanentId);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, auraControllerId, auraPerm);
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, auraControllerId, auraCard, null, false);
 
             boolean hasControlEffect = enchantTarget != null && auraCard.getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);

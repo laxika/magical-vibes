@@ -182,8 +182,11 @@ class CheerfulOsteomancerRaiseDeadTest extends BaseCardTest {
     }
 
     private Permanent castCheerfulOsteomancer() {
-        harness.castFromHand(player1, new CheerfulOsteomancerRaiseDead(), "{3}{B}");
-        harness.passBothPriorities(); // resolve creature spell
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.castFromHand(player1, new CheerfulOsteomancerRaiseDead(), "{3}{B}");
+            harness.passBothPriorities();
+            resolveAllTriggers();
+        });
 
         return findPermanent(player1, "Cheerful Osteomancer");
     }

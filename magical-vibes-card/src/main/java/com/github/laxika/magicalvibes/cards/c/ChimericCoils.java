@@ -23,7 +23,7 @@ public class ChimericCoils extends Card {
                 List.of(
                         new AnimatePermanentsEffect(new XValue(), new XValue(),
                                 List.of(CardSubtype.CONSTRUCT), Set.of(), null, Set.of(),
-                                GrantScope.SELF, EffectDuration.UNTIL_END_OF_TURN, null),
+                                GrantScope.SELF, EffectDuration.PERMANENT, null),
                         new SacrificeSelfAtEndStepEffect()),
                 "{X}{1}: This artifact becomes an X/X Construct artifact creature. Sacrifice it at the beginning of the next end step."
         ));

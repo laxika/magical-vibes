@@ -17,7 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChaosIsMyPlaything.class, GiantGrowth.class, GrizzlyBears.class, Pacifism.class})
+@CardUsed({ChaosIsMyPlaything.class, GiantGrowth.class, GrizzlyBears.class, Pacifism.class, Clone.class})
 class ChaosIsMyPlaythingTest extends BaseCardTest {
 
     @Test
@@ -130,6 +130,65 @@ class ChaosIsMyPlaythingTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.getTargetLegalityService().validateMultiSpellTargets(
                 gd, scheme, List.of(), player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void auraCannotEnchantACreatureEnteringInTheSameBatch() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card creature = new GrizzlyBears();
+        Card aura = new Pacifism();
+        harness.setLibrary(player1, List.of(creature));
+        harness.setLibrary(player2, List.of(aura));
+
+        resolveScheme(List.of(target.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getOriginalCard() == creature);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(aura);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(aura);
+    }
+
+    @Test
+    void auraAttachmentChoiceFinishesBeforeRevealedRemainderIsReturned() {
+        Permanent firstHost = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card skipped = new GiantGrowth();
+        Card aura = new Pacifism();
+        Card unrevealed = new GiantGrowth();
+        harness.setLibrary(player1, List.of(skipped, aura, unrevealed));
+        harness.setLibrary(player2, List.of(new GiantGrowth()));
+
+        resolveScheme(List.of(target.getId()));
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(skipped, aura, unrevealed);
+        harness.handlePermanentChosen(player1, firstHost.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getOriginalCard() == aura
+                        && firstHost.getId().equals(permanent.getAttachedTo()));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unrevealed, skipped);
+    }
+
+    @Test
+    void revealedCloneChoosesItsCopyBeforeTheBatchEnters() {
+        Permanent host = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card clone = new Clone();
+        Card skipped = new GiantGrowth();
+        harness.setLibrary(player1, List.of(skipped, clone));
+        harness.setLibrary(player2, List.of(new GiantGrowth()));
+
+        resolveScheme(List.of(target.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, host.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getOriginalCard() == clone
+                        && permanent.getCard().getName().equals(host.getCard().getName()));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(skipped);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(clone);
     }
 
     private void resolveScheme(List<UUID> targetIds) {

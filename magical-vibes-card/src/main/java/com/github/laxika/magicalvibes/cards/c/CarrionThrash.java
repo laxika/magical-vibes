@@ -20,10 +20,11 @@ public class CarrionThrash extends Card {
     public CarrionThrash() {
         // When this creature dies, you may pay {2}. If you do, return another target creature card
         // from your graveyard to your hand. "Another" excludes Carrion Thrash itself, now in the
-        // graveyard; the controller picks the creature card at resolution.
+        // graveyard; the controller targets the creature card before deciding whether to pay.
         addEffect(EffectSlot.ON_DEATH, new MayPayManaEffect("{2}",
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
+                        .targetGraveyard(true)
                         .filter(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardNotPredicate(new CardIsSelfPredicate()))))

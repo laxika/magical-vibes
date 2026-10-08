@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForTargetControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -20,7 +21,8 @@ public class ChainStasis extends Card {
                         "Tap or untap target creature?"))
                 .addEffect(EffectSlot.SPELL, new MayPayManaEffect(
                         "{2}{U}",
-                        new CopyThisSpellForTargetControllerEffect(),
+                        new MayEffect(new CopyThisSpellForTargetControllerEffect(),
+                                "Copy Chain Stasis?", null, MayChoicePlayer.LAST_MANA_PAYMENT_PLAYER),
                         "Pay {2}{U} to copy Chain Stasis?",
                         MayPayPayer.TARGET_PERMANENT_CONTROLLER
                 ));

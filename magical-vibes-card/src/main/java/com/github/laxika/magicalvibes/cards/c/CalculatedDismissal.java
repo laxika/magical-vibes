@@ -17,17 +17,10 @@ import java.util.List;
 public class CalculatedDismissal extends Card {
 
     public CalculatedDismissal() {
-        // Spell mastery — If there are two or more instant and/or sorcery cards in your graveyard, scry 2.
-        //
-        // The scry is listed before the counter because the two instructions are independent (the scry
-        // happens whether or not the spell is countered), and the counter hands off to the pay-or-counter
-        // choice flow.
+        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(3));
         addEffect(EffectSlot.SPELL, new ConditionalEffect(new GraveyardCardThreshold(2, new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)
         ))), new ScryEffect(2)));
-
-        // Counter target spell unless its controller pays {3}.
-        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(3));
     }
 }

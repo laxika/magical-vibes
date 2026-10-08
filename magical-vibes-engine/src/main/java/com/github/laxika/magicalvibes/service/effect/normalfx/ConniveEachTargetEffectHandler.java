@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingConnive;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConniveEachTargetEffect;
@@ -21,6 +23,7 @@ import java.util.UUID;
 public class ConniveEachTargetEffectHandler implements NormalEffectHandlerBean {
 
     private final DrawService drawService;
+    private final PlayerInputService playerInputService;
     private final GameQueryService gameQueryService;
     private final PlayerInteractionSupport playerInteractionSupport;
 
@@ -43,7 +46,20 @@ public class ConniveEachTargetEffectHandler implements NormalEffectHandlerBean {
         int replacementDraws = gameQueryService.countPlayerControlledStaticEffects(
                 gameData, controllerId, DrawBeforeConniveReplacementEffect.class);
         while (!remaining.isEmpty()) {
-            UUID creatureId = remaining.removeFirst();
+            remaining.removeIf(id -> gameQueryService.findPermanentById(gameData, id) == null);
+            if (remaining.isEmpty()) break;
+            UUID chosen = entry.getChosenPermanentId();
+            if (remaining.size() > 1 && (chosen == null || !remaining.contains(chosen))) {
+                entry.setTargetConniveCreatureIdsToProcess(remaining);
+                gameData.rerunCurrentEffectAfterInteraction = true;
+                playerInputService.beginPermanentChoice(gameData, controllerId, remaining,
+                        new PermanentChoiceContext.ConniveNextCreatureChoice(),
+                        "Choose the next creature to connive.");
+                return;
+            }
+            UUID creatureId = chosen != null && remaining.contains(chosen) ? chosen : remaining.getFirst();
+            remaining.remove(creatureId);
+            entry.setChosenPermanentId(null);
             entry.setTargetConniveCreatureIdsToProcess(remaining);
             if (gameQueryService.findPermanentById(gameData, creatureId) == null) {
                 continue;

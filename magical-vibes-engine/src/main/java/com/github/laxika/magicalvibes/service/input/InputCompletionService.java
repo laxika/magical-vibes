@@ -79,6 +79,15 @@ public class InputCompletionService {
         if (gameData.status == GameStatus.FINISHED) return;
         if (gameData.interaction.isAwaitingInput()) return;
         if (commanderZoneMoves != null && commanderZoneMoves.beginPending(gameData)) return;
+        var queuedMergedOrder = gameData.pendingInteractions.stream()
+                .filter(pending -> pending instanceof PendingInteraction.LibraryReorder order
+                        && order.destinationZone() != null)
+                .findFirst().orElse(null);
+        if (queuedMergedOrder != null) {
+            gameData.pendingInteractions.removeFirstOccurrence(queuedMergedOrder);
+            interactionHandlerRegistry.begin(gameData, queuedMergedOrder);
+            return;
+        }
         var queuedManaChoice = gameData.pendingInteractions.stream()
                 .filter(pending -> pending instanceof PendingInteraction.ColorChoice choice
                         && !(choice.context() instanceof ChoiceContext.RegenerationShieldChoice))
@@ -139,6 +148,14 @@ public class InputCompletionService {
 
             if (gameData.status == GameStatus.FINISHED) {
                 return;
+            }
+            if (gameData.pendingEffectResolutionEntry == null) {
+                PendingInteraction.PermanentChoice reflexiveTarget = gameData
+                        .pollPendingInteraction(PendingInteraction.PermanentChoice.class);
+                if (reflexiveTarget != null) {
+                    interactionHandlerRegistry.begin(gameData, reflexiveTarget);
+                    return;
+                }
             }
             if (gameData.stack.isEmpty() && !gameData.pendingLibraryBottomReorders.isEmpty()) {
                 warpWorldService.beginNextPendingLibraryBottomReorder(gameData);

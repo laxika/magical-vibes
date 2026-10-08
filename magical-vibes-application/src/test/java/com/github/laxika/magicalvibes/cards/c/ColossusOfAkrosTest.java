@@ -133,6 +133,8 @@ class ColossusOfAkrosTest extends BaseCardTest {
     }
 
     private void declareColossusAttack(Permanent colossus) {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.DECLARE_ATTACKERS));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.DECLARE_ATTACKERS));
         int colossusIndex = gd.playerBattlefields.get(player1.getId()).indexOf(colossus);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);

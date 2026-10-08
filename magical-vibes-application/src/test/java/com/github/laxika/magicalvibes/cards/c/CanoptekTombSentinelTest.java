@@ -80,7 +80,7 @@ class CanoptekTombSentinelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent sentinel = findPermanent(player1, "Canoptek Tomb Sentinel");
-        assertThat(sentinel.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, sentinel, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);

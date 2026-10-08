@@ -41,11 +41,13 @@ import org.springframework.stereotype.Component;
 public class TokenCopySupport {
 
     private final BattlefieldEntryService battlefieldEntryService;
+    private final PermanentControlSupport permanentControlSupport;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final SagaChapterService sagaChapterService;
     private final PlayerInputService playerInputService;
+    private final com.github.laxika.magicalvibes.service.aura.AuraAttachmentService auraAttachmentService;
 
     public List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
                                         Permanent sourcePermanent,
@@ -208,6 +210,27 @@ public class TokenCopySupport {
             tokens.add(new Permanent(foodTokenCard));
         }
 
+        int additionalClueCount = tokens.isEmpty() ? 0
+                : permanentControlSupport.solvedClueReplacementCount(gameData, tokenControllerId);
+        CreateTokenEffect clue = CreateTokenEffect.ofClueToken(1);
+        for (int i = 0; i < additionalClueCount; i++) {
+            int clueAmount = gameQueryService.getTokenCreationAmount(gameData, tokenControllerId,
+                    1, clue.subtypes(), false);
+            List<CreateTokenEffect> clueBlueprints = TokenCreationReplacementSupport.academyManufactorTokenBlueprints(
+                    gameData, tokenControllerId, clue, clueAmount);
+            if (clueBlueprints.isEmpty()) {
+                for (int j = 0; j < clueAmount; j++) {
+                    tokens.add(new Permanent(TokenCardFactory.create(clue, 0, 0,
+                            entry.getCard() == null ? null : entry.getCard().getSetCode())));
+                }
+            } else {
+                for (CreateTokenEffect blueprint : clueBlueprints) {
+                    tokens.add(new Permanent(TokenCardFactory.create(blueprint, 0, 0,
+                            entry.getCard() == null ? null : entry.getCard().getSetCode())));
+                }
+            }
+        }
+
         int additionalTreasureTokenCount = tokens.stream().mapToInt(token ->
                 TokenCreationReplacementSupport.additionalTreasureTokenCount(
                         gameData, tokenControllerId, token.getCard(), 1)).sum();
@@ -215,6 +238,28 @@ public class TokenCopySupport {
             Card treasureToken = TokenCardFactory.create(CreateTokenEffect.ofTreasureToken(1), 0, 0,
                     entry.getCard() == null ? null : entry.getCard().getSetCode());
             tokens.add(new Permanent(treasureToken));
+        }
+
+        int squirrelCount = TokenCreationReplacementSupport.additionalSquirrelTokenCount(
+                gameData, tokenControllerId, tokens.size());
+        CreateTokenEffect squirrel = squirrelCount == 0 ? null
+                : TokenCreationReplacementSupport.additionalSquirrelTokenIfApplicable(
+                        gameData, tokenControllerId,
+                        new CreateTokenEffect(1, "Squirrel", 1, 1,
+                                CardColor.GREEN, List.of(CardSubtype.SQUIRREL), Set.of(), Set.of()));
+        if (!creatureTokenEvent && squirrelCount > 0) {
+            squirrelCount = gameQueryService.getNewCreatureTokenCreationAmount(
+                    gameData, tokenControllerId, squirrelCount, squirrel.subtypes());
+        }
+        int originalAttackTargetCount = expandedAttackTargets.size();
+        for (int i = 0; i < squirrelCount; i++) {
+            Card squirrelCard = TokenCardFactory.create(squirrel, 1, 1,
+                    entry.getCard() == null ? null : entry.getCard().getSetCode());
+            squirrelCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                    gameData, tokenControllerId, squirrelCard);
+            tokens.add(withGrantedHaste(squirrelCard, squirrelCard, effect));
+            expandedAttackTargets.add(originalAttackTargetCount == 0 ? null
+                    : expandedAttackTargets.get(i % originalAttackTargetCount));
         }
 
         if (chooseOpponentAttackTargets) {
@@ -301,6 +346,34 @@ public class TokenCopySupport {
                                                             CreateTokenCopyOfTargetPermanentEffect effect,
                                                             List<UUID> expandedAttackTargets,
                                                             boolean explicitAttackTargets) {
+        for (int i = 0; i < tokens.size(); i++) {
+            Permanent token = tokens.get(i);
+            if (!token.getCard().isAura() || token.getCard().isEnchantZone() || token.isAttached()) continue;
+            List<UUID> hosts = new ArrayList<>();
+            gameData.forEachPermanent((controller, permanent) -> {
+                if (!gameQueryService.cantBeEnchantedByOtherAuras(gameData, permanent)
+                        && auraAttachmentService.canEnchant(gameData, token.getCard(), tokenControllerId, permanent)) {
+                    hosts.add(permanent.getId());
+                }
+            });
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                if (auraAttachmentService.canEnchantPlayer(gameData, token.getCard(), tokenControllerId, playerId)) {
+                    hosts.add(playerId);
+                }
+            }
+            if (hosts.isEmpty()) continue;
+            if (hosts.size() == 1) {
+                token.setAttachedTo(hosts.getFirst());
+            } else {
+                playerInputService.beginPermanentChoice(gameData, tokenControllerId, hosts,
+                        new PermanentChoiceContext.PreparedTokenCopyAttachments(tokenControllerId, entry, effect,
+                                tokens, sourcePermanent, expandedAttackTargets, explicitAttackTargets, i),
+                        "Choose what " + token.getCard().getName() + " will enchant.");
+                return List.of();
+            }
+        }
+        tokens = tokens.stream().filter(token -> !token.getCard().isAura()
+                || token.getCard().isEnchantZone() || token.isAttached()).toList();
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = tokens;
         List<UUID> createdIds = new ArrayList<>();
@@ -374,6 +447,15 @@ public class TokenCopySupport {
         return createdIds;
     }
 
+    /** Resumes the token-copy batch after one legal, untargeted Aura attachment choice. */
+    public void completeTokenCopyAttachmentChoice(GameData gameData, UUID attachmentId,
+            PermanentChoiceContext.PreparedTokenCopyAttachments context) {
+        context.tokens().get(context.choosingIndex()).setAttachedTo(attachmentId);
+        putPreparedTokenCopiesOntoBattlefield(gameData, context.entry(), context.tokens(),
+                context.sourcePermanent(), context.controllerId(), context.copyEffect(),
+                context.attackTargets(), context.explicitAttackTargets());
+    }
+
     static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {
         return buildTokenCopyCard(sourceCard, effect, null);
     }
@@ -393,6 +475,12 @@ public class TokenCopySupport {
         tokenCard.setAdditionalTypes(sourceCard.getAdditionalTypes());
         tokenCard.setManaCost(sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
         tokenCard.setToken(true);
+        if (sourceCard.getBackFaceCard() != null && !sourceCard.isModalDoubleFaced()
+                && !sourceCard.getBackFaceCard().hasType(CardType.INSTANT)
+                && !sourceCard.getBackFaceCard().hasType(CardType.SORCERY)) {
+            tokenCard.setBackFaceCard(buildTokenCopyCard(sourceCard.getBackFaceCard(), effect,
+                    isCreatureSubtype, targetingSourceCard));
+        }
         CardColor color = effect.colorOverride() != null ? effect.colorOverride() : sourceCard.getColor();
         tokenCard.setColor(color);
         List<CardColor> colors = effect.colorOverride() != null

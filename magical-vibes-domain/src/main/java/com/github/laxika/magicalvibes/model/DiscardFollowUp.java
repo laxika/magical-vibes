@@ -440,6 +440,20 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                 targetOpponentsDiscardThenDraw, thenEffectSourcePermanentId,
                 thenEffectSourcePermanentSnapshot, thenEffectEventValue, discardedCardSelectionControllerId, discardedCardIds, resolveThenDuringSameResolution, pendingSpellCast);
     }
+    /** Copies unresolved entry and spell payloads for an independent simulated choice. */
+    public DiscardFollowUp deepCopyEntryPayloads() {
+        return new DiscardFollowUp(rummageDrawCount, untapPermanentId, remainingEachPlayerDiscards,
+                eachPlayerControllerId, eachPlayerAmount, graveyardReturnCount, eachPlayerAmounts,
+                boostPermanentId, boostPower, boostToughness, thenEffectSourceCard, thenEffect,
+                thenEffectCondition, enteringPermanent == null ? null : new Permanent(enteringPermanent),
+                enteringControllerId, plusOnePlusOneCounterPermanentId, plusOnePlusOneCounterAmount,
+                thenEffectTargetId, plaguecrafter, eachPlayerNoDiscardCount, thenEffectUsesDiscardedManaValue,
+                rummageDrawPlayerId, thenEffectAlternateCardType, thenEffectAlternate,
+                targetOpponentsDiscardThenDraw, thenEffectSourcePermanentId, thenEffectSourcePermanentSnapshot,
+                thenEffectEventValue, discardedCardSelectionControllerId, discardedCardIds,
+                resolveThenDuringSameResolution, pendingSpellCast == null ? null : new StackEntry(pendingSpellCast));
+    }
+
     public static DiscardFollowUp chooseDiscardedLandForBattlefield(UUID controllerId) {
         return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0,
                 null, null, null, null, null, null, 0, null, false, 0, false, null, null, null,

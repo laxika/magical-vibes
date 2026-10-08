@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -33,8 +33,8 @@ public class CaretakersTalent extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{W}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
-                "Level up {W} ({W}: Put a level counter on this. Level up only as a sorcery.)",
+                List.of(new ClassLevelUpEffect(2)),
+                "{W}: Gain level 2. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withActivationCondition(
                 new NotCondition(new SourceCounterThreshold(1, CounterType.LEVEL)),
@@ -42,8 +42,8 @@ public class CaretakersTalent extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{W}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
-                "Level up {3}{W} ({3}{W}: Put a level counter on this. Level up only as a sorcery.)",
+                List.of(new ClassLevelUpEffect(3)),
+                "{3}{W}: Gain level 3. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withActivationCondition(
                 new AllOf(List.of(

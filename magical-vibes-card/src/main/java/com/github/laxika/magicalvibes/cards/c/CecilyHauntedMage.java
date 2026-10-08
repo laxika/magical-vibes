@@ -7,9 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseControllerMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
@@ -22,11 +20,13 @@ import java.util.List;
 public class CecilyHauntedMage extends Card {
 
     public CecilyHauntedMage() {
-        addEffect(EffectSlot.STATIC, new IncreaseControllerMaxHandSizeEffect(4));
+        addEffect(EffectSlot.STATIC, new SetControllerMaximumHandSizeEffect(11));
         addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(
                 new DrawCardEffect(1),
                 new LoseLifeEffect(1),
                 ConditionalEffect.unless(new CardsInHandAtLeast(11),
-                        new MayCastAnySpellFromHandWithoutPayingManaCostEffect())));
+                        new MayCastAnySpellFromHandWithoutPayingManaCostEffect(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)))))));
     }
 }

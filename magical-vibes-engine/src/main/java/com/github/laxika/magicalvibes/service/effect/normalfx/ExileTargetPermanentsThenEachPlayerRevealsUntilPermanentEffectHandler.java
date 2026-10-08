@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
+import com.github.laxika.magicalvibes.model.BattlefieldEntryLibraryRemainder;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -10,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestO
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -27,6 +30,7 @@ public class ExileTargetPermanentsThenEachPlayerRevealsUntilPermanentEffectHandl
     private final PermanentRemovalService permanentRemovalService;
     private final GameLogService gameLogService;
     private final RevealUntilCardPredicateRestOnBottomRandomEffectHandler revealHandler;
+    private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,10 +52,16 @@ public class ExileTargetPermanentsThenEachPlayerRevealsUntilPermanentEffectHandl
 
         var revealEffect = new RevealUntilCardPredicateRestOnBottomRandomEffect(
                 new CardIsPermanentPredicate(), LibrarySearchDestination.BATTLEFIELD);
-        for (UUID playerId : gameData.orderedPlayerIds) {
+        List<BattlefieldEntryCard> cards = new ArrayList<>();
+        List<BattlefieldEntryLibraryRemainder> remainders = new ArrayList<>();
+        List<UUID> playerOrder = new ArrayList<>(gameData.orderedPlayerIds);
+        int activeIndex = playerOrder.indexOf(gameData.activePlayerId);
+        if (activeIndex > 0) java.util.Collections.rotate(playerOrder, -activeIndex);
+        for (UUID playerId : playerOrder) {
             StackEntry playerEntry = new StackEntry(entry);
             playerEntry.setControllerId(playerId);
-            revealHandler.resolve(gameData, playerEntry, revealEffect);
+            revealHandler.collectIntoBattlefieldBatch(gameData, playerEntry, revealEffect, cards, remainders);
         }
+        battlefieldEntryBatchSupport.begin(gameData, cards, remainders);
     }
 }

@@ -20,7 +20,7 @@ import java.util.List;
 public class CharnelSerenade extends Card {
 
     public CharnelSerenade() {
-        addEffect(EffectSlot.SPELL, new SurveilThenEffect(
+        addEffect(EffectSlot.SPELL, SurveilThenEffect.direct(
                 3,
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)

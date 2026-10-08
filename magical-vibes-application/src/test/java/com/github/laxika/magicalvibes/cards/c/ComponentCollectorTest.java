@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.Set;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ComponentCollector.class, Forest.class, UnblinkingObserver.class})
@@ -131,10 +133,11 @@ class ComponentCollectorTest extends BaseCardTest {
     }
 
     private void advanceToNextTurn() {
+        gd.playerAutoStopSteps.put(player1.getId(), Set.of(TurnStep.UPKEEP));
+        gd.playerAutoStopSteps.put(player2.getId(), Set.of(TurnStep.UPKEEP));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
         harness.passBothPriorities();
     }
 }

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CamouflageEffect;
 public class Camouflage extends Card {
 
     public Camouflage() {
-        setSpellCastTimingRestriction(SpellCastTimingRestriction.DECLARE_ATTACKERS);
+        setSpellCastTimingRestriction(SpellCastTimingRestriction.YOUR_DECLARE_ATTACKERS);
         addEffect(EffectSlot.SPELL, new CamouflageEffect());
     }
 }

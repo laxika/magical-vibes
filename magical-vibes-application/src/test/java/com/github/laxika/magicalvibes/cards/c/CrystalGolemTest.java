@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CrystalGolem.class, Forest.class})
@@ -54,13 +56,15 @@ class CrystalGolemTest extends BaseCardTest {
     @Test
     @DisplayName("Crystal Golem phases back in during its controller's next untap step")
     void phasesBackInNextUntapStep() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent golem = addGolem();
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(golem);
 
-        harness.passUntil(player1, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(golem);
         assertThat(gd.phasedOutPermanents.get(player1.getId())).doesNotContain(golem);

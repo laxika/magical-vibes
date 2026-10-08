@@ -30,7 +30,7 @@ public class CauldronOfSouls extends Card {
                 null, null, null,        // loyaltyCost, maxActivationsPerTurn, timingRestriction
                 List.of(creatureFilter), // non-empty to enable multi-target selection
                 0,                       // minTargets — "any number" includes zero
-                99                       // maxTargets
+                Integer.MAX_VALUE        // maxTargets
         ));
     }
 }

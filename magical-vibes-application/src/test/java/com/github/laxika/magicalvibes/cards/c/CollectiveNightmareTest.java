@@ -144,6 +144,7 @@ class CollectiveNightmareTest extends BaseCardTest {
         convoker.tap();
         harness.setHand(player1, List.of(new CollectiveNightmare()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.castInstantWithConvoke(player1, 0, List.of(target.getId()),
                 List.of(convoker.getId())))

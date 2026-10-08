@@ -22,7 +22,7 @@ class CeremonialGuardTest extends BaseCardTest {
         Permanent guard = addCreatureReady(player1, new CeremonialGuard());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(guard);
         harness.assertInGraveyard(player1, "Ceremonial Guard");

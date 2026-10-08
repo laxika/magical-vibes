@@ -142,6 +142,7 @@ class CandletrapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
+        resolveAllTriggers();
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(enchanted.getCard());
     }
 

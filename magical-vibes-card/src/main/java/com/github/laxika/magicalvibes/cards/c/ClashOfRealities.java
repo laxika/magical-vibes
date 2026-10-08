@@ -17,10 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 /**
- * Clash of Realities grants a mirrored optional ETB damage trigger to both halves of the
- * battlefield: every Spirit may shoot a non-Spirit creature for 3 as it enters, and every
- * non-Spirit creature may shoot a Spirit for 3 as it enters. Spirit is a creature type only,
- * so {@link GrantScope#ALL_CREATURES} covers the oracle's "All Spirits".
+ * Every Spirit permanent may deal 3 damage to a non-Spirit creature as it enters, and every
+ * non-Spirit creature may deal 3 damage to a Spirit creature as it enters.
  */
 @CardRegistration(set = "BOK", collectorNumber = "97")
 public class ClashOfRealities extends Card {
@@ -39,20 +37,22 @@ public class ClashOfRealities extends Card {
             new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), NON_SPIRIT));
 
     public ClashOfRealities() {
+        MayEffect spiritAbility = new MayEffect(
+                new DealDamageToTargetCreatureEffect(3, NON_SPIRIT_CREATURE),
+                "Have this Spirit deal 3 damage to target non-Spirit creature?");
         addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ENTER_BATTLEFIELD,
-                new MayEffect(
-                        new DealDamageToTargetCreatureEffect(3, NON_SPIRIT_CREATURE),
-                        "Have this Spirit deal 3 damage to target non-Spirit creature?"),
-                GrantScope.ALL_CREATURES,
-                SPIRIT));
+                spiritAbility, GrantScope.ALL_PERMANENTS, SPIRIT));
+        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                EffectSlot.ON_ENTER_BATTLEFIELD,
+                spiritAbility, GrantScope.SELF, SPIRIT));
 
         addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(
                         new DealDamageToTargetCreatureEffect(3, SPIRIT_CREATURE),
                         "Have this creature deal 3 damage to target Spirit creature?"),
-                GrantScope.ALL_CREATURES,
-                NON_SPIRIT));
+                GrantScope.ALL_CREATURES_INCLUDING_SELF,
+                NON_SPIRIT_CREATURE));
     }
 }

@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -150,7 +151,6 @@ class CommandoRaidTest extends BaseCardTest {
         gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
-        harness.passBothPriorities();
 
         assertThat(blocker.getMarkedDamage()).isEqualTo(2);
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -173,6 +173,10 @@ class CommandoRaidTest extends BaseCardTest {
     }
 
     private void castOn(Permanent target) {
+        Set<TurnStep> stops = Set.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN,
+                TurnStep.DECLARE_BLOCKERS, TurnStep.COMBAT_DAMAGE);
+        gd.playerAutoStopSteps.put(player1.getId(), stops);
+        gd.playerAutoStopSteps.put(player2.getId(), stops);
         harness.setHand(player1, List.of(new CommandoRaid()));
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castAndResolveInstant(player1, 0, target.getId());

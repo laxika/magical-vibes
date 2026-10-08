@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.u.UkkimaStalkingShadow;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -116,7 +117,7 @@ class CazurRuthlessStalkerTest extends BaseCardTest {
         Permanent cazur = addCreatureReady(player1, new CazurRuthlessStalker());
         cazur.setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
 
         harness.assertLife(player2, 17);
         assertThat(cazur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -129,7 +130,7 @@ class CazurRuthlessStalkerTest extends BaseCardTest {
         Permanent cazur = addCreatureReady(player1, new CazurRuthlessStalker());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         cazur.setAttacking(true);
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
         assertThat(cazur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
@@ -145,7 +146,7 @@ class CazurRuthlessStalkerTest extends BaseCardTest {
         Permanent cazur = addCreatureReady(player1, new CazurRuthlessStalker());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setAttacking(true);
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
         harness.assertLife(player2, 18);
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class ChangeOfPlans extends Card {
 
     public ChangeOfPlans() {
-        targetX(TargetFilters.creatureYouControl(), 100)
+        targetExactlyX(TargetFilters.creatureYouControl(), Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL, new ConniveEachTargetEffect())
                 .addEffect(EffectSlot.SPELL, new PhaseOutChosenTargetCreaturesEffect());
     }

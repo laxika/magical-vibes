@@ -185,7 +185,7 @@ class CunningBanditTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(creature.getId()));
         assertThat(gd.isStolenUntilEndOfTurn(creature.getId())).isTrue();
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(null, TurnStep.CLEANUP);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(creature.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(creature.getId()));

@@ -43,7 +43,7 @@ public class CurrencyConverter extends Card {
                 List.of(new PutTargetCardExiledWithSourceIntoOwnersGraveyardAndCreateTokenEffect(
                         CreateTokenEffect.ofTreasureToken(1),
                         new CreateTokenEffect("Rogue", 2, 2, CardColor.BLACK,
-                                List.of(CardSubtype.ROGUE), Set.of(), Set.of()))),
+                                List.of(CardSubtype.ROGUE), Set.of(), Set.of()), true)),
                 "{T}: Put a card exiled with this artifact into its owner's graveyard. If it's a land card, create a Treasure token. If it's a nonland card, create a 2/2 black Rogue creature token."
         ));
     }

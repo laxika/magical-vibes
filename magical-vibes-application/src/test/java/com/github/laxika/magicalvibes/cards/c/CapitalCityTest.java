@@ -21,7 +21,7 @@ class CapitalCityTest extends BaseCardTest {
     void tappingAddsColorlessMana() {
         harness.addToBattlefield(player1, new CapitalCity());
 
-        harness.tapPermanent(player1, 0);
+        harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
@@ -77,7 +77,7 @@ class CapitalCityTest extends BaseCardTest {
     @Test
     void tappedCityCannotFilterMana() {
         harness.addToBattlefield(player1, new CapitalCity());
-        harness.tapPermanent(player1, 0);
+        harness.activateAbility(player1, 0, 0, null, null);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);

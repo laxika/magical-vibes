@@ -405,6 +405,8 @@ public class MultiPermanentChoiceHandlerService {
             throw new IllegalStateException("Too few targets selected");
         }
         if ((context instanceof MultiPermanentChoiceContext.EachPlayerSacrificeOneOfEachTypeChoice
+                || context instanceof MultiPermanentChoiceContext.EachPlayerSacrificeOneOfEachTypeChoice
+                || context instanceof MultiPermanentChoiceContext.KeepOneOfEachTypeChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesCreaturePutsVowCounterChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeThenReturnToHandChoice
@@ -4017,8 +4019,14 @@ public class MultiPermanentChoiceHandlerService {
                 state.sourceCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new DestroyOneOfTargetsAtRandomEffect())),
                 0,
-                allTargets
+                null, state.sourcePermanentId(), Map.of(), null, List.of(), allTargets
         );
+        List<com.github.laxika.magicalvibes.model.filter.TargetFilter> filters = new ArrayList<>();
+        filters.add(DestroyOneOfTargetsAtRandomEffect.targetFilter(true));
+        for (UUID ignored : permanentIds) {
+            filters.add(DestroyOneOfTargetsAtRandomEffect.targetFilter(false));
+        }
+        entry.setTargetFilters(filters);
         gameData.stack.add(entry);
 
         List<String> targetNames = new ArrayList<>();

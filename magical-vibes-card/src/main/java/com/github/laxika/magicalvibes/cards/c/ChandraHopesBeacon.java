@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
@@ -39,11 +40,11 @@ public class ChandraHopesBeacon extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +1,
                 List.of(new ExileTopCardsMayCastMatchingUntilNextTurnEffect(
-                        5,
+                        new Fixed(5),
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY)
-                        )))),
+                        )), false, 1)),
                 "+1: Exile the top five cards of your library. Until the end of your next turn, you may cast an instant or sorcery spell from among those exiled cards."
         ));
 

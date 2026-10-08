@@ -173,14 +173,15 @@ class ConsulsLieutenantTest extends BaseCardTest {
         addCreatureReady(player2, new ConsulsLieutenant());
         lieutenant.setRenowned(true);
 
-        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
-                () -> declareAttackers(List.of(0, 1)));
-        assertThat(gd.stack).isNotEmpty();
-        gd.playerBattlefields.get(player1.getId()).remove(lieutenant);
-        gd.playerGraveyards.get(player1.getId()).add(lieutenant.getCard());
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1));
+            assertThat(gd.stack).isNotEmpty();
+            gd.playerBattlefields.get(player1.getId()).remove(lieutenant);
+            gd.playerGraveyards.get(player1.getId()).add(lieutenant.getCard());
+            resolveAllTriggers();
 
-        assertThat(other.getPowerModifier()).isEqualTo(1);
-        assertThat(other.getToughnessModifier()).isEqualTo(1);
+            assertThat(other.getPowerModifier()).isEqualTo(1);
+            assertThat(other.getToughnessModifier()).isEqualTo(1);
+        });
     }
 }

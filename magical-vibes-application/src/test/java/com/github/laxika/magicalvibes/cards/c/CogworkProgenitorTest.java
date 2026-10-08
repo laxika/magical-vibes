@@ -87,6 +87,7 @@ class CogworkProgenitorTest extends BaseCardTest {
 
     @Test
     void cannotExileItselfOnTheBattlefieldOrAnOpponentsArtifacts() {
+        harness.setHand(player1, List.of());
         Permanent source = addCreatureReady(player1, new CogworkProgenitor());
         Permanent opponentArtifact = addCreatureReady(player2, new CogworkProgenitor());
         Card opponentGraveyardArtifact = new CogworkProgenitor();
@@ -128,6 +129,7 @@ class CogworkProgenitorTest extends BaseCardTest {
 
     @Test
     void stillExilesTheChosenArtifactWhenTheLibraryIsEmpty() {
+        harness.setHand(player1, List.of());
         addCreatureReady(player1, new CogworkProgenitor());
         Card artifact = new CogworkProgenitor();
         harness.setGraveyard(player1, List.of(artifact));
@@ -151,7 +153,8 @@ class CogworkProgenitorTest extends BaseCardTest {
 
         beginEndStepMayChoice();
         harness.handleMayAbilityChosen(player1, true);
-        Card modified = gd.playerHands.get(player1.getId()).getFirst();
+        Card modified = gd.playerHands.get(player1.getId()).stream()
+                .filter(card -> card.getId().equals(sought.getId())).findFirst().orElseThrow();
         gd.playerHands.get(player1.getId()).remove(modified);
         Permanent permanent = harness.enterBattlefieldAndReturn(player1, modified);
 

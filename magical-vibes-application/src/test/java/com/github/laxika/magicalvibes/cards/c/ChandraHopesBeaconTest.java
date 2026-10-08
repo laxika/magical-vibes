@@ -165,11 +165,11 @@ class ChandraHopesBeaconTest extends BaseCardTest {
         addReadyChandra(5);
         harness.setHand(player1, List.of(new GrizzlyBears(), new LightningBolt()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castCreature(player1, 0);
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
 
         assertThat(gd.stack).filteredOn(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)

@@ -29,7 +29,7 @@ public class CrawlingSensation extends Card {
         // Whenever one or more land cards are put into your graveyard from anywhere for the first
         // time each turn, create a 1/1 green Insect creature token.
         addEffect(EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
-                new OncePerTurnTriggerEffect(new CreateTokenEffect("Insect", 1, 1, CardColor.GREEN,
+                OncePerTurnTriggerEffect.firstLandGraveyardEvent(new CreateTokenEffect("Insect", 1, 1, CardColor.GREEN,
                         List.of(CardSubtype.INSECT), Set.of(), Set.of())));
     }
 }

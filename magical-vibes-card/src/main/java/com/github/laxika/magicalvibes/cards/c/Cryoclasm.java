@@ -7,10 +7,11 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
-import java.util.Set;
+import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "195")
@@ -20,7 +21,9 @@ public class Cryoclasm extends Card {
     public Cryoclasm() {
         // Destroy target Plains or Island. Cryoclasm deals 3 damage to that land's controller.
         target(new PermanentPredicateTargetFilter(
-                new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.PLAINS, CardSubtype.ISLAND)),
+                new PermanentAnyOfPredicate(List.of(
+                        new PermanentHasSubtypePredicate(CardSubtype.PLAINS),
+                        new PermanentHasSubtypePredicate(CardSubtype.ISLAND))),
                 "Target must be a Plains or Island"
         ))
                 .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(

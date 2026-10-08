@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -70,6 +69,31 @@ class CurrencyConverterTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
         assertThat(findPermanents(player1, "Rogue")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Conversion chooses among linked cards as the ability resolves")
+    void choosesExiledCardDuringResolution() {
+        Permanent converter = addConverter();
+        Card forest = new Forest();
+        Card bears = new GrizzlyBears();
+        gd.addToExile(player1.getId(), forest, converter.getId());
+        gd.addToExile(player1.getId(), bears, converter.getId());
+
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(converter), 1, null, null);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(com.github.laxika.magicalvibes.model.PendingInteraction.ExiledCardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+
+        assertThat(gd.findExiledCard(forest.getId())).isNotNull();
+        assertThat(gd.findExiledCard(bears.getId())).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears);
+        assertThat(findPermanents(player1, "Rogue")).hasSize(1);
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
     }
 
     @Test
@@ -153,7 +177,10 @@ class CurrencyConverterTest extends BaseCardTest {
     private void activateConversion(Permanent converter, UUID cardId) {
         converter.untap();
         harness.activateAbility(player1,
-                gd.playerBattlefields.get(player1.getId()).indexOf(converter), 1, null, cardId, Zone.EXILE);
+                gd.playerBattlefields.get(player1.getId()).indexOf(converter), 1, null, null);
         harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof com.github.laxika.magicalvibes.model.PendingInteraction.ExiledCardChoice) {
+            harness.handleMultipleCardsChosen(player1, List.of(cardId));
+        }
     }
 }

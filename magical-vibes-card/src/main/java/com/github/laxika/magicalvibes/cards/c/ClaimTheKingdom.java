@@ -22,7 +22,7 @@ public class ClaimTheKingdom extends Card {
                         new PutCountersOnSelfEffect(CounterType.PLAN)));
 
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, new ConditionalEffect(
+                .addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, ConditionalEffect.atTriggerTime(
                         new SourceCounterThreshold(4, CounterType.PLAN),
                         SacrificeSelfThenEffect.reflexive(
                                 new PutCounterOnTargetPermanentEffect(CounterType.INDESTRUCTIBLE))));

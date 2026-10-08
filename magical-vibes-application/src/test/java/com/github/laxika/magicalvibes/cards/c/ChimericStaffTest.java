@@ -151,7 +151,7 @@ class ChimericStaffTest extends BaseCardTest {
         assertThat(gqs.effectiveCreatureSubtypes(gd, staffPerm)).containsExactly(CardSubtype.CONSTRUCT);
 
         // Advance to cleanup step
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(null, TurnStep.CLEANUP);
 
         assertThat(gqs.effectiveCreatureSubtypes(gd, staffPerm)).isEmpty();
     }
@@ -250,7 +250,7 @@ class ChimericStaffTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(3);
 
         // Advance to cleanup step
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(null, TurnStep.CLEANUP);
 
         assertThat(gqs.isCreature(gd, staffPerm)).isFalse();
         assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(0);
@@ -419,7 +419,7 @@ class ChimericStaffTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(2);
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(null, TurnStep.CLEANUP);
 
         assertThat(gqs.isCreature(gd, staffPerm)).isTrue();
         assertThat(gqs.isArtifact(gd, staffPerm)).isTrue();

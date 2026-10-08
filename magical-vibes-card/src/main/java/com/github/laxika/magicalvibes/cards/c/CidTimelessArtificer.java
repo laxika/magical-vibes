@@ -43,7 +43,7 @@ public class CidTimelessArtificer extends Card {
         Sum boost = new Sum(artificersYouControl, artificersInYourGraveyard);
 
         addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
-                boost, boost, GrantScope.OWN_CREATURES,
+                boost, boost, GrantScope.ALL_OWN_CREATURES,
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.HERO)))));

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -27,20 +29,22 @@ public class CelestineCaveWitch extends Card {
                 CardType.CREATURE, 2, "Insect", 1, 1, CardColor.BLACK, null,
                 List.of(CardSubtype.INSECT), Set.of(), Set.of(), false, false,
                 Map.of(), List.of(), false, false, false, 0, Set.of()));
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
-                new SacrificePermanentThenEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.INSECT),
-                        new CreateTokenAttachedToDefendingPlayerEffect(curseToken()),
-                        "an Insect"),
-                "Sacrifice an Insect?"));
+        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.unless(
+                new ControlsPermanentCount(1, new PermanentHasSubtypePredicate(CardSubtype.INSECT)),
+                new MayEffect(
+                        new SacrificePermanentThenEffect(
+                                new PermanentHasSubtypePredicate(CardSubtype.INSECT),
+                                new CreateTokenAttachedToDefendingPlayerEffect(curseToken()),
+                                "an Insect"),
+                        "Sacrifice an Insect?")));
     }
 
     private static CreateTokenEffect curseToken() {
         return new CreateTokenEffect(
                 CardType.ENCHANTMENT, 1, "Curse", 0, 0, CardColor.BLACK, null,
                 List.of(CardSubtype.AURA, CardSubtype.CURSE), Set.of(), Set.of(), false, false,
-                Map.of(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED,
-                        new LoseLifeEffect(1, LoseLifeRecipient.ACTIVE_PLAYER)),
+                Map.of(EffectSlot.UPKEEP_TRIGGERED,
+                        new LoseLifeEffect(1, LoseLifeRecipient.CONTROLLER)),
                 List.of(), false, false, false, 0, Set.<Keyword>of());
     }
 }

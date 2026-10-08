@@ -38,11 +38,12 @@ public class RemoveCounterOrSacrificeSelfEffectHandler implements NormalEffectHa
         var e = (RemoveCounterOrSacrificeSelfEffect) effect;
         UUID sourceId = entry.getSourcePermanentId();
         Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
-        if (source == null) {
+        Permanent sourceSnapshot = source != null ? source : entry.getSourcePermanentSnapshot();
+        if (sourceSnapshot == null) {
             return;
         }
 
-        int current = source.getCounterCount(e.counterType());
+        int current = source == null ? 0 : source.getCounterCount(e.counterType());
         if (current > 0) {
             source.setCounterCount(e.counterType(), current - 1);
             if (e.counterType() == CounterType.OIL) {
@@ -58,7 +59,7 @@ public class RemoveCounterOrSacrificeSelfEffectHandler implements NormalEffectHa
             return;
         }
 
-        UUID enchantedId = source.isAttached() ? source.getAttachedTo() : null;
+        UUID enchantedId = sourceSnapshot.isAttached() ? sourceSnapshot.getAttachedTo() : null;
         sacrificeSelfEffectHandler.resolve(gameData, entry, new SacrificeSelfEffect());
         if (enchantedId == null || gameQueryService.findPermanentById(gameData, enchantedId) == null) {
             return;

@@ -20,10 +20,17 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *
  * @param instantOrSorceryOnly whether the qualifying card must be an instant or sorcery instead of
  *                             any nonland card
+ * @param deferCastUntilEndOfTurn whether the hit instead receives a normal-timing free cast
+ *                               permission until end of turn and remains exiled if not cast (Codie).
  * @param qualifyingCardFilter optional additional filter for the qualifying nonland card
  */
-public record CascadeEffect(boolean instantOrSorceryOnly, CardPredicate qualifyingCardFilter)
+public record CascadeEffect(boolean instantOrSorceryOnly, CardPredicate qualifyingCardFilter,
+                             boolean deferCastUntilEndOfTurn)
         implements TriggeringSpellManaValueEffect {
+
+    public CascadeEffect(boolean instantOrSorceryOnly, CardPredicate qualifyingCardFilter) {
+        this(instantOrSorceryOnly, qualifyingCardFilter, false);
+    }
 
     public CascadeEffect() {
         this(false, null);

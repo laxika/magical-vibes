@@ -25,7 +25,7 @@ class CourtOfLocthwainTest extends BaseCardTest {
     @Test
     @DisplayName("Enters as the monarch and exiles the target opponent's top card during upkeep")
     void becomesMonarchAndExilesTargetOpponentsTopCard() {
-        Permanent court = harness.addToBattlefieldAndReturn(player1, new CourtOfLocthwain());
+        Permanent court = castCourt();
         Card ownTop = new Forest();
         Card opponentTop = new GrizzlyBears();
         harness.setLibrary(player1, List.of(ownTop));
@@ -66,7 +66,7 @@ class CourtOfLocthwainTest extends BaseCardTest {
     @Test
     @DisplayName("The monarch may cast one exiled spell without paying its mana cost until end of turn")
     void monarchMayCastExiledSpellForFree() {
-        Permanent court = harness.addToBattlefieldAndReturn(player1, new CourtOfLocthwain());
+        Permanent court = castCourt();
         Card exiled = new GrizzlyBears();
         harness.setLibrary(player2, List.of(exiled));
 
@@ -92,6 +92,14 @@ class CourtOfLocthwainTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.getGameService().handleInteractionAnswer(
                 gd, player1, new InteractionAnswer.PermanentChosen(player1.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    private Permanent castCourt() {
+        harness.setHand(player1, List.of(new CourtOfLocthwain()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+        return findPermanent(player1, "Court of Locthwain");
     }
 
     private void resolveUpkeep(Permanent court) {

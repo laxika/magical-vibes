@@ -289,7 +289,8 @@ public class MtgjsonOracleLoader implements OracleLoader {
         }
 
         return new RawFace(
-                face.has("faceName") ? face.get("faceName").asText() : CardDataSupport.text(face, "name"),
+                face.has("faceName") && !"split".equals(CardDataSupport.text(face, "layout"))
+                        ? face.get("faceName").asText() : CardDataSupport.text(face, "name"),
                 CardDataSupport.text(face, "manaCost"),
                 CardDataSupport.text(face, "type"),
                 text,

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -53,7 +54,7 @@ class CelebrateTheMountainKingTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("Soldier"));
+                .anyMatch(permanent -> permanent.getCard().getName().equals("Human Soldier"));
     }
 
     @Test
@@ -63,7 +64,7 @@ class CelebrateTheMountainKingTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Forest");
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Soldier"));
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Human Soldier"));
     }
 
     @Test
@@ -184,12 +185,22 @@ class CelebrateTheMountainKingTest extends BaseCardTest {
                                 com.github.laxika.magicalvibes.model.Card drawnCard) {
         prepareCast(discardedCard, drawnCard);
         harness.castEnchantment(player1, 0, targetIds);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-
-        if (gd.interaction.isAwaitingInput()) {
-            harness.handleCardChosen(player1, 0);
-            harness.passBothPriorities();
+        for (int i = 0; i < 8 && (!gd.stack.isEmpty()
+                || gd.interaction.activeInteraction() instanceof PendingInteraction.MultiPermanentChoice
+                || gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice
+                || gd.interaction.activeInteraction() instanceof PendingInteraction.DiscardChoice); i++) {
+            if (gd.interaction.activeInteraction() instanceof PendingInteraction.MultiPermanentChoice) {
+                harness.handleMultiplePermanentsChosen(player1, targetIds);
+            } else if (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice
+                    && targetIds.isEmpty()) {
+                harness.handlePermanentChosen(player1, player1.getId());
+            } else if (gd.interaction.activeInteraction() instanceof PendingInteraction.DiscardChoice) {
+                harness.handleCardChosen(player1, 0);
+            } else if (!gd.interaction.isAwaitingInput()) {
+                harness.passBothPriorities();
+            } else {
+                throw new IllegalStateException("Unexpected enter choice: " + gd.interaction.activeInteraction());
+            }
         }
     }
 

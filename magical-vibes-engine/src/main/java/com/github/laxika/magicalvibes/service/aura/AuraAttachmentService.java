@@ -102,8 +102,9 @@ public class AuraAttachmentService {
                 boolean attachmentIsMissing = p.isAttached()
                         && !gameData.playerIds.contains(p.getAttachedTo())
                         && gameQueryService.findPermanentById(gameData, p.getAttachedTo()) == null
-                        && gameQueryService.findCardInGraveyardById(gameData, p.getAttachedTo()) == null
-                        && !isCardInHand(gameData, p.getAttachedTo());
+                        && (isAura
+                            || gameQueryService.findCardInGraveyardById(gameData, p.getAttachedTo()) == null
+                                && !isCardInHand(gameData, p.getAttachedTo()));
                 if ((isAura && !p.isAttached()) || attachmentIsMissing) {
                     if (p.isBestow()) {
                         p.setCard(p.getOriginalCard());

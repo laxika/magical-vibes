@@ -150,9 +150,8 @@ class CursedLandTest extends BaseCardTest {
         Permanent aura = findPermanent(player1, "Cursed Land");
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
         harness.setHand(player2, List.of(new Disenchant()));
-        harness.addMana(player2, ManaColor.WHITE, 2);
-
         advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.WHITE, 2);
         harness.castAndResolveInstant(player2, 0, aura.getId());
         harness.assertInGraveyard(player1, "Cursed Land");
         harness.passBothPriorities();

@@ -66,6 +66,9 @@ public class PlayerInputService {
     @Autowired @Lazy
     private InputCompletionService inputCompletionService;
 
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.GameQueryService gameQueryService;
+
     @Autowired(required = false)
     private CardCatalog cardCatalog;
     private volatile List<String> catalogNonbasicLandCardNames;
@@ -1327,7 +1330,10 @@ public class PlayerInputService {
             return;
         }
         if (choiceEffect.writesToBuddyList()) {
-            beginSubtypeChoice(gameData, playerId, permanentId, choiceEffect.allowedSubtypes(), false,
+            Permanent entering = gameQueryService.findPermanentById(gameData, permanentId);
+            List<CardSubtype> choices = entering == null ? choiceEffect.allowedSubtypes()
+                    : gameQueryService.effectiveCreatureSubtypes(gameData, entering).stream().toList();
+            beginSubtypeChoice(gameData, playerId, permanentId, choices, false,
                     choiceEffect.choicePrompt(), false, true);
             return;
         }
@@ -2712,6 +2718,7 @@ public class PlayerInputService {
                         return List.copyOf(catalogNames);
                     }));
         }
+        names.addAll(names.stream().flatMap(name -> java.util.Arrays.stream(name.split(" // "))).toList());
         return new ArrayList<>(names);
     }
 
@@ -2886,7 +2893,8 @@ public class PlayerInputService {
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiZoneExileChoice(
                 choosingPlayerId, validCardIds, Math.min(maxCount, matchingCards.size()), targetPlayerId,
-                choosingPlayerId, cardName, drawForHandExiled, tokenTemplate, sourceSetCode, null, null));
+                choosingPlayerId, cardName, drawForHandExiled, tokenTemplate, sourceSetCode, null, null,
+                maxCount == Integer.MAX_VALUE));
     }
 
     public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,

@@ -139,6 +139,21 @@ class CheeringCrowdTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
+    @Test
+    @CardUsed({CheeringCrowd.class, VorinclexMonstrousRaider.class})
+    @DisplayName("A legal counter payment replaced with zero still awards mana for the existing counters")
+    void replacementReducingCounterPaymentToZeroStillAwardsMana() {
+        Permanent crowd = harness.addToBattlefieldAndReturn(player1, new CheeringCrowd());
+        crowd.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.addToBattlefield(player1, new VorinclexMonstrousRaider());
+        advanceToPrecombatMain(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(crowd.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
     private void advanceToPrecombatMain(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DRAW);

@@ -22,11 +22,10 @@ public class CharnelTroll extends Card {
     public CharnelTroll() {
         // At the beginning of your upkeep, exile a creature card from your graveyard. If you do,
         // put a +1/+1 counter on this creature. Otherwise, sacrifice it.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
-                new ForcedCostOrElseEffect(
-                        new ExileCardFromGraveyardCost(CardType.CREATURE),
-                        List.of(new SacrificeSelfEffect())),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ForcedCostOrElseEffect(
+                new ExileCardFromGraveyardCost(CardType.CREATURE),
+                List.of(new SacrificeSelfEffect()), false,
+                List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))));
 
         // {B}{G}, Discard a creature card: Put a +1/+1 counter on this creature.
         addActivatedAbility(new ActivatedAbility(

@@ -1588,6 +1588,14 @@ public class SpellCastTriggerCollectorService {
         // prompt; accepting puts the copy-creating ability on the stack.
         MayEffect optionalMay = optionalMayEffect(match.rawEffect());
         if (trigger.tapCost() == null && trigger.manaCost() == null && optionalMay != null) {
+            if (trigger.requiredCastWithAdventure()) {
+                match.gameData().stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(),
+                        match.controllerId(), match.permanent().getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(new MayEffect(copyEffect, optionalMay.prompt()))),
+                        null, match.permanent().getId()));
+                return true;
+            }
             if (trigger.beforeCopyEffect() != null) {
                 TargetSpec targetSpec = copyEffect.targetSpec();
                 boolean playerTargetOnly = targetSpec.admits(TargetPredicate.Kind.PLAYER)
@@ -1811,7 +1819,8 @@ public class SpellCastTriggerCollectorService {
                     ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
                         match.permanent().getCard().getName() + "'s ability", resolved, null, match.permanent().getId())
                     : new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
-                        match.permanent().getCard().getName() + "'s ability", resolved);
+                        match.permanent().getCard().getName() + "'s ability", resolved, null, match.permanent().getId());
+            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
             if (carriesTriggeringSpellManaValue) {
                 entry.setTriggeringCardId(sc.spellCard().getId());
                 entry.setEventValue(triggeringSpellManaValue);

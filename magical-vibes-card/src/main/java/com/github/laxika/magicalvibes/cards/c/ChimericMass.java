@@ -29,7 +29,7 @@ public class ChimericMass extends Card {
                 List.of(new AnimatePermanentsEffect(
                         new CountersOnSource(CounterType.CHARGE), new CountersOnSource(CounterType.CHARGE),
                         List.of(CardSubtype.CONSTRUCT), Set.of(), null, Set.of(),
-                        GrantScope.SELF, EffectDuration.UNTIL_END_OF_TURN, null)),
+                        GrantScope.SELF, EffectDuration.UNTIL_END_OF_TURN, null, Set.of(), false, true)),
                 "{1}: Until end of turn, Chimeric Mass becomes a Construct artifact creature with \"This creature's power and toughness are each equal to the number of charge counters on it.\""
         ));
     }

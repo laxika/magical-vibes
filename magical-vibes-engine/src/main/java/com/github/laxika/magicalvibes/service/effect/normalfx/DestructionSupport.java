@@ -126,6 +126,7 @@ public class DestructionSupport {
     private final EnergyCountersEffectHandler energyCountersEffectHandler;
     private final DrawCardEffectHandler drawCardEffectHandler;
     private final ObjectProvider<DamageSupport> damageSupportProvider;
+    private final ObjectProvider<TapUntapSupport> tapUntapSupportProvider;
 
     public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
                                            List<UUID> protectedIds, String sourceName) {
@@ -590,6 +591,7 @@ public class DestructionSupport {
         List<Permanent> permanents = ids.stream()
                 .map(permId -> gameQueryService.findPermanentById(gameData, permId))
                 .filter(java.util.Objects::nonNull)
+                .filter(permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent))
                 .toList();
         beginSimultaneousCreatureDeaths(gameData, permanents);
         try {
@@ -932,10 +934,13 @@ public class DestructionSupport {
         if (source == null) {
             return;
         }
+        Permanent lastKnownSource = new Permanent(source);
+        lastKnownSource.setCard(permanentRemovalService.snapshotEffectivePermanentCard(gameData, source));
+        entry.setSourcePermanentSnapshot(lastKnownSource);
         boolean destroyed = tryDestroyAndLog(gameData, source, entry.getCard().getName());
         if (destroyed) {
-            dealNoncombatDamageToPlayer(gameData, entry.getControllerId(), damage,
-                    entry.getCard().getName(), entry.getEffectiveDamageSourceCard());
+            damageSupportProvider.getObject().dealDamageToPlayer(
+                    gameData, entry, entry.getControllerId(), damage);
             gameOutcomeService.checkWinCondition(gameData);
         }
     }
@@ -960,7 +965,8 @@ public class DestructionSupport {
             return;
         }
         UUID currentControllerId = gameQueryService.findPermanentController(gameData, self.getId());
-        if (!entry.getControllerId().equals(currentControllerId)) {
+        if (!entry.getControllerId().equals(currentControllerId)
+                || gameQueryService.cantBeSacrificed(gameData, self)) {
             return;
         }
         if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, self)) {
@@ -973,7 +979,7 @@ public class DestructionSupport {
     private void tapSourcePermanent(GameData gameData, StackEntry entry) {
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (sourcePermanent != null) {
-            sourcePermanent.tap();
+            tapUntapSupportProvider.getObject().tapPermanent(gameData, sourcePermanent, entry.getControllerId());
             gameLogService.append(gameData, GameLog.cardThen(sourcePermanent.getCard(), " is tapped."));
             log.info("Game {} - {} is tapped (no matching creature to sacrifice)",
                     gameData.id, sourcePermanent.getCard().getName());
@@ -992,7 +998,7 @@ public class DestructionSupport {
         if (enchanted == null) {
             return;
         }
-        enchanted.tap();
+        tapUntapSupportProvider.getObject().tapPermanent(gameData, enchanted, entry.getControllerId());
         gameLogService.append(gameData,
                 GameLog.cardTextCard(entry.getCard(), " taps ", enchanted.getCard(), "."));
         log.info("Game {} - {} taps enchanted permanent {}",

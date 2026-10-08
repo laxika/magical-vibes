@@ -225,9 +225,15 @@ public class MiscTriggerCollectorService {
             return true;
         }
         List<CardEffect> triggeredEffects = cardEffects.stream()
+                .filter(triggeredEffect -> !(triggeredEffect instanceof
+                        com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect)
+                        || match.permanent().getChosenPermanentId() != null)
                 .map(triggeredEffect -> triggeredEffect instanceof DestroyLinkedPermanentEffect destroy
                         ? new DestroyLinkedPermanentEffect(
                                 destroy.cannotBeRegenerated(), match.permanent().getChosenPermanentId())
+                        : triggeredEffect instanceof com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect remove
+                        ? new com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect(
+                                remove.mode(), match.permanent().getChosenPermanentId(), null)
                         : triggeredEffect instanceof ReturnCardsExiledWithSourceOnUntapEffect
                         ? new ReturnCardsExiledWithSourceOnUntapEffect(
                                 match.gameData().exileReturnOnPermanentLeave
@@ -236,6 +242,7 @@ public class MiscTriggerCollectorService {
                                         .collect(java.util.stream.Collectors.toSet()))
                         : triggeredEffect)
                 .toList();
+        if (triggeredEffects.isEmpty()) return true;
 
         boolean needsTarget = triggeredEffects.stream()
                 .anyMatch(triggeredEffect ->
@@ -998,7 +1005,7 @@ public class MiscTriggerCollectorService {
         TriggerContext.EnchantedPermanentTap ept = (TriggerContext.EnchantedPermanentTap) ctx;
         // Chronic Flooding: "its controller mills three cards". TARGET_PLAYER reads the entry's
         // targetId, so bake the tapped permanent's controller — no target is chosen.
-        match.gameData().enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
@@ -1006,7 +1013,9 @@ public class MiscTriggerCollectorService {
                 new ArrayList<>(List.of(e)),
                 ept.tappedPermanentControllerId(),
                 match.permanent().getId()
-        ));
+        );
+        entry.setNonTargeting(true);
+        match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers, enchanted permanent's controller mills",
                 match.gameData().id, match.permanent().getCard().getName());
@@ -3166,6 +3175,14 @@ public class MiscTriggerCollectorService {
         TargetFilter targetFilter = targetGroupIndex >= 0
                 ? sourceCard.getSpellTargets().get(targetGroupIndex).getFilter()
                 : sourceCard.getTargetFilter();
+        var damagedPlayerRestriction = new com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate(
+                damage.damagedPlayerId());
+        if (targetFilter instanceof com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter permanentFilter) {
+            targetFilter = new com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter(
+                    new com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate(
+                            List.of(permanentFilter.predicate(), damagedPlayerRestriction)),
+                    permanentFilter.errorMessage());
+        }
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 sourceCard,
                 match.controllerId(),

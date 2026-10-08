@@ -134,19 +134,20 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
                 ? damageEntry.getSourcePermanentId() : damageEntry.getEffectiveDamageSourceCard().getId();
         int damageBefore = gameData.damageDealtThisTurnBySource.getOrDefault(damageSourceId, 0);
         boolean previousExilesCreaturesDamaged = damageEntry.isExilesCreaturesDamaged();
-        damageEntry.setExilesCreaturesDamaged(e.exileInsteadOfDie());
+        damageEntry.setExilesCreaturesDamaged(e.exileInsteadOfDie() && !e.preventRegenerationWithoutDamage());
         try {
             if (unpreventable) {
                 boolean previous = gameData.damageCantBePreventedThisTurn;
                 gameData.damageCantBePreventedThisTurn = true;
                 try {
                     damageDealt = damageSupport.resolveAnyTargetDamage(gameData, damageEntry, targetId, rawDamage,
-                            e.cantRegenerate(), e.cantBeRedirectedWhenUnpreventable());
+                            e.cantRegenerate() && !e.preventRegenerationWithoutDamage(), e.cantBeRedirectedWhenUnpreventable());
                 } finally {
                     gameData.damageCantBePreventedThisTurn = previous;
                 }
             } else {
-                damageDealt = damageSupport.resolveAnyTargetDamage(gameData, damageEntry, targetId, rawDamage, e.cantRegenerate());
+                damageDealt = damageSupport.resolveAnyTargetDamage(gameData, damageEntry, targetId, rawDamage,
+                        e.cantRegenerate() && !e.preventRegenerationWithoutDamage());
             }
         } finally {
             damageEntry.setExilesCreaturesDamaged(previousExilesCreaturesDamaged);

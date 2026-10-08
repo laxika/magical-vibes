@@ -119,8 +119,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
 
     private void resolveTriggering(GameData gameData, StackEntry entry) {
         UUID triggeringId = entry.getTriggeringPermanentId();
-        if (triggeringId == null
-                || gameData.creatureTapCountsThisTurn.getOrDefault(triggeringId, 0) != 1) {
+        if (triggeringId == null) {
             return;
         }
         Permanent triggering = gameQueryService.findPermanentById(gameData, triggeringId);

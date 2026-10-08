@@ -26,9 +26,9 @@ public class CavalierOfDawn extends Card {
                         new CreateTokenEffect("Golem", 3, 3, null,
                                 List.of(CardSubtype.GOLEM), Set.of(), Set.of(CardType.ARTIFACT))));
 
-        addEffect(EffectSlot.ON_DEATH, new ReturnTargetCardsFromGraveyardToHandEffect(
+        addEffect(EffectSlot.ON_DEATH, ReturnTargetCardsFromGraveyardToHandEffect.exactlyOneForTriggeredAbility(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.ARTIFACT),
-                        new CardTypePredicate(CardType.ENCHANTMENT))), 1));
+                        new CardTypePredicate(CardType.ENCHANTMENT)))));
     }
 }

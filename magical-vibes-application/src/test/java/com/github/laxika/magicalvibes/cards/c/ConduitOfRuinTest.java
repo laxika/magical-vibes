@@ -171,6 +171,7 @@ class ConduitOfRuinTest extends BaseCardTest {
     @Test
     @DisplayName("The first creature discount becomes available again on the next turn")
     void reductionResetsOnLaterTurn() {
+        harness.setHand(player2, List.of());
         addCreatureReady(player1, new ConduitOfRuin());
         harness.setHand(player1, List.of(new KozileksChanneler()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);

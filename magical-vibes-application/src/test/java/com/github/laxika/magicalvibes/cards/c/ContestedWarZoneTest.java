@@ -21,7 +21,7 @@ class ContestedWarZoneTest extends BaseCardTest {
     void tappingAddsColorlessMana() {
         Permanent warZone = addContestedWarZone(player1);
 
-        harness.tapPermanent(player1, 0);
+        harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(warZone.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
@@ -159,20 +159,23 @@ class ContestedWarZoneTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage queues the control change and leaves time to respond")
     void controlChangeUsesTheStack() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
         Permanent warZone = addContestedWarZone(player2);
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
 
-        harness.resolveCombatDamage();
+        resolveCombat(player1);
 
         harness.assertLife(player2, 18);
         harness.assertOnBattlefield(player2, "Contested War Zone");
         harness.assertNotOnBattlefield(player1, "Contested War Zone");
         assertThat(gd.stack).hasSize(1);
 
-        harness.tapPermanent(player2, 0);
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, 0, null, null);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         resolveAllTriggers();
 
@@ -183,13 +186,15 @@ class ContestedWarZoneTest extends BaseCardTest {
     @Test
     @DisplayName("Each creature dealing combat damage creates a separate control-change trigger")
     void multipleAttackersCreateSeparateTriggers() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
         addContestedWarZone(player2);
         addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
         addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
 
-        harness.resolveCombatDamage();
+        resolveCombat(player1);
 
         harness.assertLife(player2, 16);
         assertThat(gd.stack).hasSize(2);

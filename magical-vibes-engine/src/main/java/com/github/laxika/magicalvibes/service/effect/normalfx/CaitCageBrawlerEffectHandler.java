@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CaitCageBrawlerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
+import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
+import org.springframework.beans.factory.ObjectProvider;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Component;
 public class CaitCageBrawlerEffectHandler implements NormalEffectHandlerBean {
 
     private final DrawService drawService;
+    private final ObjectProvider<CardChoiceHandlerService> cardChoiceHandlerServiceProvider;
     private final GameQueryService gameQueryService;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final PermanentCounterSupport permanentCounterSupport;
@@ -35,6 +38,9 @@ public class CaitCageBrawlerEffectHandler implements NormalEffectHandlerBean {
         CaitCageBrawlerState state = gameData.caitCageBrawler;
         if (!state.active) {
             state.active = true;
+            gameData.eachPlayerRummage.reset();
+            gameData.eachPlayerRummage.active = true;
+            gameData.eachPlayerRummage.deferDiscards = true;
             state.controllerId = entry.getControllerId();
             state.defendingPlayerId = defendingPlayerId(gameData, entry);
             state.remaining.add(state.controllerId);
@@ -48,8 +54,13 @@ public class CaitCageBrawlerEffectHandler implements NormalEffectHandlerBean {
                 drawService.resolveDrawCard(gameData, playerId);
             }
         } else if (state.currentPlayerId != null) {
-            state.discardedManaValues.put(state.currentPlayerId,
-                    gameData.lastDiscardedCardManaValue);
+            UUID selectingPlayerId = state.currentPlayerId;
+            gameData.eachPlayerRummage.selectedDiscards.stream()
+                    .filter(selection -> selection.playerId().equals(selectingPlayerId))
+                    .findFirst()
+                    .flatMap(selection -> gameData.playerHands.get(selectingPlayerId).stream()
+                            .filter(card -> card.getId().equals(selection.cardId())).findFirst())
+                    .ifPresent(card -> state.discardedManaValues.put(selectingPlayerId, card.getManaValue()));
             state.currentPlayerId = null;
         }
 
@@ -61,6 +72,7 @@ public class CaitCageBrawlerEffectHandler implements NormalEffectHandlerBean {
         while (!state.remaining.isEmpty()) {
             UUID playerId = state.remaining.removeFirst();
             state.currentPlayerId = playerId;
+            gameData.eachPlayerRummage.currentPlayerId = playerId;
             List<Card> hand = gameData.playerHands.get(playerId);
             boolean opponentDiscard = !playerId.equals(state.controllerId);
             if (hand == null || hand.isEmpty()
@@ -85,6 +97,10 @@ public class CaitCageBrawlerEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void finish(GameData gameData, StackEntry entry, CaitCageBrawlerState state) {
+        var discardedCounts = cardChoiceHandlerServiceProvider.getObject().discardCollectedCards(
+                gameData, List.copyOf(gameData.eachPlayerRummage.selectedDiscards), state.controllerId);
+        state.discardedManaValues.keySet().removeIf(playerId -> discardedCounts.getOrDefault(playerId, 0) == 0);
+        gameData.eachPlayerRummage.reset();
         Integer controllerDiscard = state.discardedManaValues.get(state.controllerId);
         Integer defendingDiscard = state.defendingPlayerId == null
                 ? null : state.discardedManaValues.get(state.defendingPlayerId);

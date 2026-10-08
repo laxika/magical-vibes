@@ -139,7 +139,7 @@ class CombustionManTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, target));
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.passBothPriorities());
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertInGraveyard(player2, "Mountain");
         harness.assertLife(player2, 20);
     }

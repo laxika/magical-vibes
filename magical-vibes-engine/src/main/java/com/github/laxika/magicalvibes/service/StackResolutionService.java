@@ -95,6 +95,9 @@ public class StackResolutionService {
     private final StateBasedActionService stateBasedActionService;
     private final GameQueryService gameQueryService;
     private final TargetLegalityService targetLegalityService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.MutationSupport mutationSupport;
     private final GameLogService gameLogService;
     private final EffectResolutionService effectResolutionService;
     private final PlayerInputService playerInputService;
@@ -678,6 +681,10 @@ public class StackResolutionService {
         Card card = entry.getCard();
         Card characteristics = disturbCharacteristics(entry, card);
         UUID controllerId = entry.getControllerId();
+
+        if (entry.isCastWithMutate() && mutationSupport.beginResolvingMutation(gameData, entry)) {
+            return;
+        }
 
         if (!entry.isCastFaceDown() && cloneService.prepareCloneReplacementEffect(
                 gameData, controllerId, characteristics, entry.getTargetId(), entry.getXValue(),

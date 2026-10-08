@@ -100,6 +100,8 @@ public class Permanent {
     @Setter private boolean backupAbilityCopyUsedThisTurn;
     private final List<Integer> blockingTargets = new ArrayList<>();
     private final List<UUID> blockingTargetIds = new ArrayList<>();
+    /** Creatures this permanent blocked during the current combat, retained when it leaves combat. */
+    private final List<UUID> blockedAttackerIdsThisCombat = new ArrayList<>();
     /** Identifies the attacking band (CR 702.22) this creature was declared in, or null if it is not
      *  in a band. Shared by every member of the same band. Set at declare-attackers time and cleared
      *  by {@link #clearCombatState()} when combat ends; persists for the rest of combat even if banding
@@ -513,6 +515,9 @@ public class Permanent {
     @Setter private boolean exileIfLeavesBattlefield;
     /** If true, this permanent is exiled instead of being put into a graveyard from the battlefield. */
     @Setter private boolean exileIfDying;
+    @Setter private long exileIfDyingTimestamp;
+    @Setter private Integer lastKnownAuraCount;
+    @Setter private Integer lastKnownEquipmentCount;
     /** If true, this permanent is exiled instead of going to any other zone when it leaves the battlefield this turn. */
     @Setter private boolean exileIfLeavesBattlefieldUntilEndOfTurn;
     @Setter private boolean enteredViaUnearth;
@@ -686,6 +691,8 @@ public class Permanent {
      * to the destination zone.
      */
     private final List<Card> meldComponentCards = new ArrayList<>();
+    /** Physical components of a creature merged by mutate, ordered from top to bottom. */
+    private final List<Card> mutatedComponentCards = new ArrayList<>();
     /** Activated abilities temporarily granted by one-shot effects until end of turn
      *  (e.g. Navigator's Compass adding a basic land mana ability to a land).
      *  Cleared every turn by {@link #resetModifiers()}. */
@@ -819,6 +826,7 @@ public class Permanent {
         this.backupAbilityCopyUsedThisTurn = source.backupAbilityCopyUsedThisTurn;
         this.blockingTargets.addAll(source.blockingTargets);
         this.blockingTargetIds.addAll(source.blockingTargetIds);
+        this.blockedAttackerIdsThisCombat.addAll(source.blockedAttackerIdsThisCombat);
         this.bandId = source.bandId;
         this.summoningSick = source.summoningSick;
         this.persistentPowerModifier = source.persistentPowerModifier;
@@ -980,6 +988,9 @@ public class Permanent {
         this.unblockableIfDefenderControlsUntilEndOfTurn.addAll(source.unblockableIfDefenderControlsUntilEndOfTurn);
         this.exileIfLeavesBattlefield = source.exileIfLeavesBattlefield;
         this.exileIfDying = source.exileIfDying;
+        this.exileIfDyingTimestamp = source.exileIfDyingTimestamp;
+        this.lastKnownAuraCount = source.lastKnownAuraCount;
+        this.lastKnownEquipmentCount = source.lastKnownEquipmentCount;
         this.exileIfLeavesBattlefieldUntilEndOfTurn = source.exileIfLeavesBattlefieldUntilEndOfTurn;
         this.enteredViaUnearth = source.enteredViaUnearth;
         this.shroudIgnoredByPlayersUntilEndOfTurn.addAll(source.shroudIgnoredByPlayersUntilEndOfTurn);
@@ -1032,6 +1043,7 @@ public class Permanent {
         this.controlledDragonAsCast = source.controlledDragonAsCast;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts;
         this.tributePaid = source.tributePaid;
+        this.renowned = source.renowned;
         this.castFromZone = source.castFromZone;
         this.enteredFromZone = source.enteredFromZone;
         this.putOntoBattlefieldWithAbilitySourcePermanentId = source.putOntoBattlefieldWithAbilitySourcePermanentId;
@@ -1048,6 +1060,7 @@ public class Permanent {
         this.grantedDevour = source.grantedDevour;
         this.devouredCreatures.addAll(source.devouredCreatures);
         this.meldComponentCards.addAll(source.meldComponentCards);
+        this.mutatedComponentCards.addAll(source.mutatedComponentCards);
         this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);
         this.adaptOverridesUntilEndOfTurn = source.adaptOverridesUntilEndOfTurn;
         this.persistentGrantedActivatedAbilities.addAll(source.persistentGrantedActivatedAbilities);
@@ -1310,6 +1323,9 @@ public class Permanent {
 
     public void addBlockingTargetId(UUID permanentId) {
         this.blockingTargetIds.add(permanentId);
+        if (!blockedAttackerIdsThisCombat.contains(permanentId)) {
+            blockedAttackerIdsThisCombat.add(permanentId);
+        }
     }
 
     public void setSummoningSick(boolean summoningSick) {
@@ -1394,11 +1410,16 @@ public class Permanent {
         devouredCreatures.add(devoured);
     }
 
-    /**
-     * Cards that move when this permanent leaves the battlefield. Melded permanents are
-     * represented by their component cards (CR 701.37); otherwise the original card.
-     */
+    /** Whether this permanent consists of physical components merged by mutate. */
+    public boolean isMergedByMutation() {
+        return !mutatedComponentCards.isEmpty();
+    }
+
+    /** Cards and tokens which move together when this permanent leaves the battlefield. */
     public List<Card> cardsLeavingBattlefield() {
+        if (isMergedByMutation()) {
+            return List.copyOf(mutatedComponentCards);
+        }
         if (!meldComponentCards.isEmpty()) {
             return List.copyOf(meldComponentCards);
         }
@@ -1411,6 +1432,9 @@ public class Permanent {
 
     public void setBlockedThisCombat(boolean blockedThisCombat) {
         this.blockedThisCombat = blockedThisCombat;
+        if (!blockedThisCombat) {
+            blockedAttackerIdsThisCombat.clear();
+        }
     }
 
     /**

@@ -50,21 +50,25 @@ public class AddManaEqualToEnchantedPermanentManaCostEffectHandler implements No
         if (enchanted == null) {
             enchanted = entry.getAttachedPermanentSnapshot();
         }
-        if (enchanted == null) {
-            return;
+        boolean fromMilledCost = ((AddManaEqualToEnchantedPermanentManaCostEffect) effect)
+                .coloredSymbolsOfMilledCostCards();
+        List<Set<ManaColor>> choices;
+        if (fromMilledCost) {
+            choices = entry.getCardsMilledAsActivationCost().stream()
+                    .filter(card -> card.getParsedManaCost() != null)
+                    .flatMap(card -> card.getParsedManaCost().getManaProductionChoices().stream())
+                    .filter(choice -> !choice.equals(Set.of(ManaColor.COLORLESS)))
+                    .toList();
+        } else {
+            if (enchanted == null || enchanted.getCard().getParsedManaCost() == null) return;
+            choices = enchanted.getCard().getParsedManaCost().getManaProductionChoices();
         }
-
-        ManaCost manaCost = enchanted.getCard().getParsedManaCost();
-        if (manaCost == null) {
-            return;
-        }
-        List<Set<ManaColor>> choices = manaCost.getManaProductionChoices();
         if (choices.isEmpty()) {
             return;
         }
 
         UUID controllerId = entry.getControllerId();
-        boolean fromCreature = gameQueryService.isCreature(gameData, aura);
+        boolean fromCreature = aura != null && gameQueryService.isCreature(gameData, aura);
         List<Set<ManaColor>> selectableChoices = choices.stream()
                 .filter(choice -> choice.size() > 1)
                 .toList();

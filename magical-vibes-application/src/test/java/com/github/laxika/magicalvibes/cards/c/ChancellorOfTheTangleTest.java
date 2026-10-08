@@ -140,6 +140,8 @@ class ChancellorOfTheTangleTest {
     @Test
     @DisplayName("Chancellor does not trigger from hand on subsequent turns")
     void doesNotTriggerOnSubsequentTurns() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.skipMulligan();
         // Set hand with Chancellor after the mulligan (so it wasn't in opening hand during first upkeep)
         harness.setHand(player1, List.of(new ChancellorOfTheTangle()));

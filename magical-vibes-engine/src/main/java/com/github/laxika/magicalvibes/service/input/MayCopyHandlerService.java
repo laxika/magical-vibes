@@ -356,7 +356,7 @@ public class MayCopyHandlerService {
             return;
         }
 
-        Card copiedCard = copyEntry.getCard();
+        Card copiedCard = copyEntry.getTargetingCard();
         List<UUID> validTargets = new ArrayList<>();
 
         if (EffectResolution.needsSpellTarget(copiedCard)) {

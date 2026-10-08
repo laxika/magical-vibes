@@ -27,6 +27,25 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class CephalidConstableTest extends BaseCardTest {
 
     @Test
+    void selectedTargetsWaitForTheCombatDamageAbilityToResolve() {
+        Permanent constable = addCreatureReady(player1, new CephalidConstable());
+        constable.setAttacking(true);
+        Permanent hawk = addCreatureReady(player2, new SuntailHawk());
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE,
+                () -> harness.handleMultiplePermanentsChosen(player1, List.of(hawk.getId())));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(hawk);
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, harness::passBothPriorities);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(hawk);
+        assertThat(gd.playerHands.get(player2.getId())).contains(hawk.getOriginalCard());
+    }
+
+    @Test
     @DisplayName("Dealing combat damage to player triggers multi-permanent choice")
     void combatDamageTriggersBounce() {
         Permanent constable = addCreatureReady(player1, new CephalidConstable());
@@ -34,6 +53,7 @@ class CephalidConstableTest extends BaseCardTest {
         addCreatureReady(player2, new SuntailHawk());
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
@@ -52,13 +72,15 @@ class CephalidConstableTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, constable)).isEqualTo(2);
         assertThat(gqs.getEffectiveCombatDamage(gd, constable)).isEqualTo(2);
 
-        declareAttackers(List.of(0));
+        constable.setAttacking(true);
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).maxCount())
                 .isEqualTo(2);
 
         harness.handleMultiplePermanentsChosen(player1, List.of(hawk.getId(), verge.getId()));
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId()))
@@ -73,10 +95,12 @@ class CephalidConstableTest extends BaseCardTest {
         Permanent hawk = addCreatureReady(player2, new SuntailHawk());
 
         resolveCombat();
+        resolveAllTriggers();
 
         UUID hawkId = hawk.getId();
 
         harness.handleMultiplePermanentsChosen(player1, List.of(hawkId));
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Suntail Hawk");
         harness.assertInHand(player2, "Suntail Hawk");
@@ -95,7 +119,9 @@ class CephalidConstableTest extends BaseCardTest {
         brigid.setTransformed(true);
 
         resolveCombat();
+        resolveAllTriggers();
         harness.handleMultiplePermanentsChosen(player1, List.of(brigid.getId()));
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(brigid);
         assertThat(gd.playerHands.get(player2.getId()))
@@ -111,8 +137,10 @@ class CephalidConstableTest extends BaseCardTest {
         addCreatureReady(player2, new SuntailHawk());
 
         resolveCombat();
+        resolveAllTriggers();
 
         harness.handleMultiplePermanentsChosen(player1, List.of());
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Suntail Hawk");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("chooses not to return"));
@@ -126,6 +154,7 @@ class CephalidConstableTest extends BaseCardTest {
         // player2 has no permanents
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("has no permanents"));
@@ -141,6 +170,7 @@ class CephalidConstableTest extends BaseCardTest {
         blocker.addBlockingTarget(0);
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
     }
@@ -154,6 +184,7 @@ class CephalidConstableTest extends BaseCardTest {
         Permanent hawk2 = addCreatureReady(player2, new SuntailHawk());
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).maxCount()).isEqualTo(1);
 
@@ -171,10 +202,12 @@ class CephalidConstableTest extends BaseCardTest {
         Permanent hawk = addCreatureReady(player2, new SuntailHawk());
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
 
         harness.handleMultiplePermanentsChosen(player1, List.of(hawk.getId()));
+        resolveAllTriggers();
 
         // Game should have advanced past combat damage (auto-passes through END_OF_COMBAT)
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -190,8 +223,10 @@ class CephalidConstableTest extends BaseCardTest {
         addCreatureReady(player2, new SuntailHawk());
 
         resolveCombat();
+        resolveAllTriggers();
 
         harness.handleMultiplePermanentsChosen(player1, List.of());
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
@@ -205,11 +240,13 @@ class CephalidConstableTest extends BaseCardTest {
         Permanent defendersPermanent = addCreatureReady(player2, new BorderPatrol());
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(attackersPermanent.getId())))
                 .isInstanceOf(IllegalStateException.class);
 
         harness.handleMultiplePermanentsChosen(player1, List.of(defendersPermanent.getId()));
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attackersPermanent);
         assertThat(gd.playerHands.get(player2.getId())).contains(defendersPermanent.getCard());
@@ -227,11 +264,13 @@ class CephalidConstableTest extends BaseCardTest {
         Permanent patrol2 = addCreatureReady(player2, new BorderPatrol());
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).maxCount())
                 .isEqualTo(2);
 
         harness.handleMultiplePermanentsChosen(player1, List.of(patrol1.getId(), patrol2.getId()));
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId()).stream().map(Permanent::getId).toList())
                 .doesNotContain(patrol1.getId(), patrol2.getId());
@@ -246,8 +285,10 @@ class CephalidConstableTest extends BaseCardTest {
         Permanent noncreature = harness.addToBattlefieldAndReturn(player2, new EpicStruggle());
 
         resolveCombat();
+        resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         harness.handleMultiplePermanentsChosen(player1, List.of(noncreature.getId()));
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId()).stream().map(Permanent::getId).toList())
                 .doesNotContain(noncreature.getId());
@@ -263,6 +304,7 @@ class CephalidConstableTest extends BaseCardTest {
         Permanent hawk = addCreatureReady(player2, new SuntailHawk());
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
                 .contains(hawk.getId())
@@ -271,6 +313,7 @@ class CephalidConstableTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.handleMultiplePermanentsChosen(player1, List.of(hawk.getId()));
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Troll Ascetic");
         harness.assertInHand(player2, "Suntail Hawk");
@@ -286,7 +329,9 @@ class CephalidConstableTest extends BaseCardTest {
         Permanent hawk = addCreatureReady(player2, hawkCard);
 
         resolveCombat();
+        resolveAllTriggers();
         harness.handleMultiplePermanentsChosen(player1, List.of(hawk.getId()));
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(hawk);
         assertThat(gd.playerHands.get(player1.getId())).contains(hawkCard);
@@ -306,6 +351,7 @@ class CephalidConstableTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, constable));
         resolveAllTriggers();
         harness.handleMultiplePermanentsChosen(player1, List.of(hawk.getId()));
+        resolveAllTriggers();
 
         harness.assertInHand(player1, "Cephalid Constable");
         harness.assertInHand(player2, "Suntail Hawk");

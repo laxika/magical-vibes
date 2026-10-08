@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -90,6 +94,7 @@ class ColfenorsUrnTest extends BaseCardTest {
         Permanent urn = addUrn();
         Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
         gd.stolenCreatures.put(spider.getId(), player1.getId());
+        recordControlEffect(spider, player2);
         castWrath();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -102,6 +107,7 @@ class ColfenorsUrnTest extends BaseCardTest {
         addUrn();
         Permanent spider = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
         gd.stolenCreatures.put(spider.getId(), player2.getId());
+        recordControlEffect(spider, player1);
         castWrath();
 
         harness.assertInGraveyard(player2, "Giant Spider");
@@ -127,6 +133,7 @@ class ColfenorsUrnTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(urn);
         gd.playerBattlefields.get(player2.getId()).add(urn);
         gd.stolenCreatures.put(urn.getId(), player1.getId());
+        recordControlEffect(urn, player2);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Colfenor's Urn");
@@ -218,5 +225,11 @@ class ColfenorsUrnTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
+    }
+    private void recordControlEffect(Permanent permanent, com.github.laxika.magicalvibes.model.Player controller) {
+        gd.addFloatingEffect(new FloatingContinuousEffect(
+                java.util.UUID.randomUUID(), "Control setup", null, controller.getId(),
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
     }
 }

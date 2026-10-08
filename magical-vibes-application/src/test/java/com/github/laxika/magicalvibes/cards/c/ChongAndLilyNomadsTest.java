@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -120,7 +121,9 @@ class ChongAndLilyNomadsTest extends BaseCardTest {
         assertThat(opposingCreature.getPowerModifier()).isZero();
         saga.setCounterCount(CounterType.LORE, 1);
         assertThat(creature.getPowerModifier()).isEqualTo(2);
-        advanceToUpkeep(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getToughnessModifier()).isZero();
     }
@@ -155,6 +158,7 @@ class ChongAndLilyNomadsTest extends BaseCardTest {
 
         assertThat(firstSaga.getCounterCount(CounterType.LORE)).isZero();
         assertThat(secondSaga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+        resolveAllTriggers();
         assertThat(countPermanents(player1, "Ally")).isEqualTo(2);
     }
 

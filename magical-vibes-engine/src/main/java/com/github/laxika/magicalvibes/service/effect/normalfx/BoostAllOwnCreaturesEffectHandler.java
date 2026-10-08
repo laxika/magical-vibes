@@ -41,7 +41,12 @@ public class BoostAllOwnCreaturesEffectHandler implements NormalEffectHandlerBea
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var boost = (BoostAllOwnCreaturesEffect) effect;
-        List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+        List<Permanent> battlefield = boost.declaredAttackers()
+                ? gameData.playerBattlefields.values().stream().flatMap(List::stream).toList()
+                : gameData.playerBattlefields.get(entry.getControllerId());
+        var declaredAttackerIds = entry.getAttackingPermanentSnapshots().stream()
+                .map(Permanent::getId)
+                .collect(java.util.stream.Collectors.toSet());
 
         // Lock the amount in once, before any boost lands — re-reading per creature would inflate
         // power-derived amounts (e.g. Overwhelming Stampede) as earlier boosts raise the max power.
@@ -68,7 +73,8 @@ public class BoostAllOwnCreaturesEffectHandler implements NormalEffectHandlerBea
                         || entry.getDeclaredTargetIds().contains(permanent.getId()))) {
                 continue;
             }
-            if (gameQueryService.isCreature(gameData, permanent)
+            if ((boost.declaredAttackers() ? declaredAttackerIds.contains(permanent.getId())
+                    : gameQueryService.isCreature(gameData, permanent))
                     && (boost.filter() == null
                         || predicateEvaluationService.matchesPermanentPredicate(permanent, boost.filter(), filterContext))) {
                 if (boost.duration() == GrantDuration.UNTIL_YOUR_NEXT_TURN) {

@@ -142,9 +142,11 @@ class ChandraPyromasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
-        // Each copy pauses for its own target; aim all three at the opponent.
+        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());
 
         assertThat(gd.stack.stream().filter(e -> e.getCard().getName().equals("Shock")).count())
@@ -341,6 +343,29 @@ class ChandraPyromasterTest extends BaseCardTest {
     }
 
     @Test
+    void ultimateCanCastOneCopyAndDeclineTheOtherTwo() {
+        addReadyChandra(player1, 7);
+        Shock shock = new Shock();
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(shock, forest));
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(shock, forest);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void ultimateCannotCastCopiesThroughSilence() {
         addReadyChandra(player1, 7);
         Shock shock = new Shock();
@@ -353,6 +378,10 @@ class ChandraPyromasterTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+
+        for (int i = 0; i < 3; i++) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();

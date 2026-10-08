@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -82,6 +84,8 @@ class CelestialSwordTest extends BaseCardTest {
     @Test
     @DisplayName("Activation during an end step waits until the following end step")
     void activationDuringEndStepWaitsUntilNextEndStep() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -92,14 +96,14 @@ class CelestialSwordTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.activateAbility(player1, 0, null, bears.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
         harness.assertOnBattlefield(player1, "Balduvian Bears");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(basePower);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(baseToughness);
 
-        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Balduvian Bears");
         harness.assertInGraveyard(player1, "Balduvian Bears");

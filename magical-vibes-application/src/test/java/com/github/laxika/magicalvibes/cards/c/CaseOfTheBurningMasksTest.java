@@ -181,6 +181,7 @@ class CaseOfTheBurningMasksTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0, firstTarget.getId());
         harness.passBothPriorities();
+        resolveAllTriggers();
         return findPermanent(player1, "Case of the Burning Masks");
     }
 

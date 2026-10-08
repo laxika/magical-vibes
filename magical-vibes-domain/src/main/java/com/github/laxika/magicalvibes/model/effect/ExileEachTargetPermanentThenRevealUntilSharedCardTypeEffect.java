@@ -1,16 +1,35 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CardType;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
 /**
- * Exiles each chosen permanent, then has each permanent's controller reveal cards from their
- * library until they reveal a permanent card sharing a card type with that permanent. Each found
- * card is put onto the battlefield under its controller's control and the other revealed cards are
- * shuffled into that library.
+ * Exiles the chosen permanents simultaneously, then replaces them one at a time using their
+ * last-known card types. Each controller chooses the order of their own replacements.
  */
-public record ExileEachTargetPermanentThenRevealUntilSharedCardTypeEffect() implements RemovalEffect {
+public record ExileEachTargetPermanentThenRevealUntilSharedCardTypeEffect(
+        List<Replacement> remaining, UUID selectedPermanentId) implements RemovalEffect {
+
+    public ExileEachTargetPermanentThenRevealUntilSharedCardTypeEffect {
+        remaining = remaining == null ? null : List.copyOf(remaining);
+    }
+
+    public ExileEachTargetPermanentThenRevealUntilSharedCardTypeEffect() {
+        this(null, null);
+    }
+
+    /** Immutable characteristics and controller captured before the simultaneous exile event. */
+    public record Replacement(UUID permanentId, UUID controllerId, String name, Set<CardType> cardTypes) {
+        public Replacement {
+            cardTypes = Set.copyOf(cardTypes);
+        }
+    }
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetPredicates.permanent());
+        return remaining == null ? TargetSpec.harmful(TargetPredicates.permanent()) : TargetSpec.NONE;
     }
 
     @Override

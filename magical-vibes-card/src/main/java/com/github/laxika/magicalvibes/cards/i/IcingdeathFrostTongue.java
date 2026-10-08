@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1018")
-@CardRegistration(set = "SLD", collectorNumber = "1019")
 public class IcingdeathFrostTongue extends Card {
 
     public IcingdeathFrostTongue() {

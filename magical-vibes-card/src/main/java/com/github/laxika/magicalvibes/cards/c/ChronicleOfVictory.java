@@ -24,7 +24,7 @@ public class ChronicleOfVictory extends Card {
         addEffect(EffectSlot.STATIC, new BoostCreaturesOfChosenSubtypeEffect(2, 2));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
                 Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE),
-                GrantScope.OWN_CREATURES,
+                GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSourceChosenSubtypePredicate()));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new ChosenSubtypeSpellCastTriggerEffect(
                 List.of(new DrawCardEffect()), false));

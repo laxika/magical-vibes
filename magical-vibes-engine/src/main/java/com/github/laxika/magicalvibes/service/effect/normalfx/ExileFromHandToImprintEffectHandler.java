@@ -33,11 +33,15 @@ public class ExileFromHandToImprintEffectHandler implements NormalEffectHandlerB
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ExileFromHandToImprintEffect) effect;
-        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (sourcePermanent == null) {
-            log.info("Game {} - Source permanent no longer on battlefield, imprint from hand fizzles", gameData.id);
+        UUID sourcePermanentId = entry.getSourcePermanentId() != null
+                ? entry.getSourcePermanentId() : entry.getTargetId();
+        if (sourcePermanentId == null && entry.getSourcePermanentSnapshot() != null) {
+            sourcePermanentId = entry.getSourcePermanentSnapshot().getId();
+        }
+        if (sourcePermanentId == null) {
             return;
         }
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
 
         UUID controllerId = entry.getControllerId();
         List<Card> hand = gameData.playerHands.get(controllerId);
@@ -61,7 +65,8 @@ public class ExileFromHandToImprintEffectHandler implements NormalEffectHandlerB
         }
 
         playerInputService.beginImprintFromHandChoice(gameData, controllerId, validIndices,
-                "Choose " + e.description() + " from your hand to exile and imprint.", sourcePermanent.getId(),
+                "Choose " + e.description() + " from your hand to exile and imprint.",
+                sourcePermanent != null ? sourcePermanent.getId() : sourcePermanentId,
                 e.grantCastPermission(), e.faceDown());
     }
 }

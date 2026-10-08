@@ -50,6 +50,8 @@ public class ExileTopCardMayCastOrDealDamageEffectHandler implements NormalEffec
         UUID controllerId = entry.getControllerId();
         List<Card> library = gameData.playerDecks.get(controllerId);
         if (library == null || library.isEmpty()) {
+            dealDamageToPlayersEffectHandler.resolve(gameData, entry,
+                    new DealDamageToPlayersEffect(exileEffect.damage(), DamageRecipient.EACH_OPPONENT));
             return;
         }
 

@@ -59,7 +59,7 @@ class ChronomancerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent chronomancer = findPermanent(player1, "Chronomancer");
-        assertThat(chronomancer.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, chronomancer, Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Chronomancer");
     }
 
@@ -73,7 +73,7 @@ class ChronomancerTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
 
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Chronomancer");

@@ -28,9 +28,12 @@ public class GrantTriggeredAbilityEffectHandler implements StaticEffectHandlerBe
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantTriggeredAbilityEffect) effect;
         boolean scopeMatch = switch (grant.scope()) {
+            case ALL_PERMANENTS -> !context.target().getId().equals(context.sourceId())
+                    && support.matchesStaticFilter(context, context.target(), grant.filter());
             case OWN_PERMANENTS -> context.targetOnSameBattlefield()
                     && support.matchesStaticFilter(context, context.target(), grant.filter());
-            case SELF -> context.target().getId().equals(context.sourceId());
+            case SELF -> context.target().getId().equals(context.sourceId())
+                    && support.matchesStaticFilter(context, context.target(), grant.filter());
             case SELF_AND_PAIRED -> {
                 UUID targetId = context.target().getId();
                 UUID sourceId = context.sourceId();

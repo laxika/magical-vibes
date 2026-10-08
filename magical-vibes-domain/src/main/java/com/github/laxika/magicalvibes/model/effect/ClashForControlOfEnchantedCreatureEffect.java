@@ -8,5 +8,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * performs a clash for the aura's controller and, based on the outcome, moves control of the
  * enchanted creature to the winner of the clash.
  */
-public record ClashForControlOfEnchantedCreatureEffect() implements CardEffect {
+public record ClashForControlOfEnchantedCreatureEffect(java.util.UUID enchantedId, java.util.UUID recipientId)
+        implements CardEffect {
+    public ClashForControlOfEnchantedCreatureEffect() {
+        this(null, null);
+    }
 }

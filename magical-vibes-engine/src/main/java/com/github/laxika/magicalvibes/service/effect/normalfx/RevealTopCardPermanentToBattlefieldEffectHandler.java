@@ -2,29 +2,27 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPermanentToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class RevealTopCardPermanentToBattlefieldEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
-    private final BattlefieldEntryService battlefieldEntryService;
+    private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -59,21 +57,8 @@ public class RevealTopCardPermanentToBattlefieldEffectHandler implements NormalE
             return;
         }
 
-        library.removeFirst();
-        Permanent permanent = new Permanent(topCard);
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
-        gameLogService.append(gameData, GameLog.entersBattlefieldUnder(topCard, playerName));
-
-        if (topCard.hasType(CardType.CREATURE)) {
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, topCard, null, false);
-        }
-        if (topCard.hasType(CardType.PLANESWALKER) && topCard.getLoyalty() != null) {
-            permanent.setCounterCount(CounterType.LOYALTY, topCard.getLoyalty());
-            permanent.setSummoningSick(false);
-        }
-
-        log.info("Game {} - {} puts {} onto the battlefield via {}",
-                gameData.id, playerName, topCard.getName(), sourceName);
+        battlefieldEntryBatchSupport.begin(gameData, List.of(
+                new BattlefieldEntryCard(controllerId, controllerId, topCard, Zone.LIBRARY, null)));
     }
 
     private boolean isPermanentCard(Card card) {

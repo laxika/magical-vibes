@@ -16,7 +16,7 @@ public class ColfenorsUrn extends Card {
     public ColfenorsUrn() {
         // Whenever a creature with toughness 4 or greater is put into your graveyard from the
         // battlefield, you may exile it (tracked with this artifact).
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+        addEffect(EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentToughnessAtLeastPredicate(4),
                         new MayEffect(new ExileTriggeringCreatureAndTrackWithSourceEffect(),

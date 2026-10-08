@@ -47,7 +47,7 @@ class ClericClassTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(clericClass.getCounterCount(CounterType.LEVEL)).isEqualTo(1);
+        assertThat(clericClass.getClassLevel()).isEqualTo(2);
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         harness.assertLife(player1, 23);
     }

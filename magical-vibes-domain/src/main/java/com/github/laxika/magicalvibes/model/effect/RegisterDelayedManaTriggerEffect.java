@@ -12,5 +12,5 @@ import com.github.laxika.magicalvibes.model.ManaColor;
  * @param color  the color of mana to add
  * @param amount the amount of mana to add
  */
-public record RegisterDelayedManaTriggerEffect(ManaColor color, int amount) implements CardEffect {
+public record RegisterDelayedManaTriggerEffect(ManaColor color, int amount) implements PregameChoiceEffect {
 }

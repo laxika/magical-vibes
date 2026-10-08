@@ -33,6 +33,7 @@ class ChangeOfPlansTest extends BaseCardTest {
         harness.castInstantForX(player1, 0, 2, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
+        harness.handlePermanentChosen(player1, first.getId());
         discardByName("Grizzly Bears");
         discardByName("Mountain");
 
@@ -134,6 +135,8 @@ class ChangeOfPlansTest extends BaseCardTest {
 
     @Test
     void canPhaseOutEveryTargetAndTheyReturnOnlyOnControllersNextTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new ChangeOfPlans(), new GrizzlyBears(), new Mountain()));
@@ -143,6 +146,7 @@ class ChangeOfPlansTest extends BaseCardTest {
 
         harness.castInstantForX(player1, 0, 2, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, first.getId());
         discardByName("Grizzly Bears");
         discardByName("Mountain");
         harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));

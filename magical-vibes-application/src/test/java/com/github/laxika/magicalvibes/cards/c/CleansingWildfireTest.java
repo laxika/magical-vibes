@@ -33,6 +33,7 @@ class CleansingWildfireTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Forest");
         harness.assertInGraveyard(player2, "Forest");
+        harness.handleMayAbilityChosen(player2, true);
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().playerId()).isEqualTo(player2.getId());
@@ -53,6 +54,7 @@ class CleansingWildfireTest extends BaseCardTest {
         castWildfire(target);
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, -1);
 
         harness.assertInGraveyard(player2, "Forest");
@@ -98,6 +100,7 @@ class CleansingWildfireTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Island()));
         castWildfire(target);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
 
         harness.assertOnBattlefield(player2, "Forest");
@@ -112,6 +115,7 @@ class CleansingWildfireTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Island(), new CleansingWildfire()));
         castWildfire(target);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
 
         harness.assertInGraveyard(player1, "Forest");
@@ -126,6 +130,7 @@ class CleansingWildfireTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Island()));
         castWildfire(target);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
 
         harness.assertInGraveyard(player2, "Forest");
         harness.assertInHand(player1, "Island");

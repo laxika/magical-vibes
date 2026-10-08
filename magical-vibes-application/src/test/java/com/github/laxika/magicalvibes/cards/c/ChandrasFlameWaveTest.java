@@ -45,6 +45,7 @@ class ChandrasFlameWaveTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5);
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(chandraFlamesFury.getId()));
 
         harness.assertInHand(player1, "Chandra, Flame's Fury");
         harness.assertNotInGraveyard(player1, "Chandra, Flame's Fury");
@@ -53,14 +54,15 @@ class ChandrasFlameWaveTest extends BaseCardTest {
     @Test
     @DisplayName("Finds Chandra, Flame's Fury in the library and puts it into hand")
     void findsNamedCardInLibrary() {
-        harness.setLibrary(player1, List.of(new ChandraFlamesFury()));
+        ChandraFlamesFury libraryCopy = new ChandraFlamesFury();
+        harness.setLibrary(player1, List.of(libraryCopy));
         harness.setHand(player1, List.of(new ChandrasFlameWave()));
         harness.addMana(player1, ManaColor.RED, 5);
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
-        harness.handleCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class)).isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of(libraryCopy.getId()));
 
         harness.assertInHand(player1, "Chandra, Flame's Fury");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
@@ -102,7 +104,7 @@ class ChandrasFlameWaveTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5);
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
-        harness.handleCardChosen(player1, -1);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         harness.assertLife(player2, 18);
         harness.assertNotInHand(player1, "Chandra, Flame's Fury");

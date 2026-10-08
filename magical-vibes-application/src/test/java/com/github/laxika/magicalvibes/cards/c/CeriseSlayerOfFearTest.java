@@ -143,6 +143,7 @@ class CeriseSlayerOfFearTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new LlanowarElves(), new GrizzlyBears()));
         gd.lifeGainedThisTurn.put(player1.getId(), 1);
         harness.forceActivePlayer(player1);
+        gd.mainPhasesBegunThisTurn = 1;
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.stack).hasSize(1);
@@ -162,6 +163,7 @@ class CeriseSlayerOfFearTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         gd.lifeGainedThisTurn.put(player1.getId(), 2);
         harness.forceActivePlayer(player1);
+        gd.mainPhasesBegunThisTurn = 1;
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
         harness.passBothPriorities();
@@ -179,8 +181,9 @@ class CeriseSlayerOfFearTest extends BaseCardTest {
     private void advanceToPostcombatMain(Player activePlayer) {
         harness.setHand(activePlayer, List.of());
         harness.forceActivePlayer(activePlayer);
+        gd.mainPhasesBegunThisTurn = 1;
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.passUntil(activePlayer, TurnStep.POSTCOMBAT_MAIN);
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

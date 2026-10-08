@@ -32,22 +32,29 @@ public record ChosenColorStrictlyMostCommonAmongOpponentNontokens() implements C
      * has been chosen yet.
      */
     public static boolean isStrictlyMostCommon(GameData gameData, Permanent source, UUID controllerId) {
+        return isStrictlyMostCommon(gameData, source, controllerId, Permanent::getEffectiveColors);
+    }
+
+    public static boolean isStrictlyMostCommon(GameData gameData, Permanent source, UUID controllerId,
+            java.util.function.Function<Permanent, ? extends java.util.Collection<CardColor>> colors) {
         CardColor chosen = source.getChosenColor();
         if (chosen == null || controllerId == null) {
             return false;
         }
         for (UUID opponentId : gameData.orderedPlayerIds) {
-            if (opponentId.equals(controllerId)) {
+            if (source.getChosenPlayerIds().isEmpty() ? opponentId.equals(controllerId)
+                    : !source.getChosenPlayerIds().contains(opponentId)) {
                 continue;
             }
-            if (isStrictlyMostCommonAmong(gameData.playerBattlefields.get(opponentId), chosen)) {
+            if (isStrictlyMostCommonAmong(gameData.playerBattlefields.get(opponentId), chosen, colors)) {
                 return true;
             }
         }
         return false;
     }
 
-    private static boolean isStrictlyMostCommonAmong(List<Permanent> battlefield, CardColor chosen) {
+    private static boolean isStrictlyMostCommonAmong(List<Permanent> battlefield, CardColor chosen,
+            java.util.function.Function<Permanent, ? extends java.util.Collection<CardColor>> colors) {
         if (battlefield == null || battlefield.isEmpty()) {
             return false;
         }
@@ -59,7 +66,7 @@ public record ChosenColorStrictlyMostCommonAmongOpponentNontokens() implements C
             if (permanent.getCard().isToken()) {
                 continue;
             }
-            for (CardColor color : permanent.getEffectiveColors()) {
+            for (CardColor color : colors.apply(permanent)) {
                 counts.merge(color, 1, Integer::sum);
             }
         }

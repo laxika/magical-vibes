@@ -27,7 +27,7 @@ public class CharismaBobblehead extends Card {
         // {4}, {T}: Create X 1/1 white Soldier creature tokens, where X is the number of
         // Bobbleheads you control. Activate only as a sorcery.
         addActivatedAbility(new ActivatedAbility(
-                false,
+                true,
                 "{4}",
                 List.of(new CreateTokenEffect(
                         new PermanentCount(

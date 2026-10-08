@@ -10,7 +10,15 @@ import java.util.UUID;
 /** A one-shot ability scheduled for the next end step, retaining its source and affected object. */
 public record DelayedEndStepTrigger(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
                                     UUID affectedPermanentId, CardEffect effect,
-                                    List<DelayedTargetGroup> targetGroups) implements DelayedAction {
+                                    List<DelayedTargetGroup> targetGroups,
+                                    List<UUID> affectedPermanentIds) implements DelayedAction {
+
+    public DelayedEndStepTrigger(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
+                                 UUID affectedPermanentId, CardEffect effect,
+                                 List<DelayedTargetGroup> targetGroups) {
+        this(controllerId, sourceCard, sourcePermanentId, affectedPermanentId, effect,
+                targetGroups, affectedPermanentId == null ? List.of() : List.of(affectedPermanentId));
+    }
 
     public DelayedEndStepTrigger(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
                                  UUID affectedPermanentId, CardEffect effect) {
@@ -19,5 +27,6 @@ public record DelayedEndStepTrigger(UUID controllerId, Card sourceCard, UUID sou
 
     public DelayedEndStepTrigger {
         targetGroups = List.copyOf(targetGroups);
+        affectedPermanentIds = List.copyOf(affectedPermanentIds);
     }
 }

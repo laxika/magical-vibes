@@ -636,6 +636,22 @@ public class MayCastHandlerService {
     public void handleCastFromGraveyardChoice(GameData gameData, Player player, boolean accepted,
                                                PendingMayAbility ability,
                                                CastTargetInstantOrSorceryFromGraveyardEffect castEffect) {
+        if (!castEffect.withoutPayingManaCost() && !castEffect.anyManaType() && castEffect.copyCount() == 0) {
+            CardPredicate filter = castEffect.filter() != null ? castEffect.filter()
+                    : new com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate(List.of(
+                    new com.github.laxika.magicalvibes.model.filter.CardTypePredicate(CardType.INSTANT),
+                    new com.github.laxika.magicalvibes.model.filter.CardTypePredicate(CardType.SORCERY)));
+            CardPredicate exileFilter = new com.github.laxika.magicalvibes.model.filter.CardTruePredicate();
+            if (!castEffect.exileInsteadOfGraveyard()) {
+                exileFilter = new com.github.laxika.magicalvibes.model.filter.CardNotPredicate(exileFilter);
+            }
+            CastCardFromGraveyardEffect delegated = new CastCardFromGraveyardEffect(
+                    filter, castEffect.scope(), exileFilter, false, false,
+                    castEffect.afterSuccessfulCastEffect());
+            handleCastCardFromGraveyardChoice(gameData, player, accepted,
+                    ability.withEffects(List.of(delegated)), delegated);
+            return;
+        }
         handleCastFromGraveyardChoice(gameData, player, accepted, ability,
                 castEffect.scope(), castEffect.filter(), castEffect.withoutPayingManaCost(),
                 castEffect.exileInsteadOfGraveyard(), castEffect.anyManaType(), castEffect.copyCount(),
@@ -878,7 +894,7 @@ public class MayCastHandlerService {
                 graveyardOwnerId, ability.sourcePermanentId(), ability.sourcePowerAtTrigger(), ability.xValue());
 
         if (EffectResolution.needsTarget(spellCard) || EffectResolution.needsSpellTarget(spellEffects)) {
-            List<UUID> validTargets = buildValidSpellTargets(gameData, spellCard, spellEffects, player.getId());
+            List<UUID> validTargets = buildValidSpellTargets(gameData, spellCard, spellEffects, player.getId(), xValue, false);
             if (validTargets.isEmpty()) {
                 gameLogService.append(gameData, GameLog.cardThen(cardToCast, " has no valid targets."));
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -1244,6 +1260,12 @@ public class MayCastHandlerService {
             return;
         }
 
+        if (cardToPlay.hasType(CardType.LAND)
+                && !spellCastingService.canPlayLandForMadness(gameData, player.getId(), cardToPlay)) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         // The card leaves exile as it's played — clear the source's imprint pointer.
         if (ability.sourcePermanentId() != null) {
             Permanent source = gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
@@ -1479,6 +1501,11 @@ public class MayCastHandlerService {
                 interaction.costLabel(), chosenX);
     }
 
+    private boolean hasOnlyOptionalDeclaredTargets(Card card, int xValue) {
+        return !card.isAura() && !card.getSpellTargets().isEmpty()
+                && !card.hasDynamicTargetCount() && card.getEffectiveMinTargets(xValue) == 0;
+    }
+
     /**
      * Handles the madness "you may cast this for its madness cost" choice (CR 702.34b).
      * Pays {@link PendingMayAbility#manaCost()} then casts from exile, ignoring type timing.
@@ -1550,6 +1577,7 @@ public class MayCastHandlerService {
                 ? cardToCast.getEffects(EffectSlot.SPELL) : List.of();
         if ((cardToCast.hasType(CardType.INSTANT) || cardToCast.hasType(CardType.SORCERY) || cardToCast.isAura())
                 && (EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast))
+                && !hasOnlyOptionalDeclaredTargets(cardToCast, 0)
                 && buildValidSpellTargets(gameData, cardToCast, madnessEffects, player.getId(), 0, true).isEmpty()) {
             gameData.removeFromExile(cardToCast.getId());
             graveyardService.addCardToGraveyard(gameData, player.getId(), cardToCast);
@@ -2114,10 +2142,13 @@ public class MayCastHandlerService {
                 ? List.of()
                 : new ArrayList<>(card.getEffects(EffectSlot.SPELL));
 
+        boolean zeroOptionalTargets = hasOnlyOptionalDeclaredTargets(card, xValue)
+                && buildValidSpellTargets(gameData, card, spellEffects, playerId, xValue,
+                "madness".equals(costLabel)).isEmpty();
         boolean zeroDividedDamage = "madness".equals(costLabel)
                 && EffectResolution.needsDamageDistribution(spellEffects)
                 && dealDividedDamageSupport.damageAssignedToSingleTarget(gameData, spellEffects, playerId, xValue, true) == 0;
-        if (!zeroDividedDamage && (!isPermanentSpell || card.isAura())
+        if (!zeroDividedDamage && !zeroOptionalTargets && (!isPermanentSpell || card.isAura())
                 && (EffectResolution.needsTarget(card) || EffectResolution.needsSpellTarget(card))) {
             boolean castForMadnessCost = "madness".equals(costLabel);
             List<UUID> validTargets = buildValidSpellTargets(gameData, card, spellEffects, player.getId(),

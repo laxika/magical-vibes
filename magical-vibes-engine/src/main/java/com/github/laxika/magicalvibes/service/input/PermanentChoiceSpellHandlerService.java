@@ -404,12 +404,20 @@ public class PermanentChoiceSpellHandlerService {
                     && ect.physicalCard().getBackFaceCard() != null
                     && ect.physicalCard().getBackFaceCard().getName().equals(ect.cardToCast().getName()));
             entry.setSourceZone(Zone.EXILE);
+            var exiledEntry = gameData.findExiledCard(entry.getPhysicalCard().getId());
+            if (!ect.copy()) {
+                entry.setOwnerIdOverride(exiledEntry == null
+                        ? entry.getPhysicalCard().getOwnerId() : exiledEntry.ownerId());
+            }
             entry.setExileInsteadOfGraveyard(gameData.exileInsteadOfGraveyard.remove(ect.cardToCast().getId()));
             if (gameData.spellsGrantedHasteOnEntry.remove(ect.cardToCast().getId())) {
                 entry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
             }
             entry.setSuspendHasteOnEntry(gameData.spellsGrantedSuspendHasteOnEntry.remove(ect.cardToCast().getId()));
             if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, entry)) return;
+            if (gameData.removeFromExile(entry.getPhysicalCard().getId()) && !ect.copy()) {
+                gameData.recordCardPlayedFromExile(ect.controllerId());
+            }
             gameData.stack.add(entry);
 
             gameData.recordSpellCast(ect.controllerId(), ect.cardToCast());
@@ -578,12 +586,20 @@ public class PermanentChoiceSpellHandlerService {
                 && ect.physicalCard().getBackFaceCard() != null
                 && ect.physicalCard().getBackFaceCard().getName().equals(card.getName()));
         entry.setSourceZone(Zone.EXILE);
+        var exiledEntry = gameData.findExiledCard(entry.getPhysicalCard().getId());
+        if (!ect.copy()) {
+            entry.setOwnerIdOverride(exiledEntry == null
+                    ? entry.getPhysicalCard().getOwnerId() : exiledEntry.ownerId());
+        }
         entry.setExileInsteadOfGraveyard(gameData.exileInsteadOfGraveyard.remove(card.getId()));
         if (gameData.spellsGrantedHasteOnEntry.remove(card.getId())) {
             entry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
         }
         entry.setSuspendHasteOnEntry(gameData.spellsGrantedSuspendHasteOnEntry.remove(card.getId()));
         if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, entry)) return;
+        if (gameData.removeFromExile(entry.getPhysicalCard().getId()) && !ect.copy()) {
+            gameData.recordCardPlayedFromExile(ect.controllerId());
+        }
         gameData.stack.add(entry);
 
         gameData.recordSpellCast(ect.controllerId(), card);
@@ -618,13 +634,26 @@ public class PermanentChoiceSpellHandlerService {
         boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
         Card spellCard = gct.castWithAdventure() ? gct.cardToCast().getBackFaceCard() : gct.cardToCast();
 
-        if (target != null || isPlayerTarget) {
+        Card graveyardTarget = gameQueryService.findCardInGraveyardById(gameData, permanentId);
+        boolean isGraveyardTarget = graveyardTarget != null && gct.spellEffects().stream()
+                .anyMatch(effect -> effect.targetSpec().admits(
+                        com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.GRAVEYARD_CARD));
+        if (isGraveyardTarget) {
+            try {
+                targetLegalityService.validateGraveyardEffectTargetOnly(
+                        gameData, spellCard, gct.spellEffects(), permanentId, gct.xValue(), gct.controllerId());
+            } catch (IllegalStateException ex) {
+                isGraveyardTarget = false;
+            }
+        }
+        if (target != null || isPlayerTarget || isGraveyardTarget) {
             if (!gct.withoutPayingManaCost()) {
                 try {
                     spellCastingService.paySpellManaCostFromNonHandZone(gameData, gct.controllerId(), spellCard, gct.xValue(),
                             Zone.GRAVEYARD, gct.anyManaType());
                 } catch (IllegalStateException ex) {
-                    graveyardService.addCardToGraveyard(gameData, gct.controllerId(), gct.cardToCast());
+                    UUID ownerId = gct.ownerId() != null ? gct.ownerId() : gct.controllerId();
+                    graveyardService.addCardToGraveyard(gameData, ownerId, gct.cardToCast());
                     gameLogService.append(gameData, GameLog.cardThen(gct.cardToCast(), " can't be cast because its mana cost can't be paid."));
                     inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                     return;
@@ -645,6 +674,7 @@ public class PermanentChoiceSpellHandlerService {
                     permanentId,
                     null
             );
+            if (isGraveyardTarget) entry.setTargetZone(Zone.GRAVEYARD);
             entry.setCastWithAdventure(gct.castWithAdventure());
             entry.setExileInsteadOfGraveyard(gct.exileInsteadOfGraveyard());
             entry.setOwnerIdOverride(gct.ownerId());
@@ -681,7 +711,7 @@ public class PermanentChoiceSpellHandlerService {
 
             String targetName = isPlayerTarget
                     ? gameData.playerIdToName.get(permanentId)
-                    : target.getCard().getName();
+                    : isGraveyardTarget ? graveyardTarget.getName() : target.getCard().getName();
             
             gameLogService.append(gameData, GameLog.builder().card(castCharacteristics).text(" targets " + targetName + ".").build());
             log.info("Game {} - {} cast-from-graveyard targets {}", gameData.id, spellCard.getName(), targetName);
@@ -690,15 +720,9 @@ public class PermanentChoiceSpellHandlerService {
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         } else {
             UUID ownerId = gct.ownerId() != null ? gct.ownerId() : gct.controllerId();
-            if (gct.exileInsteadOfGraveyard()) {
-                gameData.addToExile(ownerId, gct.cardToCast());
-            } else {
-                graveyardService.addCardToGraveyard(gameData, ownerId, gct.cardToCast());
-            }
-            String destination = gct.exileInsteadOfGraveyard()
-                    ? "'s target is no longer valid. It is exiled."
-                    : "'s target is no longer valid. It is put into the graveyard.";
-            gameLogService.append(gameData, GameLog.cardThen(gct.cardToCast(), destination));
+            graveyardService.addCardToGraveyard(gameData, ownerId, gct.cardToCast());
+            gameLogService.append(gameData, GameLog.cardThen(gct.cardToCast(),
+                    "'s target is no longer valid. It remains in its owner's graveyard."));
             log.info("Game {} - {} cast-from-graveyard target no longer exists", gameData.id, gct.cardToCast().getName());
         }
 
@@ -730,7 +754,7 @@ public class PermanentChoiceSpellHandlerService {
         if (isGraveyardTarget) {
             try {
                 targetLegalityService.validateGraveyardEffectTargetOnly(
-                        gameData, hct.cardToCast(), hct.spellEffects(), permanentId, hct.xValue());
+                        gameData, hct.cardToCast(), hct.spellEffects(), permanentId, hct.xValue(), hct.controllerId());
             } catch (IllegalStateException e) {
                 isGraveyardTarget = false;
             }

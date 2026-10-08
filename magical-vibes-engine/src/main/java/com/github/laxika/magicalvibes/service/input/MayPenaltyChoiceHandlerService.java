@@ -1697,7 +1697,7 @@ public class MayPenaltyChoiceHandlerService {
             gameLogService.append(gameData, GameLog.text(opponentName + " chooses: " + controllerName
                     + " draws three cards (Combustible Gearhulk)."));
         } else {
-            List<Card> milled = graveyardService.resolveMillPlayer(gameData, controllerId, 3);
+            List<Card> milled = graveyardService.resolveMillPlayerAndReturnAllMilledCards(gameData, controllerId, 3);
             int damageAmount = milled.stream().mapToInt(Card::getManaValue).sum();
             if (damageAmount > 0) {
                 DealDamageToPlayersEffect damage =
@@ -2110,12 +2110,16 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost counterCost) {
-            // The counters go on the source itself, so nothing can make this cost unpayable.
             StackEntry counterEntry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,
                     ability.sourceCard().getName() + "'s ability", List.of(effect),
                     ability.targetCardId(), ability.sourcePermanentId());
-            forcedCostOrElseEffectHandler.payCounterOnSourceCost(gameData, counterEntry, counterCost);
+            counterEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
+            counterEntry.setActivePlayerId(ability.activePlayerId());
+            if (forcedCostOrElseEffectHandler.payCounterOnSourceCost(
+                    gameData, counterEntry, counterCost, decidingPlayerId)) {
+                forcedCostOrElseEffectHandler.resolvePaidEffects(gameData, counterEntry, effect, 0);
+            }
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             return;
         }

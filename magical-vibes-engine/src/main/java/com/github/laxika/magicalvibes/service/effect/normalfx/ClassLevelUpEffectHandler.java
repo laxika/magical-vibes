@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -37,11 +38,15 @@ public class ClassLevelUpEffectHandler implements NormalEffectHandlerBean {
         }
 
         source.setClassLevel(levelUp.level());
-        if (levelUp.gainedEffects().isEmpty()) {
+        List<CardEffect> levelEffects = levelUp.gainedEffects().isEmpty()
+                ? source.getCard().getEffects(levelUp.level() == 2
+                ? EffectSlot.ON_SELF_REACHES_LEVEL_TWO : EffectSlot.ON_SELF_REACHES_LEVEL_THREE)
+                : levelUp.gainedEffects();
+        if (levelEffects.isEmpty()) {
             return;
         }
 
-        List<CardEffect> gainedEffects = new ArrayList<>(levelUp.gainedEffects());
+        List<CardEffect> gainedEffects = new ArrayList<>(levelEffects);
         if (gainedEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     source.getCard(), entry.getControllerId(), gainedEffects));

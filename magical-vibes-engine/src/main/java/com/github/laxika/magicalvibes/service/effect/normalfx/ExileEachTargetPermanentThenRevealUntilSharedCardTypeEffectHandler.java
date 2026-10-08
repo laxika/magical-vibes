@@ -1,32 +1,26 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.*;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEachTargetPermanentThenRevealUntilSharedCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileEachTargetPermanentThenRevealUntilSharedCardTypeEffect.Replacement;
+import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
-import java.util.EnumSet;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ExileEachTargetPermanentThenRevealUntilSharedCardTypeEffectHandler
@@ -35,8 +29,8 @@ public class ExileEachTargetPermanentThenRevealUntilSharedCardTypeEffectHandler
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
     private final GameLogService gameLogService;
-    private final BattlefieldEntryService battlefieldEntryService;
-    private final CardSpecificSupport cardSpecificSupport;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final RevealUntilCardPredicateRestOnBottomRandomEffectHandler revealHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,127 +39,74 @@ public class ExileEachTargetPermanentThenRevealUntilSharedCardTypeEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<UUID> targetIds = new ArrayList<>(entry.targetsForEffect(effect));
-        if (targetIds.isEmpty() && entry.getTargetId() != null) {
-            targetIds = List.of(entry.getTargetId());
-        } else if (targetIds.isEmpty() && entry.getCard().getSpellTargets().size() == 1) {
-            targetIds = entry.getTargetIds();
+        var typed = (ExileEachTargetPermanentThenRevealUntilSharedCardTypeEffect) effect;
+        List<Replacement> remaining = typed.remaining() == null
+                ? exileTargets(gameData, entry, effect) : new ArrayList<>(typed.remaining());
+        if (remaining.isEmpty()) return;
+
+        int index = entry.getResolvingEffectIndex();
+        UUID controllerId = remaining.getFirst().controllerId();
+        List<Replacement> options = remaining.stream()
+                .filter(item -> item.controllerId().equals(controllerId)).toList();
+        if (typed.selectedPermanentId() == null && options.size() > 1) {
+            entry.replaceEffectToResolve(index,
+                    new ExileEachTargetPermanentThenRevealUntilSharedCardTypeEffect(remaining, null));
+            List<String> labels = IntStream.range(0, options.size())
+                    .mapToObj(i -> (i + 1) + ": " + options.get(i).name()).toList();
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    controllerId, null, null,
+                    new ChoiceContext.PermanentReplacementOrder(
+                            options.stream().map(Replacement::permanentId).toList()),
+                    labels, "Choose the next permanent to replace."));
+            gameData.rerunCurrentEffectAfterInteraction = true;
+            return;
         }
 
-        List<ExiledPermanent> exiledPermanents = new ArrayList<>();
+        Replacement next = typed.selectedPermanentId() == null ? options.getFirst()
+                : options.stream().filter(item -> item.permanentId().equals(typed.selectedPermanentId()))
+                .findFirst().orElseThrow();
+        remaining.remove(next);
+        if (!remaining.isEmpty()) {
+            entry.insertEffectsToResolve(index + 1, List.of(
+                    new ExileEachTargetPermanentThenRevealUntilSharedCardTypeEffect(remaining, null)));
+        }
+        StackEntry revealEntry = new StackEntry(entry);
+        revealEntry.setControllerId(next.controllerId());
+        List<CardPredicate> predicates = next.cardTypes().stream()
+                .map(type -> (CardPredicate) new CardTypePredicate(type)).toList();
+        revealHandler.resolve(gameData, revealEntry,
+                new RevealUntilCardPredicateRestOnBottomRandomEffect(
+                        new CardAnyOfPredicate(predicates), LibrarySearchDestination.BATTLEFIELD), true);
+    }
+
+    private List<Replacement> exileTargets(GameData gameData, StackEntry entry, CardEffect effect) {
+        List<UUID> targetIds = entry.targetsForEffect(effect);
+        List<Permanent> targets = new ArrayList<>();
+        List<Replacement> snapshots = new ArrayList<>();
         for (UUID targetId : new LinkedHashSet<>(targetIds)) {
-            if (targetId == null) {
-                continue;
-            }
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target == null) {
-                continue;
-            }
             UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
-            if (controllerId == null) {
-                continue;
-            }
-
-            exiledPermanents.add(new ExiledPermanent(
-                    controllerId, snapshotCardTypes(gameData, target)));
-            permanentRemovalService.removePermanentToExile(gameData, target);
-            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is exiled."));
+            if (target == null || controllerId == null) continue;
+            targets.add(target);
+            snapshots.add(new Replacement(targetId, controllerId,
+                    gameQueryService.getEffectiveName(gameData, target),
+                    gameQueryService.getEffectiveCardTypes(gameData, target)));
         }
+        List<Replacement> exiled = new ArrayList<>();
+        permanentRemovalService.performSimultaneousRemovals(gameData, targets, () -> {
+            for (int i = 0; i < targets.size(); i++) {
+                Permanent target = targets.get(i);
+                if (permanentRemovalService.removePermanentToExile(gameData, target)) {
+                    exiled.add(snapshots.get(i));
+                    gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is exiled."));
+                }
+            }
+        });
         permanentRemovalService.removeOrphanedAuras(gameData);
-
-        for (ExiledPermanent exiled : exiledPermanents) {
-            replaceFromLibrary(gameData, exiled);
-        }
-    }
-
-    private Set<CardType> snapshotCardTypes(GameData gameData, Permanent permanent) {
-        EnumSet<CardType> types = EnumSet.noneOf(CardType.class);
-        if (gameQueryService.isArtifact(gameData, permanent)) {
-            types.add(CardType.ARTIFACT);
-        }
-        if (gameQueryService.isCreature(gameData, permanent)) {
-            types.add(CardType.CREATURE);
-        }
-        if (gameQueryService.isEnchantment(gameData, permanent)) {
-            types.add(CardType.ENCHANTMENT);
-        }
-        if (gameQueryService.isPlaneswalker(gameData, permanent)) {
-            types.add(CardType.PLANESWALKER);
-        }
-        if (gameQueryService.isLand(gameData, permanent)) {
-            types.add(CardType.LAND);
-        }
-        return Set.copyOf(types);
-    }
-
-    private void replaceFromLibrary(GameData gameData, ExiledPermanent exiled) {
-        String controllerName = gameData.playerIdToName.get(exiled.controllerId());
-        List<Card> deck = gameData.playerDecks.get(exiled.controllerId());
-        if (deck == null) {
-            return;
-        }
-
-        List<Card> revealedCards = new ArrayList<>();
-        Card foundCard = null;
-        while (!deck.isEmpty()) {
-            Card card = deck.removeFirst();
-            revealedCards.add(card);
-            if (!permanentTypesOf(card).isEmpty()
-                    && cardSpecificSupport.cardMatchesAnyType(card, exiled.cardTypes())) {
-                foundCard = card;
-                break;
-            }
-        }
-
-        if (revealedCards.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(
-                    controllerName + "'s library is empty — no cards are revealed."));
-            return;
-        }
-
-        String revealedNames = revealedCards.stream()
-                .map(Card::getName)
-                .collect(Collectors.joining(", "));
-        gameLogService.append(gameData, GameLog.text(controllerName + " reveals " + revealedNames + "."));
-
-        if (foundCard == null) {
-            deck.addAll(revealedCards);
-            LibraryShuffleHelper.shuffleLibrary(gameData, exiled.controllerId());
-            gameLogService.append(gameData, GameLog.text(
-                    controllerName + " reveals their entire library — no matching card found. Library is shuffled."));
-            return;
-        }
-
-        Permanent enteringPermanent = new Permanent(foundCard);
-        battlefieldEntryService.putPermanentOntoBattlefield(
-                gameData, exiled.controllerId(), enteringPermanent);
-        gameLogService.append(gameData, GameLog.entersBattlefieldUnder(foundCard, controllerName));
-
-        if (foundCard.hasType(CardType.CREATURE)) {
-            battlefieldEntryService.handleCreatureEnteredBattlefield(
-                    gameData, exiled.controllerId(), foundCard, null, false);
-        }
-        if (foundCard.hasType(CardType.PLANESWALKER) && foundCard.getLoyalty() != null) {
-            enteringPermanent.setCounterCount(CounterType.LOYALTY, foundCard.getLoyalty());
-            enteringPermanent.setSummoningSick(false);
-        }
-
-        revealedCards.remove(foundCard);
-        deck.addAll(revealedCards);
-        LibraryShuffleHelper.shuffleLibrary(gameData, exiled.controllerId());
-        gameLogService.append(gameData, GameLog.text(controllerName + " shuffles their library."));
-    }
-
-    private record ExiledPermanent(UUID controllerId, Set<CardType> cardTypes) {
-    }
-
-    private Set<CardType> permanentTypesOf(Card card) {
-        EnumSet<CardType> types = EnumSet.noneOf(CardType.class);
-        if (card.getType() != null) {
-            types.add(card.getType());
-        }
-        types.addAll(card.getAdditionalTypes());
-        types.removeIf(type -> !type.isPermanentType() || type == CardType.KINDRED);
-        return types;
+        List<UUID> playerOrder = new ArrayList<>(gameData.orderedPlayerIds);
+        int activeIndex = playerOrder.indexOf(gameData.activePlayerId);
+        if (activeIndex >= 0) java.util.Collections.rotate(playerOrder, -activeIndex);
+        exiled.sort(Comparator.comparingInt(item -> playerOrder.indexOf(item.controllerId())));
+        return exiled;
     }
 }

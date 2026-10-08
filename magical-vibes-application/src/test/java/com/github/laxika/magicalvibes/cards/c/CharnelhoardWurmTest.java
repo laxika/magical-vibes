@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -108,10 +109,12 @@ class CharnelhoardWurmTest extends BaseCardTest {
         Card target = new CylianSunsinger();
         harness.setGraveyard(player1, List.of(target));
         addCreatureReady(player1, new CharnelhoardWurm());
-        addCreatureReady(player2, new CylianSunsinger());
+        Permanent blocker = addCreatureReady(player2, new CylianSunsinger());
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0,
+                Map.of(blocker.getId(), 2, player2.getId(), 4));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));

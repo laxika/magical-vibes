@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.h.HeartWolf;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -111,6 +112,8 @@ class ChiefWargsCompanyTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Wolf")).hasSize(1);
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player1, List.of()));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();

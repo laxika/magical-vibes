@@ -91,7 +91,8 @@ class CuriosityCrafterTest extends BaseCardTest {
         seedLibrary(1);
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        declareAttackers(player2, List.of(0));
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of());
         resolveCombat(player2);
         resolveAllTriggers();
 
@@ -136,6 +137,8 @@ class CuriosityCrafterTest extends BaseCardTest {
     @Test
     @DisplayName("A draw trigger resolves after Curiosity Crafter leaves the battlefield")
     void drawTriggerSurvivesSourceLeaving() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
         Permanent crafter = addCreatureReady(player1, new CuriosityCrafter());
         addReadyToken();
         seedLibrary(1);

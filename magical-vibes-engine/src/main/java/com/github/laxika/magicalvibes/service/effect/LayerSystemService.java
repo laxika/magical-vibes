@@ -1756,6 +1756,10 @@ public class LayerSystemService {
             }
             case RemoveCardTypeFromAttachedPermanentEffect remove -> {
                 manage(board, instance);
+                if (remove.duration() == EffectDuration.WHILE_ATTACHED
+                        && (instance.source() == null || !instance.source().permanent().isAttached())) {
+                    return;
+                }
                 for (PermanentSlot target : scopeTargets(gameData, instance, remove.scope(), null,
                         slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
@@ -3069,6 +3073,17 @@ public class LayerSystemService {
                         }
                     }
                 }
+                case ConditionalEffect ignored ->
+                        applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
+                                (target, harvested) -> {
+                                    if (harvested.isBasePTOverridden()) {
+                                        entries.add(new BasePtEntry(target.permanent().getId(),
+                                                harvested.getBasePowerOverride(),
+                                                harvested.getBaseToughnessOverride(),
+                                                instance.timestamp(), instance.position(),
+                                                provenanceSourceName(instance)));
+                                    }
+                                });
                 case SetBasePowerToughnessToAmountEffect ignored ->
                         applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
                                 (target, harvested) -> {

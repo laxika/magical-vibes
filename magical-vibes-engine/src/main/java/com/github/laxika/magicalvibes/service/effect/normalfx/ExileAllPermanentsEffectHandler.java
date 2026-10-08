@@ -60,6 +60,7 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
 
         permanentRemovalService.beginPermanentLeaveBatch(gameData);
         try {
+            permanentRemovalService.performSimultaneousRemovals(gameData, toExile, () -> {
             for (Permanent perm : toExile) {
                 boolean removed;
                 if (sourcePermanentId != null) {
@@ -93,6 +94,7 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
                 log.info("Game {} - {} is exiled by {}",
                         gameData.id, perm.getCard().getName(), entry.getCard().getName());
             }
+            });
         } finally {
             permanentRemovalService.endPermanentLeaveBatch(gameData);
         }

@@ -51,7 +51,7 @@ public class SearchLibraryForOneCardOfEachColorToHandEffectHandler implements No
             return;
         }
 
-        librarySearchSupport.startNextToHandPick(gameData, controllerId,
+        librarySearchSupport.startSingleSearchToHandPicks(gameData, controllerId,
                 LibrarySearchFollowUp.colorToHandPicks(COLORS));
     }
 }

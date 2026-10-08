@@ -131,6 +131,9 @@ public class DamageSupport {
         if (source == null && entry != null && entry.getSourcePermanentId() != null) {
             source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         }
+        if (source == null && entry != null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         UUID sourceControllerId = source == null
                 ? entry == null ? null : entry.getControllerId()
                 : gameQueryService.findPermanentController(gameData, source.getId());
@@ -167,7 +170,8 @@ public class DamageSupport {
             return 0;
         }
         if (gameQueryService.isDamageByCreaturePrevented(gameData, source)) {
-            damagePreventionService.applyAllByCreaturesPreventionLifeGain(gameData, rawDamage);
+            damagePreventionService.applyAllByCreaturesPreventionLifeGain(gameData, rawDamage,
+                    gameQueryService.findPermanentController(gameData, target.getId()));
             gameLogService.append(gameData, GameLog.textCardText("Damage dealt by ", source.getCard(), " is prevented."));
             return 0;
         }
@@ -1035,12 +1039,21 @@ public class DamageSupport {
     private boolean isGlobalCreaturePreventionForEntry(GameData gameData, StackEntry entry) {
         if (entry.getSourcePermanentId() == null) return false;
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        return gameQueryService.isDamageByCreaturePrevented(gameData, source);
+        if (source != null) return gameQueryService.isDamageByCreaturePrevented(gameData, source);
+        Permanent snapshot = entry.getSourcePermanentSnapshot();
+        Card sourceCard = entry.getEffectiveDamageSourceCard();
+        return gameQueryService.isDamagePreventable(gameData)
+                && sourceCard != null && sourceCard.hasType(CardType.CREATURE)
+                && (snapshot == null || !gameQueryService.damageCantBePreventedFromSource(gameData, snapshot))
+                && (gameData.preventAllDamageByCreatures
+                || gameData.playersWithDamageFromOpponentCreaturesPrevented.stream()
+                        .anyMatch(playerId -> !playerId.equals(entry.getControllerId())));
     }
 
-    private void applyGlobalCreaturePreventionLifeGain(GameData gameData, StackEntry entry, int damage) {
+    private void applyGlobalCreaturePreventionLifeGain(GameData gameData, StackEntry entry, int damage,
+                                                      UUID affectedPlayerId) {
         if (isGlobalCreaturePreventionForEntry(gameData, entry)) {
-            damagePreventionService.applyAllByCreaturesPreventionLifeGain(gameData, damage);
+            damagePreventionService.applyAllByCreaturesPreventionLifeGain(gameData, damage, affectedPlayerId);
         }
     }
 
@@ -1102,7 +1115,8 @@ public class DamageSupport {
                         || isSourcePermanentPreventedFromDealingDamage(gameData, entry)
                         || gameQueryService.hasProtectionFromDamageSource(gameData, targetPermanent, source,
                             entry.getControllerId()))) {
-                applyGlobalCreaturePreventionLifeGain(gameData, entry, rawDamage);
+                applyGlobalCreaturePreventionLifeGain(gameData, entry, rawDamage,
+                        gameQueryService.findPermanentController(gameData, targetPermanent.getId()));
                 gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
                 return 0;
             }
@@ -1653,9 +1667,10 @@ public class DamageSupport {
         }
         if (sourceDamagePrevented
                 || damagePreventionService.isNoncombatDamageFromAttackerPreventedForPlayer(gameData, playerId, damageSourceId)
-                || gameQueryService.isDamageFromMatchingSourcePreventedForPlayer(gameData, playerId, sourcePermanent)
+                || gameQueryService.isDamageFromMatchingSourcePreventedForPlayer(gameData, playerId, entry)
+                || isGlobalCreaturePreventionForEntry(gameData, entry)
                 || isSourcePermanentPreventedFromDealingDamage(gameData, entry)) {
-            applyGlobalCreaturePreventionLifeGain(gameData, entry, rawDamage);
+            applyGlobalCreaturePreventionLifeGain(gameData, entry, rawDamage, playerId);
             gameLogService.append(gameData, GameLog.cardThen(source,
                     "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
             return;

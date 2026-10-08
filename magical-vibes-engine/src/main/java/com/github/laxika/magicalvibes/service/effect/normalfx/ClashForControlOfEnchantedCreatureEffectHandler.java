@@ -36,15 +36,21 @@ public class ClashForControlOfEnchantedCreatureEffectHandler implements NormalEf
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var clash = (ClashForControlOfEnchantedCreatureEffect) effect;
+        if (clash.recipientId() != null) {
+            Permanent enchanted = gameQueryService.findPermanentById(gameData, clash.enchantedId());
+            if (enchanted != null) {
+                creatureControlService.applyControlEffect(gameData, clash.recipientId(), enchanted,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        EffectDuration.PERMANENT, null, entry.getCard().getName());
+            }
+            return;
+        }
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (aura == null || !aura.isAttached()) {
-            return;
+        if (aura == null) {
+            aura = entry.getSourcePermanentSnapshot();
         }
-
-        Permanent enchantedCreature = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
-        if (enchantedCreature == null) {
-            return;
-        }
+        UUID enchantedId = aura == null ? null : aura.getAttachedTo();
 
         UUID controllerId = entry.getControllerId();
         UUID opponentId = gameData.orderedPlayerIds.stream()
@@ -54,11 +60,14 @@ public class ClashForControlOfEnchantedCreatureEffectHandler implements NormalEf
         boolean won = triggerCollectionService.performClash(gameData, controllerId);
 
         UUID newControllerId = won ? controllerId : opponentId;
-        if (newControllerId != null) {
-            // Indefinite control change (no stated duration) — never reverted at end of turn.
-            creatureControlService.applyControlEffect(gameData, newControllerId, enchantedCreature,
-                    new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                    EffectDuration.PERMANENT, null, entry.getCard().getName());
+        java.util.List<CardEffect> followUps = new java.util.ArrayList<>();
+        followUps.add(new com.github.laxika.magicalvibes.model.effect.ScryEffect(
+                1, com.github.laxika.magicalvibes.model.effect.LibraryOwner.CONTROLLER, false));
+        followUps.add(new com.github.laxika.magicalvibes.model.effect.ScryEffect(
+                1, com.github.laxika.magicalvibes.model.effect.LibraryOwner.OPPONENT, false));
+        if (newControllerId != null && enchantedId != null) {
+            followUps.add(new ClashForControlOfEnchantedCreatureEffect(enchantedId, newControllerId));
         }
+        entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, followUps);
     }
 }

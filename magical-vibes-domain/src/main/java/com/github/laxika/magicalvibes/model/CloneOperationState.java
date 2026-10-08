@@ -13,6 +13,8 @@ public class CloneOperationState {
 
     public Card card;
     public Card physicalCard;
+    public Permanent preparedPermanent;
+    public PermanentChoiceContext.AuraEntryBatchChoice battlefieldEntryBatch;
     public boolean transformed;
     public UUID controllerId;
     public UUID etbTargetId;

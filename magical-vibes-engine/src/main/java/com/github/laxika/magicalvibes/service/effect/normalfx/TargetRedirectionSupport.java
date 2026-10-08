@@ -88,7 +88,9 @@ public class TargetRedirectionSupport {
             return targetLegalityService.checkGraveyardRetargetCandidate(gameData, spellCard, candidateTargetId, targetSpell.getControllerId()).isEmpty();
         }
 
-        return targetLegalityService.checkSpellTargeting(gameData, spellCard, candidateTargetId, null, targetSpell.getControllerId()).isEmpty();
+        return targetLegalityService.checkSpellTargeting(gameData, spellCard, candidateTargetId, null,
+                targetSpell.getControllerId(), EffectResolution.needsTarget(spellCard),
+                targetSpell.getXValue(), targetSpell.wasKicked(), targetSpell.isMadness()).isEmpty();
     }
 
     private boolean isValidNewTargetForAbility(GameData gameData, StackEntry abilityEntry, UUID candidateTargetId) {

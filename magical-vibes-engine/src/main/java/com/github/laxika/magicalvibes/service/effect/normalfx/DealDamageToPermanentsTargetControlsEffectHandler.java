@@ -36,7 +36,11 @@ public class DealDamageToPermanentsTargetControlsEffectHandler implements Normal
         var e = (DealDamageToPermanentsTargetControlsEffect) effect;
 
         UUID targetPlayerId = entry.getTargetId();
-        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) return;
+        if (targetPlayerId == null) return;
+        if (!gameData.playerIds.contains(targetPlayerId)) {
+            targetPlayerId = gameQueryService.findPermanentController(gameData, targetPlayerId);
+            if (targetPlayerId == null) return;
+        }
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
         String cardName = entry.getCard().getName();

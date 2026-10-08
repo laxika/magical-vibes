@@ -45,7 +45,7 @@ public class CatchRelease extends Card {
                         "Fuse — Catch and then Release",
                         List.of(catchHalf, releaseHalf),
                         List.of(permanent)
-                ).withManaCost("{5}{R}{R}{U}{W}")
+                ).withManaCost("{5}{R}{R}{U}{W}").onlyFromHand()
         )));
     }
 }

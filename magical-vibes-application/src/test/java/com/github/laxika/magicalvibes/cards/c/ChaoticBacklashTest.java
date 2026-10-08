@@ -102,6 +102,7 @@ class ChaoticBacklashTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0, player2.getId());
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.activateAbility(player1, 0, null, trapper.getId());
         resolveAllTriggers();
 

@@ -1995,9 +1995,13 @@ public class PermanentCounterSupport {
             boolean firstPlacementOnThisPermanent =
                     gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.add(target.getId());
             gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
-            firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId, count);
+            if (controllerId.equals(placingPlayerId)) {
+                firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId, count);
+            }
             if (gameQueryService.isCreature(gameData, target)) {
-                firePlusOnePlusOneCountersPutOnControlledCreatureTriggers(gameData, controllerId, count);
+                if (controllerId.equals(placingPlayerId)) {
+                    firePlusOnePlusOneCountersPutOnControlledCreatureTriggers(gameData, controllerId, count);
+                }
                 fireControllerPutPlusOnePlusOneCountersOnCreatureTriggers(
                         gameData, target, count, placingPlayerId, controllerId);
             }

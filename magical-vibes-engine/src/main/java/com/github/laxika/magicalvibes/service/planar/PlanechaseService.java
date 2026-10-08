@@ -150,7 +150,8 @@ public class PlanechaseService {
         if (game.planechase == null) return;
         PlanechaseState state = game.planechase;
         state.controllerId = game.activePlayerId;
-        state.lastRoll = result;
+        state.lastRoll = result == PlanarDieResult.BLANK && !state.blankRollChaosSources.isEmpty()
+                ? PlanarDieResult.CHAOS : result;
         state.lastRollPlayerId = playerId;
         state.rollSequence++;
         logs.append(game, GameLogEntry.text(game.playerIdToName.get(playerId)
@@ -158,11 +159,7 @@ public class PlanechaseService {
         triggers.checkControllerRollsPlanarDieTriggers(game, playerId,
                 state.lastRoll == PlanarDieResult.BLANK ? 0 : 1);
         switch (state.lastRoll) {
-            case BLANK -> {
-                if (state.faceUp.stream().anyMatch(object -> state.blankRollChaosSources.contains(object.getId()))) {
-                    chaos(game);
-                }
-            }
+            case BLANK -> { }
             case CHAOS -> chaos(game);
             case PLANESWALKER -> {
                 if (planarDiePlaneswalkIsReplaced(game)) {
@@ -248,7 +245,9 @@ public class PlanechaseService {
         PlanechaseState state = game.planechase;
         if (phasingService != null) phasingService.phaseInUntilPlaneswalk(game);
         state.faceUp.clear();
-        state.blankRollChaosSources.clear();
+        if (departing.stream().anyMatch(object -> object.getCard().hasType(CardType.PLANE))) {
+            state.blankRollChaosSources.clear();
+        }
         state.planeswalkedToNamesThisTurn.clear();
         for (PlanarObject object : departing) {
             state.deck.add(object.getCard());
@@ -268,7 +267,9 @@ public class PlanechaseService {
         if (phasingService != null) phasingService.phaseInUntilPlaneswalk(game);
         List<PlanarObject> departing = List.copyOf(state.faceUp);
         state.faceUp.clear();
-        state.blankRollChaosSources.clear();
+        if (departing.stream().anyMatch(object -> object.getCard().hasType(CardType.PLANE))) {
+            state.blankRollChaosSources.clear();
+        }
         state.planeswalkedToNamesThisTurn.clear();
 
         for (PlanarObject object : departing) {

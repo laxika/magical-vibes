@@ -51,5 +51,10 @@ public class ExileService {
         if (source != null) {
             gameData.setImprintedCard(source.getCard(), card);
         }
+        gameData.exiledCards.replaceAll(exiled -> exiled.card().getId().equals(card.getId())
+                ? new com.github.laxika.magicalvibes.model.ExiledCardEntry(exiled.card(), exiled.ownerId(),
+                        sourcePermanentId, exiled.faceDown(), exiled.exilerId(), exiled.exiledTurnNumber(),
+                        exiled.controllerTurnsTakenAtExile())
+                : exiled);
     }
 }

@@ -21,13 +21,12 @@ public class ChaliceOfLife extends Card {
 
         // {T}: You gain 1 life. Then if you have at least 10 life more than your
         // starting life total, transform this artifact.
-        // Starting life total = 20, so threshold = 30.
         addActivatedAbility(new ActivatedAbility(
                 true, null,
                 List.of(
                         new GainLifeEffect(1),
                         new ConditionalEffect(
-                                new ControllerLifeAtLeast(GameData.STARTING_LIFE_TOTAL + 10),
+                                new ControllerLifeAtLeast(10, true),
                                 new TransformSelfEffect()
                         )
                 ),

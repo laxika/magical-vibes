@@ -26,7 +26,7 @@ public class ChangeTargetOfTargetSpellToEnchantedCreatureEffectHandler implement
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID triggeringCardId = entry.getTriggeringCardId();
-        if (triggeringCardId == null || entry.getTargetId() == null) {
+        if (triggeringCardId == null) {
             return;
         }
 
@@ -35,7 +35,11 @@ public class ChangeTargetOfTargetSpellToEnchantedCreatureEffectHandler implement
             return;
         }
 
-        UUID enchantedCreatureId = entry.getTargetId();
+        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (aura == null) {
+            aura = entry.getSourcePermanentSnapshot();
+        }
+        UUID enchantedCreatureId = aura == null ? entry.getTargetId() : aura.getAttachedTo();
         Permanent enchantedCreature = gameQueryService.findPermanentById(gameData, enchantedCreatureId);
         if (enchantedCreature == null || !gameQueryService.isCreature(gameData, enchantedCreature)) {
             return;
@@ -46,6 +50,9 @@ public class ChangeTargetOfTargetSpellToEnchantedCreatureEffectHandler implement
 
         if (targetRedirectionSupport.isValidNewTargetForSpell(gameData, targetSpell, enchantedCreatureId)) {
             targetSpell.setTargetId(enchantedCreatureId);
+            for (int i = 0; i < targetSpell.getDeclaredTargetIds().size(); i++) {
+                targetSpell.replaceTargetIdAt(i, enchantedCreatureId);
+            }
         }
     }
 }

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasAllCardNamesPredicate;
@@ -16,10 +18,12 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -45,6 +49,7 @@ public class BasicLandSearchQueueSupport {
     private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
+    private final BattlefieldEntryService battlefieldEntryService;
 
     /** Active player first, then every other player in seating order (CR 101.4 APNAP). */
     public List<UUID> apnapOrder(GameData gameData) {
@@ -85,8 +90,41 @@ public class BasicLandSearchQueueSupport {
             queue = nextQueue;
         }
 
+        placeSelectedLands(gameData, queue);
         shuffleAfterQueue(gameData, queue);
         return beginSacrifices(gameData, queue);
+    }
+
+    private void placeSelectedLands(GameData gameData, LibrarySearchFollowUp.BasicLandSearchQueue queue) {
+        if (queue.selectedLands().isEmpty()) return;
+        List<Map.Entry<UUID, Permanent>> prepared = new ArrayList<>();
+        for (LibrarySearchFollowUp.DeferredBasicLand selected : queue.selectedLands()) {
+            if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, selected.card(), Zone.LIBRARY)) {
+                continue;
+            }
+            List<Card> library = gameData.playerDecks.get(selected.libraryOwnerId());
+            if (library == null || !library.remove(selected.card())) {
+                continue;
+            }
+            Permanent permanent = new Permanent(selected.card(), Zone.LIBRARY);
+            if (selected.enterTapped()) permanent.tap();
+            prepared.add(Map.entry(selected.battlefieldControllerId(), permanent));
+        }
+        var enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+        List<Permanent> entering = prepared.stream().map(Map.Entry::getValue).toList();
+        for (Map.Entry<UUID, Permanent> selected : prepared) {
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, selected.getKey(), selected.getValue(),
+                    enterTappedTypes, entering);
+            gameLogService.append(gameData, GameLog.entersBattlefieldUnder(selected.getValue().getCard(),
+                    gameData.playerIdToName.get(selected.getKey())));
+        }
+        for (Map.Entry<UUID, Permanent> selected : prepared) {
+            UUID actualControllerId = gameQueryService.findPermanentController(gameData, selected.getValue().getId());
+            if (actualControllerId != null) {
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, actualControllerId,
+                        selected.getValue().getCard(), null, false);
+            }
+        }
     }
 
     private boolean startSearch(GameData gameData, LibrarySearchFollowUp.BasicLandsPick pick,
@@ -125,9 +163,10 @@ public class BasicLandSearchQueueSupport {
         int count = pick.count();
         if (count <= 0) {
             LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
-            LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+            if (!shuffleAfterQueue) LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
             gameLogService.append(gameData, GameLog.text(
-                    playerName + " searches their library for up to zero basic land cards. Library is shuffled."));
+                    playerName + " searches their library for up to zero basic land cards."
+                            + (shuffleAfterQueue ? "" : " Library is shuffled.")));
             return false;
         }
         boolean enterTapped = pick.enterTapped();

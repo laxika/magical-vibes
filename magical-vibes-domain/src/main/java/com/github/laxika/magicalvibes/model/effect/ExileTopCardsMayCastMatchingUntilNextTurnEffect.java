@@ -10,8 +10,14 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  */
 public record ExileTopCardsMayCastMatchingUntilNextTurnEffect(DynamicAmount count,
                                                                CardPredicate filter,
-                                                               boolean expireAtTurnBeginning)
+                                                               boolean expireAtTurnBeginning,
+                                                               int maximumSpells)
         implements CardEffect {
+
+    public ExileTopCardsMayCastMatchingUntilNextTurnEffect(DynamicAmount count, CardPredicate filter,
+                                                         boolean expireAtTurnBeginning) {
+        this(count, filter, expireAtTurnBeginning, 0);
+    }
 
     public ExileTopCardsMayCastMatchingUntilNextTurnEffect(DynamicAmount count, CardPredicate filter) {
         this(count, filter, false);
@@ -23,6 +29,12 @@ public record ExileTopCardsMayCastMatchingUntilNextTurnEffect(DynamicAmount coun
 
     public ExileTopCardsMayCastMatchingUntilNextTurnEffect(int count, CardPredicate filter,
                                                          boolean expireAtTurnBeginning) {
-        this(new Fixed(count), filter, expireAtTurnBeginning);
+        this(new Fixed(count), filter, expireAtTurnBeginning, 0);
+    }
+
+    public ExileTopCardsMayCastMatchingUntilNextTurnEffect(int count, CardPredicate filter,
+                                                         boolean expireAtTurnBeginning,
+                                                         int maximumSpells) {
+        this(new Fixed(count), filter, expireAtTurnBeginning, maximumSpells);
     }
 }

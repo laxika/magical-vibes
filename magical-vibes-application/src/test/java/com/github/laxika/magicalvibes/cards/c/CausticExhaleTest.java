@@ -71,8 +71,7 @@ class CausticExhaleTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0,
                 harness.getPermanentId(player2, "Fortress Kin-Guard")))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("not playable");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

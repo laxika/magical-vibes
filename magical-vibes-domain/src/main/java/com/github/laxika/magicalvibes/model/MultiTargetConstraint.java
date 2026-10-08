@@ -71,5 +71,7 @@ public enum MultiTargetConstraint {
     /** The chosen graveyard cards must have different mana values. */
     DIFFERENT_MANA_VALUES,
     /** The chosen targets must have different names. */
-    DIFFERENT_NAMES
+    DIFFERENT_NAMES,
+    /** Every chosen target must be a different object or player, including across modes. */
+    DISTINCT_TARGETS
 }

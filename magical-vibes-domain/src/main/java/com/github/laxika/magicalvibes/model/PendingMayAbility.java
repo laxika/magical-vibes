@@ -174,6 +174,15 @@ public record PendingMayAbility(
                 tapPermanentsCost, lifeCost, additionalLifeCost, null, null);
     }
 
+    /** Retains the triggering context when a cast choice delegates to another existing effect. */
+    public PendingMayAbility withEffects(List<CardEffect> updatedEffects) {
+        return new PendingMayAbility(sourceCard, controllerId, List.copyOf(updatedEffects), description,
+                targetCardId, manaCost, sourcePermanentId, tapPermanentsCost, lifeCost, additionalLifeCost,
+                attackedTargetId, activePlayerId, choicePlayerId, sourcePermanentSnapshot,
+                sourceControllerId, triggeringCardId, eventValue, triggeringPermanentId,
+                sourcePowerAtTrigger, xValue, triggeringPermanentToughnessAtTrigger);
+    }
+
     public PendingMayAbility withEventValue(int updatedEventValue) {
         return new PendingMayAbility(sourceCard, controllerId, effects, description, targetCardId, manaCost,
                 sourcePermanentId, tapPermanentsCost, lifeCost, additionalLifeCost, attackedTargetId,

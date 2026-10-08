@@ -142,12 +142,15 @@ class CemeteryIlluminatorTest extends BaseCardTest {
         illuminator.setSummoningSick(false);
         Card secondExiled = new Abrade();
         harness.setGraveyard(player2, List.of(secondExiled));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
-        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
         harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of(secondExiled.getId()));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMultipleCardsChosen(player1, List.of(secondExiled.getId())));
         harness.passBothPriorities();
-        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(firstExiled, secondExiled);
         Card spell = new CemeteryIlluminator();

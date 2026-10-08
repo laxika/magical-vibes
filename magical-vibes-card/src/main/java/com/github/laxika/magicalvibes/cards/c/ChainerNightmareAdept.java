@@ -33,7 +33,7 @@ public class ChainerNightmareAdept extends Card {
                         + "Activate only once each turn.",
                 1));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new EnteringCreatureNotCastFromHandConditionalEffect(
                         new BoostEnteringCreatureEffect(0, 0, Set.of(Keyword.HASTE),
                                 GrantDuration.UNTIL_YOUR_NEXT_TURN)));

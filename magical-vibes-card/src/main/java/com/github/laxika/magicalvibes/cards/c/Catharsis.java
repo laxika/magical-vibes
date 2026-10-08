@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -16,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -27,19 +29,19 @@ public class Catharsis extends Card {
     public Catharsis() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{R/W}{R/W}"))));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ConditionalEffect.atTriggerTime(
                 new ColorSpentToCast(ManaColor.WHITE, 2),
                 new CreateTokenEffect(
-                        2, "Kithkin Soldier", 1, 1, CardColor.WHITE,
-                        List.of(CardSubtype.KITHKIN, CardSubtype.SOLDIER), Set.of(), Set.of())));
+                        2, "Kithkin", 1, 1, CardColor.WHITE,
+                        Set.of(CardColor.GREEN, CardColor.WHITE), List.of(CardSubtype.KITHKIN))),
+                TriggerMode.INDEPENDENT);
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ConditionalEffect.atTriggerTime(
                 new ColorSpentToCast(ManaColor.RED, 2),
-                new BoostAllOwnCreaturesEffect(1, 1)));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
-                new ColorSpentToCast(ManaColor.RED, 2),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES)));
+                SequenceEffect.of(new BoostAllOwnCreaturesEffect(1, 1),
+                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES))),
+                TriggerMode.INDEPENDENT);
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SacrificeSelfIfEvokedEffect());
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SacrificeSelfIfEvokedEffect(), TriggerMode.INDEPENDENT);
     }
 }

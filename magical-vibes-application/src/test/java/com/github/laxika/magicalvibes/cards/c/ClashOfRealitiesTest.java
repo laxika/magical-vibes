@@ -4,6 +4,9 @@ import com.github.laxika.magicalvibes.cards.g.GoblinCohort;
 import com.github.laxika.magicalvibes.cards.k.KamiOfFalseHope;
 import com.github.laxika.magicalvibes.cards.o.OgreRecluse;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,11 +14,41 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.Set;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ClashOfRealities.class, GoblinCohort.class, KamiOfFalseHope.class,
         OgreRecluse.class, Opalescence.class})
 class ClashOfRealitiesTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("An entering noncreature Spirit gains the Spirit damage ability")
+    void noncreatureSpiritGainsEnterAbility() {
+        harness.addToBattlefield(player1, new ClashOfRealities());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new GoblinCohort());
+        Card spirit = new Card();
+        spirit.setName("Spirit enchantment");
+        spirit.setType(CardType.ENCHANTMENT);
+        spirit.setAdditionalTypes(Set.of(CardType.KINDRED));
+        spirit.setSubtypes(List.of(CardSubtype.SPIRIT));
+        spirit.setManaCost("{0}");
+        harness.setHand(player1, List.of(spirit));
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(goblin.getId());
+        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Spirit enchantment");
+        harness.assertInGraveyard(player2, "Goblin Cohort");
+    }
 
     @Test
     @DisplayName("An entering Spirit may deal 3 damage to a non-Spirit creature")

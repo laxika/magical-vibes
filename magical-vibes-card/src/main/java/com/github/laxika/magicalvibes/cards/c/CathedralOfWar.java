@@ -4,6 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 
@@ -15,7 +18,8 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 public class CathedralOfWar extends Card {
 
     public CathedralOfWar() {
-        // This land enters tapped. (Exalted is an auto-loaded keyword.)
+        addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
+                ConditionalEffect.atTriggerTime(new AttacksAlone(), new BoostTargetCreatureEffect(1, 1)));
         addEffect(EffectSlot.STATIC, new EntersTappedEffect());
 
         // {T}: Add {C}.

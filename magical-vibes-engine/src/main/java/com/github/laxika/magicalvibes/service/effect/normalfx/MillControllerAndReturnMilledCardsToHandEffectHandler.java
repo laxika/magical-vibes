@@ -29,7 +29,7 @@ public class MillControllerAndReturnMilledCardsToHandEffectHandler implements No
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var millEffect = (MillControllerAndReturnMilledCardsToHandEffect) effect;
-        List<Card> milled = graveyardService.resolveMillPlayer(
+        List<Card> milled = graveyardService.resolveMillPlayerIncludingExiled(
                 gameData, entry.getControllerId(), millEffect.count());
         List<Card> graveyard = gameData.playerGraveyards.get(entry.getControllerId());
         if (graveyard == null) {
@@ -38,7 +38,7 @@ public class MillControllerAndReturnMilledCardsToHandEffectHandler implements No
         List<Card> returnable = milled.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, millEffect.filter(), entry.getCard().getId(), gameData, entry.getControllerId()))
-                .filter(graveyard::contains)
+                .filter(card -> graveyard.contains(card) || gameData.findExiledCard(card.getId()) != null)
                 .toList();
         if (returnable.isEmpty()) {
             return;
@@ -47,7 +47,11 @@ public class MillControllerAndReturnMilledCardsToHandEffectHandler implements No
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
             for (Card card : returnable) {
-                permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
+                if (graveyard.contains(card)) {
+                    permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
+                } else {
+                    gameData.removeFromExile(card.getId());
+                }
                 gameData.addCardToHand(entry.getControllerId(), card);
             }
         } finally {

@@ -65,19 +65,35 @@ public class ExileTopCardsMayCastMatchingUntilNextTurnEffectHandler implements N
 
         List<Card> exiled = new ArrayList<>();
         List<String> castableNames = new ArrayList<>();
+        List<UUID> permittedCardIds = new ArrayList<>();
         for (int i = 0; i < count && !deck.isEmpty(); i++) {
             Card topCard = deck.removeFirst();
             exileService.exileCard(gameData, controllerId, topCard);
             exiled.add(topCard);
 
-            if (predicateEvaluationService.matchesCardPredicate(topCard, exileEffect.filter(), null)) {
+            boolean matchingFace = predicateEvaluationService.matchesCardPredicate(topCard, exileEffect.filter(), null)
+                    || topCard.getBackFaceCard() != null
+                    && (topCard.isModalDoubleFaced()
+                        || topCard.getCastingOption(com.github.laxika.magicalvibes.model.AdventureCast.class).isPresent())
+                    && predicateEvaluationService.matchesCardPredicate(
+                            topCard.getBackFaceCard(), exileEffect.filter(), null);
+            if (matchingFace) {
                 exileSupport.grantPlayUntilOwnersNextTurn(gameData, topCard.getId(), controllerId);
                 if (exileEffect.expireAtTurnBeginning()) {
                     int expiryTurn = gameData.exilePlayPermissionsExpireAtTurnEnd.remove(topCard.getId());
                     gameData.exilePlayPermissionsExpireAtTurnBeginning.put(topCard.getId(), expiryTurn);
                 }
                 castableNames.add(topCard.getName());
+                permittedCardIds.add(topCard.getId());
+                if (exileEffect.filter() != null) {
+                    gameData.exilePlayPermissionSpellFilters.put(topCard.getId(), exileEffect.filter());
+                }
             }
+        }
+
+        if (exileEffect.maximumSpells() > 0) {
+            gameData.registerExilePlayPermissionGroup(UUID.randomUUID(),
+                    exileEffect.maximumSpells(), permittedCardIds);
         }
 
         GameLog.Builder logEntry = GameLog.builder().text(controllerName + " exiles ");

@@ -53,7 +53,9 @@ class CaseOfTheShatteredPactTest extends BaseCardTest {
         solveAtEndStep();
 
         harness.forceActivePlayer(player1);
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
@@ -74,7 +76,9 @@ class CaseOfTheShatteredPactTest extends BaseCardTest {
 
         solveAtEndStep();
 
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
@@ -159,11 +163,19 @@ class CaseOfTheShatteredPactTest extends BaseCardTest {
         Permanent casePermanent = harness.addToBattlefieldAndReturn(player1, new CaseOfTheShatteredPact());
         Permanent leyline = harness.addToBattlefieldAndReturn(player1, new LeylineOfTheGuildpact());
         Permanent creature = addCreatureReady(player1, new RubblebeltMaverick());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         solveAtEndStep();
-        bounce(leyline.getId());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.withAutoStop(TurnStep.END_STEP, () -> bounce(leyline.getId()));
         assertThat(casePermanent.isSolved()).isTrue();
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
 
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
@@ -171,7 +183,7 @@ class CaseOfTheShatteredPactTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();
@@ -184,7 +196,9 @@ class CaseOfTheShatteredPactTest extends BaseCardTest {
         addFiveColors();
         Permanent creature = addCreatureReady(player1, new RubblebeltMaverick());
         solveAtEndStep();
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
         harness.handlePermanentChosen(player1, creature.getId());
         assertThat(gd.stack).hasSize(1);

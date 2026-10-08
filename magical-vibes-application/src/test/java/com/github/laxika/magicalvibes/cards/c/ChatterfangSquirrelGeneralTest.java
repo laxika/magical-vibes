@@ -6,6 +6,12 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HardEvidence;
 import com.github.laxika.magicalvibes.cards.r.RaiseTheAlarm;
 import com.github.laxika.magicalvibes.cards.s.SparkDouble;
+import com.github.laxika.magicalvibes.cards.o.OjerTaqDeepestFoundation;
+import com.github.laxika.magicalvibes.cards.s.SaheeliRai;
+import com.github.laxika.magicalvibes.cards.s.SolRing;
+import com.github.laxika.magicalvibes.cards.t.ThrabenInspector;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -22,6 +28,64 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({ChatterfangSquirrelGeneral.class, RaiseTheAlarm.class, GrizzlyBears.class, Forest.class,
         HardEvidence.class, AcademyManufactor.class, CacklingCounterpart.class, SparkDouble.class})
 class ChatterfangSquirrelGeneralTest extends BaseCardTest {
+
+    @Test
+    @CardUsed({OjerTaqDeepestFoundation.class, ThrabenInspector.class})
+    void creatureOnlyMultiplierAppliesToSquirrelsAddedToClueCreation() {
+        harness.addToBattlefield(player1, new ChatterfangSquirrelGeneral());
+        harness.addToBattlefield(player1, new OjerTaqDeepestFoundation());
+        harness.setHand(player1, List.of(new ThrabenInspector()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.castCreature(player1, 0);
+            harness.passBothPriorities();
+            resolveAllTriggers();
+        });
+
+        assertThat(findPermanents(player1, "Clue")).hasSize(1);
+        assertThat(findPermanents(player1, "Squirrel")).hasSize(3);
+    }
+
+    @Test
+    @CardUsed(OjerTaqDeepestFoundation.class)
+    void multiplierAlreadyAppliedToCreatureTokensDoesNotApplyAgainToAddedSquirrels() {
+        harness.addToBattlefield(player1, new ChatterfangSquirrelGeneral());
+        harness.addToBattlefield(player1, new OjerTaqDeepestFoundation());
+        harness.setHand(player1, List.of(new RaiseTheAlarm()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(findPermanents(player1, "Soldier")).hasSize(6);
+        assertThat(findPermanents(player1, "Squirrel")).hasSize(6);
+    }
+
+    @Test
+    @CardUsed({OjerTaqDeepestFoundation.class, SaheeliRai.class, SolRing.class})
+    void copiedArtifactAddsMultipliedSquirrelsWithHasteAndDelayedExile() {
+        Permanent saheeli = harness.addToBattlefieldAndReturn(player1, new SaheeliRai());
+        saheeli.setCounterCount(CounterType.LOYALTY, 5);
+        harness.addToBattlefield(player1, new ChatterfangSquirrelGeneral());
+        harness.addToBattlefield(player1, new OjerTaqDeepestFoundation());
+        Permanent ring = harness.addToBattlefieldAndReturn(player1, new SolRing());
+
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.activateAbility(player1, 0, 1, null, ring.getId());
+            resolveAllTriggers();
+        });
+
+        assertThat(findPermanents(player1, "Sol Ring")).hasSize(2);
+        assertThat(findPermanents(player1, "Squirrel")).hasSize(3)
+                .allSatisfy(squirrel -> assertThat(gqs.hasKeyword(gd, squirrel, Keyword.HASTE)).isTrue());
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+            harness.passUntil(TurnStep.END_STEP);
+            resolveAllTriggers();
+        });
+        assertThat(findPermanents(player1, "Squirrel")).isEmpty();
+        assertThat(findPermanents(player1, "Sol Ring")).containsExactly(ring);
+    }
 
     @Test
     @DisplayName("Creates one Squirrel for each token created under its controller's control")
@@ -139,7 +203,6 @@ class ChatterfangSquirrelGeneralTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, indexOf(chatterfang), 0, 1, target.getId());
-        harness.handlePermanentChosen(player1, chatterfang.getId());
         harness.assertInGraveyard(player1, "Chatterfang, Squirrel General");
         harness.passBothPriorities();
 

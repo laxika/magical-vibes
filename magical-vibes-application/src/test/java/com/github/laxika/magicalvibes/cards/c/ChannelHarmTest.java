@@ -184,6 +184,8 @@ class ChannelHarmTest extends BaseCardTest {
     @Test
     @DisplayName("Does not recheck hexproof acquired after Channel Harm resolves")
     void damagesCreatureThatGainedHexproofAfterResolution() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, List.of(new BarkhideTroll()));
         harness.addMana(player2, ManaColor.GREEN, 2);
         harness.castCreature(player2, 0);

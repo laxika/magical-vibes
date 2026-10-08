@@ -145,7 +145,7 @@ class CabalSlaverTest extends BaseCardTest {
         Permanent goblin = addCreatureReady(player1, new SkirkProspector());
         goblin.setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 

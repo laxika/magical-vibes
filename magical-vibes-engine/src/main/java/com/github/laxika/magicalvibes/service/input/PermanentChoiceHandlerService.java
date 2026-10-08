@@ -191,6 +191,8 @@ public class PermanentChoiceHandlerService {
                     gameData, playerId, permanentId, chooseDwarf);
         } else if (context instanceof PermanentChoiceContext.AttachEquipmentToSamurai attachEquip) {
             battlefieldHandler.handleAttachEquipmentToSamurai(gameData, playerId, permanentId, attachEquip);
+        } else if (context instanceof PermanentChoiceContext.AttachMatchingEquipmentToCreatedPermanent attachEquip) {
+            battlefieldHandler.handleAttachMatchingEquipmentToCreatedPermanent(gameData, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AttachEquipmentToSamuraiTarget attachEquip) {
             battlefieldHandler.handleAttachEquipmentToSamuraiTarget(gameData, playerId, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AttachOneOfEquipmentToCreature attachEquip) {
@@ -415,6 +417,9 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleHandAbilityCostChoice(gameData, player, permanentId, handCostChoice);
         } else if (context instanceof PermanentChoiceContext.MayAbilityTapCostChoice mayTapCostChoice) {
             battlefieldHandler.handleMayAbilityTapCostChoice(gameData, player, permanentId, mayTapCostChoice);
+        } else if (context instanceof PermanentChoiceContext.ConniveNextCreatureChoice) {
+            gameData.pendingEffectResolutionEntry.setChosenPermanentId(permanentId);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.BackdraftPlayerChoice) {
             gameData.pendingEffectResolutionEntry.setTargetId(permanentId);
             var sorceries = gameData.getSpellsCastThisTurn(permanentId).stream()
@@ -651,6 +656,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleCreateTokensAttacking(gameData, permanentId, createTokens);
         } else if (context instanceof PermanentChoiceContext.CreateTokenCopiesAttacking tokenCopies) {
             triggerHandler.handleCreateTokenCopiesAttacking(gameData, permanentId, tokenCopies);
+        } else if (context instanceof PermanentChoiceContext.PreparedTokenCopyAttachments tokenCopies) {
+            triggerHandler.handlePreparedTokenCopyAttachment(gameData, permanentId, tokenCopies);
         } else if (context instanceof PermanentChoiceContext.PreparedOpponentTokenCopiesAttacking tokenCopies) {
             triggerHandler.handlePreparedOpponentTokenCopiesAttacking(gameData, permanentId, tokenCopies);
         } else if (context instanceof PermanentChoiceContext.CreateTokenCopiesOfEnteredThisTurnAttacking tokenCopies) {

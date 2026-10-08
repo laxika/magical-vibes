@@ -146,6 +146,8 @@ class CinderCrawlerTest extends BaseCardTest {
     @CardUsed(SonicBurst.class)
     @DisplayName("Remains blocked and can activate after its last blocker dies")
     void canActivateAfterLastBlockerDies() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.DECLARE_BLOCKERS));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.DECLARE_BLOCKERS));
         Permanent crawler = addCreatureReady(player1, new CinderCrawler());
         Permanent blocker = addCreatureReady(player2, new CinderCrawler());
         setupBlockedCrawler(crawler, blocker);

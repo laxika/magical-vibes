@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -22,15 +22,11 @@ import java.util.List;
 public class ChocoSeekerOfParadise extends Card {
 
     public ChocoSeekerOfParadise() {
-        PermanentAllOfPredicate birdAttacker = new PermanentAllOfPredicate(List.of(
-                new PermanentIsAttackingPredicate(),
-                new PermanentHasSubtypePredicate(CardSubtype.BIRD)));
-
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
-                new ConditionalEffect(new HasAttacker(
-                        new PermanentHasSubtypePredicate(CardSubtype.BIRD)),
+                new ConditionalEffect(new com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers(
+                        1, new PermanentHasSubtypePredicate(CardSubtype.BIRD)),
                         new LookAtTopCardsChooseOneToHandThenLandsToBattlefieldTappedEffect(
-                                new PermanentCount(birdAttacker, CountScope.CONTROLLER))));
+                                new EventValue())));
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new BoostSelfEffect(1, 0));
     }
 }

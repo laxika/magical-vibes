@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CemeteryDesecratorEffect;
@@ -105,7 +106,7 @@ public class CemeteryDesecratorEffectHandler implements NormalEffectHandlerBean 
         ChooseOneEffect modal = new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         REMOVE_COUNTERS_MODE,
-                        new RemoveChosenCountersFromTargetPermanentEffect(manaValue),
+                        new RemoveChosenCountersFromTargetPermanentEffect(new Fixed(manaValue), true),
                         TargetFilters.permanent()),
                 new ChooseOneEffect.ChooseOneOption(
                         DEBUFF_MODE,

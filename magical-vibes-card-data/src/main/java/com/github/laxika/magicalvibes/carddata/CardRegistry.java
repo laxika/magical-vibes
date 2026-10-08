@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.text.Normalizer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -349,13 +350,18 @@ public class CardRegistry implements CardCatalog {
         return false;
     }
 
-    /** A face's name, plus its part before the comma when it is a legendary's. */
+    /** A face's name, its first half when combined, and its legendary name before the comma. */
     private static List<String> nameStems(String name) {
         if (name == null) {
             return List.of();
         }
-        String beforeComma = name.split(",")[0];
-        return name.equals(beforeComma) ? List.of(name) : List.of(name, beforeComma);
+        String firstFace = name.split(" // ")[0];
+        String beforeComma = firstFace.split(",")[0];
+        List<String> stems = new ArrayList<>();
+        stems.add(name);
+        if (!name.equals(firstFace)) stems.add(firstFace);
+        if (!firstFace.equals(beforeComma)) stems.add(beforeComma);
+        return stems;
     }
 
     /** Whether a card name reduces to the same identifier characters as a class name already has. */

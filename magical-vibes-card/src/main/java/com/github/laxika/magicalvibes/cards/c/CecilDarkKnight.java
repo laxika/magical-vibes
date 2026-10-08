@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -26,7 +25,7 @@ public class CecilDarkKnight extends Card {
         addEffect(EffectSlot.ON_SELF_DEALS_DAMAGE, SequenceEffect.of(
                 new LoseLifeEffect(new EventValue(), LoseLifeRecipient.CONTROLLER),
                 ConditionalEffect.unless(
-                        new ControllerLifeAtMost(GameData.STARTING_LIFE_TOTAL / 2),
+                        ControllerLifeAtMost.atHalfStartingLife(),
                         SequenceEffect.of(
                                 new UntapPermanentsEffect(TapUntapScope.SELF),
                                 new TransformToBackFaceEffect()))));

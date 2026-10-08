@@ -656,8 +656,9 @@ public class ActivatedAbilityExecutionService {
             if (sacrificeSelfCost.get().trackPower()) {
                 effectiveXValue = Math.max(0, gameQueryService.getEffectivePower(gameData, permanent));
             }
+            Card sacrificedCard = permanentRemovalService.snapshotEffectivePermanentCard(gameData, permanent);
             permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent);
-            triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), permanent.getCard());
+            triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), sacrificedCard);
         }
 
         // Sacrifice the source equipment (e.g. Blazing Torch's "{T}, Sacrifice Blazing Torch: ...")
@@ -854,7 +855,7 @@ public class ActivatedAbilityExecutionService {
             // A land whose mana ability is written as an ActivatedAbility (Forbidden Orchard,
             // Undiscovered Paradise, Cavern of Souls) is still "tapped for mana", so the land-tap
             // watchers must see it exactly as they see a printed ON_TAP land.
-            if (ability.isRequiresTap() && (gameQueryService.isLand(gameData, permanent)
+            if (!manaTypeChoicePending && ability.isRequiresTap() && (gameQueryService.isLand(gameData, permanent)
                     || permanent.getCard().hasType(CardType.LAND))) {
                 int stackBeforeLandTapTriggers = gameData.stack.size();
                 Set<ManaColor> producedColors = newlyProducedManaTypes(
@@ -884,7 +885,7 @@ public class ActivatedAbilityExecutionService {
                 List<StackEntry> deferred = new ArrayList<>(gameData.pendingManaAbilityTriggers.subList(
                         pendingTriggersBefore, gameData.pendingManaAbilityTriggers.size()));
                 gameData.pendingRevertableManaActivation = new PendingManaActivation(
-                        playerId, permanent.getId(), poolBefore, creatureManaBefore, List.copyOf(deferred));
+                        playerId, permanent.getId(), poolBefore, creatureManaBefore, List.copyOf(deferred), manaTypesBefore);
             } else if (revertable) {
                 List<StackEntry> deferred = new ArrayList<>(gameData.pendingManaAbilityTriggers.subList(
                         pendingTriggersBefore, gameData.pendingManaAbilityTriggers.size()));
@@ -1085,8 +1086,8 @@ public class ActivatedAbilityExecutionService {
                 // the ability's source, but the Equipment is the permanent that returns to hand.
                 snapshotEffects.add(ReturnToHandEffect.grantingEquipmentSnapshot(
                         ability.getGrantSourcePermanentId()));
-            } else if (effect instanceof ExileEnchantedCreatureEffect && permanent.getAttachedTo() != null) {
-                snapshotEffects.add(new ExileEnchantedCreatureEffect(permanent.getAttachedTo()));
+            } else if (effect instanceof ExileEnchantedCreatureEffect) {
+                snapshotEffects.add(effect);
             } else if (effect instanceof SacrificeGrantingPermanentAndControllerDrawsEffect sacrifice) {
                 snapshotEffects.add(new SacrificeGrantingPermanentAndControllerDrawsEffect(
                         sacrifice.cards(), ability.getGrantSourcePermanentId()));
@@ -1801,6 +1802,9 @@ public class ActivatedAbilityExecutionService {
                 // SkipNextUntapEffect(SELF); on a mana ability it must apply inline here because
                 // mana abilities never hit the stack / NormalEffectHandlerBean path.
                 permanent.setSkipUntapCount(Math.max(permanent.getSkipUntapCount(), skip.untapSteps()));
+                if (skip.controllerStepOnly()) {
+                    permanent.setSkipUntapControllerId(player.getId());
+                }
                 gameLogService.append(gameData, GameLog.cardThen(
                         permanent.getCard(), " won't untap during its controller's next untap step."));
             } else if (effect instanceof ReturnSourceToHandAtNextUntapEffect) {
@@ -2349,6 +2353,10 @@ public class ActivatedAbilityExecutionService {
         // Carry the creature chosen during activation (e.g. tapped for a TapCreatureCost) so
         // ChosenPermanentPower can read its power as the ability resolves (Impelled Giant).
         stackEntry.setChosenPermanentId(permanent.getChosenPermanentId());
+        if (ability.getTargetFilter() == null && ability.getMultiTargetFilters().isEmpty()
+                && snapshotEffects.stream().noneMatch(effect -> effect.targetSpec().declaredTarget() != null)) {
+            stackEntry.setNonTargeting(true);
+        }
         gameData.stack.add(stackEntry);
         triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData);
         stateBasedActionService.performStateBasedActions(gameData);

@@ -130,7 +130,7 @@ class ConjurersBanTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Skarrg, the Rage Pits");
 
-        harness.tapPermanent(player1, 0);
+        harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(findPermanent(player1, "Skarrg, the Rage Pits").isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);

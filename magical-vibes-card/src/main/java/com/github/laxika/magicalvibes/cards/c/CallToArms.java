@@ -6,12 +6,15 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ChosenColorStrictlyMostCommonAmongOpponentNontokens;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentChosenColorStrictlyMostCommonPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +25,7 @@ public class CallToArms extends Card {
 
     public CallToArms() {
         // "As this enchantment enters, choose a color and an opponent."
-        // Opponent is implicit (single-opponent model, like Cursed Rack / Nyxathid).
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentOnEnterEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
 
         // "White creatures get +1/+1 as long as the chosen color is the most common color among
@@ -34,13 +37,9 @@ public class CallToArms extends Card {
 
         // "When the chosen color isn't the most common … or is tied for most common, sacrifice this."
         addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
-                (gameData, sourcePermanent, controllerId) -> {
-                    if (sourcePermanent.getChosenColor() == null) {
-                        return false;
-                    }
-                    return !ChosenColorStrictlyMostCommonAmongOpponentNontokens.isStrictlyMostCommon(
-                            gameData, sourcePermanent, controllerId);
-                },
+                (gameData, sourcePermanent, controllerId) -> sourcePermanent.getChosenColor() != null,
+                new PermanentNotPredicate(new PermanentChosenColorStrictlyMostCommonPredicate()),
+                null, 0, null,
                 List.of(new SacrificeSelfEffect()),
                 "Call to Arms's state-triggered ability"
         ));

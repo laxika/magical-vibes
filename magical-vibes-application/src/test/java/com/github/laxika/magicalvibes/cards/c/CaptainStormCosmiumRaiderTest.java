@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.v.VolatileWanderglyph;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -67,6 +68,7 @@ class CaptainStormCosmiumRaiderTest extends BaseCardTest {
     void artifactCreatureEntryTriggers() {
         Permanent captain = harness.addToBattlefieldAndReturn(player1, new CaptainStormCosmiumRaider());
         harness.enterBattlefieldAndReturn(player1, new VolatileWanderglyph());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
         harness.handlePermanentChosen(player1, captain.getId());
         harness.passBothPriorities();
 
@@ -90,6 +92,7 @@ class CaptainStormCosmiumRaiderTest extends BaseCardTest {
         Permanent captain = harness.addToBattlefieldAndReturn(player1, new CaptainStormCosmiumRaider());
         Permanent opposingCaptain = harness.addToBattlefieldAndReturn(player2, new CaptainStormCosmiumRaider());
         harness.enterBattlefieldAndReturn(player1, new VolatileWanderglyph());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opposingCaptain.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -113,6 +116,7 @@ class CaptainStormCosmiumRaiderTest extends BaseCardTest {
         harness.handleListChoice(player1, "PIRATE");
 
         harness.enterBattlefieldAndReturn(player1, new VolatileWanderglyph());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
         harness.handlePermanentChosen(player1, blossom.getId());
         harness.passBothPriorities();
 
@@ -124,6 +128,7 @@ class CaptainStormCosmiumRaiderTest extends BaseCardTest {
     void targetThatStopsBeingPirateDoesNotReceiveCounter() {
         Permanent captain = harness.addToBattlefieldAndReturn(player1, new CaptainStormCosmiumRaider());
         harness.enterBattlefieldAndReturn(player1, new VolatileWanderglyph());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
         harness.handlePermanentChosen(player1, captain.getId());
 
         harness.setHand(player1, List.of(new ArtificialEvolution()));

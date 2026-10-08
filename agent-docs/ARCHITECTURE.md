@@ -26,6 +26,8 @@ application → engine, websocket, ai (config @Imports)
 
 ## Key Patterns
 
+- **Mutate keeps permanent identity**: `AlternateHandCast.mutate` declares a targeted alternative creature cast. `StackEntry.castWithMutate` sends resolution through `MutationSupport`; an illegal target resolves as an ordinary creature spell. The resolving spell's controller chooses top or bottom through `ChoiceContext.MutateOrderChoice`. A legal merge keeps the existing `Permanent` object, controller, counters, attachments, and combat state, and collects mutate triggers without battlefield-entry triggers. The frozen composite `Permanent.card` supplies copiable characteristics and all component abilities; `mutatedComponentCards` retains physical components in top-to-bottom order for departure. Simulation copies preserve that list, while copying the creature's characteristics creates a single object without its physical components. The top physical component determines token status; token components remain distinguishable when the other component cards move to new zones. Departures count one permanent while moving each physical component. Owners order surviving nontoken components in their graveyard or library through `PendingInteraction.LibraryReorder.destinationZone`; this reorders cards already placed there without repeating zone changes. Pending component orders resume before other input continuations.
+
 - **Stack object identity**: spells use their card ID; each activated or triggered ability has a distinct `StackEntry.getTargetableId()`. The stack-entry copy constructor preserves identity for snapshots and simulations. Use `copyForNewStackObject()` when duplicating an actual trigger. Legacy source-card target IDs are accepted only when they identify one stack object and are normalized before costs are paid.
 - **Face-down library casts**: the library-top path evaluates permissions and casting restrictions using the face-down spell's characteristics, pays its face-down alternative cost with the proper cost modifiers, and keeps the original card on the stack with the face-down/disguise flags. The request carries both `fromLibraryTop` and `morph`; free or life-payment casting alternatives cannot replace the face-down cost.
 
@@ -64,6 +66,10 @@ Card tests live in `magical-vibes-application/src/test/java/.../cards/{letter}/C
 Optional 1v1 Planechase state lives in `GameData.planechase`; face-up planar cards are command-zone objects, never battlefield permanents. See [PLANECHASE.md](PLANECHASE.md) for actions, source snapshots, projection, and extension rules.
 
 ## Trigger and entry state
+
+Clone entry replacements can retain a prepared permanent in `CloneOperationState`, preserving its identity, zone provenance, and ownership while copy choices are answered. When a spell resumes after that entry, its returned-permanent reference uses the copied characteristics, with last-known characteristics retained if the permanent leaves before the continuation.
+
+`BattlefieldEntryBatchSupport` gathers Aura attachments, battle protectors, Clone copy choices, and native entry choices before placing a simultaneous batch. `CloneOperationState.battlefieldEntryBatch` returns a prepared copy to that batch instead of entering it immediately. `GameData.pendingBattlefieldEntryBatch` and `pendingBattlefieldEntryRequests` retain the pending batch and answered requests for Riot, Unleash, Amplify, naming, entry costs, and conflicting tapped-entry choices. Their completion handlers resume preparation rather than entering one member alone. All physical cards remain in their original zones during these choices, including the entire revealed library prefix in its original order. After placement, `BattlefieldEntryLibraryRemainder` removes its exact skipped card IDs and returns them to the bottom or shuffles the library. Simulation copies isolate both active choice payloads and pending batches; resumption replaces the candidate and saved request with the answered prepared permanent.
 
 Perpetual base power and toughness setters use `GameData.perpetualCardBasePowerToughness`, keyed by physical card identity with the original effect timestamp. Layer 7b applies them after characteristic-defining abilities and before additive modifiers; non-battlefield power/toughness queries also honor them. Both game-copy paths retain this immutable state.
 
@@ -130,3 +136,24 @@ GameData.permanentsWithPlusOneCountersPutByPlayerThisTurn records permanent iden
 Riot and Unleash may pause a BattlefieldEntryRequest before physical battlefield placement. Riot records every applicable instance's counter-or-haste choice, applies the final counters and persistent haste before entry, and resumes entry-trigger collection with the original spell metadata. Copy request-bearing pending choices explicitly for simulations.
 
 Combat damage records each damaging creature's player recipient in `CombatDamageState.combatDamagePlayerRecipients`. Normal, infect, and unpreventable damage totals are retained per player; aggregate prevention applies separately before lifelink and state-based actions. Trigger batches are partitioned by both damaged player and source controller, so a myriad copy damaging a different opponent uses that opponent for discard and other combat-damage abilities. Game snapshots copy these recipient ledgers.
+
+Revealed creature cards used for a power-based casting cost are retained by identity on the stack entry. While the card remains in a hand, amounts query its effective power; `GameMutationCoordinator` captures that power before actions that can move it, preserving its last known power after departure. Pending cast selections and stack-entry snapshots are copied for simulations and cleared by game restart.
+
+Stack entries retain the cards milled as an activation cost and the player offered a subsequent mana-payment choice. These snapshots are copied with the entry, so pending activations and optional copy choices cannot read a later activation's global state. Multi-creature connive uses the existing parked resolution entry to choose each next creature, then resumes the same effect after its discard choice. Channel Harm's damage choice resolves directly as part of prevention and does not create another stack ability or recheck targeting.
+
+`MultiTargetConstraint.DISTINCT_TARGETS` preserves explicit cross-mode target distinctions when a triggered modal ability builds its runtime target groups.
+
+Chaotic Transformation records immutable controller and card-type snapshots before simultaneous exile. Its replacement continuations remain individual resolving stack effects, so each controller chooses their order and completes battlefield entry and library shuffle choices before the next reveal begins.
+
+Suspended spells that exile themselves retain their countdown in `suspendedSpellExiles`.
+Effects adjusting suspended-card counters include these records and hand-suspended cards;
+removing the last counter queues the existing optional free-cast trigger.
+A resolving entry remembers controllers of departing declared targets, so later choices and
+spell copies can use that last-known controller after the target is sacrificed during resolution.
+Generic triggered-ability doublers include their last-known simultaneous death snapshots when
+collecting abilities caused by those deaths.
+Token-copy creation applies Squirrel replacements to the full prepared event. Each Chatterfang
+replacement doubles the event's token count by adding Squirrels, while event instructions such as
+haste, entering tapped and attacking, and delayed exile apply to the added tokens too.
+
+Creature-only token multipliers that were inapplicable to an original noncreature token event apply to the Squirrels added by Chatterfang; multipliers already applied to the original event are not repeated. Token creation instructions retain their resolving entry through replacement and entry choices. Chainer's Torment snapshots its damage amount before ordinary token creation and then uses `TargetCreatureDealsDamageToControllerEffect` with `TOKENS_CREATED_THIS_RESOLUTION` and `CONTROLLER`, so every resulting token deals that amount to the ability controller while remaining its own damage source. The original effect constructors preserve targeted-creature behavior. Official rulings: https://magic.wizards.com/en/news/feature/modern-horizons-2-release-notes-2021-06-04 and https://magic.wizards.com/en/news/feature/dominaria-release-notes.

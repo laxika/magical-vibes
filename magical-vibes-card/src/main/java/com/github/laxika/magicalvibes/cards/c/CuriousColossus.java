@@ -23,11 +23,12 @@ public class CuriousColossus extends Card {
                 "Target must be an opponent"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new LosesAllAbilitiesEffect(GrantScope.TARGET_PLAYERS_CREATURES,
-                                EffectDuration.UNTIL_END_OF_TURN))
+                                EffectDuration.PERMANENT))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new GrantSubtypeUntilEndOfTurnEffect(CardSubtype.COWARD,
-                                GrantScope.TARGET_PLAYERS_CREATURES))
+                                GrantScope.TARGET_PLAYERS_CREATURES, null, EffectDuration.PERMANENT))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new SetBasePowerToughnessEffect(1, 1, GrantScope.TARGET_PLAYERS_CREATURES));
+                        new SetBasePowerToughnessEffect(1, 1, GrantScope.TARGET_PLAYERS_CREATURES,
+                                EffectDuration.PERMANENT));
     }
 }

@@ -18,11 +18,9 @@ public class CemeteryTampering extends Card {
 
     public CemeteryTampering() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ImprintFromTopCardsEffect(5, true));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
-                SequenceEffect.of(
-                        new MillEffect(3, MillRecipient.CONTROLLER),
-                        new ConditionalEffect(new GraveyardCardThreshold(20, null),
-                                new PlayImprintedCardWithoutPayingManaCostEffect())),
-                "Mill three cards?"));
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
+                new MayEffect(new MillEffect(3, MillRecipient.CONTROLLER), "Mill three cards?"),
+                ConditionalEffect.unless(new GraveyardCardThreshold(20, null),
+                        new PlayImprintedCardWithoutPayingManaCostEffect())));
     }
 }

@@ -194,7 +194,8 @@ class ChocoboKickTest extends BaseCardTest {
 
     @Test
     void appliesJayasBonusToTheRedCreatureDealingDamage() {
-        harness.addToBattlefield(player1, new JayaVeneratedFiremage());
+        Permanent jaya = harness.addToBattlefieldAndReturn(player1, new JayaVeneratedFiremage());
+        jaya.setCounterCount(CounterType.LOYALTY, 5);
         Permanent source = harness.addToBattlefieldAndReturn(player1, new HillGiant());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);

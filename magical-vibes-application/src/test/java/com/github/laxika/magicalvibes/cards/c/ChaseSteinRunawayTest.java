@@ -41,8 +41,8 @@ class ChaseSteinRunawayTest extends BaseCardTest {
         assertThat(chase.isTapped()).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
         assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd.get(topCard.getId()))
-                .isEqualTo(gd.turnNumber + 2);
+        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer)
+                .containsEntry(topCard.getId(), player1.getId());
     }
 
     @Test
@@ -179,14 +179,16 @@ class ChaseSteinRunawayTest extends BaseCardTest {
 
     @Test
     void permissionExpiresAfterTheControllersNextTurnAndCardRemainsExiled() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Card topCard = new Shock();
         exileTopCard(topCard);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsKey(topCard.getId());
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsKey(topCard.getId());
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
@@ -208,10 +210,10 @@ class ChaseSteinRunawayTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsKey(topCard.getId());
-        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
@@ -222,6 +224,8 @@ class ChaseSteinRunawayTest extends BaseCardTest {
 
     @Test
     void permissionSurvivesTheOpponentsExtraTurnsUntilTheControllersNextTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         addCreatureReady(player1, new ChaseSteinRunaway());
         Card topCard = new Shock();
         harness.setHand(player1, List.of(new TimeStretch(), new Forest()));

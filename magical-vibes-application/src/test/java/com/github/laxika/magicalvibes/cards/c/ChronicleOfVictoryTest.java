@@ -163,7 +163,7 @@ class ChronicleOfVictoryTest extends BaseCardTest {
         harness.activateAbility(player1, 2, 0, null, chronicle.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.hasKeyword(gd, chronicle, Keyword.CHANGELING)).isTrue();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, chronicle)).contains(CardSubtype.ELF);
         assertThat(gqs.hasKeyword(gd, chronicle, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, chronicle, Keyword.TRAMPLE)).isTrue();
     }

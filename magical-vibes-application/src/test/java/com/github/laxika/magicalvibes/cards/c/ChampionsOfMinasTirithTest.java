@@ -69,7 +69,6 @@ class ChampionsOfMinasTirithTest extends BaseCardTest {
         addChampionsOfMinasTirith();
         addCreatureReady(player2, new ElvishMystic());
         harness.setHand(player2, List.of(new ElvishMystic(), new ElvishMystic()));
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         resolveCombatTrigger(player2);
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
@@ -154,6 +153,7 @@ class ChampionsOfMinasTirithTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
 
         harness.setHand(player2, List.of(new ElvishMystic()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         resolveAllTriggers();
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> harness.handleMayAbilityChosen(player2, true));

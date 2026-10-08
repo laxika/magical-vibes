@@ -111,7 +111,7 @@ class CatchReleaseTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");

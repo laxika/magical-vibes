@@ -203,6 +203,18 @@ public class EffectResolutionService {
             }
 
             if (effectToResolve instanceof MayEffect may
+                    && may.elseEffect() == null
+                    && !entry.isNonTargeting()
+                    && !may.resolvesWhenTargetIllegal()
+                    && may.targetSpec().declaredTarget() != null
+                    && resolvingTargetGroup >= 0
+                    && entry.targetsForGroup(resolvingTargetGroup).isEmpty()
+                    && !(entry.getTargetId() != null && entry.getTargetIds().isEmpty()
+                    && entry.getCard().getSpellTargets().size() == 1)) {
+                continue;
+            }
+
+            if (effectToResolve instanceof MayEffect may
                     && shouldSkipAcceptedOncePerTurnMay(gameData, entry, may)) {
                 log.info("Game {} - {}'s once-per-turn may ability already resolved", gameData.id,
                         entry.getCard().getName());

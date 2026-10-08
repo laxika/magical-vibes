@@ -89,6 +89,37 @@ public class LibraryReorderInteractionHandler implements InteractionHandler<Pend
             }
         }
 
+        if (interaction.destinationZone() != null) {
+            UUID zoneOwnerId = interaction.deckOwnerId() == null ? player.getId() : interaction.deckOwnerId();
+            List<Card> zone = switch (interaction.destinationZone()) {
+                case GRAVEYARD -> gameData.playerGraveyards.get(zoneOwnerId);
+                case LIBRARY -> gameData.playerDecks.get(zoneOwnerId);
+                default -> throw new IllegalStateException("Unsupported reorder destination");
+            };
+            Set<UUID> componentIds = reorderCards.stream().map(Card::getId)
+                    .collect(java.util.stream.Collectors.toSet());
+            int firstIndex = -1;
+            for (int index = 0; index < zone.size(); index++) {
+                if (componentIds.contains(zone.get(index).getId())) {
+                    firstIndex = index;
+                    break;
+                }
+            }
+            List<Card> ordered = cardOrder.stream().map(reorderCards::get)
+                    .filter(card -> zone.stream().anyMatch(present -> present.getId().equals(card.getId())))
+                    .toList();
+            zone.removeIf(card -> componentIds.contains(card.getId()));
+            if (firstIndex >= 0) {
+                zone.addAll(Math.min(firstIndex, zone.size()), ordered);
+            }
+            gameData.interaction.clearAwaitingInput();
+            gameLogService.append(gameData, GameLog.text(player.getUsername()
+                    + " orders the cards from the merged permanent in their "
+                    + interaction.destinationZone().name().toLowerCase(java.util.Locale.ROOT) + "."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (interaction.planarDeck()) {
             if (gameData.planechase == null) {
                 throw new IllegalStateException("No planar deck is active");

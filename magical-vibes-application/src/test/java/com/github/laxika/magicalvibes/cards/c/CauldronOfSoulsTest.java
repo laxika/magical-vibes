@@ -21,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CauldronOfSouls.class, DoomBlade.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({CauldronOfSouls.class, Confiscate.class, DoomBlade.class, GrizzlyBears.class, Mountain.class})
 class CauldronOfSoulsTest extends BaseCardTest {
 
     /** Resolves the stack until the game pauses for input or the stack empties. */
@@ -185,8 +185,11 @@ class CauldronOfSoulsTest extends BaseCardTest {
     @DisplayName("The dying creature's controller controls persist, and its owner receives it")
     void stolenCreaturePersistIsControlledByItsController() {
         addCauldronReady();
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.stolenCreatures.put(bears.getId(), player2.getId());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Confiscate()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(bears.getId()));
         harness.passBothPriorities();
         harness.setHand(player1, List.of(new DoomBlade()));

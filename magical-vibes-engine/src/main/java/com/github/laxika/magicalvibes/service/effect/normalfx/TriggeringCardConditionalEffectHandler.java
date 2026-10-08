@@ -32,7 +32,9 @@ public class TriggeringCardConditionalEffectHandler implements NormalEffectHandl
         TriggeringCardConditionalEffect conditional = (TriggeringCardConditionalEffect) effect;
         Card triggeringCard = gameQueryService.findCardById(gameData, entry.getTriggeringCardId());
         if (triggeringCard == null || !predicateEvaluationService.matchesCardPredicate(
-                triggeringCard, conditional.predicate(), null, gameData, entry.getControllerId())) {
+                triggeringCard, conditional.predicate(), entry.getCard().getId(), gameData,
+                entry.getControllerId(), entry.getSourcePermanentId(), null,
+                entry.getXValue(), entry.getSourcePermanentSnapshot())) {
             return;
         }
 

@@ -206,7 +206,7 @@ class CoriSteelCutterTest extends BaseCardTest {
         assertThat(monkTokens()).hasSize(1);
         assertThat(gqs.getEffectivePower(gd, firstMonk)).isEqualTo(3);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gqs.getEffectivePower(gd, firstMonk)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, firstMonk)).isEqualTo(2);
 

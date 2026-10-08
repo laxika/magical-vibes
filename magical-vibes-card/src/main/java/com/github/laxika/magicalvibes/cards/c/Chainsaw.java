@@ -22,7 +22,7 @@ public class Chainsaw extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToTargetCreatureEffect(3));
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES,
                 new OneOrMoreCreatureDeathTriggerEffect(
-                        new PutCountersOnSourceCardEffect(CounterType.REV)));
+                        new PutCountersOnSourceCardEffect(CounterType.REV), true));
         addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
                 new CountersOnSource(CounterType.REV), new Fixed(0), GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{3}"));

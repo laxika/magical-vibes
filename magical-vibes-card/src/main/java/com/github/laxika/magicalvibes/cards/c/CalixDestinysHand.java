@@ -59,6 +59,7 @@ public class CalixDestinysHand extends Card {
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardTypePredicate(CardType.ENCHANTMENT))
                         .returnAll(true)
+                        .chooseAuraAttachment(true)
                         .build()),
                 "−7: Return all enchantment cards from your graveyard to the battlefield."
         ));

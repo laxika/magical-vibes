@@ -95,8 +95,16 @@ public class DistributeCountersAmongTargetsEffectHandler implements NormalEffect
                             .withSourceControllerId(entry.getControllerId()))) {
                 continue;
             }
-            int placed = permanentCounterSupport.placeCounterOnPermanent(
-                    gameData, entry, target, e.counterType(), assignment.getValue());
+            int placed = 0;
+            if (e.separateInstructions()) {
+                for (int counter = 0; counter < assignment.getValue(); counter++) {
+                    placed += permanentCounterSupport.placeCounterOnPermanent(
+                            gameData, entry, target, e.counterType(), 1);
+                }
+            } else {
+                placed = permanentCounterSupport.placeCounterOnPermanent(
+                        gameData, entry, target, e.counterType(), assignment.getValue());
+            }
             if (e.removeAtNextCleanup() && placed > 0) {
                 gameData.delayedActions.add(new RemoveCountersFromPermanentAtNextCleanup(
                         entry.getCard(), entry.getControllerId(), target.getId(), e.counterType(), placed));

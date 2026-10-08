@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponents;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -25,11 +27,12 @@ public class CombatCalligrapher extends Card {
         addEffect(EffectSlot.STATIC, new CreaturesCantAttackControllerUnlessPredicateEffect(
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.INKLING)), true));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER,
+        addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS,
+                new ConditionalEffect(new PlayerAttacksOneOfYourOpponents(),
                 new CreateTokenForTriggeringPlayerEffect(new CreateTokenEffect(
                         CardType.CREATURE, 1, "Inkling", 2, 1, CardColor.WHITE,
                         Set.of(CardColor.WHITE, CardColor.BLACK), List.of(CardSubtype.INKLING),
                         Set.of(Keyword.FLYING), Set.of(), true, false, Map.of(), List.of(),
-                        false, false, false, 0, Set.of())));
+                        false, false, false, 0, Set.of()))));
     }
 }

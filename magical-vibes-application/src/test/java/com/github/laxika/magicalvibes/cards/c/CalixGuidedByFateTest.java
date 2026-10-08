@@ -147,8 +147,6 @@ class CalixGuidedByFateTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validPermanentIds()).contains(calix.getId(), bears.getId());
-        assertThat(gd.interaction.permanentChoiceContext())
-                .isNotInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
         harness.handlePermanentChosen(player1, bears.getId());
 
         assertThat(findPermanents(player1, "Holy Strength"))

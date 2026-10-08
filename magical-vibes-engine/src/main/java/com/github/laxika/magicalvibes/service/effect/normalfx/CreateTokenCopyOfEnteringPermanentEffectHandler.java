@@ -14,7 +14,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CreateTokenCopyOfEnteringPermanentEffectHandler implements NormalEffectHandlerBean {
 
-    private final CreateTokenCopyOfTargetPermanentEffectHandler targetPermanentHandler;
+    private final com.github.laxika.magicalvibes.service.battlefield.GameQueryService gameQueryService;
+    private final com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService permanentCopierService;
+    private final TokenCopySupport tokenCopySupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -30,9 +32,15 @@ public class CreateTokenCopyOfEnteringPermanentEffectHandler implements NormalEf
         if (enteringPermanentId == null) {
             return;
         }
-        targetPermanentHandler.resolveForTarget(
-                gameData, entry,
-                new CreateTokenCopyOfTargetPermanentEffect(copyEffect.grantHaste(), copyEffect.exileAtEndStep()),
-                enteringPermanentId);
+        var entering = gameQueryService.findPermanentById(gameData, enteringPermanentId);
+        if (entering == null && entry.getAttachedPermanentSnapshot() != null
+                && enteringPermanentId.equals(entry.getAttachedPermanentSnapshot().getId())) {
+            entering = entry.getAttachedPermanentSnapshot();
+        }
+        if (entering == null) return;
+        tokenCopySupport.createTokenCopies(gameData, entry,
+                java.util.List.of(permanentCopierService.copiableCard(entering)),
+                entering, entry.getControllerId(), new CreateTokenCopyOfTargetPermanentEffect(
+                        copyEffect.grantHaste(), copyEffect.exileAtEndStep(), copyEffect.sacrificeAtEndStep()));
     }
 }

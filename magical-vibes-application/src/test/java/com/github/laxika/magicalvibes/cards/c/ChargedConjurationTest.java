@@ -206,6 +206,8 @@ class ChargedConjurationTest extends BaseCardTest {
     @ParameterizedTest
     @ValueSource(strings = {"Empty the Warrens", "Galvanic Relay", "Grapeshot"})
     void everySpellbookCardCanBeChosen(String cardName) {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new ChargedConjuration());
         harness.activateAbility(player1, 0, null, null);
         harness.assertInGraveyard(player1, "Charged Conjuration");

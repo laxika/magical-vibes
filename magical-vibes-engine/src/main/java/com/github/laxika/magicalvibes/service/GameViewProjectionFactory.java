@@ -276,9 +276,18 @@ public class GameViewProjectionFactory {
                             com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawReplacement.class::isInstance)) {
                         continue;
                     }
-                    UUID viewerId = entry.exilerId() != null ? entry.exilerId() : pid;
-                    cardsByViewer.computeIfAbsent(viewerId, ignored -> new ArrayList<>())
-                            .add(cardViewFactory.create(entry.card()));
+                    boolean grantsImplicitLookPermission = java.util.Arrays.stream(EffectSlot.values())
+                            .flatMap(slot -> p.getCard().getEffects(slot).stream())
+                            .filter(com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect.class::isInstance)
+                            .map(com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect.class::cast)
+                            .noneMatch(effect -> effect.faceDown() && !effect.mayLookAtFaceDownCards());
+                    UUID viewerId = grantsImplicitLookPermission
+                            ? entry.exilerId() != null ? entry.exilerId() : pid
+                            : data.exileLookPermissions.get(entry.card().getId());
+                    if (viewerId != null) {
+                        cardsByViewer.computeIfAbsent(viewerId, ignored -> new ArrayList<>())
+                                .add(cardViewFactory.create(entry.card()));
+                    }
                     for (UUID additionalViewer : data.additionalExileLookPermissions
                             .getOrDefault(entry.card().getId(), java.util.Set.of())) {
                         if (!additionalViewer.equals(viewerId)) {
@@ -525,7 +534,7 @@ public class GameViewProjectionFactory {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(data, perm)) continue;
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(data, perm)) {
                     if (effect instanceof PlayWithTopCardRevealedEffect topCardRevealed) {
                         // Public: visible to all
                         if (topCardRevealed.allPlayers()) {

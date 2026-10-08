@@ -29,6 +29,7 @@ public class RevealedMatchingHandCardChoiceInteractionHandler
     private final GameLogService gameLogService;
     private final CardRevealService cardRevealService;
     private final InputCompletionService inputCompletionService;
+    private final com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService battlefieldEntryService;
 
     @Override
     public Class<PendingInteraction.RevealedMatchingHandCardChoice> handledType() {
@@ -51,6 +52,26 @@ public class RevealedMatchingHandCardChoiceInteractionHandler
         List<UUID> cardIds = ((InteractionAnswer.CardsChosen) answer).cardIds();
         if (cardIds == null || cardIds.size() != 1 || !interaction.validCardIds().contains(cardIds.getFirst())) {
             throw new IllegalStateException("Choose exactly one revealed card");
+        }
+
+        if (interaction.entryRevealAbility() != null) {
+            Card chosen = gameData.playerHands.getOrDefault(interaction.targetPlayerId(), List.of()).stream()
+                    .filter(card -> card.getId().equals(cardIds.getFirst()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Chosen card is no longer in your hand"));
+            gameData.interaction.clearAwaitingInput();
+            cardRevealService.revealMatchingHandCardsToAllPlayers(
+                    gameData, interaction.targetPlayerId(), List.of(chosen));
+            gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " reveals ")
+                    .card(chosen).text(" — ").card(interaction.entryRevealAbility().sourceCard())
+                    .text(" enters untapped.").build());
+            if (interaction.entryRevealAbility().sourceCard().hasType(
+                    com.github.laxika.magicalvibes.model.CardType.LAND)) {
+                battlefieldEntryService.processLandETBEffects(gameData, interaction.targetPlayerId(),
+                        interaction.entryRevealAbility().sourceCard());
+            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
         }
 
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;

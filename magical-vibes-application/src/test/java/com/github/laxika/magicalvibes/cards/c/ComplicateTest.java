@@ -292,9 +292,9 @@ class ComplicateTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, creature.getId());
 
         harness.assertNotInGraveyard(player1, "Glory Seeker");
-        harness.tapPermanent(player1, 0);
-        harness.tapPermanent(player1, 1);
-        harness.tapPermanent(player1, 2);
+        gs.tapPermanent(gd, player1, 0);
+        gs.tapPermanent(gd, player1, 1);
+        gs.tapPermanent(gd, player1, 2);
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -325,7 +325,7 @@ class ComplicateTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotInGraveyard(player2, "Shock");
-        harness.tapPermanent(player2, 0);
+        gs.tapPermanent(gd, player2, 0);
         harness.handleMayAbilityChosen(player2, true);
         resolveAllTriggers();
 

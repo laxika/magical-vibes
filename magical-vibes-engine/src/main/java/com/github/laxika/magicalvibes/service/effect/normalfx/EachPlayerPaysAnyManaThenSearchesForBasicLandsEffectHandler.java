@@ -120,8 +120,10 @@ public class EachPlayerPaysAnyManaThenSearchesForBasicLandsEffectHandler
                 .map(playerId -> new LibrarySearchFollowUp.BasicLandsPick(playerId, totalManaPaid, true))
                 .toList();
         state.reset();
-        basicLandSearchQueueSupport.advance(
-                gameData, LibrarySearchFollowUp.basicLandSearches(picks, List.of()));
+        LibrarySearchFollowUp followUp = LibrarySearchFollowUp.basicLandSearches(picks, List.of(), true);
+        followUp = followUp.withBasicLandSearchQueue(followUp.basicLandSearchQueue()
+                .deferBattlefieldEntry().withOptionalSearch(false));
+        basicLandSearchQueueSupport.advance(gameData, followUp);
     }
 
     private int maxPotentialX(GameData gameData, UUID playerId) {

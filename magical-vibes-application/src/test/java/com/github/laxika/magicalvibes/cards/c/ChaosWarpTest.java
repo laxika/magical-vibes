@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -18,8 +20,45 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChaosWarp.class, BattleScreech.class, FountainOfYouth.class, GrizzlyBears.class, Pacifism.class, PsychogenicProbe.class, Shock.class})
+@CardUsed({ChaosWarp.class, CopyEnchantment.class, BattleScreech.class, FountainOfYouth.class, GrizzlyBears.class, Pacifism.class, PsychogenicProbe.class, Shock.class})
 class ChaosWarpTest extends BaseCardTest {
+
+    @Test
+    void simulationAnswersPreparedCopiedAuraIndependentlyOfLiveGame() {
+        Permanent firstHost = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondHost = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent originalAura = harness.addToBattlefieldAndReturn(player1, new Pacifism());
+        originalAura.setAttachedTo(firstHost.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        target.setExileIfLeavesBattlefield(true);
+        CopyEnchantment copyCard = new CopyEnchantment();
+        harness.setLibrary(player2, List.of(copyCard));
+        harness.setHand(player1, List.of(new ChaosWarp()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, originalAura.getId());
+        PendingInteraction liveChoice = gd.interaction.activeInteraction();
+        assertThat(liveChoice).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        GameData simulation = gd.simulationCopy();
+
+        gs.handleInteractionAnswer(simulation, player2, new InteractionAnswer.PermanentChosen(firstHost.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isSameAs(liveChoice);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(copyCard);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getOriginalCard() == copyCard);
+        harness.handlePermanentChosen(player2, secondHost.getId());
+
+        Permanent simulatedAura = simulation.playerBattlefields.get(player2.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard() == copyCard).findFirst().orElseThrow();
+        Permanent liveAura = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard() == copyCard).findFirst().orElseThrow();
+        assertThat(simulatedAura.getAttachedTo()).isEqualTo(firstHost.getId());
+        assertThat(liveAura.getAttachedTo()).isEqualTo(secondHost.getId());
+    }
 
     @Test
     void shufflesTargetPermanentThenPutsPermanentTopCardOntoBattlefield() {
@@ -119,6 +158,7 @@ class ChaosWarpTest extends BaseCardTest {
     @Test
     void revealedAuraOffersOwnerAnAttachmentChoice() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Pacifism());
         target.setAttachedTo(creature.getId());
         harness.setLibrary(player2, List.of());

@@ -121,7 +121,7 @@ class ChoreographedSparksTest extends BaseCardTest {
         assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
 
         harness.passBothPriorities();
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
         assertThat(gd.stack).anySatisfy(entry -> {
             assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);

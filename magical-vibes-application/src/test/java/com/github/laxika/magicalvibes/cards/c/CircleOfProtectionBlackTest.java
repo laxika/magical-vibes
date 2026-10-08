@@ -232,7 +232,9 @@ class CircleOfProtectionBlackTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player2, 0, null, player1.getId());
-        harness.handlePermanentChosen(player2, horror.getId());
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice) {
+            harness.handlePermanentChosen(player2, horror.getId());
+        }
         harness.passPriority(player2);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

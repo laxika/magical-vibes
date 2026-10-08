@@ -12,8 +12,22 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * ({@code 1} for "you may return target creature that player controls" — Mistblade Shinobi). The
  * choice always allows returning fewer, which is what makes the "you may" optional.</p>
  */
-public record ReturnPermanentsOnCombatDamageToPlayerEffect(PermanentPredicate filter, int fixedCount)
+public record ReturnPermanentsOnCombatDamageToPlayerEffect(PermanentPredicate filter, int fixedCount, boolean targetsChosenAtTriggerTime)
         implements CombatDamageTriggerContextEffect {
+
+    public ReturnPermanentsOnCombatDamageToPlayerEffect(PermanentPredicate filter, int fixedCount) {
+        this(filter, fixedCount, false);
+    }
+
+    /** Bakes the targeted form while a combat damage trigger is being put on the stack. */
+    public ReturnPermanentsOnCombatDamageToPlayerEffect withTriggerTimeTargets() {
+        return new ReturnPermanentsOnCombatDamageToPlayerEffect(filter, fixedCount, true);
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return targetsChosenAtTriggerTime ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
+    }
 
     public ReturnPermanentsOnCombatDamageToPlayerEffect() {
         this(null, 0);

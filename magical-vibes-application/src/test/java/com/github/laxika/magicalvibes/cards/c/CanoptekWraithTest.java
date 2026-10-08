@@ -17,6 +17,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({CanoptekWraith.class, Plains.class, Forest.class})
 class CanoptekWraithTest extends BaseCardTest {
 
+    @org.junit.jupiter.api.BeforeEach
+    void keepPriorityForResponses() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.EnumSet.of(
+                com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN,
+                com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.EnumSet.of(
+                com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN,
+                com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE));
+    }
+
+
     @Test
     @DisplayName("Combat damage offers the payment and sacrifice ability")
     void combatDamageOffersPayment() {

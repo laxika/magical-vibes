@@ -5,6 +5,10 @@ import com.github.laxika.magicalvibes.cards.t.TerminalMoraine;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -147,6 +151,7 @@ class CrosissCatacombsTest extends BaseCardTest {
     void returnsLandToOpponentOwner() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
         gd.stolenCreatures.put(land.getId(), player2.getId());
+        recordControlEffect(land, player1);
         playAndResolveEtb();
 
         harness.handleMayAbilityChosen(player1, true);
@@ -193,5 +198,11 @@ class CrosissCatacombsTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
         return catacombs;
+    }
+    private void recordControlEffect(Permanent permanent, com.github.laxika.magicalvibes.model.Player controller) {
+        gd.addFloatingEffect(new FloatingContinuousEffect(
+                java.util.UUID.randomUUID(), "Control setup", null, controller.getId(),
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
     }
 }

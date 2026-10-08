@@ -171,15 +171,14 @@ class CapturedByTheConsulateTest extends BaseCardTest {
         Permanent currentlyEnchanted = addCreatureReady(player2, new GrizzlyBears());
         castAuraOn(formerlyEnchanted);
         Permanent aura = findPermanent(player1, "Captured by the Consulate");
+        harness.setHand(player1, List.of(new AuraGraft()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setHand(player2, List.of(new Boomerang()));
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, originalTarget.getId());
 
-        harness.setHand(player1, List.of(new AuraGraft()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.passPriority(player2);
         harness.castAndResolveInstant(player1, 0, aura.getId());
         harness.handlePermanentChosen(player1, currentlyEnchanted.getId());
         assertThat(aura.getAttachedTo()).isEqualTo(currentlyEnchanted.getId());

@@ -51,6 +51,19 @@ public record BattlefieldEntryRequest(UUID controllerId,
                 landPlayZone, sourceStackEntry, null);
     }
 
+    /** Uses the answered prepared object and the other members of its simultaneous entry batch. */
+    public BattlefieldEntryRequest withPermanent(Permanent prepared, List<Permanent> enteredTogether) {
+        return withBatchState(prepared, enterTappedTypes, enteredTogether);
+    }
+
+    /** Captures the battlefield's entry replacements once after all batch choices are complete. */
+    public BattlefieldEntryRequest withBatchState(Permanent prepared, Set<CardType> tappedTypes,
+                                                   List<Permanent> enteredTogether) {
+        return new BattlefieldEntryRequest(controllerId, prepared, tappedTypes, enteredTogether,
+                xValue, kicked, repeatedAdditionalCosts, convokeCreatureCount, discardReplacement,
+                enterWithCounters, landPlayZone, sourceStackEntry, unleashChoice, riotCounters, riotHaste);
+    }
+
     /** Resumes entry after the controller answers the unleash replacement choice. */
     public BattlefieldEntryRequest withUnleashChoice(boolean accepted) {
         return new BattlefieldEntryRequest(controllerId, permanent, enterTappedTypes, simultaneouslyEntered,

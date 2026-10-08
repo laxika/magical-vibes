@@ -152,7 +152,7 @@ class CentaurGardenTest extends BaseCardTest {
 
     @Test
     void thresholdAbilityRequiresGreenMana() {
-        harness.addToBattlefield(player1, new CentaurGarden());
+        Permanent garden = harness.addToBattlefieldAndReturn(player1, new CentaurGarden());
         Permanent halberdier = harness.addToBattlefieldAndReturn(player2, new Halberdier());
         harness.setGraveyard(player1, cards(7));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -161,7 +161,8 @@ class CentaurGardenTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
         harness.assertOnBattlefield(player1, "Centaur Garden");
-        harness.assertNotInGraveyard(player1, "Centaur Garden");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(garden.getCard().getId()));
     }
 
     @Test

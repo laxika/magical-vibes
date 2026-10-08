@@ -106,8 +106,26 @@ class ChantOfVituGhaziTest extends BaseCardTest {
         attacker.setAttacking(true);
         resolveCombat(player2);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())
-                + gd.playerLifeTotals.get(player2.getId())).isEqualTo(42);
+        harness.handleListChoice(player1, player1.getId().toString());
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void affectedPlayerCanChooseTheOpponentsOverlappingShield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        castChantOfVituGhazi();
+        harness.castFromHand(player2, new ChantOfVituGhazi(), "{6}{W}{W}");
+        harness.passBothPriorities();
+        attacker.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.handleListChoice(player1, player2.getId().toString());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 22);
     }
 
     @Test

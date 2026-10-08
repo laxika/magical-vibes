@@ -37,7 +37,10 @@ public class ChampionOfTheHareishTriggerEffectHandler implements NormalEffectHan
 
         ChampionOfTheHareishTriggerEffect trigger = (ChampionOfTheHareishTriggerEffect) effect;
         Set<CardSubtype> buddies = gameData.getBuddyList(entry.getControllerId());
-        boolean matchingType = trigger.enteringSubtypes().stream().anyMatch(buddies::contains);
+        Permanent entering = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        List<CardSubtype> enteringTypes = entering == null ? trigger.enteringSubtypes()
+                : gameQueryService.effectiveCreatureSubtypes(gameData, entering).stream().toList();
+        boolean matchingType = enteringTypes.stream().anyMatch(buddies::contains);
         if (matchingType) {
             Permanent source = entry.getSourcePermanentId() == null
                     ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
@@ -47,7 +50,7 @@ public class ChampionOfTheHareishTriggerEffectHandler implements NormalEffectHan
             return;
         }
 
-        List<CardSubtype> choices = trigger.enteringSubtypes().stream()
+        List<CardSubtype> choices = enteringTypes.stream()
                 .filter(subtype -> !buddies.contains(subtype))
                 .distinct()
                 .toList();

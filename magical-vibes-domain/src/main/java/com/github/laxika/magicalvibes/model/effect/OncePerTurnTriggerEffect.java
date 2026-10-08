@@ -7,7 +7,18 @@ package com.github.laxika.magicalvibes.model.effect;
  * track multiple independent once-per-turn abilities on the same source.
  */
 public record OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAcceptance, String key,
-                                      boolean firstTokenCreation, boolean firstLifeGain) implements CardEffect {
+                                      boolean firstTokenCreation, boolean firstLifeGain,
+                                      boolean firstLandGraveyardEvent) implements CardEffect {
+
+    public OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAcceptance, String key,
+                                   boolean firstTokenCreation, boolean firstLifeGain) {
+        this(wrapped, markOnAcceptance, key, firstTokenCreation, firstLifeGain, false);
+    }
+
+    /** Includes land-graveyard events that occurred before the source entered. */
+    public static OncePerTurnTriggerEffect firstLandGraveyardEvent(CardEffect wrapped) {
+        return new OncePerTurnTriggerEffect(wrapped, false, null, false, false, true);
+    }
 
     public OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAcceptance, String key,
                                    boolean firstTokenCreation) {

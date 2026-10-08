@@ -13,8 +13,12 @@ import com.github.laxika.magicalvibes.cards.m.Meteorite;
 import com.github.laxika.magicalvibes.cards.n.NicolBolasPlaneswalker;
 import com.github.laxika.magicalvibes.cards.o.OmegaMyr;
 import com.github.laxika.magicalvibes.cards.s.SoulSculptor;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
+import com.github.laxika.magicalvibes.cards.z.ZhurTaaGoblin;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -41,9 +45,38 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         Meteorite.class,
         NicolBolasPlaneswalker.class,
         OmegaMyr.class,
+        PsychogenicProbe.class,
+        ZhurTaaGoblin.class,
         SoulSculptor.class
 })
 class ChaoticTransformationTest extends BaseCardTest {
+
+    @Test
+    void riotChoiceFinishesBeforeEntryAndLibraryShuffle() {
+        harness.addToBattlefield(player1, new PsychogenicProbe());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card skipped = new FountainOfYouth();
+        Card revealed = new ZhurTaaGoblin();
+        harness.setLibrary(player2, List.of(skipped, revealed));
+        harness.setHand(player1, List.of(new ChaoticTransformation()));
+        addManaForChaoticTransformation();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(target.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(skipped, revealed);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getOriginalCard() == revealed);
+        assertThat(gd.stack).isEmpty();
+        harness.handleMayAbilityChosen(player2, true);
+
+        Permanent entered = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard() == revealed).findFirst().orElseThrow();
+        assertThat(entered.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(skipped);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+    }
 
     @Test
     void exilesEachTargetAndReplacesItWithApermanentSharingItsCardType() {
@@ -67,6 +100,7 @@ class ChaoticTransformationTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0,
                 List.of(artifact.getId(), creature.getId(), enchantment.getId(), planeswalker.getId(), land.getId()));
+        finishReplacementOrderChoices();
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .containsExactlyInAnyOrder(artifactCard, creatureCard, enchantmentCard, planeswalkerCard, landCard);
@@ -103,7 +137,7 @@ class ChaoticTransformationTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0,
                 List.of(firstArtifact.getId(), secondArtifact.getId())))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("at most one artifact");
+                .hasMessageContaining("declared target groups");
     }
 
     @Test
@@ -127,6 +161,7 @@ class ChaoticTransformationTest extends BaseCardTest {
         addManaForChaoticTransformation();
 
         harness.castAndResolveSorcery(player1, 0, List.of(animation.getId(), artifact.getId()));
+        finishReplacementOrderChoices();
 
         harness.assertOnBattlefield(player2, "Heartbeat of Spring");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -149,6 +184,13 @@ class ChaoticTransformationTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(artifact.getCard(), creature.getCard());
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order.context()).isInstanceOf(ChoiceContext.PermanentReplacementOrder.class);
+        harness.handleListChoice(player2, order.options().get(1));
+        harness.assertOnBattlefield(player2, "Omega Myr");
+        harness.assertOnBattlefield(player2, "Mox Opal");
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .singleElement().satisfies(card -> assertThat(card.getName()).isEqualTo("Grizzly Bears"));
     }
 
     @Test
@@ -171,6 +213,7 @@ class ChaoticTransformationTest extends BaseCardTest {
     void revealedAuraEntersAttachedToAChosenLegalCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HeartbeatOfSpring());
         Permanent host = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setLibrary(player2, List.of(new CombatResearch()));
         harness.setHand(player1, List.of(new ChaoticTransformation()));
         addManaForChaoticTransformation();
@@ -269,6 +312,14 @@ class ChaoticTransformationTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, player1.getId());
         harness.passBothPriorities();
         harness.assertLife(player1, 18);
+    }
+
+    private void finishReplacementOrderChoices() {
+        PendingInteraction.ColorChoice order;
+        while ((order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)) != null
+                && order.context() instanceof ChoiceContext.PermanentReplacementOrder) {
+            harness.handleListChoice(player2, order.options().getFirst());
+        }
     }
 
     private void addManaForChaoticTransformation() {

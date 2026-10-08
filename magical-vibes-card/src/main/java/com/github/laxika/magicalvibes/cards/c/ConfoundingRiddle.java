@@ -16,7 +16,7 @@ public class ConfoundingRiddle extends Card {
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Look at the top four cards of your library. Put one of them into your hand and the rest into your graveyard",
-                        LookAtTopCardsEffect.chooseNToHandRestToGraveyard(4, 1)),
+                        LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(4, 1)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Counter target spell unless its controller pays {4}",
                         new CounterUnlessPaysEffect(4))

@@ -155,6 +155,8 @@ class ChromiumTest extends BaseCardTest {
     @DisplayName("Chromium may be sacrificed even when its upkeep payment is available")
     void canDeclineWithEnoughMana() {
         harness.addToBattlefield(player1, new Chromium());
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.EnumSet.of(TurnStep.UPKEEP));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.EnumSet.of(TurnStep.UPKEEP));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();

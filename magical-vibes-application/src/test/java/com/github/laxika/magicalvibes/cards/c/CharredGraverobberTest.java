@@ -105,6 +105,7 @@ class CharredGraverobberTest extends BaseCardTest {
 
     @Test
     void escapeStillReturnsAnOutlawNotExiledForItsCost() {
+        harness.setHand(player1, List.of());
         Card robber = new CharredGraverobber();
         Card retainedOutlaw = new CharredGraverobber();
         List<Card> fodder = List.of(new ChangelingOutcast(), new ChangelingOutcast(),

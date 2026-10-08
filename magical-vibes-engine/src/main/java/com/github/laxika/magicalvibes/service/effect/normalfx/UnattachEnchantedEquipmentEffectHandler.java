@@ -77,6 +77,6 @@ public class UnattachEnchantedEquipmentEffectHandler implements NormalEffectHand
                 }
             }
         }
-        return null;
+        return entry.getSourcePermanentSnapshot();
     }
 }

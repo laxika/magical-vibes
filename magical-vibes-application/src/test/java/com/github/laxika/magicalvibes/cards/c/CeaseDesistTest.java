@@ -230,7 +230,8 @@ class CeaseDesistTest extends BaseCardTest {
 
         harness.assertLife(player2, 22);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawn);
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Cease // Desist");
         assertThat(gd.exiledCards.stream().map(entry -> entry.card().getId()))
                 .containsExactly(exiled.getId());
     }

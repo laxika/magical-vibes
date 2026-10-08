@@ -38,7 +38,7 @@ public class CunningBandit extends Card {
         addEffect(EffectSlot.END_STEP_TRIGGERED,
                 new ConditionalEffect(
                         new SourceCounterThreshold(2, CounterType.KI),
-                        new MayEffect(new TransformToBackFaceEffect(), "Flip Cunning Bandit?")));
+                        new MayEffect(new TransformToBackFaceEffect(true), "Flip Cunning Bandit?")));
     }
 
     @Override

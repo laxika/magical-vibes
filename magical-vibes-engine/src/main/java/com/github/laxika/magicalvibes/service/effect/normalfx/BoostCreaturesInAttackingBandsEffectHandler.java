@@ -30,6 +30,21 @@ public class BoostCreaturesInAttackingBandsEffectHandler implements NormalEffect
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+        if (!entry.getDeclaredTargetIds().isEmpty()) {
+            List<Permanent> survivingBand = gameData.playerBattlefields.values().stream()
+                    .flatMap(List::stream)
+                    .filter(permanent -> entry.getDeclaredTargetIds().contains(permanent.getId()))
+                    .filter(permanent -> permanent.isAttacking() && permanent.getBandId() != null)
+                    .toList();
+            int boost = survivingBand.size();
+            for (Permanent permanent : survivingBand) {
+                permanent.setPowerModifier(permanent.getPowerModifier() + boost);
+                permanent.setToughnessModifier(permanent.getToughnessModifier() + boost);
+            }
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                    " gives creatures in the attacking band +" + boost + "/+" + boost + " until end of turn."));
+            return;
+        }
         Map<UUID, List<Permanent>> bands = new HashMap<>();
         for (Permanent permanent : battlefield) {
             if (permanent.isAttacking() && permanent.getBandId() != null) {

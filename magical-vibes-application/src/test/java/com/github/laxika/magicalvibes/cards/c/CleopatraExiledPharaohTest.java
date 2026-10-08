@@ -161,7 +161,6 @@ class CleopatraExiledPharaohTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.END_STEP);
         harness.handlePermanentChosen(player1, target.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

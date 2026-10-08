@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.a.AnointedProcession;
 import com.github.laxika.magicalvibes.cards.s.SafePassage;
+import com.github.laxika.magicalvibes.cards.j.JinnieFayJetmirsSecond;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +23,64 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ChainersTorment.class, AnointedProcession.class, SafePassage.class})
 class ChainersTormentTest extends BaseCardTest {
+
+    @Test
+    @CardUsed(ChatterfangSquirrelGeneral.class)
+    void addedSquirrelDealsTheSameFixedDamageAsTheNightmare() {
+        harness.addToBattlefield(player1, new ChatterfangSquirrelGeneral());
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new ChainersTorment());
+        saga.setCounterCount(CounterType.LORE, 2);
+        harness.setLife(player1, 20);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Nightmare Horror")).hasSize(1);
+        assertThat(findPermanents(player1, "Squirrel")).hasSize(1);
+        harness.assertLife(player1, 0);
+    }
+
+    @Test
+    @CardUsed(JinnieFayJetmirsSecond.class)
+    void replacementChoiceResumesTokenDamageWithTheOriginalFixedAmount() {
+        harness.addToBattlefield(player1, new JinnieFayJetmirsSecond());
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new ChainersTorment());
+        saga.setCounterCount(CounterType.LORE, 2);
+        harness.setLife(player1, 20);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.assertLife(player1, 20);
+        harness.handleListChoice(player1, "Cat");
+
+        assertThat(findPermanents(player1, "Cat")).hasSize(1);
+        assertThat(findPermanents(player1, "Nightmare Horror")).isEmpty();
+        harness.assertLife(player1, 10);
+    }
+
+    @Test
+    void tokensEnteringUnderAnotherPlayersControlStillDamageTheSagaController() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new ChainersTorment());
+        saga.setCounterCount(CounterType.LORE, 2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        gd.playersGatheringSpecimensThisTurn.add(player2.getId());
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player2, "Nightmare Horror")).hasSize(1);
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 20);
+    }
 
     @Test
     @DisplayName("Casting Chainer's Torment adds a lore counter and triggers chapter I")
@@ -264,13 +324,13 @@ class ChainersTormentTest extends BaseCardTest {
         saga.setCounterCount(CounterType.LORE, 2);
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new SafePassage()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castAndResolveInstant(player1, 0);
         harness.passBothPriorities();
 

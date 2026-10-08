@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.a.AqueousAria;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 
 /**
  * Campus Composer // Aqueous Aria (SOS 40).
@@ -23,7 +24,8 @@ public class CampusComposerAqueousAria extends Card {
         setBackFaceCard(prepareSpell);
 
         // This creature enters prepared.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomePreparedEffect());
+        addEffect(EffectSlot.STATIC, new BecomePreparedEffect());
+        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
     }
 
     @Override

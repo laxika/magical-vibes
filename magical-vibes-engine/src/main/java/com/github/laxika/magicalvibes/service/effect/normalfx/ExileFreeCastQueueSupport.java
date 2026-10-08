@@ -292,7 +292,10 @@ public class ExileFreeCastQueueSupport {
                 StackEntry pendingCast = new StackEntry(spellType, cardToCast, playerId,
                         cardToCast.getName(), spellEffects, 0, (UUID) null, null);
                 pendingCast.setCopy(asCopy);
-                if (!asCopy) pendingCast.setSourceZone(Zone.EXILE);
+                if (!asCopy) {
+                    pendingCast.setSourceZone(Zone.EXILE);
+                    pendingCast.setOwnerIdOverride(exiledEntry.ownerId());
+                }
                 playerInputService.beginDiscardChoice(gameData, playerId, validIndices,
                         "Choose a card to discard to cast " + cardToCast.getName() + ".",
                         additionalCosts.discardCost().count(),
@@ -432,6 +435,8 @@ public class ExileFreeCastQueueSupport {
                                    Card cardToCast, List<CardEffect> spellEffects,
                                    StackEntryType spellType, boolean asCopy, int effectiveXValue) {
         String playerName = gameData.playerIdToName.get(playerId);
+        ExiledCardEntry exiledEntry = gameData.findExiledCard(physicalCard.getId());
+        UUID ownerId = exiledEntry == null ? physicalCard.getOwnerId() : exiledEntry.ownerId();
 
         if (needsCastTarget(cardToCast, spellEffects)) {
             List<UUID> firstCandidates = exileCastTargetSupport.firstSlotCandidates(
@@ -461,10 +466,6 @@ public class ExileFreeCastQueueSupport {
                 return;
             }
 
-            gameData.removeFromExile(physicalCard.getId());
-            if (!asCopy) {
-                gameData.recordCardPlayedFromExile(playerId);
-            }
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.ExileCastSpellTarget(
                             cardToCast, playerId, spellEffects, spellType, asCopy));
@@ -475,10 +476,6 @@ public class ExileFreeCastQueueSupport {
             return;
         }
 
-        gameData.removeFromExile(physicalCard.getId());
-        if (!asCopy) {
-            gameData.recordCardPlayedFromExile(playerId);
-        }
         StackEntry entry = new StackEntry(
                 spellType, cardToCast, playerId, cardToCast.getName(),
                 spellEffects, effectiveXValue, (UUID) null, null
@@ -486,8 +483,12 @@ public class ExileFreeCastQueueSupport {
         entry.setCopy(asCopy);
         if (!asCopy) {
             entry.setSourceZone(Zone.EXILE);
+            entry.setOwnerIdOverride(ownerId);
         }
         if (beginSacrificeCostIfNeeded(gameData, entry)) return;
+        if (gameData.removeFromExile(physicalCard.getId()) && !asCopy) {
+            gameData.recordCardPlayedFromExile(playerId);
+        }
         gameData.stack.add(entry);
         gameData.recordSpellCast(playerId, cardToCast);
         gameData.priorityPassedBy.clear();

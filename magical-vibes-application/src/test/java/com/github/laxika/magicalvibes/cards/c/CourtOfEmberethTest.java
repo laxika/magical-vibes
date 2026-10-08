@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.ManaColor;
+
+import java.util.List;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +17,10 @@ class CourtOfEmberethTest extends BaseCardTest {
     @Test
     @DisplayName("Enters as the monarch and creates a Knight that contributes to its damage")
     void createsKnightAndDealsDamageAsMonarch() {
-        harness.addToBattlefield(player1, new CourtOfEmbereth());
+        harness.setHand(player1, List.of(new CourtOfEmbereth()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());

@@ -177,6 +177,8 @@ class CurseOfTheBloodyTomeTest extends BaseCardTest {
     @Test
     @DisplayName("A library with one card mills just that card")
     void millsOnlyAvailableCard() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.UPKEEP));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.UPKEEP));
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new CurseOfTheBloodyTome());
         aura.setAttachedTo(player2.getId());
         CurseOfTheBloodyTome remaining = new CurseOfTheBloodyTome();
@@ -194,6 +196,8 @@ class CurseOfTheBloodyTomeTest extends BaseCardTest {
     @Test
     @DisplayName("Milling an empty library does nothing")
     void emptyLibraryDoesNotPreventResolution() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.UPKEEP));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.UPKEEP));
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new CurseOfTheBloodyTome());
         aura.setAttachedTo(player2.getId());
         harness.setLibrary(player2, List.of());

@@ -39,6 +39,8 @@ public class UnleashHandler implements MayEffectHandlerBean {
 
     @Autowired @Lazy
     private AsEntersInteractionService asEntersInteractionService;
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -51,6 +53,10 @@ public class UnleashHandler implements MayEffectHandlerBean {
                 .map(UnleashEffect.class::cast).findFirst().orElse(null);
         if (unleash != null && unleash.entryRequest() != null) {
             var request = unleash.entryRequest().withUnleashChoice(accepted);
+            if (battlefieldEntryBatchSupport.completeNativeChoice(gameData, request)) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
             battlefieldPlacementService.place(gameData, request);
             var spell = request.sourceStackEntry();
             asEntersInteractionService.handleCreatureEnteredBattlefield(gameData, request.controllerId(),

@@ -22,7 +22,7 @@ public class Chaosphere extends Card {
 
         // Creatures without flying have reach.
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
-                Keyword.REACH, GrantScope.ALL_CREATURES,
+                Keyword.REACH, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
     }
 }

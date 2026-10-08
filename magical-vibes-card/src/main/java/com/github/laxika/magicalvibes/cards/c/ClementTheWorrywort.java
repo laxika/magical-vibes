@@ -29,7 +29,7 @@ public class ClementTheWorrywort extends Card {
         PermanentPredicate bounceFilter = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentControlledBySourceControllerPredicate(),
-                new PermanentManaValueLessThanSourceManaValuePredicate()));
+                new PermanentManaValueLessThanSourceManaValuePredicate(true)));
 
         target(new PermanentPredicateTargetFilter(
                 bounceFilter,

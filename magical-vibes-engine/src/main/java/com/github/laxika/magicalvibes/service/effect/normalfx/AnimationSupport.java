@@ -604,9 +604,7 @@ public class AnimationSupport {
         target.setPermanentAnimatedPower(power);
         target.setPermanentAnimatedToughness(toughness);
         if (effect.power() != null || effect.toughness() != null) {
-            boolean dynamicPowerToughness = effect.power() != null && effect.toughness() != null
-                    && (!(effect.power() instanceof Fixed) || !(effect.toughness() instanceof Fixed));
-            CardEffect basePowerToughnessEffect = !dynamicPowerToughness
+            CardEffect basePowerToughnessEffect = !effect.dynamicPowerToughness()
                     ? new SetBasePowerToughnessEffect(power, toughness)
                     : new SetPowerToughnessToAmountEffect(effect.power(), effect.toughness());
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,

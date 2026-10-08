@@ -13,7 +13,7 @@ public class CauldronHaze extends Card {
 
     public CauldronHaze() {
         // Choose any number of target creatures. Each of those creatures gains persist until end of turn.
-        target(TargetFilters.creature(), 0, 99)
+        target(TargetFilters.creature(), 0, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.PERSIST, GrantScope.TARGET));
     }
 }

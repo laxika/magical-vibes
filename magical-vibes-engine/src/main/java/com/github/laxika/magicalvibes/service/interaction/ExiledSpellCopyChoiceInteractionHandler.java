@@ -68,17 +68,19 @@ public class ExiledSpellCopyChoiceInteractionHandler
         }
 
         if (interaction.mayCastCopies()) {
-            Card copy = copySupport.createCopyCard(entry.card());
-            exileService.exileCard(gameData, interaction.playerId(), copy);
-            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                    copy,
-                    interaction.playerId(),
-                    List.of(new MayCastCopyWithoutPayingManaCostEffect()),
-                    "Cast the copy of " + copy.getName() + " without paying its mana cost?",
-                    copy.getId()));
-            gameLogService.append(gameData,
-                    GameLog.textCardText(gameData.playerIdToName.get(interaction.playerId())
-                            + " creates a copy of ", entry.card(), "."));
+            for (int i = 0; i < interaction.copies(); i++) {
+                Card copy = copySupport.createCopyCard(entry.card());
+                exileService.exileCard(gameData, interaction.playerId(), copy);
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        copy,
+                        interaction.playerId(),
+                        List.of(new MayCastCopyWithoutPayingManaCostEffect()),
+                        "Cast the copy of " + copy.getName() + " without paying its mana cost?",
+                        copy.getId()));
+                gameLogService.append(gameData,
+                        GameLog.textCardText(gameData.playerIdToName.get(interaction.playerId())
+                                + " creates a copy of ", entry.card(), "."));
+            }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }

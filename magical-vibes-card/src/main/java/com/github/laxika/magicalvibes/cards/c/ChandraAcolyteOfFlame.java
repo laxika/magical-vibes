@@ -72,7 +72,8 @@ public class ChandraAcolyteOfFlame extends Card {
                 List.of(new CastTargetInstantOrSorceryFromGraveyardEffect(
                         GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
                         false,
-                        true)),
+                        true,
+                        new CardMaxManaValuePredicate(3))),
                 "−2: You may cast target instant or sorcery card with mana value 3 or less from your graveyard. If that spell would be put into your graveyard, exile it instead.",
                 targetFilter));
     }

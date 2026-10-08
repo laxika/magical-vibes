@@ -138,9 +138,8 @@ class CasalLurkwoodPathfinderTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, lateLegend)).isEqualTo(frontPower);
         assertThat(gqs.hasKeyword(gd, lateLegend, Keyword.TRAMPLE)).isFalse();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        gs.declareBlockers(gd, player2, java.util.List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         resolveAllTriggers();
 
         assertThat(casal.isTransformed()).isTrue();

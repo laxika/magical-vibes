@@ -21,6 +21,7 @@ public class CreateTokenCopyOfEachCreatureTargetPlayerControlsEffectHandler
 
     private final GameQueryService gameQueryService;
     private final TokenCopySupport tokenCopySupport;
+    private final com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService permanentCopierService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,7 +39,7 @@ public class CreateTokenCopyOfEachCreatureTargetPlayerControlsEffectHandler
                 .getOrDefault(targetPlayerId, List.of())
                 .stream()
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
-                .map(Permanent::getCard)
+                .map(permanentCopierService::copiableCard)
                 .toList();
 
         tokenCopySupport.createTokenCopies(

@@ -113,6 +113,6 @@ class ChillerpillarTest extends BaseCardTest {
 
     private void addMonstrosityMana(Player player) {
         harness.addMana(player, ManaColor.COLORLESS, 4);
-        gd.playerManaPools.get(player.getId()).addSnowMana(ManaColor.COLORLESS, 2);
+        gd.playerManaPools.get(player.getId()).addSnowMana(ManaColor.BLUE, 2);
     }
 }

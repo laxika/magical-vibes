@@ -170,7 +170,7 @@ class CharredFoyerWarpedSpaceTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(land, new Glimmerburst()));
         harness.forceStep(TurnStep.UNTAP);
         harness.passUntil(TurnStep.UPKEEP);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
 
         assertThatThrownBy(() -> harness.castFromExile(player1, land.getId()))
                 .isInstanceOf(IllegalStateException.class);

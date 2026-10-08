@@ -81,7 +81,12 @@ public class RevealUntilLandToBattlefieldRestToBottomEffectHandler implements No
                 gameData.id, playerName, cardName, land != null ? land.getName() : "none", rest.size());
 
         if (!rest.isEmpty()) {
-            libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, rest);
+            if (typedEffect.randomOrder()) {
+                java.util.Collections.shuffle(rest);
+                deck.addAll(rest);
+            } else {
+                libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, rest);
+            }
         }
     }
 }

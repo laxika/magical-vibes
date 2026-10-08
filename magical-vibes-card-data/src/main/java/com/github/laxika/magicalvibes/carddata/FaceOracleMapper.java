@@ -42,7 +42,7 @@ public final class FaceOracleMapper {
 
         return new OracleData(
                 // A double-faced card's printed name is "Front // Back"; a face is named by its half.
-                stripSecondFace(face.name()),
+                "split".equals(face.layout()) && !isBackFace ? face.name() : stripSecondFace(face.name()),
                 parsed.type(),
                 parsed.additionalTypes(),
                 blankToNull(stripSecondFace(face.manaCost())),

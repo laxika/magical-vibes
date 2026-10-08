@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterOpeningHandUpkeepTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -22,10 +23,10 @@ public class ChancellorOfTheForge extends Card {
         // You may reveal this card from your opening hand. If you do, at the beginning of
         // the first upkeep, create a 1/1 red Phyrexian Goblin creature token with haste.
         addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new MayEffect(
-                new CreateTokenEffect(
+                new RegisterOpeningHandUpkeepTriggerEffect(new CreateTokenEffect(
                         "Phyrexian Goblin", 1, 1, CardColor.RED,
                         List.of(CardSubtype.PHYREXIAN, CardSubtype.GOBLIN),
-                        Set.of(Keyword.HASTE), Set.of()),
+                        Set.of(Keyword.HASTE), Set.of())),
                 "Reveal this card from your opening hand?"
         ));
 

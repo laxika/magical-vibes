@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -98,6 +99,8 @@ class CullingDroneTest extends BaseCardTest {
     @Test
     @DisplayName("Ingest resolves after its source leaves the battlefield")
     void ingestResolvesWithoutSource() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
         Permanent drone = addAttackingDrone(player1);
         CullingDrone topCard = new CullingDrone();
         harness.setLibrary(player2, List.of(topCard));

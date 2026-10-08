@@ -22,7 +22,7 @@ public class Cetavolver extends Card {
 
     public Cetavolver() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{1}{R}"));
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.singlePayment(List.of("{G}")));
+        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{G}"), true, 1));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));

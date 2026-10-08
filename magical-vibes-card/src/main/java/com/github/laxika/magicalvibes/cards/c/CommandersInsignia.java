@@ -15,6 +15,6 @@ public class CommandersInsignia extends Card {
     public CommandersInsignia() {
         var commanderCasts = new CommanderCastsFromCommandZoneThisGame();
         addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
-                commanderCasts, commanderCasts, GrantScope.OWN_CREATURES));
+                commanderCasts, commanderCasts, GrantScope.ALL_OWN_CREATURES));
     }
 }

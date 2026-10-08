@@ -140,7 +140,7 @@ class ChimericSphereTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        harness.passUntil(TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, sphere)).isFalse();
         assertThat(gqs.isArtifact(gd, sphere)).isTrue();

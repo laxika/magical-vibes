@@ -89,6 +89,7 @@ class ConnectingTheDotsTest extends BaseCardTest {
                     .filter(permanent -> permanent.id().equals(source.getId())).findFirst().orElseThrow();
             assertThat(sourceView.faceDownExiledCards()).isEmpty();
             assertThat(sourceView.faceDownExiledCount()).isEqualTo(1);
+            assertThat(state.lookedAtExileCards()).isEmpty();
         }
     }
 

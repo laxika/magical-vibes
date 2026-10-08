@@ -272,7 +272,7 @@ class CharmbreakerDevilsTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new BumpInTheNight()));
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
 
         harness.assertInHand(player1, "Bump in the Night");
         harness.assertNotInGraveyard(player1, "Bump in the Night");

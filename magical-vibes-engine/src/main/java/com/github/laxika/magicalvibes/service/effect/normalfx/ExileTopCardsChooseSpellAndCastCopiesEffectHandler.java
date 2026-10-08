@@ -58,7 +58,8 @@ public class ExileTopCardsChooseSpellAndCastCopiesEffectHandler implements Norma
         }
 
         interactionHandlerRegistry.begin(gameData,
-                new PendingInteraction.ExiledSpellCopyChoice(controllerId, instantOrSorceryIds, e.copies()));
+                new PendingInteraction.ExiledSpellCopyChoice(controllerId, instantOrSorceryIds, e.copies(),
+                        true, "an instant or sorcery card"));
         log.info("Game {} - {} awaiting copy choice among {} exiled spells",
                 gameData.id, sourceName, instantOrSorceryIds.size());
     }

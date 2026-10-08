@@ -43,7 +43,7 @@ public class ChampionOfStraySouls extends Card {
                 List.of(),
                 0,
                 100
-        ).withXScaledTargets());
+        ).withExactXTargets());
 
         addGraveyardActivatedAbility(new ActivatedAbility(
                 false,

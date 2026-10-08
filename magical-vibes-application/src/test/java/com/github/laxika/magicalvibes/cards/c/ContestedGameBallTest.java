@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ContestedGameBall.class, PanickedAltisaur.class, Abrade.class})
+@CardUsed({ContestedGameBall.class, PanickedAltisaur.class, Abrade.class, CaptainsManeuver.class})
 class ContestedGameBallTest extends BaseCardTest {
 
     @Test
@@ -72,6 +72,8 @@ class ContestedGameBallTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage leaves the ball with its controller until the trigger resolves")
     void controlChangesOnlyWhenTriggerResolves() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN, TurnStep.DECLARE_BLOCKERS, TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN, TurnStep.DECLARE_BLOCKERS, TurnStep.COMBAT_DAMAGE));
         Permanent ball = addBall(player2);
         ball.tap();
         Permanent attacker = addCreatureReady(player1, new PanickedAltisaur());
@@ -93,6 +95,8 @@ class ContestedGameBallTest extends BaseCardTest {
     @Test
     @DisplayName("Simultaneous combat damage from two creatures triggers only once")
     void simultaneousCombatDamageTriggersOnce() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN, TurnStep.DECLARE_BLOCKERS, TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN, TurnStep.DECLARE_BLOCKERS, TurnStep.COMBAT_DAMAGE));
         Permanent ball = addBall(player2);
         addCreatureReady(player1, new PanickedAltisaur()).setAttacking(true);
         addCreatureReady(player1, new PanickedAltisaur()).setAttacking(true);
@@ -164,6 +168,37 @@ class ContestedGameBallTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Panicked Altisaur");
         assertThat(countPermanents(player1, "Treasure")).isZero();
+    }
+
+    @Test
+    @DisplayName("Combat damage redirected to the attacking player untaps their ball on resolution")
+    void redirectedCombatDamageUntapsAttackingPlayersBall() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.PRECOMBAT_MAIN,
+                TurnStep.POSTCOMBAT_MAIN, TurnStep.DECLARE_BLOCKERS, TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.PRECOMBAT_MAIN,
+                TurnStep.POSTCOMBAT_MAIN, TurnStep.DECLARE_BLOCKERS, TurnStep.COMBAT_DAMAGE));
+        Permanent ball = addBall(player1);
+        ball.tap();
+        Permanent attacker = addCreatureReady(player1, new PanickedAltisaur());
+        harness.setHand(player1, List.of(new CaptainsManeuver()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castInstantForX(player1, 0, 4, List.of(player2.getId(), player1.getId()));
+        harness.passBothPriorities();
+        attacker.setAttacking(true);
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat(player1));
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(ball.isTapped()).isTrue();
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ball);
+        assertThat(ball.isTapped()).isFalse();
     }
 
     private Permanent addBall(Player player) {

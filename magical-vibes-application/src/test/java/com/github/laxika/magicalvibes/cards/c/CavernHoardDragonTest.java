@@ -138,12 +138,14 @@ class CavernHoardDragonTest extends BaseCardTest {
     @Test
     void trampleTriggersAndDoesNotCountArtifactBlockerThatDied() {
         addCreatureReady(player1, new CavernHoardDragon());
-        addCreatureReady(player2, new Ornithopter());
+        Permanent blocker = addCreatureReady(player2, new Ornithopter());
         harness.addToBattlefield(player2, new Spellbook());
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
+        gs.handleCombatDamageAssigned(gd, player1, 0, java.util.Map.of(
+                blocker.getId(), 2, player2.getId(), 4));
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);

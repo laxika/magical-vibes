@@ -34,11 +34,12 @@ public class ConniveConcoct extends Card {
                 "Target must be a creature with power 2 or less");
 
         CardEffect connive = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
-        CardEffect concoct = new SurveilThenEffect(
+        CardEffect concoct = SurveilThenEffect.direct(
                 3,
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardTypePredicate(CardType.CREATURE))
+                        .mandatory(true)
                         .build());
 
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(

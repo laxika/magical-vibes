@@ -46,6 +46,7 @@ public class SuspectEffectHandler implements NormalEffectHandlerBean {
                 yield source == null || source.getAttachedTo() == null
                         ? List.of() : List.of(source.getAttachedTo());
             }
+            case TOKENS_CREATED_THIS_RESOLUTION -> entry.getCreatedPermanentIds();
             default -> List.of();
         };
 

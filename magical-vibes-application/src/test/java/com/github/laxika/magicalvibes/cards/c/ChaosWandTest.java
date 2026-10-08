@@ -76,7 +76,9 @@ class ChaosWandTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId()))
-                .extracting(Card::getName).contains("Forest");
+                .extracting(Card::getName).contains("Forest", "Funeral Charm");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getName).doesNotContain("Funeral Charm");
     }
 
     @Test
@@ -123,7 +125,6 @@ class ChaosWandTest extends BaseCardTest {
     @DisplayName("The found spell goes to its owner's graveyard after resolving")
     void resolvedSpellReturnsToOpponentsGraveyard() {
         Divination spell = new Divination();
-        spell.setOwnerId(player2.getId());
         activateWithLibrary(List.of(spell));
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
 
@@ -149,8 +150,13 @@ class ChaosWandTest extends BaseCardTest {
 
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(spell.getId())
                 && gd.playerHands.get(player1.getId()).contains(payment));
-        assertThat(gd.interaction.activeInteraction() != null
-                || gd.playerGraveyards.get(player1.getId()).contains(payment)).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.playerHands.get(player1.getId())).contains(payment);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(payment);
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(spell.getId())
+                && entry.getOwnerId().equals(player2.getId()));
     }
 
     @Test

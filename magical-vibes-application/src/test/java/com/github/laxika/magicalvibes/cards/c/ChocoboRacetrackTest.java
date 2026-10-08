@@ -34,6 +34,8 @@ class ChocoboRacetrackTest extends BaseCardTest {
 
     @Test
     void birdLandfallBoostsItUntilEndOfTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new ChocoboRacetrack());
         harness.setHand(player1, List.of(new Forest(), new Forest()));
 
@@ -41,8 +43,8 @@ class ChocoboRacetrackTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent bird = findBird(player1);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
@@ -51,7 +53,7 @@ class ChocoboRacetrackTest extends BaseCardTest {
         assertThat(bird.getEffectivePower()).isEqualTo(3);
         assertThat(bird.getEffectiveToughness()).isEqualTo(2);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(bird.getEffectivePower()).isEqualTo(2);
         assertThat(bird.getEffectiveToughness()).isEqualTo(2);

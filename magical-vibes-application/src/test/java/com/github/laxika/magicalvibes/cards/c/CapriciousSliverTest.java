@@ -21,6 +21,18 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({CapriciousSliver.class, SinewSliver.class, GrizzlyBears.class, Mountain.class})
 class CapriciousSliverTest extends BaseCardTest {
 
+    @org.junit.jupiter.api.BeforeEach
+    void keepTurnStepsAvailableForAssertions() {
+        for (var player : java.util.List.of(player1, player2)) {
+            gd.playerAutoStopSteps.put(player.getId(), java.util.EnumSet.of(
+                    com.github.laxika.magicalvibes.model.TurnStep.UPKEEP,
+                    com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN,
+                    com.github.laxika.magicalvibes.model.TurnStep.POSTCOMBAT_MAIN,
+                    com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE));
+        }
+    }
+
+
     @Test
     @DisplayName("A Sliver's combat damage exiles the top card of its controller's library for play")
     void sliverCombatDamageExilesTopCardForPlay() {

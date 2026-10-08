@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.cards.g.Gloom;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -18,6 +20,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CreepyCrawler.class, Frightcrawler.class, GrizzlyBears.class, Gloom.class})
 class CreepyCrawlerTest extends BaseCardTest {
+
+    @BeforeEach
+    void stopAfterCombatDamage() {
+        Set<TurnStep> stops = Set.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN,
+                TurnStep.DECLARE_BLOCKERS, TurnStep.COMBAT_DAMAGE);
+        gd.playerAutoStopSteps.put(player1.getId(), stops);
+        gd.playerAutoStopSteps.put(player2.getId(), stops);
+    }
 
     @Test
     @DisplayName("A Horror that entered this turn makes the damaged player afraid")
@@ -33,6 +43,7 @@ class CreepyCrawlerTest extends BaseCardTest {
         crawler.setAttacking(true);
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);
@@ -50,7 +61,7 @@ class CreepyCrawlerTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(discardedCard));
         harness.setLibrary(player1, List.of(drawnCard));
-        Permanent horror = harness.addToBattlefieldAndReturn(player1, new Frightcrawler());
+        Permanent horror = addCreatureReady(player1, new Frightcrawler());
         gd.permanentsEnteredBattlefieldThisTurn.clear();
 
         horror.setAttacking(true);
@@ -59,6 +70,7 @@ class CreepyCrawlerTest extends BaseCardTest {
         crawler.setAttacking(true);
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);
@@ -80,6 +92,7 @@ class CreepyCrawlerTest extends BaseCardTest {
         crawler.setAttacking(true);
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(retainedCard);
@@ -93,14 +106,16 @@ class CreepyCrawlerTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(discardedCard));
         harness.setLibrary(player1, List.of(drawnCard));
-        Permanent horror = harness.addToBattlefieldAndReturn(player1, new Frightcrawler());
+        Permanent horror = addCreatureReady(player1, new Frightcrawler());
+        addCreatureReady(player1, new CreepyCrawler());
         gd.permanentsEnteredBattlefieldThisTurn.clear();
-        gd.playersAttackedThisTurn.put(horror.getId(), Set.of(player2.getId()));
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, horror);
-        Permanent crawler = addCreatureReady(player1, new CreepyCrawler());
-        crawler.setAttacking(true);
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, horror));
+        gs.declareBlockers(gd, player2, List.of());
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);
@@ -120,6 +135,7 @@ class CreepyCrawlerTest extends BaseCardTest {
         crawler.setAttacking(true);
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
@@ -139,6 +155,7 @@ class CreepyCrawlerTest extends BaseCardTest {
         crawler.setAttacking(true);
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
     }
@@ -155,6 +172,7 @@ class CreepyCrawlerTest extends BaseCardTest {
         crawler.setAttacking(true);
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
@@ -170,6 +188,7 @@ class CreepyCrawlerTest extends BaseCardTest {
         crawler.setAttacking(true);
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }

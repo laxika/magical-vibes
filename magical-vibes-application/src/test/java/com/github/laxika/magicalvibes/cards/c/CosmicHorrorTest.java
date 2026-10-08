@@ -76,13 +76,15 @@ class CosmicHorrorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.UPKEEP, () -> {
+            harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 7);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(4);
+            assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+            assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 7);
+            assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+            assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(4);
+        });
     }
 
     @Test

@@ -57,7 +57,7 @@ public class LicidBecomeAuraEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        source.setCard(auraForm(source.getCard(), ((LicidBecomeAuraEffect) effect).endCost()));
+        source.setCard(auraForm(source.getCard(), ((LicidBecomeAuraEffect) effect).endCost(), entry.getControllerId()));
         gameData.expireFloatingEffectsForUnattachedSource(source.getId());
         source.setAttachedTo(host.getId());
         source.setTimestamp(gameData.nextTimestamp());
@@ -78,7 +78,7 @@ public class LicidBecomeAuraEffectHandler implements NormalEffectHandlerBean {
      * the end-effect payment; any other activated ability (Nurturing Licid's "{G}: Regenerate
      * enchanted creature") and the STATIC effects come along untouched.
      */
-    private Card auraForm(Card creatureForm, String endCost) {
+    private Card auraForm(Card creatureForm, String endCost, java.util.UUID effectControllerId) {
         Card copy = creatureForm.createRuntimeCopy();
         copy.setType(CardType.ENCHANTMENT);
         copy.setAdditionalTypes(Set.of());
@@ -92,7 +92,7 @@ public class LicidBecomeAuraEffectHandler implements NormalEffectHandlerBean {
                 endCost,
                 List.of(new LicidEndEffect()),
                 endCost + ": End this effect."
-        ));
+        ).withActivatableOnlyByGrantingPlayer().withGrantingPlayer(effectControllerId));
         copy.target(TargetFilters.creature());
         copy.freeze();
         return copy;

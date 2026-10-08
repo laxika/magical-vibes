@@ -172,6 +172,8 @@ class ChainOfVaporTest extends BaseCardTest {
     @Test
     @DisplayName("A copy can itself be copied by its target's controller")
     void copyCanContinueTheChain() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
         Permanent secondTarget = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
         Permanent thirdTarget = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());

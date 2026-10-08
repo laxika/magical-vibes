@@ -126,6 +126,7 @@ class CoilingOracleTest extends BaseCardTest {
     @Test
     @DisplayName("Entering without being cast uses the entering controller's library")
     void enteringWithoutCastingUsesControllersLibrary() {
+        harness.setHand(player2, List.of());
         Card oracle = new CoilingOracle();
         Card land = new GhostQuarter();
         Card opponentTop = new SimicInitiate();

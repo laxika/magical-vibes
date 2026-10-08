@@ -65,7 +65,8 @@ public class EachPlayerSacrificesOneOfEachTypeEffectHandler implements NormalEff
 
             while (currentTypeIndex < TYPES.size()) {
                 CardType type = TYPES.get(currentTypeIndex);
-                List<UUID> candidates = candidates(gameData, subjectPlayerId, type);
+                List<UUID> candidates = new ArrayList<>(candidates(gameData, subjectPlayerId, type));
+                candidates.removeAll(currentIds);
                 currentTypeIndex++;
 
                 if (candidates.isEmpty()) {
@@ -96,7 +97,8 @@ public class EachPlayerSacrificesOneOfEachTypeEffectHandler implements NormalEff
 
     private List<UUID> candidates(GameData gameData, UUID playerId, CardType type) {
         return destructionSupport.collectPermanentIds(gameData, playerId,
-                permanent -> matchesType(gameData, permanent, type));
+                permanent -> matchesType(gameData, permanent, type)
+                        && !gameQueryService.cantBeSacrificed(gameData, permanent));
     }
 
     private boolean matchesType(GameData gameData, Permanent permanent, CardType type) {

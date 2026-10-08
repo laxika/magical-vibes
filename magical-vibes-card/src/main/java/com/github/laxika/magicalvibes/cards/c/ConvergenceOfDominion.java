@@ -21,7 +21,7 @@ public class ConvergenceOfDominion extends Card {
         // cost {2} less to activate.
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new ControllerControlsCommander(),
-                new ReduceGraveyardCardActivatedAbilityCostEffect(new CardTruePredicate(), 2)));
+                new ReduceGraveyardCardActivatedAbilityCostEffect(new CardTruePredicate(), 2, 1)));
 
         // {3}, {T}: Mill three cards.
         addActivatedAbility(new ActivatedAbility(

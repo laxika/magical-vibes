@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CombatDamagePreventionTokenShield;
@@ -125,7 +126,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
 @Component
 public class DamagePreventionService {
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+
     private final GameQueryService gameQueryService;
+    private final ObjectProvider<LayerSystemService> layerSystemServiceProvider;
     private final PredicateEvaluationService predicateEvaluationService;
     private final LifeSupport lifeSupport;
     private final DrawService drawService;
@@ -140,6 +145,7 @@ public class DamagePreventionService {
     private final TriggerCollectionService triggerCollectionService;
 
     public DamagePreventionService(GameQueryService gameQueryService,
+                                   ObjectProvider<LayerSystemService> layerSystemServiceProvider,
                                    PredicateEvaluationService predicateEvaluationService,
                                    LifeSupport lifeSupport, DrawService drawService,
                                    AmountEvaluationService amountEvaluationService,
@@ -152,6 +158,7 @@ public class DamagePreventionService {
                                    GameLogService gameLogService,
                                    TriggerCollectionService triggerCollectionService) {
         this.gameQueryService = gameQueryService;
+        this.layerSystemServiceProvider = layerSystemServiceProvider;
         this.predicateEvaluationService = predicateEvaluationService;
         this.lifeSupport = lifeSupport;
         this.drawService = drawService;
@@ -712,6 +719,7 @@ public class DamagePreventionService {
             return false;
         }
         permanent.setCounterCount(CounterType.SHIELD, shields - 1);
+        triggerCollectionService.checkLoyaltyCounterRemovalTriggers(gameData);
         gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " loses a shield counter."));
         log.info("Game {} - {} loses a shield counter", gameData.id, permanent.getCard().getName());
         return true;
@@ -730,7 +738,8 @@ public class DamagePreventionService {
     }
 
     private int selfDamagePrevented(GameData gameData, Permanent permanent, int damage) {
-        int prevented = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        int prevented = gameQueryService.hasLostPrintedAbilities(gameData, permanent) ? 0
+                : permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .filter(SelfDamagePreventionEffect.class::isInstance)
                 .map(SelfDamagePreventionEffect.class::cast)
                 .mapToInt(effect -> effect.preventedDamage(damage))
@@ -1174,7 +1183,7 @@ public class DamagePreventionService {
             }
             gameData.pendingMayAbilities.add(new PendingMayAbility(
                     shield.sourceCard(), protectedPlayerId,
-                    List.of(new DealDamageToTargetCreatureEffect(damage)),
+                    List.of(new com.github.laxika.magicalvibes.model.effect.ChannelHarmEffect(damage)),
                     "Have " + shield.sourceCard().getName() + " deal " + damage
                             + " damage to the target creature?",
                     shield.targetCreatureId()));
@@ -1323,11 +1332,25 @@ public class DamagePreventionService {
         return remaining;
     }
 
-    /** Applies life gain riders attached to global creature-source prevention shields. */
-    public void applyAllByCreaturesPreventionLifeGain(GameData gameData, int preventedDamage) {
+    /** Applies exactly one rider after the affected player selects overlapping shields. */
+    public void applyAllByCreaturesPreventionLifeGain(GameData gameData, int preventedDamage,
+                                                      UUID affectedPlayerId) {
         if (preventedDamage <= 0 || gameData.damageByCreaturesPreventionLifeGainPlayers.isEmpty()) return;
-        for (UUID playerId : gameData.damageByCreaturesPreventionLifeGainPlayers) {
-            lifeSupport.applyGainLife(gameData, playerId, preventedDamage, "prevented damage");
+        List<UUID> controllers = gameData.damageByCreaturesPreventionLifeGainPlayers.stream().distinct().toList();
+        if (controllers.size() == 1) {
+            lifeSupport.applyGainLife(gameData, controllers.getFirst(), preventedDamage, "prevented damage");
+            return;
+        }
+        var choice = new com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice(
+                affectedPlayerId, null, null,
+                new com.github.laxika.magicalvibes.model.ChoiceContext.CreaturePreventionLifeGainChoice(
+                        preventedDamage, controllers),
+                controllers.stream().map(UUID::toString).toList(),
+                "Choose whose creature-damage prevention effect applies.");
+        if (gameData.interaction.isAwaitingInput()) {
+            gameData.queueInteraction(choice);
+        } else {
+            interactionHandlerRegistry.begin(gameData, choice);
         }
     }
 
@@ -2393,18 +2416,23 @@ public class DamagePreventionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(protectedPlayerId);
         if (battlefield == null) return damage;
 
-        for (Permanent permanent : List.copyOf(battlefield)) {
-            // "other permanents you control" — the absorbing permanent takes its own damage normally.
-            if (permanent.getId().equals(damagedPermanentId)
-                    || gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-            boolean absorbs = gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
-                    .anyMatch(effect -> effect instanceof RedirectPlayerDamageToSelfEffect e && e.includeOtherPermanents());
-            if (!absorbs) continue;
-            gameData.pendingSourceRedirectDamage.add(
-                    new SourceDamageRedirectShield(protectedPlayerId, null, damage, permanent.getId()));
-            return 0;
+        var layerSystemService = layerSystemServiceProvider.getObject();
+        var pass = layerSystemService.beginPass(gameData);
+        try {
+            for (Permanent permanent : List.copyOf(battlefield)) {
+                if (permanent.getId().equals(damagedPermanentId)
+                        || gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
+                boolean absorbs = gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
+                        .anyMatch(effect -> effect instanceof RedirectPlayerDamageToSelfEffect e && e.includeOtherPermanents());
+                if (!absorbs) continue;
+                gameData.pendingSourceRedirectDamage.add(
+                        new SourceDamageRedirectShield(protectedPlayerId, null, damage, permanent.getId()));
+                return 0;
+            }
+            return damage;
+        } finally {
+            layerSystemService.endPass(pass);
         }
-        return damage;
     }
 
     public boolean applyColorDamagePreventionForPlayer(GameData gameData, UUID playerId, CardColor sourceColor) {

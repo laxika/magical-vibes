@@ -191,7 +191,8 @@ public class GameActionAvailabilityService {
             VirtualManaPool poolWithoutSource = null;
             for (int i = 0; i < abilities.size(); i++) {
                 ActivatedAbility ability = abilities.get(i);
-                if (castingPermissionService.isSplitSecondActive(gameData) && !ability.isManaAbility()) {
+                if (castingPermissionService.isSplitSecondActive(gameData)
+                        && !com.github.laxika.magicalvibes.service.ability.AbilityActivationService.isManaAbility(ability)) {
                     continue;
                 }
                 String abilityManaCost = effectiveAbilityManaCost(gameData, playerId, perm, ability);

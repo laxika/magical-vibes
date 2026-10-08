@@ -298,12 +298,11 @@ public class DeathTriggerCollectorService {
         TurnStep step = match.gameData().currentStep;
         if (dyingPermanent == null || step == null
                 || step.ordinal() < TurnStep.BEGINNING_OF_COMBAT.ordinal()
-                || step.ordinal() > TurnStep.END_OF_COMBAT.ordinal()
-                || dyingPermanent.getBlockingTargetIds().isEmpty()) {
+                || step.ordinal() > TurnStep.END_OF_COMBAT.ordinal()) {
             return false;
         }
-        List<UUID> targetIds = new ArrayList<>(dyingPermanent.getBlockingTargetIds());
-        match.gameData().stack.add(new StackEntry(
+        List<UUID> targetIds = new ArrayList<>(dyingPermanent.getBlockedAttackerIdsThisCombat());
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sd.dyingCard(),
                 sd.controllerId(),
@@ -311,7 +310,9 @@ public class DeathTriggerCollectorService {
                 new ArrayList<>(List.of(deathDmg)),
                 0,
                 targetIds
-        ));
+        );
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
         return true;
     }
 
@@ -724,6 +725,9 @@ public class DeathTriggerCollectorService {
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(mayPay))
             ));
+        } else if (wrappedSpec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    sd.dyingCard(), sd.controllerId(), List.of(mayPay)));
         } else {
             match.gameData().queueMayAbility(sd.dyingCard(), sd.controllerId(), mayPay, null);
         }
@@ -1354,6 +1358,7 @@ public class DeathTriggerCollectorService {
     boolean handleReturnEnchantedCreature(TriggerMatchContext match,
             ReturnEnchantedCreatureToOwnerHandOnDeathEffect effect, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
+        if (!epd.wasCreature()) return false;
         CardEffect effectForStack = epd.dyingCreatureCardId() != null
                 ? new ReturnEnchantedCreatureToOwnerHandOnDeathEffect(epd.dyingCreatureCardId(),
                         effect.followUpManaCost(), effect.followUpPrompt())
@@ -2868,16 +2873,18 @@ public class DeathTriggerCollectorService {
             return false;
         }
         MayPayManaEffect rawMayPay = (MayPayManaEffect) match.rawEffect();
-        var copyEffect = new BecomeCopyOfDyingCreatureEffect(cd.dyingCard().getId());
-        match.gameData().pendingMayAbilities.add(new PendingMayAbility(
-                match.permanent().getCard(),
-                match.controllerId(),
-                List.of(copyEffect),
-                match.permanent().getCard().getName() + " — Pay " + rawMayPay.manaCost()
-                        + " to become a copy of " + cd.dyingCard().getName() + "?",
-                null,
-                rawMayPay.manaCost()
-        ));
+        Card dyingCopy = cd.dyingPermanent() != null
+                ? cd.dyingPermanent().getCard() : cd.dyingCard();
+        var copyEffect = new BecomeCopyOfDyingCreatureEffect(cd.dyingCard().getId(),
+                dyingCopy.createRuntimeCopy());
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(), match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                List.of(new MayPayManaEffect(rawMayPay.manaCost(), copyEffect,
+                        "Pay " + rawMayPay.manaCost() + " to become a copy of " + dyingCopy.getName() + "?")),
+                null, match.permanent().getId());
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
         logAnyCreatureDeath(match);
         return true;
     }

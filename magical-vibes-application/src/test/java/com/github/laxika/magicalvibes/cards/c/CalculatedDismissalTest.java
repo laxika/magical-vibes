@@ -22,6 +22,17 @@ import static org.assertj.core.api.Assertions.assertThat;
         LlanowarElves.class, ManaLeak.class, ActOfTreason.class})
 class CalculatedDismissalTest extends BaseCardTest {
 
+    @org.junit.jupiter.api.BeforeEach
+    void keepPriorityForResponses() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.EnumSet.of(
+                com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN,
+                com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.EnumSet.of(
+                com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN,
+                com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE));
+    }
+
+
     @Test
     @DisplayName("Counters the target spell when its controller cannot pay {3}")
     void countersWhenControllerCannotPay() {
@@ -208,7 +219,6 @@ class CalculatedDismissalTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passPriority(player1);
         harness.castInstant(player2, 0, bolt.getId());
-        harness.passPriority(player2);
         harness.castAndResolveInstant(player1, 0, bolt.getId());
         harness.assertInGraveyard(player1, "Lightning Bolt");
         harness.passBothPriorities();

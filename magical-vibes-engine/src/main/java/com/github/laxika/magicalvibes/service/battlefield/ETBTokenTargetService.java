@@ -196,6 +196,13 @@ public class ETBTokenTargetService {
                     .forEach(validTargetObjects::add);
             boolean optionalTarget = pending.effects().stream().anyMatch(effect -> effect instanceof OptionalTargetEffect
                     || effect.hasOptionalTarget());
+            if (!optionalTarget && pending.sourceCard().getSpellTargets().size() == 1) {
+                var declaredTarget = pending.sourceCard().getSpellTargets().getFirst();
+                optionalTarget = declaredTarget.getMinTargets() == 0
+                        && declaredTarget.getMaxTargets() == 1
+                        && pending.effects().stream().anyMatch(effect ->
+                        pending.sourceCard().getEffectTargetIndex(effect) == declaredTarget.getIndex());
+            }
             if (!validExiledCardTargets.isEmpty()
                     && validPlayerTargets.isEmpty()
                     && validSpellTargets.isEmpty()) {
@@ -469,6 +476,7 @@ public class ETBTokenTargetService {
                         .map(id -> targetControllerId(gameData, id))
                         .filter(java.util.Objects::nonNull)
                         .toList();
+                validPlayerTargets.removeIf(selectedControllers::contains);
                 validPermanentTargets.removeIf(id ->
                         selectedControllers.contains(gameQueryService.findPermanentController(gameData, id)));
                 validGraveyardCardTargets.removeIf(id ->

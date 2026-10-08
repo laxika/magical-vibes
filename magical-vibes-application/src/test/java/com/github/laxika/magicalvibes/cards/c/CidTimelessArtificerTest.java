@@ -61,6 +61,8 @@ class CidTimelessArtificerTest extends BaseCardTest {
     @DisplayName("Only your Artificers and graveyard cards count, and only your creatures benefit")
     void boostUsesOnlyControllerZones() {
         Permanent cid = harness.addToBattlefieldAndReturn(player1, new CidTimelessArtificer());
+        int unboostedCidPower = gqs.getEffectivePower(gd, cid);
+        int unboostedCidToughness = gqs.getEffectiveToughness(gd, cid);
         Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
         Permanent opposingArtifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
         harness.addToBattlefield(player2, new CidTimelessArtificer());
@@ -71,8 +73,8 @@ class CidTimelessArtificerTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, ownArtifact)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, opposingArtifact)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, opposingArtifact)).isEqualTo(5);
-        assertThat(gqs.getEffectivePower(gd, cid)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, cid)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, cid)).isEqualTo(unboostedCidPower);
+        assertThat(gqs.getEffectiveToughness(gd, cid)).isEqualTo(unboostedCidToughness);
 
         harness.setGraveyard(player1, List.of(new CidTimelessArtificer(), new CidTimelessArtificer()));
         assertThat(gqs.getEffectivePower(gd, ownArtifact)).isEqualTo(3);

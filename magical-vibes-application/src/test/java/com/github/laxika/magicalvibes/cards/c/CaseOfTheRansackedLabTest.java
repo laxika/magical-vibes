@@ -226,6 +226,7 @@ class CaseOfTheRansackedLabTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CaseOfTheRansackedLab());
         castShocks(4);
         resolveEndStepTriggers();
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         harness.setHand(player1, List.of(new Divination()));

@@ -45,7 +45,7 @@ class ClarionConquerorTest extends BaseCardTest {
         harness.addToBattlefield(player2, new SolRing());
         harness.addToBattlefieldAndReturn(player2, new LlanowarElves()).setSummoningSick(false);
 
-        assertThatThrownBy(() -> harness.tapPermanent(player2, 0))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated");
         assertThatThrownBy(() -> harness.tapPermanent(player2, 1))

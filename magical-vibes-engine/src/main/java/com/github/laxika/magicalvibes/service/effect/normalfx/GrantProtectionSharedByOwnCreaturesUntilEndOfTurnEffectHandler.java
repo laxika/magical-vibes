@@ -139,6 +139,7 @@ public class GrantProtectionSharedByOwnCreaturesUntilEndOfTurnEffectHandler impl
         if (!protection.protectionFromCardTypes().isEmpty()
                 || !protection.protectionFromSubtypes().isEmpty()
                 || protection.protectionFromManaValueAtLeast().isPresent()
+                || protection.protectionFromManaValueAtMost().isPresent()
                 || protection.protectionFromMulticolored()
                 || protection.protectionFromMonocolored()
                 || protection.protectionFromColoredSpells()

@@ -20,6 +20,10 @@ class CaesarLegionsEmperorTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing another creature allows two modes and counts tokens created earlier")
     void sacrificeAllowsTwoModes() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.EnumSet.of(
+                com.github.laxika.magicalvibes.model.TurnStep.DECLARE_ATTACKERS));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.EnumSet.of(
+                com.github.laxika.magicalvibes.model.TurnStep.DECLARE_ATTACKERS));
         addCreatureReady(player1, new CaesarLegionsEmperor());
         Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
         int opponentLifeBefore = gd.getLife(player2.getId());
@@ -45,6 +49,7 @@ class CaesarLegionsEmperorTest extends BaseCardTest {
             assertThat(soldier.getCard().getColors())
                     .containsExactlyInAnyOrder(CardColor.RED, CardColor.WHITE);
         });
+        resolveCombat();
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - 8);
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }

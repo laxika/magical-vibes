@@ -38,7 +38,7 @@ public class CentralElevatorPromisingStairs extends Card {
         addEffect(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED,
                 new TriggeringRoomDoorConditionalEffect(0, searchRoom));
 
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, ConditionalEffect.atTriggerTime(
                 new SourceRoomDoorUnlocked(1),
                 SequenceEffect.of(
                         new SurveilEffect(1),

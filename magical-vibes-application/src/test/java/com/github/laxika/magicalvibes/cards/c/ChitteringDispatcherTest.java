@@ -180,6 +180,7 @@ class ChitteringDispatcherTest extends BaseCardTest {
     void myriadCopyCanAttackOtherOpponentsPlaneswalker() {
         addThirdPlayer();
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player3, new UginTheIneffable());
+        planeswalker.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 5);
         addCreatureReady(player1, new ChitteringDispatcher());
 
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {

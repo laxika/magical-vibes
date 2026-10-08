@@ -25,6 +25,6 @@ public class ChroniclerOfHeroes extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)
                 ))),
-                new DrawCardEffect()));
+                new DrawCardEffect(), false));
     }
 }

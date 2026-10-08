@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.SourceAttackedOrBlockedThisCombat;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceAtEndOfCombatEffect;
@@ -21,11 +23,10 @@ public class ClockworkDragon extends Card {
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(6)));
 
         // At end of combat, if this creature attacked or blocked this combat, remove a +1/+1
-        // counter from it. Scheduling from ON_ATTACK/ON_BLOCK encodes the combat condition.
-        addEffect(EffectSlot.ON_ATTACK,
-                new RemoveCounterFromSourceAtEndOfCombatEffect(CounterType.PLUS_ONE_PLUS_ONE));
-        addEffect(EffectSlot.ON_BLOCK,
-                new RemoveCounterFromSourceAtEndOfCombatEffect(CounterType.PLUS_ONE_PLUS_ONE));
+        // counter from it. The combat condition is checked as the end-of-combat trigger fires.
+        addEffect(EffectSlot.END_OF_COMBAT_TRIGGERED,
+                new ConditionalEffect(new SourceAttackedOrBlockedThisCombat(),
+                        new RemoveCounterFromSourceAtEndOfCombatEffect(CounterType.PLUS_ONE_PLUS_ONE)));
 
         // {3}: Put a +1/+1 counter on this creature.
         addActivatedAbility(new ActivatedAbility(false, "{3}",

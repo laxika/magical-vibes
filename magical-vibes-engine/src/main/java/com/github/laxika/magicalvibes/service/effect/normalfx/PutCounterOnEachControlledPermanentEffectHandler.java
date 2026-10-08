@@ -53,6 +53,7 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
                 AmountContext.forStackEntry(entry, source));
         FilterContext ctx = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
+                .withSourcePermanentId(entry.getSourcePermanentId())
                 .withSourcePermanentSnapshot(source);
         int count = 0;
         int loyaltyCountersPlaced = 0;

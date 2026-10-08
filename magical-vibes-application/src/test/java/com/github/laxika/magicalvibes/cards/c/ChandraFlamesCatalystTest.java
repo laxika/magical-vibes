@@ -100,6 +100,7 @@ class ChandraFlamesCatalystTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, shock.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.addMana(player1, ManaColor.RED, 1);
         assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player1, 0, player2.getId()))

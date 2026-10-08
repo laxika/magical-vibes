@@ -28,8 +28,22 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 public record ExileTopCardsToSourceEffect(int count, boolean faceDown,
                                           boolean toGraveyardOnControlLoss, LibraryScope scope,
                                           boolean targetedOpponent, DynamicAmount dynamicCount,
-                                          boolean markWithIntelCounters)
+                                          boolean markWithIntelCounters, boolean mayLookAtFaceDownCards)
         implements CombatDamageTriggerContextEffect, CombatDamageAmountAwareEffect {
+
+    public ExileTopCardsToSourceEffect(int count, boolean faceDown,
+                                       boolean toGraveyardOnControlLoss, LibraryScope scope,
+                                       boolean targetedOpponent, DynamicAmount dynamicCount,
+                                       boolean markWithIntelCounters) {
+        this(count, faceDown, toGraveyardOnControlLoss, scope, targetedOpponent, dynamicCount,
+                markWithIntelCounters, true);
+    }
+
+    /** Exiles cards face down without granting either player permission to look at them. */
+    public static ExileTopCardsToSourceEffect faceDownWithoutLookPermission(int count) {
+        return new ExileTopCardsToSourceEffect(count, true, false, LibraryScope.CONTROLLER,
+                false, null, false, false);
+    }
 
     public ExileTopCardsToSourceEffect(int count, boolean faceDown,
                                        boolean toGraveyardOnControlLoss, LibraryScope scope,

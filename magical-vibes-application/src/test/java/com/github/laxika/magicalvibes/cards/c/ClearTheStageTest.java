@@ -88,7 +88,7 @@ class ClearTheStageTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(forest));
         prepareCast();
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, forest.getId(), target.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(target.getId(), forest.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -171,7 +171,7 @@ class ClearTheStageTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(graveyardCreature));
         prepareCast();
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, graveyardCreature.getId(), target.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(target.getId(), graveyardCreature.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -182,7 +182,7 @@ class ClearTheStageTest extends BaseCardTest {
         Card graveyardCreature = new TerritorialBoar();
         harness.setGraveyard(player1, List.of(graveyardCreature));
         prepareCast();
-        harness.castInstant(player1, 0, graveyardCreature.getId(), target.getId());
+        harness.castInstant(player1, 0, List.of(target.getId(), graveyardCreature.getId()));
         harness.setGraveyard(player1, List.of());
         harness.setExile(player1, List.of(graveyardCreature));
 
@@ -201,7 +201,7 @@ class ClearTheStageTest extends BaseCardTest {
         Card graveyardCreature = new TerritorialBoar();
         harness.setGraveyard(player1, List.of(graveyardCreature));
         prepareCast();
-        harness.castInstant(player1, 0, graveyardCreature.getId(), target.getId());
+        harness.castInstant(player1, 0, List.of(target.getId(), graveyardCreature.getId()));
         gd.playerBattlefields.get(player2.getId()).remove(target);
         harness.setHand(player2, List.of(target.getCard()));
 
@@ -219,7 +219,7 @@ class ClearTheStageTest extends BaseCardTest {
         Card graveyardCreature = new TerritorialBoar();
         harness.setGraveyard(player1, List.of(graveyardCreature));
         prepareCast();
-        harness.castInstant(player1, 0, graveyardCreature.getId(), target.getId());
+        harness.castInstant(player1, 0, List.of(target.getId(), graveyardCreature.getId()));
         harness.addToBattlefield(player1, new RampagingRendhorn());
 
         harness.passBothPriorities();
@@ -237,7 +237,7 @@ class ClearTheStageTest extends BaseCardTest {
         Card graveyardCreature = new TerritorialBoar();
         harness.setGraveyard(player1, List.of(graveyardCreature));
         prepareCast();
-        harness.castInstant(player1, 0, graveyardCreature.getId(), target.getId());
+        harness.castInstant(player1, 0, List.of(target.getId(), graveyardCreature.getId()));
         gd.playerBattlefields.get(player1.getId()).remove(largeCreature);
         harness.setHand(player1, List.of(largeCreature.getCard()));
 
@@ -265,9 +265,9 @@ class ClearTheStageTest extends BaseCardTest {
             assertThat(largeCreature.getEffectivePower()).isGreaterThanOrEqualTo(4);
         }
         if (graveyardCard == null) {
-            harness.castAndResolveInstant(player1, 0, target.getId());
+            harness.castAndResolveInstant(player1, 0, List.of(target.getId()));
         } else {
-            harness.castInstant(player1, 0, graveyardCard.getId(), target.getId());
+            harness.castInstant(player1, 0, List.of(target.getId(), graveyardCard.getId()));
             harness.passBothPriorities();
         }
     }

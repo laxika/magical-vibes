@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ExiledCreatureCopyOnEnterService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -51,6 +52,8 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 
 @Slf4j
 @Component
@@ -68,6 +71,10 @@ public class CloneService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final TriggerCollectionService triggerCollectionService;
     private final ExiledCreatureCopyOnEnterService exiledCreatureCopyOnEnterService;
+    private final AuraAttachmentService auraAttachmentService;
+    @Autowired
+    @Lazy
+    private BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId) {
         return prepareCloneReplacementEffect(gameData, controllerId, card, targetId, 0, false);
@@ -505,6 +512,8 @@ public class CloneService {
                                     boolean exileCopiedGraveyardCard) {
         Card card = gameData.cloneOperation.card;
         Card physicalCard = gameData.cloneOperation.physicalCard;
+        Permanent preparedPermanent = gameData.cloneOperation.preparedPermanent;
+        PermanentChoiceContext.AuraEntryBatchChoice battlefieldEntryBatch = gameData.cloneOperation.battlefieldEntryBatch;
         boolean transformed = gameData.cloneOperation.transformed;
         UUID controllerId = gameData.cloneOperation.controllerId;
         UUID etbTargetId = gameData.cloneOperation.etbTargetId;
@@ -542,6 +551,8 @@ public class CloneService {
 
         gameData.cloneOperation.card = null;
         gameData.cloneOperation.physicalCard = null;
+        gameData.cloneOperation.preparedPermanent = null;
+        gameData.cloneOperation.battlefieldEntryBatch = null;
         gameData.cloneOperation.transformed = false;
         gameData.cloneOperation.controllerId = null;
         gameData.cloneOperation.etbTargetId = null;
@@ -583,14 +594,16 @@ public class CloneService {
         gameData.cloneOperation.exileTwoAndAddOtherPowerCounters = false;
         gameData.cloneOperation.selectedGraveyardCopyCardIds = List.of();
 
-        Permanent perm = new Permanent(physicalCard != null ? physicalCard : card);
+        Permanent perm = preparedPermanent != null ? preparedPermanent
+                : new Permanent(physicalCard != null ? physicalCard : card);
         if (transformed) {
             perm.setCard(card);
             perm.setTransformed(true);
         }
 
         Permanent targetPerm = targetId == null ? null : gameQueryService.findPermanentById(gameData, targetId);
-        Card copiedCard = targetCard != null ? targetCard : targetPerm == null ? null : targetPerm.getCard();
+        Card copiedCard = targetCard != null ? targetCard : targetPerm == null ? null
+                : permanentCopierService.copiableCard(targetPerm);
         if (copiedCard != null) {
             boolean copiedPermanentHasVanishing = targetPerm != null
                     && gameQueryService.hasKeyword(gameData, targetPerm, Keyword.VANISHING);
@@ -668,6 +681,49 @@ public class CloneService {
             perm.tap();
         }
 
+        if (battlefieldEntryBatch != null) {
+            List<StackEntry> triggers = new ArrayList<>();
+            if (exileCopiedGraveyardCard && targetCard != null) {
+                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, perm.getCard(), controllerId,
+                        perm.getCard().getName() + "'s reflexive ability",
+                        List.of(new ExileTriggeringCardFromGraveyardEffect()), 0, perm.getId());
+                trigger.setTriggeringCardId(targetCard.getId());
+                triggers.add(trigger);
+            }
+            if (targetPerm != null && !reflexiveEffects.isEmpty()) {
+                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, perm.getCard(), controllerId,
+                        card.getName() + "'s reflexive ability", reflexiveEffects, targetPerm.getId(), perm.getId());
+                trigger.setNonTargeting(true);
+                triggers.add(trigger);
+            }
+            battlefieldEntryBatchSupport.completeClonePreparation(gameData, perm, triggers, battlefieldEntryBatch);
+            return;
+        }
+
+        if (perm.getCard().isAura() && !perm.isAttached()) {
+            List<UUID> hosts = new ArrayList<>();
+            gameData.forEachPermanent((ignored, permanent) -> {
+                if (auraAttachmentService.canEnchant(gameData, perm.getCard(), controllerId, permanent)) {
+                    hosts.add(permanent.getId());
+                }
+            });
+            if (perm.getCard().isEnchantPlayer()) {
+                for (UUID playerId : gameData.orderedPlayerIds) {
+                    if (auraAttachmentService.canEnchantPlayer(gameData, perm.getCard(), controllerId, playerId)) {
+                        hosts.add(playerId);
+                    }
+                }
+            }
+            if (!hosts.isEmpty()) {
+                gameData.interaction.setPendingAuraCard(perm.getCard());
+                gameData.interaction.setPendingAuraOriginalCard(perm.getOriginalCard());
+                gameData.interaction.setPendingAuraOwnerId(controllerId);
+                playerInputService.beginPermanentChoice(gameData, controllerId, hosts,
+                        "Choose what the copied Aura will enchant.");
+                return;
+            }
+        }
+
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm, xValue, false);
         if (ninjutsuEntry) {
             perm.setAttacking(true);
@@ -676,6 +732,11 @@ public class CloneService {
 
         String playerName = gameData.playerIdToName.get(controllerId);
         Card enteredCard = perm.getCard();
+        StackEntry parkedEntry = gameData.pendingEffectResolutionEntry;
+        if (preparedPermanent != null && parkedEntry != null
+                && perm.getId().equals(parkedEntry.getTargetId())) {
+            parkedEntry.rememberLastKnownPermanentCard(perm.getId(), enteredCard);
+        }
         if (copiedCard != null) {
             gameLogService.append(gameData, GameLog.builder()
                     .card(enteredCard)

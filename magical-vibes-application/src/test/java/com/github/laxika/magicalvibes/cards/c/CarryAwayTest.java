@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.e.EchoingTruth;
 import com.github.laxika.magicalvibes.cards.n.NemesisMask;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -40,7 +41,7 @@ class CarryAwayTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CarryAway()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castEnchantment(player1, 0, equipment.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> harness.passBothPriorities());
 
         harness.assertOnBattlefield(player1, "Nemesis Mask");
         harness.assertNotOnBattlefield(player2, "Nemesis Mask");
@@ -104,13 +105,14 @@ class CarryAwayTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CarryAway()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castEnchantment(player1, 0, equipment.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
         Permanent aura = findPermanent(player1, "Carry Away");
         assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
-        harness.setHand(player2, List.of(new EchoingTruth()));
-        harness.addMana(player2, ManaColor.BLUE, 2);
-        harness.castAndResolveInstant(player2, 0, aura.getId());
+        harness.setHand(player2, List.of(new EchoingTruth(), new EchoingTruth()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
+                () -> harness.castAndResolveInstant(player2, 0, aura.getId()));
 
         harness.assertInHand(player1, "Carry Away");
         harness.assertOnBattlefield(player2, "Nemesis Mask");

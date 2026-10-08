@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.SourcePermanentSnapshotRequir
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -207,14 +208,16 @@ public class PlayedCardNameTriggerCollectorService {
             return false;
         }
 
-        CardEffect resolved = conditional.wrapped();
+        CardEffect resolved = conditional.predicate() instanceof CardSharesCardTypeWithImprintedCardPredicate imprint
+                && imprint.requireImprintedCard() ? conditional : conditional.wrapped();
         if (resolved instanceof ConditionalEffect gate && gate.interveningIf()
                 && !conditionEvaluationService.isMet(match.gameData(), gate.condition(),
                 ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
             return false;
         }
 
-        return enqueueLandPlayTrigger(match, resolved, landPlayed.playingPlayerId());
+        return enqueueLandPlayTrigger(match, List.of(resolved), landPlayed.playingPlayerId(),
+                landPlayed.landCard().getId());
     }
 
     @CollectsTrigger(value = CreateFoodWhenPlayingCardFromTopOfLibraryEffect.class,

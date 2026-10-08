@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 public class CrackleWithPower extends Card {
 
     public CrackleWithPower() {
-        targetX(null, 100).addEffect(EffectSlot.SPELL,
+        targetX(null, Integer.MAX_VALUE).addEffect(EffectSlot.SPELL,
                 new DealDamageToEachTargetEffect(new Scaled(new XValue(), 5)));
     }
 }

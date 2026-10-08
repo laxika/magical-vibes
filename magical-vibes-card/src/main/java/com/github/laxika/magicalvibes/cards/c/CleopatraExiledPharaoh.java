@@ -43,5 +43,8 @@ public class CleopatraExiledPharaoh extends Card {
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
                 legendaryCreatureWithCounters,
                 new DrawCardForEachDyingSourceCounterEffect(null, new LoseLifeEffect(2))));
+        addEffect(EffectSlot.ON_DEATH, new TriggeringPermanentConditionalEffect(
+                legendaryCreatureWithCounters,
+                new DrawCardForEachDyingSourceCounterEffect(null, new LoseLifeEffect(2))));
     }
 }

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -35,8 +36,10 @@ public class CityOfDeath extends Card {
     }
 
     private void addCopyChapter(EffectSlot slot) {
+        var filter = new ControlledPermanentPredicateTargetFilter(
+                TARGET, "Target must be a non-Saga token you control.");
         addEffect(slot, new CreateTokenCopyOfTargetPermanentEffect());
-        setSagaChapterTargetFilter(slot, Set.of(new ControlledPermanentPredicateTargetFilter(
-                TARGET, "Target must be a non-Saga token you control.")));
+        setSagaChapterTargetFilter(slot, Set.of(filter));
+        setSagaChapterTargetGroups(slot, List.of(new SagaChapterTargetGroup(filter, 1, 1)));
     }
 }

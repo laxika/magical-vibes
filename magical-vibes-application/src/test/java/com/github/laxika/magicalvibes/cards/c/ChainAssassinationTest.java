@@ -61,7 +61,9 @@ class ChainAssassinationTest extends BaseCardTest {
     void drawsWhenTargetIsIndestructible() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
-        gd.creatureDeathCountThisTurn.merge(player2.getId(), 1, Integer::sum);
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        otherCreature.setMarkedDamage(2);
+        harness.runStateBasedActions();
         Forest drawn = new Forest();
         harness.setHand(player1, List.of(new ChainAssassination()));
         harness.setLibrary(player1, List.of(drawn));

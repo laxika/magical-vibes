@@ -66,8 +66,8 @@ class ChandraFlameshaperTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(token.getCard().getName()).isEqualTo("Llanowar Elves");
-        assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
-        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
         assertThat(gd.stack).isNotEmpty();

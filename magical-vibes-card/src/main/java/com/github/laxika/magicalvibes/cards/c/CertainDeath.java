@@ -16,10 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class CertainDeath extends Card {
 
     public CertainDeath() {
-        // The target's controller must lose life before destruction while the target permanent still exists.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER))
                 .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
+                .addEffect(EffectSlot.SPELL, new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER))
                 .addEffect(EffectSlot.SPELL, new GainLifeEffect(2));
     }
 }

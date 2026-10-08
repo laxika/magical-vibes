@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -41,16 +42,11 @@ public class CeaseDesist extends Card {
                         "Cease — Exile up to two target cards from a single graveyard. Target player gains 2 life and draws a card",
                         cease,
                         anyPlayer
-                ).withManaCost("{1}{B/G}"),
+                ).withManaCost("{1}{B/G}").withSpellType(CardType.INSTANT),
                 new ChooseOneEffect.ChooseOneOption(
                         "Desist — Destroy all artifacts and enchantments",
                         desist
-                ).withManaCost("{4}{G/W}{G/W}"),
-                new ChooseOneEffect.ChooseOneOption(
-                        "Fuse — Cease and then Desist",
-                        List.of(exile, gainLife, draw, desist),
-                        anyPlayer
-                ).withManaCost("{5}{B/G}{G/W}{G/W}")
+                ).withManaCost("{4}{G/W}{G/W}").withSpellType(CardType.SORCERY)
         )));
     }
 }

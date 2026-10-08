@@ -799,6 +799,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers at the beginning of each of the controller's postcombat main phases.
      *  Checked in {@code StepTriggerService.handlePostcombatMainTriggers}. */
     POSTCOMBAT_MAIN_TRIGGERED,
+
+    /** Fires only at the beginning of the controller's second main phase of the turn. */
+    SECOND_MAIN_PHASE_TRIGGERED,
     /** Triggers whenever a creature an opponent controls is dealt damage (combat or non-combat).
      *  Fires on the permanent with this slot, not on the damaged creature. Scans all battlefields
      *  for permanents with this slot whose controller is different from the damaged creature's controller. */

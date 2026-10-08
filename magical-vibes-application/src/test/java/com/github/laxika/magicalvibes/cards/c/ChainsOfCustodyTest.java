@@ -127,8 +127,9 @@ class ChainsOfCustodyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChainsOfCustody()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castEnchantment(player1, 0, List.of(creature.getId(), target.getId()));
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
 
         harness.setHand(player1, List.of(new Naturalize()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -193,6 +194,7 @@ class ChainsOfCustodyTest extends BaseCardTest {
     void cannotTargetOwnPermanentForExile() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent ownPermanent = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent legalTarget = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -200,10 +202,13 @@ class ChainsOfCustodyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> harness.castEnchantment(
-                player1, 0, List.of(creature.getId(), ownPermanent.getId())))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a nonland permanent an opponent controls");
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownPermanent.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, legalTarget.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Fountain of Youth");
     }
 
     private void castAndResolve(UUID creatureId, UUID permanentId) {
@@ -213,8 +218,9 @@ class ChainsOfCustodyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castEnchantment(player1, 0, List.of(creatureId, permanentId));
+        harness.castEnchantment(player1, 0, creatureId);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, permanentId);
         harness.passBothPriorities();
     }
 }

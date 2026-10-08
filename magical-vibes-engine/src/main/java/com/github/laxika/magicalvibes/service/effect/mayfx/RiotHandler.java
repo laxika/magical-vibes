@@ -37,6 +37,8 @@ public class RiotHandler implements MayEffectHandlerBean {
 
     @Autowired @Lazy
     private AsEntersInteractionService asEntersInteractionService;
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -62,6 +64,10 @@ public class RiotHandler implements MayEffectHandlerBean {
                 return;
             }
             request = request.withRiotChoices(counters, haste);
+            if (battlefieldEntryBatchSupport.completeNativeChoice(gameData, request)) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
             battlefieldPlacementService.place(gameData, request);
             var spell = request.sourceStackEntry();
             asEntersInteractionService.handleCreatureEnteredBattlefield(gameData, request.controllerId(),

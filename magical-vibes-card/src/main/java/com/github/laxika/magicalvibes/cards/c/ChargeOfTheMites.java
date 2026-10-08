@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
-import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -54,9 +54,7 @@ public class ChargeOfTheMites extends Card {
                                 false,
                                 false,
                                 Map.of(
-                                        EffectSlot.STATIC, new CantBlockEffect(),
-                                        EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                                        new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER)
+                                        EffectSlot.STATIC, SequenceEffect.of(new CantBlockEffect(), new ToxicEffect(1))
                                 ),
                                 List.of(),
                                 false,

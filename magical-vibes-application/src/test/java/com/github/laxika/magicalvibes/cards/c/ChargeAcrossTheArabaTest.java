@@ -135,7 +135,7 @@ class ChargeAcrossTheArabaTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(null, TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);

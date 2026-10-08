@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.PutRandomCreatureFromRandomGr
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -29,6 +30,7 @@ public class PutRandomCreatureFromRandomGraveyardOntoBattlefieldAndDealManaValue
         implements NormalEffectHandlerBean {
 
     private final BattlefieldEntryService battlefieldEntryService;
+    private final CloneService cloneService;
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final PermanentRemovalService permanentRemovalService;
@@ -66,6 +68,22 @@ public class PutRandomCreatureFromRandomGraveyardOntoBattlefieldAndDealManaValue
         permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
         Permanent permanent = new Permanent(card);
         permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
+        entry.setEventValue(card.getManaValue());
+        entry.setTargetId(permanent.getId());
+        entry.rememberLastKnownPermanentCard(permanent.getId(), card);
+        int effectIndex = entry.getEffectsToResolve().indexOf(effect);
+        entry.insertEffectsToResolve(effectIndex + 1,
+                List.of(new DealDamageToPlayersEffect(new TargetManaValue(), DamageRecipient.CONTROLLER)));
+
+        if (cloneService.prepareCloneReplacementEffect(
+                gameData, entry.getControllerId(), card, null)) {
+            gameData.cloneOperation.preparedPermanent = permanent;
+            if (!entry.getControllerId().equals(graveyardOwnerId)) {
+                graveyardReturnSupport.trackStolenCreature(
+                        gameData, permanent.getId(), entry.getControllerId(), graveyardOwnerId);
+            }
+            return;
+        }
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         battlefieldEntryService.putPermanentOntoBattlefield(
@@ -82,11 +100,5 @@ public class PutRandomCreatureFromRandomGraveyardOntoBattlefieldAndDealManaValue
                 .build());
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(
                 gameData, entry.getControllerId(), permanent, card);
-
-        entry.setEventValue(card.getManaValue());
-        entry.setTargetId(permanent.getId());
-        int effectIndex = entry.getEffectsToResolve().indexOf(effect);
-        entry.insertEffectsToResolve(effectIndex + 1,
-                List.of(new DealDamageToPlayersEffect(new TargetManaValue(), DamageRecipient.CONTROLLER)));
     }
 }

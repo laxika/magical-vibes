@@ -258,7 +258,15 @@ public class CombatAttackService {
                                              boolean mustAttackWithAtLeastOne) {
     }
 
-    private record AttackTriggerSource(Permanent permanent, EffectSlot effectSlot) {
+    private record AttackTriggerSource(Permanent permanent, EffectSlot effectSlot,
+                                       List<CardEffect> effects, List<UUID> bandMembers) {
+        private AttackTriggerSource(Permanent permanent, EffectSlot effectSlot, List<CardEffect> effects) {
+            this(permanent, effectSlot, effects, null);
+        }
+
+        private AttackTriggerSource(Permanent permanent, EffectSlot effectSlot) {
+            this(permanent, effectSlot, null, null);
+        }
     }
 
     /**
@@ -931,6 +939,14 @@ public class CombatAttackService {
             if (attackTarget != null && gameData.playerIds.contains(attackTarget)) {
                 gameData.recordAttackAgainstPlayer(attacker.getId(), attackTarget);
                 gameData.recordPlayerAttackAgainstPlayer(playerId, attackTarget);
+                var attackSubtypes = gameQueryService.effectiveCreatureSubtypes(gameData, attacker);
+                if (attacker.isFaceDown() || gameQueryService.isEnchantment(gameData, attacker)
+                        || attackSubtypes.contains(CardSubtype.HORROR)
+                        || attackSubtypes.contains(CardSubtype.NIGHTMARE)) {
+                    gameData.playersAfraidOfControllerAfterAttackThisTurn
+                            .computeIfAbsent(playerId, ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                            .add(attackTarget);
+                }
             } else if (attackTarget != null) {
                 Permanent attackedPermanent = gameQueryService.findPermanentById(gameData, attackTarget);
                 if (attackedPermanent != null && gameQueryService.isBattle(gameData, attackedPermanent)) {
@@ -1642,7 +1658,38 @@ public class CombatAttackService {
         // removed before resolution still count, tokens entering attacking after don't).
         List<AttackTriggerSource> attackTriggerSources = new ArrayList<>();
         for (Permanent perm : battlefield) {
-            attackTriggerSources.add(new AttackTriggerSource(perm, EffectSlot.ON_ALLY_CREATURES_ATTACK));
+            List<CardEffect> combinedEffects = new ArrayList<>();
+            for (var registration : perm.getCard().getEffectRegistrations(EffectSlot.ON_ALLY_CREATURES_ATTACK)) {
+                if (registration.effect() instanceof com.github.laxika.magicalvibes.model.effect.BoostCreaturesInAttackingBandsEffect) {
+                    Map<UUID, List<UUID>> declaredBands = new java.util.LinkedHashMap<>();
+                    for (int attackerIndex : attackerIndices) {
+                        Permanent attacker = battlefield.get(attackerIndex);
+                        if (attacker.getBandId() != null) {
+                            declaredBands.computeIfAbsent(attacker.getBandId(), ignored -> new ArrayList<>())
+                                    .add(attacker.getId());
+                        }
+                    }
+                    for (List<UUID> members : declaredBands.values()) {
+                        if (members.size() >= 2) {
+                            attackTriggerSources.add(new AttackTriggerSource(perm,
+                                    EffectSlot.ON_ALLY_CREATURES_ATTACK, List.of(registration.effect()), List.copyOf(members)));
+                        }
+                    }
+                    continue;
+                }
+                if (registration.triggerMode() == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT) {
+                    attackTriggerSources.add(new AttackTriggerSource(perm,
+                            EffectSlot.ON_ALLY_CREATURES_ATTACK, List.of(registration.effect())));
+                } else {
+                    combinedEffects.add(registration.effect());
+                }
+            }
+            combinedEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, perm, EffectSlot.ON_ALLY_CREATURES_ATTACK));
+            if (!combinedEffects.isEmpty()) {
+                attackTriggerSources.add(new AttackTriggerSource(perm,
+                        EffectSlot.ON_ALLY_CREATURES_ATTACK, combinedEffects));
+            }
         }
         List<Card> commandZone = gameData.playerCommandZones.get(playerId);
         if (commandZone != null) {
@@ -1654,12 +1701,8 @@ public class CombatAttackService {
         for (AttackTriggerSource triggerSource : attackTriggerSources) {
             Permanent perm = triggerSource.permanent();
             EffectSlot effectSlot = triggerSource.effectSlot();
-            List<CardEffect> allyAttackEffects = new ArrayList<>(
-                    perm.getCard().getEffects(effectSlot));
-            if (effectSlot == EffectSlot.ON_ALLY_CREATURES_ATTACK) {
-                allyAttackEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                        gameData, perm, effectSlot));
-            }
+            List<CardEffect> allyAttackEffects = new ArrayList<>(triggerSource.effects() != null
+                    ? triggerSource.effects() : perm.getCard().getEffects(effectSlot));
             if (allyAttackEffects.isEmpty()) continue;
 
             // Pre-filter attacker-group conditional effects — skip if no matching attacker exists,
@@ -1892,6 +1935,10 @@ public class CombatAttackService {
                                         : null
                         );
                         attackTrigger.setNonTargeting(referencesDeclaredAttackers);
+                        if (triggerSource.bandMembers() != null) {
+                            attackTrigger.setDeclaredTargetIds(triggerSource.bandMembers());
+                            attackTrigger.setNonTargeting(true);
+                        }
                         if (matchingAttackerCount != null) {
                             attackTrigger.setEventValue(matchingAttackerCount);
                         }

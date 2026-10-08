@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -94,9 +95,6 @@ public class ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffectHand
         }
 
         for (Card card : gameData.playerGraveyards.getOrDefault(controllerId, List.of())) {
-            if (sourceCardId != null && sourceCardId.equals(card.getId())) {
-                continue;
-            }
             if (predicateEvaluationService.matchesCardPredicate(
                     card, ARTIFACT, sourceCardId, gameData, controllerId)) {
                 candidates.add(new Candidate(card.getId(), null, card));
@@ -142,6 +140,23 @@ public class ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffectHand
         }
 
         Card sought = matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
+        gameData.perpetualCardTypes.merge(sought.getId(), Set.of(CardType.CREATURE, CardType.ARTIFACT),
+                (existing, added) -> {
+                    EnumSet<CardType> merged = EnumSet.noneOf(CardType.class);
+                    merged.addAll(existing);
+                    merged.addAll(added);
+                    return Set.copyOf(merged);
+                });
+        gameData.perpetualCardSubtypes.merge(sought.getId(), Set.of(effect.subtype()),
+                (existing, added) -> {
+                    EnumSet<CardSubtype> merged = EnumSet.noneOf(CardSubtype.class);
+                    merged.addAll(existing);
+                    merged.addAll(added);
+                    return Set.copyOf(merged);
+                });
+        gameData.perpetualCardBasePowerToughness.put(sought.getId(),
+                new GameData.PerpetualBasePowerToughness(effect.power(), effect.toughness(),
+                        gameData.nextTimestamp()));
         library.removeIf(card -> card.getId().equals(sought.getId()));
         gameData.addCardToHand(controllerId, sought);
 

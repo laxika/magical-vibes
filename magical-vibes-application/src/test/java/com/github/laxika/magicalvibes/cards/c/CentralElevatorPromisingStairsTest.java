@@ -112,7 +112,8 @@ class CentralElevatorPromisingStairsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castModalInstant(player1, 0, 1, List.of(room.getId()));
         harness.passBothPriorities();
-        assertThat(gd.playerHands.get(player1.getId())).contains(room.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
+                .contains(room.getOriginalCard().getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 

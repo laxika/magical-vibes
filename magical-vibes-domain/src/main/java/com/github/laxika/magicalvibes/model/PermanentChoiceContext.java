@@ -55,14 +55,23 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record BackdraftSorceryChoice() implements PermanentChoiceContext {}
 
     record AuraEntryBatchChoice(List<BattlefieldEntryCard> remaining, List<BattlefieldEntryCard> ready,
-                               boolean choosingProtector)
+                               boolean choosingProtector, List<BattlefieldEntryLibraryRemainder> libraryRemainders)
             implements PermanentChoiceContext {
+        public AuraEntryBatchChoice(List<BattlefieldEntryCard> remaining, List<BattlefieldEntryCard> ready,
+                                    boolean choosingProtector) {
+            this(remaining, ready, choosingProtector, List.of());
+        }
         public AuraEntryBatchChoice(List<BattlefieldEntryCard> remaining, List<BattlefieldEntryCard> ready) {
             this(remaining, ready, false);
         }
         public AuraEntryBatchChoice {
             remaining = List.copyOf(remaining);
             ready = List.copyOf(ready);
+            libraryRemainders = List.copyOf(libraryRemainders);
+        }
+        public AuraEntryBatchChoice deepCopy() {
+            return new AuraEntryBatchChoice(remaining.stream().map(BattlefieldEntryCard::deepCopy).toList(),
+                    ready.stream().map(BattlefieldEntryCard::deepCopy).toList(), choosingProtector, libraryRemainders);
         }
     }
 
@@ -124,6 +133,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record AttachOneOfEquipmentToCreature(List<UUID> equipmentPermanentIds)
             implements PermanentChoiceContext {
         public AttachOneOfEquipmentToCreature {
+            equipmentPermanentIds = List.copyOf(equipmentPermanentIds);
+        }
+    }
+
+    /** Chooses one of the permanents created by a resolving effect as the Equipment's host. */
+    record AttachMatchingEquipmentToCreatedPermanent(List<UUID> equipmentPermanentIds)
+            implements PermanentChoiceContext {
+        public AttachMatchingEquipmentToCreatedPermanent {
             equipmentPermanentIds = List.copyOf(equipmentPermanentIds);
         }
     }
@@ -1341,6 +1358,25 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /** Prepared token copies whose Aura attachments are chosen before they enter together. */
+    record PreparedTokenCopyAttachments(UUID controllerId, StackEntry entry,
+                                        CreateTokenCopyOfTargetPermanentEffect copyEffect,
+                                        List<Permanent> tokens, Permanent sourcePermanent,
+                                        List<UUID> attackTargets, boolean explicitAttackTargets,
+                                        int choosingIndex) implements PermanentChoiceContext {
+        public PreparedTokenCopyAttachments {
+            tokens = List.copyOf(tokens);
+            attackTargets = java.util.Collections.unmodifiableList(new java.util.ArrayList<>(attackTargets));
+        }
+
+        public PreparedTokenCopyAttachments deepCopy() {
+            return new PreparedTokenCopyAttachments(controllerId, new StackEntry(entry), copyEffect,
+                    tokens.stream().map(Permanent::new).toList(),
+                    sourcePermanent == null ? null : new Permanent(sourcePermanent),
+                    attackTargets, explicitAttackTargets, choosingIndex);
+        }
+    }
+
     /** Prepared copies whose player or planeswalker attack targets are chosen before their simultaneous entry. */
     record PreparedOpponentTokenCopiesAttacking(UUID controllerId, StackEntry entry,
                                                 CreateTokenCopyOfTargetPermanentEffect copyEffect,
@@ -1428,7 +1464,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId,
                                UUID enteringPermanentId, UUID targetSourcePermanentId, TargetFilter targetFilter,
                                boolean sourceIsEnteringPermanent, Integer enteringPowerAtTrigger,
-                               Integer enteringToughnessAtTrigger) implements PermanentChoiceContext {
+                               Integer enteringToughnessAtTrigger, UUID choosingPlayerId) implements PermanentChoiceContext {
+
+        public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                   UUID sourcePermanentId, UUID enteringPermanentId,
+                                   UUID targetSourcePermanentId, TargetFilter targetFilter,
+                                   boolean sourceIsEnteringPermanent, Integer enteringPowerAtTrigger,
+                                   Integer enteringToughnessAtTrigger) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
+                    targetSourcePermanentId, targetFilter, sourceIsEnteringPermanent,
+                    enteringPowerAtTrigger, enteringToughnessAtTrigger, null);
+        }
 
         public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, UUID enteringPermanentId,
@@ -2951,5 +2997,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Lynde: choose the opponent to which the selected Curse will be attached. */
     record LyndeOpponentChoice(UUID controllerId, UUID curseId) implements PermanentChoiceContext {}
+
+    /** Selects the next creature to connive while a multi-creature effect resolves. */
+    record ConniveNextCreatureChoice() implements PermanentChoiceContext {}
 
 }

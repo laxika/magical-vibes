@@ -116,7 +116,7 @@ class ConfoundingRiddleTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard()).isSameAs(target);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(target.getId());
         harness.passBothPriorities();
         assertThat(gd.stack).isEmpty();
     }

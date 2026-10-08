@@ -26,7 +26,7 @@ public class CharredFoyerWarpedSpace extends Card {
                         .withManaCost("{4}{R}{R}")
         )));
 
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, ConditionalEffect.atTriggerTime(
                 new SourceRoomDoorUnlocked(0),
                 new ExileTopCardMayPlayThisTurnEffect(false)));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(

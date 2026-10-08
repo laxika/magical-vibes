@@ -204,10 +204,13 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                         com.github.laxika.magicalvibes.model.action.DelayedPermanentAction.class,
                         action -> createdIds.contains(action.permanentId())
                                 && action.kind() == com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP);
-        for (var action : exileActions) {
+        if (!exileActions.isEmpty()) {
+            List<UUID> exiledTokenIds = exileActions.stream()
+                    .map(com.github.laxika.magicalvibes.model.action.DelayedPermanentAction::permanentId).toList();
             gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger(
-                    controllerId, entry.getCard(), entry.getSourcePermanentId(), action.permanentId(),
-                    new com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect()));
+                    controllerId, entry.getCard(), entry.getSourcePermanentId(), exiledTokenIds.getFirst(),
+                    new com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect(),
+                    List.of(), exiledTokenIds));
         }
     }
 

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -24,8 +26,11 @@ import org.springframework.stereotype.Component;
 public class ReturnPermanentsOnCombatDamageToPlayerEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
+    private final com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService permanentRemovalService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
+    private final ValidTargetService validTargetService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,6 +41,26 @@ public class ReturnPermanentsOnCombatDamageToPlayerEffectHandler implements Norm
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ReturnPermanentsOnCombatDamageToPlayerEffect) effect;
 
+        if (e.targetsChosenAtTriggerTime()) {
+            if (entry.getTargetIds().isEmpty()) {
+                gameLogService.append(gameData, GameLog.text(
+                        gameData.playerIdToName.get(entry.getControllerId()) + " chooses not to return any permanents."));
+                return;
+            }
+            for (UUID targetId : entry.getTargetIds()) {
+                Permanent permanent = gameQueryService.findPermanentById(gameData, targetId);
+                if (permanent == null || !entry.getAttackedTargetId().equals(
+                        gameQueryService.findPermanentController(gameData, targetId))
+                        || e.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, e.filter())
+                        || !validTargetService.isValidTriggeredAbilityPermanentTarget(gameData,
+                        entry.getCard(), List.of(effect), TargetFilters.permanent(), permanent, entry.getControllerId())) continue;
+                if (permanentRemovalService.removePermanentToHand(gameData, permanent)) {
+                    gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is returned to its owner's hand."));
+                }
+            }
+            return;
+        }
+
         UUID defenderId = entry.getTargetId();
         int damageDealt = e.fixedCount() > 0 ? e.fixedCount() : entry.getXValue();
         UUID attackerId = entry.getControllerId();
@@ -45,7 +70,9 @@ public class ReturnPermanentsOnCombatDamageToPlayerEffectHandler implements Norm
         List<UUID> validIds = new ArrayList<>();
         if (defenderBattlefield != null) {
             for (Permanent perm : defenderBattlefield) {
-                if (e.filter() == null || predicateEvaluationService.matchesPermanentPredicate(gameData, perm, e.filter())) {
+                if ((e.filter() == null || predicateEvaluationService.matchesPermanentPredicate(gameData, perm, e.filter()))
+                        && validTargetService.isValidTriggeredAbilityPermanentTarget(gameData,
+                        entry.getCard(), List.of(effect), TargetFilters.permanent(), perm, attackerId)) {
                     validIds.add(perm.getId());
                 }
             }

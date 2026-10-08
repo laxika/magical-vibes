@@ -625,6 +625,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                         null, null, entry.getSourcePermanentId()));
                 return;
             }
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, e.paidEffects());
             if (graveyardTopExileSupport.exileSoleMatching(gameData, entry.getControllerId(), graveyardCost)) {
                 return;
             }
@@ -671,20 +672,26 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
 
         if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost counterCost) {
             Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-            if (source == null || !canPutCounterOnPermanent(gameData, source, counterCost.counterType())) {
+            UUID payerId = resolvePayer(gameData, entry, e);
+            if (source == null || payerId == null
+                    || !canPutCounterOnPermanent(gameData, source, counterCost.counterType())) {
                 destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
                 return;
             }
             if (e.optional()) {
-                gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
-                        entry.getCard(), entry.getControllerId(), List.of(e),
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        entry.getCard(), payerId, List.of(e),
                         entry.getCard().getName() + " - Put " + counterCost.count() + " "
                                 + permanentCounterSupport.counterTypeName(counterCost.counterType())
                                 + " counter(s) on it?",
-                        null, null, entry.getSourcePermanentId()));
+                        entry.getTargetId(), null, entry.getSourcePermanentId(), null, 0, 0,
+                        entry.getAttackedTargetId(), entry.getActivePlayerId(), payerId,
+                        entry.getSourcePermanentSnapshot(), entry.getControllerId(), null));
                 return;
             }
-            payCounterOnSourceCost(gameData, entry, counterCost);
+            if (payCounterOnSourceCost(gameData, entry, counterCost, payerId)) {
+                resolvePaidEffects(gameData, entry, e, 0);
+            }
             return;
         }
 
@@ -1283,6 +1290,19 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         permanentCounterSupport.placeCounterOnPermanent(gameData, entry, source, cost.counterType(), cost.count());
+    }
+
+    /** Pays a legal source-counter cost for its actual payer, including replaced payments. */
+    public boolean payCounterOnSourceCost(GameData gameData, StackEntry entry,
+            com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost cost,
+            UUID placingPlayerId) {
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null || !canPutCounterOnPermanent(gameData, source, cost.counterType())) {
+            return false;
+        }
+        permanentCounterSupport.placeCounterOnPermanentForPlayer(
+                gameData, entry, source, cost.counterType(), cost.count(), placingPlayerId);
+        return true;
     }
 
     /** Pays a source-counter forced cost, returning false if the source or required counters are gone. */

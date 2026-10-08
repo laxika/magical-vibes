@@ -145,7 +145,6 @@ class CensorTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, beetle.getId());
-        harness.passPriority(player2);
         harness.castAndResolveInstant(player1, 0, opposingCensor.getId());
 
         harness.assertInGraveyard(player2, "Censor");

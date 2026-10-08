@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -28,7 +30,9 @@ public class ClawingTorment extends Card {
                         new StaticBoostEffect(-1, -1, GrantScope.ENCHANTED_PERMANENT,
                                 new PermanentIsCreaturePredicate()))
                 .addEffect(EffectSlot.STATIC, new CantBlockEffect())
-                .addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
-                        new EnchantedCreatureControllerLosesLifeEffect(1));
+                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                        EffectSlot.UPKEEP_TRIGGERED,
+                        new LoseLifeEffect(1, LoseLifeRecipient.CONTROLLER),
+                        GrantScope.ENCHANTED_PERMANENT));
     }
 }

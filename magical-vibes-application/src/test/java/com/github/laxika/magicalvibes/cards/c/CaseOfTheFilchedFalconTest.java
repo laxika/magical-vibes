@@ -196,7 +196,7 @@ class CaseOfTheFilchedFalconTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Candlestick());
         harness.addToBattlefield(player1, new Candlestick());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Candlestick());
-        harness.setLibrary(player2, List.of(new Candlestick()));
+        harness.setLibrary(player2, List.of(new Candlestick(), new Candlestick(), new Candlestick()));
         resolveEndStepTriggers();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -205,9 +205,11 @@ class CaseOfTheFilchedFalconTest extends BaseCardTest {
 
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.activateAbility(player2, 0, 0, null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            for (int i = 0; i < 4 && !gd.stack.isEmpty(); i++) {
+                harness.passBothPriorities();
+            }
+        });
         harness.assertInGraveyard(player1, "Case of the Filched Falcon");
         harness.assertInGraveyard(player2, "Candlestick");
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

@@ -135,6 +135,7 @@ public class AttackLegalityService {
      * the turn the permanent entered the battlefield.
      */
     private boolean canAttackAsThoughHasteFromOwnStatic(GameData gameData, Permanent creature) {
+        if (gameQueryService.hasLostAllAbilities(gameData, creature)) return false;
         boolean hasPermission = creature.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CanAttackAsThoughHasteUnlessEnteredThisTurnEffect.class::isInstance);
         if (!hasPermission) return false;
@@ -371,6 +372,8 @@ public class AttackLegalityService {
                     }
                     if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
                             && (targetIsPlayer || restriction.protectsPlaneswalkers()
+                            && gameQueryService.isPlaneswalker(gameData,
+                            gameQueryService.findPermanentById(gameData, targetId))
                             || restriction.protectsPermanents())
                             && (restriction.restrictedAttackerId() == null
                             || restriction.restrictedAttackerId().equals(
@@ -402,6 +405,8 @@ public class AttackLegalityService {
                     CardEffect effect = fe.effect();
                     if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
                             && (targetIsPlayer || restriction.protectsPlaneswalkers()
+                            && gameQueryService.isPlaneswalker(gameData,
+                            gameQueryService.findPermanentById(gameData, targetId))
                             || restriction.protectsPermanents())
                             && (restriction.restrictedAttackerId() == null
                             || restriction.restrictedAttackerId().equals(

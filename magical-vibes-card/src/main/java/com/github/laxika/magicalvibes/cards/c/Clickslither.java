@@ -27,10 +27,7 @@ public class Clickslither extends Card {
                 null,
                 List.of(
                         new SacrificePermanentCost(
-                                new PermanentAllOfPredicate(List.of(
-                                        new PermanentIsCreaturePredicate(),
-                                        new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)
-                                )),
+                                new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
                                 "Sacrifice a Goblin",
                                 false
                         ),

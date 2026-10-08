@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -31,6 +32,7 @@ public class RevealSubtypeOrEntersTappedHandler implements MayEffectHandlerBean 
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
     private final InputCompletionService inputCompletionService;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,10 +48,18 @@ public class RevealSubtypeOrEntersTappedHandler implements MayEffectHandlerBean 
         if (revealOrTapped != null) {
             if (accepted) {
                 List<Card> hand = gameData.playerHands.get(ability.controllerId());
-                Card revealed = hand == null ? null : hand.stream()
+                List<Card> eligible = hand == null ? List.of() : hand.stream()
                         .filter(card -> revealOrTapped.subtypes().stream().anyMatch(subtype ->
                                 gameQueryService.cardHasSubtype(card, subtype, gameData, ability.controllerId())))
-                        .findFirst().orElse(null);
+                        .toList();
+                if (eligible.size() > 1) {
+                    interactionHandlerRegistry.begin(gameData,
+                            new PendingInteraction.RevealedMatchingHandCardChoice(
+                                    ability.controllerId(), ability.controllerId(), eligible, null,
+                                    "Choose a card to reveal for " + ability.sourceCard().getName(), true, ability));
+                    return;
+                }
+                Card revealed = eligible.isEmpty() ? null : eligible.getFirst();
                 String revealedName = revealed != null ? revealed.getName() : revealOrTapped.subtypes().stream()
                         .map(subtype -> subtype.getDisplayName())
                         .findFirst()

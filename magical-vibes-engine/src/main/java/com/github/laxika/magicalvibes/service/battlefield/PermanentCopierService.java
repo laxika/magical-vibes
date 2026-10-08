@@ -6,6 +6,12 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import java.util.ArrayList;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumSet;
@@ -21,7 +27,46 @@ public class PermanentCopierService {
 
     public void applyCloneCopy(Permanent clonePerm, Permanent targetPerm, Integer powerOverride,
                                 Integer toughnessOverride, Set<CardType> additionalTypesOverride) {
-        applyCloneCopy(clonePerm, targetPerm.getCard(), powerOverride, toughnessOverride, additionalTypesOverride);
+        applyCloneCopy(clonePerm, copiableCard(targetPerm), powerOverride, toughnessOverride, additionalTypesOverride);
+    }
+
+    /** Includes characteristics selected by independent as-enters choices in a copy's base. */
+    public Card copiableCard(Permanent permanent) {
+        if (permanent.isFaceDown()) {
+            Card visible = new Card();
+            visible.setName("");
+            visible.setType(CardType.CREATURE);
+            visible.setManaCost("");
+            visible.setPower(permanent.getBasePower());
+            visible.setToughness(permanent.getBaseToughness());
+            return visible;
+        }
+        Card original = permanent.getCard();
+        if (original.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .noneMatch(ChooseIndependentModesOnEnterEffect.class::isInstance)) {
+            return original;
+        }
+        Card copy = original.createRuntimeCopy();
+        for (EffectSlot slot : EffectSlot.values()) {
+            List<EffectRegistration> registrations = copy.getEffectRegistrations(slot);
+            if (registrations.isEmpty()) continue;
+            List<EffectRegistration> selectedEffects = new ArrayList<>();
+            for (EffectRegistration registration : registrations) {
+                if (registration.effect() instanceof ConditionalEffect conditional
+                        && conditional.condition() instanceof SourceHasChosenMode chosenMode
+                        && permanent.getChosenModeLabels().contains(chosenMode.mode())) {
+                    if (conditional.wrapped() instanceof SetBasePowerToughnessEffect set
+                            && set.scope() == GrantScope.SELF) {
+                        copy.setPower(set.power());
+                        copy.setToughness(set.toughness());
+                        continue;
+                    }
+                    selectedEffects.add(new EffectRegistration(conditional.wrapped(), registration.triggerMode()));
+                }
+            }
+            registrations.addAll(0, selectedEffects);
+        }
+        return copy;
     }
 
     /**

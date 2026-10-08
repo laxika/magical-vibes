@@ -39,6 +39,7 @@ public class SacrificePermanentAndBoostSelfEffectHandler implements NormalEffect
         String playerName = gameData.playerIdToName.get(controllerId);
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
+                .withSourcePermanentId(entry.getSourcePermanentId())
                 .withSourceControllerId(controllerId);
 
         List<UUID> validIds = new ArrayList<>();

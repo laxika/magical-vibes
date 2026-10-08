@@ -214,7 +214,8 @@ class ChandraHeartOfFireTest extends BaseCardTest {
     void ultimateAllowsCastingSpellWithPayableAdditionalDiscardCost() {
         addReadyChandra(player1, 9);
         Card thrill = new ThrillOfPossibility();
-        harness.setHand(player1, List.of(new Forest()));
+        Card discard = new Forest();
+        harness.setHand(player1, List.of(discard));
         harness.setGraveyard(player1, List.of(thrill));
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.activateAbility(player1, 0, 2, null, null);
@@ -223,6 +224,11 @@ class ChandraHeartOfFireTest extends BaseCardTest {
 
         assertThatCode(() -> harness.castFromExile(player1, thrill.getId()))
                 .doesNotThrowAnyException();
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discard);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(thrill);
     }
 
     @Test

@@ -18,22 +18,22 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MKM", collectorNumber = "80")
 public class CaseOfTheStashedSkeleton extends Card {
 
     public CaseOfTheStashedSkeleton() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(new CreateTokenEffect(
                 1, "Skeleton", 2, 1, CardColor.BLACK,
-                List.of(CardSubtype.SKELETON), Set.of(), Set.of(),
-                Map.of(EffectSlot.ON_ENTER_BATTLEFIELD, new SuspectEffect(GrantScope.SELF))));
+                List.of(CardSubtype.SKELETON), Set.of(), Set.of()),
+                new SuspectEffect(GrantScope.TOKENS_CREATED_THIS_RESOLUTION)));
 
         var suspectedSkeleton = new PermanentAllOfPredicate(List.of(
                 new PermanentHasSubtypePredicate(CardSubtype.SKELETON),

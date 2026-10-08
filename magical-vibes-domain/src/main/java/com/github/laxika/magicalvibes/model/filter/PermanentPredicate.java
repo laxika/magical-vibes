@@ -32,6 +32,7 @@ public sealed interface PermanentPredicate permits
         PermanentBaseToughnessEqualsPredicate,
         PermanentBaseToughnessAtMostPredicate,
         PermanentColorInPredicate,
+        PermanentChosenColorStrictlyMostCommonPredicate,
         PermanentControlledByActivePlayerPredicate,
         PermanentControlledByPlayerPredicate,
         PermanentControlledByPlayerDirectionPredicate,

@@ -635,10 +635,8 @@ public class ConditionEvaluationService {
                     partyIsAlwaysFull(gameData, ctx.controllerId())
                             || AmountEvaluationService.partySize(gameData, ctx.controllerId(), gameQueryService) == 4;
             case AnotherCreatureDiedThisTurn ignored ->
-                    gameData.creatureDeathCountThisTurn.values().stream()
-                            .mapToInt(Integer::intValue)
-                            .sum() > (ctx.targetId() != null
-                                    && gameQueryService.findPermanentById(gameData, ctx.targetId()) == null ? 1 : 0);
+                    gameData.creaturePermanentIdsDiedThisTurn.stream()
+                            .anyMatch(permanentId -> !permanentId.equals(ctx.targetId()));
             case CreatureWithDifferentNameDiedThisTurn c ->
                     gameData.creatureNamesDiedThisTurn.stream()
                             .anyMatch(name -> !name.equals(c.excludedName()));
@@ -976,7 +974,8 @@ public class ConditionEvaluationService {
                             >= c.threshold() + (c.relativeToStartingLifeTotal() ? gameData.format.startingLife() : 0);
             case ControllerLifeAtMost c ->
                     ctx.controllerId() != null
-                            && gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 20) <= c.threshold();
+                            && gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 20)
+                            <= (c.halfStartingLife() ? gameData.startingLife() / 2 : c.threshold());
             case ColorsAmongControlledPermanentsAtLeast c ->
                     countColorsAmongControlledPermanents(gameData, ctx) >= c.threshold();
             case CardTypesAmongControlledPermanentsAndGraveyardAtLeast c ->
@@ -1920,6 +1919,9 @@ public class ConditionEvaluationService {
             case SourcePowerAtLeast c -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 int power = source == null ? 0
+                        : gameQueryService.findPermanentById(gameData, source.getId()) == null
+                                && source.getLastKnownPower() != null
+                        ? source.getLastKnownPower()
                         : GameQueryService.isStaticEvaluationActive()
                         ? gameQueryService.powerForStaticFilter(source)
                         : gameQueryService.getEffectivePower(gameData, source);
@@ -1983,7 +1985,10 @@ public class ConditionEvaluationService {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null
                         && ChosenColorStrictlyMostCommonAmongOpponentNontokens.isStrictlyMostCommon(
-                                gameData, source, ctx.controllerId());
+                                gameData, source, ctx.controllerId(),
+                                permanent -> GameQueryService.isStaticEvaluationActive()
+                                        ? gameQueryService.colorsForStaticEvaluation(permanent)
+                                        : gameQueryService.getEffectiveColors(gameData, permanent));
             }
             case ColorMostCommonAmongAllPermanents c ->
                     isMostCommonPermanentColor(gameData, c.color());
@@ -2925,6 +2930,10 @@ public class ConditionEvaluationService {
         if (qualifyingEntry || !faceDownCreatureCards.isEmpty()) {
             return true;
         }
+        if (gameData.playersAfraidOfControllerAfterAttackThisTurn
+                .getOrDefault(controllerId, Set.of()).contains(targetPlayerId)) {
+            return true;
+        }
 
         return gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(permanent -> isAfraidOfPermanent(permanent))
@@ -2934,9 +2943,9 @@ public class ConditionEvaluationService {
     }
 
     private boolean isAfraidOfCard(Card card) {
-        return card.hasType(CardType.ENCHANTMENT)
+        return card.hasType(CardType.CREATURE) && (card.hasType(CardType.ENCHANTMENT)
                 || card.getSubtypes().contains(CardSubtype.HORROR)
-                || card.getSubtypes().contains(CardSubtype.NIGHTMARE);
+                || card.getSubtypes().contains(CardSubtype.NIGHTMARE));
     }
 
     private boolean isAfraidOfPermanent(Permanent permanent) {

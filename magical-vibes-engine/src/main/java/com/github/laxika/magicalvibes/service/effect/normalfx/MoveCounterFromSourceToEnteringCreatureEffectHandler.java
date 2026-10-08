@@ -35,6 +35,13 @@ public class MoveCounterFromSourceToEnteringCreatureEffectHandler implements Nor
         if (source == null || enteringCreature == null || source.getCounterCount(counterType) <= 0) {
             return;
         }
+        if (gameQueryService.cantHaveCounters(gameData, enteringCreature)
+                || (counterType == CounterType.PLUS_ONE_PLUS_ONE
+                && gameQueryService.cantHavePlusOnePlusOneCounters(gameData, enteringCreature))
+                || (counterType == CounterType.MINUS_ONE_MINUS_ONE
+                && gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, enteringCreature))) {
+            return;
+        }
 
         source.setCounterCount(counterType, source.getCounterCount(counterType) - 1);
         if (counterType == CounterType.OIL) {

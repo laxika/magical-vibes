@@ -113,7 +113,7 @@ class ChaosDragonTest extends BaseCardTest {
         Permanent planeswalker = addPlaneswalker(player2);
 
         advanceToBeginningOfCombat();
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, this::resolveAllTriggers);
 
         assertThat(als.canAttackDefender(gd, dragon, player2.getId())).isFalse();
         assertThat(als.canAttackDefender(gd, dragon, planeswalker.getId())).isFalse();

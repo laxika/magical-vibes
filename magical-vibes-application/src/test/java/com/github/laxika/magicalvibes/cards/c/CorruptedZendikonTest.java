@@ -193,8 +193,10 @@ class CorruptedZendikonTest extends BaseCardTest {
 
     private Permanent addEnchantedPlains() {
         Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
-        Permanent aura = harness.addToBattlefieldAndReturn(player1, new CorruptedZendikon());
-        aura.setAttachedTo(plains.getId());
+        harness.setHand(player1, List.of(new CorruptedZendikon()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castEnchantment(player1, 0, plains.getId());
+        harness.passBothPriorities();
         return plains;
     }
 }

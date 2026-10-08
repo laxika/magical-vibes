@@ -148,7 +148,9 @@ class CursedRackTest extends BaseCardTest {
 
     @Test
     void chosenOpponentRemainsAffectedAfterControlChange() {
-        Permanent rack = harness.addToBattlefieldAndReturn(player1, new CursedRack());
+        harness.castFromHand(player1, new CursedRack(), "{4}");
+        harness.passBothPriorities();
+        Permanent rack = findPermanent(player1, "Cursed Rack");
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, List.of(new StealArtifact()));

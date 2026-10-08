@@ -206,11 +206,10 @@ class ConvincingMirageTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "ISLAND");
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class);
-        assertThat(land.isTapped()).isFalse();
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertOnBattlefield(player1, "Terramorphic Expanse");
-        harness.tapPermanent(player1, 0);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
     }
 

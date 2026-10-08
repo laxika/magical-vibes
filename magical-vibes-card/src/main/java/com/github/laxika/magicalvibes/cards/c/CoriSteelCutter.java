@@ -50,7 +50,7 @@ public class CoriSteelCutter extends Card {
                         monkToken,
                         new MayEffect(
                                 new AttachMatchingEquipmentToCreatedPermanentEffect(
-                                        new PermanentIsSourceCardPredicate()),
+                                        new PermanentIsSourceCardPredicate(), true),
                                 "Attach Cori-Steel Cutter to the Monk token?"))));
         addActivatedAbility(new EquipActivatedAbility("{1}{R}"));
     }

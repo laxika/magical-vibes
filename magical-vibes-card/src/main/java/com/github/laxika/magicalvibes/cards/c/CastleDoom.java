@@ -27,7 +27,7 @@ public class CastleDoom extends Card {
                 true,
                 null,
                 List.of(new AwardRestrictedManaOfColorsEffect(
-                        ManaColor.COLORS, new ManaRestriction.ArtifactSpells())),
+                        ManaColor.COLORS, new ManaRestriction.ArtifactSpellsOnly())),
                 "{T}: Add one mana of any color. Spend this mana only to cast an artifact spell."
         ));
 

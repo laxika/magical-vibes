@@ -1031,6 +1031,16 @@ public class AdditionalSpellCostService {
                 // Fixed BeholdCost is a flashback-only additional cost. Optional chosen-type
                 // BeholdCost is payable by declining the optional cost.
                 case BeholdCost cost -> {
+                    if (cost.alternativeManaCost() != null) {
+                        boolean canBehold = battlefield.stream().anyMatch(permanent ->
+                                predicateEvaluationService.matchesPermanentPredicate(gameData, permanent,
+                                        new PermanentHasSubtypePredicate(cost.subtype())))
+                                || hand.stream().anyMatch(candidate -> !candidate.getId().equals(card.getId())
+                                && predicateEvaluationService.matchesCardPredicate(candidate,
+                                        new CardSubtypePredicate(cost.subtype()), candidate.getId()));
+                        if (!canBehold && !canAffordManaOption(gameData, playerId, card,
+                                cost.alternativeManaCost())) return false;
+                    }
                     if (includeFlashbackOnlyCosts && !cost.optional() && !cost.chosenCreatureType()) {
                         long matchingPermanents = battlefield.stream()
                                 .filter(p -> predicateEvaluationService.matchesPermanentPredicate(
@@ -1499,7 +1509,7 @@ public class AdditionalSpellCostService {
         if (costs.beholdCost() != null) {
             validateBeholdCost(gameData, player, card, costs.beholdCost(), selection);
         }
-        if (costs.beholdSelectionCost() != null && costs.beholdSelectionCost().chosenCreatureType()) {
+        if (costs.beholdSelectionCost() != null) {
             validateBeholdCost(gameData, player, card, costs.beholdSelectionCost(), selection);
         }
         if (costs.chosenCreatureOrWarpedCardCost() != null) {

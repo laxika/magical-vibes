@@ -931,7 +931,7 @@ public class CastingPermissionService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                     if (effect instanceof SpellsAndLandsWithChosenNamesCantBePlayedEffect
                             && (card.getName().equals(perm.getChosenName())
                                 || card.getName().equals(perm.getSecondChosenName()))) {
@@ -1135,6 +1135,12 @@ public class CastingPermissionService {
         return false;
     }
 
+    /** Explicit sorcery-timing restrictions prevent a cast made during another effect's resolution. */
+    public boolean canCastDuringResolution(GameData gameData, UUID playerId) {
+        return !isSorcerySpeedOnlyForPlayer(gameData, playerId)
+                && !gameQueryService.isLockedOutByOpponentsSorceryTimingRestriction(gameData, playerId);
+    }
+
     private boolean hasTopLibraryFlashGrant(GameData gameData, UUID playerId, Card card) {
         if (card.hasType(CardType.LAND)) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -1300,6 +1306,8 @@ public class CastingPermissionService {
         if (restriction == null) return true;
         return switch (restriction) {
             case DECLARE_ATTACKERS -> gameData.currentStep == TurnStep.DECLARE_ATTACKERS;
+            case YOUR_DECLARE_ATTACKERS -> gameData.currentStep == TurnStep.DECLARE_ATTACKERS
+                    && playerId.equals(gameData.activePlayerId);
             case BEFORE_ATTACKERS_DECLARED -> gameData.currentStep.isBeforeAttackersDeclared()
                     && gameData.combatPhasesThisTurn <= 1;
             case BEFORE_BLOCKERS_DECLARED -> gameData.currentStep.isBeforeBlockersDeclared()
@@ -2244,7 +2252,11 @@ public class CastingPermissionService {
         List<Card> deck = gameData.playerDecks.get(playerId);
         return deck != null && !deck.isEmpty()
                 && deck.getFirst().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(LookAtTopCardOfOwnLibraryEffect.class::isInstance);
+                .anyMatch(effect -> effect instanceof LookAtTopCardOfOwnLibraryEffect
+                        || effect instanceof ConditionalEffect conditional
+                        && conditional.wrapped() instanceof LookAtTopCardOfOwnLibraryEffect
+                        && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forCasting(playerId)));
     }
 
     /** Returns whether the caster may use the specified opponent's current library top. */

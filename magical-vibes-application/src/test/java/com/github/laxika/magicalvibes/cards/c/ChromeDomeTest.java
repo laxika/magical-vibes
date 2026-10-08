@@ -53,7 +53,7 @@ class ChromeDomeTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(token.getCard().getName()).isEqualTo("Leonin Scimitar");
-        assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
     }
 
     @Test

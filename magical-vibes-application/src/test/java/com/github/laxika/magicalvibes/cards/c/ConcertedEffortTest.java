@@ -174,6 +174,11 @@ class ConcertedEffortTest extends BaseCardTest {
 
     @Test
     void sharesProtectionFromLowManaValuesFromCrewedVehicle() {
+        gd.turnNumber = 2;
+        java.util.Set<TurnStep> stops = java.util.Set.of(
+                TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN, TurnStep.UPKEEP);
+        gd.playerAutoStopSteps.put(player1.getId(), stops);
+        gd.playerAutoStopSteps.put(player2.getId(), stops);
         harness.addToBattlefield(player1, new ConcertedEffort());
         Permanent titan = harness.addToBattlefieldAndReturn(player1, new ReaverTitan());
         Permanent wurm = harness.addToBattlefieldAndReturn(player1, new SiegeWurm());
@@ -184,6 +189,7 @@ class ConcertedEffortTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.activateAbility(player1, 1, null, null);
         harness.handlePermanentChosen(player1, wurm.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         resolveAllTriggers();
 
         assertThat(gqs.isCreature(gd, titan)).isTrue();

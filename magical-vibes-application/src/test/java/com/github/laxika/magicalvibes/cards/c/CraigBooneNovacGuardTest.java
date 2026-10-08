@@ -154,6 +154,8 @@ class CraigBooneNovacGuardTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player1.getId());
 
+        harness.passBothPriorities();
+
         assertThat(craig.getCounterCount(CounterType.QUEST)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }

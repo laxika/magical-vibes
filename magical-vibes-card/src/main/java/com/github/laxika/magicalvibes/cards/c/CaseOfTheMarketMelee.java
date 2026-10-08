@@ -46,7 +46,10 @@ public class CaseOfTheMarketMelee extends Card {
                         new NotCondition(new SourceIsSolved())
                 )), new SolveSourceEffect()));
 
-        target(0, 99).addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+        target(new AnyTargetPredicateTargetFilter(
+                TargetPredicates.anyTarget().permanentRestriction().orElseThrow(),
+                new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be any target"),
+                0, Integer.MAX_VALUE).addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                 new ConditionalEffect(new SourceIsSolved(),
                         DealDividedDamageEffect.chosenAmongAnyTargetsAtResolution(new XValue())));
     }

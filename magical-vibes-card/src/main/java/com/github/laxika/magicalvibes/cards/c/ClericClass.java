@@ -11,8 +11,10 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
 import com.github.laxika.magicalvibes.model.effect.AdditionalLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -28,12 +30,13 @@ public class ClericClass extends Card {
     public ClericClass() {
         addEffect(EffectSlot.STATIC, new AdditionalLifeGainEffect(1));
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE,
+                ConditionalEffect.atTriggerTime(new SourceClassLevelAtLeast(2),
                 PutCounterOnTargetPermanentEffect.withTargetRestriction(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         1,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
-                                new PermanentControlledBySourceControllerPredicate()))));
+                                new PermanentControlledBySourceControllerPredicate())))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

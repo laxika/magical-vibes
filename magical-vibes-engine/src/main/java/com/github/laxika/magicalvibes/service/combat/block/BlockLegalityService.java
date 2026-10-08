@@ -572,7 +572,7 @@ public class BlockLegalityService {
         GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, attacker);
         if (!attacker.isFaceDown() && !bonus.losesAllAbilities() && !bonus.losesAllNonManaAbilities()
                 && !attacker.isLosesAllAbilitiesUntilEndOfTurn()) {
-            for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, attacker)) {
                 if (effect instanceof BlockabilityRestrictionEffect restriction) {
                     restrictions.add(new AttackerRestriction(attacker, restriction));
                 }
@@ -779,6 +779,13 @@ public class BlockLegalityService {
                 blocksShadowAsThoughNoShadow |= permission.blocksShadowAsThoughNoShadow();
                 blocksLandwalkAsThoughNoLandwalk |= permission.blocksLandwalkAsThoughNoLandwalk();
                 addReachPermission(blocksAsThoughReachForAttackers, permission);
+            }
+            if (effect instanceof BlockingRestrictionEffect restriction
+                    && restriction.canBlockOnlyAttackersMatching() != null) {
+                if (attackerFilterRestrictions == null) {
+                    attackerFilterRestrictions = new ArrayList<>(2);
+                }
+                attackerFilterRestrictions.add(restriction);
             }
             if (effect instanceof BlockingRestrictionEffect restriction) {
                 if (restriction.cantBlock()) {

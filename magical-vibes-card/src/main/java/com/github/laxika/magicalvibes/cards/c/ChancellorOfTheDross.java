@@ -6,13 +6,14 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterOpeningHandUpkeepTriggerEffect;
 
 @CardRegistration(set = "NPH", collectorNumber = "54")
 public class ChancellorOfTheDross extends Card {
 
     public ChancellorOfTheDross() {
         addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new MayEffect(
-                new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT, true),
+                new RegisterOpeningHandUpkeepTriggerEffect(new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT, true)),
                 "Reveal this card from your opening hand?"
         ));
     }

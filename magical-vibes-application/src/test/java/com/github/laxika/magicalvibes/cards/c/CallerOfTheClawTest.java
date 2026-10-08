@@ -20,6 +20,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({CallerOfTheClaw.class, GrizzlyBears.class, Shock.class})
 class CallerOfTheClawTest extends BaseCardTest {
 
+    @org.junit.jupiter.api.BeforeEach
+    void keepPriorityForResponses() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.EnumSet.of(
+                com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN,
+                com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.EnumSet.of(
+                com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN,
+                com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE));
+    }
+
+
     @Test
     void canBeCastDuringOpponentsTurnBecauseItHasFlash() {
         harness.forceActivePlayer(player2);
@@ -152,6 +163,7 @@ class CallerOfTheClawTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         Permanent caller = findPermanent(player1, "Caller of the Claw");
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, caller.getId());
         resolveAllTriggers();
 

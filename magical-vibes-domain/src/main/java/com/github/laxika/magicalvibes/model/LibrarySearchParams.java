@@ -104,6 +104,24 @@ public record LibrarySearchParams(
                 mayCastManaValueAtMost, returnToHandAtControllerEndStepId);
     }
 
+    /** Continues the same search with updated follow-up state and unchanged search permissions. */
+    public LibrarySearchParams withFollowUp(LibrarySearchFollowUp updatedFollowUp) {
+        return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
+                remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
+                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition,
+                topLibraryCardLimit, discoverValue, filterCardTypes, accumulatedCards, filterCardName,
+                attachToPlayerId, attachToPermanentId, battlefieldControllerId, filterPredicate,
+                sourcePermanentId, updatedFollowUp, requireDifferentNames, requireDifferentPowers,
+                manaValueBoundValue, manaValueExact, totalManaValueBound, excludedCardNames,
+                grantHaste, sacrificeAtEndStep, exileAtEndStep, returnToHandAtEndStep, animateFound,
+                battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode,
+                sourceSideboard, battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
+                battlefieldIfChosenPredicate, battlefieldIfChosenTapped, battlefieldIfOpponentControlsMoreLands,
+                placeBattlefieldCardsSimultaneously, finalCardToHand, allowCastFromLibraryWhileSearching,
+                grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost, mayCastManaValueAtMost,
+                returnToHandAtControllerEndStepId);
+    }
+
     public LibrarySearchParams withAllowCastFromLibraryWhileSearching(boolean allow) {
         return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,

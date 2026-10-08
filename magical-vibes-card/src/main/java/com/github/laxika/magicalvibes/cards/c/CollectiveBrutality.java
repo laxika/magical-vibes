@@ -29,6 +29,7 @@ import java.util.List;
 public class CollectiveBrutality extends Card {
 
     public CollectiveBrutality() {
+        setAllowSharedTargets(true);
         // Escalate—Discard a card. (Pay this cost for each mode chosen beyond the first.)
         addEffect(EffectSlot.SPELL, new EscalateDiscardCost());
 

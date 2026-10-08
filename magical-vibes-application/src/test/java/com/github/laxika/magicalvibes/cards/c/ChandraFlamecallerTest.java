@@ -36,7 +36,7 @@ class ChandraFlamecallerTest extends BaseCardTest {
             assertThat(elemental.getCard().getKeywords()).contains(Keyword.HASTE);
         });
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Elemental")).isEmpty();
@@ -79,7 +79,7 @@ class ChandraFlamecallerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
 
         assertThat(findPermanents(player1, "Elemental")).hasSize(2);
         assertThat(gd.stack).hasSize(1);

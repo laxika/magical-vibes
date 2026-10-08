@@ -90,6 +90,7 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
                     : e.manaCost().replace("{X}", dynamicGenericCost);
         }
 
+        entry.setLastManaPaymentPlayerId(payer);
         gameData.resolvingMayEffectFromStack = true;
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(),

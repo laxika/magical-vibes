@@ -1388,16 +1388,20 @@ public class CardChoiceHandlerService {
                     gameLogService.append(gameData, GameLog.cardThen(sourceCard,
                             "'s ability has no valid targets."));
                 } else {
-                    gameData.interaction.setPermanentChoiceContext(
-                            new PermanentChoiceContext.MayAbilityTriggerTarget(
-                                    sourceCard, playerId, List.of(thenEffect),
-                                    followUp.thenEffectSourcePermanentId(),
-                                    followUp.thenEffectSourcePermanentSnapshot(),
-                                    followUp.thenEffectEventValue(),
-                                    thenEffectXValue));
-                    playerInputService.beginAnyTargetChoice(gameData, playerId,
-                            validPermanentTargets, validPlayerTargets,
-                            sourceCard.getName() + " — Choose a target for the reflexive trigger.");
+                    var context = new PermanentChoiceContext.MayAbilityTriggerTarget(
+                            sourceCard, playerId, List.of(thenEffect),
+                            followUp.thenEffectSourcePermanentId(),
+                            followUp.thenEffectSourcePermanentSnapshot(),
+                            followUp.thenEffectEventValue(), thenEffectXValue);
+                    var targetChoice = new PendingInteraction.PermanentChoice(playerId,
+                            validPermanentTargets, validPlayerTargets, context,
+                            sourceCard.getName() + " ? Choose a target for the reflexive trigger.");
+                    if (gameData.pendingEffectResolutionEntry != null) {
+                        gameData.queueInteraction(targetChoice);
+                        resumeRemainingEffectsAfterDiscard(gameData);
+                    } else {
+                        interactionHandlerRegistry.begin(gameData, targetChoice);
+                    }
                     log.info("Game {} - {} discard-then rider awaiting target for {}",
                             gameData.id, player.getUsername(), sourceCard.getName());
                     return;

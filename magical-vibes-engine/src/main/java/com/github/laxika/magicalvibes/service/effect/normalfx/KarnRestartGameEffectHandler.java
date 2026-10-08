@@ -198,6 +198,11 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.openingHandRevealTriggers.clear();
         gameData.legacyChosenWordsByCardId.clear();
         gameData.openingHandManaTriggers.clear();
+        gameData.openingHandUpkeepTriggers.clear();
+        gameData.mainPhasesBegunThisTurn = 0;
+        gameData.postcombatMainPhasesBegunThisTurn = 0;
+        gameData.exilePlayPermissionSpellFilters.clear();
+        gameData.exilePlayPermissionsExpireAtEndStep.clear();
         gameData.playersWhoCastFirstSpellInGame.clear();
         gameData.playersWithNoMaximumHandSize.clear();
         gameData.playersWithNoMaximumHandSizeUntilNextTurn.clear();
@@ -404,6 +409,8 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playersWhoPutEnchantmentIntoGraveyardFromBattlefieldThisTurn.clear();
         gameData.playersWhoControlledLandPutIntoGraveyardFromBattlefieldThisTurn.clear();
         gameData.playersWhoControlledModifiedCreatureDiedThisTurn.clear();
+        gameData.creaturePermanentIdsDiedThisTurn.clear();
+        gameData.pendingRevealedPowerCostCards.clear();
 
         gameData.interaction.clearAwaitingInput();
         gameData.turnNumber = 1;

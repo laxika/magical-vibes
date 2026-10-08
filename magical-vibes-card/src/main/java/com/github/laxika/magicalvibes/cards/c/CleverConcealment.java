@@ -19,7 +19,7 @@ public class CleverConcealment extends Card {
     public CleverConcealment() {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
-                "Target must be a nonland permanent you control"), 0, 99)
+                "Target must be a nonland permanent you control"), 0, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL, new PhaseOutEffect(PhaseOutSubject.TARGET));
     }
 }

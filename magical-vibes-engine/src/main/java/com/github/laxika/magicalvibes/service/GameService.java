@@ -2133,6 +2133,10 @@ public class GameService {
                         targetId, targetZone, targetIds, damageAssignments, paymentIntent))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
+            boolean normalPriorityActivation = !isAttackTaxManaPayment(gameData, player)
+                    && !isBlockCostManaPayment(gameData, player) && !isMayCostManaPayment(gameData, player);
+            boolean manaActivation = abilityActivationService.isManaAbilityAt(
+                    gameData, player.getId(), permanentIndex, abilityIndex);
             if (isAttackTaxManaPayment(gameData, player)) {
                 // CR 508.1i: only mana abilities allowed during attacker declaration
                 if (!abilityActivationService.isManaAbilityAt(gameData, player.getId(), permanentIndex, abilityIndex)) {
@@ -2153,6 +2157,15 @@ public class GameService {
             }
             abilityActivationService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments);
             manaChoiceNarrowingService.narrowActiveManaColorChoice(gameData, player.getId(), paymentIntent);
+            if (normalPriorityActivation && manaActivation && !gameData.interaction.isAwaitingInput()
+                    && gameData.revertableManaActivations.isEmpty()
+                    && gameData.pendingRevertableManaActivation == null
+                    && !gameData.pendingManaAbilityTriggers.isEmpty()) {
+                stateBasedActionService.performStateBasedActions(gameData);
+                gameData.stack.addAll(gameData.pendingManaAbilityTriggers);
+                gameData.pendingManaAbilityTriggers.clear();
+                gameData.priorityPassedBy.clear();
+            }
         }
     }
 

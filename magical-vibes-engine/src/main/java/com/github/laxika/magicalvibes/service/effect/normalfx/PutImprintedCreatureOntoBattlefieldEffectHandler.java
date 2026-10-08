@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.PutImprintedCreatureOntoBattl
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -35,45 +37,52 @@ public class PutImprintedCreatureOntoBattlefieldEffectHandler implements NormalE
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
 
         UUID controllerId = entry.getControllerId();
-        Card imprintedCard = gameData.getImprintedCard(entry.getCard());
         String playerName = gameData.playerIdToName.get(controllerId);
+        List<ExiledCardEntry> linkedCards = gameData.exiledCards.stream()
+                .filter(exiled -> entry.getSourcePermanentId() != null
+                        && entry.getSourcePermanentId().equals(exiled.sourcePermanentId()))
+                .toList();
+        Card legacyImprinted = gameData.getImprintedCard(entry.getCard());
+        if (linkedCards.isEmpty() && legacyImprinted != null) {
+            ExiledCardEntry legacyEntry = gameData.findExiledCard(legacyImprinted.getId());
+            if (legacyEntry != null && legacyEntry.sourcePermanentId() == null) {
+                linkedCards = List.of(legacyEntry);
+            }
+        }
 
-        if (imprintedCard == null) {
+        if (linkedCards.isEmpty()) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s imprint ability resolves but no card was imprinted."));
             return;
         }
 
-        var exiled = gameData.findExiledCard(imprintedCard.getId());
-        if (exiled == null) {
-            return;
+        List<Permanent> entering = new ArrayList<>();
+        for (ExiledCardEntry exiled : linkedCards) {
+            Card imprintedCard = exiled.card();
+            gameData.exiledCards.replaceAll(card -> card.card().getId().equals(imprintedCard.getId())
+                    ? new ExiledCardEntry(card.card(), card.ownerId(), card.sourcePermanentId(), false,
+                            card.exilerId(), card.exiledTurnNumber(), card.controllerTurnsTakenAtExile())
+                    : card);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    playerName + " turns the exiled card face up: ", imprintedCard, "."));
+            if (!imprintedCard.hasType(CardType.CREATURE)) {
+                gameLogService.append(gameData, GameLog.cardThen(imprintedCard,
+                        " is not a creature card. It remains in exile."));
+                continue;
+            }
+            if (!gameData.removeFromExile(imprintedCard.getId())) continue;
+            Permanent permanent = new Permanent(imprintedCard);
+            permanent.setEnteredFromExile(true);
+            entering.add(permanent);
         }
-        gameData.exiledCards.replaceAll(card -> card.card().getId().equals(imprintedCard.getId())
-                ? new ExiledCardEntry(card.card(), card.ownerId(),
-                        card.sourcePermanentId(), false, card.exilerId(), card.exiledTurnNumber())
-                : card);
-
-        gameLogService.append(gameData, GameLog.textCardText(playerName + " turns the exiled card face up: " , imprintedCard, "."));
-
-        boolean isCreature = imprintedCard.hasType(CardType.CREATURE);
-
-        if (!isCreature) {
-            gameLogService.append(gameData, GameLog.cardThen(imprintedCard, " is not a creature card. It remains in exile."));
-            return;
+        var enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+        for (Permanent permanent : entering) {
+            battlefieldEntryService.putPermanentOntoBattlefield(
+                    gameData, controllerId, permanent, enterTappedTypes, entering);
+            gameLogService.append(gameData, GameLog.entersBattlefieldUnder(permanent.getCard(), playerName));
         }
-
-        // Remove from exile zone
-        gameData.removeFromExile(imprintedCard.getId());
-
-        // Put onto the battlefield
-        Permanent perm = new Permanent(imprintedCard);
-        perm.setEnteredFromExile(true);
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
-
-        gameLogService.append(gameData, GameLog.entersBattlefieldUnder(imprintedCard, playerName));
-
-        graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, perm, imprintedCard);
-
-        log.info("Game {} - {} puts imprinted creature {} onto battlefield",
-                gameData.id, playerName, imprintedCard.getName());
+        for (Permanent permanent : entering) {
+            graveyardReturnSupport.handleCreatureEtbAndLegendRule(
+                    gameData, controllerId, permanent, permanent.getCard());
+        }
     }
 }

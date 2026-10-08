@@ -747,6 +747,7 @@ public class GraveyardService {
             }
         }
         if (!isToken(gameData, card) && card.hasType(CardType.LAND)) {
+            gameData.landCardGraveyardEntriesThisTurn.merge(ownerId, 1, Integer::sum);
             triggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card,
                     suppressOncePerBatchLandTriggers ? Boolean.FALSE : null);
             triggerCollectionService.checkAnyLandPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
@@ -1257,6 +1258,12 @@ public class GraveyardService {
 
     private List<Permanent> findDestructionReplacementSources(GameData gameData, Permanent destroyedPermanent,
                                                               DestructionReplacement replacement) {
+        return gameQueryService.withQueryScope(gameData, () -> findDestructionReplacementSourcesInScope(
+                gameData, destroyedPermanent, replacement));
+    }
+
+    private List<Permanent> findDestructionReplacementSourcesInScope(
+            GameData gameData, Permanent destroyedPermanent, DestructionReplacement replacement) {
         List<Permanent> sources = new ArrayList<>();
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent source : battlefield) {

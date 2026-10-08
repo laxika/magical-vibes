@@ -2,10 +2,13 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsInAllGraveyardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +23,7 @@ import java.util.UUID;
 public class GainKeywordsOfCreatureCardsInAllGraveyardsSelfEffectHandler implements StaticEffectHandlerBean {
 
     /**
-     * The keywords Cairn Wanderer scans graveyards for. Landwalk is represented by its variants;
-     * protection is omitted (inherent protection is not modelled as a card characteristic).
+     * The keywords Cairn Wanderer scans graveyards for. Landwalk is represented by its variants.
      */
     private static final Set<Keyword> WATCHED_KEYWORDS = Set.of(
             Keyword.FLYING,
@@ -39,6 +41,7 @@ public class GainKeywordsOfCreatureCardsInAllGraveyardsSelfEffectHandler impleme
             Keyword.MOUNTAINWALK,
             Keyword.ISLANDWALK,
             Keyword.SWAMPWALK,
+            Keyword.PLAINSWALK,
             Keyword.DESERTWALK
     );
 
@@ -63,6 +66,12 @@ public class GainKeywordsOfCreatureCardsInAllGraveyardsSelfEffectHandler impleme
                 for (Keyword keyword : card.getKeywords()) {
                     if (WATCHED_KEYWORDS.contains(keyword)) {
                         accumulator.addKeyword(keyword);
+                    }
+                }
+                for (CardEffect staticEffect : card.getEffects(EffectSlot.STATIC)) {
+                    if (staticEffect instanceof ProtectionFromColorsEffect protection
+                            && (protection.scope() == null || protection.scope() == GrantScope.SELF)) {
+                        accumulator.addProtectionColors(protection.colors());
                     }
                 }
             }

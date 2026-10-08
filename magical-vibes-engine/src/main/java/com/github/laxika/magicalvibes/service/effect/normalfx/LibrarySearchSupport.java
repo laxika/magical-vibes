@@ -391,6 +391,20 @@ public class LibrarySearchSupport {
      * shuffled once (the single shuffle for the whole search) and false is returned; returns true if
      * a search was begun, false if the search is prevented or no descriptor remains to search.
      */
+    /** Starts several choices within one search, retaining its original searchable library cards. */
+    public boolean startSingleSearchToHandPicks(GameData gameData, UUID playerId,
+                                               LibrarySearchFollowUp followUp) {
+        if (isSearchPrevented(gameData, playerId)) return false;
+        List<Card> deck = gameData.playerDecks.getOrDefault(playerId, List.of());
+        int limit = Math.min(opponentSearchTopCardsLimit(gameData, playerId), deck.size());
+        Set<UUID> searchableCardIds = deck.subList(0, limit).stream()
+                .map(Card::getId).collect(java.util.stream.Collectors.toSet());
+        LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
+        return startNextToHandPick(gameData, playerId, followUp.withRemainingToHandPicks(
+                followUp.remainingToHandPicks().stream()
+                        .map(pick -> pick.withinSingleSearch(searchableCardIds)).toList()));
+    }
+
     public boolean startNextToHandPick(GameData gameData, UUID playerId, LibrarySearchFollowUp followUp) {
         if (isSearchPrevented(gameData, playerId)) return false;
 
@@ -400,7 +414,10 @@ public class LibrarySearchSupport {
         while (!remaining.isEmpty()) {
             LibrarySearchFollowUp.ToHandPick pick = remaining.remove(0);
             List<Card> matches = deck == null ? List.of()
-                    : deck.stream().filter(card -> matchesToHandPick(card, pick)).toList();
+                    : deck.stream()
+                            .filter(card -> pick.searchableCardIds() == null
+                                    || pick.searchableCardIds().contains(card.getId()))
+                            .filter(card -> matchesToHandPick(card, pick)).toList();
             if (matches.isEmpty()) {
                 continue;
             }
@@ -422,7 +439,8 @@ public class LibrarySearchSupport {
                 prompt = "Search your library for a " + descriptor + " card to reveal and put into your hand.";
                 logMsg = playerName + " searches their library for a " + descriptor + " card.";
             }
-            sendLibrarySearchToPlayer(gameData, playerId, builder.build(), prompt, true, logMsg);
+            sendLibrarySearchToPlayer(gameData, playerId, builder.build(), prompt, true, logMsg,
+                    pick.searchableCardIds());
             return true;
         }
 
@@ -807,17 +825,25 @@ public class LibrarySearchSupport {
 
     public void sendLibrarySearchToPlayer(GameData gameData, UUID playerId, LibrarySearchParams params,
                                             String prompt, boolean canFailToFind, String logMessage) {
+        sendLibrarySearchToPlayer(gameData, playerId, params, prompt, canFailToFind, logMessage, null);
+    }
+
+    private void sendLibrarySearchToPlayer(GameData gameData, UUID playerId, LibrarySearchParams params,
+                                           String prompt, boolean canFailToFind, String logMessage,
+                                           Set<UUID> singleSearchCardIds) {
         // Universal choke point for every library search that presents cards: fire
         // ON_OPPONENT_SEARCHES_LIBRARY (Ob Nixilis, Unshackled) for a player searching their OWN
         // library. A search of someone else's library (targetPlayerId set) is not "their library".
-        if ((params.targetPlayerId() == null || params.targetPlayerId().equals(params.playerId()))
+        if (singleSearchCardIds == null
+                && (params.targetPlayerId() == null || params.targetPlayerId().equals(params.playerId()))
                 && params.followUp().basicLandSearchQueue() == null
                 && params.followUp().eachPlayerToHandCount() == 0) {
             LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, params.playerId());
         }
 
         // Aven Mindcensor & friends: an opponent's search is limited to the top N cards of that library.
-        int topLimit = opponentSearchTopCardsLimit(gameData, params.playerId());
+        int topLimit = singleSearchCardIds != null ? Integer.MAX_VALUE
+                : opponentSearchTopCardsLimit(gameData, params.playerId());
         if (params.topLibraryCardLimit() > 0) {
             topLimit = Math.min(topLimit, params.topLibraryCardLimit());
         }
@@ -846,6 +872,10 @@ public class LibrarySearchSupport {
         if (ownLibrarySearch) {
             params = params.withAllowCastFromLibraryWhileSearching(true);
             List<Card> castableCards = librarySearchCastableCards(gameData, playerId);
+            if (singleSearchCardIds != null) {
+                castableCards = castableCards.stream()
+                        .filter(card -> singleSearchCardIds.contains(card.getId())).toList();
+            }
             if (topLimit != Integer.MAX_VALUE) {
                 castableCards = restrictToTopCards(gameData, playerId, castableCards, topLimit);
             }

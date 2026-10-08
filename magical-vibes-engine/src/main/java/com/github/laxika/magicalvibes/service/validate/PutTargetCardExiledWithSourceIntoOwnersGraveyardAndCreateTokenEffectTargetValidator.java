@@ -20,6 +20,9 @@ public class PutTargetCardExiledWithSourceIntoOwnersGraveyardAndCreateTokenEffec
     @ValidatesTarget(PutTargetCardExiledWithSourceIntoOwnersGraveyardAndCreateTokenEffect.class)
     public void validate(TargetValidationContext ctx,
                          PutTargetCardExiledWithSourceIntoOwnersGraveyardAndCreateTokenEffect effect) {
+        if (effect.chooseAtResolution()) {
+            return;
+        }
         if (ctx.targetZone() != Zone.EXILE) {
             throw new IllegalStateException("Effect requires an exile target");
         }

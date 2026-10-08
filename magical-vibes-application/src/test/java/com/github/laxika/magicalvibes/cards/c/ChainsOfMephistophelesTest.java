@@ -210,12 +210,12 @@ class ChainsOfMephistophelesTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleListChoice(player1, "NONLAND");
+        harness.withAutoStop(TurnStep.DRAW, () -> harness.handleListChoice(player1, "NONLAND"));
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.DRAW);
         drawCard(player1);
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

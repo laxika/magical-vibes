@@ -93,7 +93,7 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
             UUID subjectPlayerId = remaining.getFirst();
             while (index < types.size()) {
                 CardType type = types.get(index);
-                List<UUID> candidates = candidates(gameData, subjectPlayerId, type);
+                List<UUID> candidates = candidates(gameData, subjectPlayerId, type, sacrificeAllPermanents);
                 index++;
 
                 if (candidates.isEmpty()) {
@@ -151,9 +151,10 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
         log.info("Game {} - {} sacrifices {} permanents", gameData.id, sourceName, toSacrifice.size());
     }
 
-    private List<UUID> candidates(GameData gameData, UUID playerId, CardType type) {
+    private List<UUID> candidates(GameData gameData, UUID playerId, CardType type, boolean includeLands) {
         return destructionSupport.collectPermanentIds(gameData, playerId,
-                permanent -> matchesType(gameData, permanent, type));
+                permanent -> (includeLands || !gameQueryService.isLand(gameData, permanent))
+                        && matchesType(gameData, permanent, type));
     }
 
     private boolean matchesType(GameData gameData, Permanent permanent, CardType type) {

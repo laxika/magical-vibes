@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -23,13 +25,13 @@ public class CavalierOfThorns extends Card {
                 LookAtTopCardsEffect.putOneMatchingOntoBattlefieldRestToGraveyard(
                         5, new CardTypePredicate(CardType.LAND)));
         addEffect(EffectSlot.ON_DEATH, new MayEffect(
-                SequenceEffect.of(
+                ConditionalEffect.unless(new SourceCardInGraveyard(), SequenceEffect.of(
                         new ExileSourceCardFromGraveyardEffect(),
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY)
                                 .filter(new CardNotPredicate(new CardIsSelfPredicate()))
                                 .targetGraveyard(true)
-                                .build()),
+                                .build())),
                 "Exile Cavalier of Thorns and put another target card from your graveyard on top of your library?"));
     }
 }

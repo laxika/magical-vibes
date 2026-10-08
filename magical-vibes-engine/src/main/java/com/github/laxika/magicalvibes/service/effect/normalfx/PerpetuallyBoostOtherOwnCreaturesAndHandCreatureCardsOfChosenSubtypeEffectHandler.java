@@ -33,6 +33,9 @@ public class PerpetuallyBoostOtherOwnCreaturesAndHandCreatureCardsOfChosenSubtyp
         Permanent source = entry.getSourcePermanentId() == null
                 ? entry.getSourcePermanentSnapshot()
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         if (source == null || source.getChosenSubtype() == null) {
             return;
         }

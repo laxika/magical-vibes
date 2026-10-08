@@ -118,6 +118,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ChoiceHandlerService {
     @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
+    @Autowired @Lazy
     private PermanentChoiceSpellHandlerService permanentChoiceSpellHandlerService;
 
     private final LibraryRevealSupport libraryRevealSupport;
@@ -233,12 +235,55 @@ public class ChoiceHandlerService {
     private com.github.laxika.magicalvibes.service.effect.normalfx.PutCounterOnTargetPermanentEffectHandler
             counterPlacementHandler;
 
+    @Autowired @Lazy
+    private AbilityActivationService abilityActivationService;
+
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.MutationSupport mutationSupport;
+
     public void handleListChoice(GameData gameData, Player player, String colorName) {
         if (gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class) == null) {
             throw new IllegalStateException("Not awaiting color choice");
         }
         PendingInteraction.ColorChoice colorChoice =
                 gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (colorChoice.context() instanceof ChoiceContext.CreaturePreventionLifeGainChoice choice) {
+            if (!player.getId().equals(colorChoice.playerId())) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid prevention effect");
+            }
+            gameData.interaction.clearAwaitingInput();
+            lifeSupport.applyGainLife(gameData, UUID.fromString(colorName), choice.preventedDamage(),
+                    "prevented damage");
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.MutateOrderChoice choice) {
+            if (!player.getId().equals(colorChoice.playerId())) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid mutate placement");
+            }
+            gameData.interaction.clearAwaitingInput();
+            mutationSupport.merge(gameData, choice.entry(), "TOP".equals(colorName));
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.ActivatedAbilityForageCostChoice choice) {
+            if (!player.getId().equals(colorChoice.playerId())) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid forage payment choice");
+            }
+            gameData.interaction.clearAwaitingInput();
+            abilityActivationService.completeForageCostChoice(gameData, player, choice,
+                    "Sacrifice a Food".equals(colorName));
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.GraveyardShuffleOrExileReplacementChoice choice) {
             if (!player.getId().equals(colorChoice.playerId())) {
                 throw new IllegalStateException("Not your turn to choose");
@@ -253,6 +298,21 @@ public class ChoiceHandlerService {
         }
         if (colorChoice == null || !player.getId().equals(colorChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
+        }
+        if (colorChoice.context() instanceof ChoiceContext.PermanentReplacementOrder order) {
+            int selected = colorChoice.options().indexOf(colorName);
+            if (selected < 0) throw new IllegalArgumentException("Invalid permanent replacement choice");
+            StackEntry entry = gameData.pendingEffectResolutionEntry;
+            int index = gameData.pendingEffectResolutionIndex;
+            var effect = (com.github.laxika.magicalvibes.model.effect.ExileEachTargetPermanentThenRevealUntilSharedCardTypeEffect)
+                    entry.getEffectsToResolve().get(index);
+            entry.replaceEffectToResolve(index,
+                    new com.github.laxika.magicalvibes.model.effect.ExileEachTargetPermanentThenRevealUntilSharedCardTypeEffect(
+                            effect.remaining(), order.permanentIds().get(selected)));
+            gameData.interaction.clearAwaitingInput();
+            gameData.rerunCurrentEffectAfterInteraction = false;
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
         }
         if (colorChoice.context() instanceof ChoiceContext.SpellDamageModifierOrder order) {
             if (!colorChoice.options().contains(colorName)) {
@@ -874,6 +934,9 @@ public class ChoiceHandlerService {
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.EachPlayerCardNameRevealChoice ctx) {
+            if (!libraryRevealSupport.isCardNameAllowed(gameData, colorName)) {
+                throw new IllegalArgumentException("Invalid card name: " + colorName);
+            }
             handleEachPlayerCardNameRevealChoice(gameData, player, colorName, ctx);
             return;
         }
@@ -915,6 +978,9 @@ public class ChoiceHandlerService {
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.SpellsAndLandsCantBePlayedUntilNextTurnChoice ctx) {
+            if (!libraryRevealSupport.isCardNameAllowed(gameData, colorName)) {
+                throw new IllegalArgumentException("Invalid card name: " + colorName);
+            }
             handleSpellsAndLandsCantBePlayedUntilNextTurnChoice(gameData, player, colorName, ctx);
             return;
         }
@@ -1634,10 +1700,21 @@ public class ChoiceHandlerService {
         if (parkedActivation == null || !parkedActivation.playerId().equals(playerId)) {
             return;
         }
-        AbilityActivationService.completeParkedManaActivation(gameData, parkedActivation);
         Permanent source = gameQueryService.findPermanentById(gameData, parkedActivation.permanentId());
         if (source != null) {
             int stackBeforeTriggers = gameData.stack.size();
+            if (gameQueryService.isLand(gameData, source)) {
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                java.util.Set<ManaColor> producedColors = java.util.EnumSet.noneOf(ManaColor.class);
+                for (ManaColor color : ManaColor.values()) {
+                    if (parkedActivation.allManaBefore() != null
+                            && pool.getAllManaTotals().getOrDefault(color, 0)
+                            > parkedActivation.allManaBefore().getOrDefault(color, 0)) {
+                        producedColors.add(color);
+                    }
+                }
+                triggerCollectionService.checkLandTapTriggers(gameData, playerId, source.getId(), producedColors);
+            }
             triggerCollectionService.checkManaAbilityResolutionTriggers(
                     gameData, source, playerId, manaProduced);
             if (gameData.stack.size() > stackBeforeTriggers) {
@@ -1647,6 +1724,7 @@ public class ChoiceHandlerService {
                 gameData.pendingManaAbilityTriggers.addAll(triggers);
             }
         }
+        AbilityActivationService.completeParkedManaActivation(gameData, parkedActivation);
     }
 
     private void handleManaColorChosen(GameData gameData, Player player, String colorName,
@@ -2755,6 +2833,11 @@ public class ChoiceHandlerService {
         if (ctx.attachedTo() != null) {
             perm.setAttachedTo(ctx.attachedTo());
         }
+        if (battlefieldEntryBatchSupport.completeNativeChoice(gameData, perm)) {
+            gameLogService.append(gameData, GameLog.playerChoosesForCard(player.getUsername(), cardName, card));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         if (ctx.landPlayZone() != null) {
             battlefieldEntryService.putLandOntoBattlefield(gameData, controllerId, perm, ctx.landPlayZone());
         } else {
@@ -2961,9 +3044,14 @@ public class ChoiceHandlerService {
         }
 
         UUID controllerId = ctx.controllerId();
-        Permanent perm = new Permanent(card);
+        var batchRequest = gameData.pendingBattlefieldEntryRequests.get(card.getId());
+        Permanent perm = batchRequest == null ? new Permanent(card) : batchRequest.permanent();
         perm.setChosenName(ctx.firstChosenName() == null ? cardName : ctx.firstChosenName());
         perm.setSecondChosenName(ctx.firstChosenName() == null ? null : cardName);
+        if (battlefieldEntryBatchSupport.completeNativeChoice(gameData, perm)) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -6359,7 +6447,7 @@ public class ChoiceHandlerService {
             var nextContext = new ChoiceContext.EachPlayerCardNameRevealChoice(
                     ctx.playerOrder(), updatedNames);
 
-            List<String> cardNames = collectAllCardNamesInGame(gameData);
+            List<String> cardNames = libraryRevealSupport.collectPublicCardNames(gameData);
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                     nextPlayerId, null, null, nextContext, cardNames, "Choose a card name."));
 
@@ -6573,7 +6661,7 @@ public class ChoiceHandlerService {
         }
 
         List<Card> toDiscard = hand.stream()
-                .filter(card -> card.getName().equals(cardName))
+                .filter(card -> card.hasName(cardName))
                 .toList();
         if (toDiscard.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(targetName + " has no cards named \""

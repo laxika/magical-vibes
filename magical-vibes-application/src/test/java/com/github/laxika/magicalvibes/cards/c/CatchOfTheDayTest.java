@@ -106,6 +106,7 @@ class CatchOfTheDayTest extends BaseCardTest {
 
     @Test
     void payingThreeManaAllowsOpponentsSpellToResolve() {
+        harness.setHand(player1, List.of());
         Permanent serpent = enter(player1, "Ward {3}", "Scry 2", "4/4");
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -123,6 +124,7 @@ class CatchOfTheDayTest extends BaseCardTest {
 
     @Test
     void choosingVigilanceDoesNotGrantWardAndReentryAllowsNewChoices() {
+        harness.setHand(player1, List.of());
         Permanent serpent = enter(player1, "Vigilance", "Scry 2", "6/2");
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

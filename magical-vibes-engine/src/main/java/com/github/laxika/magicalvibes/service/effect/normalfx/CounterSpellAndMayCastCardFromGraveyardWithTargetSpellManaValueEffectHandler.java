@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -20,7 +21,6 @@ public class CounterSpellAndMayCastCardFromGraveyardWithTargetSpellManaValueEffe
         implements NormalEffectHandlerBean {
 
     private final CounterSupport counterSupport;
-    private final CastCardFromGraveyardEffectHandler castCardFromGraveyardEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,7 +35,10 @@ public class CounterSpellAndMayCastCardFromGraveyardWithTargetSpellManaValueEffe
         StackEntry targetEntry = counterSupport.findCounterTargetIgnoringCounterability(
                 gameData, entry.getTargetId(), entry);
         if (targetEntry != null) {
-            int targetSpellManaValue = targetEntry.getCard().getManaValue() + targetEntry.getXValue();
+            var targetCard = targetEntry.getTargetingCard();
+            int xSymbols = targetCard.getManaCost() == null ? 0
+                    : new ManaCost(targetCard.getManaCost()).getXSymbolCount();
+            int targetSpellManaValue = targetCard.getManaValue() + xSymbols * targetEntry.getXValue();
             StackEntry counterableTarget = counterSupport.findCounterTarget(gameData, entry.getTargetId(), entry);
             if (counterableTarget != null) {
                 counterSupport.counterSpell(gameData, entry, counterableTarget);
@@ -55,8 +58,9 @@ public class CounterSpellAndMayCastCardFromGraveyardWithTargetSpellManaValueEffe
                         new CardMaxManaValueXPredicate())),
                 GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
                 new CardAnyOfPredicate(List.of()),
-                false,
+                true,
                 true);
-        castCardFromGraveyardEffectHandler.resolve(gameData, entry, castEffect);
+        int effectIndex = entry.getEffectsToResolve().indexOf(effect);
+        entry.insertEffectsToResolve(effectIndex + 1, List.of(castEffect));
     }
 }

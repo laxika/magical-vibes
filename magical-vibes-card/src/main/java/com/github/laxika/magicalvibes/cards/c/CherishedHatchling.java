@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetC
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityToCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -22,8 +23,8 @@ public class CherishedHatchling extends Card {
 
     public CherishedHatchling() {
         addEffect(EffectSlot.ON_DEATH,
-                new GrantFlashToCardTypeThisTurnEffect(new CardSubtypePredicate(CardSubtype.DINOSAUR)));
-        addEffect(EffectSlot.ON_DEATH, new RegisterDelayedControllerSpellCastTriggerEffect(
+                SequenceEffect.of(new GrantFlashToCardTypeThisTurnEffect(new CardSubtypePredicate(CardSubtype.DINOSAUR)),
+                new RegisterDelayedControllerSpellCastTriggerEffect(
                 new CardSubtypePredicate(CardSubtype.DINOSAUR),
                 List.of(new GrantTriggeredAbilityToCastSpellEffect(
                         EffectSlot.ON_ENTER_BATTLEFIELD,
@@ -33,6 +34,6 @@ public class CherishedHatchling extends Card {
                                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
                                 ))),
                                 "Have it fight another target creature?"))),
-                false));
+                false)));
     }
 }

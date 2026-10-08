@@ -16,7 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChaosMutation.class, FountainOfYouth.class, GrizzlyBears.class, LlanowarElves.class, SoulWarden.class})
+@CardUsed({ChaosMutation.class, FountainOfYouth.class, GrizzlyBears.class, LlanowarElves.class, SoulWarden.class, Clone.class})
 class ChaosMutationTest extends BaseCardTest {
 
     @Test
@@ -150,6 +150,31 @@ class ChaosMutationTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouchedLibraryCard);
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(elves.getCard());
+    }
+
+    @Test
+    void completesEnteringCloneChoiceBeforeRevealingForTheNextPlayer() {
+        harness.forceActivePlayer(player1);
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new SoulWarden());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        Clone clone = new Clone();
+        GrizzlyBears replacement = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(clone));
+        harness.setLibrary(player2, List.of(replacement));
+
+        castChaosMutation(List.of(elves.getId(), bear.getId()));
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(replacement);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, original.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getName().equals("Soul Warden"))).hasSize(2);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 
     private void castChaosMutation(List<UUID> targetIds) {

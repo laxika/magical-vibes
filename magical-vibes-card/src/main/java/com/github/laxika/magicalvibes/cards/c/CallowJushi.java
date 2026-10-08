@@ -38,7 +38,7 @@ public class CallowJushi extends Card {
         addEffect(EffectSlot.END_STEP_TRIGGERED,
                 new ConditionalEffect(
                         new SourceCounterThreshold(2, CounterType.KI),
-                        new MayEffect(new TransformToBackFaceEffect(), "Flip Callow Jushi?")));
+                        new MayEffect(new TransformToBackFaceEffect(true), "Flip Callow Jushi?")));
     }
 
     @Override

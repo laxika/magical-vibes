@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.PendingGemstoneCavernsChoice;
@@ -30,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseLegacyWordEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterOpeningHandUpkeepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
@@ -220,7 +222,7 @@ public class MayMiscHandlerService {
             log.info("Game {} - {} declines to reveal {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
         }
 
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        completeOpeningHandReveal(gameData);
     }
 
     public void handleOpeningHandDelayedManaTrigger(GameData gameData, Player player, boolean accepted,
@@ -241,7 +243,30 @@ public class MayMiscHandlerService {
             log.info("Game {} - {} declines to reveal {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
         }
 
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        completeOpeningHandReveal(gameData);
+    }
+
+    public void handleOpeningHandUpkeepTrigger(GameData gameData, Player player, boolean accepted,
+                                               PendingMayAbility ability,
+                                               RegisterOpeningHandUpkeepTriggerEffect effect) {
+        if (accepted) {
+            gameData.openingHandUpkeepTriggers.add(new OpeningHandRevealTrigger(
+                    ability.controllerId(), ability.sourceCard(), effect.effect()));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " reveals ",
+                    ability.sourceCard(), " from their opening hand."));
+        }
+        completeOpeningHandReveal(gameData);
+    }
+
+    private void completeOpeningHandReveal(GameData gameData) {
+        if (gameData.status == GameStatus.MULLIGAN) {
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                mulliganService.continueStartGame(gameData);
+            }
+        } else {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
     public void handleSingleDrawReplacementChoice(GameData gameData, Player player, boolean accepted,

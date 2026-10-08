@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -65,7 +66,7 @@ class ChronomanticEscapeTest extends BaseCardTest {
 
         for (int i = 0; i < 3; i++) {
             advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            harness.withAutoStop(TurnStep.UPKEEP, this::resolveAllTriggers);
         }
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -82,7 +83,7 @@ class ChronomanticEscapeTest extends BaseCardTest {
 
         for (int i = 0; i < 3; i++) {
             advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            harness.withAutoStop(TurnStep.UPKEEP, this::resolveAllTriggers);
         }
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
@@ -99,7 +100,7 @@ class ChronomanticEscapeTest extends BaseCardTest {
         castDustOfMoments(0);
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, this::resolveAllTriggers);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -119,12 +120,12 @@ class ChronomanticEscapeTest extends BaseCardTest {
 
         for (int i = 0; i < 4; i++) {
             advanceToUpkeep(player1);
-            harness.passBothPriorities();
-            assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            harness.withAutoStop(TurnStep.UPKEEP, this::resolveAllTriggers);
+            assertThat(gd.interaction.activeInteraction()).isNull();
         }
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, this::resolveAllTriggers);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
@@ -137,12 +138,12 @@ class ChronomanticEscapeTest extends BaseCardTest {
 
         for (int i = 0; i < 3; i++) {
             advanceToUpkeep(player2);
-            harness.passBothPriorities();
-            assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            harness.withAutoStop(TurnStep.UPKEEP, this::resolveAllTriggers);
+            assertThat(gd.interaction.activeInteraction()).isNull();
             advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            harness.withAutoStop(TurnStep.UPKEEP, this::resolveAllTriggers);
             if (i < 2) {
-                assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+                assertThat(gd.interaction.activeInteraction()).isNull();
             }
         }
 
@@ -168,7 +169,7 @@ class ChronomanticEscapeTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).anySatisfy(entry -> {
             assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(entry.getCard()).isSameAs(escape);

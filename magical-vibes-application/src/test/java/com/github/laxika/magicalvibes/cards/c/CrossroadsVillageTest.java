@@ -65,9 +65,13 @@ class CrossroadsVillageTest extends BaseCardTest {
 
     @Test
     void separateVillagesKeepIndependentColorChoices() {
-        Permanent first = harness.enterBattlefieldAndReturn(player1, new CrossroadsVillage());
+        harness.setHand(player1, List.of(new CrossroadsVillage(), new CrossroadsVillage()));
+        harness.playLand(player1, 0);
+        Permanent first = gd.playerBattlefields.get(player1.getId()).getFirst();
         harness.handleListChoice(player1, "WHITE");
-        Permanent second = harness.enterBattlefieldAndReturn(player1, new CrossroadsVillage());
+        gd.landsPlayedThisTurn.put(player1.getId(), 0);
+        harness.playLand(player1, 0);
+        Permanent second = gd.playerBattlefields.get(player1.getId()).getLast();
         harness.handleListChoice(player1, "BLACK");
 
         assertThat(first.isTapped()).isTrue();

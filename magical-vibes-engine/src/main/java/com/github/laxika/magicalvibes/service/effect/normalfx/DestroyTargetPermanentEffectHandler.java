@@ -42,6 +42,8 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
                 }
 
                 entry.rememberLastKnownPermanentCard(target.getId(), target.getCard());
+                entry.getLastKnownPermanentPowers().put(target.getId(),
+                        gameQueryService.getEffectivePower(gameData, target));
                 destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName(), destroy.cannotBeRegenerated());
 
                 // Create token for the target's controller if specified

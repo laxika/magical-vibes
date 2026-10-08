@@ -134,7 +134,8 @@ class ChokedEstuaryTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handleCardChosen(player1, 1);
+        harness.handleMultipleCardsChosen(player1,
+                List.of(gd.playerHands.get(player1.getId()).get(1).getId()));
 
         assertThat(findLand(player1).isTapped()).isFalse();
         assertThat(gameLogContains("reveals Swamp")).isTrue();

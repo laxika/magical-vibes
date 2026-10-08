@@ -9,11 +9,14 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -23,6 +26,9 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
     private final CounterSupport counterSupport;
     private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
+    @Autowired
+    @Lazy
+    private PotentialManaService potentialManaService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,11 +48,6 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
                 gameData, targetCardId, entry);
         if (targetEntry == null) return;
         entry.getRemovedPermanentControllers().put(targetCardId, targetEntry.getControllerId());
-        if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())
-                && e.onNotPaidEffects().isEmpty() && e.onPaidEffects().isEmpty()) {
-            return;
-        }
-
         int payAmount;
         if (e.dynamicAmount() != null) {
             // Source-relative amounts use the live source permanent when it is still on the
@@ -71,7 +72,10 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
                 || (gameQueryService.canPlayerLifeChange(gameData, targetControllerId)
                         && gameData.getLife(targetControllerId) >= lifeCost);
 
-        if (!cost.canPay(pool) || !canPayLife) {
+        boolean canPayMana = cost.canPay(pool)
+                || (potentialManaService != null
+                && cost.canPay(potentialManaService.buildVirtualManaPool(gameData, targetControllerId)));
+        if (!canPayMana || !canPayLife) {
             StackEntry counterableTarget = counterSupport.findCounterTarget(gameData, targetCardId, entry);
             if (counterableTarget != null) {
                 if (e.exileIfCountered()) {
@@ -92,7 +96,8 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
                     entry.getCard(), targetControllerId,
                     List.of(new CounterUnlessPaysEffect(payAmount, false, e.exileIfCountered(),
                             null, e.onNotPaidEffects(), lifeCost, e.manaCost(), e.onPaidEffects())),
-                    prompt, targetCardId, entry.getControllerId()
+                    prompt, targetCardId, manaCost, entry.getSourcePermanentId(), null, 0, 0,
+                    null, null, null, entry.getSourcePermanentSnapshot(), entry.getControllerId()
             ));
         }
     }

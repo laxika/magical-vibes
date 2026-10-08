@@ -133,6 +133,9 @@ public class TriggeredAbilityQueueService {
             return;
         }
 
+        if (gameData.currentStep == com.github.laxika.magicalvibes.model.TurnStep.UNTAP) {
+            return;
+        }
         while (gameData.hasPendingInteraction(PermanentChoiceContext.DayNightTriggerTarget.class)) {
             PermanentChoiceContext.DayNightTriggerTarget pending =
                     gameData.pollPendingInteraction(PermanentChoiceContext.DayNightTriggerTarget.class);
@@ -838,6 +841,43 @@ public class TriggeredAbilityQueueService {
             Permanent sourcePermanent = pending.sourcePermanentId() == null
                     ? null : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
 
+            var combatBounce = pending.effects().stream()
+                    .filter(com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect.class::isInstance)
+                    .map(com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect.class::cast)
+                    .filter(com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect::targetsChosenAtTriggerTime)
+                    .findFirst().orElse(null);
+            if (combatBounce != null) {
+                List<UUID> validIds = gameData.playerBattlefields
+                        .getOrDefault(pending.attackedTargetId(), List.of()).stream()
+                        .filter(permanent -> combatBounce.filter() == null
+                                || predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, combatBounce.filter()))
+                        .filter(permanent -> validTargetService.isValidTriggeredAbilityPermanentTarget(gameData,
+                                pending.sourceCard(), pending.effects(),
+                                com.github.laxika.magicalvibes.model.filter.TargetFilters.permanent(),
+                                permanent, pending.controllerId()))
+                        .map(Permanent::getId).toList();
+                gameData.pollPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
+                int damage = combatBounce.fixedCount() > 0 ? combatBounce.fixedCount()
+                        : pending.xValue() == null ? 0 : pending.xValue();
+                int maxCount = Math.min(damage, validIds.size());
+                if (maxCount == 0) {
+                    StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                            pending.sourceCard(), pending.controllerId(), pending.sourceCard().getName() + "'s ability",
+                            pending.effects(), pending.sourcePermanentId(), List.of());
+                    entry.setNonTargeting(true);
+                    entry.setAttackedTargetId(pending.attackedTargetId());
+                    if (pending.xValue() != null) entry.setXValue(pending.xValue());
+                    gameData.stack.add(entry);
+                    gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                            " has no permanents to return."));
+                    continue;
+                }
+                playerInputService.beginMultiPermanentChoice(gameData, choosingPlayerId,
+                        validIds, maxCount, new MultiPermanentChoiceContext.AttackTriggerTargets(pending, 0),
+                        "Choose up to " + maxCount + " target permanents to return to their owners' hands.");
+                return;
+            }
+
             TriggerTargetCollector.Result result = triggerTargetCollector.collect(
                     gameData,
                     pending.effects(),
@@ -979,7 +1019,8 @@ public class TriggeredAbilityQueueService {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
             PermanentChoiceContext.EntersTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class);
 
-            UUID choosingPlayerId = pending.controllerId();
+            UUID choosingPlayerId = pending.choosingPlayerId() != null
+                    ? pending.choosingPlayerId() : pending.controllerId();
             if (pending.enteringPermanentId() != null && pending.effects().stream().anyMatch(effect ->
                     effect instanceof MayEffect may && may.choicePlayer()
                             == com.github.laxika.magicalvibes.model.MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER)) {
@@ -1252,7 +1293,8 @@ public class TriggeredAbilityQueueService {
         targetingCard.setCastTimeTargetFilter(null);
         // Each chosen mode has its own target instruction. The same object may be chosen
         // for different modes, while repeated choices within one mode must stay distinct.
-        if (chosenModes.size() > 1) {
+        if (chosenModes.size() > 1
+                && sourceCard.getMultiTargetConstraint() != com.github.laxika.magicalvibes.model.MultiTargetConstraint.DISTINCT_TARGETS) {
             targetingCard.setAllowSharedTargets(true);
         }
         for (ChooseOneEffect.ChooseOneOption mode : chosenModes) {

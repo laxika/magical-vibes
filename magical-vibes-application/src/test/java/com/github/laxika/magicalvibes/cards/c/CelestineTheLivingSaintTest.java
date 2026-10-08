@@ -134,9 +134,11 @@ class CelestineTheLivingSaintTest extends BaseCardTest {
     @Test
     @DisplayName("Counts all life gained before Celestine entered, regardless of life lost")
     void countsTotalLifeGainedRatherThanNetLifeChange() {
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 2);
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 2);
-        harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 6, "test");
+        harness.inMutationScope(() -> {
+            harness.getLifeSupport().applyGainLife(gd, player1.getId(), 2);
+            harness.getLifeSupport().applyGainLife(gd, player1.getId(), 2);
+            harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 6, "test");
+        });
         harness.addToBattlefield(player1, new CelestineTheLivingSaint());
         Card target = new HillGiant();
         harness.setGraveyard(player1, List.of(target));

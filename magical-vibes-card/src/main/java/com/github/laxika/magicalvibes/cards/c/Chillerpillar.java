@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -21,8 +20,7 @@ public class Chillerpillar extends Card {
         SourceIsMonstrous monstrous = new SourceIsMonstrous();
 
         addActivatedAbility(new ActivatedAbility(false, "{4}{S}{S}", List.of(new MonstrosityEffect(2)),
-                "{4}{S}{S}: Monstrosity 2.")
-                .withActivationCondition(new NotCondition(monstrous), "This creature is already monstrous"));
+                "{4}{S}{S}: Monstrosity 2."));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(monstrous,
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
     }

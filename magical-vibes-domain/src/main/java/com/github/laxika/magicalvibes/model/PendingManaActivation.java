@@ -16,9 +16,9 @@ import java.util.UUID;
  * and its mana stayed floating.
  *
  * <p>So the activation parks itself here, and the colour-choice answer completes it into a real
- * {@link ManaActivation}. Only unrestricted plain-pool colour choices park: restricted mana
- * (flashback-only, creature-spells-only, …) lands in buckets the pool diff does not see, and
- * reverting it would untap the source without draining what it produced.
+ * {@link ManaActivation}. Restricted mana choices also park their total-mana snapshot so
+ * land-tap triggers can observe the mana produced, but leave {@code poolBefore} null to
+ * prevent reverting an activation whose restricted buckets cannot be safely drained.
  *
  * @param playerId          the player who activated the mana ability
  * @param permanentId       the tapped source permanent
@@ -26,12 +26,20 @@ import java.util.UUID;
  * @param creatureManaBefore per-colour creature-mana pool immediately before resolution
  * @param deferredTriggers  triggers this activation deferred into
  *                          {@link GameData#pendingManaAbilityTriggers}
+ * @param allManaBefore     per-colour totals across all mana buckets before resolution
  */
 public record PendingManaActivation(
         UUID playerId,
         UUID permanentId,
         EnumMap<ManaColor, Integer> poolBefore,
         EnumMap<ManaColor, Integer> creatureManaBefore,
-        List<StackEntry> deferredTriggers
+        List<StackEntry> deferredTriggers,
+        EnumMap<ManaColor, Integer> allManaBefore
 ) {
+    public PendingManaActivation(UUID playerId, UUID permanentId,
+                                 EnumMap<ManaColor, Integer> poolBefore,
+                                 EnumMap<ManaColor, Integer> creatureManaBefore,
+                                 List<StackEntry> deferredTriggers) {
+        this(playerId, permanentId, poolBefore, creatureManaBefore, deferredTriggers, poolBefore);
+    }
 }

@@ -17,8 +17,21 @@ public record BoostAllOwnCreaturesEffect(
         DynamicAmount toughnessBoost,
         PermanentPredicate filter,
         GrantDuration duration,
-        boolean excludeTargets
+        boolean excludeTargets,
+        boolean declaredAttackers
 ) implements CardEffect {
+
+    public BoostAllOwnCreaturesEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
+                                      PermanentPredicate filter, GrantDuration duration,
+                                      boolean excludeTargets) {
+        this(powerBoost, toughnessBoost, filter, duration, excludeTargets, false);
+    }
+
+    /** Restricts the recipients to creatures declared attacking when this trigger was created. */
+    public BoostAllOwnCreaturesEffect forDeclaredAttackers() {
+        return new BoostAllOwnCreaturesEffect(powerBoost, toughnessBoost, filter, duration,
+                excludeTargets, true);
+    }
 
     public BoostAllOwnCreaturesEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost) {
         this(powerBoost, toughnessBoost, null, GrantDuration.END_OF_TURN, false);

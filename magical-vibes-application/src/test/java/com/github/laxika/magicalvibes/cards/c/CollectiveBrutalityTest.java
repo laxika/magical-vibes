@@ -212,7 +212,7 @@ class CollectiveBrutalityTest extends BaseCardTest {
         assertThat(bears.getPowerModifier()).isEqualTo(-2);
         assertThat(bears.getToughnessModifier()).isEqualTo(-2);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(bears.getPowerModifier()).isZero();
         assertThat(bears.getToughnessModifier()).isZero();

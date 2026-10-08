@@ -23,7 +23,7 @@ class ChimericCoilsTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, coils)).isFalse();
 
         harness.activateAbility(player1, 0, 3, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
 
         assertThat(gqs.isCreature(gd, coils)).isTrue();
         assertThat(gqs.getEffectivePower(gd, coils)).isEqualTo(3);
@@ -38,11 +38,11 @@ class ChimericCoilsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, 2, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
         harness.assertOnBattlefield(player1, "Chimeric Coils");
 
-        harness.passUntil(TurnStep.END_STEP);
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
 
         harness.assertNotOnBattlefield(player1, "Chimeric Coils");
     }
@@ -54,7 +54,7 @@ class ChimericCoilsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, 0, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
 
         harness.assertNotOnBattlefield(player1, "Chimeric Coils");
         harness.assertInGraveyard(player1, "Chimeric Coils");
@@ -68,7 +68,7 @@ class ChimericCoilsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, 3, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         harness.assertOnBattlefield(player1, "Chimeric Coils");
@@ -78,7 +78,7 @@ class ChimericCoilsTest extends BaseCardTest {
         assertThat(gqs.hasEffectiveSubtype(gd, coils, CardSubtype.CONSTRUCT)).isTrue();
 
         harness.passUntil(player2, TurnStep.END_STEP);
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
 
         harness.assertNotOnBattlefield(player1, "Chimeric Coils");
         harness.assertInGraveyard(player1, "Chimeric Coils");
@@ -91,16 +91,16 @@ class ChimericCoilsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 8);
 
         harness.activateAbility(player1, 0, 5, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
         harness.activateAbility(player1, 0, 1, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
 
         assertThat(gqs.isCreature(gd, coils)).isTrue();
         assertThat(gqs.getEffectivePower(gd, coils)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, coils)).isEqualTo(1);
 
-        harness.passUntil(TurnStep.END_STEP);
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
 
         harness.assertNotOnBattlefield(player1, "Chimeric Coils");
         harness.assertInGraveyard(player1, "Chimeric Coils");

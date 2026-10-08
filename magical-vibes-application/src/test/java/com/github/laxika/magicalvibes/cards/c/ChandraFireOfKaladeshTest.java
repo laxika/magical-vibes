@@ -162,6 +162,7 @@ class ChandraFireOfKaladeshTest extends BaseCardTest {
             harness.activateAbility(player1, indexOf(player1, chandra), null, player2.getId());
             harness.passBothPriorities();
         }
+        chandra.untap();
         harness.activateAbility(player1, indexOf(player1, chandra), null, player2.getId());
         chandra.untap();
         harness.activateAbility(player1, indexOf(player1, chandra), null, player2.getId());
