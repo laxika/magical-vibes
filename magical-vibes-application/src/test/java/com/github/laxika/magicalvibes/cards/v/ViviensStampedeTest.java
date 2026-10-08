@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ViviensStampede.class, GrizzlyBears.class})
+@CardUsed({ViviensStampede.class, GrizzlyBears.class, VedalkenOrrery.class})
 class ViviensStampedeTest extends BaseCardTest {
 
     @Test
@@ -59,5 +59,64 @@ class ViviensStampedeTest extends BaseCardTest {
         assertThat(attacker.getEffectivePower()).isEqualTo(2);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.MELEE)).isFalse();
+    }
+
+    @Test
+    void doesNotGrantKeywordsToCreaturesEnteringAfterResolution() {
+        harness.castFromHand(player1, new ViviensStampede(), "{4}{G}{G}");
+        harness.passBothPriorities();
+
+        Permanent lateCreature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.MELEE)).isFalse();
+    }
+
+    @Test
+    void drawsOnceForMultipleCreaturesDamagingTheSamePlayer() {
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.castFromHand(player1, new ViviensStampede(), "{4}{G}{G}");
+        harness.passBothPriorities();
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(List.of(0, 1));
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 14);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 1);
+    }
+
+    @Test
+    void delayedAbilityTriggersEvenWhenNoPlayerWasDealtCombatDamage() {
+        harness.castFromHand(player1, new ViviensStampede(), "{4}{G}{G}");
+        harness.passBothPriorities();
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+    }
+
+    @Test
+    void drawsAtOpponentsNextMainPhaseWhenCastWithFlashPermission() {
+        harness.addToBattlefield(player1, new VedalkenOrrery());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new ViviensStampede(), "{4}{G}{G}");
+        harness.passBothPriorities();
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(player2, List.of(0));
+        harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 1);
     }
 }
