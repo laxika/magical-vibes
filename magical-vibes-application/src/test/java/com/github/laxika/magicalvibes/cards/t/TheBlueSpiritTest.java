@@ -219,4 +219,48 @@ class TheBlueSpiritTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("An opponent's creature spell does not consume the controller's flash permission")
+    void opponentsCreatureCastDoesNotConsumePermission() {
+        harness.addToBattlefield(player1, new TheBlueSpirit());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new AardvarkSloth()));
+        harness.addMana(player2, ManaColor.WHITE, 4);
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        harness.setHand(player1, List.of(new AardvarkSloth()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Putting a creature onto the battlefield does not consume the first creature spell permission")
+    void uncastCreatureEntryDoesNotConsumePermission() {
+        harness.addToBattlefield(player1, new TheBlueSpirit());
+        harness.enterBattlefieldAndReturn(player1, new AardvarkSloth());
+        harness.setHand(player1, List.of(new AardvarkSloth()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.forceActivePlayer(player2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The flash permission does not allow casting a noncreature spell during combat")
+    void noncreatureSpellDoesNotGainFlash() {
+        harness.addToBattlefield(player1, new TheBlueSpirit());
+        harness.setHand(player1, List.of(new LeylineOfAnticipation()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
 }
