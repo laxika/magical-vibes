@@ -29,8 +29,7 @@ class VisionsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Visions()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         PendingInteraction.MayAbilityChoice may =
                 gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
@@ -52,8 +51,7 @@ class VisionsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Visions()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         PendingInteraction.MayAbilityChoice may =
                 gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
@@ -73,8 +71,7 @@ class VisionsTest extends BaseCardTest {
 
         List<Card> before = new ArrayList<>(gd.playerDecks.get(player2.getId()));
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleMayAbilityChosen(player1, false);
 
         // Pure look: no reorder, no shuffle — the whole library keeps its exact order.
@@ -89,8 +86,7 @@ class VisionsTest extends BaseCardTest {
 
         List<Card> before = new ArrayList<>(gd.playerDecks.get(player2.getId()));
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleMayAbilityChosen(player1, true);
 
         // The shuffle only randomizes the library; no cards are drawn, exiled, or milled.
@@ -104,8 +100,7 @@ class VisionsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.setLibrary(player2, List.of());
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         PendingInteraction.MayAbilityChoice may =
                 gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
@@ -121,12 +116,47 @@ class VisionsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Visions()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         PendingInteraction.MayAbilityChoice may =
                 gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
         assertThat(may).isNotNull();
         assertThat(may.playerId()).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("A library with fewer than five cards shows all available cards without moving them")
+    void shortLibraryShowsAllAvailableCards() {
+        List<Card> library = List.of(new HolyDay(), new TundraWolves());
+        harness.setLibrary(player2, library);
+        harness.setHand(player1, List.of(new Visions()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        PendingInteraction.MayAbilityChoice may =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(may).isNotNull();
+        assertThat(may.playerId()).isEqualTo(player1.getId());
+        assertThat(may.description()).contains("Top 2 cards", "Holy Day", "Tundra Wolves");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(library);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(library);
+    }
+
+    @Test
+    @DisplayName("Accepting the shuffle completes it during resolution without a separate stack ability")
+    void acceptingShuffleDoesNotCreateSeparateAbility() {
+        harness.setHand(player1, List.of(new Visions(), new HolyDay()));
+        harness.setHand(player2, List.of(new HolyDay()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).isEmpty();
     }
 }
