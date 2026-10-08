@@ -92,6 +92,56 @@ class WellOfDiscoveryTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }
 
+    @Test
+    @DisplayName("Opponent's untapped lands do not prevent drawing")
+    void drawsDespiteOpponentsUntappedLand() {
+        harness.addToBattlefield(player1, new WellOfDiscovery());
+        harness.addToBattlefield(player2, new RhysticCave());
+        harness.setLibrary(player1, List.of(new RhysticCave()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore);
+    }
+
+    @Test
+    @DisplayName("One untapped land prevents triggering even when another land is tapped")
+    void doesNotTriggerWithMixedTappedAndUntappedLands() {
+        harness.addToBattlefield(player1, new WellOfDiscovery());
+        harness.addToBattlefieldAndReturn(player1, new RhysticCave()).tap();
+        harness.addToBattlefield(player1, new RhysticCave());
+        harness.setLibrary(player1, List.of(new RhysticCave()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    @DisplayName("Tapping the last untapped land after the end step begins does not trigger")
+    void doesNotTriggerWhenLandIsTappedAfterEndStepBegins() {
+        harness.addToBattlefield(player1, new WellOfDiscovery());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        harness.setLibrary(player1, List.of(new RhysticCave()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).isEmpty();
+
+        land.tap();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
     private void advanceToEndStep(com.github.laxika.magicalvibes.model.Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
