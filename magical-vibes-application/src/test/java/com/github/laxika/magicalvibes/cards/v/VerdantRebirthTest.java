@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.d.DoomBlade;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RaptorCompanion;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,15 +14,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VerdantRebirth.class, RaptorCompanion.class, VanquishTheWeak.class})
 class VerdantRebirthTest extends BaseCardTest {
-
-    // ===== Casting and resolution =====
 
     @Test
     @DisplayName("Casting Verdant Rebirth draws a card")
     void drawsACard() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent creature = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RaptorCompanion());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -31,8 +28,7 @@ class VerdantRebirthTest extends BaseCardTest {
         harness.setHand(player1, List.of(new VerdantRebirth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities(); // resolve Verdant Rebirth
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         // Hand had 1 card (Verdant Rebirth), cast it (0), drew 1 card = 1 card in hand
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -41,8 +37,7 @@ class VerdantRebirthTest extends BaseCardTest {
     @Test
     @DisplayName("Creature returns to owner's hand when it dies after Verdant Rebirth")
     void creatureReturnsToHandOnDeath() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent creature = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RaptorCompanion());
         Card creatureCard = creature.getCard();
 
         // Cast Verdant Rebirth targeting the creature
@@ -52,17 +47,15 @@ class VerdantRebirthTest extends BaseCardTest {
         harness.setHand(player1, List.of(new VerdantRebirth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities(); // resolve Verdant Rebirth
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        // Now destroy the creature with Doom Blade
+        // Now destroy the creature with Vanquish the Weak
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new DoomBlade()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
-        harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities(); // resolve Doom Blade — creature dies, trigger goes on stack
+        harness.setHand(player2, List.of(new VanquishTheWeak()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
         harness.passBothPriorities(); // resolve return-to-hand trigger
 
         // Creature should be in player1's hand, not in the graveyard
@@ -75,8 +68,7 @@ class VerdantRebirthTest extends BaseCardTest {
     @Test
     @DisplayName("Creature does NOT return to hand if it dies after end of turn (effect expired)")
     void effectExpiresAtEndOfTurn() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent creature = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RaptorCompanion());
         Card creatureCard = creature.getCard();
 
         // Cast Verdant Rebirth targeting the creature
@@ -86,28 +78,20 @@ class VerdantRebirthTest extends BaseCardTest {
         harness.setHand(player1, List.of(new VerdantRebirth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities(); // resolve Verdant Rebirth
-
-        // The flag should be set
-        assertThat(creature.getTemporaryTriggeredEffects(EffectSlot.ON_DEATH)).isNotEmpty();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         // Advance to end step and pass priorities — this triggers cleanup which resets "until end of turn" effects
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        // The temporary effect should be cleared
-        assertThat(creature.getTemporaryTriggeredEffects(EffectSlot.ON_DEATH)).isEmpty();
-
         // Now destroy the creature on the next turn
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new DoomBlade()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
-        harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities(); // resolve Doom Blade
+        harness.setHand(player2, List.of(new VanquishTheWeak()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
 
         // Creature should be in graveyard, NOT in hand (effect expired)
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -117,8 +101,7 @@ class VerdantRebirthTest extends BaseCardTest {
     @Test
     @DisplayName("Verdant Rebirth on opponent's creature returns it to opponent's hand")
     void returnsOpponentCreatureToOwnersHand() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent creature = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
         Card creatureCard = creature.getCard();
 
         // Player 1 casts Verdant Rebirth targeting player 2's creature
@@ -128,15 +111,13 @@ class VerdantRebirthTest extends BaseCardTest {
         harness.setHand(player1, List.of(new VerdantRebirth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities(); // resolve Verdant Rebirth
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         // Player 1 destroys the creature
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new DoomBlade()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities(); // resolve Doom Blade — creature dies, trigger goes on stack
+        harness.setHand(player1, List.of(new VanquishTheWeak()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.passBothPriorities(); // resolve return-to-hand trigger
 
         // Creature should return to player 2's hand (the owner), not player 1
@@ -149,10 +130,8 @@ class VerdantRebirthTest extends BaseCardTest {
     @Test
     @DisplayName("Non-targeted creature does not get the return-to-hand ability")
     void nonTargetedCreatureDoesNotGetAbility() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent creature1 = gd.playerBattlefields.get(player1.getId()).getFirst();
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent creature2 = gd.playerBattlefields.get(player1.getId()).get(1);
+        Permanent creature1 = harness.addToBattlefieldAndReturn(player1, new RaptorCompanion());
+        Permanent creature2 = harness.addToBattlefieldAndReturn(player1, new RaptorCompanion());
         Card creature2Card = creature2.getCard();
 
         // Cast Verdant Rebirth targeting creature1 only
@@ -162,21 +141,15 @@ class VerdantRebirthTest extends BaseCardTest {
         harness.setHand(player1, List.of(new VerdantRebirth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, creature1.getId());
-        harness.passBothPriorities(); // resolve Verdant Rebirth
-
-        // Only creature1 should have the temporary death effect
-        assertThat(creature1.getTemporaryTriggeredEffects(EffectSlot.ON_DEATH)).isNotEmpty();
-        assertThat(creature2.getTemporaryTriggeredEffects(EffectSlot.ON_DEATH)).isEmpty();
+        harness.castAndResolveInstant(player1, 0, creature1.getId());
 
         // Destroy creature2 — it should go to graveyard normally
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new DoomBlade()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
-        harness.castInstant(player2, 0, creature2.getId());
-        harness.passBothPriorities(); // resolve Doom Blade
+        harness.setHand(player2, List.of(new VanquishTheWeak()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player2, 0, creature2.getId());
 
         // creature2 should be in graveyard, not hand
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -188,8 +161,7 @@ class VerdantRebirthTest extends BaseCardTest {
     @Test
     @DisplayName("Verdant Rebirth goes to graveyard after resolution")
     void spellGoesToGraveyard() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent creature = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RaptorCompanion());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -197,9 +169,53 @@ class VerdantRebirthTest extends BaseCardTest {
         harness.setHand(player1, List.of(new VerdantRebirth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities(); // resolve Verdant Rebirth
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         harness.assertInGraveyard(player1, "Verdant Rebirth");
+    }
+
+    @Test
+    @DisplayName("No card is drawn when the target dies before Verdant Rebirth resolves")
+    void removedTargetPreventsDraw() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RaptorCompanion());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new VerdantRebirth()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castInstant(player1, 0, creature.getId());
+
+        harness.setHand(player2, List.of(new VanquishTheWeak()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Raptor Companion");
+        harness.assertInGraveyard(player1, "Verdant Rebirth");
+    }
+
+    @Test
+    @DisplayName("The granted ability still works during the end step")
+    void returnsCreatureDyingDuringEndStep() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RaptorCompanion());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new VerdantRebirth()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new VanquishTheWeak()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.assertInGraveyard(player1, "Raptor Companion");
+        harness.assertNotInHand(player1, "Raptor Companion");
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Raptor Companion");
+        harness.assertNotInGraveyard(player1, "Raptor Companion");
     }
 }
