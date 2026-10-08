@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.cards.b.BalothGorger;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,18 +15,16 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VoltaicServant.class, IcyManipulator.class, BalothGorger.class})
 class VoltaicServantTest extends BaseCardTest {
-
-    // ===== Untapping artifacts at end step =====
 
     @Test
     @DisplayName("Untaps a tapped artifact at controller's end step")
     void untapsTappedArtifactAtEndStep() {
         harness.addToBattlefield(player1, new VoltaicServant());
-        harness.addToBattlefield(player1, new AngelsFeather());
-        UUID featherId = harness.getPermanentId(player1, "Angel's Feather");
-        Permanent feather = gd.playerBattlefields.get(player1.getId()).get(1);
-        feather.tap();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new IcyManipulator());
+        UUID artifactId = artifact.getId();
+        artifact.tap();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -38,24 +37,23 @@ class VoltaicServantTest extends BaseCardTest {
         // Should be awaiting target selection for the artifact
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
-        // Choose the tapped Angel's Feather
-        harness.handlePermanentChosen(player1, featherId);
+        // Choose the tapped Icy Manipulator
+        harness.handlePermanentChosen(player1, artifactId);
 
         // Resolve the triggered ability
         harness.passBothPriorities();
 
-        // Feather should be untapped
-        assertThat(feather.isTapped()).isFalse();
+        // Artifact should be untapped
+        assertThat(artifact.isTapped()).isFalse();
     }
 
     @Test
     @DisplayName("Can untap an opponent's artifact")
     void canUntapOpponentArtifact() {
         harness.addToBattlefield(player1, new VoltaicServant());
-        harness.addToBattlefield(player2, new AngelsFeather());
-        UUID featherId = harness.getPermanentId(player2, "Angel's Feather");
-        Permanent feather = gd.playerBattlefields.get(player2.getId()).get(0);
-        feather.tap();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new IcyManipulator());
+        UUID artifactId = artifact.getId();
+        artifact.tap();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -65,18 +63,17 @@ class VoltaicServantTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
-        harness.handlePermanentChosen(player1, featherId);
+        harness.handlePermanentChosen(player1, artifactId);
         harness.passBothPriorities();
 
-        assertThat(feather.isTapped()).isFalse();
+        assertThat(artifact.isTapped()).isFalse();
     }
 
     @Test
     @DisplayName("Can target itself (Voltaic Servant is an artifact creature)")
     void canTargetItself() {
-        harness.addToBattlefield(player1, new VoltaicServant());
-        UUID servantId = harness.getPermanentId(player1, "Voltaic Servant");
-        Permanent servant = gd.playerBattlefields.get(player1.getId()).get(0);
+        Permanent servant = harness.addToBattlefieldAndReturn(player1, new VoltaicServant());
+        UUID servantId = servant.getId();
         servant.tap();
 
         harness.forceActivePlayer(player1);
@@ -93,15 +90,12 @@ class VoltaicServantTest extends BaseCardTest {
         assertThat(servant.isTapped()).isFalse();
     }
 
-    // ===== Does not trigger on opponent's turn =====
-
     @Test
     @DisplayName("Does not trigger on opponent's end step")
     void doesNotTriggerOnOpponentEndStep() {
         harness.addToBattlefield(player1, new VoltaicServant());
-        harness.addToBattlefield(player1, new AngelsFeather());
-        Permanent feather = gd.playerBattlefields.get(player1.getId()).get(1);
-        feather.tap();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new IcyManipulator());
+        artifact.tap();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -112,18 +106,16 @@ class VoltaicServantTest extends BaseCardTest {
         // No trigger should fire for player1's Voltaic Servant
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).isEmpty();
-        // Feather should remain tapped
-        assertThat(feather.isTapped()).isTrue();
+        // Artifact should remain tapped
+        assertThat(artifact.isTapped()).isTrue();
     }
-
-    // ===== Cannot target non-artifacts =====
 
     @Test
     @DisplayName("Non-artifact creatures are not valid targets")
     void nonArtifactCreatureNotValidTarget() {
         harness.addToBattlefield(player1, new VoltaicServant());
         // Only non-artifact creature on the battlefield besides Voltaic Servant
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BalothGorger());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -135,27 +127,24 @@ class VoltaicServantTest extends BaseCardTest {
         // Should be awaiting target selection — only Voltaic Servant itself should be valid
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
-        // Grizzly Bears (non-artifact) should NOT be in valid choices
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(bearsId);
+        // Baloth Gorger (non-artifact) should NOT be in valid choices
+        UUID gorgerId = harness.getPermanentId(player2, "Baloth Gorger");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(gorgerId);
 
         // Voltaic Servant (artifact creature) should be a valid target
         UUID servantId = harness.getPermanentId(player1, "Voltaic Servant");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(servantId);
     }
 
-    // ===== Untapping already untapped artifact =====
-
     @Test
     @DisplayName("Can target an already untapped artifact (no-op untap)")
     void canTargetAlreadyUntappedArtifact() {
         harness.addToBattlefield(player1, new VoltaicServant());
-        harness.addToBattlefield(player1, new AngelsFeather());
-        UUID featherId = harness.getPermanentId(player1, "Angel's Feather");
-        Permanent feather = gd.playerBattlefields.get(player1.getId()).get(1);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new IcyManipulator());
+        UUID artifactId = artifact.getId();
 
-        // Feather is already untapped
-        assertThat(feather.isTapped()).isFalse();
+        // Artifact is already untapped
+        assertThat(artifact.isTapped()).isFalse();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -165,10 +154,31 @@ class VoltaicServantTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
-        harness.handlePermanentChosen(player1, featherId);
+        harness.handlePermanentChosen(player1, artifactId);
         harness.passBothPriorities();
 
-        // Feather remains untapped
-        assertThat(feather.isTapped()).isFalse();
+        // Artifact remains untapped
+        assertThat(artifact.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Triggered untap resolves after Voltaic Servant leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent servant = harness.addToBattlefieldAndReturn(player1, new VoltaicServant());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new IcyManipulator());
+        artifact.tap();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, artifact.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(servant);
+        gd.playerGraveyards.get(player1.getId()).add(servant.getCard());
+        harness.passBothPriorities();
+
+        assertThat(artifact.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
