@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.s.ShadowTheHedgehog;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -9,13 +11,13 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(WhiteManaBattery.class)
+@CardUsed({WhiteManaBattery.class, ShadowTheHedgehog.class})
 class WhiteManaBatteryTest extends BaseCardTest {
-
-    // ===== Ability 0: {2}, {T}: Put a charge counter =====
 
     @Test
     @DisplayName("Paying {2} and tapping puts a charge counter on the battery")
@@ -40,8 +42,6 @@ class WhiteManaBatteryTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Ability 1: {T}, Remove any number of charge counters: Add {W} + one per removed =====
 
     @Test
     @DisplayName("Removing all charge counters adds the base {W} plus one per counter removed")
@@ -120,7 +120,72 @@ class WhiteManaBatteryTest extends BaseCardTest {
         assertThat(whiteMana()).isZero();
     }
 
-    // ===== Helpers =====
+    @Test
+    void chargingUsesTheStackAndPreservesExistingCounters() {
+        Permanent battery = addReadyBattery(player1);
+        battery.setCounterCount(CounterType.CHARGE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(battery.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(battery.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void manaAbilityDoesNotUseTheStackOrRemoveOtherCounterTypes() {
+        Permanent battery = addReadyBattery(player1);
+        battery.setCounterCount(CounterType.CHARGE, 2);
+        battery.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "2");
+
+        assertThat(whiteMana()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+        assertThat(battery.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(battery.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void manaGoesToTheActivatingController() {
+        Permanent battery = addReadyBattery(player2);
+        battery.setCounterCount(CounterType.CHARGE, 2);
+
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.handleListChoice(player2, "2");
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isEqualTo(3);
+        assertThat(whiteMana()).isZero();
+        assertThat(battery.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    void counterManaStillCountsAsArtifactManaAfterTheBaseManaIsSpent() {
+        harness.addToBattlefield(player1, new ShadowTheHedgehog());
+        Permanent battery = addReadyBattery(player1);
+        addReadyBattery(player1);
+        battery.setCounterCount(CounterType.CHARGE, 5);
+        harness.setHand(player1, List.of(new WhiteManaBattery()));
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.handleListChoice(player1, "5");
+        assertThat(whiteMana()).isEqualTo(6);
+
+        harness.activateAbility(player1, 2, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(whiteMana()).isEqualTo(4);
+
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().hasKeyword(Keyword.SPLIT_SECOND)).isTrue();
+    }
 
     private Permanent addReadyBattery(Player player) {
         return harness.addToBattlefieldAndReturn(player, new WhiteManaBattery());
