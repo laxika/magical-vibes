@@ -14,10 +14,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.cards.m.MetathranSoldier;
 import com.github.laxika.magicalvibes.model.GameStatus;
 
-@CardUsed({GrizzlyBears.class, SoulFeast.class, CanyonWildcat.class, MetathranSoldier.class})
+@CardUsed({GrizzlyBears.class, SoulFeast.class, CanyonWildcat.class})
 class SoulFeastTest extends BaseCardTest {
 
     @Test
@@ -139,4 +138,32 @@ class SoulFeastTest extends BaseCardTest {
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
+    @Test
+    @DisplayName("Soul Feast gives life to the second player's spell controller")
+    void secondPlayerGainsLifeWhenCasting() {
+        harness.forceActivePlayer(player2);
+        harness.setLife(player1, 18);
+        harness.setLife(player2, 12);
+        harness.setHand(player2, List.of(new SoulFeast()));
+        harness.addMana(player2, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 16);
+        harness.assertInGraveyard(player2, "Soul Feast");
+    }
+
+    @Test
+    @DisplayName("Soul Feast targeting self at four life restores life before checking for a loss")
+    void targetingSelfAtFourLifeDoesNotLoseGame() {
+        harness.setLife(player1, 4);
+        harness.setHand(player1, List.of(new SoulFeast()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 4);
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
 }
