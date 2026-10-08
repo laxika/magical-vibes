@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class WallOfPineNeedlesTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Activating regeneration ability puts it on the stack targeting the wall")
+    @DisplayName("Activating regeneration ability puts it on the stack for the wall")
     void activatingAbilityPutsOnStack() {
         Permanent wall = addCreatureReady(player1, new WallOfPineNeedles());
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -58,10 +57,7 @@ class WallOfPineNeedlesTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new HyalopterousLemure());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Wall of Pine Needles");
         Permanent survivingWall = findPermanent(player1, "Wall of Pine Needles");
@@ -79,4 +75,63 @@ class WallOfPineNeedlesTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("Regeneration can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfPineNeedles());
+        wall.tap();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(wall.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creating a regeneration shield does not tap the wall or remove existing damage")
+    void shieldDoesNotRegenerateImmediately() {
+        Permanent wall = addCreatureReady(player1, new WallOfPineNeedles());
+        wall.setMarkedDamage(1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(wall.isTapped()).isFalse();
+        assertThat(wall.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple activations protect against separate lethal damage events")
+    void multipleShieldsProtectAgainstSeparateDamageEvents() {
+        Permanent wall = addCreatureReady(player1, new WallOfPineNeedles());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        wall.setMarkedDamage(3);
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Wall of Pine Needles");
+        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(wall.getMarkedDamage()).isZero();
+        assertThat(wall.isTapped()).isTrue();
+
+        wall.setMarkedDamage(3);
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Wall of Pine Needles");
+        assertThat(wall.getRegenerationShield()).isZero();
+        assertThat(wall.getMarkedDamage()).isZero();
+
+        wall.setMarkedDamage(3);
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Wall of Pine Needles");
+    }
 }
