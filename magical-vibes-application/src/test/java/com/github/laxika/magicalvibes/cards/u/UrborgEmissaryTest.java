@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.r.Repulse;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UrborgEmissary.class, Forest.class})
+@CardUsed({UrborgEmissary.class, Forest.class, Repulse.class})
 class UrborgEmissaryTest extends BaseCardTest {
 
     @Test
@@ -106,14 +107,54 @@ class UrborgEmissaryTest extends BaseCardTest {
         harness.assertInHand(player1, "Urborg Emissary");
     }
 
-    private void addBaseMana() {
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+    @Test
+    @DisplayName("The kicked trigger still resolves after its source leaves the battlefield")
+    void kickedTriggerResolvesWithoutSource() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new UrborgEmissary()));
+        addKickedMana();
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, land.getId());
+
+        harness.setHand(player2, List.of(new Repulse()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Urborg Emissary"));
+        harness.assertInHand(player1, "Urborg Emissary");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInHand(player2, "Forest");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The kicked trigger does not return another permanent when its target leaves")
+    void kickedTriggerWithRemovedTargetDoesNotRetarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new UrborgEmissary());
+        harness.setHand(player1, List.of(new UrborgEmissary()));
+        addKickedMana();
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.setHand(player2, List.of(new Repulse()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Urborg Emissary");
+        harness.assertOnBattlefield(player1, "Urborg Emissary");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addKickedMana() {
-        addBaseMana();
+        harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
     }
 }
