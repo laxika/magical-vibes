@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WitherbloomTheBalancer.class, GrizzlyBears.class, Divination.class, AngelsMercy.class})
 class WitherbloomTheBalancerTest extends BaseCardTest {
 
     @Test
@@ -78,6 +80,84 @@ class WitherbloomTheBalancerTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
 
         assertThatThrownBy(() -> harness.castSorcery(player2, 0, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void creatureBeingCastDoesNotCountForItsOwnAffinity() {
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new GrizzlyBears());
+        }
+        harness.setHand(player1, List.of(new WitherbloomTheBalancer()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void ownAffinityCannotPayColoredMana() {
+        for (int i = 0; i < 8; i++) {
+            harness.addToBattlefield(player1, new GrizzlyBears());
+        }
+        harness.setHand(player1, List.of(new WitherbloomTheBalancer()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void grantedAffinityCountsAllYourCreatures() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new WitherbloomTheBalancer());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AngelsMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertLife(player1, 27);
+        harness.assertInGraveyard(player1, "Angel's Mercy");
+    }
+
+    @Test
+    void grantedAffinityDoesNotCountOpponentsCreatures() {
+        harness.addToBattlefield(player1, new WitherbloomTheBalancer());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Divination()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void grantedAffinityCannotPayColoredMana() {
+        harness.addToBattlefield(player1, new WitherbloomTheBalancer());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AngelsMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void affinityGrantDoesNotReduceOtherCreatureSpells() {
+        harness.addToBattlefield(player1, new WitherbloomTheBalancer());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
