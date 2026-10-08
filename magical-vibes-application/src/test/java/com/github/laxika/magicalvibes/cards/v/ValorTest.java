@@ -17,6 +17,45 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ValorTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Creatures entering after Valor is in the graveyard also gain first strike")
+    void grantsFirstStrikeToNewCreatures() {
+        harness.setGraveyard(player1, List.of(new Valor()));
+        harness.addToBattlefield(player1, new Plains());
+
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new Squire());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A remaining Valor continues granting first strike when another copy leaves the graveyard")
+    void remainingCopyContinuesGrantingFirstStrike() {
+        Valor remaining = new Valor();
+        harness.setGraveyard(player1, List.of(new Valor(), remaining));
+        harness.addToBattlefield(player1, new Plains());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Squire());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+
+        harness.setGraveyard(player1, List.of(remaining));
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Valor in an opponent's graveyard grants first strike only to that opponent's creatures")
+    void opponentsValorBenefitsOnlyOpponent() {
+        harness.setGraveyard(player2, List.of(new Valor()));
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player2, new Plains());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new Squire());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new Squire());
+
+        assertThat(gqs.hasKeyword(gd, own, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
     @DisplayName("Grants first strike to the controller's creatures from the graveyard while a Plains is controlled")
     void grantsFirstStrikeWithPlainsControlled() {
         harness.setGraveyard(player1, List.of(new Valor()));
