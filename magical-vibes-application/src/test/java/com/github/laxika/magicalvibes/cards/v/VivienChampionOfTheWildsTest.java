@@ -35,7 +35,7 @@ class VivienChampionOfTheWildsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.getGameService().passPriority(gd, player2);
+        harness.passPriority(player2);
 
         harness.castCreature(player1, 0);
 
@@ -94,8 +94,7 @@ class VivienChampionOfTheWildsTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).containsExactly(first, chosen, third);
 
-        gs.handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(search.params().cards().indexOf(chosen)));
+        harness.handleCardChosen(player1, search.params().cards().indexOf(chosen));
 
         PendingInteraction.LibraryReorder reorder = gd.interaction.activeInteraction(
                 PendingInteraction.LibraryReorder.class);
@@ -129,14 +128,177 @@ class VivienChampionOfTheWildsTest extends BaseCardTest {
         harness.passBothPriorities();
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(
                 PendingInteraction.LibrarySearch.class);
-        gs.handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(search.params().cards().indexOf(chosen)));
+        harness.handleCardChosen(player1, search.params().cards().indexOf(chosen));
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1)));
 
         harness.addMana(player1, ManaColor.RED, 1);
         assertThatThrownBy(() -> harness.castFromExile(player1, chosen.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("No permission");
+    }
+
+    @Test
+    void exiledCreatureRemainsCastableAfterVivienLeaves() {
+        Permanent vivien = addReadyVivien(3);
+        Card chosen = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(chosen));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, vivien);
+
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromExile(player1, chosen.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.findExiledCard(chosen.getId())).isNull();
+    }
+
+    @Test
+    void minusTwoStillGrantsPermissionWhenLoyaltyCostKillsVivien() {
+        addReadyVivien(2);
+        Card chosen = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(chosen));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Vivien, Champion of the Wilds");
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromExile(player1, chosen.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void minusTwoOnEmptyLibraryOnlyPaysLoyalty() {
+        Permanent vivien = addReadyVivien(3);
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(vivien.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.getCardsExiledByPermanent(vivien.getId())).isEmpty();
+    }
+
+    @Test
+    void minusTwoWithTwoCardsExilesChosenCardAndBottomsTheOther() {
+        Permanent vivien = addReadyVivien(3);
+        Card remaining = new Shock();
+        Card chosen = new LlanowarElves();
+        harness.setLibrary(player1, List.of(remaining, chosen));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.getCardsExiledByPermanent(vivien.getId())).containsExactly(chosen);
+        assertThat(gd.findExiledCard(chosen.getId()).faceDown()).isTrue();
+    }
+
+    @Test
+    void singleNoncreatureIsExiledWithoutCastingPermission() {
+        Permanent vivien = addReadyVivien(3);
+        Card chosen = new Shock();
+        harness.setLibrary(player1, List.of(chosen));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(vivien.getId())).containsExactly(chosen);
+        assertThat(gd.findExiledCard(chosen.getId()).faceDown()).isTrue();
+        harness.addMana(player1, ManaColor.RED, 1);
+        assertThatThrownBy(() -> harness.castFromExile(player1, chosen.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permission");
+    }
+
+    @Test
+    void exiledCreatureCanBeCastDuringOpponentsTurnWhileVivienRemains() {
+        addReadyVivien(3);
+        Card chosen = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(chosen));
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passPriority(player2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromExile(player1, chosen.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void minusTwoPreservesChosenBottomOrderAndUntouchedLibrary() {
+        addReadyVivien(3);
+        Card first = new Shock();
+        Card chosen = new GrizzlyBears();
+        Card third = new LlanowarElves();
+        Card untouched = new Shock();
+        harness.setLibrary(player1, List.of(first, chosen, third, untouched));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, third, first);
+        assertThat(gd.findExiledCard(chosen.getId()).faceDown()).isTrue();
+    }
+
+    @Test
+    void plusOneExpiresAtControllersNextTurnAndSurvivesSourceRemoval() {
+        Permanent vivien = addReadyVivien(3);
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Shock(), new Shock()));
+        harness.setLibrary(player2, List.of(new Shock(), new Shock()));
+
+        harness.activateAbility(player1, 0, 0, null, bear.getId());
+        harness.passBothPriorities();
+        harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, vivien);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.VIGILANCE)).isTrue();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    void plusOneCanTargetOpponentsCreature() {
+        addReadyVivien(3);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 0, null, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    void flashPermissionDoesNotExtendToOpponent() {
+        addReadyVivien(3);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castCreature(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent addReadyVivien(int loyalty) {
