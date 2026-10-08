@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.a.AirbendingLesson;
 import com.github.laxika.magicalvibes.cards.c.CrescentIslandTemple;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BadgermoleCub;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -17,7 +17,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WhiteLotusHideout.class, AirbendingLesson.class, CrescentIslandTemple.class, GrizzlyBears.class})
+@CardUsed({WhiteLotusHideout.class, AirbendingLesson.class, CrescentIslandTemple.class, BadgermoleCub.class})
 class WhiteLotusHideoutTest extends BaseCardTest {
 
     @Test
@@ -65,7 +65,7 @@ class WhiteLotusHideoutTest extends BaseCardTest {
         harness.handleListChoice(player1, "WHITE");
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BadgermoleCub());
         harness.setHand(player1, List.of(new AirbendingLesson()));
         harness.castInstant(player1, 0, target.getId());
 
@@ -95,12 +95,70 @@ class WhiteLotusHideoutTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, "WHITE");
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new BadgermoleCub()));
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerManaPools.get(player1.getId())
                 .getSubtypeSpellOnlyManaTotal(Set.of(CardSubtype.LESSON, CardSubtype.SHRINE))).isEqualTo(1);
+    }
+
+    @Test
+    void restrictedManaCanPayGenericPartOfLessonCost() {
+        addReadyHideout();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BadgermoleCub());
+        harness.setHand(player1, List.of(new AirbendingLesson()));
+
+        harness.castInstant(player1, 0, target.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeSpellOnlyManaTotal(Set.of(CardSubtype.LESSON, CardSubtype.SHRINE))).isZero();
+    }
+
+    @Test
+    void restrictedManaCannotPayManaAbilityActivationCost() {
+        addReadyHideout();
+        Permanent secondHideout = addReadyHideout();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 2, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(secondHideout.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeSpellOnlyManaTotal(Set.of(CardSubtype.LESSON, CardSubtype.SHRINE))).isEqualTo(1);
+    }
+
+    @Test
+    void thirdAbilityManaCanCastNonLessonOrShrineSpell() {
+        addReadyHideout();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.handleListChoice(player1, "GREEN");
+        harness.setHand(player1, List.of(new BadgermoleCub()));
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void thirdAbilityRequiresManaBeforeProducingMana() {
+        Permanent hideout = addReadyHideout();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(hideout.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addReadyHideout() {
