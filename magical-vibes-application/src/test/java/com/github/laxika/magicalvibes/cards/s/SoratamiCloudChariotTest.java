@@ -56,10 +56,8 @@ class SoratamiCloudChariotTest extends BaseCardTest {
         resolveCombat();
 
         harness.assertLife(player2, 20);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getId().equals(attacker.getId()));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(permanent -> permanent.getId().equals(blocker.getId()));
+        harness.assertOnBattlefield(player1, "Briarknit Kami");
+        harness.assertOnBattlefield(player2, "Fiddlehead Kami");
         assertThat(attacker.getMarkedDamage()).isZero();
         assertThat(blocker.getMarkedDamage()).isZero();
     }
@@ -93,6 +91,78 @@ class SoratamiCloudChariotTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, opponentCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Combat prevention does not prevent noncombat damage dealt by the target")
+    void doesNotPreventNoncombatDamageByTarget() {
+        addReadyChariot(player1);
+        Permanent raider = addCreatureReady(player1, new GhostLitRaider());
+        Permanent target = addCreatureReady(player2, new BriarknitKami());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, raider.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Combat prevention stops an unblocked creature from damaging the defending player")
+    void preventsCombatDamageToPlayer() {
+        harness.setLife(player2, 20);
+        addReadyChariot(player1);
+        Permanent attacker = addCreatureReady(player1, new BriarknitKami());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, null, attacker.getId());
+        harness.passBothPriorities();
+
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        resolveCombat();
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Both combat prevention effects expire at the end of the turn")
+    void combatPreventionExpiresAtEndOfTurn() {
+        addReadyChariot(player1);
+        Permanent attacker = addCreatureReady(player1, new BriarknitKami());
+        Permanent blocker = addCreatureReady(player2, new FiddleheadKami());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, null, attacker.getId());
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        blocker.setBlocking(true);
+        blocker.addBlockingTargetId(attacker.getId());
+        resolveCombat();
+
+        harness.assertNotOnBattlefield(player1, "Briarknit Kami");
+        harness.assertNotOnBattlefield(player2, "Fiddlehead Kami");
+    }
+
+    @Test
+    @DisplayName("Neither ability can target a noncreature artifact you control")
+    void cannotTargetNoncreatureArtifact() {
+        Permanent chariot = addReadyChariot(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, chariot.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, chariot.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
