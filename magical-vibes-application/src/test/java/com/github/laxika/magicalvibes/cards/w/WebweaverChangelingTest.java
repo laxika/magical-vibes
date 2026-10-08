@@ -2,8 +2,11 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.k.KingOfThePride;
+import com.github.laxika.magicalvibes.cards.s.SegovianAngel;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -70,13 +73,12 @@ class WebweaverChangelingTest extends BaseCardTest {
     }
 
     private void castWebweaverChangeling() {
-        harness.setHand(player1, List.of(new WebweaverChangeling()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new WebweaverChangeling(), "{3}{G}{G}");
     }
 }
 
-@CardUsed({WebweaverChangeling.class, GrizzlyBears.class, Forest.class})
+@CardUsed({WebweaverChangeling.class, GrizzlyBears.class, Forest.class,
+        KingOfThePride.class, SegovianAngel.class})
 class Mh1WebweaverChangelingTest extends BaseCardTest {
 
     @Test
@@ -105,11 +107,7 @@ class Mh1WebweaverChangelingTest extends BaseCardTest {
     void etbConditionMustStillBeMetOnResolution() {
         harness.setLife(player1, 20);
         harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
-        harness.setHand(player1, List.of(new WebweaverChangeling()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new WebweaverChangeling(), "{3}{G}{G}");
         harness.passBothPriorities();
         harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.passBothPriorities();
@@ -118,12 +116,78 @@ class Mh1WebweaverChangelingTest extends BaseCardTest {
     }
 
     private void castWebweaverChangeling() {
-        harness.setHand(player1, List.of(new WebweaverChangeling()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromHand(player1, new WebweaverChangeling(), "{3}{G}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+    }
 
-        harness.castCreature(player1, 0);
+    @Test
+    @CardUsed(WebweaverChangeling.class)
+    void gainsLifeWithMoreThanThreeCreatureCards() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 12);
+        harness.setGraveyard(player1, List.of(new WebweaverChangeling(), new WebweaverChangeling(),
+                new WebweaverChangeling(), new WebweaverChangeling()));
+
+        castWebweaverChangeling();
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 12);
+    }
+
+    @Test
+    @CardUsed(WebweaverChangeling.class)
+    void doesNotTriggerIfThresholdIsReachedOnlyAfterEntry() {
+        harness.setLife(player1, 10);
+        harness.setGraveyard(player1, List.of(new WebweaverChangeling(), new WebweaverChangeling()));
+        harness.castFromHand(player1, new WebweaverChangeling(), "{3}{G}{G}");
         harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.setGraveyard(player1, List.of(new WebweaverChangeling(), new WebweaverChangeling(),
+                new WebweaverChangeling()));
+        harness.assertLife(player1, 10);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed(WebweaverChangeling.class)
+    void gainsLifeEvenIfSourceLeavesBeforeTriggerResolves() {
+        harness.setLife(player1, 10);
+        harness.setGraveyard(player1, List.of(new WebweaverChangeling(), new WebweaverChangeling(),
+                new WebweaverChangeling()));
+        harness.castFromHand(player1, new WebweaverChangeling(), "{3}{G}{G}");
         harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 15);
+    }
+
+    @Test
+    @CardUsed({WebweaverChangeling.class, SegovianAngel.class})
+    void reachAllowsBlockingFlyingCreature() {
+        addCreatureReady(player1, new SegovianAngel());
+        Permanent blocker = addCreatureReady(player2, new WebweaverChangeling());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @CardUsed({WebweaverChangeling.class, KingOfThePride.class})
+    void changelingReceivesCatBonus() {
+        Permanent changeling = harness.addToBattlefieldAndReturn(player1, new WebweaverChangeling());
+        int originalPower = gqs.getEffectivePower(gd, changeling);
+        int originalToughness = gqs.getEffectiveToughness(gd, changeling);
+
+        harness.addToBattlefield(player1, new KingOfThePride());
+
+        assertThat(gqs.getEffectivePower(gd, changeling)).isEqualTo(originalPower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, changeling)).isEqualTo(originalToughness + 1);
     }
 }
