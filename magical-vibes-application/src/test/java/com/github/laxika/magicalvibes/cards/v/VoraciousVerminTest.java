@@ -35,8 +35,7 @@ class VoraciousVerminTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passBothPriorities();
 
         assertThat(vermin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -51,10 +50,82 @@ class VoraciousVerminTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
 
         assertThat(vermin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Gets a counter when its Rat token dies")
+    void getsCounterWhenTokenDies() {
+        castAndResolve();
+        Permanent vermin = findPermanent(player1, "Voracious Vermin");
+        Permanent rat = findPermanent(player1, "Rat");
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, rat.getId());
+
+        assertThat(findPermanents(player1, "Rat")).isEmpty();
+        assertThat(vermin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(vermin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Triggers for each allied creature death in the same turn")
+    void triggersForEachDeathInSameTurn() {
+        castAndResolve();
+        Permanent vermin = findPermanent(player1, "Voracious Vermin");
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent rat = findPermanent(player1, "Rat");
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+        resolveAllTriggers();
+        harness.castAndResolveInstant(player1, 0, rat.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Rat")).isEmpty();
+        assertThat(vermin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Does not trigger for its own death")
+    void doesNotTriggerForOwnDeath() {
+        castAndResolve();
+        Permanent vermin = findPermanent(player1, "Voracious Vermin");
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, vermin.getId());
+
+        harness.assertInGraveyard(player1, "Voracious Vermin");
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Rat")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Creates its Rat even if it dies before the enter trigger resolves")
+    void enterTriggerResolvesAfterSourceDies() {
+        harness.setHand(player1, List.of(new VoraciousVermin(), new Shock()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent vermin = findPermanent(player1, "Voracious Vermin");
+        assertThat(findPermanents(player1, "Rat")).isEmpty();
+
+        harness.castAndResolveInstant(player1, 0, vermin.getId());
+        harness.assertInGraveyard(player1, "Voracious Vermin");
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Rat")).hasSize(1);
+        assertThat(bls.canBlock(gd, findPermanent(player1, "Rat"))).isFalse();
     }
 
     private void castAndResolve() {
