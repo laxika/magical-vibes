@@ -126,6 +126,121 @@ class WaxmaneBakuTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Accepting an Arcane cast trigger adds a ki counter before the spell resolves")
+    void arcaneSpellAddsKiCounterBeforeResolving() {
+        Permanent baku = addBaku();
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new ReachThroughMists()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(baku.getCounterCount(CounterType.KI)).isEqualTo(1);
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() instanceof ReachThroughMists);
+    }
+
+    @Test
+    @DisplayName("An opponent's Arcane spell does not trigger Waxmane Baku")
+    void opponentsArcaneSpellDoesNotTrigger() {
+        Permanent baku = addBaku();
+        prepareMainPhase();
+        harness.setHand(player2, List.of(new ReachThroughMists()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player2, 0);
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() instanceof WaxmaneBaku);
+        assertThat(baku.getCounterCount(CounterType.KI)).isZero();
+    }
+
+    @Test
+    @DisplayName("X can be zero with no ki counters and no targets")
+    void zeroCountersAndZeroTargetsAreLegal() {
+        Permanent baku = addBaku();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(baku.getCounterCount(CounterType.KI)).isZero();
+        assertThat(baku.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Baku can activate repeatedly and spend fewer than all counters")
+    void tappedBakuCanActivateRepeatedly() {
+        Permanent baku = addBaku();
+        baku.setTapped(true);
+        baku.setSummoningSick(true);
+        baku.setCounterCount(CounterType.KI, 3);
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, 1, List.of(first.getId()));
+        assertThat(baku.getCounterCount(CounterType.KI)).isEqualTo(2);
+        assertThat(first.isTapped()).isFalse();
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, 1, List.of(second.getId()));
+        assertThat(baku.getCounterCount(CounterType.KI)).isEqualTo(1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The same creature cannot be selected twice for one activation")
+    void rejectsDuplicateTargets() {
+        Permanent baku = addBaku();
+        baku.setCounterCount(CounterType.KI, 2);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, 2, List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(baku.getCounterCount(CounterType.KI)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The remaining legal target is tapped when another target leaves the battlefield")
+    void remainingTargetIsTapped() {
+        Permanent baku = addBaku();
+        baku.setCounterCount(CounterType.KI, 2);
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, 2, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(first);
+        gd.playerGraveyards.get(player2.getId()).add(first.getCard());
+        harness.passBothPriorities();
+
+        assertThat(second.isTapped()).isTrue();
+        assertThat(baku.getCounterCount(CounterType.KI)).isZero();
+    }
+
+    @Test
+    @DisplayName("Removing the source does not stop its activated ability from tapping the target")
+    void abilityResolvesWithoutSource() {
+        Permanent baku = addBaku();
+        baku.setCounterCount(CounterType.KI, 1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, 1, List.of(target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(baku);
+        gd.playerGraveyards.get(player1.getId()).add(baku.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
     private Permanent addBaku() {
         return harness.addToBattlefieldAndReturn(player1, new WaxmaneBaku());
     }
