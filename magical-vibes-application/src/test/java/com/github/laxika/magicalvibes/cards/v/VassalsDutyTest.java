@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.k.KondaLordOfEiganjo;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.cards.l.LanternKami;
+import com.github.laxika.magicalvibes.cards.p.Pariah;
 import com.github.laxika.magicalvibes.cards.y.YamabushisFlame;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,7 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VassalsDuty.class, KondaLordOfEiganjo.class, IsamaruHoundOfKonda.class, LanternKami.class, YamabushisFlame.class})
+@CardUsed({VassalsDuty.class, KondaLordOfEiganjo.class, IsamaruHoundOfKonda.class, LanternKami.class, YamabushisFlame.class, Pariah.class})
 class VassalsDutyTest extends BaseCardTest {
 
     @Test
@@ -39,8 +40,7 @@ class VassalsDutyTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetId);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
         assertThat(findPermanent(player1, "Konda, Lord of Eiganjo").getMarkedDamage()).isEqualTo(2);
@@ -58,8 +58,7 @@ class VassalsDutyTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
         resolveCombat(player2);
 
@@ -89,8 +88,7 @@ class VassalsDutyTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetId);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(findPermanent(player1, "Konda, Lord of Eiganjo").getMarkedDamage()).isEqualTo(3);
@@ -118,5 +116,84 @@ class VassalsDutyTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Each activation redirects one damage and the shields are consumed")
+    void multipleActivationsRedirectOnlyTheirAllocatedDamage() {
+        harness.addToBattlefield(player1, new VassalsDuty());
+        harness.addToBattlefield(player1, new KondaLordOfEiganjo());
+        UUID targetId = harness.getPermanentId(player1, "Konda, Lord of Eiganjo");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, targetId);
+        resolveAllTriggers();
+
+        harness.setHand(player2, List.of(new YamabushisFlame(), new YamabushisFlame()));
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castAndResolveInstant(player2, 0, targetId);
+
+        harness.assertLife(player1, 18);
+        assertThat(findPermanent(player1, "Konda, Lord of Eiganjo").getMarkedDamage()).isEqualTo(1);
+
+        harness.castAndResolveInstant(player2, 0, targetId);
+
+        harness.assertLife(player1, 18);
+        assertThat(findPermanent(player1, "Konda, Lord of Eiganjo").getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A shield does not redirect damage dealt directly to its controller")
+    void shieldOnlyProtectsTheTargetCreature() {
+        harness.addToBattlefield(player1, new VassalsDuty());
+        harness.addToBattlefield(player1, new KondaLordOfEiganjo());
+        UUID targetId = harness.getPermanentId(player1, "Konda, Lord of Eiganjo");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new YamabushisFlame(), new YamabushisFlame()));
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.assertLife(player1, 17);
+
+        harness.castAndResolveInstant(player2, 0, targetId);
+
+        harness.assertLife(player1, 16);
+        assertThat(findPermanent(player1, "Konda, Lord of Eiganjo").getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Pariah redirects damage that Vassal's Duty redirects to its controller")
+    void redirectedDamageIsSubjectToPariah() {
+        harness.addToBattlefield(player1, new VassalsDuty());
+        harness.addToBattlefield(player1, new KondaLordOfEiganjo());
+        UUID targetId = harness.getPermanentId(player1, "Konda, Lord of Eiganjo");
+        var recipient = harness.addToBattlefieldAndReturn(player2, new KondaLordOfEiganjo());
+        harness.addToBattlefieldAndReturn(player1, new Pariah()).setAttachedTo(recipient.getId());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new YamabushisFlame()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castAndResolveInstant(player2, 0, targetId);
+
+        harness.assertLife(player1, 20);
+        assertThat(findPermanent(player1, "Konda, Lord of Eiganjo").getMarkedDamage()).isEqualTo(2);
+        assertThat(recipient.getMarkedDamage()).isEqualTo(1);
     }
 }
