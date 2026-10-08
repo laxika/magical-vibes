@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WhiskAway.class, GrizzlyBears.class})
 class WhiskAwayTest extends BaseCardTest {
 
     @Test
@@ -63,7 +65,7 @@ class WhiskAwayTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Fizzles if the attacker leaves combat before resolution")
+    @DisplayName("Fizzles if the attacker leaves the battlefield before resolution")
     void fizzlesIfTargetRemovedBeforeResolution() {
         Permanent attacker = addAttacker(player2);
         int deckSizeBefore = harness.getGameData().playerDecks.get(player2.getId()).size();
@@ -78,6 +80,56 @@ class WhiskAwayTest extends BaseCardTest {
                 .anyMatch(log -> log.contains("fizzles"));
     }
 
+    @Test
+    @DisplayName("Fizzles if the creature stops attacking while remaining on the battlefield")
+    void fizzlesIfCreatureStopsAttacking() {
+        Permanent attacker = addAttacker(player2);
+        int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
+
+        castWhiskAway(attacker.getId());
+        attacker.setAttacking(false);
+        attacker.setAttackTarget(null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
+        harness.assertInGraveyard(player1, "Whisk Away");
+    }
+
+    @Test
+    @DisplayName("Fizzles if the creature stops blocking while remaining on the battlefield")
+    void fizzlesIfCreatureStopsBlocking() {
+        Permanent blocker = addBlocker(player2);
+        int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
+
+        castWhiskAway(blocker.getId());
+        blocker.setBlocking(false);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
+        harness.assertInGraveyard(player1, "Whisk Away");
+    }
+
+    @Test
+    @DisplayName("A borrowed attacker goes to its owner's library, even when owned by the caster")
+    void borrowedAttackerGoesToOwnersLibrary() {
+        Permanent attacker = addAttacker(player2);
+        attacker.getCard().setOwnerId(player1.getId());
+        gd.stolenCreatures.put(attacker.getId(), player1.getId());
+        Card targetCard = attacker.getCard();
+        int controllerDeckSize = gd.playerDecks.get(player2.getId()).size();
+        int ownerDeckSize = gd.playerDecks.get(player1.getId()).size();
+
+        castWhiskAway(attacker.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(ownerDeckSize + 1);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(targetCard);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(controllerDeckSize);
+    }
+
     private void castWhiskAway(UUID targetId) {
         harness.setHand(player1, List.of(new WhiskAway()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -86,8 +138,7 @@ class WhiskAwayTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Player owner) {
-        harness.addToBattlefield(owner, new GrizzlyBears());
-        Permanent attacker = findPermanent(owner, "Grizzly Bears");
+        Permanent attacker = harness.addToBattlefieldAndReturn(owner, new GrizzlyBears());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());
@@ -95,8 +146,7 @@ class WhiskAwayTest extends BaseCardTest {
     }
 
     private Permanent addBlocker(Player owner) {
-        harness.addToBattlefield(owner, new GrizzlyBears());
-        Permanent blocker = findPermanent(owner, "Grizzly Bears");
+        Permanent blocker = harness.addToBattlefieldAndReturn(owner, new GrizzlyBears());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTargetId(UUID.randomUUID());
