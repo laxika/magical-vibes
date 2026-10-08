@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Somnomancer.class, GrizzlyBears.class})
 class SomnomancerTest extends BaseCardTest {
 
     private void castSomnomancer() {
@@ -26,8 +28,7 @@ class SomnomancerTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the may taps the target creature")
     void tapsTargetCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         assertThat(target.isTapped()).isFalse();
 
         castSomnomancer();
@@ -42,8 +43,7 @@ class SomnomancerTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the may leaves the creature untapped")
     void decliningLeavesUntapped() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         castSomnomancer();
         harness.passBothPriorities();
@@ -66,5 +66,50 @@ class SomnomancerTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    @Test
+    @DisplayName("Somnomancer can target and tap itself when it is the only creature")
+    void canTapItself() {
+        castSomnomancer();
+        harness.passBothPriorities();
+        Permanent somnomancer = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.handlePermanentChosen(player1, somnomancer.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(somnomancer.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An already tapped creature is a legal target")
+    void canTargetTappedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setTapped(true);
+        castSomnomancer();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A target leaving before resolution prevents the optional tap prompt")
+    void targetLeavingPreventsResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castSomnomancer();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(target.isTapped()).isFalse();
     }
 }
