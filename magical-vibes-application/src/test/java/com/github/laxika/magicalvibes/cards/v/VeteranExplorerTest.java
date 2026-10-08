@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GemstoneMine;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -23,7 +24,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VeteranExplorer.class, FlameJavelin.class, Forest.class, GrizzlyBears.class, Plains.class})
+@CardUsed({VeteranExplorer.class, FlameJavelin.class, Forest.class, GrizzlyBears.class,
+        Plains.class, GemstoneMine.class, PsychogenicProbe.class})
 class VeteranExplorerTest extends BaseCardTest {
 
     private PendingInteraction.LibrarySearch activeSearch() {
@@ -51,8 +53,7 @@ class VeteranExplorerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 6);
 
         UUID explorerId = harness.getPermanentId(player1, "Veteran Explorer");
-        harness.castInstant(player2, 0, explorerId);
-        harness.passBothPriorities(); // Flame Javelin resolves -> Veteran Explorer dies
+        harness.castAndResolveInstant(player2, 0, explorerId);
         harness.passBothPriorities(); // death trigger resolves
     }
 
@@ -125,14 +126,17 @@ class VeteranExplorerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A player whose library holds no basic land is skipped")
-    void playerWithoutBasicLandsIsSkipped() {
+    @DisplayName("A player whose library holds no basic land finds no lands")
+    void playerWithoutBasicLandsFindsNoLands() {
         harness.addToBattlefield(player1, new VeteranExplorer());
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
 
         killExplorer();
 
+        if (activeSearch() != null && activeSearch().params().playerId().equals(player2.getId())) {
+            gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
+        }
         assertThat(activeSearch()).isNotNull();
         assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
 
@@ -144,7 +148,6 @@ class VeteranExplorerTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(GemstoneMine.class)
     @DisplayName("A nonbasic land is not a valid search result")
     void searchExcludesNonbasicLands() {
         harness.addToBattlefield(player1, new VeteranExplorer());
@@ -176,5 +179,66 @@ class VeteranExplorerTest extends BaseCardTest {
 
         assertThat(activeSearch()).isNull();
         assertThat(landCount(player1)).isZero();
+    }
+
+    @Test
+    @DisplayName("Declining the optional search does not shuffle either library")
+    void decliningSearchDoesNotTriggerPsychogenicProbe() {
+        harness.addToBattlefield(player1, new VeteranExplorer());
+        harness.addToBattlefield(player1, new PsychogenicProbe());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Plains(), new Plains()));
+
+        killExplorer();
+
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+
+        assertThat(activeSearch()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A player without basic lands can decline searching and avoid shuffle triggers")
+    void noBasicLandsDoesNotForceAnOptionalSearch() {
+        harness.addToBattlefield(player1, new VeteranExplorer());
+        harness.addToBattlefield(player1, new PsychogenicProbe());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+
+        killExplorer();
+
+        if (activeSearch() != null && activeSearch().params().playerId().equals(player2.getId())) {
+            gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
+        }
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+
+        assertThat(activeSearch()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("All players choose their lands before any fetched lands enter the battlefield")
+    void landsWaitForAllPlayersToChoose() {
+        harness.addToBattlefield(player1, new VeteranExplorer());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Plains(), new Plains()));
+
+        killExplorer();
+
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        long activePlayersLandsBeforeOtherPlayerChooses = landCount(player2);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(activeSearch()).isNull();
+        assertThat(activePlayersLandsBeforeOtherPlayerChooses).isZero();
+        assertThat(landCount(player1)).isEqualTo(2);
+        assertThat(landCount(player2)).isEqualTo(2);
     }
 }
