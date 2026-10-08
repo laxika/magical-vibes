@@ -5,10 +5,8 @@ import com.github.laxika.magicalvibes.cards.s.Singe;
 import com.github.laxika.magicalvibes.cards.s.SinisterStrength;
 import com.github.laxika.magicalvibes.cards.s.StoneKavu;
 import com.github.laxika.magicalvibes.cards.t.TahngarthTalruumHero;
-import com.github.laxika.magicalvibes.cards.v.VolcanoImp;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -30,8 +28,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({VoiceOfAll.class, TahngarthTalruumHero.class, StoneKavu.class, VolcanoImp.class,
         SilverDrake.class, Singe.class, SinisterStrength.class})
 class VoiceOfAllTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Voice of All puts it on the stack")
@@ -56,8 +52,6 @@ class VoiceOfAllTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
-
-    // ===== Resolving triggers color choice =====
 
     @Test
     @DisplayName("Resolving Voice of All enters battlefield and awaits color choice")
@@ -129,7 +123,7 @@ class VoiceOfAllTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLACK");
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("chooses black") && log.contains("Voice of All"));
+        assertThat(gameLogContains("chooses black for Voice of All")).isTrue();
     }
 
     @Test
@@ -145,8 +139,6 @@ class VoiceOfAllTest extends BaseCardTest {
         Permanent perm = findPermanent(player1, "Voice of All");
         assertThat(perm.isSummoningSick()).isTrue();
     }
-
-    // ===== Color choice validation =====
 
     @Test
     @DisplayName("Wrong player cannot choose color")
@@ -169,8 +161,6 @@ class VoiceOfAllTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not awaiting");
     }
-
-    // ===== Protection - combat damage =====
 
     @Test
     @DisplayName("Voice of All takes no combat damage from chosen color creature")
@@ -207,8 +197,6 @@ class VoiceOfAllTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Voice of All");
     }
 
-    // ===== Protection - blocking =====
-
     @Test
     @DisplayName("Chosen color flying creature cannot block Voice of All")
     void chosenColorCreatureCannotBlock() {
@@ -216,7 +204,7 @@ class VoiceOfAllTest extends BaseCardTest {
         attacker.setChosenColor(CardColor.BLACK);
         attacker.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new VolcanoImp());
+        addCreatureReady(player2, new VolcanoImp());
 
         prepareDeclareBlockers();
 
@@ -240,8 +228,6 @@ class VoiceOfAllTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
-
-    // ===== Protection - targeting =====
 
     @Test
     @DisplayName("Cannot be targeted by instant of chosen color")
@@ -291,8 +277,6 @@ class VoiceOfAllTest extends BaseCardTest {
                 .hasMessageContaining("protection from red");
     }
 
-    // ===== Protection - aura enchantment =====
-
     @Test
     @DisplayName("Cannot be enchanted by aura of chosen color")
     void cannotBeEnchantedByChosenColorAura() {
@@ -309,8 +293,6 @@ class VoiceOfAllTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from black");
     }
-
-    // ===== Different color choices =====
 
     @Test
     @DisplayName("Can choose each of the five colors")
@@ -333,8 +315,6 @@ class VoiceOfAllTest extends BaseCardTest {
         }
     }
 
-    // ===== Protection from chosen white =====
-
     @Test
     @DisplayName("Choosing white grants protection from white creatures in combat")
     void protectionFromWhiteInCombat() {
@@ -350,8 +330,6 @@ class VoiceOfAllTest extends BaseCardTest {
         // Voice of All survives — damage from the white-blue source is prevented
         harness.assertOnBattlefield(player2, "Voice of All");
     }
-
-    // ===== No protection without color choice =====
 
     @Test
     @DisplayName("Without choosing a color, Voice of All has no protection")
@@ -369,5 +347,86 @@ class VoiceOfAllTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Voice of All");
         harness.assertInGraveyard(player2, "Voice of All");
     }
-}
 
+    @Test
+    @DisplayName("Colorless is not a valid color choice")
+    void cannotChooseColorless() {
+        harness.setHand(player1, List.of(new VoiceOfAll()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "COLORLESS"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+
+        harness.handleListChoice(player1, "RED");
+        assertThat(findPermanent(player1, "Voice of All").getChosenColor()).isEqualTo(CardColor.RED);
+    }
+
+    @Test
+    @DisplayName("Each Voice of All remembers its own color choice")
+    void separateCopiesHaveIndependentProtection() {
+        harness.setHand(player1, List.of(new VoiceOfAll(), new VoiceOfAll()));
+        harness.addMana(player1, ManaColor.WHITE, 8);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+        Permanent first = findPermanent(player1, "Voice of All");
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+        Permanent second = findPermanents(player1, "Voice of All").get(1);
+
+        harness.setHand(player1, List.of(new Singe()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, first.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from red");
+        harness.castAndResolveInstant(player1, 0, second.getId());
+        harness.assertOnBattlefield(player1, "Voice of All");
+        assertThat(first.getChosenColor()).isEqualTo(CardColor.RED);
+        assertThat(second.getChosenColor()).isEqualTo(CardColor.BLACK);
+    }
+
+    @Test
+    @DisplayName("Protection from black does not prevent red spell damage after becoming black")
+    void nonChosenColorSpellDamageResolves() {
+        harness.setHand(player1, List.of(new VoiceOfAll()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+        Permanent voice = findPermanent(player1, "Voice of All");
+
+        harness.setHand(player1, List.of(new Singe(), new Singe()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, voice.getId());
+        harness.assertOnBattlefield(player1, "Voice of All");
+        harness.castAndResolveInstant(player1, 0, voice.getId());
+
+        harness.assertNotOnBattlefield(player1, "Voice of All");
+        harness.assertInGraveyard(player1, "Voice of All");
+    }
+
+    @Test
+    @DisplayName("An Aura of another color can enchant Voice of All")
+    void nonChosenColorAuraRemainsAttached() {
+        harness.setHand(player1, List.of(new VoiceOfAll()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+        Permanent voice = findPermanent(player1, "Voice of All");
+
+        harness.setHand(player1, List.of(new SinisterStrength()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castEnchantment(player1, 0, voice.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Voice of All");
+        harness.assertOnBattlefield(player1, "Sinister Strength");
+        assertThat(findPermanent(player1, "Sinister Strength").getAttachedTo()).isEqualTo(voice.getId());
+    }
+}
