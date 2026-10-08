@@ -81,4 +81,34 @@ class VividFlyingFishTest extends BaseCardTest {
                 .doesNotThrowAnyException();
         assertThat(blocker.isBlocking()).isTrue();
     }
+    @Test
+    @DisplayName("Blocking does not grant flying")
+    void cannotBlockFlyingCreatureWhileNotAttacking() {
+        Permanent attacker = addCreatureReady(player1, new SuntailHawk());
+        Permanent fish = addCreatureReady(player2, new VividFlyingFish());
+
+        declareAttackersAndPrepareBlockers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+
+        assertThat(gqs.hasKeyword(gd, fish, Keyword.FLYING)).isFalse();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(fish),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
+    }
+
+    @Test
+    @DisplayName("Only the attacking Fish gains flying")
+    void flyingAppliesOnlyToTheAttackingFish() {
+        Permanent attacker = addCreatureReady(player1, new VividFlyingFish());
+        Permanent idleFish = addCreatureReady(player1, new VividFlyingFish());
+        addCreatureReady(player2, new GiantSpider());
+
+        declareAttackersAndPrepareBlockers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, idleFish, Keyword.FLYING)).isFalse();
+    }
 }
