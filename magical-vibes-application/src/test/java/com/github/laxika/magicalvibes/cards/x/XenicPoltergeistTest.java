@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.x;
 
 import com.github.laxika.magicalvibes.cards.c.ClayStatue;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,10 +11,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({XenicPoltergeist.class, Millstone.class, ClayStatue.class})
+@CardUsed({XenicPoltergeist.class, Millstone.class, ClayStatue.class, LightningBolt.class})
 class XenicPoltergeistTest extends BaseCardTest {
 
     @Test
@@ -87,5 +91,97 @@ class XenicPoltergeistTest extends BaseCardTest {
 
         millstone = findPermanent(player1, "Millstone");
         assertThat(gqs.isCreature(gd, millstone)).isFalse();
+    }
+
+    @Test
+    void cannotTargetNonartifact() {
+        Permanent source = addCreatureReady(player1, new XenicPoltergeist());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, source.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a noncreature artifact");
+    }
+
+    @Test
+    void activationTapsSourceAndPreventsAnotherActivation() {
+        Permanent source = addCreatureReady(player1, new XenicPoltergeist());
+        harness.addToBattlefield(player1, new Millstone());
+        Permanent target = findPermanent(player1, "Millstone");
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(source.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, target)).isTrue();
+    }
+
+    @Test
+    void summoningSickSourceCannotActivate() {
+        harness.addToBattlefield(player1, new XenicPoltergeist());
+        harness.addToBattlefield(player1, new Millstone());
+        Permanent target = findPermanent(player1, "Millstone");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.isCreature(gd, target)).isFalse();
+    }
+
+    @Test
+    void opponentsUpkeepDoesNotEndAnimation() {
+        addCreatureReady(player1, new XenicPoltergeist());
+        harness.addToBattlefield(player2, new Millstone());
+        Permanent target = findPermanent(player2, "Millstone");
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player2);
+        assertThat(gqs.isCreature(gd, target)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+
+        advanceToUpkeep(player1);
+        assertThat(gqs.isCreature(gd, target)).isFalse();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
+    }
+
+    @Test
+    void abilityResolvesAfterSourceDiesAndLastsUntilItsControllersUpkeep() {
+        Permanent source = addCreatureReady(player1, new XenicPoltergeist());
+        harness.addToBattlefield(player2, new Millstone());
+        Permanent target = findPermanent(player2, "Millstone");
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, source.getId());
+        harness.assertInGraveyard(player1, "Xenic Poltergeist");
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, target)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        advanceToUpkeep(player2);
+        assertThat(gqs.isCreature(gd, target)).isTrue();
+        advanceToUpkeep(player1);
+        assertThat(gqs.isCreature(gd, target)).isFalse();
+    }
+
+    @Test
+    void targetThatBecomesCreatureInResponseIsIllegalOnResolution() {
+        addCreatureReady(player1, new XenicPoltergeist());
+        addCreatureReady(player2, new XenicPoltergeist());
+        harness.addToBattlefield(player1, new Millstone());
+        Permanent target = findPermanent(player1, "Millstone");
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player2, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, target)).isTrue();
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player2);
+        assertThat(gqs.isCreature(gd, target)).isFalse();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
     }
 }
