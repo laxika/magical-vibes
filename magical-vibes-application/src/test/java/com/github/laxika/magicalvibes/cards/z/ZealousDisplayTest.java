@@ -59,12 +59,55 @@ class ZealousDisplayTest extends BaseCardTest {
         assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(ownCreature.getPowerModifier()).isZero();
         assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
         assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Boosts every creature present at resolution, whether tapped or untapped")
+    void boostsAllCreaturesPresentAtResolution() {
+        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent untappedCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        tappedCreature.tap();
+
+        castOnOpponentsTurn();
+
+        assertThat(tappedCreature.isTapped()).isFalse();
+        assertThat(untappedCreature.isTapped()).isFalse();
+        assertThat(tappedCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(untappedCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(tappedCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(untappedCreature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not receive the boost")
+    void doesNotBoostCreaturesEnteringLater() {
+        Permanent existingCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castOnYourTurn();
+        Permanent laterCreature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(existingCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Resolves without any creatures and leaves lands tapped")
+    void resolvesWithoutCreatures() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        land.tap();
+
+        castOnOpponentsTurn();
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof ZealousDisplay);
     }
 
     private void castOnYourTurn() {
