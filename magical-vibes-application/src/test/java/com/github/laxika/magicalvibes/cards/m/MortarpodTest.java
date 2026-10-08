@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianDigester;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Mortarpod.class, GrizzlyBears.class, PhyrexianDigester.class})
 class MortarpodTest extends BaseCardTest {
-
-    // ===== Living weapon ETB =====
 
     @Test
     @DisplayName("Casting Mortarpod triggers living weapon ETB on the stack")
@@ -46,14 +47,8 @@ class MortarpodTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve artifact spell
         harness.passBothPriorities(); // Resolve living weapon ETB trigger
 
-        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-
-        Permanent mortarpod = battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Mortarpod"))
-                .findFirst().orElseThrow();
-        Permanent germ = battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent mortarpod = findPermanent(player1, "Mortarpod");
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         // Mortarpod should be attached to the Germ token
         assertThat(mortarpod.getAttachedTo()).isEqualTo(germ.getId());
@@ -79,8 +74,6 @@ class MortarpodTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(CardSubtype.PHYREXIAN, CardSubtype.GERM);
     }
 
-    // ===== Germ gets equipment bonuses =====
-
     @Test
     @DisplayName("Germ token gets +0/+1 from Mortarpod (effective 0/1)")
     void germGetsEquipmentBonus() {
@@ -97,8 +90,6 @@ class MortarpodTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, germ)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, germ)).isEqualTo(1);
     }
-
-    // ===== Granted sacrifice ability: deal 1 damage to creature =====
 
     @Test
     @DisplayName("Equipped creature can sacrifice itself to deal 1 damage to target creature")
@@ -123,8 +114,6 @@ class MortarpodTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(creature.getId()));
     }
 
-    // ===== Granted sacrifice ability: deal 1 damage to player =====
-
     @Test
     @DisplayName("Equipped creature can sacrifice itself to deal 1 damage to a player")
     void grantedAbilityDeals1DamageToPlayer() {
@@ -144,8 +133,6 @@ class MortarpodTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(creature.getId()));
     }
 
-    // ===== Germ can sacrifice itself =====
-
     @Test
     @DisplayName("Germ token from living weapon can sacrifice itself to deal 1 damage")
     void germCanSacrificeItselfToDealDamage() {
@@ -160,7 +147,6 @@ class MortarpodTest extends BaseCardTest {
         Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         // Germ has summoning sickness, but the sacrifice ability doesn't require tapping
-        germ.setSummoningSick(false);
 
         // Find the germ's index on the battlefield
         int germIndex = gd.playerBattlefields.get(player1.getId()).indexOf(germ);
@@ -177,8 +163,6 @@ class MortarpodTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Mortarpod");
     }
 
-    // ===== Equip to another creature =====
-
     @Test
     @DisplayName("Equipping Mortarpod to another creature moves it from the Germ")
     void equipToAnotherCreature() {
@@ -190,9 +174,7 @@ class MortarpodTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Add a creature to equip to
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         // Equip to bears
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -208,8 +190,6 @@ class MortarpodTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);  // 2 + 1
     }
 
-    // ===== Germ dies when equipment is moved =====
-
     @Test
     @DisplayName("Germ token dies (0 toughness) when Mortarpod is moved to another creature")
     void germDiesWhenEquipmentMoved() {
@@ -220,11 +200,9 @@ class MortarpodTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
-        // Equip to bears — Germ becomes 0/0 and dies
+        // Equip to bears â€” Germ becomes 0/0 and dies
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
@@ -232,8 +210,6 @@ class MortarpodTest extends BaseCardTest {
         // Germ should be dead (0 toughness, state-based action)
         harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
     }
-
-    // ===== Equipment stays when creature is sacrificed =====
 
     @Test
     @DisplayName("Mortarpod stays on battlefield after equipped creature is sacrificed")
@@ -252,12 +228,50 @@ class MortarpodTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Mortarpod");
     }
 
-    // ===== Helpers =====
-
     private Permanent addMortarpodReady(Player player) {
-        Permanent perm = new Permanent(new Mortarpod());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Mortarpod());
+    }
+
+    @Test
+    @DisplayName("Damage from the sacrificed equipped creature retains infect")
+    void sacrificedCreatureDealsInfectDamage() {
+        harness.setLife(player2, 20);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new PhyrexianDigester());
+        Permanent mortarpod = addMortarpodReady(player1);
+        mortarpod.setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        harness.assertNotOnBattlefield(player1, "Phyrexian Digester");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(1);
+        assertThat(mortarpod.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("A sacrificed Germ deals lethal damage to a one-toughness creature")
+    void germDealsLethalDamageToCreature() {
+        harness.setHand(player1, List.of(new Mortarpod()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PhyrexianDigester());
+        int germIndex = gd.playerBattlefields.get(player1.getId()).indexOf(germ);
+
+        harness.activateAbility(player1, germIndex, null, target.getId());
+        harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
+        harness.assertOnBattlefield(player2, "Phyrexian Digester");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Phyrexian Digester");
+        harness.assertOnBattlefield(player1, "Mortarpod");
+        assertThat(findPermanent(player1, "Mortarpod").getAttachedTo()).isNull();
     }
 }
