@@ -157,6 +157,37 @@ class TheCabbageMerchantTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Food").get(1).isTapped()).isFalse();
     }
 
+    @Test
+    void manaAbilityCanTapNontokenFoodsWhileMerchantIsTapped() {
+        Permanent merchant = addCreatureReady(player1, new TheCabbageMerchant());
+        Permanent firstFood = harness.addToBattlefieldAndReturn(player1, new Gingerbrute());
+        Permanent secondFood = harness.addToBattlefieldAndReturn(player1, new Gingerbrute());
+        merchant.tap();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.RED.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(firstFood.isTapped()).isTrue();
+        assertThat(secondFood.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotInGraveyard(player1, "Gingerbrute");
+    }
+
+    @Test
+    void manaAbilityCannotTapAnOpponentsFood() {
+        addCreatureReady(player1, new TheCabbageMerchant());
+        Permanent ownFood = addCreatureReady(player1, new Gingerbrute());
+        Permanent opposingFood = addCreatureReady(player2, new Gingerbrute());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(ownFood.isTapped()).isFalse();
+        assertThat(opposingFood.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
     private void createFood() {
         harness.setHand(player2, List.of(new Divination()));
         harness.addMana(player2, ManaColor.BLUE, 3);
