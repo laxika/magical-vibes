@@ -99,4 +99,51 @@ class SoilshaperTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
+
+    @Test
+    @DisplayName("Soilshaper does not trigger from its own casting")
+    void doesNotTriggerFromItsOwnCasting() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.castFromHand(player1, new Soilshaper(), "{1}{G}");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Soilshaper");
+        assertThat(gqs.isCreature(gd, forest)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Only the targeted land is animated")
+    void onlyTargetedLandIsAnimated() {
+        harness.addToBattlefield(player1, new Soilshaper());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.castFromHand(player1, new DesperateRitual(), "{1}{R}");
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, target)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        assertThat(gqs.isCreature(gd, other)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The animation trigger resolves before the Spirit spell")
+    void triggerResolvesBeforeSpiritSpell() {
+        harness.addToBattlefield(player1, new Soilshaper());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.castFromHand(player1, new HarshDeceiver(), "{3}{W}");
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.assertNotOnBattlefield(player1, "Harsh Deceiver");
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        harness.assertNotOnBattlefield(player1, "Harsh Deceiver");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Harsh Deceiver");
+    }
 }
