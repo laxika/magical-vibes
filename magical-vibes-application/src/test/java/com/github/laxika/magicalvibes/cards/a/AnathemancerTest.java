@@ -101,8 +101,7 @@ class AnathemancerTest extends BaseCardTest {
     void unearthedCreatureIsExiledAtNextEndStep() {
         unearthTargetingOpponent();
 
-        declareAttackers(List.of());
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Anathemancer");
@@ -185,6 +184,39 @@ class AnathemancerTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Anathemancer").getCard().getId()).isEqualTo(first.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(second);
+        assertThat(countPermanents(player1, "Anathemancer")).isEqualTo(1);
+    }
+
+    @Test
+    void unearthCannotBeActivatedDuringOpponentsMainPhase() {
+        prepareUnearth();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Anathemancer");
+        harness.assertNotOnBattlefield(player1, "Anathemancer");
+    }
+
+    @Test
+    void unearthCannotBeActivatedWhileAnotherUnearthAbilityIsOnStack() {
+        prepareUnearth();
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateGraveyardAbility(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Anathemancer");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Anathemancer");
         assertThat(countPermanents(player1, "Anathemancer")).isEqualTo(1);
     }
 
