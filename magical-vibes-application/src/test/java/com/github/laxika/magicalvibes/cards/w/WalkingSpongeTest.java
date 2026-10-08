@@ -26,11 +26,11 @@ class WalkingSpongeTest extends BaseCardTest {
     @Test
     @DisplayName("The ability removes the chosen keyword until end of turn")
     void removesChosenKeyword() {
-        Permanent sponge = setUpSponge();
+        setUpSponge();
         harness.addToBattlefield(player1, new Knighthood());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new CloudOfFaeries());
 
-        activate(sponge, target, FLYING_MODE);
+        activate(target, FLYING_MODE);
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
@@ -45,22 +45,22 @@ class WalkingSpongeTest extends BaseCardTest {
         Permanent trample = harness.addToBattlefieldAndReturn(player1, new YavimayaWurm());
 
         assertThat(gqs.hasKeyword(gd, firstStrike, Keyword.FIRST_STRIKE)).isTrue();
-        activate(sponge, firstStrike, FIRST_STRIKE_MODE);
+        activate(firstStrike, FIRST_STRIKE_MODE);
         assertThat(gqs.hasKeyword(gd, firstStrike, Keyword.FIRST_STRIKE)).isFalse();
 
         sponge.untap();
         assertThat(gqs.hasKeyword(gd, trample, Keyword.TRAMPLE)).isTrue();
-        activate(sponge, trample, TRAMPLE_MODE);
+        activate(trample, TRAMPLE_MODE);
         assertThat(gqs.hasKeyword(gd, trample, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
     @DisplayName("The chosen keyword returns at end of turn")
     void removalWearsOffAtEndOfTurn() {
-        Permanent sponge = setUpSponge();
+        setUpSponge();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new CloudOfFaeries());
 
-        activate(sponge, target, FLYING_MODE);
+        activate(target, FLYING_MODE);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -84,10 +84,10 @@ class WalkingSpongeTest extends BaseCardTest {
     @Test
     @DisplayName("The ability can target an opponent's creature")
     void canTargetOpponentsCreature() {
-        Permanent sponge = setUpSponge();
+        setUpSponge();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new CloudOfFaeries());
 
-        activate(sponge, target, FLYING_MODE);
+        activate(target, FLYING_MODE);
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
@@ -139,7 +139,41 @@ class WalkingSpongeTest extends BaseCardTest {
         return addCreatureReady(player1, new WalkingSponge());
     }
 
-    private void activate(Permanent sponge, Permanent target, String mode) {
+    @Test
+    @DisplayName("A keyword the target does not have can still be chosen")
+    void canChooseAbsentKeyword() {
+        setUpSponge();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CloudOfFaeries());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        assertThat(findPermanent(player1, "Walking Sponge").isTapped()).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, TRAMPLE_MODE);
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability resolves even if Walking Sponge leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent sponge = setUpSponge();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CloudOfFaeries());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(sponge);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, FLYING_MODE);
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private void activate(Permanent target, String mode) {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
         harness.handleListChoice(player1, mode);
