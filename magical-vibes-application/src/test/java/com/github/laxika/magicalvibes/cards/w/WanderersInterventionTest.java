@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GreaterTanuki;
+import com.github.laxika.magicalvibes.cards.s.SunbladeSamurai;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,12 +15,12 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WanderersIntervention.class, AirElemental.class, GrizzlyBears.class})
+@CardUsed({WanderersIntervention.class, GreaterTanuki.class, SunbladeSamurai.class})
 class WanderersInterventionTest extends BaseCardTest {
 
     @Test
     void dealsFourDamageToAnAttackingCreature() {
-        Permanent target = addAttacker(player2, new AirElemental());
+        Permanent target = addAttacker(player2, new GreaterTanuki());
 
         castAndResolve(target);
 
@@ -29,7 +29,7 @@ class WanderersInterventionTest extends BaseCardTest {
 
     @Test
     void dealsFourDamageToABlockingCreature() {
-        Permanent target = addBlocker(player2, new AirElemental());
+        Permanent target = addBlocker(player2, new GreaterTanuki());
 
         castAndResolve(target);
 
@@ -38,8 +38,7 @@ class WanderersInterventionTest extends BaseCardTest {
 
     @Test
     void cannotTargetANonCombatCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent target = findPermanent(player2, "Grizzly Bears");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GreaterTanuki());
         prepareCast();
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
@@ -47,10 +46,55 @@ class WanderersInterventionTest extends BaseCardTest {
                 .hasMessageContaining("attacking or blocking creature");
     }
 
-    private void castAndResolve(Permanent target) {
+    @Test
+    void destroysACreatureWithFourToughness() {
+        Permanent target = addAttacker(player2, new SunbladeSamurai());
+
+        castAndResolve(target);
+
+        harness.assertNotOnBattlefield(player2, "Sunblade Samurai");
+        harness.assertInGraveyard(player2, "Sunblade Samurai");
+    }
+
+    @Test
+    void canTargetAnAttackingCreatureYouControl() {
+        Permanent target = addAttacker(player1, new GreaterTanuki());
+        target.setAttackTarget(player2.getId());
+
+        castAndResolve(target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    void doesNotDealDamageIfTargetStopsAttackingBeforeResolution() {
+        Permanent target = addAttacker(player2, new GreaterTanuki());
         prepareCast();
         harness.castInstant(player1, 0, target.getId());
+        target.clearCombatState();
+
         harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Wanderer's Intervention");
+    }
+
+    @Test
+    void doesNotDealDamageIfTargetStopsBlockingBeforeResolution() {
+        Permanent target = addBlocker(player2, new GreaterTanuki());
+        prepareCast();
+        harness.castInstant(player1, 0, target.getId());
+        target.clearCombatState();
+
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Wanderer's Intervention");
+    }
+
+    private void castAndResolve(Permanent target) {
+        prepareCast();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void prepareCast() {
@@ -60,8 +104,7 @@ class WanderersInterventionTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Player owner, com.github.laxika.magicalvibes.model.Card card) {
-        harness.addToBattlefield(owner, card);
-        Permanent target = findPermanent(owner, card.getName());
+        Permanent target = harness.addToBattlefieldAndReturn(owner, card);
         target.setSummoningSick(false);
         target.setAttacking(true);
         target.setAttackTarget(player1.getId());
@@ -69,8 +112,7 @@ class WanderersInterventionTest extends BaseCardTest {
     }
 
     private Permanent addBlocker(Player owner, com.github.laxika.magicalvibes.model.Card card) {
-        harness.addToBattlefield(owner, card);
-        Permanent target = findPermanent(owner, card.getName());
+        Permanent target = harness.addToBattlefieldAndReturn(owner, card);
         target.setSummoningSick(false);
         target.setBlocking(true);
         target.addBlockingTargetId(UUID.randomUUID());
