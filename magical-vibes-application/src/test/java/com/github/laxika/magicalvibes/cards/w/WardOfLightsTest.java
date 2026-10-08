@@ -6,10 +6,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -98,7 +96,7 @@ class WardOfLightsTest extends BaseCardTest {
 
         assertThat(gqs.hasProtectionFrom(gd, falcon, CardColor.BLACK)).isTrue();
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.passUntil(TurnStep.CLEANUP);
 
         harness.assertOnBattlefield(player1, "Ward of Lights");
     }
@@ -118,7 +116,11 @@ class WardOfLightsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Ward of Lights");
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.passUntil(TurnStep.CLEANUP);
+
+        harness.assertOnBattlefield(player1, "Ward of Lights");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Ward of Lights");
         harness.assertInGraveyard(player1, "Ward of Lights");
@@ -136,5 +138,76 @@ class WardOfLightsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Choosing white while resolving keeps the Aura attached and protects the creature")
+    void choosingWhiteDuringResolutionKeepsAuraAttached() {
+        Permanent falcon = addCreatureReady(player2, new BayFalcon());
+        harness.setHand(player1, List.of(new WardOfLights()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castEnchantment(player1, 0, falcon.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+
+        Permanent aura = findPermanent(player1, "Ward of Lights");
+        assertThat(aura.getAttachedTo()).isEqualTo(falcon.getId());
+        assertThat(gqs.hasProtectionFrom(gd, falcon, CardColor.WHITE)).isTrue();
+        assertThat(harness.getPermanentRemovalService().enforceAttachmentLegality(gd)).isFalse();
+        harness.assertOnBattlefield(player1, "Ward of Lights");
+
+        harness.passUntil(TurnStep.CLEANUP);
+
+        harness.assertOnBattlefield(player1, "Ward of Lights");
+        harness.assertOnBattlefield(player2, "Bay Falcon");
+    }
+
+    @Test
+    @DisplayName("Casting in response during your main phase still requires the cleanup sacrifice")
+    void castingWithNonemptyStackRequiresCleanupSacrifice() {
+        Permanent falcon = addCreatureReady(player1, new BayFalcon());
+        harness.setHand(player1, List.of(new BayFalcon(), new WardOfLights()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, falcon.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+        harness.passBothPriorities();
+
+        harness.passUntil(TurnStep.CLEANUP);
+        harness.assertOnBattlefield(player1, "Ward of Lights");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ward of Lights");
+        harness.assertInGraveyard(player1, "Ward of Lights");
+        assertThat(gqs.hasProtectionFrom(gd, falcon, CardColor.BLACK)).isFalse();
+        assertThat(countPermanents(player1, "Bay Falcon")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Casting during the opponent's main phase requires the cleanup sacrifice")
+    void castingDuringOpponentsMainPhaseRequiresCleanupSacrifice() {
+        Permanent falcon = addCreatureReady(player2, new BayFalcon());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new WardOfLights()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castEnchantment(player1, 0, falcon.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gqs.hasProtectionFrom(gd, falcon, CardColor.RED)).isTrue();
+        harness.passUntil(TurnStep.CLEANUP);
+        harness.assertOnBattlefield(player1, "Ward of Lights");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ward of Lights");
+        harness.assertInGraveyard(player1, "Ward of Lights");
+        harness.assertOnBattlefield(player2, "Bay Falcon");
+        assertThat(gqs.hasProtectionFrom(gd, falcon, CardColor.RED)).isFalse();
     }
 }
