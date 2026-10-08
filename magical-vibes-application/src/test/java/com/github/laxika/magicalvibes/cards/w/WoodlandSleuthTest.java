@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +14,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WoodlandSleuth.class, GrizzlyBears.class, LlanowarElves.class, Shock.class})
 class WoodlandSleuthTest extends BaseCardTest {
-
-    // ===== Morbid not met =====
 
     @Test
     @DisplayName("Does not return a creature card without morbid")
@@ -36,8 +36,6 @@ class WoodlandSleuthTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
-
-    // ===== Morbid met =====
 
     @Test
     @DisplayName("Returns a creature card at random from graveyard when morbid is met")
@@ -102,8 +100,6 @@ class WoodlandSleuthTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
-    // ===== Integration: actual creature death =====
-
     @Test
     @DisplayName("Killing a creature with Shock enables morbid to return a creature from graveyard")
     void actualCreatureDeathEnablesMorbid() {
@@ -118,8 +114,7 @@ class WoodlandSleuthTest extends BaseCardTest {
 
         // Kill Grizzly Bears with Shock
         java.util.UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearsId);
 
         // Now cast Woodland Sleuth — morbid should be active
         harness.castCreature(player1, 0);
@@ -131,5 +126,59 @@ class WoodlandSleuthTest extends BaseCardTest {
 
         // Woodland Sleuth should be on the battlefield
         harness.assertOnBattlefield(player1, "Woodland Sleuth");
+    }
+
+    @Test
+    @DisplayName("Returns exactly one eligible creature from only the controller's graveyard")
+    void returnsExactlyOneCreatureFromOwnGraveyard() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        GrizzlyBears bears = new GrizzlyBears();
+        LlanowarElves elves = new LlanowarElves();
+        Shock shock = new Shock();
+        GrizzlyBears opposingCard = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears, elves, shock));
+        harness.setGraveyard(player2, List.of(opposingCard));
+        harness.setHand(player1, List.of(new WoodlandSleuth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        gd.creatureDeathCountThisTurn.merge(player1.getId(), 1, Integer::sum);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId()).getFirst()).isIn(bears, elves);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2).contains(shock);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can return Woodland Sleuth itself if it dies before its trigger resolves")
+    void canReturnItselfAfterDyingInResponse() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new WoodlandSleuth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        gd.creatureDeathCountThisTurn.merge(player2.getId(), 1, Integer::sum);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        java.util.UUID sleuthId = harness.getPermanentId(player1, "Woodland Sleuth");
+        harness.castAndResolveInstant(player2, 0, sleuthId);
+        harness.castAndResolveInstant(player2, 0, sleuthId);
+        harness.assertInGraveyard(player1, "Woodland Sleuth");
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Woodland Sleuth");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }
