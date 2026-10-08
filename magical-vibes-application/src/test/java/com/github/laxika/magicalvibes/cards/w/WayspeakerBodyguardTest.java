@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
+import com.github.laxika.magicalvibes.cards.d.DragonfireBlade;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WayspeakerBodyguard.class, CrawWurm.class, Forest.class, GrizzlyBears.class, LightningBolt.class})
+@CardUsed({WayspeakerBodyguard.class, CrawWurm.class, DragonfireBlade.class, Forest.class, GrizzlyBears.class, LightningBolt.class})
 class WayspeakerBodyguardTest extends BaseCardTest {
 
     @Test
@@ -58,10 +59,8 @@ class WayspeakerBodyguardTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt(), new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownCreature.getId()))
@@ -72,10 +71,50 @@ class WayspeakerBodyguardTest extends BaseCardTest {
         assertThat(opponentCreature.isTapped()).isTrue();
         opponentCreature.untap();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(opponentCreature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("ETB returns a noncreature permanent but rejects an instant and an opponent's card")
+    void etbReturnsArtifactFromOwnGraveyardOnly() {
+        DragonfireBlade blade = new DragonfireBlade();
+        LightningBolt bolt = new LightningBolt();
+        GrizzlyBears opponentCard = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(blade, bolt));
+        harness.setGraveyard(player2, List.of(opponentCard));
+
+        castBodyguard();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(bolt.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(opponentCard.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(blade.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Dragonfire Blade");
+        harness.assertNotInGraveyard(player1, "Dragonfire Blade");
+        harness.assertInGraveyard(player1, "Lightning Bolt");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Flurry counts the Bodyguard spell cast before it entered")
+    void flurryCountsItsOwnSpellAsFirstSpell() {
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        castBodyguard();
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(opponentCreature.isTapped()).isTrue();
     }
 
     private void castBodyguard() {
