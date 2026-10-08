@@ -195,6 +195,55 @@ class TangleTumblerTest extends BaseCardTest {
         assertThat(tumbler.isTapped()).isTrue();
     }
 
+    @Test
+    void counterAbilityRejectsTappedTumbler() {
+        Permanent tumbler = addTumbler(player1);
+        tumbler.tap();
+        Permanent target = addCreatureReady(player1, new BarkformHarvester());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void newlyControlledNonCreatureTumblerCanUseTapAbility() {
+        Permanent tumbler = addTumbler(player1);
+        tumbler.setSummoningSick(true);
+        Permanent target = addCreatureReady(player1, new BarkformHarvester());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(tumbler.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void newlyControlledAnimatedTumblerCannotUseTapAbility() {
+        Permanent tumbler = addTumbler(player1);
+        tumbler.setSummoningSick(true);
+        addToken(player1, "First token");
+        addToken(player1, "Second token");
+        Permanent target = addCreatureReady(player1, new BarkformHarvester());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThat(gqs.isCreature(gd, tumbler)).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(tumbler.isTapped()).isFalse();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addTumbler(Player player) {
         return addCreatureReady(player, new TangleTumbler());
     }
