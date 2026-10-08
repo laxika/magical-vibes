@@ -18,10 +18,7 @@ class WarDanceTest extends BaseCardTest {
     void upkeepTriggerMayAddVerseCounter() {
         Permanent warDance = addWarDance(player1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -32,10 +29,7 @@ class WarDanceTest extends BaseCardTest {
     void upkeepTriggerMayBeDeclined() {
         Permanent warDance = addWarDance(player1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -87,6 +81,36 @@ class WarDanceTest extends BaseCardTest {
         assertThat(target.getEffectivePower()).isEqualTo(3);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
         harness.assertNotOnBattlefield(player1, "War Dance");
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent warDance = addWarDance(player1);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(warDance.getCounterCount(CounterType.VERSE)).isZero();
+    }
+
+    @Test
+    void sacrificeIsPaidImmediatelyAndOnlyVerseCountersDetermineBoost() {
+        Permanent warDance = addWarDance(player1);
+        warDance.setCounterCount(CounterType.VERSE, 2);
+        warDance.setCounterCount(CounterType.CHARGE, 4);
+        Permanent target = addCreatureReady(player1, new GorillaWarrior());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "War Dance");
+        harness.assertInGraveyard(player1, "War Dance");
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(4);
     }
 
     private Permanent addWarDance(Player owner) {
