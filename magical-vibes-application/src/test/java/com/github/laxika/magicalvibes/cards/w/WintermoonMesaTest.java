@@ -82,4 +82,69 @@ class WintermoonMesaTest extends BaseCardTest {
                 player1, 0, 1, List.of(land.getId(), creature.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void canTargetItselfAndStillTapTheOtherLand() {
+        Permanent mesa = harness.addToBattlefieldAndReturn(player1, new WintermoonMesa());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new RhysticCave());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(mesa.getId(), land.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Wintermoon Mesa");
+        harness.assertInGraveyard(player1, "Wintermoon Mesa");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(land.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
+    void rejectsTheSameLandChosenTwiceWithoutPayingCosts() {
+        Permanent mesa = harness.addToBattlefieldAndReturn(player1, new WintermoonMesa());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new RhysticCave());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 1, List.of(land.getId(), land.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(mesa.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Wintermoon Mesa");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    void cannotActivateSacrificeAbilityWhileTapped() {
+        Permanent mesa = harness.addToBattlefieldAndReturn(player1, new WintermoonMesa());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new RhysticCave());
+        mesa.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 1, List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Wintermoon Mesa");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    void cannotActivateSacrificeAbilityWithOnlyOneMana() {
+        Permanent mesa = harness.addToBattlefieldAndReturn(player1, new WintermoonMesa());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new RhysticCave());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 1, List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(mesa.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Wintermoon Mesa");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
 }
