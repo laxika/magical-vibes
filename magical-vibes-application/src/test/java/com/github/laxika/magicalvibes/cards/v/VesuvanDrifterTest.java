@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VesuvanDrifter.class, GrizzlyBears.class, Island.class})
+@CardUsed({VesuvanDrifter.class, GrizzlyBears.class, Island.class, Clone.class})
 class VesuvanDrifterTest extends BaseCardTest {
 
     @Test
@@ -73,6 +74,97 @@ class VesuvanDrifterTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, drifter, Keyword.FLYING)).isTrue();
     }
 
+    @Test
+    void mayDeclineToRevealCreature() {
+        Permanent drifter = addDrifter();
+        GrizzlyBears top = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(top));
+
+        advanceToCombat(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(drifter.getCard().getName()).isEqualTo("Vesuvan Drifter");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gameLogContains("reveals Grizzly Bears")).isFalse();
+    }
+
+    @Test
+    void triggersDuringOpponentsCombatUsingControllersLibrary() {
+        Permanent drifter = addDrifter();
+        GrizzlyBears top = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(top));
+        harness.setLibrary(player2, List.of(new Island()));
+
+        advanceToCombat(player2);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(drifter.getCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gqs.hasKeyword(gd, drifter, Keyword.FLYING)).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+    }
+
+    @Test
+    void emptyLibraryDoesNotChangeDrifter() {
+        Permanent drifter = addDrifter();
+        harness.setLibrary(player1, List.of());
+
+        advanceToCombat(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(drifter.getCard().getName()).isEqualTo("Vesuvan Drifter");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void topCardIsPrivateAndPermissionEndsWhileCopying() {
+        addDrifter();
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.forceActivePlayer(player2);
+        harness.clearMessages();
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[{"));
+        assertThat(harness.getConn2().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+
+        advanceToCombat(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.clearMessages();
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+    }
+
+    @Test
+    void copyingDrifterCopiesFlyingException() {
+        Permanent drifter = addDrifter();
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        advanceToCombat(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        gd.interaction.clearAwaitingInput();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, drifter.getId());
+
+        Permanent clone = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard() instanceof Clone)
+                .findFirst().orElseThrow();
+        assertThat(clone.getCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gqs.hasKeyword(gd, clone, Keyword.FLYING)).isTrue();
+    }
+
     private Permanent addDrifter() {
         return addCreatureReady(player1, new VesuvanDrifter());
     }
@@ -80,7 +172,6 @@ class VesuvanDrifterTest extends BaseCardTest {
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 }
