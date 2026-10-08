@@ -87,8 +87,7 @@ class SlithermuseTest extends BaseCardTest {
 
         harness.castCreatureWithEvoke(player1, 0, null);
         harness.passBothPriorities(); // resolve creature -> ETB trigger on stack
-        harness.passBothPriorities(); // resolve ETB (evoke sacrifice) -> LTB trigger on stack
-        harness.passBothPriorities(); // resolve LTB trigger
+        resolveAllTriggers();
 
         // After casting, player1's hand is empty; opponent holds 3 -> draw 3.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
@@ -111,5 +110,89 @@ class SlithermuseTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
         harness.assertInHand(player1, "Slithermuse");
+    }
+
+    @Test
+    @DisplayName("Normal casting leaves Slithermuse on the battlefield without drawing")
+    void normalCastingDoesNotSacrificeOrDraw() {
+        harness.setHand(player1, List.of(new Slithermuse()));
+        harness.setHand(player2, ancients(3));
+        harness.setLibrary(player1, ancients(5));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Slithermuse");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("Equal hand sizes draw no cards")
+    void drawsNothingWhenHandSizesAreEqual() {
+        harness.setHand(player1, ancients(3));
+        harness.setHand(player2, ancients(3));
+        harness.setLibrary(player1, ancients(5));
+        Permanent slithermuse = harness.addToBattlefieldAndReturn(player1, new Slithermuse());
+
+        leaveBattlefield(slithermuse);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("The trigger draws if the opponent gains more cards before resolution")
+    void usesHandSizesAtResolutionWhenOpponentGainsCards() {
+        harness.setHand(player1, ancients(3));
+        harness.setHand(player2, ancients(2));
+        harness.setLibrary(player1, ancients(5));
+        Permanent slithermuse = harness.addToBattlefieldAndReturn(player1, new Slithermuse());
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, slithermuse));
+        harness.setHand(player2, ancients(5));
+        resolveLeaveBattlefieldTrigger();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("The trigger draws nothing if its controller gains enough cards before resolution")
+    void usesHandSizesAtResolutionWhenControllerGainsCards() {
+        harness.setHand(player1, ancients(1));
+        harness.setHand(player2, ancients(4));
+        harness.setLibrary(player1, ancients(5));
+        Permanent slithermuse = harness.addToBattlefieldAndReturn(player1, new Slithermuse());
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, slithermuse));
+        harness.setHand(player1, ancients(4));
+        resolveLeaveBattlefieldTrigger();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("A Slithermuse owned by the opponent draws for its battlefield controller")
+    void drawsForControllerRatherThanOwner() {
+        harness.setHand(player1, ancients(4));
+        harness.setHand(player2, ancients(1));
+        harness.setLibrary(player2, ancients(5));
+        Slithermuse card = new Slithermuse();
+        card.setOwnerId(player1.getId());
+        Permanent slithermuse = harness.addToBattlefieldAndReturn(player2, card);
+
+        leaveBattlefield(slithermuse);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        harness.assertInGraveyard(player1, "Slithermuse");
     }
 }
