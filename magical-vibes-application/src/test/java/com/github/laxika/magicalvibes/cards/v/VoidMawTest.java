@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.g.GristleGrinner;
 import com.github.laxika.magicalvibes.cards.k.KrovikanScoundrel;
 import com.github.laxika.magicalvibes.cards.m.MishrasBauble;
+import com.github.laxika.magicalvibes.cards.o.Ovinize;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,7 +20,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VoidMaw.class, KrovikanScoundrel.class, MishrasBauble.class, GristleGrinner.class})
+@CardUsed({VoidMaw.class, KrovikanScoundrel.class, MishrasBauble.class, GristleGrinner.class, Ovinize.class})
 class VoidMawTest extends BaseCardTest {
 
     @Test
@@ -144,6 +146,69 @@ class VoidMawTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, grinner)).isEqualTo(grinnerPower);
         assertThat(gd.getCardsExiledByPermanent(maw.getId()))
                 .extracting(Card::getId).containsExactly(victim.getCard().getId());
+    }
+
+    @Test
+    @DisplayName("Void Maw without abilities does not replace another creature's death")
+    void abilityLossDisablesExileReplacement() {
+        Permanent maw = addMaw();
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new KrovikanScoundrel());
+        harness.setHand(player1, List.of(new Ovinize()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, maw.getId());
+        harness.passBothPriorities();
+
+        removeToGraveyard(victim);
+
+        harness.assertInGraveyard(player2, "Krovikan Scoundrel");
+        assertThat(gd.findExiledCard(victim.getCard().getId())).isNull();
+    }
+
+    @Test
+    @DisplayName("Void Maw replaces another creature's death even when both have lethal damage")
+    void exilesCreatureDyingSimultaneouslyWithMaw() {
+        Permanent maw = addMaw();
+        Permanent victim = harness.addToBattlefieldAndReturn(player1, new KrovikanScoundrel());
+        maw.setMarkedDamage(5);
+        victim.setMarkedDamage(1);
+
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Void Maw");
+        harness.assertNotInGraveyard(player1, "Krovikan Scoundrel");
+        assertThat(gd.findExiledCard(victim.getCard().getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("A dying creature's controller chooses which of two Void Maws exiles it")
+    void competingMawsRequireReplacementChoice() {
+        addMaw();
+        harness.addToBattlefield(player2, new VoidMaw());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new KrovikanScoundrel());
+
+        removeToGraveyard(victim);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.findExiledCard(victim.getCard().getId())).isNull();
+    }
+
+    @Test
+    @DisplayName("Returning a card from exile as a cost does not trigger creature dies abilities")
+    void payingCostDoesNotCountAsDying() {
+        Permanent maw = addMaw();
+        Permanent grinner = harness.addToBattlefieldAndReturn(player1, new GristleGrinner());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new KrovikanScoundrel());
+        removeToGraveyard(victim);
+        int grinnerPower = gqs.getEffectivePower(gd, grinner);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(maw),
+                0, victim.getCard().getId(), Zone.EXILE);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Krovikan Scoundrel");
+        assertThat(gqs.getEffectivePower(gd, grinner)).isEqualTo(grinnerPower);
+        assertThat(gqs.getEffectivePower(gd, maw)).isEqualTo(6);
     }
 
     private Permanent addMaw() {
