@@ -42,10 +42,9 @@ class WorthyCostTest extends BaseCardTest {
     @DisplayName("Sacrifices a creature and exiles the target planeswalker")
     void sacrificesCreatureAndExilesTargetPlaneswalker() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent target = new Permanent(new GarrukWildspeaker());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GarrukWildspeaker());
         target.setCounterCount(CounterType.LOYALTY, 3);
         target.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(target);
         harness.setHand(player1, List.of(new WorthyCost()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -81,5 +80,53 @@ class WorthyCostTest extends BaseCardTest {
                 player1, 0, target.getId(), sacrifice.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature or planeswalker");
+    }
+
+    @Test
+    void sacrificesCreatureBeforeResolutionAndCanExileOwnCreature() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WorthyCost()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorceryWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target).doesNotContain(sacrifice);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(target.getCard());
+    }
+
+    @Test
+    void canSacrificeTheTargetAndSpellDoesNotExileItFromGraveyard() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WorthyCost()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorceryWithSacrifice(player1, 0, creature.getId(), creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Worthy Cost");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotSacrificeOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WorthyCost()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(
+                player1, 0, target.getId(), target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Worthy Cost");
     }
 }
