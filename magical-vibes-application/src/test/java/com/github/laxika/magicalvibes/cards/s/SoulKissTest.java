@@ -159,4 +159,74 @@ class SoulKissTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Aura controller pays to boost an opponent's enchanted creature")
+    void boostsOpponentsCreature() {
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
+        harness.setHand(player1, List.of(new SoulKiss()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Unresolved activations count toward the three activation limit")
+    void pendingActivationsCountTowardLimit() {
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SoulKiss());
+        aura.setAttachedTo(bears.getId());
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, 1, null, null);
+        }
+
+        assertThat(gd.stack).hasSize(3);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no more than 3");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
+
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("An activation without black mana pays no life and uses no activation")
+    void failedManaPaymentDoesNotConsumeActivation() {
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SoulKiss());
+        aura.setAttachedTo(bears.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.stack).isEmpty();
+
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, 1, null, null);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(8);
+    }
 }
