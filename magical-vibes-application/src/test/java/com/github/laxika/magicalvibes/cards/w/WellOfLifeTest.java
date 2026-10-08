@@ -99,6 +99,55 @@ class WellOfLifeTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(10);
     }
 
+    @Test
+    @DisplayName("One untapped land prevents the trigger even when another land is tapped")
+    void doesNotTriggerWithMixedTappedAndUntappedLands() {
+        harness.addToBattlefield(player1, new WellOfLife());
+        Permanent tappedLand = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        tappedLand.tap();
+        harness.addToBattlefield(player1, new RhysticCave());
+        harness.setLife(player1, 10);
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 10);
+    }
+
+    @Test
+    @DisplayName("Untapping an existing land in response prevents the life gain")
+    void doesNotGainLifeWhenExistingLandUntapsBeforeResolution() {
+        harness.addToBattlefield(player1, new WellOfLife());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        land.tap();
+        harness.setLife(player1, 10);
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        land.untap();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+    }
+
+    @Test
+    @DisplayName("Tapping the last untapped land after the end step begins does not create a trigger")
+    void doesNotTriggerRetroactivelyWhenLastLandTaps() {
+        harness.addToBattlefield(player1, new WellOfLife());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        harness.setLife(player1, 10);
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        land.tap();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 10);
+    }
+
     private void advanceToEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
