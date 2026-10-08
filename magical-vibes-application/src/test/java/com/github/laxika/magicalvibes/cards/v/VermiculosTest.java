@@ -100,4 +100,22 @@ class VermiculosTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, vermiculos)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, vermiculos)).isEqualTo(1);
     }
+    @Test
+    @DisplayName("The boost waits for resolution and does not require the entering artifact to remain")
+    void enteringArtifactCanLeaveBeforeTriggerResolves() {
+        Permanent vermiculos = harness.addToBattlefieldAndReturn(player1, new Vermiculos());
+        Permanent frogmite = harness.enterBattlefieldAndReturn(player2, new Frogmite());
+
+        assertThat(gqs.getEffectivePower(gd, vermiculos)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, vermiculos)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, frogmite));
+        harness.assertInGraveyard(player2, "Frogmite");
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, vermiculos)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, vermiculos)).isEqualTo(5);
+    }
 }
