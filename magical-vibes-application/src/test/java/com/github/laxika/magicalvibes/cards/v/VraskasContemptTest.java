@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,9 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({VraskasContempt.class, GrizzlyBears.class, GarrukWildspeaker.class, Plains.class})
 class VraskasContemptTest extends BaseCardTest {
-
-    // ===== Exile target creature =====
 
     @Test
     @DisplayName("Exiles target creature")
@@ -40,8 +40,6 @@ class VraskasContemptTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
-    // ===== Exile target planeswalker =====
-
     @Test
     @DisplayName("Exiles target planeswalker")
     void exilesTargetPlaneswalker() {
@@ -56,8 +54,6 @@ class VraskasContemptTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Garruk Wildspeaker"));
     }
-
-    // ===== Life gain =====
 
     @Test
     @DisplayName("Controller gains 2 life when exiling a creature")
@@ -88,8 +84,6 @@ class VraskasContemptTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
     }
 
-    // ===== Targeting restrictions =====
-
     @Test
     @DisplayName("Cannot target a non-creature non-planeswalker permanent")
     void cannotTargetLand() {
@@ -101,8 +95,6 @@ class VraskasContemptTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, landId))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Stack behavior =====
 
     @Test
     @DisplayName("Casting puts it on the stack with target")
@@ -142,8 +134,6 @@ class VraskasContemptTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
     }
 
-    // ===== Opponent perspective =====
-
     @Test
     @DisplayName("Opponent's life is unaffected when their permanent is exiled")
     void opponentLifeUnaffected() {
@@ -159,14 +149,30 @@ class VraskasContemptTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore);
     }
 
-    // ===== Helpers =====
-
     private Permanent addReadyPlaneswalker(Player player, int loyalty) {
-        GarrukWildspeaker card = new GarrukWildspeaker();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new GarrukWildspeaker());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
+    }
+
+    @Test
+    @DisplayName("Can exile its controller's creature and gain life")
+    void exilesOwnCreatureAndGainsLife() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new VraskasContempt()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        int lifeBefore = gd.getLife(player1.getId());
+        int opponentLifeBefore = gd.getLife(player2.getId());
+
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature.getCard());
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Vraska's Contempt");
+        harness.assertLife(player1, lifeBefore + 2);
+        harness.assertLife(player2, opponentLifeBefore);
     }
 }
