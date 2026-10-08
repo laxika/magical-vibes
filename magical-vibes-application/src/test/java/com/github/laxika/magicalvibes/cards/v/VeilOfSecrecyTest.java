@@ -24,6 +24,54 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class VeilOfSecrecyTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Shroud prevents both players from targeting the creature")
+    void shroudPreventsBothPlayersFromTargeting() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GnarledMass());
+        harness.setHand(player1, List.of(new VeilOfSecrecy()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new MendingHands()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.setHand(player2, List.of(new FirstVolley()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A shrouded blue creature can be returned as a splice cost")
+    void canReturnShroudedCreatureForSplice() {
+        Permanent blueCreature = harness.addToBattlefieldAndReturn(player1, new TeardropKami());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GnarledMass());
+        harness.setHand(player1, List.of(new VeilOfSecrecy()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, blueCreature.getId());
+        harness.passBothPriorities();
+        assertThat(blueCreature.hasKeyword(Keyword.SHROUD)).isTrue();
+
+        harness.setHand(player1, List.of(new FirstVolley(), new VeilOfSecrecy()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castWithSplice(player1, 0, target.getId(), List.of(1), List.of(blueCreature.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Teardrop Kami");
+        harness.assertInHand(player1, "Teardrop Kami");
+        harness.passBothPriorities();
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(target.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(target.isCantBeBlocked()).isTrue();
+        harness.assertInHand(player1, "Veil of Secrecy");
+    }
+
+    @Test
     @DisplayName("Target creature gains shroud and can't be blocked")
     void grantsShroudAndUnblockable() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GnarledMass());
@@ -82,8 +130,7 @@ class VeilOfSecrecyTest extends BaseCardTest {
         harness.castWithSplice(player1, 0, target.getId(), List.of(1), List.of(blueCreature.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Teardrop Kami"));
+        harness.assertNotOnBattlefield(player1, "Teardrop Kami");
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(Card::getName)
                 .containsExactlyInAnyOrder("Veil of Secrecy", "Teardrop Kami");
