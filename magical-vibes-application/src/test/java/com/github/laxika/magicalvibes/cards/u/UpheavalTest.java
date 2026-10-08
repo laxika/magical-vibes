@@ -65,4 +65,49 @@ class UpheavalTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
+
+    @Test
+    @DisplayName("Resolves on an empty battlefield")
+    void resolvesOnEmptyBattlefield() {
+        Upheaval upheaval = new Upheaval();
+        harness.setHand(player1, List.of(upheaval));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(upheaval);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Leaves cards outside the battlefield in their existing zones")
+    void leavesOtherZonesUnchanged() {
+        Card permanent = new Werebear();
+        Card handCard = new Forest();
+        Card graveyardCard = new Werebear();
+        Card exiledCard = new Werebear();
+        Card libraryCard = new Forest();
+        Upheaval upheaval = new Upheaval();
+        harness.addToBattlefield(player2, permanent);
+        harness.setHand(player1, List.of(upheaval, handCard));
+        harness.setHand(player2, List.of());
+        harness.setGraveyard(player1, List.of(graveyardCard));
+        harness.setExile(player2, List.of(exiledCard));
+        harness.setLibrary(player2, List.of(libraryCard));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCard);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(permanent);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardCard, upheaval);
+        assertThat(gd.exiledCards.stream().map(entry -> entry.card()).toList()).containsExactly(exiledCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
 }
