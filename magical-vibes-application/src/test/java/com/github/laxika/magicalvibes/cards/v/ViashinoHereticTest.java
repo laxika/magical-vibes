@@ -1,22 +1,26 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.c.ChaliceOfLife;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
+import com.github.laxika.magicalvibes.cards.w.WeldingJar;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ViashinoHeretic.class, FountainOfYouth.class, GrizzlyBears.class, LeoninScimitar.class,
-        RodOfRuin.class})
+        RodOfRuin.class, Incinerate.class, WeldingJar.class, ChaliceOfLife.class})
 class ViashinoHereticTest extends BaseCardTest {
 
     @Test
@@ -86,4 +90,114 @@ class ViashinoHereticTest extends BaseCardTest {
         harness.assertLife(player1, 19);
     }
 
+    @Test
+    void dealsDamageEvenWhenArtifactRegenerates() {
+        addCreatureReady(player1, new ViashinoHeretic());
+        var target = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.addToBattlefield(player2, new WeldingJar());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player2, 1, null, target.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Rod of Ruin");
+        harness.assertNotInGraveyard(player2, "Rod of Ruin");
+        harness.assertInGraveyard(player2, "Welding Jar");
+        assertThat(target.isTapped()).isTrue();
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void doesNotDealDamageWhenTargetHasAlreadyLeftBattlefield() {
+        addCreatureReady(player1, new ViashinoHeretic());
+        addCreatureReady(player1, new ViashinoHeretic());
+        var target = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 1, null, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Rod of Ruin");
+        harness.assertNotOnBattlefield(player2, "Rod of Ruin");
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void abilityStillDestroysAndDealsDamageAfterSourceDies() {
+        var heretic = addCreatureReady(player1, new ViashinoHeretic());
+        var target = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.setHand(player2, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.castAndResolveInstant(player2, 0, heretic.getId());
+        harness.assertInGraveyard(player1, "Viashino Heretic");
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Rod of Ruin");
+        harness.assertNotOnBattlefield(player2, "Rod of Ruin");
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new ViashinoHeretic());
+        var target = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void cannotActivateWithoutRedMana() {
+        addCreatureReady(player1, new ViashinoHeretic());
+        var target = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void cannotActivateAgainWhileTapped() {
+        addCreatureReady(player1, new ViashinoHeretic());
+        var target = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Rod of Ruin");
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void transformedArtifactDealsDamageUsingFrontFaceManaValue() {
+        addCreatureReady(player1, new ViashinoHeretic());
+        var chalice = harness.addToBattlefieldAndReturn(player2, new ChaliceOfLife());
+        harness.setLife(player2, 29);
+
+        harness.activateAbility(player2, 0, null, null);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player2, "Chalice of Death");
+        harness.assertLife(player2, 30);
+
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, 0, null, chalice.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Chalice of Death");
+        harness.assertInGraveyard(player2, "Chalice of Life");
+        harness.assertLife(player2, 27);
+    }
 }
