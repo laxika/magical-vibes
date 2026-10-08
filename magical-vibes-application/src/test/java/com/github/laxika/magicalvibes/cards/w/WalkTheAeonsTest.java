@@ -23,8 +23,7 @@ class WalkTheAeonsTest extends BaseCardTest {
     void grantsExtraTurnToTargetedPlayer() {
         prepareCast();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.extraTurns).containsExactly(player2.getId());
         harness.assertInGraveyard(player1, "Walk the Aeons");
@@ -87,6 +86,65 @@ class WalkTheAeonsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0,
                 harness.getPermanentId(player2, "Island")))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Buyback is optional even when three Islands are available")
+    void canTargetSelfWithoutPayingBuyback() {
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        prepareCast();
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        assertThat(gd.extraTurns).containsExactly(player1.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+        harness.assertInGraveyard(player1, "Walk the Aeons");
+        harness.assertNotInHand(player1, "Walk the Aeons");
+    }
+
+    @Test
+    @DisplayName("Tapped Islands can pay buyback and are sacrificed before resolution")
+    void tappedIslandsCanPayBuyback() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new Island());
+        first.setTapped(true);
+        second.setTapped(true);
+        third.setTapped(true);
+        prepareCast();
+
+        harness.castSorceryWithSacrificesAndBuyback(player1, 0, player1.getId(),
+                List.of(first.getId(), second.getId(), third.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        harness.assertNotInHand(player1, "Walk the Aeons");
+        assertThat(gd.extraTurns).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.extraTurns).containsExactly(player1.getId());
+        harness.assertInHand(player1, "Walk the Aeons");
+        harness.assertNotInGraveyard(player1, "Walk the Aeons");
+    }
+
+    @Test
+    @DisplayName("Buyback cannot sacrifice an opponent's Island")
+    void cannotSacrificeOpponentsIsland() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new Island());
+        prepareCast();
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrificesAndBuyback(
+                player1, 0, player1.getId(), List.of(first.getId(), second.getId(), opposing.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Walk the Aeons");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        harness.assertOnBattlefield(player2, "Island");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void prepareCast() {
