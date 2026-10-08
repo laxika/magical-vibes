@@ -123,4 +123,70 @@ class VodalianMageTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, permanent.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new VodalianMage());
+
+        harness.forceActivePlayer(player2);
+        RiverMerfolk spell = new RiverMerfolk();
+        harness.castFromHand(player2, spell, "{U}{U}");
+        harness.passPriority(player2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, spell.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(findPermanent(player1, "Vodalian Mage").isTapped()).isFalse();
+    }
+
+    @Test
+    void canCounterItsControllersOwnSpell() {
+        addCreatureReady(player1, new VodalianMage());
+        RiverMerfolk spell = new RiverMerfolk();
+        harness.castFromHand(player1, spell, "{U}{U}");
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, spell.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "River Merfolk");
+        harness.assertNotOnBattlefield(player1, "River Merfolk");
+    }
+
+    @Test
+    void genericPaymentAcceptsNonblueManaAndConsumesIt() {
+        addCreatureReady(player1, new VodalianMage());
+
+        harness.forceActivePlayer(player2);
+        RiverMerfolk spell = new RiverMerfolk();
+        harness.castFromHand(player2, spell, "{U}{U}");
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.passPriority(player2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, spell.getId());
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "River Merfolk");
+        harness.assertNotInGraveyard(player2, "River Merfolk");
+    }
+
+    @Test
+    void cannotTargetActivatedAbility() {
+        addCreatureReady(player1, new VodalianMage());
+        addCreatureReady(player2, new RiverMerfolk());
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.activateAbility(player2, 0, null, null);
+        var abilityId = gd.stack.getLast().getTargetableId();
+        harness.passPriority(player2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, abilityId))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
