@@ -68,6 +68,28 @@ class WanderguardSentryTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an opponent");
     }
 
+    @Test
+    @DisplayName("ETB looks at the current hand only when the trigger resolves")
+    void etbLooksAtHandAtResolution() {
+        harness.setHand(player2, List.of(new YotianSoldier()));
+        castWanderguardSentry(player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND")).isEmpty();
+
+        WanderguardSentry cardInHand = new WanderguardSentry();
+        harness.setHand(player2, List.of(cardInHand));
+        resolveAllTriggers();
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
+                .anyMatch(message -> message.contains("Wanderguard Sentry"))
+                .noneMatch(message -> message.contains("Yotian Soldier"));
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(cardInHand);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castWanderguardSentry(UUID targetPlayerId) {
         harness.setHand(player1, List.of(new WanderguardSentry()));
         harness.addMana(player1, ManaColor.BLUE, 1);
