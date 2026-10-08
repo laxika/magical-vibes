@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WoodElves.class, Forest.class, GrizzlyBears.class, Island.class, Plains.class})
+@CardUsed({WoodElves.class, Forest.class, GrizzlyBears.class, Island.class, Plains.class, DryadArbor.class})
 class WoodElvesTest extends BaseCardTest {
 
     @Test
@@ -84,7 +84,6 @@ class WoodElvesTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(DryadArbor.class)
     @DisplayName("ETB search includes nonbasic cards with the Forest subtype")
     void findsNonbasicForestCard() {
         setupAndCast();
@@ -100,6 +99,47 @@ class WoodElvesTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard() == dryadArbor && !p.isTapped());
+    }
+
+    @Test
+    @DisplayName("An empty library still finishes the search and shuffles")
+    void emptyLibraryFinishesSearch() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Wood Elves");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the chosen Forest leaves the controller's library")
+    void choosesOneOfMultipleForests() {
+        setupAndCast();
+        Forest first = new Forest();
+        Forest second = new Forest();
+        Island island = new Island();
+        Forest opponentForest = new Forest();
+        harness.setLibrary(player1, List.of(first, island, second));
+        harness.setLibrary(player2, List.of(opponentForest));
+
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(first, second);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2)
+                .anyMatch(p -> p.getCard() == second && !p.isTapped());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(first, island);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentForest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
     }
 
     private void setupAndCast() {
