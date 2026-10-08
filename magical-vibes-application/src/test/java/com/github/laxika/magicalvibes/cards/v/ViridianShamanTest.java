@@ -29,21 +29,17 @@ class ViridianShamanTest extends BaseCardTest {
     // ===== Casting and resolving =====
 
     @Test
-    @DisplayName("Casting Viridian Shaman puts it on the stack with target")
-    void castingPutsItOnStackWithTarget() {
+    @DisplayName("Casting Viridian Shaman needs no target even with artifacts present")
+    void castingNeedsNoTargetWithArtifactsPresent() {
         harness.addToBattlefield(player2, new GreatFurnace());
-        harness.setHand(player1, List.of(new ViridianShaman()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-
-        UUID targetId = harness.getPermanentId(player2, "Great Furnace");
-        harness.castCreature(player1, 0, targetId);
+        harness.castFromHand(player1, new ViridianShaman(), "{2}{G}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Viridian Shaman");
-        assertThat(entry.getTargetId()).isEqualTo(targetId);
+        assertThat(entry.getTargetId()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -124,19 +120,18 @@ class ViridianShamanTest extends BaseCardTest {
     @Test
     @DisplayName("ETB fizzles if target artifact is removed before resolution")
     void etbFizzlesIfTargetRemoved() {
-        harness.addToBattlefield(player2, new GreatFurnace());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GreatFurnace());
         harness.setHand(player1, List.of(new ViridianShaman()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         GameData gd = harness.getGameData();
-        UUID targetId = harness.getPermanentId(player2, "Great Furnace");
+        UUID targetId = target.getId();
         harness.castCreature(player1, 0, targetId);
 
         // Resolve creature spell → ETB on stack
         harness.passBothPriorities();
 
         // Remove target before ETB resolves
-        Permanent target = findPermanent(player2, "Great Furnace");
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, target));
 
@@ -169,13 +164,19 @@ class ViridianShamanTest extends BaseCardTest {
     @DisplayName("Cannot target a non-artifact creature")
     void cannotTargetNonArtifactCreature() {
         harness.addToBattlefield(player2, new EzurisArchers());
-        harness.setHand(player1, List.of(new ViridianShaman()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addToBattlefield(player2, new GreatFurnace());
+        harness.castFromHand(player1, new ViridianShaman(), "{2}{G}");
+        harness.passBothPriorities();
 
         UUID targetId = harness.getPermanentId(player2, "Ezuri's Archers");
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0, targetId))
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, targetId))
                 .isInstanceOf(IllegalStateException.class);
+
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Great Furnace"));
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Ezuri's Archers");
+        harness.assertInGraveyard(player2, "Great Furnace");
     }
 
     @Test
@@ -208,8 +209,8 @@ class ViridianShamanTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB ability is not put on the stack when cast without a target")
-    void etbAbilityIsNotPutOnStackWithoutTarget() {
+    @DisplayName("ETB ability is not put on the stack when no legal targets exist")
+    void etbAbilityIsNotPutOnStackWithoutLegalTargets() {
         harness.castFromHand(player1, new ViridianShaman(), "{2}{G}");
 
         // Resolve creature spell
@@ -234,5 +235,52 @@ class ViridianShamanTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Entering without being cast still destroys an artifact")
+    void enteringWithoutBeingCastTriggersDestruction() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new GreatFurnace());
+
+        harness.enterBattlefieldAndReturn(player1, new ViridianShaman());
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Viridian Shaman");
+        harness.assertNotOnBattlefield(player2, "Great Furnace");
+        harness.assertInGraveyard(player2, "Great Furnace");
+    }
+
+    @Test
+    @DisplayName("The trigger destroys its target even after Viridian Shaman leaves")
+    void triggerResolvesAfterSourceLeaves() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new GreatFurnace());
+        harness.castFromHand(player1, new ViridianShaman(), "{2}{G}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, artifact.getId());
+
+        Permanent shaman = findPermanent(player1, "Viridian Shaman");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, shaman));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Viridian Shaman");
+        harness.assertNotOnBattlefield(player2, "Great Furnace");
+        harness.assertInGraveyard(player2, "Great Furnace");
+    }
+
+    @Test
+    @DisplayName("Must destroy its controller's artifact when that is the only legal target")
+    void mustDestroyOnlyOwnArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new GreatFurnace());
+        harness.castFromHand(player1, new ViridianShaman(), "{2}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Great Furnace");
+        harness.assertInGraveyard(player1, "Great Furnace");
     }
 }
