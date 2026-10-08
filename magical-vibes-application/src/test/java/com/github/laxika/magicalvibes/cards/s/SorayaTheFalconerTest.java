@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SorayaTheFalconer.class, MesaFalcon.class, SpectralBears.class, AmoeboidChangeling.class})
+@CardUsed({SorayaTheFalconer.class, MesaFalcon.class, SpectralBears.class})
 class SorayaTheFalconerTest extends BaseCardTest {
 
     @Test
@@ -72,6 +72,7 @@ class SorayaTheFalconerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Does not grant banding if the target stops being a Bird before resolution")
+    @CardUsed(AmoeboidChangeling.class)
     void targetMustStillBeBirdAtResolution() {
         harness.addToBattlefield(player1, new SorayaTheFalconer());
         Permanent bird = harness.addToBattlefieldAndReturn(player1, new MesaFalcon());
@@ -81,8 +82,7 @@ class SorayaTheFalconerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bird.getId());
         harness.activateAbility(player1, 2, 1, null, bird.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, bird, Keyword.BANDING)).isFalse();
     }
@@ -102,6 +102,7 @@ class SorayaTheFalconerTest extends BaseCardTest {
 
     @Test
     @DisplayName("A Bird version of Soraya also receives the Bird boost")
+    @CardUsed(AmoeboidChangeling.class)
     void boostsItselfWhenItBecomesABird() {
         Permanent soraya = harness.addToBattlefieldAndReturn(player1, new SorayaTheFalconer());
         addCreatureReady(player1, new AmoeboidChangeling());
@@ -112,5 +113,41 @@ class SorayaTheFalconerTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, soraya)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, soraya)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Resolved banding remains when the creature stops being a Bird")
+    @CardUsed(AmoeboidChangeling.class)
+    void bandingRemainsAfterLosingBirdType() {
+        harness.addToBattlefield(player1, new SorayaTheFalconer());
+        Permanent bird = harness.addToBattlefieldAndReturn(player1, new MesaFalcon());
+        addCreatureReady(player1, new AmoeboidChangeling());
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, bird.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 2, 1, null, bird.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bird, Keyword.BANDING)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Banding ability resolves after Soraya leaves, while her static boost ends")
+    void abilityResolvesWithoutSource() {
+        Permanent soraya = harness.addToBattlefieldAndReturn(player1, new SorayaTheFalconer());
+        Permanent bird = harness.addToBattlefieldAndReturn(player1, new MesaFalcon());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, bird.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, soraya);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bird, Keyword.BANDING)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(1);
     }
 }
