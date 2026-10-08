@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
+import com.github.laxika.magicalvibes.cards.j.JinnieFayJetmirsSecond;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,14 +16,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ZaxaraTheExemplary.class, Hurricane.class, GrizzlyBears.class})
+@CardUsed({ZaxaraTheExemplary.class, Hurricane.class, GrizzlyBears.class, JinnieFayJetmirsSecond.class})
 class ZaxaraTheExemplaryTest extends BaseCardTest {
 
     @Test
     @DisplayName("Tapping adds two mana of one chosen color")
     void addsTwoManaOfChosenColor() {
-        Permanent zaxara = harness.addToBattlefieldAndReturn(player1, new ZaxaraTheExemplary());
-        zaxara.setSummoningSick(false);
+        Permanent zaxara = addCreatureReady(player1, new ZaxaraTheExemplary());
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, "GREEN");
@@ -39,8 +39,7 @@ class ZaxaraTheExemplaryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Hurricane()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castSorcery(player1, 0, 3);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3);
 
         Permanent hydra = findPermanent(player1, "Hydra");
         assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
@@ -60,5 +59,82 @@ class ZaxaraTheExemplaryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Hydra")).isZero();
+    }
+
+    @Test
+    void zeroXHydraDiesAfterTriggerResolves() {
+        harness.addToBattlefield(player1, new ZaxaraTheExemplary());
+        harness.setHand(player1, List.of(new Hurricane()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertNotOnBattlefield(player1, "Hydra");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void opponentXSpellDoesNotTrigger() {
+        harness.addToBattlefield(player2, new ZaxaraTheExemplary());
+        harness.setHand(player1, List.of(new Hurricane()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 3);
+
+        harness.assertNotOnBattlefield(player1, "Hydra");
+        harness.assertNotOnBattlefield(player2, "Hydra");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void hydraIsCreatedBeforeTheSpellResolves() {
+        harness.addToBattlefield(player1, new ZaxaraTheExemplary());
+        harness.setHand(player1, List.of(new Hurricane()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 3);
+
+        assertThat(findPermanent(player1, "Hydra").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void replacementCatStillReceivesXCounters() {
+        harness.addToBattlefield(player1, new ZaxaraTheExemplary());
+        harness.addToBattlefield(player1, new JinnieFayJetmirsSecond());
+        harness.setHand(player1, List.of(new Hurricane()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 3);
+        harness.handleListChoice(player1, "Cat");
+
+        Permanent cat = findPermanent(player1, "Cat");
+        assertThat(cat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, cat)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, cat)).isEqualTo(5);
+        harness.assertNotOnBattlefield(player1, "Hydra");
+    }
+
+    @Test
+    void decliningTokenReplacementStillPutsCountersOnHydra() {
+        harness.addToBattlefield(player1, new ZaxaraTheExemplary());
+        harness.addToBattlefield(player1, new JinnieFayJetmirsSecond());
+        harness.setHand(player1, List.of(new Hurricane()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 3);
+        harness.handleListChoice(player1, "Original tokens");
+
+        Permanent hydra = findPermanent(player1, "Hydra");
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, hydra)).isEqualTo(3);
     }
 }
