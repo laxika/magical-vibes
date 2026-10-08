@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -15,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TangleclawWerewolf.class, GrizzlyBears.class})
+@CardUsed({TangleclawWerewolf.class})
 class TangleclawWerewolfTest extends BaseCardTest {
 
     @Test
@@ -46,6 +45,37 @@ class TangleclawWerewolfTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(werewolf.isTransformed()).isTrue();
+    }
+
+    @Test
+    void tappedSummoningSickWerewolfCanTransformOnOpponentsTurn() {
+        Permanent werewolf = addReadyWerewolf(player1);
+        werewolf.setSummoningSick(true);
+        werewolf.tap();
+        harness.forceActivePlayer(player2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(werewolf.isTransformed()).isFalse();
+        resolveAllTriggers();
+
+        assertThat(werewolf.isTransformed()).isTrue();
+        assertThat(werewolf.isTapped()).isTrue();
+        assertThat(werewolf.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    void backFaceCannotActivateFrontFaceTransformAbility() {
+        Permanent werewolf = addReadyWerewolf(player1);
+        transform(werewolf);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(werewolf.isTransformed()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -231,8 +261,7 @@ class TangleclawWerewolfTest extends BaseCardTest {
     }
 
     private void addAttacker(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent attacker = addCreatureReady(player, new GrizzlyBears());
-        attacker.setAttacking(true);
+        addReadyWerewolf(player).setAttacking(true);
     }
 
     private void transform(Permanent werewolf) {
