@@ -83,4 +83,123 @@ class SoulStringsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("requires 2 matching cards in your graveyard");
     }
+
+    @Test
+    @DisplayName("The controller can pay X to prevent the return")
+    void controllerCanPayX() {
+        Card creature1 = new PygmyRazorback();
+        Card creature2 = new RibCageSpider();
+        harness.setGraveyard(player1, List.of(creature1, creature2));
+        harness.setHand(player1, List.of(new SoulStrings()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castSorcery(player1, 0, 2);
+        harness.handleMultipleCardsChosen(player1, List.of(creature1.getId(), creature2.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature1, creature2);
+    }
+
+    @Test
+    @DisplayName("At X zero, a player can prevent the return without spending mana")
+    void zeroXCanBePaidWithoutMana() {
+        Card creature1 = new PygmyRazorback();
+        Card creature2 = new RibCageSpider();
+        harness.setGraveyard(player1, List.of(creature1, creature2));
+        harness.setHand(player1, List.of(new SoulStrings()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(creature1.getId(), creature2.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature1, creature2);
+    }
+
+    @Test
+    @DisplayName("Payment of zero is optional, so declining still returns both creatures")
+    void zeroXIsNotAutomaticallyPaid() {
+        Card creature1 = new PygmyRazorback();
+        Card creature2 = new RibCageSpider();
+        harness.setGraveyard(player1, List.of(creature1, creature2));
+        harness.setHand(player1, List.of(new SoulStrings()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(creature1.getId(), creature2.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(creature1, creature2);
+    }
+
+    @Test
+    @DisplayName("Paying X uses the chosen X rather than the number of targets")
+    void paymentUsesChosenX() {
+        Card creature1 = new PygmyRazorback();
+        Card creature2 = new RibCageSpider();
+        harness.setGraveyard(player1, List.of(creature1, creature2));
+        harness.setHand(player1, List.of(new SoulStrings()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, 3);
+        harness.handleMultipleCardsChosen(player1, List.of(creature1.getId(), creature2.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature1, creature2);
+    }
+
+    @Test
+    @DisplayName("Returns the remaining legal target when one creature leaves the graveyard")
+    void returnsRemainingLegalTarget() {
+        Card creature1 = new PygmyRazorback();
+        Card creature2 = new RibCageSpider();
+        harness.setGraveyard(player1, List.of(creature1, creature2));
+        harness.setHand(player1, List.of(new SoulStrings()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0, 2);
+        harness.handleMultipleCardsChosen(player1, List.of(creature1.getId(), creature2.getId()));
+        harness.setGraveyard(player1, List.of(creature2));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature2);
+    }
+
+    @Test
+    @DisplayName("Does not offer payment when both targets have left the graveyard")
+    void doesNotResolveWithNoLegalTargets() {
+        Card creature1 = new PygmyRazorback();
+        Card creature2 = new RibCageSpider();
+        Card spell = new SoulStrings();
+        harness.setGraveyard(player1, List.of(creature1, creature2));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0, 2);
+        harness.handleMultipleCardsChosen(player1, List.of(creature1.getId(), creature2.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
 }
