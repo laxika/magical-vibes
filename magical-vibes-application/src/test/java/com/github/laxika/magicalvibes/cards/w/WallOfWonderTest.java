@@ -103,4 +103,54 @@ class WallOfWonderTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("A second activation reduces toughness below zero and puts the wall in the graveyard")
+    void repeatedActivationKillsWall() {
+        WallOfWonder card = new WallOfWonder();
+        addCreatureReady(player1, card);
+        harness.addMana(player1, ManaColor.BLUE, 8);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability can be activated while summoning sick but does not allow attacking")
+    void attackPermissionDoesNotBypassSummoningSickness() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfWonder());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wall.getPowerModifier()).isEqualTo(4);
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Activating one wall does not let another wall attack")
+    void attackPermissionAppliesOnlyToSource() {
+        Permanent activatedWall = addCreatureReady(player1, new WallOfWonder());
+        Permanent otherWall = addCreatureReady(player1, new WallOfWonder());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(activatedWall.getPowerModifier()).isEqualTo(4);
+        assertThat(otherWall.getPowerModifier()).isZero();
+        assertThat(otherWall.getToughnessModifier()).isZero();
+        assertThatThrownBy(() -> declareAttackers(List.of(1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
 }
