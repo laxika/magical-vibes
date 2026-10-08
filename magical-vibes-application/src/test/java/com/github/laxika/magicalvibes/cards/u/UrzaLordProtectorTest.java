@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.t.TheMightstoneAndWeakstone;
 import com.github.laxika.magicalvibes.cards.t.TeferiTemporalPilgrim;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -56,8 +57,7 @@ class UrzaLordProtectorTest extends BaseCardTest {
     @Test
     @DisplayName("Melds with The Mightstone and Weakstone")
     void meldsWithMightstoneAndWeakstone() {
-        Permanent urza = harness.addToBattlefieldAndReturn(player1, new UrzaLordProtector());
-        urza.setSummoningSick(false);
+        addCreatureReady(player1, new UrzaLordProtector());
         harness.addToBattlefield(player1, new TheMightstoneAndWeakstone());
         harness.addMana(player1, ManaColor.COLORLESS, 7);
         prepareMainPhase();
@@ -387,5 +387,86 @@ class UrzaLordProtectorTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castAndResolveSorcery(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void twoPlusTwoActivationsStackTheirCostReductions() {
+        addReadyUrza(7);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new EnergyRefractor());
+        harness.setHand(player1, List.of(new ShootDown()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertLife(player1, 24);
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card instanceof EnergyRefractor);
+    }
+
+    @Test
+    void plusTwoDoesNotReduceNonartifactCreatureCost() {
+        addReadyUrza(7);
+        harness.setHand(player1, List.of(new ArgothianSprite()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void plusTwoCostReductionExpiresAtEndOfTurn() {
+        addReadyUrza(7);
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new EnergyRefractor()));
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void minusTenIndestructibilityExpiresAtEndOfTurn() {
+        addReadyUrza(11);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new EnergyRefractor());
+        harness.activateAbility(player1, 0, 4, null, null);
+        resolveAllTriggers();
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.INDESTRUCTIBLE))
+                .isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.INDESTRUCTIBLE))
+                .isFalse();
+    }
+
+    @Test
+    void meldedUrzaMovesBothComponentsToGraveyardAtZeroLoyalty() {
+        addCreatureReady(player1, new UrzaLordProtector());
+        harness.addToBattlefield(player1, new TheMightstoneAndWeakstone());
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        prepareMainPhase();
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+        findPermanent(player1, "Urza, Planeswalker").setCounterCount(CounterType.LOYALTY, 0);
+
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Urza, Planeswalker");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof UrzaLordProtector)
+                .anyMatch(card -> card instanceof TheMightstoneAndWeakstone)
+                .noneMatch(card -> card instanceof UrzaPlaneswalker);
     }
 }
