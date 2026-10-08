@@ -48,7 +48,6 @@ class WildsizeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(bear.getPowerModifier()).isZero();
@@ -101,5 +100,33 @@ class WildsizeTest extends BaseCardTest {
         assertThat(opponentCreature.getToughnessModifier()).isEqualTo(2);
         assertThat(opponentCreature.getGrantedKeywords()).contains(Keyword.TRAMPLE);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Two Wildsizes stack their boosts and each draw exactly one card")
+    void multipleWildsizesStackAndEachDraw() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GruulNodorog());
+        harness.setLibrary(player1, List.of(new HatchingPlans(), new GruulSignet(), new HatchingPlans()));
+        harness.setHand(player1, List.of(new Wildsize(), new Wildsize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(creature.getPowerModifier()).isEqualTo(4);
+        assertThat(creature.getToughnessModifier()).isEqualTo(4);
+        assertThat(creature.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Hatching Plans");
+        harness.assertInHand(player1, "Gruul Signet");
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
     }
 }
