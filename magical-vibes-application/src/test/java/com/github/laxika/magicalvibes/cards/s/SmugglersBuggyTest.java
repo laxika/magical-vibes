@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -37,8 +36,8 @@ class SmugglersBuggyTest extends BaseCardTest {
     @DisplayName("After combat damage, accepts the free cast and returns the Vehicle to hand")
     void castsExiledCardAndReturnsToHand() {
         GrizzlyBears exiled = new GrizzlyBears();
-        Permanent buggy = addBuggyWithImprint(exiled);
-        Permanent crew = addReadyPermanent(new GrizzlyBears());
+        addBuggyWithImprint(exiled);
+        Permanent crew = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -51,10 +50,8 @@ class SmugglersBuggyTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Smuggler's Buggy"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Smuggler's Buggy"));
+        harness.assertNotOnBattlefield(player1, "Smuggler's Buggy");
+        harness.assertInHand(player1, "Smuggler's Buggy");
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
@@ -62,8 +59,8 @@ class SmugglersBuggyTest extends BaseCardTest {
     @DisplayName("Declining the free cast leaves the Vehicle and exiled card in place")
     void decliningFreeCastLeavesVehicleAndCard() {
         GrizzlyBears exiled = new GrizzlyBears();
-        Permanent buggy = addBuggyWithImprint(exiled);
-        addReadyPermanent(new GrizzlyBears());
+        addBuggyWithImprint(exiled);
+        addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -82,16 +79,75 @@ class SmugglersBuggyTest extends BaseCardTest {
 
     private Permanent addBuggyWithImprint(Card exiled) {
         Permanent buggy = harness.addToBattlefieldAndReturn(player1, new SmugglersBuggy());
-        GameData gameData = harness.getGameData();
-        gameData.setImprintedCard(buggy.getCard(), exiled);
-        gameData.addToExile(player1.getId(), exiled, buggy.getId());
+        gd.setImprintedCard(buggy.getCard(), exiled);
+        gd.addToExile(player1.getId(), exiled, buggy.getId());
         buggy.setSummoningSick(false);
         return buggy;
     }
 
-    private Permanent addReadyPermanent(Card card) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player1, card);
-        permanent.setSummoningSick(false);
-        return permanent;
+    @Test
+    @DisplayName("Casting the hidden card returns the Buggy before players receive priority")
+    void returnsDuringCombatDamageAbilityResolution() {
+        GrizzlyBears exiled = new GrizzlyBears();
+        addBuggyWithImprint(exiled);
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == exiled);
+        harness.assertNotOnBattlefield(player1, "Smuggler's Buggy");
+        harness.assertInHand(player1, "Smuggler's Buggy");
+    }
+
+    @Test
+    @DisplayName("A card hidden from a one-card library can be cast after combat damage")
+    void castsCardHiddenFromOneCardLibrary() {
+        GrizzlyBears exiled = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(exiled));
+        Permanent buggy = harness.enterBattlefieldAndReturn(player1, new SmugglersBuggy());
+        harness.passBothPriorities();
+        buggy.setSummoningSick(false);
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.findExiledCard(exiled.getId())).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == exiled);
+        harness.assertInHand(player1, "Smuggler's Buggy");
+    }
+
+    @Test
+    @DisplayName("A card selected by hideaway can be cast after combat damage")
+    void castsCardSelectedByHideaway() {
+        GrizzlyBears exiled = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(exiled, new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears()));
+        Permanent buggy = harness.enterBattlefieldAndReturn(player1, new SmugglersBuggy());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        buggy.setSummoningSick(false);
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.findExiledCard(exiled.getId())).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == exiled);
+        harness.assertInHand(player1, "Smuggler's Buggy");
     }
 }
