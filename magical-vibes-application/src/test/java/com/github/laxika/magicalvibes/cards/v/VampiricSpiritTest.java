@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -57,6 +58,57 @@ class VampiricSpiritTest extends BaseCardTest {
 
         harness.assertLife(player1, playerLifeBefore);
         harness.assertLife(player2, opponentLifeBefore - 4);
+    }
+
+    @Test
+    @DisplayName("Life loss waits until the ETB trigger resolves")
+    void lifeLossWaitsForTriggerResolution() {
+        harness.setLife(player1, 20);
+
+        castVampiricSpirit();
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 16);
+    }
+
+    @Test
+    @DisplayName("Entering without being cast still causes life loss for each Spirit")
+    void eachNoncastEntryCausesLifeLoss() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.enterBattlefieldAndReturn(player1, new VampiricSpirit());
+        resolveAllTriggers();
+        harness.assertLife(player1, 16);
+
+        harness.enterBattlefieldAndReturn(player1, new VampiricSpirit());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 12);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Life loss is mandatory even when the controller has less than 4 life")
+    void lifeLossCanBeLethal() {
+        harness.setLife(player1, 3);
+        harness.setLife(player2, 20);
+
+        castVampiricSpirit();
+        harness.passBothPriorities();
+        harness.assertLife(player1, 3);
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, -1);
+        harness.assertLife(player2, 20);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
     private void castVampiricSpirit() {
