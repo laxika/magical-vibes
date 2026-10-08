@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.v.ValakutTheMoltenPinnacle;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -13,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -21,11 +24,30 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WrennAndSeven.class, Forest.class, Island.class, GrizzlyBears.class, Shock.class,
+        Mountain.class, ValakutTheMoltenPinnacle.class})
 class WrennAndSevenTest extends BaseCardTest {
 
     @Nested
     @DisplayName("+1 ability")
+    @CardUsed({WrennAndSeven.class, Forest.class, Island.class, GrizzlyBears.class, Shock.class})
     class PlusOne {
+
+        @Test
+        void shortLibraryMovesOnlyAvailableCards() {
+            addReadyWrenn(player1);
+            Card forest = new Forest();
+            Card shock = new Shock();
+            harness.setLibrary(player1, List.of(forest, shock));
+
+            harness.activateAbility(player1, 0, 0, null, null);
+            harness.passBothPriorities();
+
+            assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+            assertThat(gd.playerHands.get(player1.getId())).contains(forest).doesNotContain(shock);
+            assertThat(gd.playerGraveyards.get(player1.getId())).contains(shock);
+            assertThat(gd.interaction.activeInteraction()).isNull();
+        }
 
         @Test
         @DisplayName("Reveals top four: lands to hand, rest to graveyard")
@@ -35,8 +57,7 @@ class WrennAndSevenTest extends BaseCardTest {
             Card island = new Island();
             Card bears = new GrizzlyBears();
             Card shock = new Shock();
-            gd.playerDecks.get(player1.getId()).clear();
-            gd.playerDecks.get(player1.getId()).addAll(List.of(forest, island, bears, shock));
+            harness.setLibrary(player1, List.of(forest, island, bears, shock));
 
             harness.activateAbility(player1, 0, 0, null, null);
             harness.passBothPriorities();
@@ -51,7 +72,31 @@ class WrennAndSevenTest extends BaseCardTest {
 
     @Nested
     @DisplayName("0 ability")
+    @CardUsed({WrennAndSeven.class, Forest.class, Island.class, GrizzlyBears.class,
+            Mountain.class, ValakutTheMoltenPinnacle.class})
     class Zero {
+
+        @Test
+        @CardUsed({WrennAndSeven.class, Mountain.class, ValakutTheMoltenPinnacle.class})
+        void simultaneousMountainsBothTriggerValakut() {
+            addReadyWrenn(player1);
+            harness.addToBattlefield(player1, new ValakutTheMoltenPinnacle());
+            for (int i = 0; i < 4; i++) {
+                harness.addToBattlefield(player1, new Mountain());
+            }
+            harness.setHand(player1, List.of(new Mountain(), new Mountain()));
+
+            harness.activateAbility(player1, 0, 1, null, null);
+            harness.passBothPriorities();
+            harness.handleCardChosen(player1, 0);
+            harness.handleCardChosen(player1, 0);
+
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player1, player2.getId());
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player1, player2.getId());
+            assertThat(gd.stack).hasSize(2);
+        }
 
         @Test
         @DisplayName("Puts chosen lands from hand onto the battlefield tapped until declined")
@@ -62,7 +107,6 @@ class WrennAndSevenTest extends BaseCardTest {
             Card bears = new GrizzlyBears();
             harness.setHand(player1, List.of(forest, island, bears));
 
-            assertThat(forest.hasType(CardType.LAND)).isTrue();
             assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest, island, bears);
 
             harness.activateAbility(player1, 0, 1, null, null);
@@ -107,7 +151,27 @@ class WrennAndSevenTest extends BaseCardTest {
 
     @Nested
     @DisplayName("−3 ability")
+    @CardUsed({WrennAndSeven.class, Forest.class, Island.class})
     class MinusThree {
+
+        @Test
+        void treefolkSizeUpdatesWhenLandsChange() {
+            addReadyWrenn(player1);
+            Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+            harness.activateAbility(player1, 0, 2, null, null);
+            harness.passBothPriorities();
+            Permanent treefolk = findPermanent(player1, "Treefolk");
+            assertThat(gqs.getEffectivePower(gd, treefolk)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, treefolk)).isEqualTo(1);
+
+            harness.addToBattlefield(player1, new Island());
+            assertThat(gqs.getEffectivePower(gd, treefolk)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, treefolk)).isEqualTo(2);
+
+            gd.playerBattlefields.get(player1.getId()).remove(forest);
+            assertThat(gqs.getEffectivePower(gd, treefolk)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, treefolk)).isEqualTo(1);
+        }
 
         @Test
         @DisplayName("Creates a Treefolk with reach whose P/T equal controlled lands")
@@ -133,7 +197,23 @@ class WrennAndSevenTest extends BaseCardTest {
 
     @Nested
     @DisplayName("−8 ability")
+    @CardUsed({WrennAndSeven.class, Forest.class, GrizzlyBears.class, Shock.class})
     class MinusEight {
+
+        @Test
+        void ultimateCreatesEmblemEvenWithoutOtherGraveyardCards() {
+            Permanent wrenn = addReadyWrenn(player1);
+            wrenn.setCounterCount(CounterType.LOYALTY, 9);
+            harness.setGraveyard(player1, List.of());
+
+            harness.activateAbility(player1, 0, 3, null, null);
+            harness.passBothPriorities();
+
+            assertThat(gd.emblems).anySatisfy(emblem -> {
+                assertThat(emblem.controllerId()).isEqualTo(player1.getId());
+                assertThat(emblem.sourceCard()).isSameAs(wrenn.getCard());
+            });
+        }
 
         @Test
         @DisplayName("Returns all permanent cards from graveyard to hand and grants no max hand size")
@@ -156,11 +236,9 @@ class WrennAndSevenTest extends BaseCardTest {
     }
 
     private Permanent addReadyWrenn(Player player) {
-        WrennAndSeven card = new WrennAndSeven();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new WrennAndSeven());
         perm.setCounterCount(CounterType.LOYALTY, 5);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
