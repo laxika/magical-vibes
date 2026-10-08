@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.a.Abundance;
+import com.github.laxika.magicalvibes.cards.a.AlmsCollector;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Windfall.class, Abundance.class, Island.class, Plains.class})
+@CardUsed({Windfall.class, Abundance.class, AlmsCollector.class, Island.class, Plains.class})
 class WindfallTest extends BaseCardTest {
 
     @Test
@@ -26,8 +27,7 @@ class WindfallTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Plains(), new Plains(), new Plains()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
@@ -44,8 +44,7 @@ class WindfallTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
@@ -62,8 +61,7 @@ class WindfallTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Plains(), new Plains(), new Plains()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         PendingInteraction.MayAbilityChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
@@ -71,4 +69,42 @@ class WindfallTest extends BaseCardTest {
         assertThat(choice.playerId()).isEqualTo(player1.getId());
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
     }
+
+    @Test
+    @DisplayName("Alms Collector replaces the opponent's entire multi-card draw")
+    void almsCollectorReplacesMultiCardDraw() {
+        harness.addToBattlefield(player1, new AlmsCollector());
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island(), new Island()));
+        harness.setLibrary(player2, List.of(new Plains(), new Plains(), new Plains()));
+        harness.setHand(player1, List.of(new Windfall(), new Island()));
+        harness.setHand(player2, List.of(new Plains(), new Plains(), new Plains()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("The caster's remaining hand can determine the shared draw count")
+    void castersRemainingHandDeterminesDrawCount() {
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
+        harness.setLibrary(player2, List.of(new Plains(), new Plains(), new Plains()));
+        harness.setHand(player1, List.of(new Windfall(), new Island(), new Island(), new Island()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
 }
