@@ -167,6 +167,39 @@ class TheBirthOfMeletisTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(saga.getCard());
     }
 
+    @Test
+    @DisplayName("Chapter I completes with an empty library")
+    void chapterIWithEmptyLibrary() {
+        Permanent saga = addSagaWithLore(0);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
+
+        advanceToNextChapter();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The opponent's precombat main phase does not advance the Saga")
+    void opponentsTurnDoesNotAdvanceSaga() {
+        Permanent saga = addSagaWithLore(1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DRAW);
+
+        harness.passUntil(TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(saga);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private Permanent addSagaWithLore(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheBirthOfMeletis());
         saga.setCounterCount(CounterType.LORE, loreCounters);
