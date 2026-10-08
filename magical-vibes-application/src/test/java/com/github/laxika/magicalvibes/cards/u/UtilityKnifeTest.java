@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,17 +18,19 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class UtilityKnifeTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Enters attached to a creature you control and boosts it")
+    @DisplayName("Attachment trigger attaches to a creature you control and boosts it")
     void entersAttachedAndBoostsCreature() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new UtilityKnife()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castArtifact(player1, 0, creature.getId());
+        harness.castArtifact(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        assertThat(findPermanent(player1, "Utility Knife").getAttachedTo()).isNull();
+        harness.handlePermanentChosen(player1, creature.getId());
+        resolveAllTriggers();
 
-        Permanent equipment = findEquipment(player1);
+        Permanent equipment = findPermanent(player1, "Utility Knife");
         assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
@@ -37,13 +39,13 @@ class UtilityKnifeTest extends BaseCardTest {
     @Test
     @DisplayName("Equip moves Utility Knife to another creature")
     void equipMovesEquipmentToAnotherCreature() {
-        Permanent firstCreature = addCreatureReady(player1);
-        Permanent secondCreature = addCreatureReady(player1);
+        Permanent firstCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent equipment = harness.addToBattlefieldAndReturn(player1, new UtilityKnife());
         equipment.setAttachedTo(firstCreature.getId());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.activateAbility(player1, findEquipmentIndex(player1), null, secondCreature.getId());
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(equipment), null, secondCreature.getId());
         harness.passBothPriorities();
 
         assertThat(equipment.getAttachedTo()).isEqualTo(secondCreature.getId());
@@ -54,11 +56,15 @@ class UtilityKnifeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an opponent's creature when entering")
     void cannotTargetOpponentsCreature() {
-        Permanent opponentCreature = addCreatureReady(player2);
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new UtilityKnife()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.castArtifact(player1, 0, opponentCreature.getId()))
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -71,29 +77,93 @@ class UtilityKnifeTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(findEquipment(player1).getAttachedTo()).isNull();
+        assertThat(findPermanent(player1, "Utility Knife").getAttachedTo()).isNull();
     }
 
-    private Permanent addCreatureReady(Player player) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        creature.setSummoningSick(false);
-        return creature;
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void equipRejectsOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new UtilityKnife());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanent(player1, "Utility Knife").getAttachedTo()).isNull();
     }
 
-    private Permanent findEquipment(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof UtilityKnife)
-                .findFirst()
-                .orElseThrow();
+    @Test
+    @DisplayName("Equip cannot be activated with only two mana")
+    void equipRequiresThreeMana() {
+        harness.addToBattlefield(player1, new UtilityKnife());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanent(player1, "Utility Knife").getAttachedTo()).isNull();
     }
 
-    private int findEquipmentIndex(Player player) {
-        List<Permanent> battlefield = gd.playerBattlefields.get(player.getId());
-        for (int i = 0; i < battlefield.size(); i++) {
-            if (battlefield.get(i).getCard() instanceof UtilityKnife) {
-                return i;
-            }
-        }
-        throw new AssertionError("Utility Knife not found");
+    @Test
+    @DisplayName("Equip cannot be activated outside a main phase")
+    void equipRequiresMainPhase() {
+        harness.addToBattlefield(player1, new UtilityKnife());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanent(player1, "Utility Knife").getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated during an opponent's turn")
+    void equipRequiresControllersTurn() {
+        harness.addToBattlefield(player1, new UtilityKnife());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanent(player1, "Utility Knife").getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Attachment trigger does nothing when its target leaves the battlefield")
+    void attachmentTargetLeavesBeforeResolution() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new UtilityKnife()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, creature.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerGraveyards.get(player1.getId()).add(creature.getCard());
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Utility Knife").getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Equip keeps its original attachment when the new target leaves")
+    void equipTargetLeavesBeforeResolution() {
+        Permanent firstCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new UtilityKnife());
+        equipment.setAttachedTo(firstCreature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 2, null, secondCreature.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(secondCreature);
+        gd.playerGraveyards.get(player1.getId()).add(secondCreature.getCard());
+        resolveAllTriggers();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(firstCreature.getId());
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(3);
     }
 }
