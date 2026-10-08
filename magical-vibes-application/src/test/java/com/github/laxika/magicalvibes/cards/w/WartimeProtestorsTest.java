@@ -27,8 +27,7 @@ class WartimeProtestorsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new JoinTheRanks()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         resolveAllTriggers();
 
         List<Permanent> allies = findPermanents(player1, "Soldier Ally");
@@ -47,8 +46,7 @@ class WartimeProtestorsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new JoinTheRanks()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         resolveAllTriggers();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -90,5 +88,62 @@ class WartimeProtestorsTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Wartime Protestors")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("One Ally entry creates one ability that resolves both instructions together")
+    @CardUsed(WartimeProtestors.class)
+    void oneEntryCreatesOneAbility() {
+        harness.addToBattlefield(player1, new WartimeProtestors());
+        Permanent ally = harness.enterBattlefieldAndReturn(player1, new WartimeProtestors());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A single resolution gives the entering token both its counter and haste")
+    @CardUsed({WartimeProtestors.class, JoinTheRanks.class})
+    void counterAndHasteResolveTogether() {
+        harness.addToBattlefield(player1, new WartimeProtestors());
+        harness.setHand(player1, List.of(new JoinTheRanks()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Soldier Ally"))
+                .filteredOn(ally -> ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) == 1
+                        && ally.hasKeyword(Keyword.HASTE))
+                .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's Ally does not trigger Wartime Protestors")
+    @CardUsed(WartimeProtestors.class)
+    void opposingAllyDoesNotTrigger() {
+        harness.addToBattlefield(player1, new WartimeProtestors());
+        Permanent ally = harness.enterBattlefieldAndReturn(player2, new WartimeProtestors());
+
+        assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two Protestors each add a counter to another entering Ally")
+    @CardUsed(WartimeProtestors.class)
+    void multipleProtestorsEachAddCounter() {
+        harness.addToBattlefield(player1, new WartimeProtestors());
+        harness.addToBattlefield(player1, new WartimeProtestors());
+        Permanent ally = harness.enterBattlefieldAndReturn(player1, new WartimeProtestors());
+        resolveAllTriggers();
+
+        assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(findPermanents(player1, "Wartime Protestors").subList(0, 2))
+                .allSatisfy(source -> assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero());
     }
 }
