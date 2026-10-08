@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(WishfulMerfolk.class)
+@CardUsed({WishfulMerfolk.class})
 class WishfulMerfolkTest extends BaseCardTest {
 
     @Test
@@ -23,7 +23,9 @@ class WishfulMerfolkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(merfolk.hasKeyword(Keyword.DEFENDER)).isFalse();
-        assertThat(merfolk.getTransientCreatureTypeOverride()).isEqualTo(CardSubtype.HUMAN);
+        assertThat(gqs.hasEffectiveSubtype(gd, merfolk, CardSubtype.HUMAN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, merfolk, CardSubtype.MERFOLK)).isFalse();
+        assertThat(als.canAttack(gd, merfolk, player1.getId())).isTrue();
     }
 
     @Test
@@ -35,10 +37,50 @@ class WishfulMerfolkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(merfolk.hasKeyword(Keyword.DEFENDER)).isTrue();
-        assertThat(merfolk.getTransientCreatureTypeOverride()).isNull();
+        assertThat(gqs.hasEffectiveSubtype(gd, merfolk, CardSubtype.HUMAN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, merfolk, CardSubtype.MERFOLK)).isTrue();
+        assertThat(als.canAttack(gd, merfolk, player1.getId())).isFalse();
+    }
+
+    @Test
+    void abilityOnlyChangesItsSourceAndDoesNotApplyBeforeResolution() {
+        Permanent merfolk = addCreatureReady(player1, new WishfulMerfolk());
+        Permanent other = addCreatureReady(player1, new WishfulMerfolk());
+        Permanent opponent = addCreatureReady(player2, new WishfulMerfolk());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(als.canAttack(gd, merfolk, player1.getId())).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, merfolk, CardSubtype.HUMAN)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(als.canAttack(gd, merfolk, player1.getId())).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, merfolk, CardSubtype.HUMAN)).isTrue();
+        assertThat(other.hasKeyword(Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, other, CardSubtype.HUMAN)).isFalse();
+        assertThat(opponent.hasKeyword(Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, opponent, CardSubtype.HUMAN)).isFalse();
+    }
+
+    @Test
+    void abilityCanBeActivatedRepeatedlyWhileTappedAndSummoningSick() {
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new WishfulMerfolk());
+        merfolk.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(merfolk.isTapped()).isTrue();
+        assertThat(merfolk.hasKeyword(Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, merfolk, CardSubtype.HUMAN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, merfolk, CardSubtype.MERFOLK)).isFalse();
     }
 }
