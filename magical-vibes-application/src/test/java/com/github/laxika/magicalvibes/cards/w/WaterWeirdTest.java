@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.z.Zombify;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,14 +15,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WaterWeird.class, Forest.class, Zombify.class})
+@CardUsed({WaterWeird.class, Forest.class})
 class WaterWeirdTest extends BaseCardTest {
 
     @Test
     @DisplayName("Combat damage with a nonland top card puts a +1/+1 counter on Water Weird")
     void nonlandTopCardPutsCounterOnWaterWeird() {
         Permanent weird = addAttackingWaterWeird();
-        harness.setLibrary(player1, List.of(new Zombify(), new Forest()));
+        harness.setLibrary(player1, List.of(new WaterWeird(), new Forest()));
 
         resolveCombat();
         resolveAllTriggers();
@@ -37,7 +36,7 @@ class WaterWeirdTest extends BaseCardTest {
     @DisplayName("Combat damage with a land top card offers to mill it")
     void landTopCardMayBeMilled() {
         Permanent weird = addAttackingWaterWeird();
-        harness.setLibrary(player1, List.of(new Forest(), new Zombify()));
+        harness.setLibrary(player1, List.of(new Forest(), new WaterWeird()));
 
         resolveCombat();
         resolveAllTriggers();
@@ -55,7 +54,7 @@ class WaterWeirdTest extends BaseCardTest {
     @DisplayName("The combat-damage mill is optional")
     void mayDeclineToMill() {
         addAttackingWaterWeird();
-        harness.setLibrary(player1, List.of(new Forest(), new Zombify()));
+        harness.setLibrary(player1, List.of(new Forest(), new WaterWeird()));
 
         resolveCombat();
         resolveAllTriggers();
@@ -68,8 +67,7 @@ class WaterWeirdTest extends BaseCardTest {
     @Test
     @DisplayName("The pump ability gives +1/-1 until end of turn")
     void pumpWearsOffAtEndOfTurn() {
-        Permanent weird = harness.addToBattlefieldAndReturn(player1, new WaterWeird());
-        weird.setSummoningSick(false);
+        Permanent weird = addCreatureReady(player1, new WaterWeird());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -85,6 +83,58 @@ class WaterWeirdTest extends BaseCardTest {
 
         assertThat(weird.getPowerModifier()).isZero();
         assertThat(weird.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("An empty library still allows choosing the otherwise mill branch")
+    void emptyLibraryAllowsOptionalMill() {
+        Permanent weird = addAttackingWaterWeird();
+        harness.setLibrary(player1, List.of());
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(weird.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Water Weird");
+    }
+
+    @Test
+    @DisplayName("The top card is checked when the combat damage trigger resolves")
+    void checksLibraryAtResolution() {
+        Permanent weird = addAttackingWaterWeird();
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+
+        harness.setLibrary(player1, List.of(new WaterWeird()));
+        resolveAllTriggers();
+
+        assertThat(weird.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The pump can be activated while summoning sick and repeated until toughness is zero")
+    void repeatedPumpCanKillSummoningSickWaterWeird() {
+        harness.addToBattlefield(player1, new WaterWeird());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        for (int activation = 0; activation < 4; activation++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        }
+
+        harness.assertNotOnBattlefield(player1, "Water Weird");
+        harness.assertInGraveyard(player1, "Water Weird");
     }
 
     private Permanent addAttackingWaterWeird() {
