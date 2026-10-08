@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.a.AvenRiftwatcher;
 import com.github.laxika.magicalvibes.cards.d.DuneriderOutlaw;
 import com.github.laxika.magicalvibes.cards.m.MagusOfTheLibrary;
+import com.github.laxika.magicalvibes.cards.o.Ovinize;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.u.UrborgTombOfYawgmoth;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({VoidstoneGargoyle.class, AvenRiftwatcher.class, DuneriderOutlaw.class,
-        ProdigalPyromancer.class, MagusOfTheLibrary.class, UrborgTombOfYawgmoth.class})
+        ProdigalPyromancer.class, MagusOfTheLibrary.class, UrborgTombOfYawgmoth.class, Ovinize.class})
 class VoidstoneGargoyleTest extends BaseCardTest {
 
     @Test
@@ -164,6 +165,121 @@ class VoidstoneGargoyleTest extends BaseCardTest {
 
     private void addWhiteMana(int amount) {
         harness.addMana(player1, ManaColor.WHITE, amount);
+    }
+
+    @Test
+    @DisplayName("Submitting a land name is rejected without completing the choice")
+    void rejectsLandNameSubmission() {
+        harness.setHand(player1, List.of(new VoidstoneGargoyle(), new UrborgTombOfYawgmoth()));
+        addWhiteMana(5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "Urborg, Tomb of Yawgmoth"))
+                .isInstanceOf(IllegalArgumentException.class);
+        harness.assertNotOnBattlefield(player1, "Voidstone Gargoyle");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+    }
+
+    @Test
+    @DisplayName("Losing its abilities ends the restriction on nonmana abilities")
+    void losingAbilitiesAllowsNamedNonmanaAbility() {
+        Permanent gargoyle = addReadyGargoyle(player1, "Prodigal Pyromancer");
+        addCreatureReady(player2, new ProdigalPyromancer());
+        ovinize(gargoyle);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Losing its abilities ends the restriction on mana abilities")
+    void losingAbilitiesAllowsNamedManaAbility() {
+        Permanent gargoyle = addReadyGargoyle(player1, "Magus of the Library");
+        Permanent magus = addCreatureReady(player2, new MagusOfTheLibrary());
+        ovinize(gargoyle);
+
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(magus.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Losing its abilities ends the spell restriction")
+    void losingAbilitiesAllowsNamedSpell() {
+        Permanent gargoyle = addReadyGargoyle(player1, "Aven Riftwatcher");
+        ovinize(gargoyle);
+        harness.setHand(player1, List.of(new AvenRiftwatcher()));
+        addWhiteMana(3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Aven Riftwatcher");
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("The named source's triggered abilities remain active")
+    void namedSourceStillTriggers() {
+        addReadyGargoyle(player1, "Aven Riftwatcher");
+
+        harness.enterBattlefieldAndReturn(player2, new AvenRiftwatcher());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 22);
+    }
+
+    @Test
+    @DisplayName("Leaving the battlefield ends the activated ability restriction")
+    void leavingBattlefieldAllowsNamedAbility() {
+        Permanent gargoyle = addReadyGargoyle(player1, "Prodigal Pyromancer");
+        addCreatureReady(player2, new ProdigalPyromancer());
+        gargoyle.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Voidstone Gargoyle");
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    private void ovinize(Permanent gargoyle) {
+        harness.setHand(player1, List.of(new Ovinize()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, gargoyle.getId());
+    }
+
+    @Test
+    @DisplayName("The controller's named activated abilities are also restricted")
+    void blocksControllersNamedAbility() {
+        addReadyGargoyle(player2, "Prodigal Pyromancer");
+        addCreatureReady(player2, new ProdigalPyromancer());
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 1, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+    }
+
+    @Test
+    @DisplayName("Leaving the battlefield ends the spell restriction")
+    void leavingBattlefieldAllowsNamedSpell() {
+        Permanent gargoyle = addReadyGargoyle(player1, "Dunerider Outlaw");
+        gargoyle.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Voidstone Gargoyle");
+        harness.setHand(player1, List.of(new DuneriderOutlaw()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dunerider Outlaw");
     }
 
     private Permanent addReadyGargoyle(Player player, String chosenName) {
