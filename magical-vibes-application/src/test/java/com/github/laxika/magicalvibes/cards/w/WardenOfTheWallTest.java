@@ -6,13 +6,16 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WardenOfTheWall.class})
 class WardenOfTheWallTest extends BaseCardTest {
 
     // ===== Enters tapped =====
@@ -35,8 +38,7 @@ class WardenOfTheWallTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for mana adds colorless mana")
     void tapForColorlessMana() {
-        harness.addToBattlefield(player1, new WardenOfTheWall());
-        Permanent warden = findWarden(player1);
+        Permanent warden = harness.addToBattlefieldAndReturn(player1, new WardenOfTheWall());
         warden.untap();
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -51,8 +53,7 @@ class WardenOfTheWallTest extends BaseCardTest {
     @Test
     @DisplayName("Is not a creature during controller's turn")
     void notCreatureDuringControllerTurn() {
-        harness.addToBattlefield(player1, new WardenOfTheWall());
-        Permanent warden = findWarden(player1);
+        Permanent warden = harness.addToBattlefieldAndReturn(player1, new WardenOfTheWall());
 
         harness.forceActivePlayer(player1);
 
@@ -65,8 +66,7 @@ class WardenOfTheWallTest extends BaseCardTest {
     @Test
     @DisplayName("Becomes a 2/3 Gargoyle with flying during opponent's turn")
     void becomesCreatureDuringOpponentTurn() {
-        harness.addToBattlefield(player1, new WardenOfTheWall());
-        Permanent warden = findWarden(player1);
+        Permanent warden = harness.addToBattlefieldAndReturn(player1, new WardenOfTheWall());
 
         harness.forceActivePlayer(player2);
 
@@ -80,8 +80,7 @@ class WardenOfTheWallTest extends BaseCardTest {
     @Test
     @DisplayName("Creature status toggles when active player changes")
     void creatureStatusTogglesWithActivePlayer() {
-        harness.addToBattlefield(player1, new WardenOfTheWall());
-        Permanent warden = findWarden(player1);
+        Permanent warden = harness.addToBattlefieldAndReturn(player1, new WardenOfTheWall());
 
         harness.forceActivePlayer(player1);
         assertThat(gqs.isCreature(gd, warden)).isFalse();
@@ -97,8 +96,7 @@ class WardenOfTheWallTest extends BaseCardTest {
     @Test
     @DisplayName("Remains an artifact while animated on opponent's turn")
     void remainsArtifactWhileAnimated() {
-        harness.addToBattlefield(player1, new WardenOfTheWall());
-        Permanent warden = findWarden(player1);
+        Permanent warden = harness.addToBattlefieldAndReturn(player1, new WardenOfTheWall());
 
         harness.forceActivePlayer(player2);
 
@@ -106,6 +104,54 @@ class WardenOfTheWallTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, warden)).isTrue();
     }
 
+    @Test
+    @DisplayName("Newly controlled Warden cannot tap for mana while animated")
+    void newlyControlledAnimatedWardenCannotTapForMana() {
+        harness.forceActivePlayer(player2);
+        Permanent warden = harness.addToBattlefieldAndReturn(player1, new WardenOfTheWall());
+        warden.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(warden.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Animated Warden controlled since the turn began can tap for mana")
+    void establishedAnimatedWardenCanTapForMana() {
+        harness.forceActivePlayer(player2);
+        Permanent warden = harness.addToBattlefieldAndReturn(player1, new WardenOfTheWall());
+        warden.setSummoningSick(false);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(warden.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.isCreature(gd, warden)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warden, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Animation affects only Warden whose controller is not taking the turn")
+    void animationUsesEachWardensController() {
+        Permanent ownWarden = harness.addToBattlefieldAndReturn(player1, new WardenOfTheWall());
+        Permanent opposingWarden = harness.addToBattlefieldAndReturn(player2, new WardenOfTheWall());
+        harness.forceActivePlayer(player1);
+
+        assertThat(gqs.isCreature(gd, ownWarden)).isFalse();
+        assertThat(gqs.isCreature(gd, opposingWarden)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, opposingWarden)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingWarden)).isEqualTo(3);
+
+        harness.forceActivePlayer(player2);
+
+        assertThat(gqs.isCreature(gd, ownWarden)).isTrue();
+        assertThat(gqs.isCreature(gd, opposingWarden)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingWarden, Keyword.FLYING)).isFalse();
+    }
     // ===== Helpers =====
 
     private Permanent findWarden(com.github.laxika.magicalvibes.model.Player player) {
