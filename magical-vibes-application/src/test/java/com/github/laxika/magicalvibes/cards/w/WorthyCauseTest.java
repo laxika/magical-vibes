@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
 import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -17,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WorthyCause.class, HornedTurtle.class, LowlandGiant.class})
+@CardUsed({WorthyCause.class, HornedTurtle.class, LowlandGiant.class, Counterspell.class})
 class WorthyCauseTest extends BaseCardTest {
 
     @Test
@@ -54,7 +55,7 @@ class WorthyCauseTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife + 3);
         assertThat(handNames(player1)).isEmpty();
-        assertThat(graveyardNames(player1)).contains("Worthy Cause");
+        harness.assertInGraveyard(player1, "Worthy Cause");
     }
 
     @Test
@@ -75,7 +76,7 @@ class WorthyCauseTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife + 3);
         assertThat(handNames(player1)).containsExactly("Worthy Cause");
-        assertThat(graveyardNames(player1)).doesNotContain("Worthy Cause");
+        harness.assertNotInGraveyard(player1, "Worthy Cause");
     }
 
     @Test
@@ -92,7 +93,44 @@ class WorthyCauseTest extends BaseCardTest {
         return gd.playerHands.get(player.getId()).stream().map(c -> c.getName()).toList();
     }
 
-    private List<String> graveyardNames(Player player) {
-        return gd.playerGraveyards.get(player.getId()).stream().map(c -> c.getName()).toList();
+    @Test
+    @DisplayName("Countering a bought-back spell prevents life gain and does not refund the sacrifice")
+    void counteredWithBuybackGoesToGraveyard() {
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new LowlandGiant());
+        harness.setHand(player1, List.of(new WorthyCause()));
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castInstantWithSacrificeAndBuyback(player1, 0, null, giant.getId());
+        UUID spellId = gd.stack.getFirst().getCard().getId();
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, spellId);
+
+        harness.assertLife(player1, startingLife);
+        harness.assertInGraveyard(player1, "Worthy Cause");
+        harness.assertNotInHand(player1, "Worthy Cause");
+        harness.assertInGraveyard(player1, "Lowland Giant");
+        harness.assertNotOnBattlefield(player1, "Lowland Giant");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's creature to pay the additional cost")
+    void cannotSacrificeOpponentsCreature() {
+        harness.addToBattlefield(player1, new LowlandGiant());
+        Permanent turtle = harness.addToBattlefieldAndReturn(player2, new HornedTurtle());
+        harness.setHand(player1, List.of(new WorthyCause()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, null, turtle.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Horned Turtle");
+        harness.assertOnBattlefield(player1, "Lowland Giant");
+        harness.assertInHand(player1, "Worthy Cause");
+        assertThat(gd.stack).isEmpty();
     }
 }
