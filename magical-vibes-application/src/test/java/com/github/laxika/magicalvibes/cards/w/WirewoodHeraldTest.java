@@ -69,6 +69,67 @@ class WirewoodHeraldTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Wirewood Herald");
     }
 
+    @Test
+    @DisplayName("The controller may fail to find an Elf even when one is available")
+    void mayFailToFindAvailableElf() {
+        WirewoodHerald elf = new WirewoodHerald();
+        harness.setLibrary(player1, List.of(elf));
+        killHerald();
+        harness.handleMayAbilityChosen(player1, true);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(elf);
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Accepting the death trigger with an empty library completes the search")
+    void emptyLibrarySearchCompletes() {
+        harness.setLibrary(player1, List.of());
+        killHerald();
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's Herald searches that opponent's library and puts the Elf into their hand")
+    void opponentsHeraldSearchesOpponentsLibrary() {
+        WirewoodHerald ownElf = new WirewoodHerald();
+        WirewoodHerald opponentsElf = new WirewoodHerald();
+        harness.setLibrary(player1, List.of(ownElf));
+        harness.setLibrary(player2, List.of(opponentsElf));
+        harness.addToBattlefield(player2, new WirewoodHerald());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Smother()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Wirewood Herald"));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards()).containsExactly(opponentsElf);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(opponentsElf);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownElf);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(opponentsElf);
+        harness.assertInGraveyard(player2, "Wirewood Herald");
+    }
+
     private void killHerald() {
         harness.addToBattlefield(player1, new WirewoodHerald());
         harness.forceActivePlayer(player1);
@@ -78,8 +139,7 @@ class WirewoodHeraldTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Smother()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Wirewood Herald"));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Wirewood Herald"));
+        resolveAllTriggers();
     }
 }
