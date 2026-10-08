@@ -24,6 +24,41 @@ class ZanamDjinnTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Reevaluates the penalty as permanents enter on either side")
+    void reevaluatesPenaltyAsPermanentsEnter() {
+        Permanent zanam = addZanamDjinn();
+
+        assertThat(gqs.getEffectivePower(gd, zanam)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, zanam)).isEqualTo(4);
+
+        harness.addToBattlefield(player1, new GoblinSpy());
+        harness.addToBattlefield(player2, new GoblinSpy());
+
+        assertThat(gqs.getEffectivePower(gd, zanam)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, zanam)).isEqualTo(6);
+
+        harness.addToBattlefield(player2, new VodalianZombie());
+
+        assertThat(gqs.getEffectivePower(gd, zanam)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, zanam)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Each Djinn applies its penalty only to itself")
+    void multipleDjinnsDoNotStackTheirPenalties() {
+        Permanent first = addZanamDjinn();
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new ZanamDjinn());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new VodalianZombie());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Shrinks when blue is the most common color")
     void shrinksWhenBlueIsMostCommon() {
         Permanent zanam = addZanamDjinn();
@@ -98,4 +133,5 @@ class ZanamDjinnTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, zanam)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, zanam)).isEqualTo(6);
     }
+
 }
