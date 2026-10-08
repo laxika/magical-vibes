@@ -35,6 +35,21 @@ class ZuoCiTheMockingSageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Hexproof allows Zuo Ci's controller to target it")
+    void hexproofAllowsControllerTargeting() {
+        Permanent zuoCi = addCreatureReady(player1, new ZuoCiTheMockingSage());
+        harness.setHand(player1, List.of(new PoisonArrow()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveSorcery(player1, 0, zuoCi.getId());
+
+        harness.assertNotOnBattlefield(player1, "Zuo Ci, the Mocking Sage");
+        harness.assertInGraveyard(player1, "Zuo Ci, the Mocking Sage");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+    }
+
+    @Test
     @DisplayName("Zuo Ci can't be blocked by a creature with horsemanship")
     void cannotBeBlockedByHorsemanshipCreature() {
         Permanent blockerPerm = addCreatureReady(player2, new WeiEliteCompanions());
