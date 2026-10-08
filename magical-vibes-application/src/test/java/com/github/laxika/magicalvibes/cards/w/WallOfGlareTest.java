@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishLookout;
 import com.github.laxika.magicalvibes.cards.h.Humility;
+import com.github.laxika.magicalvibes.cards.m.MetathranSoldier;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WallOfGlare.class, ElvishLookout.class})
+@CardUsed({WallOfGlare.class, ElvishLookout.class, Humility.class, MetathranSoldier.class})
 class WallOfGlareTest extends BaseCardTest {
 
     @Test
@@ -55,5 +56,82 @@ class WallOfGlareTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("assigned too many times");
         assertThat(wall.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Wall of Glare takes combat damage from every creature it blocks")
+    void takesDamageFromEveryBlockedCreature() {
+        Permanent wall = addCreatureReady(player2, new WallOfGlare());
+        for (int i = 0; i < 3; i++) {
+            addCreatureReady(player1, new ElvishLookout());
+        }
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1, 2));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(0, 2)));
+        resolveCombat();
+
+        assertThat(wall.getMarkedDamage()).isEqualTo(3);
+        harness.assertOnBattlefield(player2, "Wall of Glare");
+        harness.assertLife(player2, 20);
+        assertThat(countPermanents(player1, "Elvish Lookout")).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Wall of Glare may block only some attackers")
+    void mayLeaveAnAttackerUnblocked() {
+        addCreatureReady(player2, new WallOfGlare());
+        addCreatureReady(player1, new ElvishLookout());
+        addCreatureReady(player1, new ElvishLookout());
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertLife(player2, 19);
+        harness.assertOnBattlefield(player2, "Wall of Glare");
+    }
+
+    @Test
+    @DisplayName("Unlimited blocking does not allow blocking an unblockable creature")
+    void cannotBlockMetathranSoldier() {
+        Permanent wall = addCreatureReady(player2, new WallOfGlare());
+        addCreatureReady(player1, new ElvishLookout()).setAttacking(true);
+        addCreatureReady(player1, new MetathranSoldier()).setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(wall.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Wall of Glare cannot block")
+    void cannotBlockWhileTapped() {
+        Permanent wall = addCreatureReady(player2, new WallOfGlare());
+        wall.setTapped(true);
+        addCreatureReady(player1, new ElvishLookout()).setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(wall.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Wall of Glare cannot attack because it has defender")
+    void cannotAttack() {
+        Permanent wall = addCreatureReady(player1, new WallOfGlare());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(wall.isAttacking()).isFalse();
     }
 }
