@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.e.EnormousBaloth;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -20,15 +21,36 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArtisticProcess.class, EnormousBaloth.class, GiantSpider.class, GrizzlyBears.class})
+@CardUsed({ArtisticProcess.class, EnormousBaloth.class, GiantSpider.class, GrizzlyBears.class, Unsummon.class})
 class ArtisticProcessTest extends BaseCardTest {
 
     private static final int MANA_NEEDED = 5;
 
     @Nested
-    @CardUsed({ArtisticProcess.class, EnormousBaloth.class, GrizzlyBears.class})
+    @CardUsed({ArtisticProcess.class, EnormousBaloth.class, GiantSpider.class, GrizzlyBears.class, Unsummon.class})
     @DisplayName("Mode 0: 6 damage to target creature")
     class TargetCreatureMode {
+
+        @Test
+        void doesNotResolveAnotherModeWhenTargetLeavesBattlefield() {
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            Permanent other = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+            harness.setHand(player1, List.of(new ArtisticProcess()));
+            harness.setHand(player2, List.of(new Unsummon()));
+            harness.addMana(player1, ManaColor.RED, MANA_NEEDED);
+            harness.addMana(player2, ManaColor.BLUE, 1);
+
+            harness.castSorcery(player1, 0, 0, target.getId());
+            harness.castAndResolveInstant(player2, 0, target.getId());
+            harness.passBothPriorities();
+
+            harness.assertInHand(player2, "Grizzly Bears");
+            harness.assertInGraveyard(player1, "Artistic Process");
+            assertThat(other.getMarkedDamage()).isZero();
+            assertThat(countPermanents(player1, "Elemental")).isZero();
+            harness.assertLife(player1, 20);
+            harness.assertLife(player2, 20);
+        }
 
         @Test
         void canTargetOwnCreatureAndDealsExactlySixDamage() {
@@ -151,7 +173,6 @@ class ArtisticProcessTest extends BaseCardTest {
             assertThat(token.getCard().getColors()).containsExactlyInAnyOrder(CardColor.BLUE, CardColor.RED);
 
             harness.forceStep(TurnStep.END_STEP);
-            harness.clearPriorityPassed();
             harness.passBothPriorities();
 
             harness.assertOnBattlefield(player1, "Elemental");
