@@ -21,6 +21,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class WhiteAuraciteTest extends BaseCardTest {
 
     private void castAndResolve(UUID targetId) {
+        castAuracite(targetId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+    }
+
+    private void castAuracite(UUID targetId) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new WhiteAuracite()));
@@ -28,8 +34,6 @@ class WhiteAuraciteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castArtifact(player1, 0, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
     }
 
     @Test
@@ -59,8 +63,7 @@ class WhiteAuraciteTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 2);
         UUID auraciteId = harness.getPermanentId(player1, "White Auracite");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, auraciteId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, auraciteId);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -93,5 +96,57 @@ class WhiteAuraciteTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castArtifact(player1, 0, forestId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a permanent you control")
+    void cannotTargetOwnPermanent() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> castAuracite(bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can exile an opposing noncreature artifact")
+    void exilesOpponentArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new WhiteAuracite());
+
+        castAndResolve(artifact.getId());
+
+        harness.assertNotOnBattlefield(player2, "White Auracite");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getId().equals(artifact.getCard().getId()));
+        harness.assertOnBattlefield(player1, "White Auracite");
+    }
+
+    @Test
+    @DisplayName("Target stays on the battlefield if White Auracite leaves before its trigger resolves")
+    void sourceLeavesBeforeTriggerResolves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castAuracite(bears.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        UUID auraciteId = harness.getPermanentId(player1, "White Auracite");
+        harness.castAndResolveInstant(player2, 0, auraciteId);
+        harness.assertInGraveyard(player1, "White Auracite");
+        harness.passBothPriorities();
+
+        assertThat(harness.getPermanentId(player2, "Grizzly Bears")).isEqualTo(bears.getId());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate the mana ability again while tapped")
+    void cannotActivateManaAbilityWhileTapped() {
+        harness.addToBattlefield(player1, new WhiteAuracite());
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
     }
 }
