@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @CardUsed({VolcanicGeyser.class, GoblinEliteInfantry.class})
 class VolcanicGeyserTest extends BaseCardTest {
 
@@ -51,5 +53,36 @@ class VolcanicGeyserTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Goblin Elite Infantry");
         harness.assertInGraveyard(player2, "Goblin Elite Infantry");
+    }
+
+    @Test
+    @DisplayName("Can deal X damage to its controller")
+    void canTargetItsController() {
+        harness.setHand(player1, List.of(new VolcanicGeyser()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0, 3, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Volcanic Geyser");
+    }
+
+    @Test
+    @DisplayName("Nonlethal damage is marked on a creature its controller controls")
+    void marksNonlethalDamageOnOwnCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GoblinEliteInfantry());
+        harness.setHand(player1, List.of(new VolcanicGeyser()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, 1, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Goblin Elite Infantry");
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Volcanic Geyser");
     }
 }
