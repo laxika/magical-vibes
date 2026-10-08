@@ -81,6 +81,137 @@ class SorceresssSchemesTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void returnsSorceryFromGraveyard() {
+        Card target = new SorceresssSchemes();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new SorceresssSchemes()));
+        addSorceresssSchemesMana(player1);
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(target);
+    }
+
+    @Test
+    void rejectsExiledSpellWithoutFlashback() {
+        Card target = new HolyDay();
+        harness.setExile(player1, List.of(target));
+        harness.setHand(player1, List.of(new SorceresssSchemes()));
+        addSorceresssSchemesMana(player1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void rejectsOpponentsGraveyardSpell() {
+        Card target = new SorceresssSchemes();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setHand(player1, List.of(new SorceresssSchemes()));
+        addSorceresssSchemesMana(player1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void rejectsOpponentsExiledFlashbackCard() {
+        Card target = new SorceresssSchemes();
+        harness.setExile(player2, List.of(target));
+        harness.setHand(player1, List.of(new SorceresssSchemes()));
+        addSorceresssSchemesMana(player1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void rejectsFaceDownExiledFlashbackCard() {
+        Card target = new SorceresssSchemes();
+        gd.addToExile(player1.getId(), target, null, true);
+        harness.setHand(player1, List.of(new SorceresssSchemes()));
+        addSorceresssSchemesMana(player1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotAddManaWhenGraveyardTargetMovesToExile() {
+        Card target = new SorceresssSchemes();
+        Card source = new SorceresssSchemes();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(source));
+        addSorceresssSchemesMana(player1);
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(source);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void flashbackReturnsGraveyardSpellAndExilesSource() {
+        Card source = new SorceresssSchemes();
+        Card target = new SorceresssSchemes();
+        harness.setGraveyard(player1, List.of(source, target));
+        addFlashbackMana(player1);
+
+        harness.castFlashback(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(target).doesNotContain(source);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(source, target);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(source);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    void cannotCastWithoutTarget() {
+        harness.setHand(player1, List.of(new SorceresssSchemes()));
+        addSorceresssSchemesMana(player1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void flashbackCannotReturnItself() {
+        Card source = new SorceresssSchemes();
+        harness.setGraveyard(player1, List.of(source));
+        addFlashbackMana(player1);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, source.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void flashbackDoesNotAddManaWhenExileTargetLeavesExile() {
+        Card source = new SorceresssSchemes();
+        Card target = new SorceresssSchemes();
+        harness.setGraveyard(player1, List.of(source));
+        harness.setExile(player1, List.of(target));
+        addFlashbackMana(player1);
+
+        harness.castFlashback(player1, 0, target.getId());
+        gd.removeFromExile(target.getId());
+        harness.setGraveyard(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(target).doesNotContain(source);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(source);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
     private void addSorceresssSchemesMana(Player player) {
         harness.addMana(player, ManaColor.RED, 1);
         harness.addMana(player, ManaColor.COLORLESS, 3);
