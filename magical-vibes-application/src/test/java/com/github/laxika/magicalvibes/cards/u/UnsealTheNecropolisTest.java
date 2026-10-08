@@ -30,8 +30,7 @@ class UnsealTheNecropolisTest extends BaseCardTest {
         harness.setHand(player1, List.of(spell));
         addMana();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
@@ -58,14 +57,96 @@ class UnsealTheNecropolisTest extends BaseCardTest {
         harness.setHand(player1, List.of(spell));
         addMana();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
         harness.handleGraveyardCardChosen(player1, indexOfCard(player1, creature));
         assertThat(gd.playerHands.get(player1.getId())).contains(creature);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(noncreature);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("The controller may return zero creatures even when two are available")
+    void mayDeclineAllReturns() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new UnsealTheNecropolis()));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleGraveyardCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The controller may stop after returning one of several available creatures")
+    void mayStopAfterOneReturn() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new UnsealTheNecropolis()));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleGraveyardCardChosen(player1, indexOfCard(player1, first));
+        harness.handleGraveyardCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(second).doesNotContain(first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A newly milled creature can be returned even when libraries have fewer than three cards")
+    void returnsNewlyMilledCreatureFromShortLibrary() {
+        Card creature = new GrizzlyBears();
+        Card opposingCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.setLibrary(player1, List.of(creature));
+        harness.setLibrary(player2, List.of(opposingCreature, new Forest()));
+        harness.setHand(player1, List.of(new UnsealTheNecropolis()));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleGraveyardCardChosen(player1, indexOfCard(player1, creature));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opposingCreature).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("With no creatures to return, milling still completes without a choice")
+    void resolvesWithoutEligibleCreatures() {
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new UnsealTheNecropolis()));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addMana() {
