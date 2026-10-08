@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -56,9 +55,42 @@ class WrathOfLeknifTest extends BaseCardTest {
     }
 
     private void castWrath() {
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castFromHand(player1, new WrathOfLeknif(), "{1}{W}{W}{U}");
+    }
+
+    @Test
+    void mayDeclineToUntapAnyLandsAfterDestroyingCreatures() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Island());
+        land.tap();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castWrath();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(land.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Island");
+    }
+
+    @Test
+    void mayUntapFewerThanFourLandsAndLeavesOpponentsLandsTapped() {
+        Permanent selected = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent unselected = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent opposingLand = harness.addToBattlefieldAndReturn(player2, new Island());
+        selected.tap();
+        unselected.tap();
+        opposingLand.tap();
+
+        castWrath();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(selected.getId()));
+
+        assertThat(selected.isTapped()).isFalse();
+        assertThat(unselected.isTapped()).isTrue();
+        assertThat(opposingLand.isTapped()).isTrue();
+        assertThat(findPermanents(player1, "Island")).hasSize(2);
+        harness.assertOnBattlefield(player2, "Island");
     }
 }
