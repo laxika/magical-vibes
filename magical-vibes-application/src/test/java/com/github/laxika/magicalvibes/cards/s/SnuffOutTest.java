@@ -113,4 +113,50 @@ class SnuffOutTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Fresh Volunteers");
         harness.assertInGraveyard(player2, "Fresh Volunteers");
     }
+
+    @Test
+    @DisplayName("Cannot pay the alternate cost with less than four life")
+    void alternateCostRequiresEnoughLife() {
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        harness.setHand(player1, List.of(new SnuffOut()));
+        harness.setLife(player1, 3);
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(player1, 0, target.getId(), List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough life");
+
+        harness.assertLife(player1, 3);
+        harness.assertOnBattlefield(player2, "Fresh Volunteers");
+    }
+
+    @Test
+    @DisplayName("An opponent's Swamp does not enable the alternate cost")
+    void opponentsSwampDoesNotEnableAlternateCost() {
+        harness.addToBattlefield(player2, new Swamp());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        harness.setHand(player1, List.of(new SnuffOut()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(player1, 0, target.getId(), List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("condition is not met");
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Losing control of the Swamp after casting does not stop destruction")
+    void swampIsOnlyRequiredWhenCasting() {
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        harness.setHand(player1, List.of(new SnuffOut()));
+
+        harness.castInstantWithAlternateCost(player1, 0, target.getId(), List.of());
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertInGraveyard(player2, "Fresh Volunteers");
+        harness.assertNotOnBattlefield(player2, "Fresh Volunteers");
+    }
 }
