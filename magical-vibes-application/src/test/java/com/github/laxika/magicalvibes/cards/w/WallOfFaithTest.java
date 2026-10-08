@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WallOfFaith.class})
 class WallOfFaithTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -49,7 +51,7 @@ class WallOfFaithTest extends BaseCardTest {
     // ===== Activate ability =====
 
     @Test
-    @DisplayName("Activating ability puts BoostSelf on the stack with self as target")
+    @DisplayName("Activating ability puts it on the stack without immediately boosting the source")
     void activatingAbilityPutsOnStack() {
         Permanent wallPerm = addWallOfFaithReady(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -61,7 +63,7 @@ class WallOfFaithTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Wall of Faith");
-        assertThat(entry.getTargetId()).isEqualTo(wallPerm.getId());
+        assertThat(wallPerm.getEffectiveToughness()).isEqualTo(5);
     }
 
     @Test
@@ -149,8 +151,8 @@ class WallOfFaithTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Ability fizzles if Wall of Faith is removed before resolution")
-    void abilityFizzlesIfSourceRemoved() {
+    @DisplayName("Ability resolves without a boost if Wall of Faith has left the battlefield")
+    void abilityDoesNothingIfSourceRemoved() {
         addWallOfFaithReady(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -177,13 +179,68 @@ class WallOfFaithTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfFaith());
+        wall.setSummoningSick(true);
+        wall.tap();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wall.getEffectiveToughness()).isEqualTo(6);
+        assertThat(wall.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability cannot be paid for with blue mana")
+    void cannotActivateWithWrongColorMana() {
+        addWallOfFaithReady(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An activation boosts only its source, not other Walls of Faith")
+    void boostsOnlyItsSource() {
+        Permanent source = addWallOfFaithReady(player1);
+        Permanent other = addWallOfFaithReady(player1);
+        Permanent opposing = addWallOfFaithReady(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(source.getEffectiveToughness()).isEqualTo(6);
+        assertThat(other.getEffectiveToughness()).isEqualTo(5);
+        assertThat(opposing.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("An activation does not boost its source after it leaves and returns")
+    void doesNotBoostReturnedSource() {
+        Permanent original = addWallOfFaithReady(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(original);
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, original.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(returned.getEffectiveToughness()).isEqualTo(5);
+    }
 
     private Permanent addWallOfFaithReady(Player player) {
-        WallOfFaith card = new WallOfFaith();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new WallOfFaith());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
