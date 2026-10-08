@@ -95,9 +95,7 @@ class WindingCanyonsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -128,5 +126,63 @@ class WindingCanyonsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player2, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Flash permission begins only when the activated ability resolves")
+    void noFlashBeforeAbilityResolves() {
+        addCanyons(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new BenalishInfantry()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Permission survives the source leaving and allows multiple creatures on an opponent's turn")
+    void permissionSurvivesSourceLeavingAndAllowsMultipleCreatures() {
+        addCanyons(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new BenalishInfantry(), new BenalishInfantry()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 6);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.castCreature(player1, 0);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The flash ability pays two mana and taps Winding Canyons")
+    void flashAbilityPaysManaAndTapsSource() {
+        addCanyons(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
     }
 }
