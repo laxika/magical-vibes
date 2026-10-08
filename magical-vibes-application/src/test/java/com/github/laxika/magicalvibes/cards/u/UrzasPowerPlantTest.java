@@ -99,4 +99,43 @@ class UrzasPowerPlantTest extends BaseCardTest {
         assertThat(harness.getGameActionAvailabilityService()
                 .getPotentialManaTotal(gd, player1.getId())).isEqualTo(7);
     }
+
+    @Test
+    @DisplayName("A Mine and Tower split between controllers do not enable the bonus")
+    void splitControlDoesNotEnableBonus() {
+        harness.addToBattlefield(player1, new UrzasPowerPlant());
+        harness.addToBattlefield(player1, new UrzasMine());
+        harness.addToBattlefield(player2, new UrzasTower());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Extra Mines and Towers do not multiply the bonus and mana is added immediately")
+    void extraCopiesStillAddOnlyTwoImmediately() {
+        harness.addToBattlefield(player1, new UrzasPowerPlant());
+        harness.addToBattlefield(player1, new UrzasMine());
+        harness.addToBattlefield(player1, new UrzasMine());
+        harness.addToBattlefield(player1, new UrzasTower());
+        harness.addToBattlefield(player1, new UrzasTower());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mine and Tower cards in hand and graveyard do not enable the bonus")
+    void cardsOutsideBattlefieldDoNotEnableBonus() {
+        harness.addToBattlefield(player1, new UrzasPowerPlant());
+        harness.setHand(player1, java.util.List.of(new UrzasMine()));
+        harness.setGraveyard(player1, java.util.List.of(new UrzasTower()));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
 }
