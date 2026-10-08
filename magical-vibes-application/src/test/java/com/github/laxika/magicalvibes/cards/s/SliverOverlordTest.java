@@ -25,8 +25,7 @@ class SliverOverlordTest extends BaseCardTest {
         addCreatureReady(player1, new SliverOverlord());
         MetallicSliver sliver = new MetallicSliver();
         CoatOfArms coatOfArms = new CoatOfArms();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(sliver, coatOfArms));
+        harness.setLibrary(player1, List.of(sliver, coatOfArms));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -51,8 +50,7 @@ class SliverOverlordTest extends BaseCardTest {
         addCreatureReady(player1, new SliverOverlord());
         MetallicSliver sliver = new MetallicSliver();
         CoatOfArms coatOfArms = new CoatOfArms();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(sliver, coatOfArms));
+        harness.setLibrary(player1, List.of(sliver, coatOfArms));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -97,4 +95,70 @@ class SliverOverlordTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a Sliver");
     }
 
+    @Test
+    @DisplayName("The search ability works while tapped and summoning sick")
+    void searchesWhileTappedAndSummoningSick() {
+        Permanent overlord = harness.addToBattlefieldAndReturn(player1, new SliverOverlord());
+        overlord.setSummoningSick(true);
+        overlord.setTapped(true);
+        MetallicSliver sliver = new MetallicSliver();
+        harness.setLibrary(player1, List.of(sliver));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(sliver);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(overlord.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Searching an empty library resolves without a card choice")
+    void searchesEmptyLibrary() {
+        addCreatureReady(player1, new SliverOverlord());
+        harness.setLibrary(player1, List.of());
+        var handBefore = List.copyOf(gd.playerHands.get(player1.getId()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(handBefore);
+    }
+
+    @Test
+    @DisplayName("The control ability works while tapped and summoning sick")
+    void gainsControlWhileTappedAndSummoningSick() {
+        Permanent overlord = harness.addToBattlefieldAndReturn(player1, new SliverOverlord());
+        overlord.setSummoningSick(true);
+        overlord.setTapped(true);
+        Permanent sliver = addCreatureReady(player2, new MetallicSliver());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, sliver.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(sliver);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(sliver);
+        assertThat(overlord.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The control ability can target a Sliver already controlled by its controller")
+    void canTargetOwnSliver() {
+        addCreatureReady(player1, new SliverOverlord());
+        Permanent sliver = addCreatureReady(player1, new MetallicSliver());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, sliver.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(sliver);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(sliver);
+        assertThat(gd.stack).isEmpty();
+    }
 }
