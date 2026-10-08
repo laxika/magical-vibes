@@ -68,4 +68,53 @@ class WarScreecherTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+
+    @Test
+    @DisplayName("Another War Screecher entering before resolution receives the boost")
+    void boostsAnotherScreecherPresentAtResolution() {
+        Permanent source = addCreatureReady(player1, new WarScreecher());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, null);
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new WarScreecher());
+        harness.passBothPriorities();
+
+        assertThat(source.getEffectivePower()).isEqualTo(1);
+        assertThat(source.getEffectiveToughness()).isEqualTo(3);
+        assertThat(other.getEffectivePower()).isEqualTo(2);
+        assertThat(other.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not receive the boost")
+    void doesNotBoostCreaturesEnteringAfterResolution() {
+        addCreatureReady(player1, new WarScreecher());
+        Permanent other = addCreatureReady(player1, new WarScreecher());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        Permanent lateCreature = harness.addToBattlefieldAndReturn(player1, new WarScreecher());
+
+        assertThat(other.getEffectivePower()).isEqualTo(2);
+        assertThat(other.getEffectiveToughness()).isEqualTo(4);
+        assertThat(lateCreature.getEffectivePower()).isEqualTo(1);
+        assertThat(lateCreature.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void cannotActivateWithSummoningSickness() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new WarScreecher());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(source.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }
