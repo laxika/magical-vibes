@@ -13,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(UrzasBlueprints.class)
+@CardUsed({UrzasBlueprints.class})
 class UrzasBlueprintsTest extends BaseCardTest {
 
     @Test
@@ -104,10 +104,46 @@ class UrzasBlueprintsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
-    private void castAndResolveBlueprints() {
+    @Test
+    @DisplayName("Echo does not create an enters-the-battlefield trigger")
+    void enteringDoesNotCreateAnEchoRegistrationTrigger() {
         harness.castFromHand(player1, new UrzasBlueprints(), "{6}");
         harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Urza's Blueprints");
+        assertThat(gd.stack).isEmpty();
+
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Urza's Blueprints");
+    }
+
+    @Test
+    @DisplayName("Urza's Blueprints can draw in response to echo before being sacrificed")
+    void drawsInResponseToEchoBeforeSacrifice() {
+        castAndResolveBlueprints();
+        harness.setLibrary(player1, List.of(new UrzasBlueprints()));
+
+        advanceToUpkeep(player1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Urza's Blueprints");
+        harness.assertOnBattlefield(player1, "Urza's Blueprints");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInHand(player1, "Urza's Blueprints");
+        harness.assertNotOnBattlefield(player1, "Urza's Blueprints");
+        harness.assertInGraveyard(player1, "Urza's Blueprints");
+    }
+
+    private void castAndResolveBlueprints() {
+        harness.castFromHand(player1, new UrzasBlueprints(), "{6}");
+        resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Urza's Blueprints");
     }
 }
