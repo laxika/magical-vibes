@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GroundSeal;
 import com.github.laxika.magicalvibes.cards.i.Infuriate;
 import com.github.laxika.magicalvibes.cards.n.NyleasForerunner;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheBindingOfTheTitans.class, Forest.class, NyleasForerunner.class, Infuriate.class})
+@CardUsed({TheBindingOfTheTitans.class, Forest.class, NyleasForerunner.class, Infuriate.class, GroundSeal.class})
 class TheBindingOfTheTitansTest extends BaseCardTest {
 
     @Test
@@ -234,6 +235,60 @@ class TheBindingOfTheTitansTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Infuriate");
         harness.assertInGraveyard(player1, "The Binding of the Titans");
         harness.assertNotOnBattlefield(player1, "The Binding of the Titans");
+    }
+
+    @Test
+    @CardUsed({TheBindingOfTheTitans.class, NyleasForerunner.class, GroundSeal.class})
+    @DisplayName("Chapter II cannot target graveyard cards while Ground Seal is on the battlefield")
+    void chapterIICannotTargetCardsProtectedByGroundSeal() {
+        NyleasForerunner creature = new NyleasForerunner();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player2, new GroundSeal());
+        addSagaWithLore(1);
+
+        advanceToNextChapter();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player1, "The Binding of the Titans");
+    }
+
+    @Test
+    @CardUsed({TheBindingOfTheTitans.class, Forest.class, GroundSeal.class})
+    @DisplayName("Chapter III has no legal targets under Ground Seal and the Saga is sacrificed")
+    void chapterIIICannotTargetCardsProtectedByGroundSeal() {
+        Forest land = new Forest();
+        harness.setGraveyard(player1, List.of(land));
+        harness.addToBattlefield(player2, new GroundSeal());
+        addSagaWithLore(2);
+
+        advanceToNextChapter();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(land);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(land);
+        harness.assertInGraveyard(player1, "The Binding of the Titans");
+        harness.assertNotOnBattlefield(player1, "The Binding of the Titans");
+    }
+
+    @Test
+    @DisplayName("Chapter II resolves without choosing cards when both graveyards are empty")
+    void chapterIIWithEmptyGraveyards() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.setLife(player1, 20);
+        addSagaWithLore(1);
+
+        advanceToNextChapter();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player1, "The Binding of the Titans");
     }
 
     private Permanent addSagaWithLore(int loreCounters) {
