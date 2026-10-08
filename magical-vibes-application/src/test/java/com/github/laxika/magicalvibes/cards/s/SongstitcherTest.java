@@ -124,6 +124,63 @@ class SongstitcherTest extends BaseCardTest {
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
     }
 
+    @Test
+    @DisplayName("A tapped, summoning-sick Songstitcher can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent songstitcher = addCreatureReady(player1, new Songstitcher());
+        songstitcher.setSummoningSick(true);
+        songstitcher.tap();
+        Permanent attacker = addAttacker(player2, new PendrellDrake());
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Only the targeted attacker has its combat damage prevented")
+    void doesNotPreventOtherAttackersDamage() {
+        addCreatureReady(player1, new Songstitcher());
+        Permanent attacker = addAttacker(player2, new PendrellDrake());
+        addAttacker(player2, new CoralMerfolk());
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Preventing an attacker's damage does not prevent damage dealt to it")
+    void doesNotPreventBlockersDamageToAttacker() {
+        addCreatureReady(player1, new Songstitcher());
+        Permanent blocker = addCreatureReady(player1, new PendrellDrake());
+        Permanent attacker = addAttacker(player2, new PendrellDrake());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+        prepareDeclareBlockers(player2);
+        int blockerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+        harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN, () -> harness.passBothPriorities());
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
     private Permanent addAttacker(Player owner, com.github.laxika.magicalvibes.model.Card card) {
         Permanent attacker = addCreatureReady(owner, card);
         attacker.setAttacking(true);
