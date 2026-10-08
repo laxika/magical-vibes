@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -54,24 +54,83 @@ class WallOfMourningTest extends BaseCardTest {
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
     }
 
+    @Test
+    void covenIsCheckedAgainWhenTheTriggerResolves() {
+        Forest topCard = new Forest();
+        castWall(List.of(topCard), new GrizzlyBears(), new LlanowarElves());
+        beginEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).removeIf(
+                permanent -> permanent.getCard() instanceof LlanowarElves);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
+    }
+
+    @Test
+    void opponentEndStepDoesNotReturnAnExiledCard() {
+        Forest topCard = new Forest();
+        castWall(List.of(topCard), new GrizzlyBears(), new LlanowarElves());
+
+        beginEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
+    }
+
+    @Test
+    void emptyLibraryDoesNotPreventWallFromEnteringOrCovenFromResolving() {
+        castWall(List.of(), new GrizzlyBears(), new LlanowarElves());
+
+        advanceToEndStep();
+
+        assertThat(gd.getCardsExiledByPermanent(harness.getPermanentId(player1, "Wall of Mourning")))
+                .isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void newControllerReturnsTheExiledCardToItsOriginalOwner() {
+        Forest topCard = new Forest();
+        castWall(List.of(topCard), new GrizzlyBears(), new LlanowarElves());
+        var wall = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof WallOfMourning)
+                .findFirst().orElseThrow();
+        gd.playerBattlefields.get(player1.getId()).remove(wall);
+        gd.playerBattlefields.get(player2.getId()).add(wall);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new LlanowarElves());
+
+        beginEndStep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(topCard);
+        assertThat(gd.findExiledCard(topCard.getId())).isNull();
+    }
+
     private void castWall(List<Forest> library, Card firstCreature, Card secondCreature) {
         harness.setLibrary(player1, library);
         harness.addToBattlefield(player1, firstCreature);
         harness.addToBattlefield(player1, secondCreature);
-        harness.setHand(player1, List.of(new WallOfMourning()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new WallOfMourning(), "{1}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
 
     private void advanceToEndStep() {
-        harness.forceActivePlayer(player1);
+        beginEndStep(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+    }
+
+    private void beginEndStep(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.END_STEP);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 }
