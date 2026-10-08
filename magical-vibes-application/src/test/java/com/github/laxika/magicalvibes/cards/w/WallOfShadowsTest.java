@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.ChaosCharm;
 import com.github.laxika.magicalvibes.cards.d.DAvenantArcher;
 import com.github.laxika.magicalvibes.cards.d.DwarvenDemolitionTeam;
 import com.github.laxika.magicalvibes.cards.g.GlyphOfDoom;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.p.PsychicPurge;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WallOfShadows.class, DAvenantArcher.class, GlyphOfDoom.class,
-        PsychicPurge.class, DwarvenDemolitionTeam.class, ChaosCharm.class})
+        PsychicPurge.class, DwarvenDemolitionTeam.class, ChaosCharm.class, Humility.class})
 class WallOfShadowsTest extends BaseCardTest {
 
     @Test
@@ -35,6 +36,35 @@ class WallOfShadowsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(wall);
         assertThat(wall.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Losing all abilities removes prevention of damage from blocked creatures")
+    void takesCombatDamageAfterLosingAbilities() {
+        addCreatureReady(player1, new DAvenantArcher());
+        addCreatureReady(player2, new WallOfShadows());
+        harness.addToBattlefield(player1, new Humility());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertNotOnBattlefield(player2, "Wall of Shadows");
+        harness.assertInGraveyard(player2, "Wall of Shadows");
+    }
+
+    @Test
+    @DisplayName("Losing all abilities allows spells that target only Walls to target it")
+    void wallOnlySpellCanTargetItAfterLosingAbilities() {
+        Permanent wall = addCreatureReady(player2, new WallOfShadows());
+        harness.addToBattlefield(player1, new Humility());
+        harness.setHand(player1, List.of(new GlyphOfDoom()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, wall.getId());
+
+        harness.assertInGraveyard(player1, "Glyph of Doom");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(wall);
     }
 
     @Test
