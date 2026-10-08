@@ -22,7 +22,7 @@ class SliversmithTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {1}, tapping, and discarding creates a Metallic Sliver token")
     void createsMetallicSliverToken() {
-        Permanent sliversmith = addReadySliversmith();
+        Permanent sliversmith = addCreatureReady(player1, new Sliversmith());
         harness.setHand(player1, List.of(new Imperiosaur()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -55,7 +55,7 @@ class SliversmithTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without a card to discard")
     void cannotActivateWithoutCardToDiscard() {
-        Permanent sliversmith = addReadySliversmith();
+        Permanent sliversmith = addCreatureReady(player1, new Sliversmith());
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -68,7 +68,7 @@ class SliversmithTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while Sliversmith is tapped")
     void cannotActivateWhileTapped() {
-        Permanent sliversmith = addReadySliversmith();
+        Permanent sliversmith = addCreatureReady(player1, new Sliversmith());
         sliversmith.tap();
         harness.setHand(player1, List.of(new Imperiosaur()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -79,9 +79,55 @@ class SliversmithTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
-    private Permanent addReadySliversmith() {
+    @Test
+    @DisplayName("Cannot activate while Sliversmith has summoning sickness")
+    void cannotActivateWhileSummoningSick() {
         Permanent sliversmith = harness.addToBattlefieldAndReturn(player1, new Sliversmith());
-        sliversmith.setSummoningSick(false);
-        return sliversmith;
+        sliversmith.setSummoningSick(true);
+        harness.setHand(player1, List.of(new Imperiosaur()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(sliversmith.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without mana to pay the generic cost")
+    void cannotActivateWithoutMana() {
+        Permanent sliversmith = addCreatureReady(player1, new Sliversmith());
+        harness.setHand(player1, List.of(new Imperiosaur()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(sliversmith.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Costs are paid before resolution and colored mana can pay the generic cost")
+    void paysCostsBeforeCreatingToken() {
+        Permanent sliversmith = addCreatureReady(player1, new Sliversmith());
+        harness.setHand(player1, List.of(new Imperiosaur(), new Sliversmith()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(sliversmith.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Sliversmith");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(sliversmith);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Metallic Sliver");
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
     }
 }
