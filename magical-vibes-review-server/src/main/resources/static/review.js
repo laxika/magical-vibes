@@ -260,10 +260,19 @@ function recoveryPanel(run) {
     const result = await api(`/runs/${run.id}/requeue`, 'POST', {status: 'RUNNING'});
     return `Requeued ${plural(result.requeued, 'in-progress task')}`;
   }, '', {disabled: run.running === 0});
+  const resetPushFailed = action('Requeue push failed', async () => {
+    const ok = await confirmDialog('Requeue push-failed tasks?', [
+      `This sends ${plural(run.publicationFailures, 'completed task')} whose test changes failed to push back to Queued for a fresh review.`,
+      node('p', {class: 'callout'}, 'Resolve or discard the preserved local commits on those workers first. Their current findings move to the attempt history.'),
+    ], 'Requeue', true);
+    if (!ok) return false;
+    const result = await api(`/runs/${run.id}/requeue`, 'POST', {status: 'PUSH_FAILED'});
+    return `Requeued ${plural(result.requeued, 'push-failed task')}`;
+  }, '', {disabled: !run.publicationFailures});
   return node('section', {class: 'panel recovery'},
     node('div', {}, node('h3', {}, 'Recover unfinished work'),
-      node('p', {class: 'muted'}, unfinished ? 'Stop workers, reset, then restart workers to pick up the remaining cards.' : 'Nothing to recover — no failed or in-progress tasks.')),
-    node('div', {class: 'controls'}, resetFailed, resetRunning, resetAll));
+      node('p', {class: 'muted'}, unfinished || run.publicationFailures ? 'Stop workers, reset, then restart workers to pick up the remaining cards.' : 'Nothing to recover — no failed, in-progress, or push-failed tasks.')),
+    node('div', {class: 'controls'}, resetFailed, resetRunning, resetPushFailed, resetAll));
 }
 
 function publication(task) {

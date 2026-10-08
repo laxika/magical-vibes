@@ -169,6 +169,23 @@ class ReviewServerTest {
     }
 
     @Test
+    void requeuesOnlyCompletedTasksWhosePublicationFailed() throws Exception {
+        writeCard("Card2", "@CardRegistration(set = \"SOS\", collectorNumber = \"2\")");
+        var run = newRun("Push failures", "luna");
+        var pushFailed = service.claim(new ReviewService.Claim("one"));
+        service.submit(id(pushFailed), new ReviewService.Result((String) pushFailed.get("attemptToken"), "PASS", null, List.of(),
+                "a".repeat(40), "FAILED", null, null, "Push rejected", null, null, null, null));
+        var passed = service.claim(new ReviewService.Claim("two"));
+        service.submit(id(passed), result(passed, "PASS", List.of()));
+
+        assertThat(service.requeueRun(id(run), "PUSH_FAILED")).isEqualTo(1);
+
+        assertThat(service.run(id(run))).containsEntry("completed", 1).containsEntry("created", 1)
+                .containsEntry("publicationFailures", 0);
+        assertThat(service.claim(new ReviewService.Claim("three")).get("id")).isEqualTo(pushFailed.get("id"));
+    }
+
+    @Test
     void requeuesEveryUnfinishedTaskWithoutTouchingCompletedOrQueuedOnes() throws Exception {
         for (int index = 2; index <= 4; index++) {
             writeCard("Card" + index, "@CardRegistration(set = \"SOS\", collectorNumber = \"" + index + "\")");

@@ -228,11 +228,19 @@ public class ReviewService {
     }
 
     public int requeueRun(long runId, String status) {
-        require(status != null && Set.of("FAILED", "RUNNING", "UNFINISHED").contains(status), "Bulk requeue supports FAILED, RUNNING, or UNFINISHED tasks");
+        require(status != null && Set.of("FAILED", "RUNNING", "UNFINISHED", "PUSH_FAILED").contains(status),
+                "Bulk requeue supports FAILED, RUNNING, UNFINISHED, or PUSH_FAILED tasks");
         return transactions.execute(transaction -> {
             one("SELECT id FROM review_run WHERE id=?", runId);
             if (status.equals("UNFINISHED")) {
                 return jdbc.update("UPDATE review_task SET status='CREATED',current_attempt=NULL WHERE run_id=? AND status IN ('RUNNING','FAILED')", runId);
+            }
+            if (status.equals("PUSH_FAILED")) {
+                return jdbc.update("""
+                        UPDATE review_task SET status='CREATED',current_attempt=NULL
+                        WHERE run_id=? AND status='COMPLETED'
+                          AND current_attempt IN (SELECT token FROM review_attempt WHERE publication_status='FAILED')
+                        """, runId);
             }
             return jdbc.update("UPDATE review_task SET status='CREATED',current_attempt=NULL WHERE run_id=? AND status=?", runId, status);
         });
