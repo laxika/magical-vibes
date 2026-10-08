@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -37,7 +39,7 @@ class DistantMemoriesTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Distant Memories");
+        assertThat(entry.getCard()).isInstanceOf(DistantMemories.class);
     }
 
     @Test
@@ -274,6 +276,49 @@ class DistantMemoriesTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(entry -> entry.getCard() instanceof PsychogenicProbe);
         harness.passBothPriorities();
         harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @CardUsed({DistantMemories.class, Plains.class})
+    @DisplayName("The second player's opponent returns the searched card to the second player's hand")
+    void secondPlayerCanReceiveSearchedCard() {
+        Plains chosenCard = new Plains();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player2, new DistantMemories(), "{2}{U}{U}");
+        harness.setLibrary(player2, List.of(chosenCard));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(chosenCard);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(chosenCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        harness.assertInGraveyard(player2, "Distant Memories");
+    }
+
+    @Test
+    @CardUsed({DistantMemories.class, Plains.class, LeoninArbiter.class})
+    @DisplayName("Paying Leonin Arbiter's tax before resolution allows the search and return")
+    void payingSearchTaxAllowsSearch() {
+        Plains chosenCard = new Plains();
+        harness.addToBattlefield(player2, new LeoninArbiter());
+        setupAndCast();
+        harness.setLibrary(player1, List.of(chosenCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.paySearchTax(player1);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosenCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        harness.assertInGraveyard(player1, "Distant Memories");
     }
 
     private void setupAndCast() {
