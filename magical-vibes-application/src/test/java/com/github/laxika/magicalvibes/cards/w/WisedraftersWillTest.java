@@ -83,4 +83,70 @@ class WisedraftersWillTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Wisedrafter's Will");
     }
+
+    @Test
+    @DisplayName("Sacrifice is paid before drawing and immediately ends hand revelation")
+    void sacrificeEndsRevelationBeforeDrawResolves() {
+        harness.addToBattlefield(player1, new WisedraftersWill());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Fog()));
+        Card drawnCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.publishState();
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"opponentHand\"")
+                        && message.contains("Fog"));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Wisedrafter's Will");
+        harness.assertInGraveyard(player1, "Wisedrafter's Will");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        harness.clearMessages();
+        harness.publishState();
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"opponentHand\""));
+        assertThat(harness.getConn1().getSentMessages())
+                .noneMatch(message -> message.contains("Fog"));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's creature spell")
+    void countersOwnCreatureSpell() {
+        harness.addToBattlefield(player1, new WisedraftersWill());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 1, null, bears.getId());
+
+        harness.assertInGraveyard(player1, "Wisedrafter's Will");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice to draw without blue mana")
+    void cannotDrawWithoutBlueMana() {
+        harness.addToBattlefield(player1, new WisedraftersWill());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Wisedrafter's Will");
+        harness.assertNotInGraveyard(player1, "Wisedrafter's Will");
+        assertThat(gd.stack).isEmpty();
+    }
 }
