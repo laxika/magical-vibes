@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SavannahLions;
+import com.github.laxika.magicalvibes.cards.t.ThatcherRevolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VigilanteJustice.class, EliteVanguard.class, GrizzlyBears.class, SavannahLions.class,
+        ThatcherRevolt.class})
 class VigilanteJusticeTest extends BaseCardTest {
 
     @Test
@@ -64,6 +68,27 @@ class VigilanteJusticeTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Grizzly Bears
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Human token entering simultaneously triggers separately with its own target")
+    void simultaneousHumanTokensTriggerSeparately() {
+        harness.addToBattlefield(player1, new VigilanteJustice());
+        harness.setHand(player1, List.of(new ThatcherRevolt()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.stack).hasSize(3);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 18);
         assertThat(gd.stack).isEmpty();
     }
 
