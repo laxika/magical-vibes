@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VituGhaziGuildmage.class})
 class VituGhaziGuildmageTest extends BaseCardTest {
 
     @Test
@@ -61,6 +63,62 @@ class VituGhaziGuildmageTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldSize);
     }
 
+    @Test
+    @DisplayName("Populate copies the Centaur created by the first ability")
+    void populatesItsOwnCentaur() {
+        addReadyGuildmage();
+        addMana(6, 2, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        Permanent original = creatureTokensNamed(player1, "Centaur").getFirst();
+        original.setTapped(true);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        List<Permanent> tokens = creatureTokensNamed(player1, "Centaur");
+        assertThat(tokens).hasSize(2);
+        Permanent copy = tokens.stream()
+                .filter(p -> !p.getId().equals(original.getId()))
+                .findFirst().orElseThrow();
+        assertThat(copy.isTapped()).isFalse();
+        assertThat(copy.getCard().getPower()).isEqualTo(3);
+        assertThat(copy.getCard().getToughness()).isEqualTo(3);
+        assertThat(copy.getCard().getColor()).isEqualTo(CardColor.GREEN);
+        assertThat(copy.getCard().getSubtypes()).contains(CardSubtype.CENTAUR);
+    }
+
+    @Test
+    @DisplayName("Populate does not copy an opponent's creature token")
+    void doesNotPopulateOpposingToken() {
+        addReadyGuildmage();
+        addCreatureToken(player2, "Soldier Token");
+        addMana(2, 1, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(creatureTokensNamed(player2, "Soldier Token")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Both abilities can be used while the Guildmage is tapped and summoning sick")
+    void abilitiesDoNotRequireTappingOrHaste() {
+        Permanent guildmage = harness.addToBattlefieldAndReturn(player1, new VituGhaziGuildmage());
+        guildmage.setSummoningSick(true);
+        guildmage.setTapped(true);
+        addMana(6, 2, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(creatureTokensNamed(player1, "Centaur")).hasSize(2);
+        assertThat(guildmage.isTapped()).isTrue();
+    }
     private void addReadyGuildmage() {
         addCreatureReady(player1, new VituGhaziGuildmage());
     }
@@ -85,8 +143,6 @@ class VituGhaziGuildmageTest extends BaseCardTest {
         card.setPower(1);
         card.setToughness(1);
         card.setSubtypes(List.of(CardSubtype.SOLDIER));
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
+        addCreatureReady(player, card);
     }
 }
