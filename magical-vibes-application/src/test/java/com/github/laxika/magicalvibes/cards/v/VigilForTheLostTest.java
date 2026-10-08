@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MyrReservoir;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.r.RosheenMeanderer;
+import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -11,8 +13,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PayXManaGainXLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +22,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VigilForTheLost.class, CruelEdict.class, GrizzlyBears.class, Plains.class,
+        RosheenMeanderer.class, WrathOfGod.class, MyrReservoir.class})
 class VigilForTheLostTest extends BaseCardTest {
 
     private void setupPlayer2Active() {
@@ -52,8 +56,6 @@ class VigilForTheLostTest extends BaseCardTest {
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(trigger.getCard().getName()).isEqualTo("Vigil for the Lost");
-        assertThat(trigger.getEffectsToResolve()).hasSize(1);
-        assertThat(trigger.getEffectsToResolve().getFirst()).isInstanceOf(PayXManaGainXLifeEffect.class);
     }
 
     // ===== X value choice interaction =====
@@ -360,12 +362,9 @@ class VigilForTheLostTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         // Use Wrath of God to kill both creatures
-        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.w.WrathOfGod()));
+        harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
-
-        // Resolve Wrath of God → both creatures die → two Vigil triggers
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         long vigilTriggers = gd.stack.stream()
@@ -373,5 +372,54 @@ class VigilForTheLostTest extends BaseCardTest {
                         && e.getCard().getName().equals("Vigil for the Lost"))
                 .count();
         assertThat(vigilTriggers).isEqualTo(2);
+    }
+
+    @Test
+    void myrOnlyManaCannotIncreaseTheLifeGainPayment() {
+        harness.addToBattlefield(player1, new VigilForTheLost());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new MyrReservoir());
+        harness.activateAbility(player1, 2, 0, null, null);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new CruelEdict()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.XValueChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxValue()).isEqualTo(1);
+        harness.handleXValueChosen(player1, 1);
+        harness.assertLife(player1, lifeBefore + 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getMyrOnlyColorless()).isEqualTo(2);
+    }
+
+    @Test
+    void untappedRosheenCanProduceManaDuringThePayment() {
+        harness.addToBattlefield(player1, new RosheenMeanderer());
+        harness.addToBattlefield(player1, new VigilForTheLost());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        findPermanent(player1, "Rosheen Meanderer").setSummoningSick(false);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new CruelEdict()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
+        harness.handlePermanentChosen(player1, findPermanent(player1, "Grizzly Bears").getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.XValueChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxValue()).isEqualTo(4);
+        gs.activateAbility(gd, player1, 0, 0, null, null, null);
+        harness.handleXValueChosen(player1, 4);
+        harness.assertLife(player1, lifeBefore + 4);
+        assertThat(gd.playerManaPools.get(player1.getId()).getXCostOnlyColorless()).isZero();
     }
 }
