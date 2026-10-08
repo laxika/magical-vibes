@@ -93,6 +93,92 @@ class VindictiveLichTest extends BaseCardTest {
         harness.assertLife(player3, 15);
     }
 
+    @Test
+    void differentModesCannotTargetTheSameOpponent() {
+        addOpponent("Charlie");
+        addLichAndTriggerDeath();
+        harness.handleListChoice(player1, SACRIFICE_MODE);
+        harness.handleListChoice(player1, LIFE_MODE);
+        harness.handleListChoice(player1, ChooseOneEffect.FINISH_MODE_SELECTION);
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void allThreeModesAffectTheirRespectiveOpponents() {
+        Player player3 = addOpponent("Charlie");
+        Player player4 = addOpponent("Dana");
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card first = new Forest();
+        Card second = new GrizzlyBears();
+        harness.setHand(player3, List.of(first, second));
+        addLichAndTriggerDeath();
+
+        harness.handleListChoice(player1, SACRIFICE_MODE);
+        harness.handleListChoice(player1, DISCARD_MODE);
+        harness.handleListChoice(player1, LIFE_MODE);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+        harness.handlePermanentChosen(player1, player4.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player3, 0);
+        harness.handleCardChosen(player3, 0);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        assertThat(gd.playerHands.get(player3.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player3.getId()))
+                .extracting(Card::getId).containsExactly(first.getId(), second.getId());
+        harness.assertLife(player2, 20);
+        harness.assertLife(player3, 20);
+        harness.assertLife(player4, 15);
+    }
+
+    @Test
+    void targetOpponentChoosesWhichCreatureToSacrifice() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addLichAndTriggerDeath();
+        chooseMode(SACRIFICE_MODE);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player2, second.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(first).doesNotContain(second);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(Card::getId).contains(second.getCard().getId());
+    }
+
+    @Test
+    void discardModeDiscardsTheOnlyCardInHand() {
+        Card card = new Forest();
+        harness.setHand(player2, List.of(card));
+        addLichAndTriggerDeath();
+        chooseMode(DISCARD_MODE);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(Card::getId).containsExactly(card.getId());
+    }
+
+    @Test
+    void sacrificeModeCanTargetAnOpponentWithNoCreatures() {
+        harness.addToBattlefield(player2, new Forest());
+        addLichAndTriggerDeath();
+        chooseMode(SACRIFICE_MODE);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void addLich() {
         harness.addToBattlefield(player1, new VindictiveLich());
     }
