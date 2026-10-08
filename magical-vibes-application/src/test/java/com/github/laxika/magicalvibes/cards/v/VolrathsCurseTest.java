@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
+import com.github.laxika.magicalvibes.cards.l.LegacysAllure;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VolrathsCurse.class, BottleGnomes.class})
+@CardUsed({VolrathsCurse.class, BottleGnomes.class, LegacysAllure.class})
 class VolrathsCurseTest extends BaseCardTest {
 
     /** Adds ready Bottle Gnomes so an opponent-controlled Aura is at a predictable index. */
@@ -45,8 +47,7 @@ class VolrathsCurseTest extends BaseCardTest {
         Permanent curse = harness.addToBattlefieldAndReturn(player2, new VolrathsCurse());
         curse.setAttachedTo(blocker.getId());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
@@ -215,5 +216,106 @@ class VolrathsCurseTest extends BaseCardTest {
                 .anyMatch(card -> card == curse.getCard());
 
         declareAttackers(player1, List.of(0));
+    }
+
+    @Test
+    @DisplayName("Sacrificing the enchanted creature immediately puts the Curse in the graveyard")
+    void sacrificingEnchantedCreatureRemovesAuraImmediately() {
+        Permanent gnomes = addCreatureReady(player1, new BottleGnomes());
+        Permanent curse = harness.addToBattlefieldAndReturn(player2, new VolrathsCurse());
+        curse.setAttachedTo(gnomes.getId());
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.handlePermanentChosen(player1, gnomes.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(gnomes.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(curse.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(curse);
+    }
+
+    @Test
+    @DisplayName("Ignoring the Curse lets the enchanted creature block")
+    void ignoringTheCurseLetsTheCreatureBlock() {
+        Permanent blocker = addCreatureReady(player1, new BottleGnomes());
+        Permanent sacrificeTarget = addCreatureReady(player1, new BottleGnomes());
+        addFillers(player2, 2);
+        Permanent curse = harness.addToBattlefieldAndReturn(player2, new VolrathsCurse());
+        curse.setAttachedTo(blocker.getId());
+
+        harness.activateAbility(player1, 2, 0, null, null);
+        harness.handlePermanentChosen(player1, sacrificeTarget.getId());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ignoring one Curse does not remove another Curse's restrictions")
+    void ignoringOneCurseLeavesAnotherCurseActive() {
+        Permanent gnomes = addCreatureReady(player1, new BottleGnomes());
+        Permanent sacrificeTarget = addCreatureReady(player1, new BottleGnomes());
+        addFillers(player2, 2);
+        Permanent firstCurse = harness.addToBattlefieldAndReturn(player2, new VolrathsCurse());
+        Permanent secondCurse = harness.addToBattlefieldAndReturn(player2, new VolrathsCurse());
+        firstCurse.setAttachedTo(gnomes.getId());
+        secondCurse.setAttachedTo(gnomes.getId());
+
+        harness.activateAbility(player1, 2, 0, null, null);
+        harness.handlePermanentChosen(player1, sacrificeTarget.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    private Permanent stealCreatureAfterItsControllerIgnoresCurse() {
+        Permanent gnomes = addCreatureReady(player1, new BottleGnomes());
+        Permanent sacrificeTarget = addCreatureReady(player1, new BottleGnomes());
+        addFillers(player2, 2);
+        Permanent curse = harness.addToBattlefieldAndReturn(player2, new VolrathsCurse());
+        curse.setAttachedTo(gnomes.getId());
+        Permanent allure = harness.addToBattlefieldAndReturn(player2, new LegacysAllure());
+        allure.setCounterCount(CounterType.TREASURE, 1);
+
+        harness.activateAbility(player1, 2, 0, null, null);
+        harness.handlePermanentChosen(player1, sacrificeTarget.getId());
+        harness.activateAbility(player2, 3, 0, null, gnomes.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(gnomes);
+        return gnomes;
+    }
+
+    @Test
+    @DisplayName("A new controller is still restricted after the previous controller ignored the Curse")
+    void ignoringCurseDoesNotExemptANewController() {
+        Permanent gnomes = stealCreatureAfterItsControllerIgnoresCurse();
+        int creatureIndex = gd.playerBattlefields.get(player2.getId()).indexOf(gnomes);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, creatureIndex, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+    }
+
+    @Test
+    @DisplayName("A new controller may sacrifice a permanent to ignore the Curse in the same turn")
+    void newControllerMayAlsoIgnoreCurseThisTurn() {
+        Permanent gnomes = stealCreatureAfterItsControllerIgnoresCurse();
+        Permanent sacrificeTarget = gd.playerBattlefields.get(player2.getId()).getFirst();
+
+        harness.activateAbility(player2, 2, 0, null, null);
+        harness.handlePermanentChosen(player2, sacrificeTarget.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(sacrificeTarget.getCard());
+
+        int creatureIndex = gd.playerBattlefields.get(player2.getId()).indexOf(gnomes);
+        harness.activateAbility(player2, creatureIndex, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(23);
     }
 }
