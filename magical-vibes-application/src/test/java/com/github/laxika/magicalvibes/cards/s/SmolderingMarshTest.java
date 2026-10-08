@@ -18,6 +18,71 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SmolderingMarshTest extends BaseCardTest {
 
     @Test
+    void entersTappedWithNoLands() {
+        playSmolderingMarsh();
+
+        assertThat(findSmolderingMarsh(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    void entersUntappedWithTwoBasicLandsOfTheSameType() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+
+        playSmolderingMarsh();
+
+        assertThat(findSmolderingMarsh(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    void tappedBasicLandsStillCount() {
+        harness.addToBattlefieldAndReturn(player1, new Island()).tap();
+        harness.addToBattlefieldAndReturn(player1, new Swamp()).tap();
+
+        playSmolderingMarsh();
+
+        assertThat(findSmolderingMarsh(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    void basicLandTypesOnNonbasicLandsDoNotCount() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new SmolderingMarsh());
+
+        playSmolderingMarsh();
+
+        assertThat(findPermanents(player1, "Smoldering Marsh").get(1).isTapped()).isTrue();
+    }
+
+    @Test
+    void opponentsBasicLandDoesNotSupplementOneControlledBasicLand() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player2, new Island());
+
+        playSmolderingMarsh();
+
+        assertThat(findSmolderingMarsh(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    void enteringWithoutBeingPlayedStillAppliesTappedCondition() {
+        Permanent marsh = harness.enterBattlefieldAndReturn(player1, new SmolderingMarsh());
+
+        assertThat(marsh.isTapped()).isTrue();
+    }
+
+    @Test
+    void enteringWithoutBeingPlayedWithThreeBasicLandsIsUntapped() {
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+
+        Permanent marsh = harness.enterBattlefieldAndReturn(player1, new SmolderingMarsh());
+
+        assertThat(marsh.isTapped()).isFalse();
+    }
+
+    @Test
     void entersTappedWithFewerThanTwoBasicLands() {
         harness.addToBattlefield(player1, new Island());
 
@@ -81,11 +146,9 @@ class SmolderingMarshTest extends BaseCardTest {
         harness.playLand(player1, 0);
     }
 
-    private Permanent addReadySmolderingMarsh(Player player) {
-        Permanent permanent = new Permanent(new SmolderingMarsh());
+    private void addReadySmolderingMarsh(Player player) {
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new SmolderingMarsh());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 
     private Permanent findSmolderingMarsh(Player player) {
