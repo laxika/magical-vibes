@@ -44,8 +44,7 @@ class LaidToRestTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
-        gs.playCard(gd, player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(12);
@@ -66,12 +65,67 @@ class LaidToRestTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(10);
     }
 
+    @Test
+    @DisplayName("A countered Human creates two separate triggered abilities")
+    void counteredHumanCreatesSeparateTriggers() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addToBattlefield(player1, new LaidToRest());
+        Permanent human = harness.addToBattlefieldAndReturn(player1, new WoodlandDruid());
+        human.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("Each Human in a simultaneous death triggers a separate draw")
+    void simultaneousHumanDeathsEachDraw() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addToBattlefield(player1, new LaidToRest());
+        harness.addToBattlefield(player1, new WoodlandDruid());
+        harness.addToBattlefield(player1, new WoodlandDruid());
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("An opponent's countered Human triggers neither ability")
+    void opposingCounteredHumanDoesNotTrigger() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addToBattlefield(player1, new LaidToRest());
+        Permanent human = harness.addToBattlefieldAndReturn(player2, new WoodlandDruid());
+        human.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
     private void killWithShock(com.github.laxika.magicalvibes.model.Player caster, String targetName) {
         harness.setHand(caster, List.of(new Shock()));
         harness.addMana(caster, ManaColor.RED, 1);
         UUID targetId = harness.getPermanentId(caster, targetName);
-        harness.castInstant(caster, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, targetId);
         harness.passBothPriorities();
     }
 }
