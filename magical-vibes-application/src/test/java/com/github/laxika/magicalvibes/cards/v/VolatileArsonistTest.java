@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.d.DireStrainAnarchist;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GideonBlackblade;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DayNight;
@@ -10,12 +11,15 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VolatileArsonist.class, DireStrainAnarchist.class, GrizzlyBears.class, JaceBeleren.class})
+@CardUsed({VolatileArsonist.class, DireStrainAnarchist.class, GrizzlyBears.class, JaceBeleren.class,
+        GideonBlackblade.class})
 class VolatileArsonistTest extends BaseCardTest {
 
     @Test
@@ -79,6 +83,141 @@ class VolatileArsonistTest extends BaseCardTest {
         assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
         assertThat(arsonist.isTransformed()).isFalse();
         assertThat(arsonist.getCard()).isInstanceOf(VolatileArsonist.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void canChooseControllerAsPlayerTarget(boolean transformed) {
+        Permanent arsonist = transformed ? addTransformedArsonist()
+                : addCreatureReady(player1, new VolatileArsonist());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setLife(player1, 20);
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(arsonist)));
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(transformed ? 18 : 19);
+        assertThat(creature.getMarkedDamage()).isEqualTo(transformed ? 2 : 1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void canTargetSameCreaturePlaneswalkerInBothGroups(boolean transformed) {
+        Permanent arsonist = transformed ? addTransformedArsonist()
+                : addCreatureReady(player1, new VolatileArsonist());
+        addCreatureReady(player2, new GrizzlyBears());
+        Permanent gideon = harness.addToBattlefieldAndReturn(player1, new GideonBlackblade());
+        gideon.setCounterCount(CounterType.LOYALTY, 4);
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(arsonist)));
+        harness.handlePermanentChosen(player1, gideon.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, gideon.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(transformed ? 18 : 19);
+        assertThat(gideon.getMarkedDamage()).isZero();
+        assertThat(gideon.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void canDeclineEveryTargetGroup(boolean transformed) {
+        Permanent arsonist = transformed ? addTransformedArsonist()
+                : addCreatureReady(player1, new VolatileArsonist());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(arsonist)));
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+    }
+
+    @Test
+    void enteringBeforeDayOrNightStartsMakesItDay() {
+        gd.dayNight = DayNight.NEITHER;
+        harness.castFromHand(player1, new VolatileArsonist(), "{3}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(findPermanent(player1, "Volatile Arsonist").isTransformed()).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void canChooseOnlyPlayerTarget(boolean transformed) {
+        Permanent arsonist = transformed ? addTransformedArsonist()
+                : addCreatureReady(player1, new VolatileArsonist());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(arsonist)));
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(transformed ? 18 : 19);
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void remainingTargetsStillTakeDamageWhenCreatureTargetLeaves(boolean transformed) {
+        Permanent arsonist = transformed ? addTransformedArsonist()
+                : addCreatureReady(player1, new VolatileArsonist());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(arsonist)));
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, planeswalker.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        gd.playerGraveyards.get(player2.getId()).add(creature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(transformed ? 18 : 19);
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(transformed ? 3 : 4);
+    }
+
+    @Test
+    void enteringAtNightUsesBackFace() {
+        gd.dayNight = DayNight.NIGHT;
+        harness.castFromHand(player1, new VolatileArsonist(), "{3}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Dire-Strain Anarchist").isTransformed()).isTrue();
+        assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
+    }
+
+    @Test
+    void oneSpellDuringPreviousPlayersTurnKeepsItNight() {
+        gd.dayNight = DayNight.NIGHT;
+        Permanent arsonist = addTransformedArsonist();
+        gd.previousTurnActivePlayerId = player2.getId();
+        gd.spellsCastLastTurn.put(player2.getId(), 1);
+        gd.spellsCastLastTurn.put(player1.getId(), 2);
+
+        harness.performUntapStep(player1);
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
+        assertThat(arsonist.isTransformed()).isTrue();
     }
 
     private Permanent addTransformedArsonist() {
