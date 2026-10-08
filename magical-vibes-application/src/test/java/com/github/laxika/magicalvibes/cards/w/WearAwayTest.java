@@ -84,6 +84,53 @@ class WearAwayTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Spliced destruction resolves against its own distinct target")
+    void splicedDestructionUsesDistinctTarget() {
+        harness.addToBattlefield(player1, new SenseisDiviningTop());
+        harness.addToBattlefield(player2, new HondenOfCleansingFire());
+        WearAway host = new WearAway();
+        WearAway spliced = new WearAway();
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(host, spliced));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        UUID hostTarget = harness.getPermanentId(player1, "Sensei's Divining Top");
+        UUID spliceTarget = harness.getPermanentId(player2, "Honden of Cleansing Fire");
+        gs.playCardWithSplice(gd, player1, 0, 0, null, null,
+                List.of(hostTarget, spliceTarget), List.of(1));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Sensei's Divining Top");
+        harness.assertInGraveyard(player2, "Honden of Cleansing Fire");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(spliced);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(host);
+    }
+
+    @Test
+    @DisplayName("Spliced Wear Away cannot target a creature")
+    void splicedWearAwayCannotTargetCreature() {
+        harness.addToBattlefield(player2, new SenseisDiviningTop());
+        harness.addToBattlefield(player2, new WanderingOnes());
+        WearAway host = new WearAway();
+        WearAway spliced = new WearAway();
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(host, spliced));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        UUID hostTarget = harness.getPermanentId(player2, "Sensei's Divining Top");
+        UUID spliceTarget = harness.getPermanentId(player2, "Wandering Ones");
+        assertThatThrownBy(() -> gs.playCardWithSplice(gd, player1, 0, 0, null, null,
+                List.of(hostTarget, spliceTarget), List.of(1)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(host, spliced);
+        harness.assertOnBattlefield(player2, "Sensei's Divining Top");
+        harness.assertOnBattlefield(player2, "Wandering Ones");
+    }
+
+    @Test
     @DisplayName("Cannot splice onto a non-Arcane spell")
     void cannotSpliceOntoNonArcaneSpell() {
         YamabushisFlame host = new YamabushisFlame();
