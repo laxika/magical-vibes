@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MazeBehemoth;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WeaponSurge.class, MazeBehemoth.class})
 class WeaponSurgeTest extends BaseCardTest {
 
     @Test
@@ -94,10 +96,87 @@ class WeaponSurgeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Overload can resolve with no creatures under your control")
+    void overloadWithNoOwnCreatures() {
+        Permanent theirs = addCreature(player2);
+        harness.setHand(player1, List.of(new WeaponSurge()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castWithOverload(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof WeaponSurge);
+        assertThat(theirs.getPowerModifier()).isZero();
+        assertThat(theirs.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+    }
+
+    @Test
+    @DisplayName("Overload affects creatures present at resolution, not creatures entering later")
+    void overloadUsesCreaturesAtResolution() {
+        Permanent first = addCreature(player1);
+        harness.setHand(player1, List.of(new WeaponSurge()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castWithOverload(player1, 0);
+        Permanent beforeResolution = addCreature(player1);
+
+        harness.passBothPriorities();
+        Permanent afterResolution = addCreature(player1);
+
+        assertThat(first.getPowerModifier()).isEqualTo(1);
+        assertThat(first.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
+        assertThat(beforeResolution.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(afterResolution.getPowerModifier()).isZero();
+        assertThat(afterResolution.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(first.getPowerModifier()).isZero();
+        assertThat(first.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(beforeResolution.getPowerModifier()).isZero();
+        assertThat(beforeResolution.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+    }
+
+    @Test
+    @DisplayName("Normal cast does not affect other creatures you control")
+    void normalCastOnlyAffectsItsTarget() {
+        Permanent target = addCreature(player1);
+        Permanent other = addCreature(player1);
+        harness.setHand(player1, List.of(new WeaponSurge()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+    }
+
+    @Test
+    @DisplayName("A target that changes to an opponent's control is illegal at resolution")
+    void targetChangingControllerReceivesNoEffects() {
+        Permanent target = addCreature(player1);
+        harness.setHand(player1, List.of(new WeaponSurge()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addCreature(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new MazeBehemoth());
     }
 }
