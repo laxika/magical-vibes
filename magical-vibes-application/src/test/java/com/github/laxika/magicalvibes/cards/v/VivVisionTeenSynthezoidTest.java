@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(VivVisionTeenSynthezoid.class)
+@CardUsed({VivVisionTeenSynthezoid.class})
 class VivVisionTeenSynthezoidTest extends BaseCardTest {
 
     @Test
@@ -23,7 +22,7 @@ class VivVisionTeenSynthezoidTest extends BaseCardTest {
         Permanent viv = addCreatureReady(player1, new VivVisionTeenSynthezoid());
         viv.setPowerModifier(2);
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new Card()));
+        harness.setLibrary(player1, List.of(new VivVisionTeenSynthezoid()));
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -37,9 +36,10 @@ class VivVisionTeenSynthezoidTest extends BaseCardTest {
     void doesNotDrawWhenAttackingWithLowPower() {
         addCreatureReady(player1, new VivVisionTeenSynthezoid());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new Card()));
+        harness.setLibrary(player1, List.of(new VivVisionTeenSynthezoid()));
 
         declareAttackers(List.of(0));
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
@@ -69,5 +69,111 @@ class VivVisionTeenSynthezoidTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once");
+    }
+
+    @Test
+    @DisplayName("Cybernetic Senses triggers at low power and draws after Power-up resolves")
+    void drawsWhenPowerUpRaisesPowerInResponse() {
+        Permanent viv = addCreatureReady(player1, new VivVisionTeenSynthezoid());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new VivVisionTeenSynthezoid()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.stack).hasSize(1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(viv.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not draw if power falls below four before resolution")
+    void checksPowerAgainOnResolution() {
+        Permanent viv = addCreatureReady(player1, new VivVisionTeenSynthezoid());
+        viv.setPowerModifier(2);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new VivVisionTeenSynthezoid()));
+
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        viv.setPowerModifier(0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Uses Viv's power immediately before leaving the battlefield")
+    void drawsUsingLastKnownPower() {
+        Permanent viv = addCreatureReady(player1, new VivVisionTeenSynthezoid());
+        viv.setPowerModifier(2);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new VivVisionTeenSynthezoid()));
+
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        viv.setToughnessModifier(-2);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(viv);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Does not draw if Viv's last-known power was below four")
+    void doesNotDrawUsingEarlierAttackPower() {
+        Permanent viv = addCreatureReady(player1, new VivVisionTeenSynthezoid());
+        viv.setPowerModifier(2);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new VivVisionTeenSynthezoid()));
+
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        viv.setPowerModifier(0);
+        viv.setToughnessModifier(-2);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(viv);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Power-up costs seven mana after the entry turn")
+    void powerUpRequiresFullCostAfterEntryTurn() {
+        Permanent viv = addCreatureReady(player1, new VivVisionTeenSynthezoid());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(viv.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(viv.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Power-up cannot be activated a second time while the first activation is pending")
+    void powerUpLimitAppliesBeforeResolution() {
+        addCreatureReady(player1, new VivVisionTeenSynthezoid());
+        harness.addMana(player1, ManaColor.COLORLESS, 14);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+        harness.passBothPriorities();
     }
 }
