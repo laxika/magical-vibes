@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SnakeBasket.class)
+@CardUsed({SnakeBasket.class})
 class SnakeBasketTest extends BaseCardTest {
 
     @Test
@@ -122,5 +122,60 @@ class SnakeBasketTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
         harness.assertOnBattlefield(player1, "Snake Basket");
         harness.assertNotInGraveyard(player1, "Snake Basket");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while another Basket ability is on the stack")
+    void cannotActivateWithNonemptyStack() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new SnakeBasket());
+        Permanent secondBasket = harness.addToBattlefieldAndReturn(player1, new SnakeBasket());
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, 0, 2, null);
+        harness.assertNotOnBattlefield(player1, "Snake");
+        assertThat(gd.stack).hasSize(1);
+
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(secondBasket);
+        assertThatThrownBy(() -> harness.activateAbility(player1, idx, 0, 2, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(secondBasket);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().getName().equals("Snake"))
+                .hasSize(2);
+        harness.assertNotOnBattlefield(player2, "Snake");
+    }
+
+    @Test
+    @DisplayName("A tapped Basket can activate during its controller's second main phase")
+    void tappedBasketCanActivateInSecondMainPhase() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        Permanent basket = harness.addToBattlefieldAndReturn(player2, new SnakeBasket());
+        basket.tap();
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player2, 0, 0, 2, null);
+
+        harness.assertInGraveyard(player2, "Snake Basket");
+        harness.assertNotOnBattlefield(player2, "Snake");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(p -> p.getCard().getName().equals("Snake"))
+                .hasSize(2)
+                .allSatisfy(p -> {
+                    assertThat(p.getCard().isToken()).isTrue();
+                    assertThat(p.isTapped()).isFalse();
+                });
+        harness.assertNotOnBattlefield(player1, "Snake");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 }
