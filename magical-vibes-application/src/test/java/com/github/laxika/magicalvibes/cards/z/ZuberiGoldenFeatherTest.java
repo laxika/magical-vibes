@@ -50,4 +50,21 @@ class ZuberiGoldenFeatherTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
     }
+    @Test
+    @DisplayName("Opposing Zuberis boost each other and their bonuses stack on other Griffins")
+    void opposingZuberisBoostEachOtherAndStack() {
+        Permanent ownZuberi = addCreatureReady(player1, new ZuberiGoldenFeather());
+        Permanent opposingZuberi = addCreatureReady(player2, new ZuberiGoldenFeather());
+        Permanent ownGriffin = addCreatureReady(player1, new EkunduGriffin());
+        Permanent opposingGriffin = addCreatureReady(player2, new EkunduGriffin());
+
+        assertThat(gqs.getEffectivePower(gd, ownZuberi)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownZuberi)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opposingZuberi)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opposingZuberi)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownGriffin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownGriffin)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opposingGriffin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opposingGriffin)).isEqualTo(4);
+    }
 }
