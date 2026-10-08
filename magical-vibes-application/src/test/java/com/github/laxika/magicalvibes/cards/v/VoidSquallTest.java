@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.s.SpidersilkNet;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VoidSquall.class, GrizzlyBears.class, Forest.class})
+@CardUsed({VoidSquall.class, GrizzlyBears.class, Forest.class, SpidersilkNet.class})
 class VoidSquallTest extends BaseCardTest {
 
     @Test
@@ -26,8 +27,7 @@ class VoidSquallTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInHand(player2, "Grizzly Bears");
@@ -53,8 +53,7 @@ class VoidSquallTest extends BaseCardTest {
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.castSorcery(player1, 0, firstTarget.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, firstTarget.getId());
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
@@ -67,5 +66,96 @@ class VoidSquallTest extends BaseCardTest {
         assertThat(gd.findExiledCard(card.getId())).isNull();
         harness.assertInGraveyard(player1, "Void Squall");
         assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+    }
+
+    @Test
+    void returnsNoncreaturePermanentToOwnerRatherThanController() {
+        SpidersilkNet net = new SpidersilkNet();
+        net.setOwnerId(player1.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, net);
+        harness.setHand(player1, List.of(new VoidSquall()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Spidersilk Net");
+        harness.assertInHand(player1, "Spidersilk Net");
+        harness.assertNotInHand(player2, "Spidersilk Net");
+    }
+
+    @Test
+    void canReturnItsControllersOwnNonlandPermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SpidersilkNet());
+        harness.setHand(player1, List.of(new VoidSquall()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Spidersilk Net");
+        harness.assertInHand(player1, "Spidersilk Net");
+    }
+
+    @Test
+    void doesNotReboundWhenItsOnlyTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SpidersilkNet());
+        VoidSquall card = new VoidSquall();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castSorcery(player1, 0, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, target));
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Void Squall");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+    }
+
+    @Test
+    void reboundCannotCastWithoutALegalNonlandTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SpidersilkNet());
+        VoidSquall card = new VoidSquall();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        harness.assertNotInGraveyard(player1, "Void Squall");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+    }
+
+    @Test
+    void decliningReboundLeavesCardExiledWithoutAnotherOffer() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SpidersilkNet());
+        harness.addToBattlefield(player2, new SpidersilkNet());
+        VoidSquall card = new VoidSquall();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        harness.assertNotInGraveyard(player1, "Void Squall");
+        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
     }
 }
